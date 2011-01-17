@@ -30,8 +30,7 @@ same conditions as regards security.
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-B license and that you accept its terms.
 */
-#include <boost/program_options.hpp>
-namespace po = boost::program_options;
+#include <tclap/CmdLine.h>
 
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
@@ -48,47 +47,27 @@ namespace po = boost::program_options;
 
 
 
-int main(int ac,char *av[])
+int main(int argc, char** argv)
 {
-  std::string image_file = "";
-  std::string table_file = "";
-  std::string output_file = "";
 
-  //Parsing the command line using Boost
-  po::options_description desc("Usage:");
-  desc.add_options()
-    ("help", "produce help message")
-    ("image-file,i", po::value< std::string >(&image_file), "input image file (short)")
-    ("table-file,t", po::value< std::string >(&table_file), "input look up table file (ascii)")
-    ("output-file,o", po::value< std::string >(&output_file), "output file")
-    ;
-  
-  po::variables_map vm;        
-  po::store(po::parse_command_line(ac, av, desc), vm);
-  po::notify(vm);    
-  
-  if (vm.count("help")) {
-    std::cout << "This program modifies the values of the input image using a look up table.\n";
-    std::cout << desc << "\n";
-    return 1;
-  }
-  if (vm.count("image-file")) {
-    std::cout<<"   input image file "<<image_file<<"\n";
-  }
-  else{
-    std::cout<<"No input image file given. Exit.\n";
-    return 1;
-  }  
-  if (vm.count("table-file")) {
-    std::cout<<"   input look-up table file "<<table_file<<"\n";
-  }
-  else{
-    std::cout<<"No table file given. Exit.\n";
-    return 1;
-  }  
-  //end of parsing command line
+try {  
 
-  
+	TCLAP::CmdLine cmd("Command description message", ' ', "0.9", true);
+
+	TCLAP::ValueArg<std::string> inputImageArg("i","image_file","input image file (short)",true,"","string");
+	cmd.add( inputImageArg );
+	TCLAP::ValueArg<std::string> inputTableArg("t","table_file","input look up table file (ascii)",true,"","string");
+	cmd.add( inputTableArg );
+	TCLAP::ValueArg<std::string> outputImageArg("o","output_file","output image file (short)",true,"","string");
+	cmd.add( outputImageArg );
+
+	// Parse the args.
+	cmd.parse( argc, argv );
+
+	// Get the value parsed by each arg. 
+  std::string image_file = inputImageArg.getValue();
+  std::string table_file = inputTableArg.getValue();
+  std::string output_file = outputImageArg.getValue();
 
   //ITK declaration
   typedef short PixelType;
@@ -132,6 +111,10 @@ int main(int ac,char *av[])
   writer->Update();
 
   return 1;
+
+	} catch (TCLAP::ArgException &e)  // catch any exceptions
+	{ std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; }
+
 }
 
 
