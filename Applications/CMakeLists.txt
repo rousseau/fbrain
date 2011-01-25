@@ -1,0 +1,7 @@
+PROJECT(Utilities)
+INCLUDE_REGULAR_EXPRESSION("^.*$")
+
+ADD_EXECUTABLE(btkNLMDenoising btkNLMDenoising.cxx )
+TARGET_LINK_LIBRARIES(btkNLMDenoising ITKIO)
+
+

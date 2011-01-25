@@ -52,7 +52,7 @@ int main(int argc, char** argv)
 
 try {  
 
-	TCLAP::CmdLine cmd("Command description message", ' ', "0.9", true);
+	TCLAP::CmdLine cmd("Command description message", ' ', "1.0", true);
 
 	TCLAP::ValueArg<std::string> inputImageArg("i","image_file","input image file (short)",true,"","string");
 	cmd.add( inputImageArg );
