@@ -1,6 +1,7 @@
-\documentclass[a4paper,10pt,draft]{article}
+\documentclass[a4paper,10pt]{article}
 
 \usepackage{fullpage}
+\usepackage{graphicx}
 
 % Title Page
 \title{Baby Brain Toolkit}
@@ -15,7 +16,22 @@
 
 \section{Introduction}
 
-BTK stands for Baby Brain Toolkit. This toolkit is developed in the context of the Fbrain ERC project: ``Computational Anatomy of Fetal Brain''\footnote{http://lsiit-miv.u-strasbg.fr/miv/index.php?contenu=erc}.  Studies about brain maturation aim at providing a better understanding of brain development and links between brain changes and cognitive development. Such studies are of great interest for diagnosis help and clinical course of development and treatment of illnesses. Several teams have begun to make 3D maps of developing brain structures from children to young adults. However, working out the development of fetal and neonatal brain remains an open issue. This project aims at jumping over several theoretical and practical barriers and at going beyond the formal description of the brain maturation thanks to the development of a realistic numerical model of brain aging. 
+BTK stands for Baby Brain Toolkit. This toolkit is developed in the context of
+the Fbrain ERC project: ``Computational Anatomy of Fetal
+Brain''\footnote{http://lsiit-miv.u-strasbg.fr/miv/index.php?contenu=erc}. 
+Studies about brain maturation aim at providing a better understanding of brain
+development anEstanislao, Nadège et Valerio Oubel--Salis
+ont l'immense joie de
+vous faire part de la naissance de
+Paul
+le            2011d links between brain changes and cognitive development. Such
+studies are of great interest for diagnosis help and clinical course of
+development and treatment of illnesses. Several teams have begun to make 3D maps
+of developing brain structures from children to young adults. However, working
+out the development of fetal and neonatal brain remains an open issue. This
+project aims at jumping over several theoretical and practical barriers and at
+going beyond the formal description of the brain maturation thanks to the
+development of a realistic numerical model of brain aging. 
 
 \subsection{Copyright}
 This software is governed by the CeCILL-B license under French law and
@@ -44,17 +60,21 @@ same conditions as regards security.
 \subsection{Dependencies and Compilation}
 Baby Brain Toolkit (BTK) depends on:
 \begin{itemize}
- \item the most recent version of the Insight ToolKit (ITK) -- www.itk.org. 
+ \item The most recent version of the Insight ToolKit (ITK) -- www.itk.org. 
  \item Tclap library: this library can be installed for debian-based distribution using the following command line : \texttt{apt-get install libtclap-dev}
  \item OpenMP library: this library can be installed for debian-based distribution using the following command line : \texttt{apt-get install libgomp1}
 \end{itemize}
-
-
 
 \input{app}
 \input{utilities}
 
 \section*{Acknowledgment}
-\small{The research leading to these results has received funding from the European Research Council under the European Community’s Seventh Framework Programme (FP7/2007-2013 Grant Agreement no. 207667).}
+\small{The research leading to these results has received funding from the
+European Research Council under the European Community’s Seventh Framework
+Programme (FP7/2007-2013 Grant Agreement no. 207667).}
+
+\bibliographystyle{plain}
+\section*{References}
+\bibliography{./rec.bib}
 
 \end{document}
