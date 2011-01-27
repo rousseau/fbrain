@@ -66,7 +66,7 @@
 #include "itkImageMaskSpatialObject.h"
 
 #include "itkNumericTraits.h"
-#include "UserMacro.h"
+#include "btkUserMacro.h"
 
 namespace btk
 {

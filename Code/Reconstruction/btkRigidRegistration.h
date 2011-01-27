@@ -49,7 +49,7 @@
 #include "itkNormalizedCorrelationImageToImageMetric.h"
 
 #include "itkNumericTraits.h"
-#include "UserMacro.h"
+#include "btkUserMacro.h"
 
 #include "itkCommand.h"
 

@@ -67,8 +67,9 @@ int main( int argc, char *argv[] )
   std::vector< std::string > mask;
 //  std::vector< std::string > transform;
   std::vector< std::string > roi;
-//  std::vector< std::string > resampled;
+  std::vector< std::string > resampled;
   unsigned int itMax;
+  double epsilon;
 
   const char *outImage = NULL;
 
@@ -78,25 +79,26 @@ int main( int argc, char *argv[] )
 
   TCLAP::CmdLine cmd("Creates a high resolution image from a set of low resolution images", ' ', "Unversioned");
 
-  TCLAP::MultiArg<std::string> inputArg("i","input","image file",true,"string",cmd);
-  TCLAP::MultiArg<std::string> maskArg("m","","mask file",false,"string",cmd);
+  TCLAP::MultiArg<std::string> inputArg("i","input","Image file",true,"string",cmd);
+  TCLAP::MultiArg<std::string> maskArg("m","","Mask file",false,"string",cmd);
 //  TCLAP::MultiArg<std::string> transformArg("t","transform","transform file",false,"string",cmd);
   TCLAP::MultiArg<std::string> roiArg("","roi","roi file (written as mask)",false,"string",cmd);
-//  TCLAP::MultiArg<std::string> resampledArg("","resampled","resampled image",false,"string",cmd);
+  TCLAP::MultiArg<std::string> resampledArg("","ir","Resampled image with initial transform",false,"string",cmd);
 
   TCLAP::ValueArg<std::string> outArg("o","output","High resolution image",true,"none","string",cmd);
-  TCLAP::ValueArg<unsigned int> iterArg("n","iter","Maximum number of iterations",false,30,"unsigned int",cmd);
+  TCLAP::ValueArg<unsigned int> iterArg("n","iter","Maximum number of iterations",false, 30,"unsigned int",cmd);
+  TCLAP::ValueArg<double> epsilonArg("e","epsilon","Maximum number of iterations",false, 1e-4,"double",cmd);
 
-  TCLAP::SwitchArg  maskSwitchArg("", "mask", "Use masks for roi calculation", true);
-  TCLAP::SwitchArg  boxSwitchArg("", "box", "Use intersections for roi calculation", false);
-  TCLAP::SwitchArg  allSwitchArg("", "all", "Use the whole image FOV", false);
+  TCLAP::SwitchArg  xSwitchArg("","box","Use intersections for roi calculation",false);
+  TCLAP::SwitchArg  ySwitchArg("","mask","Use masks for roi calculation",false);
+  TCLAP::SwitchArg  zSwitchArg("","all","Use the whole image FOV",false);
 
   // xor arguments for roi assessment
 
   std::vector<TCLAP::Arg*>  xorlist;
-  xorlist.push_back(&maskSwitchArg);
-  xorlist.push_back(&boxSwitchArg);
-  xorlist.push_back(&allSwitchArg);
+  xorlist.push_back(&xSwitchArg);
+  xorlist.push_back(&ySwitchArg);
+  xorlist.push_back(&zSwitchArg);
 
   cmd.xorAdd( xorlist );
 
@@ -108,19 +110,20 @@ int main( int argc, char *argv[] )
   outImage = outArg.getValue().c_str();
 //  transform = transformArg.getValue();
   roi = roiArg.getValue();
-//  resampled = resampledArg.getValue();
+  resampled = resampledArg.getValue();
   itMax = iterArg.getValue();
+  epsilon = epsilonArg.getValue();
 
   // Tells the user if box or mask is used
 
-/*  if ( boxSwitchArg.isSet() )
+/*  if ( xSwitchArg.isSet() )
   {
-    std::cout << "Using automatic roi as mask" << std::cout;
+    std::cout << "Using automatic roi as mask" << std::endl;
   }
 
-  if ( maskSwitchArg.isSet() )
+  if ( ySwitchArg.isSet() )
   {
-    std::cout << "Using user-provided mask" << std::cout;
+    std::cout << "Using user-provided mask" << std::endl;
   } */
 
   // typedefs
@@ -162,11 +165,13 @@ int main( int argc, char *argv[] )
 
   // Filter setup
   unsigned int numberOfImages = input.size();
-  std::vector< ImagePointer >      images(numberOfImages);
-  std::vector< ImageMaskPointer >  imageMasks(numberOfImages);
-  std::vector< TransformPointer >  transforms(numberOfImages);
+  std::vector< ImagePointer >         images(numberOfImages);
+  std::vector< ImageMaskPointer >     imageMasks(numberOfImages);
+  std::vector< TransformPointer >     transforms(numberOfImages);
   std::vector< RegistrationPointer >  registration(numberOfImages);
   std::vector< MaskPointer >          masks(numberOfImages);
+  std::vector< RegionType >           rois(numberOfImages);
+
   ImagePointer hrImage;
   ImagePointer hrImageOld;
   ImagePointer hrImageIni;
@@ -185,14 +190,14 @@ int main( int argc, char *argv[] )
 
     lowToHighResFilter -> SetImageArray(i, images[i] );
 
-    if ( boxSwitchArg.isSet() )
+    if ( xSwitchArg.isSet() )
     {
       intersectionCalculator -> AddImage( images[i] );
     }
 
   }
 
-  if ( boxSwitchArg.isSet() )
+  if ( xSwitchArg.isSet() )
   {
     intersectionCalculator -> Compute();
   }
@@ -202,28 +207,36 @@ int main( int argc, char *argv[] )
   for (unsigned int i=0; i<numberOfImages; i++)
   {
 
-    if ( maskSwitchArg.isSet() )
+    if ( ySwitchArg.isSet() )
     {
       MaskReaderType::Pointer maskReader = MaskReaderType::New();
       maskReader -> SetFileName( mask[i].c_str() );
       maskReader -> Update();
       imageMasks[i] = maskReader -> GetOutput();
-
       lowToHighResFilter -> SetImageMaskArray( i, imageMasks[i] );
 
       masks[i] = MaskType::New();
       masks[i] -> SetImage( imageMasks[i] );
+      rois[i] = masks[i] -> GetAxisAlignedBoundingBoxRegion();
 
-      lowToHighResFilter -> SetRegionArray( i, masks[i] -> GetAxisAlignedBoundingBoxRegion() );
+      lowToHighResFilter -> SetRegionArray( i, rois[i] );
 
-    } else if ( boxSwitchArg.isSet() )
+    } else if ( xSwitchArg.isSet() )
       {
-        lowToHighResFilter -> SetRegionArray( i, intersectionCalculator -> GetBoundingBoxRegion(i) );
-      } else if ( allSwitchArg.isSet() )
-        {
-          lowToHighResFilter -> SetRegionArray( i, images[i] -> GetLargestPossibleRegion() );
-        }
+        imageMasks[i] = intersectionCalculator -> GetImageMask(i);
+        lowToHighResFilter -> SetImageMaskArray( i, imageMasks[i] );
 
+        masks[i] = MaskType::New();
+        masks[i] -> SetImage( imageMasks[i] );
+        rois[i] = masks[i] -> GetAxisAlignedBoundingBoxRegion();
+        lowToHighResFilter -> SetRegionArray( i, rois[i] );
+
+      } else if ( zSwitchArg.isSet() )
+        {
+          rois[i] = images[i] -> GetLargestPossibleRegion();
+
+          lowToHighResFilter -> SetRegionArray( i, rois[i] );
+        }
   }
 
   // Start registration
@@ -300,7 +313,7 @@ int main( int argc, char *argv[] )
     for (unsigned int i=0; i<numberOfImages; i++)
     {
       resampler -> AddInput( images[i] );
-      resampler -> AddRegion( masks[i] -> GetAxisAlignedBoundingBoxRegion() );
+      resampler -> AddRegion( rois[i] );
 
       unsigned int nslices = registration[i] -> GetTransform() -> GetNumberOfSlices();
 
@@ -359,9 +372,9 @@ int main( int argc, char *argv[] )
     NCMetricType::Pointer nc = NCMetricType::New();
     nc -> SetFixedImage(  imageA );
     nc -> SetMovingImage( imageB );
-    if ( maskSwitchArg.isSet() )
+    if ( ySwitchArg.isSet() )
     {
-      nc -> SetFixedImageRegion( masks[0] -> GetAxisAlignedBoundingBoxRegion() );
+      nc -> SetFixedImageRegion( rois[0] );
       nc -> SetFixedImageMask( masks[0] );
     }
     else
@@ -374,16 +387,16 @@ int main( int argc, char *argv[] )
     previousMetric = currentMetric;
     currentMetric = - nc -> GetValue( identity -> GetParameters() );
 
-    float epsilon = 0.0;
+    double delta = 0.0;
 
     if (it >= 2)
-      epsilon = (currentMetric - previousMetric) / previousMetric;
+      delta = (currentMetric - previousMetric) / previousMetric;
     else
-      epsilon = 1;
+      delta = 1;
 
-    std::cout << "epsilon = " << epsilon << std::endl<< std::endl;
+    std::cout << "delta = " << epsilon << std::endl<< std::endl;
 
-    if (epsilon < 1e-4) break;
+    if (delta < epsilon) break;
 
   }
 
@@ -396,7 +409,7 @@ int main( int argc, char *argv[] )
     {
       intersectionCalculator -> WriteMask( i, roi[i].c_str() );
     }
-  }
+  } */
 
   // Write resampled images
   if ( resampled.size() > 0 )
@@ -405,8 +418,7 @@ int main( int argc, char *argv[] )
     {
       lowToHighResFilter -> WriteResampledImages( i, resampled[i].c_str() );
     }
-  } */
-
+  }
 
   // Write HR image
 

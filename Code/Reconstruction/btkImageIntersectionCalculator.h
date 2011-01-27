@@ -118,6 +118,12 @@ public:
     return m_RegionArray[i];
   }
 
+  ImageMaskType* GetImageMask( unsigned int i)
+  {
+    return m_ImageMaskArray[i];
+  }
+
+
   /** Add an image for intersection calculation */
   void AddImage( ImageType * image);
 

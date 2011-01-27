@@ -46,7 +46,7 @@
 #include "itkInterpolateImageFunction.h"
 #include "itkNeighborhoodAlgorithm.h"
 #include "itkSize.h"
-#include "UserMacro.h"
+#include "btkUserMacro.h"
 
 namespace btk
 {

@@ -8,5 +8,3 @@ TARGET_LINK_LIBRARIES(btkNLMDenoising ITKIO)
 
 ADD_EXECUTABLE(btkImageReconstruction btkImageReconstruction.cxx )
 TARGET_LINK_LIBRARIES(btkImageReconstruction ITKIO ITKNumerics)
-
-
