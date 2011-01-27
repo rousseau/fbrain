@@ -9,3 +9,10 @@
 \begin{description}
  \item[btkNLMDenoising4DImage] This program applies a non-local mean filter to each 3D image of a 4D image, for denoising purpose. Usage: \texttt{-i input\_image\_filename -o output\_image\_filename}. The best results are usually obtained by using a mask (or a padding value).
 \end{description}
+
+
+\subsection{Tractography}
+
+\begin{description}
+ \item[btkTractography] This program performs a probabilistic tractography using a particle filtering. Usage: \texttt{-d dwi\_image\_filename -v dwi\_gradient\_vectors -m white\_matter\_mask -l seeds\_la\-bel\_image}.
+\end{description}
