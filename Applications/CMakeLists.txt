@@ -19,28 +19,25 @@ INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Tractography)
 
 ADD_EXECUTABLE(btkTractography
         btkTractography.cxx
-        btkTypes.h
-        btkCartesianCoordinates.cxx btkCartesianCoordinates.h
-        btkSphericalCoordinates.cxx btkSphericalCoordinates.h
-        btkVector.cxx btkVector.h
-        btkDirection.cxx btkDirection.h
-        btkPoint.cxx btkPoint.h
-        btkSignalExtractor.cxx btkSignalExtractor.h
-        btkSignal.cxx btkSignal.h
-        btkSphericalHarmonics.cxx btkSphericalHarmonics.h
-        btkSHModel.cxx btkSHModel.h
-        btkSHModelEstimator.cxx btkSHModelEstimator.h
-        btkDensity.h
-        btkSimDensity.h
-        btkSHModelDensity.cxx btkSHModelDensity.h
-        btkVonMisesFisherDensity.cxx btkVonMisesFisherDensity.h
-        btkNormalDensity.cxx btkNormalDensity.h
-        btkInitialDensity.cxx btkInitialDensity.h
-        btkAPrioriDensity.cxx btkAPrioriDensity.h
-        btkLikelihoodDensity.cxx btkLikelihoodDensity.h
-        btkImportanceDensity.cxx btkImportanceDensity.h
-        btkParticle.cxx btkParticle.h
-        btkParticleFilter.cxx btkParticleFilter.h
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkCartesianCoordinates.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalCoordinates.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkVector.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkDirection.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkPoint.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkSignalExtractor.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkSignal.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalHarmonics.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkSHModel.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkSHModelEstimator.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkSHModelDensity.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkVonMisesFisherDensity.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkNormalDensity.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkInitialDensity.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkAPrioriDensity.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkLikelihoodDensity.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkImportanceDensity.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkParticle.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkParticleFilter.cxx
 )
 
 TARGET_LINK_LIBRARIES(btkTractography ITKCommon ITKIO vtkHybrid)
