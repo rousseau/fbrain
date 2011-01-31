@@ -24,7 +24,7 @@ MESSAGE(STATUS "Check for TCLAP")
 FIND_PATH(TCLAP_DIRECTORY CmdLine.h)
 
 IF(TCLAP_DIRECTORY-NOTFOUND)
-	MESSAGE(FATAL_ERROR "TCLAP not found !")
+  MESSAGE(FATAL_ERROR "TCLAP not found !")
 ENDIF(TCLAP_DIRECTORY-NOTFOUND)
 
 #------------------------------------------------------------------------------
@@ -32,8 +32,8 @@ ENDIF(TCLAP_DIRECTORY-NOTFOUND)
 SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/bin")
 
 SUBDIRS(
-  Applications
   Utilities
+  Applications
 )
 
 
