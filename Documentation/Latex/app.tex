@@ -60,19 +60,99 @@ The full list of optional parameters of the method can be obtained by
             \end{figure}
 
     \subsubsection*{Advanced usage}
-        In addition to standard arguments of \texttt{btkTractography} program, there are some other parameters that let you to alter algorithm's behaviour. Since the default parameters values may work in the most of cases, they are optional. The program arguments are described below.
-            \begin{description}
-                \item[\texttt{-d --dwi}] Diffusion weighted sequence
-                \item[\texttt{-v --vectors}] Gradient vectors' coordinates
-                \item[\texttt{-m --mask}] White matter mask
-                \item[\texttt{-l --label}] Seeds' label volume
-                \item[\texttt{--angular-threshold}] Angular threshold between successive displacement vectors of a particle's trajectory
-                \item[\texttt{--curve-constraint}] Curve constraint of particle's trajectory
-                \item[\texttt{--step-length}] Step displacement's length of a particle
-                \item[\texttt{--model-regularization}] Regularization coefficient of the model (\texttt{i.e.} regularization term of the model regression estimation)
-                \item[\texttt{--model-order}] Order of the model (\texttt{i.e.} of spherical harmonics)
-                \item[\texttt{-- --ignore\_rest}] Ignores the rest of the labeled arguments following this flag.
-                \item[\texttt{--version}] Displays version information and exits.
-                \item[\texttt{-h --help}] Displays usage information and exits.
-            \end{description}
+        In addition to standard arguments of \texttt{btkTractography} program, there are some other parameters that let you to alter algorithm's behaviour. Since the default parameters values may work in the most of cases, they are optional. A list is of optional features is avaible by using the command
+            \begin{quote}
+                \texttt{btkTractography -\hspace{0.1mm}-help}
+            \end{quote}
+        and program's arguments are much more described below.
+
+        \paragraph*{Model's order}
+                \begin{table}
+                    \centering
+                    \caption{test}
+                    \begin{tabular}{r|l}
+                        \textbf{Action}  & modify model's order (\texttt{i.e.} spherical harmonics order)\\
+                        \hline
+                        \textbf{Default} & 4\\
+                        \textbf{Command} & \texttt{-\hspace{0.1mm}-model-order <n>} \hfill \texttt{n}$\in\{2,4,6,8\}$
+                    \end{tabular}
+                \end{table}
+
+        \paragraph*{Model's regularization}
+            \begin{center}
+                \begin{tabular}{rl}
+                    \textbf{Action}  & modify the regularization coefficient of the model estimation\\
+                    \textbf{Effect}  & reduce estimation errors\\
+                    \textbf{Default} & 0.006\\
+                    \textbf{Command} & \texttt{-\hspace{0.1mm}-model-regularization <r>} \hfill \texttt{r}$\in\mathbb{R}$
+                \end{tabular}
+            \end{center}
+
+        \paragraph*{Displacement step size}
+            \begin{center}
+                \begin{tabular}{rl}
+                    \textbf{Action}  & modify the displacement length of the particles in voxels\\
+                    \textbf{Effect}  & control the displacement speed of the particles\\
+                    \textbf{Default} & 0.5\\
+                    \textbf{Command} & \texttt{-\hspace{0.1mm}-step-size <r>} \hfill \texttt{r}$\in\mathbb{R}_+^*$
+                \end{tabular}
+            \end{center}
+
+            \begin{figure}
+                \centering
+                \includegraphics[height=0.1\textheight]{stepSize}
+                \caption{}
+            \end{figure}
+
+        \paragraph*{Angular threshold}
+            \begin{center}
+                \begin{tabular}{rl}
+                    \textbf{Action}  & modify the maximal angle in radians between two successive vectors\\
+                    \textbf{Effect}  & constraint the curvature \emph{a priori} of the estimated fibers\\
+                    \textbf{Default} & $\pi/3$\\
+                    \textbf{Command} & \texttt{-\hspace{0.1mm}-angular-threshold <a>} \hfill \texttt{a}$\in]0,2\pi[$
+                \end{tabular}
+            \end{center}
+
+            \begin{figure}
+                \centering
+                \includegraphics[height=0.1\textheight]{angleThreshold}
+                \caption{}
+            \end{figure}
+
+        \paragraph*{Rigidity}
+            \begin{center}
+                \begin{tabular}{rl}
+                    \textbf{Action}  & modify the concentration of the VMF use in the \emph{prior} density\\
+                    \textbf{Effect}  & constraint the rigidity \emph{a priori} of the estimated fibers\\
+                    \textbf{Default} & 30\\
+                    \textbf{Command} & \texttt{-\hspace{0.1mm}-curve-constraint <r>} \hfill \texttt{r}$\in\mathbb{R}_+^*$
+                \end{tabular}
+            \end{center}
+
+            \begin{figure}
+                \centering
+                \includegraphics[height=0.1\textheight]{concentration}
+                \caption{}
+            \end{figure}
+
+        \paragraph*{Number of particles}
+            \begin{center}
+                \begin{tabular}{rl}
+                    \textbf{Action}  & modify the number of particles in th system\\
+                    \textbf{Effect}  & control the algorithm's precision\\
+                    \textbf{Default} & 1000\\
+                    \textbf{Command} & \texttt{-\hspace{0.1mm}-number-of-particles <n>} \hfill \texttt{n}$\in\mathbb{N}^*$
+                \end{tabular}
+            \end{center}
+
+        \paragraph*{Resampling threshold}
+            \begin{center}
+                \begin{tabular}{rl}
+                    \textbf{Action}  & modify the effective sampling threshold (in \%)\\
+                    \textbf{Effect}  & control the particles with a low weight\\
+                    \textbf{Default} & 0.6\\
+                    \textbf{Command} & \texttt{-\hspace{0.1mm}-resampling-threshold <r>} \hfill \texttt{r}$\in[0,1]$
+                \end{tabular}
+            \end{center}
 
