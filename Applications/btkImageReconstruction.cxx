@@ -49,7 +49,7 @@
 
 #include "btkSliceBySliceTransform.h"
 #include "itkImage.h"
-#include "tclap/CmdLine.h"
+#include "CmdLine.h"
 
 #include "itkImageMaskSpatialObject.h"
 #include "btkImageIntersectionCalculator.h"

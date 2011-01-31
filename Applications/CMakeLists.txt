@@ -3,6 +3,10 @@ INCLUDE_REGULAR_EXPRESSION("^.*$")
 
 #------------------------------------------------------------------------------
 
+INCLUDE_DIRECTORIES(${TCLAP_DIRECTORY})
+
+#------------------------------------------------------------------------------
+
 ADD_EXECUTABLE(btkNLMDenoising btkNLMDenoising.cxx )
 TARGET_LINK_LIBRARIES(btkNLMDenoising ITKIO)
 
@@ -46,6 +50,6 @@ TARGET_LINK_LIBRARIES(btkTractography ITKCommon ITKIO vtkHybrid)
 
 INSTALL(TARGETS btkNLMDenoising
 				btkImageReconstruction
-                btkTractography
+				btkTractography
         DESTINATION bin)
 
