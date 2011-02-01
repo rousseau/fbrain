@@ -58,9 +58,15 @@ same conditions as regards security.
 \subsection{Dependencies and Compilation}
 Baby Brain Toolkit (BTK) depends on:
 \begin{itemize}
- \item The most recent version of the Insight ToolKit (ITK) -- www.itk.org. 
- \item Tclap library: this library can be installed for debian-based distribution using the following command line : \texttt{apt-get install libtclap-dev}
- \item OpenMP library: this library can be installed for debian-based distribution using the following command line : \texttt{apt-get install libgomp1}
+ \item The most recent version of the Insight ToolKit (ITK) -- www.itk.org.
+Please compile ITK with flags ITK\_USE\_OPTIMIZED\_REGISTRATION and
+ITK\_USE\_REVIEW set to ON.
+ \item Tclap library: this library can be installed for debian-based
+distribution using the following command line : \texttt{apt-get install
+libtclap-dev}
+ \item OpenMP library: this library can be installed for debian-based
+distribution using the following command line : \texttt{apt-get install
+libgomp1}
 \end{itemize}
 
 \input{app}
