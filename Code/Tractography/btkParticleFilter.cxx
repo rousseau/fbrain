@@ -219,11 +219,13 @@ void ParticleFilter::run(int label)
 
     this->run(label, maxDir);
     this->ComputeMap();
-    Particle map1 = this->GetMAP();
+//    Particle map1 = this->GetMAP();
+    std::vector<Point> map1 = this->GetMAP();
 
     this->run(label, symDir);
     this->ComputeMap();
-    Particle map2 = this->GetMAP();
+//    Particle map2 = this->GetMAP();
+    std::vector<Point> map2 = this->GetMAP();
 
     this->ComputeFiber(map1,map2);
 }
@@ -307,6 +309,7 @@ void ParticleFilter::run(int label, Direction dir)
 
                 weights[i] = std::log(m_cloud[i].weight()) + likelihood + std::log(apriori) - std::log(importance);
 
+
                 if(!isInside)
                 {
                     nbOfActiveParticles--;
@@ -345,7 +348,7 @@ void ParticleFilter::run(int label, Direction dir)
 
             for(unsigned int i=0; i<m_M; i++)
             {
-                if(std::isfinite(weights[i]))
+                if( std::isfinite(weights[i]))
                     weights[i] += shift;
                 else // infinite number
                     weights[i] = 0;
@@ -403,7 +406,7 @@ void ParticleFilter::run(int label, Direction dir)
                 std::cout << " (Resampling, ESS = " << ESS << ") " << std::flush;
 
                 Real cumul = 0;
-                std::vector<Particle> cloud;
+
                 Real *intervals = new Real[m_M-1];
 
 
@@ -418,8 +421,10 @@ void ParticleFilter::run(int label, Direction dir)
 
                 nbOfActiveParticles = m_M;
 
+
                 // Get M particles from the cloud
                 // keeping proportionnality
+				// (multinomial resampling)
                 for(unsigned int m=0; m<m_M; m++)
                 {
                     // Simulate x ~ U(0,1)
@@ -435,18 +440,18 @@ void ParticleFilter::run(int label, Direction dir)
                             i++;
                     } while(!found && i < m_M-1);
 
-                    cloud.push_back(m_cloud[i]);
-                    cloud[m].setWeight(1.0/(Real)m_M);
+					m_cloud[m].SetLastPoint(m_cloud[i].lastPoint());
+					m_cloud[m].SetLastVector(m_cloud[i].lastVector());
+					m_cloud[m].setWeight(1.0/(Real)m_M);
 
-                    if(!cloud[m].isActive())
-                    {
-                        nbOfActiveParticles--;
-                    }
+					if(m_cloud[i].isActive())
+						m_cloud[m].SetActive();
+					else
+					{
+						m_cloud[m].SetInactive();
+						nbOfActiveParticles--;
+					}
                 } // for m
-
-
-                // We keep new cloud
-                m_cloud = cloud;
 
 
                 // Clean space memory
@@ -465,6 +470,8 @@ void ParticleFilter::run(int label, Direction dir)
     } // for k steps
 
     delete[] weights;
+
+	this->saveCloudInVTK(label, 0, m_x0);
 
     m_dirNum++;
 }
@@ -547,9 +554,10 @@ void ParticleFilter::saveCloudInVTK(int label, unsigned int step, Point begin)
     writer->Write();
 }
 
-Particle ParticleFilter::GetMAP()
+// Particle ParticleFilter::GetMAP()
+std::vector<Point> ParticleFilter::GetMAP()
 {
-
+/*
     // MAP estimate of probablity law
     // Search the particle with maximal importance weight
     Particle map = m_cloud[0];
@@ -565,9 +573,41 @@ Particle ParticleFilter::GetMAP()
     } // for each particle in cloud
 
     return map;
+*/
+
+	std::vector<Point> map;
+
+	for(unsigned int k=0; k<m_k; k++)
+	{
+		unsigned int imap = 0;
+		Real         max  = 0;
+		unsigned int num  = 0;
+
+		for(unsigned int m=0; m<m_M; m++)
+		{
+			if(m_cloud[m].length() <= k)
+			{
+				Real tmp = m_cloud[m].getWeight(k);
+
+				if(max < tmp)
+				{
+					max  = tmp;
+					imap = m;
+				}
+
+				num++;
+			}
+		} // for each particle m
+
+		if(num > 0)
+			map.push_back(m_cloud[imap].getPoint(k));
+	} // for each step k
+
+	return map;
 }
 
-void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
+// void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
+void ParticleFilter::ComputeFiber(std::vector<Point> map1, std::vector<Point> map2)
 {
     // VTK structures
     vtkSmartPointer<vtkPoints> points   = vtkSmartPointer<vtkPoints>::New();
@@ -577,12 +617,15 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
 
     // Build fiber with the MAP estimate
 
-    Point x0 = map1.getPoint(0);
+//    Point x0 = map1.getPoint(0);
+	Point x0 = map1[0];
     points->InsertNextPoint(x0.x()*m_spacing[0] + m_origin[0], x0.y()*m_spacing[1] + m_origin[1], x0.z()*m_spacing[2] + m_origin[2]);
 
-    for(unsigned int k=1; k<map1.length(); k++)
+//    for(unsigned int k=1; k<map1.length(); k++)
+    for(unsigned int k=1; k<map1.size(); k++)
     {
-        Point p = map1.getPoint(k);
+//        Point p = map1.getPoint(k);
+		Point p = map1[k];
 
         vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
         pid[0] = points->InsertNextPoint(p.x()*m_spacing[0] + m_origin[0], p.y()*m_spacing[1] + m_origin[1], p.z()*m_spacing[2] + m_origin[2]);
@@ -593,12 +636,15 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
     }
 
 
-    x0 = map2.getPoint(0);
+//    x0 = map2.getPoint(0);
+    x0 = map2[0];
     points->InsertNextPoint(x0.x()*m_spacing[0] + m_origin[0], x0.y()*m_spacing[1] + m_origin[1], x0.z()*m_spacing[2] + m_origin[2]);
 
-    for(unsigned int k=1; k<map2.length(); k++)
+//    for(unsigned int k=1; k<map2.length(); k++)
+    for(unsigned int k=1; k<map2.size(); k++)
     {
-        Point p = map2.getPoint(k);
+//        Point p = map2.getPoint(k);
+        Point p = map2[k];
 
         vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
         pid[0] = points->InsertNextPoint(p.x()*m_spacing[0] + m_origin[0], p.y()*m_spacing[1] + m_origin[1], p.z()*m_spacing[2] + m_origin[2]);

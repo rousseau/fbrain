@@ -87,11 +87,15 @@ knowledge of the CeCILL-B license and that you accept its terms.
                  */
                 Point  lastPoint() const;
 
+				void SetLastPoint(Point p);
+
                 /**
                  * @brief Get last vector of the particle
                  * @return Last particle's vector
                  */
                 Vector lastVector() const;
+
+				void SetLastVector(Vector v);
 
                 /**
                  * @brief Get a point on path
@@ -133,6 +137,9 @@ knowledge of the CeCILL-B license and that you accept its terms.
                  * @return Stream with particle put on
                  */
                 friend std::ostream &operator<<(std::ostream &os, Particle p);
+
+				void SetActive();
+				void SetInactive();
 
             private:
                 /**

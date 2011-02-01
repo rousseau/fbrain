@@ -127,11 +127,13 @@ knowledge of the CeCILL-B license and that you accept its terms.
             private:
                 void run(int label, Direction dir);
 
-                Particle GetMAP();
+//                Particle GetMAP();
+                std::vector<Point> GetMAP();
 
                 void ComputeMap();
 
-                void ComputeFiber(Particle map1, Particle map2);
+//                void ComputeFiber(Particle map1, Particle map2);
+                void ComputeFiber(std::vector<Point> map1, std::vector<Point> map2);
 
             private:
                 InitialDensity    &m_initial;       /**< Inital density */

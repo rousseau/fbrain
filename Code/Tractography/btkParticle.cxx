@@ -89,9 +89,19 @@ Point Particle::lastPoint() const
     return m_points.back();
 }
 
+void Particle::SetLastPoint(Point p)
+{
+	m_points[m_points.size()-1] = p;
+}
+
 Vector Particle::lastVector() const
 {
     return m_vectors.back();
+}
+
+void Particle::SetLastVector(Vector v)
+{
+	m_vectors[m_vectors.size()-1] = v;
 }
 
 Point Particle::getPoint(unsigned int i) const
@@ -180,6 +190,16 @@ void Particle::addLikelihood(Real likelihood)
 Real Particle::likelihood()
 {
     return m_likelihood.back();
+}
+
+void Particle::SetActive()
+{
+	m_active = true;
+}
+
+void Particle::SetInactive()
+{
+	m_active = false;
 }
 
 } // namespace btk
