@@ -18,6 +18,7 @@
 *.dvi
 *.ps
 *.pdf
+*.blg
 
 # Packages #
 ############

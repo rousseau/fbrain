@@ -21,7 +21,7 @@ INCLUDE(${VTK_USE_FILE})
 
 # Find TCLAP
 MESSAGE(STATUS "Check for TCLAP")
-FIND_PATH(TCLAP_DIRECTORY CmdLine.h)
+FIND_PATH(TCLAP_DIRECTORY CmdLine.h /usr/include/tclap)
 
 IF(TCLAP_DIRECTORY-NOTFOUND)
   MESSAGE(FATAL_ERROR "TCLAP not found !")
@@ -29,7 +29,7 @@ ENDIF(TCLAP_DIRECTORY-NOTFOUND)
 
 #------------------------------------------------------------------------------
 
-SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/bin")
+#SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/bin")
 
 SUBDIRS(
   Utilities
