@@ -102,12 +102,6 @@ knowledge of the CeCILL-B license and that you accept its terms.
                  */
                 void saveCloudInVTK(int label, unsigned int step, Point begin);
 
-                /**
-                 * @brief Save density in map (nifti file)
-                 * @param label Label number (of label image)
-                 * @param step Step number
-                 */
-//                void saveMapDensity(int label, unsigned int step, Point begin);
 
                 /**
                  * @brief Save fiber in VTK file
@@ -127,13 +121,13 @@ knowledge of the CeCILL-B license and that you accept its terms.
             private:
                 void run(int label, Direction dir);
 
-//                Particle GetMAP();
-                std::vector<Point> GetMAP();
+                Particle GetMAP();
+//                std::vector<Point> GetMAP();
 
                 void ComputeMap();
 
-//                void ComputeFiber(Particle map1, Particle map2);
-                void ComputeFiber(std::vector<Point> map1, std::vector<Point> map2);
+                void ComputeFiber(Particle map1, Particle map2);
+//                void ComputeFiber(std::vector<Point> map1, std::vector<Point> map2);
 
             private:
                 InitialDensity    &m_initial;       /**< Inital density */

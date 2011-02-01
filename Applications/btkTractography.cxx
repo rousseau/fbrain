@@ -53,7 +53,6 @@
 #include "btkSHModel.h"
 #include "btkSHModelEstimator.h"
 #include "btkSHModelDensity.h"
-#include "btkNormalDensity.h"
 #include "btkVonMisesFisherDensity.h"
 #include "btkImportanceDensity.h"
 #include "btkInitialDensity.h"
@@ -164,7 +163,7 @@ int main(int argc, char *argv[])
 
 
         // Get spherical harmonics model
-        SHModel *modelFun = new SHModel(model);
+        SHModel *modelFun = new SHModel(model, directions);
 
         // Get signal
         Signal *signalFun = new Signal(signal, sigmas, directions);
@@ -177,13 +176,10 @@ int main(int argc, char *argv[])
 
         // These densities will be used next
         SHModelDensity modelDensity(modelFun);
-        NormalDensity normalDensity;
         VonMisesFisherDensity vmf(Kappa);
 
 
-//        vtkSmartPointer<vtkPolyData>       fibers = vtkSmartPointer<vtkPolyData>::New();
         vtkSmartPointer<vtkAppendPolyData> append = vtkSmartPointer<vtkAppendPolyData>::New();
-//        append->UserManagedInputsOn();
 
         Image::Pointer connectMap = Image::New();
         connectMap->SetOrigin(signalFun->getOrigin());
@@ -213,7 +209,7 @@ int main(int argc, char *argv[])
                 ImportanceDensity importance(vmf, modelFun, angleThreshold);
                 InitialDensity    initial(modelDensity, begin);
                 APrioriDensity    apriori(vmf);
-                LikelihoodDensity likelihood(normalDensity, signalFun, modelFun);
+                LikelihoodDensity likelihood(signalFun, modelFun);
                 std::cout << "done." << std::endl;
 
 
@@ -223,10 +219,6 @@ int main(int argc, char *argv[])
                 ParticleFilter filter(modelFun, initial, apriori, likelihood, importance, mask, signalFun->getSize(), signalFun->getOrigin(), signalFun->getSpacing(), nbOfParticles, begin, epsilon, stepSize);
                 filter.run(label);
 
-//                append->SetInputByNumber(0, fibers);
-//                append->SetInputByNumber(1, filter.GetFiber());
-//                append->Update();
-//                fibers = append->GetOutput();
                 append->AddInput(filter.GetFiber());
 
                 Image::Pointer map = filter.GetConnectionMap();

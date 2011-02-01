@@ -219,13 +219,13 @@ void ParticleFilter::run(int label)
 
     this->run(label, maxDir);
     this->ComputeMap();
-//    Particle map1 = this->GetMAP();
-    std::vector<Point> map1 = this->GetMAP();
+    Particle map1 = this->GetMAP();
+//    std::vector<Point> map1 = this->GetMAP();
 
     this->run(label, symDir);
     this->ComputeMap();
-//    Particle map2 = this->GetMAP();
-    std::vector<Point> map2 = this->GetMAP();
+    Particle map2 = this->GetMAP();
+//    std::vector<Point> map2 = this->GetMAP();
 
     this->ComputeFiber(map1,map2);
 }
@@ -554,10 +554,10 @@ void ParticleFilter::saveCloudInVTK(int label, unsigned int step, Point begin)
     writer->Write();
 }
 
-// Particle ParticleFilter::GetMAP()
-std::vector<Point> ParticleFilter::GetMAP()
+Particle ParticleFilter::GetMAP()
+// std::vector<Point> ParticleFilter::GetMAP()
 {
-/*
+/**/
     // MAP estimate of probablity law
     // Search the particle with maximal importance weight
     Particle map = m_cloud[0];
@@ -573,8 +573,9 @@ std::vector<Point> ParticleFilter::GetMAP()
     } // for each particle in cloud
 
     return map;
-*/
+/**/
 
+/*
 	std::vector<Point> map;
 
 	for(unsigned int k=0; k<m_k; k++)
@@ -604,10 +605,11 @@ std::vector<Point> ParticleFilter::GetMAP()
 	} // for each step k
 
 	return map;
+*/
 }
 
-// void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
-void ParticleFilter::ComputeFiber(std::vector<Point> map1, std::vector<Point> map2)
+void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
+// void ParticleFilter::ComputeFiber(std::vector<Point> map1, std::vector<Point> map2)
 {
     // VTK structures
     vtkSmartPointer<vtkPoints> points   = vtkSmartPointer<vtkPoints>::New();
@@ -617,15 +619,15 @@ void ParticleFilter::ComputeFiber(std::vector<Point> map1, std::vector<Point> ma
 
     // Build fiber with the MAP estimate
 
-//    Point x0 = map1.getPoint(0);
-	Point x0 = map1[0];
+    Point x0 = map1.getPoint(0);
+//	Point x0 = map1[0];
     points->InsertNextPoint(x0.x()*m_spacing[0] + m_origin[0], x0.y()*m_spacing[1] + m_origin[1], x0.z()*m_spacing[2] + m_origin[2]);
 
-//    for(unsigned int k=1; k<map1.length(); k++)
-    for(unsigned int k=1; k<map1.size(); k++)
+    for(unsigned int k=1; k<map1.length(); k++)
+//    for(unsigned int k=1; k<map1.size(); k++)
     {
-//        Point p = map1.getPoint(k);
-		Point p = map1[k];
+        Point p = map1.getPoint(k);
+//		Point p = map1[k];
 
         vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
         pid[0] = points->InsertNextPoint(p.x()*m_spacing[0] + m_origin[0], p.y()*m_spacing[1] + m_origin[1], p.z()*m_spacing[2] + m_origin[2]);
@@ -636,15 +638,15 @@ void ParticleFilter::ComputeFiber(std::vector<Point> map1, std::vector<Point> ma
     }
 
 
-//    x0 = map2.getPoint(0);
-    x0 = map2[0];
+    x0 = map2.getPoint(0);
+//    x0 = map2[0];
     points->InsertNextPoint(x0.x()*m_spacing[0] + m_origin[0], x0.y()*m_spacing[1] + m_origin[1], x0.z()*m_spacing[2] + m_origin[2]);
 
-//    for(unsigned int k=1; k<map2.length(); k++)
-    for(unsigned int k=1; k<map2.size(); k++)
+    for(unsigned int k=1; k<map2.length(); k++)
+//    for(unsigned int k=1; k<map2.size(); k++)
     {
-//        Point p = map2.getPoint(k);
-        Point p = map2[k];
+        Point p = map2.getPoint(k);
+//        Point p = map2[k];
 
         vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
         pid[0] = points->InsertNextPoint(p.x()*m_spacing[0] + m_origin[0], p.y()*m_spacing[1] + m_origin[1], p.z()*m_spacing[2] + m_origin[2]);

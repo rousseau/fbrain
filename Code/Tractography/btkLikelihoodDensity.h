@@ -43,7 +43,6 @@ knowledge of the CeCILL-B license and that you accept its terms.
     #include "btkTypes.h"
     #include "btkPoint.h"
     #include "btkDirection.h"
-    #include "btkNormalDensity.h"
     #include "btkSHModel.h"
     #include "btkSignal.h"
 
@@ -67,7 +66,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
              * @param signal Signal data
              * @param model Q-ball HS model
              */
-            LikelihoodDensity(NormalDensity d, Signal *signal, SHModel *model);
+            LikelihoodDensity(Signal *signal, SHModel *model);
 
             /**
              * @brief Compute density
@@ -79,15 +78,17 @@ knowledge of the CeCILL-B license and that you accept its terms.
              */
             Real compute(Direction uk, Point xk, Direction mean);
 
+			Real computeNormalDensity(Real sigma, Real x);
+
 
         private:
-            NormalDensity         m_d;          /**< Normal density */
-
             Signal  *m_signal;     /**< Signal data */
             SHModel *m_model;      /**< Q-ball HS model */
 
             std::vector<Direction> *m_directions;    /**< Gradients directions */
             std::vector<Real>      *m_sigmas;        /**< noise's standard deviations */
+
+			Real m_logSqrt2PI;
     };
 
     } // namespace btk

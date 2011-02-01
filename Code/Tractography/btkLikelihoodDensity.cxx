@@ -47,7 +47,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 namespace btk
 {
 
-LikelihoodDensity::LikelihoodDensity(NormalDensity d, Signal *signal, SHModel *model) : m_d(d)
+LikelihoodDensity::LikelihoodDensity(/*NormalDensity d, */Signal *signal, SHModel *model) /*: m_d(d)*/
 {
     #ifndef NDEBUG
         assert(model);
@@ -61,6 +61,8 @@ LikelihoodDensity::LikelihoodDensity(NormalDensity d, Signal *signal, SHModel *m
 
     m_directions = m_signal->getDirections();
     m_sigmas     = m_signal->getSigmas();
+
+	m_logSqrt2PI = std::log(std::sqrt(2. * M_PI));
 
     std::cout << "done." << std::endl;
 }
@@ -118,19 +120,38 @@ Real LikelihoodDensity::compute(Direction uk, Point xk, Direction mean)
 
 
     // 6. Compute densities
-    Real density = 0;
+    Real density = /*0*/1;
     Matrix S     = m_signal->signalAt(xk);
-
+/*
     for(unsigned int i=0; i<g.size(); i++)
     {
         Real mesuredSignal   = S(i,0);
         Real estimatedSignal = m_model->signalAt(g[i], xk);
 
-        density += std::log(m_d.compute(m_sigmas->at(i), mesuredSignal - estimatedSignal));
+//		density += std::log(this->computeNormalDensity(m_sigmas->at(i), mesuredSignal - estimatedSignal));
+        density += this->computeNormalDensity(m_sigmas->at(i), mesuredSignal - estimatedSignal);
     } // for i
-
+*/
 
     return density;
+}
+
+Real LikelihoodDensity::computeNormalDensity(Real sigma, Real x)
+{
+    if(sigma != 0)
+    {
+//        Real coefficient = 1./(sigma * m_sqrt2PI);
+//        Real fraction    = x / sigma;
+//        Real exponent    = -0.5 * fraction * fraction;
+//
+//        return coefficient * std::exp(exponent);
+
+        Real fraction = x / sigma;
+
+        return ( -std::log(sigma) - m_logSqrt2PI - 0.5 * fraction * fraction );
+    }
+    else
+        return 1;
 }
 
 } // namespace btk
