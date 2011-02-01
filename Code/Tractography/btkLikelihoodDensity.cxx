@@ -120,18 +120,18 @@ Real LikelihoodDensity::compute(Direction uk, Point xk, Direction mean)
 
 
     // 6. Compute densities
-    Real density = /*0*/1;
+    Real density = 0;
     Matrix S     = m_signal->signalAt(xk);
-/*
+    Matrix M     = m_model->signalAt(xk);
+
     for(unsigned int i=0; i<g.size(); i++)
     {
         Real mesuredSignal   = S(i,0);
-        Real estimatedSignal = m_model->signalAt(g[i], xk);
+        Real estimatedSignal = M(i,0);
 
-//		density += std::log(this->computeNormalDensity(m_sigmas->at(i), mesuredSignal - estimatedSignal));
         density += this->computeNormalDensity(m_sigmas->at(i), mesuredSignal - estimatedSignal);
     } // for i
-*/
+
 
     return density;
 }
@@ -140,12 +140,6 @@ Real LikelihoodDensity::computeNormalDensity(Real sigma, Real x)
 {
     if(sigma != 0)
     {
-//        Real coefficient = 1./(sigma * m_sqrt2PI);
-//        Real fraction    = x / sigma;
-//        Real exponent    = -0.5 * fraction * fraction;
-//
-//        return coefficient * std::exp(exponent);
-
         Real fraction = x / sigma;
 
         return ( -std::log(sigma) - m_logSqrt2PI - 0.5 * fraction * fraction );

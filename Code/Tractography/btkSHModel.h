@@ -56,7 +56,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
              */
             SHModel(const std::string &filename);
 
-            SHModel(Sequence::Pointer model);
+            SHModel(Sequence::Pointer model, std::vector<Direction> *originalDirections);
 
             /**
              * @brief Destructor
@@ -154,6 +154,8 @@ knowledge of the CeCILL-B license and that you accept its terms.
              */
             void computeSHBasisMatrix();
 
+            void computeSHBasisOriMatrix();
+
             /**
              * @brief Build coefficient to get sharp ODF
              */
@@ -163,6 +165,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
             Image::Pointer             *m_model;        /**< Data array containing model image */
             ImageInterpolator::Pointer *m_interp;       /**< Interpolators' images */
             std::vector<Direction>     *m_directions;   /**< Directions */
+            std::vector<Direction>     *m_originalDirections;
 
             unsigned int m_order;   /**< Order of model */
             unsigned int m_R;       /**< Number of even spherical harmonics basis */
@@ -174,6 +177,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
             Matrix *m_P;     /**< Legendre matrix */
             Matrix *m_Y;     /**< SH basis matrix */
+            Matrix *m_Yori;
             Matrix *m_Sharp; /**< Sharper ODF matrix */
 
             Real m_4PI;

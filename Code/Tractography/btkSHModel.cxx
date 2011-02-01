@@ -210,7 +210,7 @@ SHModel::SHModel(const std::string &filename)
     std::cout << "done." << std::endl;
 }
 
-SHModel::SHModel(Sequence::Pointer model)
+SHModel::SHModel(Sequence::Pointer model, std::vector<Direction> *originalDirections)
 {
     m_model      = 0;
     m_interp     = 0;
@@ -219,6 +219,8 @@ SHModel::SHModel(Sequence::Pointer model)
     m_Y     = 0;
     m_P     = 0;
     m_Sharp = 0;
+
+    m_originalDirections = originalDirections;
 
     m_reso = 16;
 
@@ -267,6 +269,7 @@ SHModel::SHModel(Sequence::Pointer model)
     // SH basis matrix
     std::cout << "\tSpherical harmonics basis matrix..." << std::flush;
     this->computeSHBasisMatrix();
+    this->computeSHBasisOriMatrix();
     std::cout << "done." << std::endl;
 
     // Compute Legendre matrix
@@ -396,6 +399,7 @@ SHModel::~SHModel()
     delete m_directions;
 
     delete m_Y;
+    delete m_Yori;
     delete m_P;
     delete m_Sharp;
 }
@@ -433,11 +437,11 @@ Matrix SHModel::signalAt(Point p)
 {
     #ifndef NDEBUG
         assert(m_P);
-        assert(m_Y);
+        assert(m_Yori);
     #endif // NDEBUG
 
 
-    Matrix &Y     = *m_Y;
+    Matrix &Y     = *m_Yori;
 
 
     // Evaluate Orientation Diffusion Function at each gradient direction
@@ -666,6 +670,43 @@ void SHModel::computeSHBasisMatrix()
 
             for(int m=-(int)l; m<=(int)l; m++)
                 Y(u,j++) = coef * SphericalHarmonics::computeBasis(m_directions->at(u), l, m);
+        } // for l
+
+        j = 0;
+    } // for u
+
+    #ifndef NDEBUG
+        std::cerr << "Y (" << Y.Rows() << "x" << Y.Cols() << ")" << std::endl;
+        Y.GetVnlMatrix().print(std::cerr);
+        std::cerr << std::endl;
+    #endif // NDEBUG
+}
+
+void SHModel::computeSHBasisOriMatrix()
+{
+    #ifndef NDEBUG
+        assert(m_originalDirections);
+        assert(!m_Yori);
+    #endif // NDEBUG
+
+    // Allocate memory space for Y matrix
+    m_Yori = new Matrix(m_originalDirections->size(), m_R);
+
+    Matrix &Y = *m_Yori;
+
+    // Compute Y matrix
+    Real _4PI  = 4.0 * M_PI;
+
+    unsigned int j = 0;
+
+    for(unsigned int u=0; u<m_originalDirections->size(); u++)
+    {
+        for(unsigned int l=0; l<=m_order; l+=2)
+        {
+            Real coef = std::sqrt((2.0*(Real)l + 1.0) / _4PI);
+
+            for(int m=-(int)l; m<=(int)l; m++)
+                Y(u,j++) = coef * SphericalHarmonics::computeBasis(m_originalDirections->at(u), l, m);
         } // for l
 
         j = 0;

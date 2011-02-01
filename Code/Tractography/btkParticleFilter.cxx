@@ -471,8 +471,6 @@ void ParticleFilter::run(int label, Direction dir)
 
     delete[] weights;
 
-	this->saveCloudInVTK(label, 0, m_x0);
-
     m_dirNum++;
 }
 
