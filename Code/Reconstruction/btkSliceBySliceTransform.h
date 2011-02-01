@@ -20,7 +20,7 @@ public:
   typedef Transform<TScalarType,NDimensions,NDimensions> Superclass;
   typedef Euler3DTransform< TScalarType > TransformType;
 
-  typedef Image< float,NDimensions > ImageType;
+  typedef Image< short,NDimensions > ImageType;
   typedef typename ImageType::Pointer ImagePointerType;
 
   typedef ContinuousIndex<double, NDimensions > ContinuousIndexType;
@@ -225,6 +225,70 @@ public:
 
     }
   }
+
+  void SetFixedParameters( const ParametersType & fp )
+  {
+    this -> m_FixedParameters = fp;
+
+    m_NumberOfSlices = this -> m_FixedParameters[0];
+
+    std::cout << "Transform list size = " << m_TransformList.size() << std::endl;
+
+    if (m_TransformList.size() == 0 )
+    {
+
+      m_TransformList.resize(m_NumberOfSlices);
+
+      TransformPointer tmpTransform = TransformType::New();
+      m_ParametersPerSlice = tmpTransform -> GetNumberOfParameters();
+      this -> m_Parameters.SetSize( m_NumberOfSlices * m_ParametersPerSlice );
+
+      for(unsigned int i=0; i<m_NumberOfSlices; i++)
+      {
+        m_TransformList[i] = TransformType::New();
+        m_TransformList[i] -> SetIdentity();
+      }
+
+    }
+
+    InputPointType c;
+    typedef typename ParametersType::ValueType ParameterValueType;
+
+    for ( unsigned int j = 0; j<m_NumberOfSlices; j++)
+    {
+      for ( unsigned int i = 0; i < NDimensions; i++ )
+      {
+        c[i] = this -> m_FixedParameters[j*NDimensions + i + 1];
+      }
+
+      m_TransformList[j] -> SetCenter ( c );
+      std::cout << m_TransformList[j] -> GetCenter() << std::endl;
+    }
+
+  }
+
+
+  /** Get the Fixed Parameters. */
+  const ParametersType & GetFixedParameters(void) const
+  {
+    this->m_FixedParameters.SetSize ( NDimensions * m_NumberOfSlices + 1 );
+
+    this->m_FixedParameters[0] = m_NumberOfSlices;
+
+    for ( unsigned int j = 0; j < m_NumberOfSlices; j++ )
+    {
+      for ( unsigned int i = 0; i < NDimensions; i++ )
+        {
+        this->m_FixedParameters[j*NDimensions + i + 1] = m_TransformList[j]-> GetCenter()[i];
+        }
+    }
+    return this->m_FixedParameters;
+  }
+
+
+
+
+
 
   itkGetMacro( NumberOfSlices, unsigned int);
 

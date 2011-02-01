@@ -2,7 +2,7 @@
 #define __SliceBySliceTransform_txx
 
 #include "itkNumericTraits.h"
-#include "itkSliceBySliceTransform.h"
+#include "btkSliceBySliceTransform.h"
 #include "vnl/algo/vnl_matrix_inverse.h"
 
 
@@ -20,7 +20,7 @@ SliceBySliceTransform(): Superclass(SpaceDimension,ParametersDimension)
 /** Constructor with default arguments */
 template<class TScalarType, unsigned int NDimensions>
 SliceBySliceTransform<TScalarType, NDimensions>::
-SliceBySliceTransform( unsigned int outputSpaceDimension, 
+SliceBySliceTransform( unsigned int outputSpaceDimension,
                  unsigned int parametersDimension   ):
   Superclass(outputSpaceDimension,parametersDimension)
 {
@@ -63,11 +63,11 @@ SliceBySliceTransform<TScalarType, NDimensions>::
 Translate(const OutputVectorType &trans, bool pre)
 {
   OutputVectorType newTranslation = this->GetTranslation();
-  if (pre) 
+  if (pre)
     {
     newTranslation += this->GetMatrix() * trans;
     }
-  else 
+  else
     {
     newTranslation += trans;
     }
@@ -82,15 +82,15 @@ Translate(const OutputVectorType &trans, bool pre)
 template<class TScalarType, unsigned int NDimensions>
 void
 SliceBySliceTransform<TScalarType, NDimensions>
-::Scale(const TScalarType &factor, bool pre) 
+::Scale(const TScalarType &factor, bool pre)
 {
-  if (pre) 
+  if (pre)
     {
     MatrixType newMatrix = this->GetMatrix();
     newMatrix *= factor;
     this->SetVarMatrix(newMatrix);
     }
-  else 
+  else
     {
     MatrixType newMatrix = this->GetMatrix();
     newMatrix *= factor;
@@ -111,24 +111,24 @@ SliceBySliceTransform<TScalarType, NDimensions>
 template<class TScalarType, unsigned int NDimensions>
 void
 SliceBySliceTransform<TScalarType, NDimensions>
-::Scale(const OutputVectorType &factor, bool pre) 
+::Scale(const OutputVectorType &factor, bool pre)
 {
   MatrixType trans;
   unsigned int i, j;
 
-  for (i = 0; i < NDimensions; i++) 
+  for (i = 0; i < NDimensions; i++)
     {
-    for (j = 0; j < NDimensions; j++) 
+    for (j = 0; j < NDimensions; j++)
       {
       trans[i][j] = 0.0;
       }
     trans[i][i] = factor[i];
     }
-  if (pre) 
+  if (pre)
     {
     this->SetVarMatrix( this->GetMatrix() * trans );
     }
-  else 
+  else
     {
     this->SetVarMatrix( trans * this->GetMatrix() );
     this->SetVarTranslation( trans * this->GetTranslation() );
@@ -144,14 +144,14 @@ SliceBySliceTransform<TScalarType, NDimensions>
 template<class TScalarType, unsigned int NDimensions>
 void
 SliceBySliceTransform<TScalarType, NDimensions>
-::Rotate(int axis1, int axis2, TScalarType angle, bool pre) 
+::Rotate(int axis1, int axis2, TScalarType angle, bool pre)
 {
   MatrixType trans;
   unsigned int i, j;
 
-  for (i = 0; i < NDimensions; i++) 
+  for (i = 0; i < NDimensions; i++)
     {
-    for (j = 0; j < NDimensions; j++) 
+    for (j = 0; j < NDimensions; j++)
       {
       trans[i][j] = 0.0;
       }
@@ -161,11 +161,11 @@ SliceBySliceTransform<TScalarType, NDimensions>
   trans[axis1][axis2] =  vcl_sin(angle);
   trans[axis2][axis1] = -vcl_sin(angle);
   trans[axis2][axis2] =  vcl_cos(angle);
-  if (pre) 
+  if (pre)
     {
     this->SetVarMatrix( this->GetMatrix() * trans );
     }
-  else 
+  else
     {
     this->SetVarMatrix( trans * this->GetMatrix() );
     this->SetVarTranslation( trans * this->GetTranslation() );
@@ -191,11 +191,11 @@ SliceBySliceTransform<TScalarType, NDimensions>
   trans[0][1] = -vcl_sin(angle);
   trans[1][0] =  vcl_sin(angle);
   trans[1][1] =  vcl_cos(angle);
-  if (pre) 
+  if (pre)
     {
     this->SetVarMatrix( this->GetMatrix() * trans );
     }
-  else 
+  else
     {
     this->SetVarMatrix( trans * this->GetMatrix() );
     this->SetVarTranslation( trans * this->GetTranslation() );
@@ -243,11 +243,11 @@ SliceBySliceTransform<TScalarType, NDimensions>
   trans[2][2] = q0*q0 + q3*q3 - q1*q1 - q2*q2;
 
   // Compose rotation matrix with the existing matrix
-  if (pre) 
+  if (pre)
     {
     this->SetVarMatrix( this->GetMatrix() * trans );
     }
-  else 
+  else
     {
     this->SetVarMatrix( trans * this->GetMatrix() );
     this->SetVarTranslation( trans * this->GetTranslation() );
@@ -268,20 +268,20 @@ SliceBySliceTransform<TScalarType, NDimensions>
   MatrixType trans;
   unsigned int i, j;
 
-  for (i = 0; i < NDimensions; i++) 
+  for (i = 0; i < NDimensions; i++)
     {
-    for (j = 0; j < NDimensions; j++) 
+    for (j = 0; j < NDimensions; j++)
       {
       trans[i][j] = 0.0;
       }
     trans[i][i] = 1.0;
     }
   trans[axis1][axis2] =  coef;
-  if (pre) 
+  if (pre)
     {
     this->SetVarMatrix( this->GetMatrix() * trans );
     }
-  else 
+  else
     {
     this->SetVarMatrix( trans * this->GetMatrix() );
     this->SetVarTranslation( trans * this->GetTranslation() );
@@ -307,7 +307,7 @@ typename SliceBySliceTransform<TScalarType, NDimensions>::InverseTransformBasePo
 SliceBySliceTransform<TScalarType, NDimensions>
 ::GetInverseTransform() const
 {
-	std::cout << "Method still not implemented" << std::endl;
+  std::cout << "Method still not implemented" << std::endl;
 }
 
 
