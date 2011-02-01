@@ -29,7 +29,7 @@ ENDIF(TCLAP_DIRECTORY-NOTFOUND)
 
 #------------------------------------------------------------------------------
 
-SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/bin")
+#SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/bin")
 
 SUBDIRS(
   Utilities
