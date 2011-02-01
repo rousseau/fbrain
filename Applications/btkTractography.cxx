@@ -96,13 +96,13 @@ int main(int argc, char *argv[])
             TCLAP::ValueArg<std::string>  maskArg("m", "mask", "White matter mask", true, "", "std::string", cmd);
             TCLAP::ValueArg<std::string> labelArg("l", "label", "Label volume of seeds", true, "", "std::string", cmd);
 
-            TCLAP::ValueArg<unsigned int> orderArg("", "model-order", "Order of the model (i.e. of spherical harmonics)", false, 4, "unsigned int", cmd);
-            TCLAP::ValueArg<Real>    lambdArg("", "model-regularization", "Regularization coefficient of the model", false, 0.006, "Real", cmd);
-            TCLAP::ValueArg<unsigned int> particlesArg("", "number-of-particles", "Number of particles", false, 1000, "unsigned int", cmd);
-            TCLAP::ValueArg<Real>    epsilonArg("", "resampling-threshold", "Resampling treshold", false, 0.6, "Real", cmd);
-            TCLAP::ValueArg<Real>    stepSizeArg("", "step-size", "Step size of particles displacement", false, 0.5, "Real", cmd);
-            TCLAP::ValueArg<Real>    KappaArg("", "curve-constraint", "Curve constraint of a particle's trajectory", false, 30.0, "Real", cmd);
-            TCLAP::ValueArg<Real>    angleThreshArg("", "angular-threshold", "Angular threshold between successive displacement vector of a particle's trajectory", false, M_PI/3., "Real", cmd);
+            TCLAP::ValueArg<unsigned int> orderArg("", "model_order", "Order of the model (i.e. of spherical harmonics)", false, 4, "unsigned int", cmd);
+            TCLAP::ValueArg<Real>    lambdArg("", "model_regularization", "Regularization coefficient of the model", false, 0.006, "Real", cmd);
+            TCLAP::ValueArg<unsigned int> particlesArg("", "number_of_particles", "Number of particles", false, 1000, "unsigned int", cmd);
+            TCLAP::ValueArg<Real>    epsilonArg("", "resampling_threshold", "Resampling treshold", false, 0.6, "Real", cmd);
+            TCLAP::ValueArg<Real>    stepSizeArg("", "step_size", "Step size of particles displacement", false, 0.5, "Real", cmd);
+            TCLAP::ValueArg<Real>    KappaArg("", "curve_constraint", "Curve constraint of a particle's trajectory", false, 30.0, "Real", cmd);
+            TCLAP::ValueArg<Real>    angleThreshArg("", "angular_threshold", "Angular threshold between successive displacement vector of a particle's trajectory", false, M_PI/3., "Real", cmd);
 
             // Parsing arguments
             cmd.parse(argc, argv);
