@@ -44,7 +44,7 @@
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 
-#include "tclap/CmdLine.h"
+#include "CmdLine.h"
 #include "vnl/vnl_cross.h"
 
 #include "itkEuler3DTransform.h"
