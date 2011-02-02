@@ -20,7 +20,7 @@ public:
   typedef Transform<TScalarType,NDimensions,NDimensions> Superclass;
   typedef Euler3DTransform< TScalarType > TransformType;
 
-  typedef Image< short,NDimensions > ImageType;
+  typedef Image< float,NDimensions > ImageType;
   typedef typename ImageType::Pointer ImagePointerType;
 
   typedef ContinuousIndex<double, NDimensions > ContinuousIndexType;

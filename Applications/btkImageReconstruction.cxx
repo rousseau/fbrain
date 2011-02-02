@@ -41,13 +41,13 @@
 #include "btkSliceBySliceRigidRegistration.h"
 #include "btkResampleImageByInjectionFilter.h"
 #include "itkNormalizedCorrelationImageToImageMetric.h"
-#include "itkEuler3DTransform.h"
 #include "itkLinearInterpolateImageFunction.h"
 #include "itkDivideByConstantImageFilter.h"
 #include "itkMinimumMaximumImageCalculator.h"
 
-
+#include "itkEuler3DTransform.h"
 #include "btkSliceBySliceTransform.h"
+#include "itkTransformFileWriter.h"
 #include "itkImage.h"
 #include "CmdLine.h"
 
@@ -65,7 +65,7 @@ int main( int argc, char *argv[] )
 
   std::vector< std::string > input;
   std::vector< std::string > mask;
-//  std::vector< std::string > transform;
+  std::vector< std::string > transform;
   std::vector< std::string > roi;
   std::vector< std::string > resampled;
   unsigned int itMax;
@@ -81,7 +81,7 @@ int main( int argc, char *argv[] )
 
   TCLAP::MultiArg<std::string> inputArg("i","input","Image file",true,"string",cmd);
   TCLAP::MultiArg<std::string> maskArg("m","","Mask file",false,"string",cmd);
-//  TCLAP::MultiArg<std::string> transformArg("t","transform","transform file",false,"string",cmd);
+  TCLAP::MultiArg<std::string> transformArg("t","transform","Transform output file",false,"string",cmd);
   TCLAP::MultiArg<std::string> roiArg("","roi","roi file (written as mask)",false,"string",cmd);
   TCLAP::MultiArg<std::string> resampledArg("","ir","Resampled image with initial transform",false,"string",cmd);
 
@@ -108,7 +108,7 @@ int main( int argc, char *argv[] )
   input = inputArg.getValue();
   mask = maskArg.getValue();
   outImage = outArg.getValue().c_str();
-//  transform = transformArg.getValue();
+  transform = transformArg.getValue();
   roi = roiArg.getValue();
   resampled = resampledArg.getValue();
   itMax = iterArg.getValue();
@@ -394,13 +394,11 @@ int main( int argc, char *argv[] )
     else
       delta = 1;
 
-    std::cout << "delta = " << epsilon << std::endl<< std::endl;
+//    std::cout << "delta = " << epsilon << std::endl<< std::endl;
 
     if (delta < epsilon) break;
 
   }
-
-
 
 
 /*  if ( roi.size() > 0 )
@@ -429,6 +427,35 @@ int main( int argc, char *argv[] )
   writer-> SetInput( hrImage );
   writer-> Update();
 
+
+  // Write transforms
+
+  typedef itk::TransformFileWriter TransformWriterType;
+
+  if ( transform.size() > 0 )
+  {
+    for (unsigned int i=0; i<numberOfImages; i++)
+    {
+      TransformWriterType::Pointer transformWriter = TransformWriterType::New();
+      transformWriter -> SetInput( registration[i] -> GetTransform() );
+      transformWriter -> SetFileName ( transform[i].c_str() );
+
+      try
+      {
+        std::cout << "Writing " << transform[i].c_str() << " ... " ; std::cout.flush();
+        transformWriter -> Update();
+        std::cout << " done! " << std::endl;
+      }
+      catch ( itk::ExceptionObject & excp )
+      {
+        std::cerr << "Error while saving transform" << std::endl;
+        std::cerr << excp << std::endl;
+        std::cout << "[FAILED]" << std::endl;
+        throw excp;
+      }
+
+    }
+  }
 
   return EXIT_SUCCESS;
 
