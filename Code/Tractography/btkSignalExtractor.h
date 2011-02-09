@@ -57,7 +57,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
               * @param dataFileName Signal filename
               * @param maskFileName Image mask filename
               */
-            SignalExtractor(const std::string &vectorsFileName, const std::string &dataFileName, std::string &maskFileName);
+            SignalExtractor(const std::string &vectorsFileName, const std::string &dataFileName, std::string &maskFileName, char displayMode);
 
             /**
               * @brief Destructor
@@ -107,6 +107,8 @@ knowledge of the CeCILL-B license and that you accept its terms.
             Sequence::Pointer          m_data;          /**< DWI sequence */
             Mask::Pointer              m_mask;          /**< Image mask */
             std::vector<Real>         *m_sigmas;        /**< Images' sigmas */
+
+            char m_displayMode;
     };
 
     } // namespace btk

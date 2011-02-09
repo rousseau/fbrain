@@ -147,13 +147,18 @@ Signal::Signal(const std::string &filename, const std::string &sigmasFilename, c
     std::cout << "done." << std::endl;
 }
 
-Signal::Signal(Sequence::Pointer signal, std::vector<Real> *sigmas, std::vector<Direction> *directions)
+Signal::Signal(Sequence::Pointer signal, std::vector<Real> *sigmas, std::vector<Direction> *directions, char displayMode)
 {
     m_signal = 0;
     m_interp = 0;
     m_sigmas = sigmas;
 
+    m_displayMode = displayMode;
+
     m_directions = directions;
+
+
+    Display1(m_displayMode, std::cout << "Loading signal..." << std::endl);
 
     m_N = 0;
 
@@ -173,18 +178,18 @@ Signal::Signal(Sequence::Pointer signal, std::vector<Real> *sigmas, std::vector<
         std::exit(EXIT_FAILURE);
     }
 
-    std::cout << "\tThere are " << kMax << " images of size ";
-    std::cout << xMax << "x" << yMax << "x" << zMax << "." << std::endl;
+    Display2(m_displayMode, std::cout << "\tThere are " << kMax << " images of size ");
+    Display2(m_displayMode, std::cout << xMax << "x" << yMax << "x" << zMax << "." << std::endl);
 
 
     // Allocate space memory for the array of images
-    std::cout << "\tAllocating space memory..." << std::flush;
+    Display2(m_displayMode, std::cout << "\tAllocating space memory..." << std::flush);
     m_signal = new Image::Pointer[kMax];
     m_interp = new ImageInterpolator::Pointer[kMax];
-    std::cout << "done." << std::endl;
+    Display2(m_displayMode, std::cout << "done." << std::endl);
 
 
-    std::cout << "\tPreparing and interpolating data..." << std::flush;
+    Display2(m_displayMode, std::cout << "\tPreparing and interpolating data..." << std::flush);
 
     // Define images region
     ImageRegion iRegion;
@@ -246,10 +251,10 @@ Signal::Signal(Sequence::Pointer signal, std::vector<Real> *sigmas, std::vector<
         m_interp[k]->SetInputImage(m_signal[k]);
     } // for k
 
-    std::cout << "done." << std::endl;
+    Display2(m_displayMode, std::cout << "done." << std::endl);
 
 
-    std::cout << "done." << std::endl;
+    Display1(m_displayMode, std::cout << "done." << std::endl);
 }
 
 Signal::~Signal()

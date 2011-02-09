@@ -67,7 +67,7 @@ SHModelEstimator::SHModelEstimator(std::string &signalFileName, std::string &dir
     this->readFiles(signalFileName, directionsFileName, maskFileName);
 }
 
-SHModelEstimator::SHModelEstimator(Sequence::Pointer signal, std::vector<Direction> *directions, Mask::Pointer mask, unsigned int order, Real lambda)
+SHModelEstimator::SHModelEstimator(Sequence::Pointer signal, std::vector<Direction> *directions, Mask::Pointer mask, unsigned int order, Real lambda, char displayMode)
 {
     m_directions = directions;
     m_signal     = signal;
@@ -81,6 +81,8 @@ SHModelEstimator::SHModelEstimator(Sequence::Pointer signal, std::vector<Directi
     m_lambda = lambda;
 
     m_2PI = 2. * M_PI;
+
+    m_displayMode = displayMode;
 }
 
 SHModelEstimator::~SHModelEstimator()
@@ -97,14 +99,14 @@ void SHModelEstimator::estimate()
     MaskRegion maskRegion       = m_mask->GetLargestPossibleRegion();
 
 
-    std::cout << "Estimating model..." << std::endl;
+    Display1(m_displayMode, std::cout << "Estimating model..." << std::endl);
 
 
     //
     // Verify data
     //
 
-        std::cout << "\tVerifying data..." << std::endl;
+        Display2(m_displayMode, std::cout << "\tVerifying data..." << std::endl);
 
         if(m_directions->size() != signalRegion.GetSize(3)) // there is a problem
         {
@@ -134,15 +136,15 @@ void SHModelEstimator::estimate()
             exit(EXIT_FAILURE);
         }
 
-        std::cout << "\t\tThere are " << m_directions->size() << " gradient directions and images." << std::endl;
-        std::cout << "\tdone." << std::endl;
+        Display2(m_displayMode, std::cout << "\t\tThere are " << m_directions->size() << " gradient directions and images." << std::endl);
+        Display2(m_displayMode, std::cout << "\tdone." << std::endl);
 
 
     //
     // Allocate memory for image
     //
 
-        std::cout << "\tAllocating memory space for model image..." << std::flush;
+        Display2(m_displayMode, std::cout << "\tAllocating memory space for model image..." << std::flush);
 
         m_model = Sequence::New();
 
@@ -162,35 +164,35 @@ void SHModelEstimator::estimate()
         m_model->Allocate();
         m_model->FillBuffer(0);
 
-        std::cout << "done." << std::endl;
+        Display2(m_displayMode, std::cout << "done." << std::endl);
 
 
     //
     //  Compute needed matricies
     //
 
-        std::cout << "\tComputing needed matrices..." << std::endl;
+        Display2(m_displayMode, std::cout << "\tComputing needed matrices..." << std::endl);
 
-        std::cout << "\t\tSpherical harmonics basis matrix..." << std::flush;
+        Display2(m_displayMode, std::cout << "\t\tSpherical harmonics basis matrix..." << std::flush);
         this->computeSHBasisMatrix();
-        std::cout << "done." << std::endl;
+        Display2(m_displayMode, std::cout << "done." << std::endl);
 
-        std::cout << "\t\tLaplace-Beltrami smoothing matrix..." << std::flush;
+        Display2(m_displayMode, std::cout << "\t\tLaplace-Beltrami smoothing matrix..." << std::flush);
         this->computeLaplaceBeltramiMatrix();
-        std::cout << "done." << std::endl;
+        Display2(m_displayMode, std::cout << "done." << std::endl);
 
-        std::cout << "\t\tTransition matrix..." << std::flush;
+        Display2(m_displayMode, std::cout << "\t\tTransition matrix..." << std::flush);
         this->computeOmegaMatrix();
-        std::cout << "done." << std::endl;
+        Display2(m_displayMode, std::cout << "done." << std::endl);
 
-        std::cout << "\tdone." << std::endl;
+        Display2(m_displayMode, std::cout << "\tdone." << std::endl);
 
 
     //
     //  Compute model image
     //
 
-        std::cout << "\tComputing model..." << std::flush;
+        Display2(m_displayMode, std::cout << "\tComputing model..." << std::flush);
 
         unsigned int xMax = signalRegion.GetSize(0);
         unsigned int yMax = signalRegion.GetSize(1);
@@ -264,10 +266,10 @@ void SHModelEstimator::estimate()
             } // for x
         } // for z
 
-        std::cout << "done." << std::endl;
+        Display2(m_displayMode, std::cout << "done." << std::endl);
 
 
-    std::cout << "done." << std::endl;
+    Display1(m_displayMode, std::cout << "done." << std::endl);
 }
 
 void SHModelEstimator::save()
@@ -315,42 +317,42 @@ void SHModelEstimator::readFiles(std::string &signalFileName, std::string &direc
     #endif // NDEBUG
 
 
-    std::cout << "Reading data files..." << std::endl;
+    Display1(m_displayMode, std::cout << "Reading data files..." << std::endl);
 
 
     //
     // Reading signal
     //
 
-        std::cout << "\tReading signal image..." << std::flush;
+        Display2(m_displayMode, std::cout << "\tReading signal image..." << std::flush);
 
         SequenceReader::Pointer reader = SequenceReader::New();
         reader->SetFileName(signalFileName);
         reader->Update();               // reading file
         m_signal = reader->GetOutput(); // getting data
 
-        std::cout << "done." << std::endl;
+        Display2(m_displayMode, std::cout << "done." << std::endl);
 
 
     //
     // Reading image mask
     //
 
-        std::cout << "\tReading image mask..." << std::flush;
+        Display2(m_displayMode, std::cout << "\tReading image mask..." << std::flush);
 
         MaskReader::Pointer mreader = MaskReader::New();
         mreader->SetFileName(maskFileName);
         mreader->Update();
         m_mask = mreader->GetOutput();
 
-        std::cout << "done." << std::endl;
+        Display2(m_displayMode, std::cout << "done." << std::endl);
 
 
     //
     // Reading gradients directions file
     //
 
-        std::cout << "\tReading gradient directions..." << std::flush;
+        Display2(m_displayMode, std::cout << "\tReading gradient directions..." << std::flush);
 
         // Open file
         std::fstream directionsFile(directionsFileName.c_str(), std::fstream::in);
@@ -374,10 +376,10 @@ void SHModelEstimator::readFiles(std::string &signalFileName, std::string &direc
         // Close file
         directionsFile.close();
 
-        std::cout << "done." << std::endl;
+        Display2(m_displayMode, std::cout << "done." << std::endl);
 
 
-    std::cout << "done." << std::endl;
+    Display1(m_displayMode, std::cout << "done." << std::endl);
 }
 
 void SHModelEstimator::computeSHBasisMatrix()

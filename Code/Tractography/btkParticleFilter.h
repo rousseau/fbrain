@@ -87,7 +87,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
                 ParticleFilter(SHModel *model, InitialDensity &initial, APrioriDensity &aPriori, LikelihoodDensity &likelihood, ImportanceDensity &importance,
                                Mask::Pointer mask, Image::SizeType size, Image::PointType origin, Image::SpacingType spacing,
-                               unsigned int M, Point x0, Real epsilon, Real stepSize);
+                               unsigned int M, Point x0, Real epsilon, Real stepSize, char displaMode);
 
                 /**
                  * @brief Launch particle filter
@@ -155,6 +155,8 @@ knowledge of the CeCILL-B license and that you accept its terms.
                 SHModel *m_model;
 
                 unsigned int m_dirNum;
+
+                char m_displayMode;
         };
 
     } // namespace btk

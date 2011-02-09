@@ -54,6 +54,10 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
         #define Pr(x) std::cout << #x << " = " << x << std::endl
 
+        #define Display1(mode,inst) if(mode > 0) { inst; }
+
+        #define Display2(mode,inst) if(mode > 1) { inst; }
+
         /**
           * Real type
           */

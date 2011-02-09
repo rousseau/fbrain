@@ -210,17 +210,23 @@ SHModel::SHModel(const std::string &filename)
     std::cout << "done." << std::endl;
 }
 
-SHModel::SHModel(Sequence::Pointer model, std::vector<Direction> *originalDirections)
+SHModel::SHModel(Sequence::Pointer model, std::vector<Direction> *originalDirections, char displayMode)
 {
     m_model      = 0;
     m_interp     = 0;
     m_directions = 0;
 
     m_Y     = 0;
+    m_Yori  = 0;
     m_P     = 0;
     m_Sharp = 0;
 
+    m_displayMode = displayMode;
+
     m_originalDirections = originalDirections;
+
+
+    Display1(m_displayMode, std::cout << "Loading model..." << std::endl);
 
     m_reso = 16;
 
@@ -241,8 +247,8 @@ SHModel::SHModel(Sequence::Pointer model, std::vector<Direction> *originalDirect
     unsigned int zMax = smodelRegion.GetSize(2);
     unsigned int kMax = smodelRegion.GetSize(3);
 
-    std::cout << "\tThere are " << kMax << " images of size ";
-    std::cout << xMax << "x" << yMax << "x" << zMax << "." << std::endl;
+    Display2(m_displayMode, std::cout << "\tThere are " << kMax << " images of size ");
+    Display2(m_displayMode, std::cout << xMax << "x" << yMax << "x" << zMax << "." << std::endl);
 
 
     // Compute order
@@ -251,11 +257,11 @@ SHModel::SHModel(Sequence::Pointer model, std::vector<Direction> *originalDirect
     m_R        = kMax;
 
 
-    std::cout << "\tModel is at order " << m_order << "." << std::endl;
+    Display2(m_displayMode, std::cout << "\tModel is at order " << m_order << "." << std::endl);
 
 
     // Generate directions following resolution
-    std::cout << "\tGenerating directions (sampling resolution " << m_reso << "x" << m_reso << ")..." << std::flush;
+    Display2(m_displayMode, std::cout << "\tGenerating directions (sampling resolution " << m_reso << "x" << m_reso << ")..." << std::flush);
     m_directions = new std::vector<Direction>;
 
     for(unsigned int i=0; i<m_reso+1; i++)
@@ -263,34 +269,34 @@ SHModel::SHModel(Sequence::Pointer model, std::vector<Direction> *originalDirect
         for(unsigned int j=0; j<m_reso; j++)
             m_directions->push_back(Direction(i*m_pasTheta,j*m_pasPhi));
     }
-    std::cout << "done." << std::endl;
+    Display2(m_displayMode, std::cout << "done." << std::endl);
 
 
     // SH basis matrix
-    std::cout << "\tSpherical harmonics basis matrix..." << std::flush;
+    Display2(m_displayMode, std::cout << "\tSpherical harmonics basis matrix..." << std::flush);
     this->computeSHBasisMatrix();
     this->computeSHBasisOriMatrix();
-    std::cout << "done." << std::endl;
+    Display2(m_displayMode, std::cout << "done." << std::endl);
 
     // Compute Legendre matrix
-    std::cout << "\tComputing Legendre matrix..." << std::flush;
+    Display2(m_displayMode, std::cout << "\tComputing Legendre matrix..." << std::flush);
     this->computeLegendreMatrix();
-    std::cout << "done." << std::endl;
+    Display2(m_displayMode, std::cout << "done." << std::endl);
 
     // Build sharp coefficients
-    std::cout << "\tBuilding sharper ODF matrix..." << std::flush;
+    Display2(m_displayMode, std::cout << "\tBuilding sharper ODF matrix..." << std::flush);
     this->buildSharperODFMatrix();
-    std::cout << "done." << std::endl;
+    Display2(m_displayMode, std::cout << "done." << std::endl);
 
 
     // Allocate space memory for the array of images
-    std::cout << "\tAllocating space memory..." << std::flush;
+    Display2(m_displayMode, std::cout << "\tAllocating space memory..." << std::flush);
     m_model  = new Image::Pointer[kMax];
     m_interp = new ImageInterpolator::Pointer[kMax];
-    std::cout << "done." << std::endl;
+    Display2(m_displayMode, std::cout << "done." << std::endl);
 
 
-    std::cout << "\tPreparing and interpolating data..." << std::flush;
+    Display2(m_displayMode, std::cout << "\tPreparing and interpolating data..." << std::flush);
 
     // Define images region
     ImageRegion iRegion;
@@ -368,10 +374,10 @@ SHModel::SHModel(Sequence::Pointer model, std::vector<Direction> *originalDirect
         m_interp[k]->SetInputImage(m_model[k]);
     } // for k
 
-    std::cout << "done." << std::endl;
+    Display2(m_displayMode, std::cout << "done." << std::endl);
 
 
-    std::cout << "done." << std::endl;
+    Display1(m_displayMode, std::cout << "done." << std::endl);
 }
 
 Sequence::Pointer SHModel::readFiles(const std::string &filename)

@@ -53,13 +53,9 @@ ImportanceDensity::ImportanceDensity(VonMisesFisherDensity d, SHModel *model, Re
         assert(model);
     #endif // NDEBUG
 
-    std::cout << "\tImportance density..." << std::flush;
-
     m_model = model;
 
     m_angleThreshold = angleThreshold / 2.0;
-
-    std::cout << "done." << std::endl;
 }
 
 Direction ImportanceDensity::computeMeanDirection(Point xk, Direction ukm1)

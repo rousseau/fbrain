@@ -40,11 +40,7 @@ namespace btk
 
 InitialDensity::InitialDensity(SHModelDensity d, Point x0) : m_d(d)
 {
-    std::cout << "\tInitial density..." << std::flush;
-
     m_d.setPoint(x0);
-
-    std::cout << "done." << std::endl;
 }
 
 Direction InitialDensity::simulate()

@@ -54,8 +54,6 @@ LikelihoodDensity::LikelihoodDensity(/*NormalDensity d, */Signal *signal, SHMode
         assert(signal);
     #endif // NDEBUG
 
-    std::cout << "\tLikelihood density..." << std::flush;
-
     m_model  = model;
     m_signal = signal;
 
@@ -63,8 +61,6 @@ LikelihoodDensity::LikelihoodDensity(/*NormalDensity d, */Signal *signal, SHMode
     m_sigmas     = m_signal->getSigmas();
 
 	m_logSqrt2PI = std::log(std::sqrt(2. * M_PI));
-
-    std::cout << "done." << std::endl;
 }
 
 Real LikelihoodDensity::compute(Direction uk, Point xk, Direction mean)

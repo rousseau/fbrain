@@ -40,11 +40,7 @@ namespace btk
 
 APrioriDensity::APrioriDensity(VonMisesFisherDensity d) : m_d(d)
 {
-    std::cout << "\tA priori density..." << std::flush;
-
     m_K = 10;
-
-    std::cout << "done." << std::endl;
 }
 
 Real APrioriDensity::compute(Direction uk, Direction ukm1)

@@ -71,8 +71,12 @@ int main(int argc, char *argv[])
     std::string vecFileName;
     std::string maskFileName;
     std::string labelFilename;
+
     std::string outMapFileName;
     std::string outFibersFileName;
+
+    bool verboseMode;
+    bool quietMode;
 
     unsigned int modelOrder;
     Real lambda;
@@ -101,6 +105,9 @@ int main(int argc, char *argv[])
             TCLAP::ValueArg<std::string>    outMapArg("", "map", "Output connection map file", false, "map.nii.gz", "string", cmd);
             TCLAP::ValueArg<std::string> outFibersArg("", "fibers", "Output fibers file", false, "fibers.vtk", "string", cmd);
 
+            TCLAP::SwitchArg verboseSwitchArg("", "verbose", "Display more informations on standard output", cmd, false);
+            TCLAP::SwitchArg quietSwitchArg("", "quiet", "Display no information on either standard and error outputs", cmd, false);
+
             TCLAP::ValueArg<unsigned int> orderArg("", "model_order", "Order of the model (i.e. of spherical harmonics)", false, 4, "unsigned int", cmd);
             TCLAP::ValueArg<Real>    lambdArg("", "model_regularization", "Regularization coefficient of the model", false, 0.006, "Real", cmd);
             TCLAP::ValueArg<unsigned int> particlesArg("", "number_of_particles", "Number of particles", false, 1000, "unsigned int", cmd);
@@ -121,6 +128,9 @@ int main(int argc, char *argv[])
             outMapFileName    = outMapArg.getValue();
             outFibersFileName = outFibersArg.getValue();
 
+            verboseMode = verboseSwitchArg.getValue();
+            quietMode   = quietSwitchArg.getValue();
+
             modelOrder     = orderArg.getValue();
             lambda         = lambdArg.getValue();
             nbOfParticles  = particlesArg.getValue();
@@ -136,11 +146,14 @@ int main(int argc, char *argv[])
     }
 
 
+    char displayMode = quietMode ? 0 : (verboseMode ? 2 : 1);
+
+
     //
     // Diffusion signal extraction
     //
 
-        SignalExtractor *extractor = new SignalExtractor(vecFileName, dwiFileName, maskFileName);
+        SignalExtractor *extractor = new SignalExtractor(vecFileName, dwiFileName, maskFileName, displayMode);
         extractor->extract();
 
         std::vector<Direction> *directions = extractor->GetDirections();
@@ -156,7 +169,7 @@ int main(int argc, char *argv[])
     // Model estimation
     //
 
-        SHModelEstimator *estimator = new SHModelEstimator(signal, directions, mask, modelOrder, lambda);
+        SHModelEstimator *estimator = new SHModelEstimator(signal, directions, mask, modelOrder, lambda, displayMode);
         estimator->estimate();
 
         Sequence::Pointer model = estimator->GetModel();
@@ -171,10 +184,10 @@ int main(int argc, char *argv[])
 
 
         // Get spherical harmonics model
-        SHModel *modelFun = new SHModel(model, directions);
+        SHModel *modelFun = new SHModel(model, directions, displayMode);
 
         // Get signal
-        Signal *signalFun = new Signal(signal, sigmas, directions);
+        Signal *signalFun = new Signal(signal, sigmas, directions, displayMode);
 
         // Read label image if any and verify sizes
         ImageReader::Pointer labelReader = ImageReader::New();
@@ -213,18 +226,16 @@ int main(int argc, char *argv[])
                 Point begin(worldPoint[0], worldPoint[1], worldPoint[2]);
 
                 // Set up filter's densities
-                std::cout << "Setting up needed densities for label " << label << begin << " ..." << std::endl;
                 ImportanceDensity importance(vmf, modelFun, angleThreshold);
                 InitialDensity    initial(modelDensity, begin);
                 APrioriDensity    apriori(vmf);
                 LikelihoodDensity likelihood(signalFun, modelFun);
-                std::cout << "done." << std::endl;
 
 
                 // Let's start filtering
-                std::cout << "Filtering label " << label << "..." << std::endl;
+                Display1(displayMode, std::cout << "Filtering label " << label << "..." << std::endl);
 
-                ParticleFilter filter(modelFun, initial, apriori, likelihood, importance, mask, signalFun->getSize(), signalFun->getOrigin(), signalFun->getSpacing(), nbOfParticles, begin, epsilon, stepSize);
+                ParticleFilter filter(modelFun, initial, apriori, likelihood, importance, mask, signalFun->getSize(), signalFun->getOrigin(), signalFun->getSpacing(), nbOfParticles, begin, epsilon, stepSize, displayMode);
                 filter.run(label);
 
                 append->AddInput(filter.GetFiber());
@@ -236,7 +247,7 @@ int main(int argc, char *argv[])
                 for(in.GoToBegin(), out.GoToBegin(); !in.IsAtEnd() && !out.IsAtEnd(); ++in, ++out)
                     out.Set(out.Get() + in.Get());
 
-                std::cout << "done." << std::endl;
+                Display1(displayMode, std::cout << "done." << std::endl);
             }
         } // for each labeled voxels
 

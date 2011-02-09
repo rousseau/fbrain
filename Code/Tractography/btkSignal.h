@@ -57,7 +57,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
              */
             Signal(const std::string &filename, const std::string &sigmasFilename, const std::string &dirFileName);
 
-            Signal(Sequence::Pointer signal, std::vector<Real> *sigmas, std::vector<Direction> *directions);
+            Signal(Sequence::Pointer signal, std::vector<Real> *sigmas, std::vector<Direction> *directions, char displayMode);
 
             /**
              * @brief Destructor
@@ -118,6 +118,8 @@ knowledge of the CeCILL-B license and that you accept its terms.
             std::vector<Real> *m_sigmas;
 
             unsigned int m_N;   /**< Number of images */
+
+            char m_displayMode;
     };
 
     } // namespace btk

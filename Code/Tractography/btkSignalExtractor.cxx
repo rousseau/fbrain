@@ -52,11 +52,13 @@ namespace btk
 
 typedef itk::ConstNeighborhoodIterator<Sequence> SequenceNeighborhoodIterator;
 
-SignalExtractor::SignalExtractor(const std::string &vectorsFileName, const std::string &dataFileName, std::string &maskFileName)
+SignalExtractor::SignalExtractor(const std::string &vectorsFileName, const std::string &dataFileName, std::string &maskFileName, char displayMode)
 {
     m_directions = 0;
     m_refIm      = 0;
     m_sigmas     = 0;
+
+    m_displayMode = displayMode;
 
     this->readFiles(vectorsFileName, dataFileName, maskFileName);
 }
@@ -75,42 +77,42 @@ void SignalExtractor::readFiles(const std::string &vectorsFileName, const std::s
         assert(!dataFileName.empty());
     #endif // NDEBUG
 
-    std::cout << "Reading data files..." << std::endl;
+    Display1(m_displayMode, std::cout << "Reading data files..." << std::endl);
 
 
     //
     // Reading dwi sequence
     //
 
-        std::cout << "\tReading dwi sequence..." << std::flush;
+        Display2(m_displayMode, std::cout << "\tReading dwi sequence..." << std::flush);
 
         SequenceReader::Pointer reader = SequenceReader::New();
         reader->SetFileName(dataFileName);
         reader->Update();               // reading file
         m_data = reader->GetOutput();   // getting data
 
-        std::cout << "done." << std::endl;
+        Display2(m_displayMode, std::cout << "done." << std::endl);
 
 
     //
     // Reading image mask
     //
 
-        std::cout << "\tReading image mask..." << std::flush;
+        Display2(m_displayMode, std::cout << "\tReading image mask..." << std::flush);
 
         MaskReader::Pointer mreader = MaskReader::New();
         mreader->SetFileName(maskFileName);
         mreader->Update();
         m_mask = mreader->GetOutput();
 
-        std::cout << "done." << std::endl;
+        Display2(m_displayMode, std::cout << "done." << std::endl);
 
 
     //
     // Reading vectors file
     //
 
-        std::cout << "\tReading vectors..." << std::flush;
+        Display2(m_displayMode, std::cout << "\tReading vectors..." << std::flush);
 
         std::vector<Real> values;
 
@@ -148,10 +150,10 @@ void SignalExtractor::readFiles(const std::string &vectorsFileName, const std::s
         // Close file
         vectorsFile.close();
 
-        std::cout << "done." << std::endl;
+        Display2(m_displayMode, std::cout << "done." << std::endl);
 
 
-    std::cout << "done." << std::endl;
+    Display1(m_displayMode, std::cout << "done." << std::endl);
 }
 
 void SignalExtractor::extract()
@@ -161,13 +163,13 @@ void SignalExtractor::extract()
 
     unsigned int nbOfImages = m_directions->size() + m_refIm->size();
 
-    std::cout << "Preparing data..." << std::endl;
+    Display1(m_displayMode, std::cout << "Preparing data..." << std::endl);
 
     //
     // Verify sizes
     //
 
-        std::cout << "\tVerifying data..." << std::endl;
+        Display2(m_displayMode, std::cout << "\tVerifying data..." << std::endl);
 
         if(dataRegion.GetSize(3) != nbOfImages)
         {
@@ -190,18 +192,18 @@ void SignalExtractor::extract()
             exit(EXIT_FAILURE);
         }
 
-        std::cout << "\t\tThere are " << m_refIm->size() << " reference images and ";
-        std::cout << m_directions->size() << " gradient images of size ";
-        std::cout << dataRegion.GetSize(0) << "x" << dataRegion.GetSize(1) << "x" << dataRegion.GetSize(2) << "." << std::endl;
+        Display2(m_displayMode, std::cout << "\t\tThere are " << m_refIm->size() << " reference images and ");
+        Display2(m_displayMode, std::cout << m_directions->size() << " gradient images of size ");
+        Display2(m_displayMode, std::cout << dataRegion.GetSize(0) << "x" << dataRegion.GetSize(1) << "x" << dataRegion.GetSize(2) << "." << std::endl);
 
-        std::cout << "\tdone." << std::endl;
+        Display2(m_displayMode, std::cout << "\tdone." << std::endl);
 
 
     //
     // Compute B0 reference image
     //
 
-        std::cout << "\tCompute reference image..." << std::flush;
+        Display2(m_displayMode, std::cout << "\tCompute reference image..." << std::flush);
 
         // Preparating mask iterator
         MaskIterator maskIt(m_mask, maskRegion);
@@ -289,14 +291,14 @@ void SignalExtractor::extract()
             std::cout << err << std::endl;
         }
 
-        std::cout << "done." << std::endl;
+        Display2(m_displayMode, std::cout << "done." << std::endl);
 
 
     //
     // Compute signal
     //
 
-        std::cout << "\tCompute signal..." << std::flush;
+        Display2(m_displayMode, std::cout << "\tCompute signal..." << std::flush);
 
         // Allocation of space memory for signal images
         m_signal = Sequence::New();
@@ -364,20 +366,20 @@ void SignalExtractor::extract()
             }
         } // for n
 
-        std::cout << "done." << std::endl;
+        Display2(m_displayMode, std::cout << "done." << std::endl);
 
 
     //
     // Compute standard deviation (sigma)
     //
 
-        std::cout << "\tCompute standard deviation of signal images..." << std::flush;
+        Display2(m_displayMode, std::cout << "\tCompute standard deviation of signal images..." << std::flush);
 
         this->computeSigmas();
 
-        std::cout << "done." << std::endl;
+        Display2(m_displayMode, std::cout << "done." << std::endl);
 
-    std::cout << "done." << std::endl;
+    Display1(m_displayMode, std::cout << "done." << std::endl);
 }
 
 void SignalExtractor::save()
@@ -388,13 +390,13 @@ void SignalExtractor::save()
     #endif // NDEBUG
 
 
-    std::cout << "Saving data..." << std::endl;
+    Display1(m_displayMode, std::cout << "Saving data..." << std::endl);
 
     //
     // Saving signal
     //
 
-        std::cout << "\tsignal into file \"signal.nii.gz\"..." << std::flush;
+        Display2(m_displayMode, std::cout << "\tsignal into file \"signal.nii.gz\"..." << std::flush);
 
         SequenceWriter::Pointer writer = SequenceWriter::New();
 
@@ -404,7 +406,7 @@ void SignalExtractor::save()
         try
         {
             writer->Update();
-            std::cout << "done." << std::endl;
+            Display2(m_displayMode, std::cout << "done." << std::endl);
         }
         catch(itk::ImageFileWriterException &err)
         {
@@ -417,7 +419,7 @@ void SignalExtractor::save()
     // Saving directions
     //
 
-        std::cout << "\tvectors into file \"directions.txt\"..." << std::flush;
+        Display2(m_displayMode, std::cout << "\tvectors into file \"directions.txt\"..." << std::flush);
 
         std::fstream directionsFile("directions.txt", std::fstream::out);
 
@@ -441,7 +443,7 @@ void SignalExtractor::save()
     // Saving standard deviation
     //
 
-        std::cout << "\tstandard deviations into file \"sigmas.txt\"..." << std::flush;
+        Display2(m_displayMode, std::cout << "\tstandard deviations into file \"sigmas.txt\"..." << std::flush);
 
         std::fstream sigmasFile("sigmas.txt", std::fstream::out);
 
@@ -460,9 +462,9 @@ void SignalExtractor::save()
 
         sigmasFile.close();
 
-        std::cout << "done." << std::endl;
+        Display2(m_displayMode, std::cout << "done." << std::endl);
 
-    std::cout << "done." << std::endl;
+    Display1(m_displayMode, std::cout << "done." << std::endl);
 
     delete m_sigmas;
     delete m_directions;

@@ -57,9 +57,9 @@ knowledge of the CeCILL-B license and that you accept its terms.
              * @param maskFileName Image mask filename
              * @param order Model's order
              */
-            SHModelEstimator(std::string &signalFileName, std::string &directionsFileName, std::string &maskFileName, unsigned int order, Real lambda=0.006);
+            SHModelEstimator(std::string &signalFileName, std::string &directionsFileName, std::string &maskFileName, unsigned int order, Real lambda);
 
-            SHModelEstimator(Sequence::Pointer signal, std::vector<Direction> *directions, Mask::Pointer mask, unsigned int order, Real lambda=0.006);
+            SHModelEstimator(Sequence::Pointer signal, std::vector<Direction> *directions, Mask::Pointer mask, unsigned int order, Real lambda, char displayMode);
 
             /**
              * @brief Destructor
@@ -119,6 +119,8 @@ knowledge of the CeCILL-B license and that you accept its terms.
             Matrix *m_L;       /**< Laplace-Beltrami smoothing matrix */
             Matrix *m_P;       /**< Legendre matrix */
             Matrix *m_Omega;   /**< Omega matrix */
+
+            char m_displayMode;
     };
 
     } // namespace btk

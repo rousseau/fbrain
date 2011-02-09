@@ -131,10 +131,13 @@ ParticleFilter::ParticleFilter(SHModel *model, InitialDensity &initial, APrioriD
 
 ParticleFilter::ParticleFilter(SHModel *model, InitialDensity &initial, APrioriDensity &aPriori, LikelihoodDensity &likelihood, ImportanceDensity &importance,
                                Mask::Pointer mask, Image::SizeType size, Image::PointType origin, Image::SpacingType spacing,
-                               unsigned int M, Point x0, Real epsilon, Real stepSize) :
+                               unsigned int M, Point x0, Real epsilon, Real stepSize, char displaMode) :
         m_initial(initial), m_aPriori(aPriori), m_likelihood(likelihood), m_importance(importance)
 {
-    std::cout << "\tInitializing filter..." << std::endl;
+    m_displayMode = displaMode;
+
+
+    Display2(m_displayMode, std::cout << "\tInitializing filter..." << std::endl);
 
     m_k         = 0;
     m_epsilon   = epsilon;
@@ -145,9 +148,10 @@ ParticleFilter::ParticleFilter(SHModel *model, InitialDensity &initial, APrioriD
     m_model     = model;
     m_dirNum    = 1;
 
-    std::cout << "\t\tFilter will use " << M << " particles." << std::endl;
-    std::cout << "\t\tResampling treshold is set as " << epsilon << "." << std::endl;
-    std::cout << "\t\tThe moving step is fixed at " << m_stepSize << " of voxel." << std::endl;
+
+    Display2(m_displayMode, std::cout << "\t\tFilter will use " << M << " particles." << std::endl);
+    Display2(m_displayMode, std::cout << "\t\tResampling treshold is set as " << epsilon << "." << std::endl);
+    Display2(m_displayMode, std::cout << "\t\tThe moving step is fixed at " << m_stepSize << " of voxel." << std::endl);
 
 
     // Initialize random number generator
@@ -179,7 +183,7 @@ ParticleFilter::ParticleFilter(SHModel *model, InitialDensity &initial, APrioriD
     m_mask = mask;
 
 
-    std::cout << "\tdone." << std::endl;
+    Display2(m_displayMode, std::cout << "\tdone." << std::endl);
 }
 
 void ParticleFilter::run(int label)
@@ -239,7 +243,7 @@ void ParticleFilter::run(int label, Direction dir)
     // Initial sampling (vMF in mean direction dir and a priori kappa)
     //
 
-    std::cout << "\tBegin initial sampling..." << std::flush;
+    Display2(m_displayMode, std::cout << "\tBegin initial sampling..." << std::flush);
 
     #ifndef NOPARA
     #pragma omp parallel for
@@ -259,7 +263,7 @@ void ParticleFilter::run(int label, Direction dir)
 
     m_k++;
 
-    std::cout << "done." << std::endl;
+    Display2(m_displayMode, std::cout << "done." << std::endl);
 
 
     //
@@ -275,7 +279,7 @@ void ParticleFilter::run(int label, Direction dir)
 
     while(nbOfActiveParticles > 0)
     {
-        std::cout << "\tBegin sampling " << m_k << "..." << std::flush;
+        Display2(m_displayMode, std::cout << "\tBegin sampling " << m_k << "..." << std::flush);
 
         #ifndef NODISPLAY
             std::cerr << std::endl << std::endl << "step " << m_k << std::endl;
@@ -403,7 +407,7 @@ void ParticleFilter::run(int label, Direction dir)
             // keeping proportionnality of weights
             if(ESS < m_epsilon*m_M)
             {
-                std::cout << " (Resampling, ESS = " << ESS << ") " << std::flush;
+                Display2(m_displayMode, std::cout << " (Resampling, ESS = " << ESS << ") " << std::flush);
 
                 Real cumul = 0;
 
@@ -459,14 +463,14 @@ void ParticleFilter::run(int label, Direction dir)
 
             } // ESS < m_epsilon
             else
-                std::cout << " (ESS = " << ESS << ") " << std::flush;
+                Display2(m_displayMode, std::cout << " (ESS = " << ESS << ") " << std::flush);
         }
 
             m_k++;
 
         } // endif nbOfActiveParticles > 0
 
-        std::cout << "done." << std::endl;
+        Display2(m_displayMode, std::cout << "done." << std::endl);
     } // for k steps
 
     delete[] weights;

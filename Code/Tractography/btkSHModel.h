@@ -56,7 +56,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
              */
             SHModel(const std::string &filename);
 
-            SHModel(Sequence::Pointer model, std::vector<Direction> *originalDirections);
+            SHModel(Sequence::Pointer model, std::vector<Direction> *originalDirections, char displayMode);
 
             /**
              * @brief Destructor
@@ -182,6 +182,8 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
             Real m_4PI;
             Real m_2PI;
+
+            char m_displayMode;
     };
 
     } // namespace btk
