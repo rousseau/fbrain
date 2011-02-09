@@ -221,33 +221,40 @@ int main(int argc, char *argv[])
             if(label != 0)
             {
                 Image::IndexType index = it.GetIndex();
-                itk::Point<Real,3> worldPoint;
-                labelVolume->TransformIndexToPhysicalPoint(index,worldPoint);
-                Point begin(worldPoint[0], worldPoint[1], worldPoint[2]);
 
-                // Set up filter's densities
-                ImportanceDensity importance(vmf, modelFun, angleThreshold);
-                InitialDensity    initial(modelDensity, begin);
-                APrioriDensity    apriori(vmf);
-                LikelihoodDensity likelihood(signalFun, modelFun);
+                // If the seed is not in the mask, there is no need to continue this one
+                if(mask->GetPixel(index) != 0)
+                {
+                    itk::Point<Real,3> worldPoint;
+                    labelVolume->TransformIndexToPhysicalPoint(index,worldPoint);
+                    Point begin(worldPoint[0], worldPoint[1], worldPoint[2]);
+
+                    // Set up filter's densities
+                    ImportanceDensity importance(vmf, modelFun, angleThreshold);
+                    InitialDensity    initial(modelDensity, begin);
+                    APrioriDensity    apriori(vmf);
+                    LikelihoodDensity likelihood(signalFun, modelFun);
 
 
-                // Let's start filtering
-                Display1(displayMode, std::cout << "Filtering label " << label << "..." << std::endl);
+                    // Let's start filtering
+                    Display1(displayMode, std::cout << "Filtering label " << label << "..." << std::endl);
+                    Display2(displayMode, std::cout << "\tSeed's world coordinates: (" << worldPoint[0] << "," << worldPoint[1] << "," << worldPoint[2] << ")" << std::endl);
+                    Display2(displayMode, std::cout << "\tSeed's image coordinates: (" << index[0] << "," << index[1] << "," << index[2] << ")" << std::endl);
 
-                ParticleFilter filter(modelFun, initial, apriori, likelihood, importance, mask, signalFun->getSize(), signalFun->getOrigin(), signalFun->getSpacing(), nbOfParticles, begin, epsilon, stepSize, displayMode);
-                filter.run(label);
+                    ParticleFilter filter(modelFun, initial, apriori, likelihood, importance, mask, signalFun->getSize(), signalFun->getOrigin(), signalFun->getSpacing(), nbOfParticles, begin, epsilon, stepSize, displayMode);
+                    filter.run(label);
 
-                append->AddInput(filter.GetFiber());
+                    append->AddInput(filter.GetFiber());
 
-                Image::Pointer map = filter.GetConnectionMap();
-                ImageIterator out(connectMap, connectMap->GetLargestPossibleRegion());
-                ImageIterator  in(map, map->GetLargestPossibleRegion());
+                    Image::Pointer map = filter.GetConnectionMap();
+                    ImageIterator out(connectMap, connectMap->GetLargestPossibleRegion());
+                    ImageIterator  in(map, map->GetLargestPossibleRegion());
 
-                for(in.GoToBegin(), out.GoToBegin(); !in.IsAtEnd() && !out.IsAtEnd(); ++in, ++out)
-                    out.Set(out.Get() + in.Get());
+                    for(in.GoToBegin(), out.GoToBegin(); !in.IsAtEnd() && !out.IsAtEnd(); ++in, ++out)
+                        out.Set(out.Get() + in.Get());
 
-                Display1(displayMode, std::cout << "done." << std::endl);
+                    Display1(displayMode, std::cout << "done." << std::endl);
+                }
             }
         } // for each labeled voxels
 
