@@ -48,7 +48,7 @@ TARGET_LINK_LIBRARIES(btkTractography ITKCommon ITKIO vtkHybrid)
 #------------------------------------------------------------------------------
 
 INSTALL(TARGETS btkNLMDenoising
-				btkImageReconstruction
-				btkTractography
+                btkImageReconstruction
+                btkTractography
         DESTINATION bin)
 

@@ -120,23 +120,23 @@ data about landmarks.
     \subsubsection*{Model's order}
         The model's order (i.e. the spherical harmonics' order) can be specified by the option
             \begin{quote}
-                \texttt{-\hspace{0.1mm}-model\_order <n>},
+                \texttt{-\hspace{0.1mm}-model\_order <order>} \enspace ,
             \end{quote}
-        for \texttt{n}$\in\{2,4,6,8\}$. The default value is 4. For more details, please refer to~\cite{descoteaux_regularized_2007}.
+        for \texttt{order}$\;\in\{2,4,6,8\}$. The default value is 4. For more details, please refer to~\cite{descoteaux_regularized_2007}.
 
     \subsubsection*{Model's regularization}
         A Laplace-Beltrami regularization coefficient is used to assume a better estimation of the model. This coefficient can by manually modified by the option
             \begin{quote}
-                \texttt{-\hspace{0.1mm}-model\_regularization <r>},
+                \texttt{-\hspace{0.1mm}-model\_regularization <coefficient>} \enspace ,
             \end{quote}
-        for \texttt{r}$\in\mathbb{R}$. The default value is set as 0.006. For more details, please refer to~\cite{descoteaux_regularized_2007}.
+        for \texttt{coefficient}$\;\in\mathbb{R}$. The default value is set as 0.006. For more details, please refer to~\cite{descoteaux_regularized_2007}.
 
     \subsubsection*{Displacement step size}
         The displacement step size of a moving particle can ben adjusted as you want by using the option
             \begin{quote}
-                \texttt{-\hspace{0.1mm}-step\_size <r>},
+                \texttt{-\hspace{0.1mm}-step\_size <length>} \enspace ,
             \end{quote}
-        where \texttt{r}$\in\mathbb{R}_+^*$. Note that this option is expressed in the voxel unit. The default value is fixed at 0.5 voxel.
+        where \texttt{length}$\;\in\mathbb{R}_+^*$. Note that this option is expressed in the voxel unit. The default value is fixed at 0.5 voxel.
 
         By setting a big step size, the particles will move quickly. So the biger is the step, the faster the algorithm will finish, but as shown by Fig.~\ref{tracto-fig:stepSize}, some informations may be missed and the particle's trajectories may overshoot the ground truth, resulting in a bad estimation.
 
@@ -151,9 +151,9 @@ data about landmarks.
     \subsubsection*{Angular threshold}
         An angular threshold prevent a particle to return back. This option has to be expressed in radian and can bet set by
             \begin{quote}
-                \texttt{-\hspace{0.1mm}-angular\_threshold <a>},
+                \texttt{-\hspace{0.1mm}-angular\_threshold <angle>} \enspace ,
             \end{quote}
-        where \texttt{a}$\in]0,2\pi[$. The default value is set as a $\tfrac{\pi}{3}$ angle.
+        where \texttt{angle}$\;\in]0,2\pi[$. The default value is set as a $\tfrac{\pi}{3}$ angle.
 
         As illustrated in two dimensions in Fig.~\ref{tracto-fig:angleThreshold}, an angle threshold is used to define an allowed area for successive sampled directions. This can be seen as a global curvature parameters on trajectories. A small angle defines trajectories with a small curvature. This is a prior information on ground truth trajectory.
 
@@ -168,9 +168,9 @@ data about landmarks.
     \subsubsection*{Rigidity}
         The rigidity option controls how much you want the particles to have straight trajectory. You can adjust it by
             \begin{quote}
-                \texttt{-\hspace{0.1mm}-curve\_constraint <r>},
+                \texttt{-\hspace{0.1mm}-curve\_constraint <rigidity>} \enspace ,
             \end{quote}
-        where \texttt{r}$\in\mathbb{R}_+^*$. The default value is fixed at 30.
+        where \texttt{rigidity}$\;\in\mathbb{R}_+^*$. The default value is fixed at 30.
 
         This value correspond to a concentration parameter of a von Mises-Fisher density probability used in the prior density of the system. As Fig.~\ref{tracto-fig:concentration} illustrates locally in two dimensions, a high value leads to a straight trajectory.
 
@@ -185,9 +185,9 @@ data about landmarks.
     \subsubsection*{Number of particles}
         The number of particles in the system is set by the option
             \begin{quote}
-                \texttt{-\hspace{0.1mm}-number\_of\_particles <n>},
+                \texttt{-\hspace{0.1mm}-number\_of\_particles <number>} \enspace ,
             \end{quote}
-        where \texttt{n}$\in\mathbb{N}^*$. By default, the algorithm will use 1000 particles.
+        where \texttt{number}$\;\in\mathbb{N}^*$. By default, the algorithm will use 1000 particles.
 
         A poor number of particles leads to a short computation time and a poor estimation. A large number of particles leads to a long computation time and a good estimation. In general, the default number of particles is a good compromise between computation time and estimation.
 
@@ -195,8 +195,8 @@ data about landmarks.
     \subsubsection*{Resampling threshold}
         This option modify the resampling threshold of the system. When the number of effective particles in the system falls below this resampling threshold, the particles are resampled according a multinomial resampling. It can be adjust by
             \begin{quote}
-                \texttt{-\hspace{0.1mm}-resampling\_threshold <r>},
+                \texttt{-\hspace{0.1mm}-resampling\_threshold <percent>} \enspace ,
             \end{quote}
-        where \texttt{r}$\in[0,1]$ is the percent of minimal effective particles in the system.
+        where \texttt{percent}$\;\in[0,1]$ is the percent of minimal effective particles in the system.
 
         A low threshold value will result in an inefficient algorithm because the particles with low weight are not are not often eliminated. Conversely, a high threshold value leads to a bad estimation because the search space will not be explored enough.
