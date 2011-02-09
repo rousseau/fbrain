@@ -71,6 +71,8 @@ int main(int argc, char *argv[])
     std::string vecFileName;
     std::string maskFileName;
     std::string labelFilename;
+    std::string outMapFileName;
+    std::string outFibersFileName;
 
     unsigned int modelOrder;
     Real lambda;
@@ -91,10 +93,13 @@ int main(int argc, char *argv[])
             TCLAP::CmdLine cmd("BTK Tractography", ' ', "0.2");
 
             // Defines arguments
-            TCLAP::ValueArg<std::string>   dwiArg("d", "dwi", "Dwi sequence", true, "", "std::string", cmd);
-            TCLAP::ValueArg<std::string>   vecArg("v", "vectors", "Gradient vectors", true, "", "std::string", cmd);
-            TCLAP::ValueArg<std::string>  maskArg("m", "mask", "White matter mask", true, "", "std::string", cmd);
-            TCLAP::ValueArg<std::string> labelArg("l", "label", "Label volume of seeds", true, "", "std::string", cmd);
+            TCLAP::ValueArg<std::string>   dwiArg("d", "dwi", "Dwi sequence", true, "", "string", cmd);
+            TCLAP::ValueArg<std::string>   vecArg("v", "vectors", "Gradient vectors", true, "", "string", cmd);
+            TCLAP::ValueArg<std::string>  maskArg("m", "mask", "White matter mask", true, "", "string", cmd);
+            TCLAP::ValueArg<std::string> labelArg("l", "label", "Label volume of seeds", true, "", "string", cmd);
+
+            TCLAP::ValueArg<std::string>    outMapArg("", "map", "Output connection map file", false, "map.nii.gz", "string", cmd);
+            TCLAP::ValueArg<std::string> outFibersArg("", "fibers", "Output fibers file", false, "fibers.vtk", "string", cmd);
 
             TCLAP::ValueArg<unsigned int> orderArg("", "model_order", "Order of the model (i.e. of spherical harmonics)", false, 4, "unsigned int", cmd);
             TCLAP::ValueArg<Real>    lambdArg("", "model_regularization", "Regularization coefficient of the model", false, 0.006, "Real", cmd);
@@ -112,6 +117,9 @@ int main(int argc, char *argv[])
             vecFileName    = vecArg.getValue();
             maskFileName   = maskArg.getValue();
             labelFilename  = labelArg.getValue();
+
+            outMapFileName    = outMapArg.getValue();
+            outFibersFileName = outFibersArg.getValue();
 
             modelOrder     = orderArg.getValue();
             lambda         = lambdArg.getValue();
@@ -260,7 +268,7 @@ int main(int argc, char *argv[])
         try
         {
             ImageWriter::Pointer writer = ImageWriter::New();
-            writer->SetFileName("map.nii.gz");
+            writer->SetFileName(outMapFileName.c_str());
             writer->SetInput(connectMap);
             writer->Update();
         }
@@ -274,7 +282,7 @@ int main(int argc, char *argv[])
         append->Update();
         vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
         writer->SetInput(append->GetOutput());
-        writer->SetFileName("fibers.vtk");
+        writer->SetFileName(outFibersFileName.c_str());
         writer->SetFileTypeToBinary();
         writer->Write();
 
