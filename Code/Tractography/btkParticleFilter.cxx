@@ -314,7 +314,7 @@ void ParticleFilter::run(int label, Direction dir)
                     Real apriori    = m_aPriori.compute(uk, ukm1);
                     Real importance = m_importance.compute(uk, mu, kappa);
 
-                    weights[i] = std::log(m_cloud[i].weight()) + likelihood + std::log(apriori) - std::log(importance);
+                    weights[i] = std::log(m_cloud[i].weight()) + likelihood + /*std::log(*/apriori/*)*/ - std::log(importance);
                 }
                 else
                 {

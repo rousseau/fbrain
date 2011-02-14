@@ -38,7 +38,6 @@ knowledge of the CeCILL-B license and that you accept its terms.
     // Local includes
     #include "btkTypes.h"
     #include "btkDirection.h"
-    #include "btkVonMisesFisherDensity.h"
 
 
     namespace btk
@@ -55,9 +54,9 @@ knowledge of the CeCILL-B license and that you accept its terms.
                 /**
                  * @brief Constructor
                  * Build an a priori density for particle filter using von Mises-Fisher density
-                 * @param d Given density
+                 * @param K Concentration of the vMF density
                  */
-                APrioriDensity(VonMisesFisherDensity d);
+                APrioriDensity(Real K);
 
                 /**
                  * @brief Compute density
@@ -75,8 +74,14 @@ knowledge of the CeCILL-B license and that you accept its terms.
                 Direction simulate(Direction mean);
 
             private:
-                VonMisesFisherDensity m_d;  /**< von Mises-Fisher density */
-                Real m_K;                   /**< Concentration */
+                Real m_K;   /**< Concentration */
+                Real m_C;   /**< Coefficient (for vMF computing) */
+
+                Real m_1OnK;    /**< Precomputed constant */
+                Real m_c;       /**< Precomputed constant */
+                Real m_Kc;      /**< Precomputed constant */
+                Real m_emK;     /**< Precomputed constant */
+                Real m_2PI;     /**< Precomputed constant */
         };
 
     } // namespace btk

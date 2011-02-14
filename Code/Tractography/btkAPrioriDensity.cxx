@@ -35,22 +35,88 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "btkAPrioriDensity.h"
 
 
+// STL includes
+#include "cmath"
+
+
 namespace btk
 {
 
-APrioriDensity::APrioriDensity(VonMisesFisherDensity d) : m_d(d)
+APrioriDensity::APrioriDensity(Real K)
 {
-    m_K = 10;
+    m_K = K;
+    m_C = std::log(K) - std::log(4.0 * M_PI) - std::log(std::sinh(K));
+
+    m_1OnK = 1.0 / m_K;
+    m_c    = 2.0 / m_K * std::sinh(m_K);
+    m_Kc   = m_K*m_c;
+    m_emK  = std::exp(-m_K);
+    m_2PI  = 2.0 * M_PI;
 }
 
 Real APrioriDensity::compute(Direction uk, Direction ukm1)
 {
-    return m_d.compute(uk, ukm1,30);
+    Vector vk   = uk.toVector();
+    Vector vkm1 = ukm1.toVector();
+
+    return m_C + m_K * (vk.x()*vkm1.x() + vk.y()*vkm1.y() + vk.z()*vkm1.z());
 }
 
 Direction APrioriDensity::simulate(Direction mean)
 {
-    return m_d.simulate(mean, m_K);
+    // Sample random scalar
+    Real y = (Real)std::rand() / (Real)RAND_MAX;
+    Real w = m_1OnK * std::log(m_emK + m_Kc * y);
+
+    // Sample random angle (to get random unit vector)
+    Real angle = ((Real)std::rand() / (Real)RAND_MAX) * m_2PI;
+
+    // Concatenate to obtain unit vector with vmf distribution with mean = (0,0,1)
+    Real cst = std::sqrt(1-w*w);
+    Vector X(cst*std::cos(angle), cst*std::sin(angle), w);
+
+    Real theta, phi;
+    Vector vmean = mean.toVector();
+
+    // Rotate if necessary
+    if(!(vmean.x() == 0 && vmean.y() == 0 && vmean.z() == 1)) // mean not (0,0,1)
+    {
+        // Rotations from (0,0,1) to mean
+        Real cosTheta = std::cos(mean.theta());
+        Real sinTheta = std::sin(mean.theta());
+        Real cosPhi   = std::cos(mean.phi());
+        Real sinPhi   = std::sin(mean.phi());
+
+        // Ry(theta)
+        // | cos(theta)  0  sin(theta)  |   |x|
+        // |     0       1       0      | . |y|
+        // |-sin(theta)  0   cos(theta) |   |z|
+        Vector tmp(
+                cosTheta * X.x() + sinTheta * X.z(),
+                X.y(),
+                -sinTheta * X.x() + cosTheta * X.z()
+        );
+
+        // Rz(phi)
+        // | cos(phi)  -sin(phi)  0 |   |x|
+        // | sin(phi)   cos(phi)  0 | . |y|
+        // |    0          0      1 |   |z|
+        Vector tmp2(
+                cosPhi * tmp.x() - sinPhi * tmp.y(),
+                sinPhi * tmp.x() + cosPhi * tmp.y(),
+                tmp.z()
+        );
+
+        theta = tmp2.toSphericalCoordinates().theta();
+        phi   = tmp2.toSphericalCoordinates().phi();
+    }
+    else // vkm1 is (0,0,1)
+    {
+        theta = X.toSphericalCoordinates().theta();
+        phi   = X.toSphericalCoordinates().phi();
+    }
+
+    return Direction(theta,phi);
 }
 
 } // namespace btk

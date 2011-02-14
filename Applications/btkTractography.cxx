@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
                     // Set up filter's densities
                     ImportanceDensity importance(vmf, modelFun, angleThreshold);
                     InitialDensity    initial(modelDensity, begin);
-                    APrioriDensity    apriori(vmf);
+                    APrioriDensity    apriori(Kappa);
                     LikelihoodDensity likelihood(signalFun, modelFun);
 
 
