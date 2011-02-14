@@ -200,7 +200,7 @@ int main(int argc, char *argv[])
         VonMisesFisherDensity vmf(Kappa);
 
 
-        vtkSmartPointer<vtkAppendPolyData> append = vtkSmartPointer<vtkAppendPolyData>::New();
+//        vtkSmartPointer<vtkAppendPolyData> append = vtkSmartPointer<vtkAppendPolyData>::New();
 
         Image::Pointer connectMap = Image::New();
         connectMap->SetOrigin(signalFun->getOrigin());
@@ -244,11 +244,12 @@ int main(int argc, char *argv[])
                     ParticleFilter filter(modelFun, initial, apriori, likelihood, importance, mask, signalFun->getSize(), signalFun->getOrigin(), signalFun->getSpacing(), nbOfParticles, begin, epsilon, stepSize, displayMode);
                     filter.run(label);
 
-                    append->AddInput(filter.GetFiber());
 
-                    Image::Pointer map = filter.GetConnectionMap();
+                    // Save data
+//                    append->AddInput(filter.GetFiber());
+
                     ImageIterator out(connectMap, connectMap->GetLargestPossibleRegion());
-                    ImageIterator  in(map, map->GetLargestPossibleRegion());
+                    ImageIterator  in(filter.GetConnectionMap(), filter.GetConnectionMap()->GetLargestPossibleRegion());
 
                     for(in.GoToBegin(), out.GoToBegin(); !in.IsAtEnd() && !out.IsAtEnd(); ++in, ++out)
                         out.Set(out.Get() + in.Get());
@@ -296,13 +297,13 @@ int main(int argc, char *argv[])
             std::cout << err << std::endl;
         }
 
-        // Write fiber polydata
-        append->Update();
-        vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
-        writer->SetInput(append->GetOutput());
-        writer->SetFileName(outFibersFileName.c_str());
-        writer->SetFileTypeToBinary();
-        writer->Write();
+//        // Write fiber polydata
+//        append->Update();
+//        vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
+//        writer->SetInput(append->GetOutput());
+//        writer->SetFileName(outFibersFileName.c_str());
+//        writer->SetFileTypeToBinary();
+//        writer->Write();
 
 
     return EXIT_SUCCESS;

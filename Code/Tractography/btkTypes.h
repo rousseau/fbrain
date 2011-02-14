@@ -52,7 +52,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
     namespace btk
     {
 
-        #define Pr(x) std::cout << #x << " = " << x << std::endl
+        #define Pr(x) std::cerr << #x << " = " << x << std::endl
 
         #define Display1(mode,inst) if(mode > 0) { inst; }
 

@@ -81,11 +81,11 @@ knowledge of the CeCILL-B license and that you accept its terms.
                  * @param stepSize Size of each step (norm of vectors)
                  * @param maxLength Maximal length of particles
                  */
-                ParticleFilter(SHModel *model, InitialDensity &initial, APrioriDensity &aPriori, LikelihoodDensity &likelihood, ImportanceDensity &importance,
-                               std::string &maskFileName, Image::SizeType size, Image::PointType origin, Image::SpacingType spacing,
+                ParticleFilter(SHModel *model, InitialDensity initial, APrioriDensity aPriori, LikelihoodDensity likelihood, ImportanceDensity importance,
+                               std::string maskFileName, Image::SizeType size, Image::PointType origin, Image::SpacingType spacing,
                                unsigned int M, Point x0, Real epsilon, Real stepSize, unsigned int maxLength);
 
-                ParticleFilter(SHModel *model, InitialDensity &initial, APrioriDensity &aPriori, LikelihoodDensity &likelihood, ImportanceDensity &importance,
+                ParticleFilter(SHModel *model, InitialDensity initial, APrioriDensity aPriori, LikelihoodDensity likelihood, ImportanceDensity importance,
                                Mask::Pointer mask, Image::SizeType size, Image::PointType origin, Image::SpacingType spacing,
                                unsigned int M, Point x0, Real epsilon, Real stepSize, char displaMode);
 

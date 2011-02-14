@@ -70,8 +70,8 @@ knowledge of the CeCILL-B license and that you accept its terms.
 namespace btk
 {
 
-ParticleFilter::ParticleFilter(SHModel *model, InitialDensity &initial, APrioriDensity &aPriori, LikelihoodDensity &likelihood, ImportanceDensity &importance,
-                               std::string &maskFileName, Image::SizeType size, Image::PointType origin, Image::SpacingType spacing,
+ParticleFilter::ParticleFilter(SHModel *model, InitialDensity initial, APrioriDensity aPriori, LikelihoodDensity likelihood, ImportanceDensity importance,
+                               std::string maskFileName, Image::SizeType size, Image::PointType origin, Image::SpacingType spacing,
                                unsigned int M, Point x0, Real epsilon, Real stepSize, unsigned int maxLength) :
         m_initial(initial), m_aPriori(aPriori), m_likelihood(likelihood), m_importance(importance)
 {
@@ -129,7 +129,7 @@ ParticleFilter::ParticleFilter(SHModel *model, InitialDensity &initial, APrioriD
     std::cout << "\tdone." << std::endl;
 }
 
-ParticleFilter::ParticleFilter(SHModel *model, InitialDensity &initial, APrioriDensity &aPriori, LikelihoodDensity &likelihood, ImportanceDensity &importance,
+ParticleFilter::ParticleFilter(SHModel *model, InitialDensity initial, APrioriDensity aPriori, LikelihoodDensity likelihood, ImportanceDensity importance,
                                Mask::Pointer mask, Image::SizeType size, Image::PointType origin, Image::SpacingType spacing,
                                unsigned int M, Point x0, Real epsilon, Real stepSize, char displaMode) :
         m_initial(initial), m_aPriori(aPriori), m_likelihood(likelihood), m_importance(importance)
@@ -224,12 +224,10 @@ void ParticleFilter::run(int label)
     this->run(label, maxDir);
     this->ComputeMap();
     Particle map1 = this->GetMAP();
-//    std::vector<Point> map1 = this->GetMAP();
 
     this->run(label, symDir);
     this->ComputeMap();
     Particle map2 = this->GetMAP();
-//    std::vector<Point> map2 = this->GetMAP();
 
     this->ComputeFiber(map1,map2);
 }
@@ -254,11 +252,14 @@ void ParticleFilter::run(int label, Direction dir)
         Direction u0 = m_aPriori.simulate(dir);
 
         // Move particle
-        Vector v0 = u0.toVector() * m_stepSize;
-        m_cloud[i].addToPath(v0, m_mask);
+        Vector v0     = u0.toVector() * m_stepSize;
+        bool isInside = m_cloud[i].addToPath(v0, m_mask);
 
         // Set the initial weight of the particle
-        m_cloud[i].setWeight(1.0/(Real)m_M);
+        if(isInside)
+            m_cloud[i].setWeight(1.0/(Real)m_M);
+        else
+            m_cloud[i].setWeight(0);
     } // for i
 
     m_k++;
@@ -306,21 +307,23 @@ void ParticleFilter::run(int label, Direction dir)
 
                 bool isInside = m_cloud[i].addToPath(vk, m_mask);
 
-                // Compute particle's weight
-                Real likelihood = m_likelihood.compute(uk, xk, mu);
-                Real apriori    = m_aPriori.compute(uk, ukm1);
-                Real importance = m_importance.compute(uk, mu, kappa);
+                if(isInside)
+                {
+                    // Compute particle's weight
+                    Real likelihood = m_likelihood.compute(uk, xk, mu);
+                    Real apriori    = m_aPriori.compute(uk, ukm1);
+                    Real importance = m_importance.compute(uk, mu, kappa);
 
-                weights[i] = std::log(m_cloud[i].weight()) + likelihood + std::log(apriori) - std::log(importance);
-
-
-                if(!isInside)
+                    weights[i] = std::log(m_cloud[i].weight()) + likelihood + std::log(apriori) - std::log(importance);
+                }
+                else
                 {
                     nbOfActiveParticles--;
+                    weights[i] = 0;
                 }
             } // particle not active
             else
-                weights[i] = std::log(m_cloud[i].weight());
+                weights[i] = 0;
 
             #ifndef NODISPLAY
                 std::cerr << "_w[" << i << "] = " << weights[i] << std::endl;
@@ -352,7 +355,7 @@ void ParticleFilter::run(int label, Direction dir)
 
             for(unsigned int i=0; i<m_M; i++)
             {
-                if( std::isfinite(weights[i]))
+                if(std::isfinite(weights[i]))
                     weights[i] += shift;
                 else // infinite number
                     weights[i] = 0;
@@ -395,76 +398,76 @@ void ParticleFilter::run(int label, Direction dir)
             Real ESS = 1. / sumSquare;
 
             if(!std::isfinite(ESS))
-        nbOfActiveParticles = 0;
-        else
-        {
-
-            #ifndef NODISPLAY
-                std::cerr << std::endl << "actives particles remaining = " << nbOfActiveParticles << std::endl << std::endl;
-            #endif // NODISPLAY
-
-            // Resample if ESS is below a threshold
-            // keeping proportionnality of weights
-            if(ESS < m_epsilon*m_M)
-            {
-                Display2(m_displayMode, std::cout << " (Resampling, ESS = " << ESS << ") " << std::flush);
-
-                Real cumul = 0;
-
-                Real *intervals = new Real[m_M-1];
-
-
-                // Create proportionnal intervals
-                // between 0 and 1
-                for(unsigned int i=0; i<m_M-1; i++)
-                {
-                    cumul += m_cloud[i].weight();
-                    intervals[i] = cumul;
-                } // for i
-
-
-                nbOfActiveParticles = m_M;
-
-
-                // Get M particles from the cloud
-                // keeping proportionnality
-				// (multinomial resampling)
-                for(unsigned int m=0; m<m_M; m++)
-                {
-                    // Simulate x ~ U(0,1)
-                    Real x = (Real)rand() / (Real)RAND_MAX;
-
-                    bool found = false;
-                    unsigned int i = 0;
-
-                    do {
-                        if(x < intervals[i])
-                            found = true;
-                        else
-                            i++;
-                    } while(!found && i < m_M-1);
-
-					m_cloud[m].SetLastPoint(m_cloud[i].lastPoint());
-					m_cloud[m].SetLastVector(m_cloud[i].lastVector());
-					m_cloud[m].setWeight(1.0/(Real)m_M);
-
-					if(m_cloud[i].isActive())
-						m_cloud[m].SetActive();
-					else
-					{
-						m_cloud[m].SetInactive();
-						nbOfActiveParticles--;
-					}
-                } // for m
-
-
-                // Clean space memory
-                delete intervals;
-
-            } // ESS < m_epsilon
+                nbOfActiveParticles = 0;
             else
-                Display2(m_displayMode, std::cout << " (ESS = " << ESS << ") " << std::flush);
-        }
+            {
+
+                #ifndef NODISPLAY
+                    std::cerr << std::endl << "actives particles remaining = " << nbOfActiveParticles << std::endl << std::endl;
+                #endif // NODISPLAY
+
+                // Resample if ESS is below a threshold
+                // keeping proportionnality of weights
+                if(ESS < m_epsilon*m_M)
+                {
+                    Display2(m_displayMode, std::cout << " (Resampling, ESS = " << ESS << ") " << std::flush);
+
+                    Real cumul = 0;
+
+                    Real *intervals = new Real[m_M-1];
+
+
+                    // Create proportionnal intervals
+                    // between 0 and 1
+                    for(unsigned int i=0; i<m_M-1; i++)
+                    {
+                        cumul += m_cloud[i].weight();
+                        intervals[i] = cumul;
+                    } // for i
+
+
+                    nbOfActiveParticles = m_M;
+
+
+                    // Get M particles from the cloud
+                    // keeping proportionnality
+                    // (multinomial resampling)
+                    for(unsigned int m=0; m<m_M; m++)
+                    {
+                        // Simulate x ~ U(0,1)
+                        Real x = (Real)rand() / (Real)RAND_MAX;
+
+                        bool found = false;
+                        unsigned int i = 0;
+
+                        do {
+                            if(x < intervals[i])
+                                found = true;
+                            else
+                                i++;
+                        } while(!found && i < m_M-1);
+
+                        m_cloud[m].SetLastPoint(m_cloud[i].lastPoint());
+                        m_cloud[m].SetLastVector(m_cloud[i].lastVector());
+                        m_cloud[m].setWeight(1.0/(Real)m_M);
+
+                        if(m_cloud[i].isActive())
+                            m_cloud[m].SetActive();
+                        else
+                        {
+                            m_cloud[m].SetInactive();
+                            nbOfActiveParticles--;
+                        }
+                    } // for m
+
+
+                    // Clean space memory
+                    delete intervals;
+
+                } // ESS < m_epsilon
+                else
+                    Display2(m_displayMode, std::cout << " (ESS = " << ESS << ") " << std::flush);
+            }
 
             m_k++;
 
