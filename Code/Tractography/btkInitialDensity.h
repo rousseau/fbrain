@@ -49,7 +49,6 @@ knowledge of the CeCILL-B license and that you accept its terms.
      * @class InitialDensity
      * @brief Initial probability density
      * @author Julien Pontabry
-     * Initial probability density for particle filter
      */
     class InitialDensity
     {

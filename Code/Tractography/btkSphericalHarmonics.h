@@ -43,6 +43,11 @@ knowledge of the CeCILL-B license and that you accept its terms.
     namespace btk
     {
 
+    /**
+     * @class SphericalHarmonics
+     * @brief Spherical harmonics mathematics implementation
+     * @author Julien Pontabry
+     */
     class SphericalHarmonics
     {
         public:
@@ -64,11 +69,11 @@ knowledge of the CeCILL-B license and that you accept its terms.
              */
             static Real legendrePolynomialInZero(unsigned int l);
 
-        #ifndef NDEBUG
+    #ifndef NDEBUG
         public:
-        #else
+    #else
         private:
-        #endif // NDEBUG
+    #endif // NDEBUG
             /**
              * @brief Factorial function
              * @param n Number to compute the factorial

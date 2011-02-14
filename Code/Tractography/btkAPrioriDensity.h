@@ -48,7 +48,6 @@ knowledge of the CeCILL-B license and that you accept its terms.
          * @class APrioriDensity
          * @brief A priori density
          * @author Julien Pontabry
-         * A priori density for particle filter
          */
         class APrioriDensity
         {
@@ -68,11 +67,16 @@ knowledge of the CeCILL-B license and that you accept its terms.
                  */
                 Real compute(Direction uk, Direction ukm1);
 
+                /**
+                 * @brief Simulate the density
+                 * @param mean Mean direction of the vMF density
+                 * @return A simulated direction
+                 */
                 Direction simulate(Direction mean);
 
             private:
-                VonMisesFisherDensity m_d; /**< von Mises-Fisher density */
-                Real m_K;
+                VonMisesFisherDensity m_d;  /**< von Mises-Fisher density */
+                Real m_K;                   /**< Concentration */
         };
 
     } // namespace btk

@@ -67,6 +67,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
             public:
                 /**
                  * @brief Constructor
+                 * @param model Diffusion model
                  * @param initial Initial density
                  * @param aPriori A priori density
                  * @param likelihood Likelihood density
@@ -82,9 +83,25 @@ knowledge of the CeCILL-B license and that you accept its terms.
                  * @param maxLength Maximal length of particles
                  */
                 ParticleFilter(SHModel *model, InitialDensity initial, APrioriDensity aPriori, LikelihoodDensity likelihood, ImportanceDensity importance,
-                               std::string maskFileName, Image::SizeType size, Image::PointType origin, Image::SpacingType spacing,
+                               const std::string maskFileName, Image::SizeType size, Image::PointType origin, Image::SpacingType spacing,
                                unsigned int M, Point x0, Real epsilon, Real stepSize, unsigned int maxLength);
 
+                /**
+                 * @brief Constructor
+                 * @param model Diffusion model
+                 * @param initial Initial density
+                 * @param aPriori A priori density
+                 * @param likelihood Likelihood density
+                 * @param importance Importance density
+                 * @param mask Mask image
+                 * @param size Size of the image
+                 * @param origin Origin of the image
+                 * @param spacing Spacing of the image
+                 * @param M Amount of particle
+                 * @param x0 Seed where all particles starts
+                 * @param epsilon Resampling threshold
+                 * @param stepSize Size of each step (norm of vectors)
+                 */
                 ParticleFilter(SHModel *model, InitialDensity initial, APrioriDensity aPriori, LikelihoodDensity likelihood, ImportanceDensity importance,
                                Mask::Pointer mask, Image::SizeType size, Image::PointType origin, Image::SpacingType spacing,
                                unsigned int M, Point x0, Real epsilon, Real stepSize, char displaMode);
@@ -110,24 +127,51 @@ knowledge of the CeCILL-B license and that you accept its terms.
                  */
                 void saveFiber(int label, unsigned int step, Point begin);
 
+                /**
+                 * @brief Save Connection map in 3D image
+                 * @param label Label number (of label image)
+                 * @param begin Starting point
+                 */
                 void saveConnectionMap(int label, Point begin);
 
+                /**
+                 * @brief Get the computed connection map
+                 * @return Connection map
+                 */
                 Image::Pointer GetConnectionMap();
 
+                /**
+                 * @brief Get the computed fibers
+                 * @return Fibers' vtk data structure
+                 */
                 vtkSmartPointer<vtkPolyData> GetFiber();
 
 
-
             private:
+                /**
+                 * @brief Run the filter
+                 * @param label Label number
+                 * @param dir Current starting direction
+                 */
                 void run(int label, Direction dir);
 
+                /**
+                 * @brief Get the MAP of the current cloud
+                 * @return The particle with the maximal importance weight
+                 */
                 Particle GetMAP();
-//                std::vector<Point> GetMAP();
 
+                /**
+                 * @brief Compute the connection map
+                 */
                 void ComputeMap();
 
+                /**
+                 * @brief Compute the fiber given two MAP
+                 * @param map1 MAP in the first direction
+                 * @param map2 MAP in the second direction
+                 */
                 void ComputeFiber(Particle map1, Particle map2);
-//                void ComputeFiber(std::vector<Point> map1, std::vector<Point> map2);
 
             private:
                 InitialDensity    &m_initial;       /**< Inital density */
@@ -149,12 +193,12 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
                 std::vector<Particle> m_cloud;  /**< Cloud of particles */
 
-                Image::Pointer m_map; /**< Density map */
-                vtkSmartPointer<vtkPolyData> m_fiber;
+                Image::Pointer m_map;                   /**< Density map */
+                vtkSmartPointer<vtkPolyData> m_fiber;   /**< Fibers' vtk structure */
 
-                SHModel *m_model;
+                SHModel *m_model;   /**< Diffusion model */
 
-                unsigned int m_dirNum;
+                unsigned int m_dirNum; /**< Current direction number */
 
                 char m_displayMode;
         };

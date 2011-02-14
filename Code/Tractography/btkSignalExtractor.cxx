@@ -52,7 +52,7 @@ namespace btk
 
 typedef itk::ConstNeighborhoodIterator<Sequence> SequenceNeighborhoodIterator;
 
-SignalExtractor::SignalExtractor(const std::string &vectorsFileName, const std::string &dataFileName, std::string &maskFileName, char displayMode)
+SignalExtractor::SignalExtractor(const std::string &vectorsFileName, const std::string &dataFileName, const std::string &maskFileName, char displayMode)
 {
     m_directions = 0;
     m_refIm      = 0;
@@ -65,17 +65,14 @@ SignalExtractor::SignalExtractor(const std::string &vectorsFileName, const std::
 
 SignalExtractor::~SignalExtractor()
 {
-//    delete m_directions;
     delete m_refIm;
-    //delete m_sigmas;
 }
 
-void SignalExtractor::readFiles(const std::string &vectorsFileName, const std::string &dataFileName, std::string &maskFileName)
+void SignalExtractor::readFiles(const std::string &vectorsFileName, const std::string &dataFileName, const std::string &maskFileName)
 {
-    #ifndef NDEBUG
-        assert(!vectorsFileName.empty());
-        assert(!dataFileName.empty());
-    #endif // NDEBUG
+    assert(!vectorsFileName.empty());
+    assert(!dataFileName.empty());
+
 
     Display1(m_displayMode, std::cout << "Reading data files..." << std::endl);
 
@@ -162,6 +159,7 @@ void SignalExtractor::extract()
     MaskRegion maskRegion     = m_mask->GetLargestPossibleRegion();
 
     unsigned int nbOfImages = m_directions->size() + m_refIm->size();
+
 
     Display1(m_displayMode, std::cout << "Preparing data..." << std::endl);
 
@@ -274,7 +272,7 @@ void SignalExtractor::extract()
                 B0It.Set(B0It.Get() + dataIt.Get()/m_refIm->size());
         } // for refImIt
 
-
+/*
         // Write B0 image
         ImageWriter::Pointer writer = ImageWriter::New();
 
@@ -290,7 +288,7 @@ void SignalExtractor::extract()
             std::cout << "Error: " << std::endl;
             std::cout << err << std::endl;
         }
-
+*/
         Display2(m_displayMode, std::cout << "done." << std::endl);
 
 
@@ -384,10 +382,8 @@ void SignalExtractor::extract()
 
 void SignalExtractor::save()
 {
-    #ifndef NDEBUG
-        assert(m_directions);
-        assert(m_sigmas);
-    #endif // NDEBUG
+    assert(m_directions);
+    assert(m_sigmas);
 
 
     Display1(m_displayMode, std::cout << "Saving data..." << std::endl);
@@ -466,6 +462,7 @@ void SignalExtractor::save()
 
     Display1(m_displayMode, std::cout << "done." << std::endl);
 
+
     delete m_sigmas;
     delete m_directions;
 }
@@ -497,10 +494,8 @@ void SignalExtractor::computeSigmas()
     // Images by Coupé et al.
 
 
-    #ifndef NDEBUG
-        assert(m_signal);
-        assert(!m_sigmas);
-    #endif // NDEBUG
+    assert(m_signal);
+    assert(!m_sigmas);
 
 
     m_sigmas = new std::vector<Real>;

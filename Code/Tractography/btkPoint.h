@@ -43,12 +43,35 @@ knowledge of the CeCILL-B license and that you accept its terms.
     namespace btk
     {
 
+    /**
+     * @class Point
+     * @brief Point in 3D space
+     * @author Julien Pontabry
+     */
     class Point : public CartesianCoordinates
     {
         public:
+            /**
+             * @brief Constructor
+             * Build a new point at the origin
+             */
             Point();
+
+            /**
+             * @brief Constructor
+             * Build a new point at the coordinates given in parameters
+             * @param x X-axis coordinate
+             * @param y Y-axis coordinate
+             * @param z Z-axis coordinate
+             */
             Point(Real x, Real y, Real z);
 
+            /**
+             * @brief Move a point
+             * Translate the point with the translation vector v
+             * @param v Translation vector
+             * @return The translated point in the 3D space
+             */
             Point operator+(Vector v);
     };
 

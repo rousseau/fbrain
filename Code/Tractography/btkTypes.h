@@ -51,11 +51,24 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
     namespace btk
     {
-
+        /**
+         * Display a variable and its value on standard error output.
+         * @param x Variable to display
+         */
         #define Pr(x) std::cerr << #x << " = " << x << std::endl
 
+        /**
+         * Display information in level one display mode.
+         * @param mode Mode in which we are
+         * @param inst Instruction to display
+         */
         #define Display1(mode,inst) if(mode > 0) { inst; }
 
+        /**
+         * Display information in level two display mode.
+         * @param mode Mode in which we are
+         * @param inst Instruction to display
+         */
         #define Display2(mode,inst) if(mode > 1) { inst; }
 
         /**
@@ -69,7 +82,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
         const Real EPSILON = DBL_EPSILON;
 
         /**
-         * Equality test on floating point numbers
+         * Equality test on floating point numbers, according to the machine precision.
          * @param a Left operand
          * @param b Right operand
          * @return True if a=b, false otherwise
@@ -82,7 +95,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
         }
 
         /**
-         * Round a number with the standard rules
+         * Round a number with the standard rules.
          * @param x number to round
          * @return The number rounded
          */
@@ -92,105 +105,105 @@ knowledge of the CeCILL-B license and that you accept its terms.
         }
 
         /**
-         * ITK matrix type
+         * ITK matrix type.
          */
         typedef itk::VariableSizeMatrix<Real> Matrix;
 
 
         /**
-         * Size of a DWI sequence
+         * Size of a DWI sequence.
          */
         const unsigned int SequenceDimension = 4;
 
         /**
-         * DWI sequence
+         * DWI sequence.
          */
         typedef itk::Image<Real, SequenceDimension> Sequence;
 
         /**
-         * DWI sequence's region
+         * DWI sequence's region.
          */
         typedef itk::ImageRegion<SequenceDimension> SequenceRegion;
 
         /**
-         * DWI sequence's iterator
+         * DWI sequence's iterator.
          */
         typedef itk::ImageRegionIterator<Sequence> SequenceIterator;
 
         /**
-         * DWI sequence's reader
+         * DWI sequence's reader.
          */
         typedef itk::ImageFileReader<Sequence> SequenceReader;
 
         /**
-         * DWI sequence's writer
+         * DWI sequence's writer.
          */
         typedef itk::ImageFileWriter<Sequence> SequenceWriter;
 
 
         /**
-         * Size of a DWI image (reference or gradient)
+         * Size of a DWI image (reference or gradient).
          */
         const unsigned int ImageDimension = 3;
 
         /**
-         * DWI image (reference or gradient)
+         * DWI image (reference or gradient).
          */
         typedef itk::Image<Real, ImageDimension> Image;
 
         /**
-         * DWI image's (reference or gradient) region
+         * DWI image's (reference or gradient) region.
          */
         typedef itk::ImageRegion<ImageDimension> ImageRegion;
 
         /**
-         * DWI image's (reference or gradient) iterator
+         * DWI image's (reference or gradient) iterator.
          */
         typedef itk::ImageRegionIterator<Image> ImageIterator;
 
         /**
-         * DWI image's (reference or gradient) reader
+         * DWI image's (reference or gradient) reader.
          */
         typedef itk::ImageFileReader<Image> ImageReader;
 
         /**
-         * DWI image's (reference or gradient) writer
+         * DWI image's (reference or gradient) writer.
          */
         typedef itk::ImageFileWriter<Image> ImageWriter;
 
         /**
-         * DWI image's interpolator
+         * DWI image's interpolator.
          */
         typedef itk::BSplineInterpolateImageFunction<Image, Real, Real> ImageInterpolator;
 
 
         /**
-         * Size of a Mask
+         * Size of a Mask.
          */
         const unsigned int MaskDimension = 3;
 
         /**
-         * Image mask
+         * Image mask.
          */
         typedef itk::Image<char, MaskDimension> Mask;
 
         /**
-         * Image mask's region
+         * Image mask's region.
          */
         typedef itk::ImageRegion<MaskDimension> MaskRegion;
 
         /**
-         * Image mask's iterator
+         * Image mask's iterator.
          */
         typedef itk::ImageRegionIterator<Mask> MaskIterator;
 
         /**
-         * Image mask's reader
+         * Image mask's reader.
          */
         typedef itk::ImageFileReader<Mask> MaskReader;
 
         /**
-         * Image mask's writer
+         * Image mask's writer.
          */
         typedef itk::ImageFileWriter<Mask> MaskWriter;
 
@@ -198,4 +211,3 @@ knowledge of the CeCILL-B license and that you accept its terms.
     } // namespace btk
 
 #endif // BTK_TYPES_H
-

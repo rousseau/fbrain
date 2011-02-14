@@ -35,11 +35,8 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "btkVonMisesFisherDensity.h"
 
 
-#ifndef NDEBUG
-    #include "assert.h"
-#endif // NDEBUG
-
 // STL includes
+#include "cassert"
 #include "cmath"
 #include "cstdlib"
 #include "ctime"
@@ -54,9 +51,8 @@ namespace btk
 
 VonMisesFisherDensity::VonMisesFisherDensity(Real K) : SimDensity()
 {
-    #ifndef NDEBUG
-        assert(K >= 0.);
-    #endif // NDEBUG
+    assert(K >= 0.);
+
 
     m_K  = K;
     m_c  = 2./m_K * std::sinh(m_K);
@@ -84,7 +80,6 @@ Real VonMisesFisherDensity::compute(Direction u, Real kappa)
     Real vectors = mean.x()*v.x() + mean.y()*v.y() + mean.z()*v.z();
 
     Real C = kappa / (4.*M_PI * std::sinh(kappa));
-//    return m_C * std::exp(m_K * vectors);
     return C * std::exp(kappa * vectors);
 }
 
@@ -95,7 +90,6 @@ Real VonMisesFisherDensity::compute(Direction u, Direction mean, Real kappa)
     Real vectors = m.x()*v.x() + m.y()*v.y() + m.z()*v.z();
 
     Real C = kappa / (4.*M_PI * std::sinh(kappa));
-//    return m_C * std::exp(m_K * vectors);
     return C * std::exp(kappa * vectors);
 }
 
@@ -159,7 +153,6 @@ Direction VonMisesFisherDensity::simulate(Direction mean, Real kappa)
 {
     // Sample random scalar
     Real y = (Real)std::rand() / (Real)RAND_MAX;
-//    Real w = 1.0/m_K * std::log(std::exp(-m_K) + m_K * m_c * y);
     Real c = 2./kappa * std::sinh(kappa);
     Real w = 1.0/kappa * std::log(std::exp(-kappa) + kappa * c * y);
 

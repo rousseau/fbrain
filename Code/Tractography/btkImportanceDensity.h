@@ -50,7 +50,6 @@ knowledge of the CeCILL-B license and that you accept its terms.
      * @class ImportanceDensity
      * @brief Importance density
      * @author Julien Pontabry
-     * Importance probability density for particle filter
      */
     class ImportanceDensity
     {

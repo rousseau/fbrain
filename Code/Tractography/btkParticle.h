@@ -95,6 +95,10 @@ knowledge of the CeCILL-B license and that you accept its terms.
                  */
                 Vector lastVector() const;
 
+                /**
+                 * @brief Set last vector of the particle
+                 * @param v Vector to set
+                 */
 				void SetLastVector(Vector v);
 
                 /**
@@ -111,6 +115,11 @@ knowledge of the CeCILL-B license and that you accept its terms.
                  */
                 Vector getVector(unsigned int i) const;
 
+                /**
+                 * @brief Get the weight on path
+                 * @param i Number of the weight on the path
+                 * @return Weight on particle's path
+                 */
                 Real getWeight(unsigned int i) const;
 
                 /**
@@ -125,11 +134,6 @@ knowledge of the CeCILL-B license and that you accept its terms.
                  */
                 bool isActive();
 
-                Real getLikelihoodAt(unsigned int k);
-                void addLikelihood(Real likelihood);
-
-                Real likelihood();
-
                 /**
                  * @brief Put particle on stream
                  * @param os Stream to put particle on
@@ -138,7 +142,14 @@ knowledge of the CeCILL-B license and that you accept its terms.
                  */
                 friend std::ostream &operator<<(std::ostream &os, Particle p);
 
+                /**
+                 * @brief Set a particle to active state
+                 */
 				void SetActive();
+
+				/**
+				 * @brief Set a particle to inactive state
+				 */
 				void SetInactive();
 
             private:
@@ -156,8 +167,6 @@ knowledge of the CeCILL-B license and that you accept its terms.
                 std::vector<Real>   m_weight;   /**< Particule's weights */
                 std::vector<Point>  m_points;   /**< Set of particle's points on path */
                 std::vector<Vector> m_vectors;  /**< Set of particle's vectors on path */
-
-                std::vector<Real> m_likelihood;
         };
 
     } // namespace btk

@@ -47,6 +47,11 @@ knowledge of the CeCILL-B license and that you accept its terms.
     namespace btk
     {
 
+    /**
+     * @class SHModelEstimator
+     * @brief Estimate diffusion model
+     * @author Julien Pontabry
+     */
     class SHModelEstimator
     {
         public:
@@ -56,9 +61,18 @@ knowledge of the CeCILL-B license and that you accept its terms.
              * @param directionsFileName Directions' filename
              * @param maskFileName Image mask filename
              * @param order Model's order
+             * @param lambda Regularization term
              */
-            SHModelEstimator(std::string &signalFileName, std::string &directionsFileName, std::string &maskFileName, unsigned int order, Real lambda);
+            SHModelEstimator(const std::string &signalFileName, const std::string &directionsFileName, const std::string &maskFileName, unsigned int order, Real lambda);
 
+            /**
+             * @brief Constructor
+             * @param signal Diffusion signal image
+             * @param directions Gradient directions
+             * @param mask Image Mask image
+             * @param order Model's order
+             * @param lambda Regularization term
+             */
             SHModelEstimator(Sequence::Pointer signal, std::vector<Direction> *directions, Mask::Pointer mask, unsigned int order, Real lambda, char displayMode);
 
             /**
@@ -77,6 +91,10 @@ knowledge of the CeCILL-B license and that you accept its terms.
              */
             void save();
 
+            /**
+             * @brief Get the model image representation
+             * @return The model coefficients
+             */
             Sequence::Pointer GetModel();
 
         private:
@@ -86,7 +104,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
              * @param directionsFileName Directions' filename
              * @param maskFileName Image mask filename
              */
-            void readFiles(std::string &signalFileName, std::string &directionsFileName, std::string &maskFileName);
+            void readFiles(const std::string &signalFileName, const std::string &directionsFileName, const std::string &maskFileName);
 
             /**
              * @brief Commpute SH basis matrix
@@ -113,7 +131,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
             unsigned int m_R;       /**< Number of even SH basis */
             Real         m_lambda;  /**< Regularization parameter */
 
-            Real m_2PI;
+            Real m_2PI; /**< Precomputed constant */
 
             Matrix *m_Y;       /**< SH basis matrix */
             Matrix *m_L;       /**< Laplace-Beltrami smoothing matrix */

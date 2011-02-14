@@ -35,12 +35,8 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "btkImportanceDensity.h"
 
 
-// Debug
-#ifndef NDEBUG
-    #include "cassert"
-#endif // NDEBUG
-
 // STL includes
+#include "cassert"
 #include "cmath"
 
 
@@ -49,9 +45,8 @@ namespace btk
 
 ImportanceDensity::ImportanceDensity(VonMisesFisherDensity d, SHModel *model, Real angleThreshold) : m_d(d)
 {
-    #ifndef NDEBUG
-        assert(model);
-    #endif // NDEBUG
+    assert(model);
+
 
     m_model = model;
 
@@ -168,9 +163,6 @@ Real ImportanceDensity::computeConcentration(Direction mu, Point xk)
     Real E = psi2;
 
     Real H = 0.5 * ( (e*G + g*E) / (E*G) );
-
-//    std::cout << "H = " << H << std::endl;
-//    std::cout << "K = " << H*0.017 << std::endl;
 
     return std::exp(H*0.017);
 }

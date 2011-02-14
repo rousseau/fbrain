@@ -35,24 +35,19 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "btkLikelihoodDensity.h"
 
 
-// Debug
-#ifndef NDEBUG
-    #include "cassert"
-#endif // NDEBUG
-
 // STL includes
+#include "cassert"
 #include "cmath"
 
 
 namespace btk
 {
 
-LikelihoodDensity::LikelihoodDensity(/*NormalDensity d, */Signal *signal, SHModel *model) /*: m_d(d)*/
+LikelihoodDensity::LikelihoodDensity(Signal *signal, SHModel *model)
 {
-    #ifndef NDEBUG
-        assert(model);
-        assert(signal);
-    #endif // NDEBUG
+    assert(model);
+    assert(signal);
+
 
     m_model  = model;
     m_signal = signal;

@@ -46,18 +46,23 @@ knowledge of the CeCILL-B license and that you accept its terms.
     namespace btk
     {
 
+    /**
+     * @class SignalExtractor
+     * @brief Extract signal from a dwi dataset
+     * @author Julien Pontabry
+     */
     class SignalExtractor
     {
         public:
             /**
               * @brief Constructor
               * Extract signal from the data file using directions files. The signal is
-              * normalized (division by reference image).
+              * normalized (division by the average reference image).
               * @param vectorsFileName Name of the file containing vectors
               * @param dataFileName Signal filename
               * @param maskFileName Image mask filename
               */
-            SignalExtractor(const std::string &vectorsFileName, const std::string &dataFileName, std::string &maskFileName, char displayMode);
+            SignalExtractor(const std::string &vectorsFileName, const std::string &dataFileName, const std::string &maskFileName, char displayMode);
 
             /**
               * @brief Destructor
@@ -77,12 +82,28 @@ knowledge of the CeCILL-B license and that you accept its terms.
               */
             void save();
 
+            /**
+             * @brief Get the gradient directions
+             * @return A vector of gradient directions
+             */
             std::vector<Direction> *GetDirections();
 
+            /**
+             * @brief Get the signal image
+             * @return A signal sequence
+             */
             Sequence::Pointer GetSignal();
 
+            /**
+             * @brief Get the signal's standard deviations
+             * @return Signal's standard deviations
+             */
             std::vector<Real> *GetSigmas();
 
+            /**
+             * @brief Get the mask image
+             * @return Mask image
+             */
             Mask::Pointer GetMask();
 
         private:
@@ -93,7 +114,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
               * @param dataFileName Dwi sequence filename
               * @param maskFileName Image mask filename
               */
-            void readFiles(const std::string &vectorsFileName, const std::string &dataFileName, std::string &maskFileName);
+            void readFiles(const std::string &vectorsFileName, const std::string &dataFileName, const std::string &maskFileName);
 
             /**
              * @brief Compute standard deviation
