@@ -79,6 +79,7 @@ int main(int argc, char *argv[])
     // Define command line variables
     std::string inFileName;
     std::string outFileName;
+    std::string vecFileName;
     bool dwi;
 
     // Define command line parser
@@ -87,6 +88,7 @@ int main(int argc, char *argv[])
     // Define command line arguments
     TCLAP::ValueArg<std::string> inArg("i", "input", "Input image", true, "", "string", cmd);
     TCLAP::ValueArg<std::string> outArg("o", "output", "Output image", false, "data.nii.gz", "string", cmd);
+    TCLAP::ValueArg<std::string> vecArg("v", "vector", "Output vector", false, "data.bvec", "string", cmd);
 
     TCLAP::SwitchArg dwiArg("d", "dwi", "DWI image conversion", cmd, false);
 
@@ -96,6 +98,7 @@ int main(int argc, char *argv[])
     // Get back arguments' values
     inFileName   = inArg.getValue();
     outFileName  = outArg.getValue();
+    vecFileName  = vecArg.getValue();
     dwi          = dwiArg.getValue();
 
 
@@ -178,20 +181,30 @@ int main(int argc, char *argv[])
 
         std::cout << "\tspacing: " << spacing[0] << "x" << spacing[1] << "x" << spacing[2] << "x" << spacing[3] << std::endl;
 
-        itk::Matrix<double,3,3> dirMat;
+        itk::Matrix<double,4,4> dirMat;
         itk::Matrix<double,3,3> iniMat = reader->GetOutput()->GetDirection();
 
-        dirMat(0,0) = iniMat(0,0);
-        dirMat(0,1) = iniMat(0,1);
-        dirMat(0,2) = iniMat(0,2);
+        dirMat(0,0) = (iniMat(0,0) != 0 ? -iniMat(0,0) : iniMat(0,0));
+        dirMat(0,1) = (iniMat(0,1) != 0 ? -iniMat(0,1) : iniMat(0,1));
+        dirMat(0,2) = (iniMat(0,2) != 0 ? -iniMat(0,2) : iniMat(0,2));
+        dirMat(0,3) = 0;
 
-        dirMat(1,0) = iniMat(1,0);
-        dirMat(1,1) = iniMat(1,1);
-        dirMat(1,2) = iniMat(1,2);
+        dirMat(1,0) = (iniMat(1,0) != 0 ? -iniMat(1,0) : iniMat(1,0));
+        dirMat(1,1) = (iniMat(1,1) != 0 ? -iniMat(1,1) : iniMat(1,1));
+        dirMat(1,2) = (iniMat(1,2) != 0 ? -iniMat(1,2) : iniMat(1,2));
+        dirMat(1,3) = 0;
 
         dirMat(2,0) = iniMat(2,0);
         dirMat(2,1) = iniMat(2,1);
         dirMat(2,2) = iniMat(2,2);
+        dirMat(2,3) = 0;
+
+        dirMat(3,0) = 0;
+        dirMat(3,1) = 0;
+        dirMat(3,2) = 0;
+        dirMat(3,3) = 1;
+
+        std::cout << "\torientation: (" << dirMat(0,0) << "," << dirMat(0,1) << "," << dirMat(0,2) << "), (" << dirMat(1,0) << "," << dirMat(1,1) << "," << dirMat(1,2) << "), (" << dirMat(2,0) << "," << dirMat(2,1) << "," << dirMat(2,2) << ")" << std::endl;
 
 
         // Temporary image file
@@ -230,14 +243,14 @@ int main(int argc, char *argv[])
         std::cout << "Writing file..." << std::flush;
 
         OutSequenceFileWriter::Pointer writer = OutSequenceFileWriter::New();
-        writer->SetFileName("data.nii.gz");
+        writer->SetFileName(outFileName);
         writer->SetInput(image);
 
         try
         {
             writer->Update();
 
-            std::fstream bvecFile("data.bvec", std::fstream::out);
+            std::fstream bvecFile(vecFileName.c_str(), std::fstream::out);
 
             for(std::vector<double>::iterator it=vx.begin(); it != vx.end(); it++)
                 bvecFile << *it << " ";
@@ -306,6 +319,31 @@ int main(int argc, char *argv[])
 
         std::cout << "\tspacing: " << spacing[0] << "x" << spacing[1] << "x" << spacing[2] << std::endl;
 
+        itk::Matrix<double,4,4> dirMat;
+        itk::Matrix<double,3,3> iniMat = reader->GetOutput()->GetDirection();
+
+        dirMat(0,0) = iniMat(0,0);
+        dirMat(0,1) = iniMat(0,1);
+        dirMat(0,2) = iniMat(0,2);
+        dirMat(0,3) = 0;
+
+        dirMat(1,0) = iniMat(1,0);
+        dirMat(1,1) = iniMat(1,1);
+        dirMat(1,2) = iniMat(1,2);
+        dirMat(1,3) = 0;
+
+        dirMat(2,0) = iniMat(2,0);
+        dirMat(2,1) = iniMat(2,1);
+        dirMat(2,2) = iniMat(2,2);
+        dirMat(2,3) = 0;
+
+        dirMat(3,0) = 0;
+        dirMat(3,1) = 0;
+        dirMat(3,2) = 0;
+        dirMat(3,3) = 1;
+
+        std::cout << "\torientation: (" << dirMat(0,0) << "," << dirMat(0,1) << "," << dirMat(0,2) << "), (" << dirMat(1,0) << "," << dirMat(1,1) << "," << dirMat(1,2) << "), (" << dirMat(2,0) << "," << dirMat(2,1) << "," << dirMat(2,2) << ")" << std::endl;
+
         // Temporary image file
         Image::Pointer image = Image::New();
         image->SetRegions(size);
@@ -334,7 +372,7 @@ int main(int argc, char *argv[])
         std::cout << "Writing file..." << std::flush;
 
         ImageFileWriter::Pointer writer = ImageFileWriter::New();
-        writer->SetFileName("out.nii.gz");
+        writer->SetFileName(outFileName);
         writer->SetInput(reader->GetOutput());
 
         try
