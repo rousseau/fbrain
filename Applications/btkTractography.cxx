@@ -53,7 +53,6 @@
 #include "btkSHModel.h"
 #include "btkSHModelEstimator.h"
 #include "btkSHModelDensity.h"
-#include "btkVonMisesFisherDensity.h"
 #include "btkImportanceDensity.h"
 #include "btkInitialDensity.h"
 #include "btkAPrioriDensity.h"
@@ -197,7 +196,6 @@ int main(int argc, char *argv[])
 
         // These densities will be used next
         SHModelDensity modelDensity(modelFun);
-        VonMisesFisherDensity vmf(Kappa);
 
 
 //        vtkSmartPointer<vtkAppendPolyData> append = vtkSmartPointer<vtkAppendPolyData>::New();
@@ -230,7 +228,7 @@ int main(int argc, char *argv[])
                     Point begin(worldPoint[0], worldPoint[1], worldPoint[2]);
 
                     // Set up filter's densities
-                    ImportanceDensity importance(vmf, modelFun, angleThreshold);
+                    ImportanceDensity importance(modelFun, angleThreshold);
                     InitialDensity    initial(modelDensity, begin);
                     APrioriDensity    apriori(Kappa);
                     LikelihoodDensity likelihood(signalFun, modelFun);
