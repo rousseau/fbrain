@@ -441,10 +441,8 @@ Real SHModel::signalAt(Direction u, Point p)
 
 Matrix SHModel::signalAt(Point p)
 {
-    #ifndef NDEBUG
-        assert(m_P);
-        assert(m_Yori);
-    #endif // NDEBUG
+    assert(m_P);
+    assert(m_Yori);
 
 
     Matrix &Y     = *m_Yori;
@@ -465,10 +463,8 @@ Matrix SHModel::signalAt(Point p)
 
 Real SHModel::odfAt(Direction u, Point p)
 {
-    #ifndef NDEBUG
-        assert(m_P);
-        assert(m_Sharp);
-    #endif // NDEBUG
+    assert(m_P);
+    assert(m_Sharp);
 
 
     Matrix &P     = *m_P;
@@ -504,10 +500,8 @@ Real SHModel::odfAt(Direction u, Point p)
 
 Matrix SHModel::odfAt(Point p)
 {
-    #ifndef NDEBUG
-        assert(m_P);
-        assert(m_Y);
-    #endif // NDEBUG
+    assert(m_P);
+    assert(m_Y);
 
 
     Matrix &Y     = *m_Y;
@@ -622,9 +616,7 @@ std::vector<Direction> SHModel::getMaxDirectionsAt(Point p)
 
 void SHModel::computeLegendreMatrix()
 {
-    #ifndef NDEBUG
-        assert(!m_P);
-    #endif // NDEBUG
+    assert(!m_P);
 
     m_P = new Matrix(m_R, m_R);
 
@@ -653,10 +645,9 @@ void SHModel::computeLegendreMatrix()
 
 void SHModel::computeSHBasisMatrix()
 {
-    #ifndef NDEBUG
-        assert(m_directions);
-        assert(!m_Y);
-    #endif // NDEBUG
+    assert(m_directions);
+    assert(!m_Y);
+
 
     // Allocate memory space for Y matrix
     m_Y = new Matrix(m_directions->size(), m_R);
@@ -690,10 +681,9 @@ void SHModel::computeSHBasisMatrix()
 
 void SHModel::computeSHBasisOriMatrix()
 {
-    #ifndef NDEBUG
-        assert(m_originalDirections);
-        assert(!m_Yori);
-    #endif // NDEBUG
+    assert(m_originalDirections);
+    assert(!m_Yori);
+
 
     // Allocate memory space for Y matrix
     m_Yori = new Matrix(m_originalDirections->size(), m_R);
@@ -727,9 +717,8 @@ void SHModel::computeSHBasisOriMatrix()
 
 void SHModel::buildSharperODFMatrix()
 {
-    #ifndef NDEBUG
-        assert(!m_Sharp);
-    #endif // NDEBUG
+    assert(!m_Sharp);
+
 
     m_Sharp = new Matrix(m_R,m_R);
 

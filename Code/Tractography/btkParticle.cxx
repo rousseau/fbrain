@@ -34,13 +34,12 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "btkParticle.h"
 
 
-#ifndef NDEBUG
-    #include "assert.h"
-#endif // NDEBUG
-
-#include "itkPoint.h"
-
+// STL includes
+#include "cassert"
 #include "cmath"
+
+// ITK includes
+#include "itkPoint.h"
 
 
 namespace btk
@@ -54,10 +53,8 @@ Particle::Particle(Point p)
 
 void Particle::setWeight(Real w)
 {
-    #ifndef NDEBUG
-        assert(w >= 0);
-        assert(w <= 1);
-    #endif // NDEBUG
+    assert(w >= 0);
+    assert(w <= 1);
 
     m_weight.push_back(w);
 }
@@ -106,27 +103,21 @@ void Particle::SetLastVector(Vector v)
 
 Point Particle::getPoint(unsigned int i) const
 {
-    #ifndef NDEBUG
-        assert(i>=0 && i<m_points.size());
-    #endif // NDEBUG
+    assert(i>=0 && i<m_points.size());
 
     return m_points[i];
 }
 
 Vector Particle::getVector(unsigned int i) const
 {
-    #ifndef NDEBUG
-        assert(i>=0 && i<m_vectors.size());
-    #endif // NDEBUG
+    assert(i>=0 && i<m_vectors.size());
 
     return m_vectors[i];
 }
 
 Real Particle::getWeight(unsigned int i) const
 {
-    #ifndef NDEBUG
-        assert(i>=0 && i<m_weight.size());
-    #endif // NDEBUG
+    assert(i>=0 && i<m_weight.size());
 
     return m_weight[i];
 }
@@ -171,25 +162,6 @@ bool Particle::IsInside(Point p, Mask::Pointer mask)
         isIn = !EQUAL(mask->GetPixel(index),0);
 
     return isIn;
-}
-
-Real Particle::getLikelihoodAt(unsigned int k)
-{
-    #ifndef NDEBUG
-        assert(k-1>=0 && k-1<m_likelihood.size());
-    #endif // NDEBUG
-
-    return m_likelihood[k-1];
-}
-
-void Particle::addLikelihood(Real likelihood)
-{
-    m_likelihood.push_back(likelihood);
-}
-
-Real Particle::likelihood()
-{
-    return m_likelihood.back();
 }
 
 void Particle::SetActive()

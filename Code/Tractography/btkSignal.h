@@ -48,15 +48,30 @@ knowledge of the CeCILL-B license and that you accept its terms.
     namespace btk
     {
 
+    /**
+     * @class Signal
+     * @brief Continuous image representing the diffusion signal
+     * @author Julien Pontabry
+     */
     class Signal
     {
         public:
             /**
              * @brief Constructor
+             * Build a continuous signal image from files
              * @param filename Signal filename
+             * @param sigmasFilename Filename of signal's standard deviations
+             * @param dirFileName Directions' filename
              */
             Signal(const std::string &filename, const std::string &sigmasFilename, const std::string &dirFileName);
 
+            /**
+             * @brief Constructor
+             * Build a continuous signal iamge from data structures
+             * @param signal Signal image
+             * @param sigmas Signal's standard deviations
+             * @param directions Gradient directions
+             */
             Signal(Sequence::Pointer signal, std::vector<Real> *sigmas, std::vector<Direction> *directions, char displayMode);
 
             /**
@@ -115,7 +130,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
             ImageInterpolator::Pointer *m_interp;       /**< Image's interpolators */
             std::vector<Direction>     *m_directions;   /**< Gradient directions */
 
-            std::vector<Real> *m_sigmas;
+            std::vector<Real> *m_sigmas;    /**< Signal's standard deviations */
 
             unsigned int m_N;   /**< Number of images */
 

@@ -35,27 +35,23 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "btkImportanceDensity.h"
 
 
-// Debug
-#ifndef NDEBUG
-    #include "cassert"
-#endif // NDEBUG
-
 // STL includes
+#include "cassert"
 #include "cmath"
 
 
 namespace btk
 {
 
-ImportanceDensity::ImportanceDensity(VonMisesFisherDensity d, SHModel *model, Real angleThreshold) : m_d(d)
+ImportanceDensity::ImportanceDensity(SHModel *model, Real angleThreshold)
 {
-    #ifndef NDEBUG
-        assert(model);
-    #endif // NDEBUG
+    assert(model);
 
-    m_model = model;
 
+    m_model          = model;
     m_angleThreshold = angleThreshold / 2.0;
+    m_2PI            = 2.0 * M_PI;
+    m_log4PI         = std::log(4.0 * M_PI);
 }
 
 Direction ImportanceDensity::computeMeanDirection(Point xk, Direction ukm1)
@@ -64,7 +60,7 @@ Direction ImportanceDensity::computeMeanDirection(Point xk, Direction ukm1)
 
     if(maxima.size() > 1)
     {
-        Vector v = ukm1.toVector();
+        Vector vkm1 = ukm1.toVector();
         std::vector<Direction> mus;
         std::vector<Real> values;
         Real sum = 0;
@@ -72,11 +68,11 @@ Direction ImportanceDensity::computeMeanDirection(Point xk, Direction ukm1)
         // we keep only maxima in the solid angle
         for(std::vector<Direction>::iterator it=maxima.begin(); it!=maxima.end(); it++)
         {
-            Vector u = it->toVector();
+            Vector v = it->toVector();
 
-            Real scalProd = u.x()*v.x() + u.y()*v.y() + u.z()*v.z();
-            Real normU    = u.x()*u.x() + u.y()*u.y() + u.z()*u.z();
-            Real normV    = v.x()*v.x() + v.y()*v.y() + v.z()*v.z();
+            Real scalProd = v.x()*vkm1.x() + v.y()*vkm1.y() + v.z()*vkm1.z();
+            Real normU    = v.x()*v.x() + v.y()*v.y() + v.z()*v.z();
+            Real normV    = vkm1.x()*vkm1.x() + vkm1.y()*vkm1.y() + vkm1.z()*vkm1.z();
             Real alpha    = std::acos( scalProd / std::sqrt(normU * normV) );
 
             if(alpha <= m_angleThreshold)
@@ -90,7 +86,7 @@ Direction ImportanceDensity::computeMeanDirection(Point xk, Direction ukm1)
         if(mus.size() > 1)
         {
             // simulate x~U(0,1)
-            Real x = std::rand() / (Real)RAND_MAX;
+            Real x = ((Real)std::rand() / (Real)RAND_MAX) * sum;
 
             // compare to intervals and choose the mean direction
             bool found = false;
@@ -99,7 +95,7 @@ Direction ImportanceDensity::computeMeanDirection(Point xk, Direction ukm1)
 
             while(!found && i<values.size())
             {
-                interval += values[i]/sum;
+                interval += values[i];
 
                 if(x < interval)
                     found = true;
@@ -122,12 +118,67 @@ Direction ImportanceDensity::computeMeanDirection(Point xk, Direction ukm1)
 
 Direction ImportanceDensity::simulate(Direction mean, Real kappa)
 {
-    return m_d.simulate(mean, kappa);
+    // Sample random scalar
+    Real y = (Real)std::rand() / (Real)RAND_MAX;
+    Real w = 1.0/kappa * std::log(std::exp(-kappa) + kappa * 2.0/kappa * std::sinh(kappa) * y);
+
+    // Sample random angle (to get random unit vector)
+    Real angle = ((Real)std::rand() / (Real)RAND_MAX) * m_2PI;
+
+    // Concatenate to obtain unit vector with vmf distribution with mean = (0,0,1)
+    Real cst = std::sqrt(1-w*w);
+    Vector X(cst*std::cos(angle), cst*std::sin(angle), w);
+
+    Real theta, phi;
+    Vector vmean = mean.toVector();
+
+    // Rotate if necessary
+    if(!(vmean.x() == 0 && vmean.y() == 0 && vmean.z() == 1)) // mean not (0,0,1)
+    {
+        // Rotations from (0,0,1) to mean
+        Real cosTheta = std::cos(mean.theta());
+        Real sinTheta = std::sin(mean.theta());
+        Real cosPhi   = std::cos(mean.phi());
+        Real sinPhi   = std::sin(mean.phi());
+
+        // Ry(theta)
+        // | cos(theta)  0  sin(theta)  |   |x|
+        // |     0       1       0      | . |y|
+        // |-sin(theta)  0   cos(theta) |   |z|
+        Vector tmp(
+                cosTheta * X.x() + sinTheta * X.z(),
+                X.y(),
+                -sinTheta * X.x() + cosTheta * X.z()
+        );
+
+        // Rz(phi)
+        // | cos(phi)  -sin(phi)  0 |   |x|
+        // | sin(phi)   cos(phi)  0 | . |y|
+        // |    0          0      1 |   |z|
+        Vector tmp2(
+                cosPhi * tmp.x() - sinPhi * tmp.y(),
+                sinPhi * tmp.x() + cosPhi * tmp.y(),
+                tmp.z()
+        );
+
+        theta = tmp2.toSphericalCoordinates().theta();
+        phi   = tmp2.toSphericalCoordinates().phi();
+    }
+    else // vkm1 is (0,0,1)
+    {
+        theta = X.toSphericalCoordinates().theta();
+        phi   = X.toSphericalCoordinates().phi();
+    }
+
+    return Direction(theta,phi);
 }
 
-Real ImportanceDensity::compute(Direction vk, Direction mean, Real kappa)
+Real ImportanceDensity::compute(Direction uk, Direction mean, Real kappa)
 {
-    return m_d.compute(vk, mean, kappa);
+    Vector vk   = uk.toVector();
+    Vector vmean = mean.toVector();
+
+    return std::log(kappa) - m_log4PI - std::log(std::sinh(kappa)) + kappa * (vk.x()*vmean.x() + vk.y()*vmean.y() + vk.z()*vmean.z());
 }
 
 Real ImportanceDensity::computeConcentration(Direction mu, Point xk)
@@ -168,9 +219,6 @@ Real ImportanceDensity::computeConcentration(Direction mu, Point xk)
     Real E = psi2;
 
     Real H = 0.5 * ( (e*G + g*E) / (E*G) );
-
-//    std::cout << "H = " << H << std::endl;
-//    std::cout << "K = " << H*0.017 << std::endl;
 
     return std::exp(H*0.017);
 }

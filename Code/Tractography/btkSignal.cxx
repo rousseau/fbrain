@@ -261,9 +261,6 @@ Signal::~Signal()
 {
     delete[] m_interp;
     delete[] m_signal;
-
-//    delete m_sigmas;
-//    delete m_directions;
 }
 
 Sequence::Pointer Signal::readFiles(const std::string &filename, const std::string &sigmasFilename, const std::string &dirFileName)

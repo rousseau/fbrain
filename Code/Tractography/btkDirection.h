@@ -45,18 +45,44 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
     class Vector;
 
+    /**
+     * @class Direction
+     * @brief Direction in 3D space
+     * @author Julien Pontabry
+     */
     class Direction : public SphericalCoordinates
     {
         public:
+            /**
+             * @brief Constructor
+             * Build a new null direction
+             */
             Direction();
+
+            /**
+             * @brief Constructor
+             * Build a new direction with the given parameters
+             * @param azimuth Azimuth coordinate
+             * @param elevation Elevation coordinate
+             */
             Direction(Real azimuth, Real elevation);
 
+            /**
+             * @brief Conversion to vector
+             * Convert the direction un a cartesian vector in 3D space
+             * @return A cartesian vector in 3D space
+             */
             Vector toVector();
 
+            /**
+             * @brief Display the vector on stream outputs
+             * @param os Current output stream
+             * @param u Direction to display
+             * @return An output stream with the direction displayed on
+             */
             friend std::ostream &operator<<(std::ostream &os, const Direction& u);
     };
 
     } // namespace btk
 
 #endif // BTK_DIRECTION_H
-

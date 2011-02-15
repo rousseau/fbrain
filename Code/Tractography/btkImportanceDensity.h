@@ -39,7 +39,6 @@ knowledge of the CeCILL-B license and that you accept its terms.
     #include "btkTypes.h"
     #include "btkPoint.h"
     #include "btkDirection.h"
-    #include "btkVonMisesFisherDensity.h"
     #include "btkSHModel.h"
 
 
@@ -50,7 +49,6 @@ knowledge of the CeCILL-B license and that you accept its terms.
      * @class ImportanceDensity
      * @brief Importance density
      * @author Julien Pontabry
-     * Importance probability density for particle filter
      */
     class ImportanceDensity
     {
@@ -58,11 +56,10 @@ knowledge of the CeCILL-B license and that you accept its terms.
             /**
              * @brief Constructor
              * Importante density need von Mises-Fisher density and Q-ball HS model
-             * @param d von Mises-Fisher density
              * @param model Q-ball HS model of MRI data
              * @param angleThreshold Angle threshold
              */
-            ImportanceDensity(VonMisesFisherDensity d, SHModel *model, Real angleThreshold);
+            ImportanceDensity(SHModel *model, Real angleThreshold);
 
             /**
              * @brief Simulate a direction
@@ -81,7 +78,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
              * @param kappa Concentration of vmf distribution
              * @return Value of probability law corresponding to direction
              */
-            Real compute(Direction vk, Direction mean, Real kappa);
+            Real compute(Direction uk, Direction mean, Real kappa);
 
             /**
              * @brief Compute mean direction
@@ -102,10 +99,11 @@ knowledge of the CeCILL-B license and that you accept its terms.
             Real computeConcentration(Direction mu, Point xk);
 
         private:
-            VonMisesFisherDensity  m_d;     /**< von Mises-Fisher density */
-            SHModel               *m_model; /**< Q-ball HS model of MRI data */
-
+            SHModel *m_model;       /**< Q-ball HS model of MRI data */
             Real m_angleThreshold;  /**< Threshold angle of importance function */
+
+            Real m_2PI;     /**< Precomputed constant */
+            Real m_log4PI;  /**< Precomputed constant */
     };
 
     } // namespace btk

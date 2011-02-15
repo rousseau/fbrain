@@ -44,10 +44,27 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
         class Direction;
 
+        /**
+         * @class Vector
+         * @brief Vector in 3D space
+         * @author Julien Pontabry
+         */
         class Vector : public CartesianCoordinates
         {
             public:
+                /**
+                 * @brief Constructor
+                 * Build a new null vector
+                 */
                 Vector();
+
+                /**
+                 * @brief Constructor
+                 * Build a new vector with the given coordinates
+                 * @param x X-axis coordinate
+                 * @param y Y-axis coordinate
+                 * @param z Z-axis coordinate
+                 */
                 Vector(Real x, Real y, Real z);
 
                 /**
@@ -64,6 +81,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
                 /**
                   * @brief Multiply coordinates by a factor
+                  * @param factor Multiplication factor
                   * @return New coordinates
                   */
                 Vector operator*(Real factor);

@@ -78,6 +78,13 @@ knowledge of the CeCILL-B license and that you accept its terms.
              */
             Real compute(Direction uk, Point xk, Direction mean);
 
+        private:
+            /**
+             * @brief Compute a normal density
+             * @param sigma Standard deviation of the normal density
+             * @param x Variable of the normal density
+             * @return Value of the normal density N(x | 0,sigma)
+             */
 			Real computeNormalDensity(Real sigma, Real x);
 
 
@@ -88,7 +95,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
             std::vector<Direction> *m_directions;    /**< Gradients directions */
             std::vector<Real>      *m_sigmas;        /**< noise's standard deviations */
 
-			Real m_logSqrt2PI;
+			Real m_logSqrt2PI;  /**< Precomputed constant */
     };
 
     } // namespace btk

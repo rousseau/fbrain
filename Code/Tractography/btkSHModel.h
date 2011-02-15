@@ -47,6 +47,11 @@ knowledge of the CeCILL-B license and that you accept its terms.
     namespace btk
     {
 
+    /**
+     * @class SHModel
+     * @brief Continuous model of diffusion
+     * @author Julien Pontabry
+     */
     class SHModel
     {
         public:
@@ -56,6 +61,11 @@ knowledge of the CeCILL-B license and that you accept its terms.
              */
             SHModel(const std::string &filename);
 
+            /**
+             * @brief Constructor
+             * @param model Model image of diffusion
+             * @param originalDirections Gradient directions of the dwi sequence
+             */
             SHModel(Sequence::Pointer model, std::vector<Direction> *originalDirections, char displayMode);
 
             /**
@@ -111,26 +121,37 @@ knowledge of the CeCILL-B license and that you accept its terms.
              */
             std::vector<Direction> getMaxDirectionsAt(Point p);
 
+            /**
+             * @brief Get the origin of the images in space
+             * @return The origin of the space
+             */
             Image::PointType getImageOrigin()
             {
                 return m_model[0]->GetOrigin();
             }
 
+            /**
+             * @brief Get the spacing of the images in space
+             * @return The spacing of the images
+             */
             Image::SpacingType getImageSpacing()
             {
                 return m_model[0]->GetSpacing();
             }
 
+            /**
+             * @brief Get the size of the images in space
+             * @return The size of the images
+             */
             Image::SizeType getImageSize()
             {
                 return m_model[0]->GetLargestPossibleRegion().GetSize();
             }
 
-			std::vector<Direction> &getDirections()
-			{
-				return *m_directions;
-			}
-
+            /**
+             * @brief Get the images' direction in space
+             * @return A matrix of orientation
+             */
             itk::Matrix<Real,3,3> GetDirection()
             {
                 return m_model[0]->GetDirection();
@@ -154,6 +175,9 @@ knowledge of the CeCILL-B license and that you accept its terms.
              */
             void computeSHBasisMatrix();
 
+            /**
+             * @brief Compute SH basis matrix for original gradient directions
+             */
             void computeSHBasisOriMatrix();
 
             /**
@@ -162,10 +186,10 @@ knowledge of the CeCILL-B license and that you accept its terms.
             void buildSharperODFMatrix();
 
         private:
-            Image::Pointer             *m_model;        /**< Data array containing model image */
-            ImageInterpolator::Pointer *m_interp;       /**< Interpolators' images */
-            std::vector<Direction>     *m_directions;   /**< Directions */
-            std::vector<Direction>     *m_originalDirections;
+            Image::Pointer             *m_model;                /**< Data array containing model image */
+            ImageInterpolator::Pointer *m_interp;               /**< Interpolators' images */
+            std::vector<Direction>     *m_directions;           /**< Directions */
+            std::vector<Direction>     *m_originalDirections;   /**< Original gradient directions */
 
             unsigned int m_order;   /**< Order of model */
             unsigned int m_R;       /**< Number of even spherical harmonics basis */
@@ -180,8 +204,8 @@ knowledge of the CeCILL-B license and that you accept its terms.
             Matrix *m_Yori;
             Matrix *m_Sharp; /**< Sharper ODF matrix */
 
-            Real m_4PI;
-            Real m_2PI;
+            Real m_4PI; /**< Precomputed constant */
+            Real m_2PI; /**< Precomputed constant */
 
             char m_displayMode;
     };

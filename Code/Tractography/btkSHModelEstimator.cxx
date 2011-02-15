@@ -41,9 +41,6 @@ knowledge of the CeCILL-B license and that you accept its terms.
 // STL includes
 #include "cmath"
 
-// OpenMP
-//#include "omp.h"
-
 // Local includes
 #include "btkSphericalHarmonics.h"
 
@@ -51,7 +48,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 namespace btk
 {
 
-SHModelEstimator::SHModelEstimator(std::string &signalFileName, std::string &directionsFileName, std::string &maskFileName, unsigned int order, Real lambda)
+SHModelEstimator::SHModelEstimator(const std::string &signalFileName, const std::string &directionsFileName, const std::string &maskFileName, unsigned int order, Real lambda)
 {
     m_directions = 0;
     m_Y          = 0;
@@ -87,7 +84,6 @@ SHModelEstimator::SHModelEstimator(Sequence::Pointer signal, std::vector<Directi
 
 SHModelEstimator::~SHModelEstimator()
 {
-//    delete m_directions;
     delete m_Y;
     delete m_L;
     delete m_Omega;
@@ -206,7 +202,6 @@ void SHModelEstimator::estimate()
 
         Matrix &Omega = *m_Omega;
 
-//        #pragma omp parallel for
         for(unsigned int z=0; z<zMax; z++)
         {
             for(unsigned int x=0; x<xMax; x++)
@@ -216,8 +211,8 @@ void SHModelEstimator::estimate()
                     Mask::IndexType mindex;
                     mindex[0] = x; mindex[1] = y; mindex[2] = z;
 
-//                    if(m_mask->GetPixel(mindex)) // is in mask
-//                    {
+                    if(m_mask->GetPixel(mindex) != 0) // is in mask
+                    {
                         // Define region for signal
                         signalIndex[0] = x; signalIndex[1] = y;
                         signalIndex[2] = z; signalIndex[3] = 0;
@@ -261,7 +256,7 @@ void SHModelEstimator::estimate()
 
                         for(modelIt.GoToBegin(); !modelIt.IsAtEnd(); ++modelIt)
                             modelIt.Set(Cp(i++,0));
-//                    } // if in mask
+                    } // if in mask
                 } // for y
             } // for x
         } // for z
@@ -309,12 +304,10 @@ Sequence::Pointer SHModelEstimator::GetModel()
     return m_model;
 }
 
-void SHModelEstimator::readFiles(std::string &signalFileName, std::string &directionsFileName, std::string &maskFileName)
+void SHModelEstimator::readFiles(const std::string &signalFileName, const std::string &directionsFileName, const std::string &maskFileName)
 {
-    #ifndef NDEBUG
-        assert(!directionsFileName.empty());
-        assert(!signalFileName.empty());
-    #endif // NDEBUG
+    assert(!directionsFileName.empty());
+    assert(!signalFileName.empty());
 
 
     Display1(m_displayMode, std::cout << "Reading data files..." << std::endl);
@@ -384,10 +377,8 @@ void SHModelEstimator::readFiles(std::string &signalFileName, std::string &direc
 
 void SHModelEstimator::computeSHBasisMatrix()
 {
-    #ifndef NDEBUG
-        assert(m_directions);
-        assert(!m_Y);
-    #endif // NDEBUG
+    assert(m_directions);
+    assert(!m_Y);
 
     // Allocate memory space for Y matrix
     m_Y = new Matrix(m_directions->size(), m_R);
@@ -398,7 +389,6 @@ void SHModelEstimator::computeSHBasisMatrix()
     Real _4PI  = 4.0 * M_PI;
 
 
-//    #pragma omp parallel for
     for(unsigned int u=0; u<m_directions->size(); u++)
     {
         unsigned int j = 0;
@@ -421,9 +411,7 @@ void SHModelEstimator::computeSHBasisMatrix()
 
 void SHModelEstimator::computeLaplaceBeltramiMatrix()
 {
-    #ifndef NDEBUG
-        assert(!m_L);
-    #endif // NDEBUG
+    assert(!m_L);
 
     m_L = new Matrix(m_R, m_R);
 
@@ -454,12 +442,10 @@ void SHModelEstimator::computeLaplaceBeltramiMatrix()
 
 void SHModelEstimator::computeOmegaMatrix()
 {
-    #ifndef NDEBUG
-        assert(m_directions);
-        assert(m_Y);
-        assert(m_L);
-        assert(!m_Omega);
-    #endif // NDEBUG
+    assert(m_directions);
+    assert(m_Y);
+    assert(m_L);
+    assert(!m_Omega);
 
     // Allocate memory space for Omega matrix
     m_Omega = new Matrix(m_R, m_directions->size());
