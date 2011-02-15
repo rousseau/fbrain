@@ -28,12 +28,5 @@ TARGET_LINK_LIBRARIES(btkSetStandardCoorSystem ITKIO )
 
 #------------------------------------------------------------------------------
 
-INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Tractography)
-
-ADD_EXECUTABLE(btkFiberODFStreamLineTractography btkFiberODFStreamLineTractography.cxx)
-TARGET_LINK_LIBRARIES(btkFiberODFStreamLineTractography ITKIO vtkHybrid)
-
-#------------------------------------------------------------------------------
-
 ADD_EXECUTABLE(btkNrrdToNifti btkNrrdToNifti.cxx)
 TARGET_LINK_LIBRARIES(btkNrrdToNifti ITKIO)
