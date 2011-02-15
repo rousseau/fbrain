@@ -36,12 +36,9 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 
 // STL includes
+#include "cassert"
 #include "iostream"
 #include "cmath"
-
-#ifndef NDEBUG
-    #include "cassert"
-#endif // NDEBUG
 
 // ITK includes
 #include "itkConstNeighborhoodIterator.h"

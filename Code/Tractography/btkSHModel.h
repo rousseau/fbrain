@@ -148,13 +148,6 @@ knowledge of the CeCILL-B license and that you accept its terms.
                 return m_model[0]->GetLargestPossibleRegion().GetSize();
             }
 
-/*
-			std::vector<Direction> &getDirections()
-			{
-				return *m_directions;
-			}
-			*/
-
             /**
              * @brief Get the images' direction in space
              * @return A matrix of orientation
