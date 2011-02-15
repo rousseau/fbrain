@@ -462,7 +462,7 @@ void ParticleFilter::run(int label, Direction dir)
 
 
                     // Clean space memory
-                    delete intervals;
+                    delete[] intervals;
 
                 } // ESS < m_epsilon
                 else
