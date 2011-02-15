@@ -70,10 +70,10 @@ knowledge of the CeCILL-B license and that you accept its terms.
 namespace btk
 {
 
-ParticleFilter::ParticleFilter(SHModel *model, InitialDensity initial, APrioriDensity aPriori, LikelihoodDensity likelihood, ImportanceDensity importance,
+ParticleFilter::ParticleFilter(SHModel *model, APrioriDensity aPriori, LikelihoodDensity likelihood, ImportanceDensity importance,
                                const std::string maskFileName, Image::SizeType size, Image::PointType origin, Image::SpacingType spacing,
                                unsigned int M, Point x0, Real epsilon, Real stepSize, unsigned int maxLength) :
-        m_initial(initial), m_aPriori(aPriori), m_likelihood(likelihood), m_importance(importance)
+        m_aPriori(aPriori), m_likelihood(likelihood), m_importance(importance)
 {
     std::cout << "\tInitializing filter..." << std::endl;
 
@@ -129,10 +129,10 @@ ParticleFilter::ParticleFilter(SHModel *model, InitialDensity initial, APrioriDe
     std::cout << "\tdone." << std::endl;
 }
 
-ParticleFilter::ParticleFilter(SHModel *model, InitialDensity initial, APrioriDensity aPriori, LikelihoodDensity likelihood, ImportanceDensity importance,
+ParticleFilter::ParticleFilter(SHModel *model, APrioriDensity aPriori, LikelihoodDensity likelihood, ImportanceDensity importance,
                                Mask::Pointer mask, Image::SizeType size, Image::PointType origin, Image::SpacingType spacing,
                                unsigned int M, Point x0, Real epsilon, Real stepSize, char displaMode) :
-        m_initial(initial), m_aPriori(aPriori), m_likelihood(likelihood), m_importance(importance)
+        m_aPriori(aPriori), m_likelihood(likelihood), m_importance(importance)
 {
     m_displayMode = displaMode;
 
@@ -314,7 +314,7 @@ void ParticleFilter::run(int label, Direction dir)
                     Real apriori    = m_aPriori.compute(uk, ukm1);
                     Real importance = m_importance.compute(uk, mu, kappa);
 
-                    weights[i] = std::log(m_cloud[i].weight()) + likelihood + /*std::log(*/apriori/*)*/ - std::log(importance);
+                    weights[i] = std::log(m_cloud[i].weight()) + likelihood + apriori - importance;
                 }
                 else
                 {

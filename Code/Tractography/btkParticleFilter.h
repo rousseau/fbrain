@@ -46,7 +46,6 @@ knowledge of the CeCILL-B license and that you accept its terms.
     #include "btkTypes.h"
     #include "btkPoint.h"
     #include "btkParticle.h"
-    #include "btkInitialDensity.h"
     #include "btkAPrioriDensity.h"
     #include "btkLikelihoodDensity.h"
     #include "btkImportanceDensity.h"
@@ -68,7 +67,6 @@ knowledge of the CeCILL-B license and that you accept its terms.
                 /**
                  * @brief Constructor
                  * @param model Diffusion model
-                 * @param initial Initial density
                  * @param aPriori A priori density
                  * @param likelihood Likelihood density
                  * @param importance Importance density
@@ -82,14 +80,13 @@ knowledge of the CeCILL-B license and that you accept its terms.
                  * @param stepSize Size of each step (norm of vectors)
                  * @param maxLength Maximal length of particles
                  */
-                ParticleFilter(SHModel *model, InitialDensity initial, APrioriDensity aPriori, LikelihoodDensity likelihood, ImportanceDensity importance,
+                ParticleFilter(SHModel *model, APrioriDensity aPriori, LikelihoodDensity likelihood, ImportanceDensity importance,
                                const std::string maskFileName, Image::SizeType size, Image::PointType origin, Image::SpacingType spacing,
                                unsigned int M, Point x0, Real epsilon, Real stepSize, unsigned int maxLength);
 
                 /**
                  * @brief Constructor
                  * @param model Diffusion model
-                 * @param initial Initial density
                  * @param aPriori A priori density
                  * @param likelihood Likelihood density
                  * @param importance Importance density
@@ -102,7 +99,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
                  * @param epsilon Resampling threshold
                  * @param stepSize Size of each step (norm of vectors)
                  */
-                ParticleFilter(SHModel *model, InitialDensity initial, APrioriDensity aPriori, LikelihoodDensity likelihood, ImportanceDensity importance,
+                ParticleFilter(SHModel *model, APrioriDensity aPriori, LikelihoodDensity likelihood, ImportanceDensity importance,
                                Mask::Pointer mask, Image::SizeType size, Image::PointType origin, Image::SpacingType spacing,
                                unsigned int M, Point x0, Real epsilon, Real stepSize, char displaMode);
 
@@ -174,10 +171,9 @@ knowledge of the CeCILL-B license and that you accept its terms.
                 void ComputeFiber(Particle map1, Particle map2);
 
             private:
-                InitialDensity    &m_initial;       /**< Inital density */
-                APrioriDensity    &m_aPriori;       /**< A priori density */
-                LikelihoodDensity &m_likelihood;    /**< Likelihood density */
-                ImportanceDensity &m_importance;    /**< Importance density */
+                APrioriDensity    m_aPriori;       /**< A priori density */
+                LikelihoodDensity m_likelihood;    /**< Likelihood density */
+                ImportanceDensity m_importance;    /**< Importance density */
 
                 Mask::Pointer m_mask;   /**< Image mask */
 

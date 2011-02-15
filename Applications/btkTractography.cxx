@@ -52,9 +52,9 @@
 #include "btkSignalExtractor.h"
 #include "btkSHModel.h"
 #include "btkSHModelEstimator.h"
-#include "btkSHModelDensity.h"
+//#include "btkSHModelDensity.h"
 #include "btkImportanceDensity.h"
-#include "btkInitialDensity.h"
+//#include "btkInitialDensity.h"
 #include "btkAPrioriDensity.h"
 #include "btkLikelihoodDensity.h"
 #include "btkParticleFilter.h"
@@ -194,9 +194,6 @@ int main(int argc, char *argv[])
         labelReader->Update();
         Image::Pointer labelVolume = labelReader->GetOutput();
 
-        // These densities will be used next
-        SHModelDensity modelDensity(modelFun);
-
 
 //        vtkSmartPointer<vtkAppendPolyData> append = vtkSmartPointer<vtkAppendPolyData>::New();
 
@@ -229,7 +226,6 @@ int main(int argc, char *argv[])
 
                     // Set up filter's densities
                     ImportanceDensity importance(modelFun, angleThreshold);
-                    InitialDensity    initial(modelDensity, begin);
                     APrioriDensity    apriori(Kappa);
                     LikelihoodDensity likelihood(signalFun, modelFun);
 
@@ -239,7 +235,7 @@ int main(int argc, char *argv[])
                     Display2(displayMode, std::cout << "\tSeed's world coordinates: (" << worldPoint[0] << "," << worldPoint[1] << "," << worldPoint[2] << ")" << std::endl);
                     Display2(displayMode, std::cout << "\tSeed's image coordinates: (" << index[0] << "," << index[1] << "," << index[2] << ")" << std::endl);
 
-                    ParticleFilter filter(modelFun, initial, apriori, likelihood, importance, mask, signalFun->getSize(), signalFun->getOrigin(), signalFun->getSpacing(), nbOfParticles, begin, epsilon, stepSize, displayMode);
+                    ParticleFilter filter(modelFun, apriori, likelihood, importance, mask, signalFun->getSize(), signalFun->getOrigin(), signalFun->getSpacing(), nbOfParticles, begin, epsilon, stepSize, displayMode);
                     filter.run(label);
 
 
