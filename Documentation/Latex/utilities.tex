@@ -2,5 +2,6 @@
 
 
 \begin{description}
- \item[btkModifyImageUsingLookUpTable] This program modifies one image using a look up table defined in a ascii file (2 columns, one for the original values, one for the final values). Usage: \texttt{-i input\_image\_filename -t input\_table\_filename -o output\_image\_filename}
+  \item[btkModifyImageUsingLookUpTable] This program modifies one image using a look up table defined in a ascii file (2 columns, one for the original values, one for the final values). Usage: \texttt{-i input\_image\_filename -t input\_table\_filename -o output\_image\_filename}
+  \item[btkNrrdToNifti] This program convert an image from Nrrd file (*.nhdr *.nrrd) to a Nifti file (*.nii). The conversion of a DWI image is possible by using the option \texttt{-d}. Usage: \texttt{-i input\_nhdr\_header\_image -o output\_nifti\_image}. Usage for DWI sequence: \texttt{-i input\_nhdr\_header\_image -o output\_nifti\_image -v gradient\_vectors\_filename -d}.
 \end{description}
