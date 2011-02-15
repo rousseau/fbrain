@@ -23,6 +23,11 @@ TARGET_LINK_LIBRARIES(btkReorientDiffusionSequenceToStandard ITKIO )
 
 #------------------------------------------------------------------------------
 
+ADD_EXECUTABLE(btkSetStandardCoorSystem btkSetStandardCoorSystem.cxx )
+TARGET_LINK_LIBRARIES(btkSetStandardCoorSystem ITKIO )
+
+#------------------------------------------------------------------------------
+
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Tractography)
 
 ADD_EXECUTABLE(btkFiberODFStreamLineTractography btkFiberODFStreamLineTractography.cxx)
