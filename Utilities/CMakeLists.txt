@@ -30,3 +30,8 @@ TARGET_LINK_LIBRARIES(btkSetStandardCoorSystem ITKIO )
 
 ADD_EXECUTABLE(btkNrrdToNifti btkNrrdToNifti.cxx)
 TARGET_LINK_LIBRARIES(btkNrrdToNifti ITKIO)
+
+#------------------------------------------------------------------------------
+
+ADD_EXECUTABLE(btkNiftiToNrrd btkNiftiToNrrd)
+TARGET_LINK_LIBRARIES(btkNiftiToNrrd ITKIO)
