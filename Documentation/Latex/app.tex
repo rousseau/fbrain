@@ -35,7 +35,7 @@ The full list of optional parameters of the method can be obtained by
     \subsubsection*{Standard usage}
         Suppose you want to perform a tractography on a diffusion weighted MRI dataset. You should have a dwi image, the corresponding gradient vectors' coordinates, a mask of the brain white matter and a label image of the seeds. Assume this data is stored in files named repsectively for instance \texttt{data.nii.gz}, \texttt{data.bvec}, \texttt{mask.nii.gz} and \texttt{seeds.nii.gz}. The tractography is accomplished by the command below.
             \begin{quote}
-                \texttt{btkTractography -d data.nii.gz -v data.bvec -m mask.nii.gz -l seeds.nii.gz}
+                \texttt{btkTractography -d data.nii.gz -g data.bvec -m mask.nii.gz -l seeds.nii.gz}
             \end{quote}
         When the program terminates its task, the probability connection map and the fibers estimation are saved in files respectively named \texttt{map.nii.gz} and \texttt{fibers.vtk}. The connection map is a volume image of probability intensities (\texttt{i.e.} intensities between 0 and 1) with the same origin, orientation and spacing as the diffusion weighted image. The fibers are polygonal data of VTK library in world coordinates. The standard pipeline of the program is shown in Fig.~\ref{btkTractography-fig:standard-pipeline}.
             \begin{figure}

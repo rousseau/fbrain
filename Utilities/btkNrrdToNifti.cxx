@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
     // Define command line arguments
     TCLAP::ValueArg<std::string> inArg("i", "input", "Input image", true, "", "string", cmd);
     TCLAP::ValueArg<std::string> outArg("o", "output", "Output image", false, "data.nii.gz", "string", cmd);
-    TCLAP::ValueArg<std::string> vecArg("v", "vector", "Output vector", false, "data.bvec", "string", cmd);
+    TCLAP::ValueArg<std::string> vecArg("g", "gradient_vectors", "Output gradient vectors", false, "data.bvec", "string", cmd);
 
     TCLAP::SwitchArg dwiArg("d", "dwi", "DWI image conversion", cmd, false);
 

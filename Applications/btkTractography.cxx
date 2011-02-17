@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
 
             // Defines arguments
             TCLAP::ValueArg<std::string>   dwiArg("d", "dwi", "Dwi sequence", true, "", "string", cmd);
-            TCLAP::ValueArg<std::string>   vecArg("v", "vectors", "Gradient vectors", true, "", "string", cmd);
+            TCLAP::ValueArg<std::string>   vecArg("g", "gradient_vectors", "Gradient vectors", true, "", "string", cmd);
             TCLAP::ValueArg<std::string>  maskArg("m", "mask", "White matter mask", true, "", "string", cmd);
             TCLAP::ValueArg<std::string> labelArg("l", "label", "Label volume of seeds", true, "", "string", cmd);
 
