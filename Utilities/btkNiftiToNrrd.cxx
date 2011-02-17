@@ -64,6 +64,7 @@ int main( int argc, char * argv[] )
   TCLAP::ValueArg<std::string> outputArg("o","output","Sequence in NRRD format",true,"","string",cmd);
 
   TCLAP::SwitchArg  lsssSwitchArg("","lsss","Data organization as list space space space (default is sssl)",cmd,false);
+  TCLAP::SwitchArg  lpsSwitchArg("","lps","Word coordinates in LPS (default is RAS)",cmd,false);
 
   cmd.parse( argc, argv );
 
@@ -230,7 +231,10 @@ int main( int argc, char * argv[] )
   fprintf( fw, "type: short\n");
   fprintf( fw, "dimension: 4\n");
   //TODO How to change space? NrrdIO option?
-  fprintf( fw, "space: left-posterior-superior\n");
+  if ( lpsSwitchArg.isSet() )
+    fprintf( fw, "space: left-posterior-superior\n");
+  else
+    fprintf( fw, "space: right-anterior-superior\n");
 
   if (lsssSwitchArg.isSet())
     fprintf( fw, "sizes: %ld %ld %ld %ld\n", imageSize[3], imageSize[0], imageSize[1], imageSize[2]);
@@ -244,6 +248,12 @@ int main( int argc, char * argv[] )
 
   vnl_matrix<double> nrrdDir;
   nrrdDir = niftiDir.extract(3,3);
+
+  if ( !lpsSwitchArg.isSet() )
+  {
+    nrrdDir.scale_row(0,-1);
+    nrrdDir.scale_row(1,-1);
+  }
 
   vnl_matrix<double> nrrdSpa(3,3);
   nrrdSpa.set_identity();
@@ -274,7 +284,12 @@ int main( int argc, char * argv[] )
   fprintf( fw, "endian: little\n");
   fprintf( fw, "encoding: raw\n");
   fprintf( fw, "space units: \"mm\" \"mm\" \"mm\"\n");
-  fprintf( fw, "space origin: (%lf,%lf,%lf)\n", imageOrigin[0], imageOrigin[1], imageOrigin[2]);
+
+  if ( lpsSwitchArg.isSet() )
+    fprintf( fw, "space origin: (%lf,%lf,%lf)\n", imageOrigin[0], imageOrigin[1], imageOrigin[2]);
+  else
+    fprintf( fw, "space origin: (%lf,%lf,%lf)\n", -imageOrigin[0], -imageOrigin[1], imageOrigin[2]);
+
   fprintf( fw, "data file: %s\n",rawFile_cstr);
   fprintf( fw, "measurement frame: (1,0,0) (0,1,0) (0,0,1)\n");
   fprintf( fw, "modality:=DWMRI\n");
@@ -296,7 +311,10 @@ int main( int argc, char * argv[] )
 
   for ( unsigned int k=0; k < imageSize[3]; k++)
   {
-    fprintf( fw, "DWMRI_gradient_%.4d:=%lf %lf %lf\n",k,gValues[0][k],gValues[1][k],gValues[2][k]);
+    if ( lpsSwitchArg.isSet() )
+      fprintf( fw, "DWMRI_gradient_%.4d:=%lf %lf %lf\n",k,-gValues[0][k],-gValues[1][k],gValues[2][k]);
+    else
+      fprintf( fw, "DWMRI_gradient_%.4d:=%lf %lf %lf\n",k,gValues[0][k],gValues[1][k],gValues[2][k]);
   }
 
   fclose (fw);
