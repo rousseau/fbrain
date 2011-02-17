@@ -703,7 +703,8 @@ void ParticleFilter::ComputeMap()
             {
                 // Get data
                 Point p = m_cloud[m].getPoint(k);
-                Real  w = /*m_cloud[m].getWeight(k)*/1;
+                Real  w = m_cloud[m].getWeight(k);
+//                Real  w = 1;
 
                 // Tri-linear interpolation
                 short x = (short)std::floor(p.x());
