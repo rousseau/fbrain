@@ -2,17 +2,32 @@
 
 
 \begin{description}
-  \item[btkModifyImageUsingLookUpTable] This program modifies one image using a
+
+\item[btkModifyImageUsingLookUpTable] This program modifies one image using a
 look up table defined in a ascii file (2 columns, one for the original values,
 one for the final values). Usage: \texttt{-i input\_image\_filename -t
 input\_table\_filename -o output\_image\_filename}
   
-  \item[btkNrrdToNifti] This program convert an image from Nrrd file (*.nhdr
+
+\item[btkNrrdToNifti] This program convert an image from Nrrd file (*.nhdr
 *.nrrd) to a Nifti file (*.nii). The conversion of a DWI image is possible by
 using the option \texttt{-d}. Usage: \texttt{-i input\_nhdr\_header\_image -o
 output\_nifti\_image}. Usage for DWI sequence: \texttt{-i
 input\_nhdr\_header\_image -o output\_nifti\_image -v
 gradient\_vectors\_filename -d}.
+
+\item[btkNiftiToNrrd] This program convert a diffusion sequence in nifti
+format\footnote{Currently there is no nifti standard for DWI, so DW images are
+saved as a standard nifti sequence and two text files containing the b-values
+(.bval) and the gradient directions (.bvec).} (*.nii, *.nii.gz) to the nrrd
+format (*.nhdr). 
+
+Usage: \texttt{-i input.nii -b bvalues.bval -g gradients.bvec -o output.nhdr
+}
+
+The list of optional parameters can be obtained by \texttt{btkNiftiToNrrd
+--help}
+
   
   \item[btkReorientImageToStandard] Sometimes it is useful
 to reorient the image to the standard orientation. This is necessary with fetal
@@ -75,4 +90,17 @@ data about landmarks (i.e. the lines beginning with \texttt{\#} and text
 \caption{Placement of landmarks by using Slicer. (a) axial slice, (b) 3D view.}
 \label{fig:landmarks}
 \end{figure}
+
+  \item[btkReorientDiffusionSequenceToStandard] Reorients a DW sequence
+to the standard orientation. This is necessary with fetal images since the fetus
+is in a random orientation with respect to the scanner. This is particularly
+important in DWI because colormaps lack of significance, which makes difficult
+the identification of specific bundles 
+
+Usage: \texttt{btkReorientDiffusionSequenceToStandard -i image -g
+gradients.bvec -l landmarks -o output -c gradients\_corr.bvec}.
+
+\texttt{landmarks} is a landmarks file obtained as explained above.
+\texttt{gradients\_corr.bvec} is a text file containing the corrected
+gradient table.
 \end{description}
