@@ -58,10 +58,10 @@ following procedure:
 \item Toogle on the visibility of all slices in the 3D view. This allows to
 identify the left and right sides of the brain in the 2D views.
 \item Place the landmarks $l$, $r$, $p$, and $a$ in this order by using
-Ctrl+p.
-\item Save the file by using the menu File $\rightarrow$ Save.
+\texttt{[p]}.
+\item Save the file (*.fcsv) by using the menu File $\rightarrow$ Save.
 \item Edit the generated file by using any text editor to remove the additional
-data about landmarks.
+data about landmarks (i.e. the lines beginning with \texttt{\#} and text 'around' the coordinates).
 \end{enumerate}
 
 \end{description}
@@ -91,8 +91,6 @@ data about landmarks.
 \end{figure}
 
 \subsection{Tractography}
-    \subsubsection*{The beginner example}
-        
 
     \subsubsection*{Standard usage}
         Suppose you want to perform a tractography on a diffusion weighted MRI dataset. You should have a dwi image, the corresponding gradient vectors' coordinates, a mask of the brain white matter and a label image of the seeds. Assume this data is stored in files named repsectively for instance \texttt{data.nii.gz}, \texttt{data.bvec}, \texttt{mask.nii.gz} and \texttt{seeds.nii.gz}. The tractography is accomplished by the command below.
@@ -137,7 +135,6 @@ data about landmarks.
                 \texttt{-\hspace{0.1mm}-step\_size <length>} \enspace ,
             \end{quote}
         where \texttt{length}$\;\in\mathbb{R}_+^*$. Note that this option is expressed in the voxel unit. The default value is fixed at 0.5 voxel.
-
         By setting a big step size, the particles will move quickly. So the biger is the step, the faster the algorithm will finish, but as shown by Fig.~\ref{tracto-fig:stepSize}, some informations may be missed and the particle's trajectories may overshoot the ground truth, resulting in a bad estimation.
 
         \begin{figure}
@@ -154,7 +151,6 @@ data about landmarks.
                 \texttt{-\hspace{0.1mm}-angular\_threshold <angle>} \enspace ,
             \end{quote}
         where \texttt{angle}$\;\in]0,2\pi[$. The default value is set as a $\tfrac{\pi}{3}$ angle.
-
         As illustrated in two dimensions in Fig.~\ref{tracto-fig:angleThreshold}, an angle threshold is used to define an allowed area for successive sampled directions. This can be seen as a global curvature parameters on trajectories. A small angle defines trajectories with a small curvature. This is a prior information on ground truth trajectory.
 
         \begin{figure}
@@ -171,7 +167,6 @@ data about landmarks.
                 \texttt{-\hspace{0.1mm}-curve\_constraint <rigidity>} \enspace ,
             \end{quote}
         where \texttt{rigidity}$\;\in\mathbb{R}_+^*$. The default value is fixed at 30.
-
         This value correspond to a concentration parameter of a von Mises-Fisher density probability used in the prior density of the system. As Fig.~\ref{tracto-fig:concentration} illustrates locally in two dimensions, a high value leads to a straight trajectory.
 
         \begin{figure}
@@ -188,7 +183,6 @@ data about landmarks.
                 \texttt{-\hspace{0.1mm}-number\_of\_particles <number>} \enspace ,
             \end{quote}
         where \texttt{number}$\;\in\mathbb{N}^*$. By default, the algorithm will use 1000 particles.
-
         A poor number of particles leads to a short computation time and a poor estimation. A large number of particles leads to a long computation time and a good estimation. In general, the default number of particles is a good compromise between computation time and estimation.
 
 
@@ -198,5 +192,4 @@ data about landmarks.
                 \texttt{-\hspace{0.1mm}-resampling\_threshold <percent>} \enspace ,
             \end{quote}
         where \texttt{percent}$\;\in[0,1]$ is the percent of minimal effective particles in the system.
-
         A low threshold value will result in an inefficient algorithm because the particles with low weight are not are not often eliminated. Conversely, a high threshold value leads to a bad estimation because the search space will not be explored enough.
