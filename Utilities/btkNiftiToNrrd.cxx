@@ -52,21 +52,23 @@ int main( int argc, char * argv[] )
 {
   try{
 
-  const char *dwiFile = NULL, *bvalFile = NULL, *bvecFile = NULL, *outputFile = NULL;
+  const char *inputFile = NULL, *bvalFile = NULL, *bvecFile = NULL, *outputFile = NULL;
 
   // Parse arguments
 
-  TCLAP::CmdLine cmd("Estimates the diffusion tensor from nifti dwi sequence", ' ', "Unversioned");
+  TCLAP::CmdLine cmd("Converts a dwi sequence in nifti format to nrrd format", ' ', "Unversioned");
 
-  TCLAP::ValueArg<std::string> dwiArg("d","dwi","DWI Sequence (.nii)",true,"","string",cmd);
+  TCLAP::ValueArg<std::string> inputArg("i","input","DWI Sequence (.nii)",true,"","string",cmd);
   TCLAP::ValueArg<std::string> bvalArg("b","bval","b-values",true,"","string",cmd);
   TCLAP::ValueArg<std::string> bvecArg("g","bvec","Gradient directions",true,"","string",cmd);
   TCLAP::ValueArg<std::string> outputArg("o","output","Sequence in NRRD format",true,"","string",cmd);
 
+  TCLAP::SwitchArg  lsssSwitchArg("","lsss","Data organization as list space space space (default is sssl)",cmd,false);
+  TCLAP::SwitchArg  lpsSwitchArg("","lps","Word coordinates in LPS (default is RAS)",cmd,false);
 
   cmd.parse( argc, argv );
 
-  dwiFile    = dwiArg.getValue().c_str();
+  inputFile  = inputArg.getValue().c_str();
   bvalFile   = bvalArg.getValue().c_str();
   bvecFile   = bvecArg.getValue().c_str();
   outputFile = outputArg.getValue().c_str();
@@ -84,7 +86,7 @@ int main( int argc, char * argv[] )
 
   ReaderType::Pointer reader = ReaderType::New();
 
-  reader -> SetFileName( dwiFile );
+  reader -> SetFileName( inputFile );
   reader -> Update();
 
   ImageType::Pointer image = reader -> GetOutput();
@@ -134,67 +136,80 @@ int main( int argc, char * argv[] )
   fclose (f);
 
 
-// Create vector image
-
-  typedef itk::VectorImage< PixelType, 3 >   VectorImageType;
-  VectorImageType::Pointer nrrdImage = VectorImageType::New();
-  nrrdImage -> SetVectorLength( bValues.size() );
-
-  std::cout << "tamanio de vector = " << bValues.size() << std::endl;
-
-  VectorImageType::IndexType  start;
-  VectorImageType::SizeType   size;
-  VectorImageType::RegionType region;
-
-  ImageType::RegionType niftiRegion = image -> GetLargestPossibleRegion();
-  ImageType::SizeType   niftiSize  = niftiRegion.GetSize();
-  ImageType::IndexType  niftiIndex = niftiRegion.GetIndex();
-
-  start[0] = niftiIndex[0]; start[1] = niftiIndex[1]; start[2] = niftiIndex[2];
-  size[0]  = niftiSize[0];  size[1]  = niftiSize[1];  size[2]  = niftiSize[2];
-
-  region.SetSize( size );
-  region.SetIndex( start );
-
-  nrrdImage -> SetRegions( region );
-  nrrdImage -> Allocate();
-
-
-  // Fill vector image
-
-  typedef itk::ImageRegionIteratorWithIndex< VectorImageType >  IteratorType;
-  IteratorType nrrdIt( nrrdImage, nrrdImage -> GetLargestPossibleRegion() );
-
-  VectorImageType::IndexType nrrdIndex;
-  VectorImageType::PixelType nrrdPixel;
-
-  for( nrrdIt.GoToBegin(); !nrrdIt.IsAtEnd(); ++nrrdIt)
+  if (lsssSwitchArg.isSet())
   {
-    nrrdIndex = nrrdIt.GetIndex();
-    nrrdPixel = nrrdIt.Get();
 
-    niftiIndex[0] = nrrdIndex[0]; niftiIndex[1] = nrrdIndex[1]; niftiIndex[2] = nrrdIndex[2];
+  // Create vector image
 
-    for ( unsigned int k=0; k < nrrdImage -> GetVectorLength(); k++)
+    typedef itk::VectorImage< PixelType, 3 >   VectorImageType;
+    VectorImageType::Pointer nrrdImage = VectorImageType::New();
+    nrrdImage -> SetVectorLength( bValues.size() );
+
+    VectorImageType::IndexType  start;
+    VectorImageType::SizeType   size;
+    VectorImageType::RegionType region;
+
+    start[0] = 0; start[1] = 0; start[2] = 0;
+    size[0]  = imageSize[0];  size[1]  = imageSize[1];  size[2]  = imageSize[2];
+
+    region.SetSize( size );
+    region.SetIndex( start );
+
+    nrrdImage -> SetRegions( region );
+    nrrdImage -> Allocate();
+
+
+    // Fill vector image
+
+    typedef itk::ImageRegionIteratorWithIndex< VectorImageType >  IteratorType;
+    IteratorType nrrdIt( nrrdImage, nrrdImage -> GetLargestPossibleRegion() );
+
+    VectorImageType::IndexType nrrdIndex;
+    VectorImageType::PixelType nrrdPixel;
+    ImageType::IndexType niftiIndex;
+
+    for( nrrdIt.GoToBegin(); !nrrdIt.IsAtEnd(); ++nrrdIt)
     {
-      niftiIndex[3] = k;
-      nrrdPixel[k] = image -> GetPixel( niftiIndex );
+      nrrdIndex = nrrdIt.GetIndex();
+      nrrdPixel = nrrdIt.Get();
+
+      niftiIndex[0] = nrrdIndex[0]; niftiIndex[1] = nrrdIndex[1]; niftiIndex[2] = nrrdIndex[2];
+
+      for ( unsigned int k=0; k < nrrdImage -> GetVectorLength(); k++)
+      {
+        niftiIndex[3] = k;
+        nrrdPixel[k] = image -> GetPixel( niftiIndex );
+
+      }
+
+      nrrdIt.Set( nrrdPixel );
 
     }
 
-    nrrdIt.Set( nrrdPixel );
+    // Write binary data
+    // TODO How to compress data? NrrdIO option?
+
+    typedef itk::ImageFileWriter< VectorImageType > WriterType;
+    WriterType::Pointer writer = WriterType::New();
+
+    writer -> SetInput( nrrdImage );
+    writer -> SetFileName( outputFile );
+    writer -> Update();
 
   }
+  else
+  {
+    // Write binary data
+    // TODO How to compress data? NrrdIO option?
 
-  // Write binary data
-  // TODO How to compress data? NrrdIO option?
+    typedef itk::ImageFileWriter< ImageType > WriterType;
+    WriterType::Pointer writer = WriterType::New();
 
-  typedef itk::ImageFileWriter< ImageType > WriterType;
-  WriterType::Pointer writer = WriterType::New();
+    writer -> SetInput( image );
+    writer -> SetFileName( outputFile );
+    writer -> Update();
 
-  writer -> SetInput( image );
-  writer -> SetFileName( outputFile );
-  writer -> Update();
+  }
 
   // Write header
 
@@ -216,8 +231,16 @@ int main( int argc, char * argv[] )
   fprintf( fw, "type: short\n");
   fprintf( fw, "dimension: 4\n");
   //TODO How to change space? NrrdIO option?
-  fprintf( fw, "space: left-posterior-superior\n");
-  fprintf( fw, "sizes: %ld %ld %ld %ld\n", niftiSize[0], niftiSize[1], niftiSize[2], niftiSize[3]);
+  if ( lpsSwitchArg.isSet() )
+    fprintf( fw, "space: left-posterior-superior\n");
+  else
+    fprintf( fw, "space: right-anterior-superior\n");
+
+  if (lsssSwitchArg.isSet())
+    fprintf( fw, "sizes: %ld %ld %ld %ld\n", imageSize[3], imageSize[0], imageSize[1], imageSize[2]);
+  else
+    fprintf( fw, "sizes: %ld %ld %ld %ld\n", imageSize[0], imageSize[1], imageSize[2], imageSize[3]);
+
   fprintf( fw, "thicknesses: NaN NaN %lf NaN\n", imageSpacing[2]);
 
   vnl_matrix<double> niftiDir;
@@ -226,6 +249,12 @@ int main( int argc, char * argv[] )
   vnl_matrix<double> nrrdDir;
   nrrdDir = niftiDir.extract(3,3);
 
+  if ( !lpsSwitchArg.isSet() )
+  {
+    nrrdDir.scale_row(0,-1);
+    nrrdDir.scale_row(1,-1);
+  }
+
   vnl_matrix<double> nrrdSpa(3,3);
   nrrdSpa.set_identity();
   nrrdSpa(0,0) = imageSpacing[0]; nrrdSpa(1,1) = imageSpacing[1]; nrrdSpa(2,2) = imageSpacing[2];
@@ -233,17 +262,34 @@ int main( int argc, char * argv[] )
   vnl_matrix<double> nrrdSpaDir;
   nrrdSpaDir = nrrdDir * nrrdSpa;
 
-  fprintf( fw, "space directions: (%lf,%lf,%lf) (%lf,%lf,%lf) (%lf,%lf,%lf) none\n",
+  if (lsssSwitchArg.isSet())
+    fprintf( fw, "space directions: none (%lf,%lf,%lf) (%lf,%lf,%lf) (%lf,%lf,%lf)\n",
+           nrrdSpaDir(0,0), nrrdSpaDir(1,0), nrrdSpaDir(2,0),
+           nrrdSpaDir(0,1), nrrdSpaDir(1,1), nrrdSpaDir(2,1),
+           nrrdSpaDir(0,2), nrrdSpaDir(1,2), nrrdSpaDir(2,2) );
+  else
+    fprintf( fw, "space directions: (%lf,%lf,%lf) (%lf,%lf,%lf) (%lf,%lf,%lf) none\n",
            nrrdSpaDir(0,0), nrrdSpaDir(1,0), nrrdSpaDir(2,0),
            nrrdSpaDir(0,1), nrrdSpaDir(1,1), nrrdSpaDir(2,1),
            nrrdSpaDir(0,2), nrrdSpaDir(1,2), nrrdSpaDir(2,2) );
 
+
   fprintf( fw, "centerings: cell cell cell ???\n");
-  fprintf( fw, "kinds: space space space list\n");
+
+  if (lsssSwitchArg.isSet())
+    fprintf( fw, "kinds: list space space space\n");
+  else
+    fprintf( fw, "kinds: space space space list\n");
+
   fprintf( fw, "endian: little\n");
   fprintf( fw, "encoding: raw\n");
   fprintf( fw, "space units: \"mm\" \"mm\" \"mm\"\n");
-  fprintf( fw, "space origin: (%lf,%lf,%lf)\n", imageOrigin[0], imageOrigin[1], imageOrigin[2]);
+
+  if ( lpsSwitchArg.isSet() )
+    fprintf( fw, "space origin: (%lf,%lf,%lf)\n", imageOrigin[0], imageOrigin[1], imageOrigin[2]);
+  else
+    fprintf( fw, "space origin: (%lf,%lf,%lf)\n", -imageOrigin[0], -imageOrigin[1], imageOrigin[2]);
+
   fprintf( fw, "data file: %s\n",rawFile_cstr);
   fprintf( fw, "measurement frame: (1,0,0) (0,1,0) (0,0,1)\n");
   fprintf( fw, "modality:=DWMRI\n");
@@ -263,9 +309,12 @@ int main( int argc, char * argv[] )
 
   fprintf( fw, "DWMRI_b-value:=%d\n",bValues[bValues.size()-1]);
 
-  for ( unsigned int k=0; k < nrrdImage -> GetVectorLength(); k++)
+  for ( unsigned int k=0; k < imageSize[3]; k++)
   {
-    fprintf( fw, "DWMRI_gradient_%.4d:=%lf %lf %lf\n",k,gValues[0][k],gValues[1][k],gValues[2][k]);
+    if ( lpsSwitchArg.isSet() )
+      fprintf( fw, "DWMRI_gradient_%.4d:=%lf %lf %lf\n",k,-gValues[0][k],-gValues[1][k],gValues[2][k]);
+    else
+      fprintf( fw, "DWMRI_gradient_%.4d:=%lf %lf %lf\n",k,gValues[0][k],gValues[1][k],gValues[2][k]);
   }
 
   fclose (fw);
