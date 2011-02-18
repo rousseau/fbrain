@@ -17,6 +17,9 @@ INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Reconstruction)
 ADD_EXECUTABLE(btkImageReconstruction btkImageReconstruction.cxx )
 TARGET_LINK_LIBRARIES(btkImageReconstruction ITKIO ITKNumerics)
 
+#ADD_EXECUTABLE(btkGroupwiseS2SDistortionCorrection btkGroupwiseS2SDistortionCorrection.cxx )
+#TARGET_LINK_LIBRARIES(btkGroupwiseS2SDistortionCorrection ITKIO ITKNumerics ${ANN_LIBRARY})
+
 #------------------------------------------------------------------------------
 
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Tractography)
