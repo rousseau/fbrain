@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
         Image::Pointer labelVolume = labelReader->GetOutput();
 
 
-//        vtkSmartPointer<vtkAppendPolyData> append = vtkSmartPointer<vtkAppendPolyData>::New();
+        vtkSmartPointer<vtkAppendPolyData> append = vtkSmartPointer<vtkAppendPolyData>::New();
 
         Image::Pointer connectMap = Image::New();
         connectMap->SetOrigin(signalFun->getOrigin());
@@ -240,7 +240,7 @@ int main(int argc, char *argv[])
 
 
                     // Save data
-//                    append->AddInput(filter.GetFiber());
+                    append->AddInput(filter.GetFiber());
 
                     ImageIterator out(connectMap, connectMap->GetLargestPossibleRegion());
                     ImageIterator  in(filter.GetConnectionMap(), filter.GetConnectionMap()->GetLargestPossibleRegion());
@@ -291,13 +291,13 @@ int main(int argc, char *argv[])
             std::cout << err << std::endl;
         }
 
-//        // Write fiber polydata
-//        append->Update();
-//        vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
-//        writer->SetInput(append->GetOutput());
-//        writer->SetFileName(outFibersFileName.c_str());
-//        writer->SetFileTypeToBinary();
-//        writer->Write();
+        // Write fiber polydata
+        append->Update();
+        vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
+        writer->SetInput(append->GetOutput());
+        writer->SetFileName(outFibersFileName.c_str());
+        writer->SetFileTypeToBinary();
+        writer->Write();
 
 
     return EXIT_SUCCESS;

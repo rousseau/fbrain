@@ -36,8 +36,6 @@ ADD_EXECUTABLE(btkTractography
         ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalHarmonics.cxx
         ${fbrain_SOURCE_DIR}/Code/Tractography/btkSHModel.cxx
         ${fbrain_SOURCE_DIR}/Code/Tractography/btkSHModelEstimator.cxx
-#        ${fbrain_SOURCE_DIR}/Code/Tractography/btkSHModelDensity.cxx
-#        ${fbrain_SOURCE_DIR}/Code/Tractography/btkInitialDensity.cxx
         ${fbrain_SOURCE_DIR}/Code/Tractography/btkAPrioriDensity.cxx
         ${fbrain_SOURCE_DIR}/Code/Tractography/btkLikelihoodDensity.cxx
         ${fbrain_SOURCE_DIR}/Code/Tractography/btkImportanceDensity.cxx

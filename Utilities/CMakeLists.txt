@@ -33,5 +33,15 @@ TARGET_LINK_LIBRARIES(btkNrrdToNifti ITKIO)
 
 #------------------------------------------------------------------------------
 
-ADD_EXECUTABLE(btkNiftiToNrrd btkNiftiToNrrd)
+ADD_EXECUTABLE(btkNiftiToNrrd btkNiftiToNrrd.cxx)
 TARGET_LINK_LIBRARIES(btkNiftiToNrrd ITKIO)
+
+#------------------------------------------------------------------------------
+
+INSTALL(TARGETS btkModifyImageUsingLookUpTable
+                btkReorientImageToStandard
+                btkReorientDiffusionSequenceToStandard
+                btkSetStandardCoorSystem
+                btkNiftiToNrrd
+                btkNrrdToNifti
+        DESTINATION bin)

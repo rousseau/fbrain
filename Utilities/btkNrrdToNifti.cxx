@@ -184,14 +184,14 @@ int main(int argc, char *argv[])
         itk::Matrix<double,4,4> dirMat;
         itk::Matrix<double,3,3> iniMat = reader->GetOutput()->GetDirection();
 
-        dirMat(0,0) = (iniMat(0,0) != 0 ? -iniMat(0,0) : iniMat(0,0));
-        dirMat(0,1) = (iniMat(0,1) != 0 ? -iniMat(0,1) : iniMat(0,1));
-        dirMat(0,2) = (iniMat(0,2) != 0 ? -iniMat(0,2) : iniMat(0,2));
+        dirMat(0,0) = iniMat(0,0);
+        dirMat(0,1) = iniMat(0,1);
+        dirMat(0,2) = iniMat(0,2);
         dirMat(0,3) = 0;
 
-        dirMat(1,0) = (iniMat(1,0) != 0 ? -iniMat(1,0) : iniMat(1,0));
-        dirMat(1,1) = (iniMat(1,1) != 0 ? -iniMat(1,1) : iniMat(1,1));
-        dirMat(1,2) = (iniMat(1,2) != 0 ? -iniMat(1,2) : iniMat(1,2));
+        dirMat(1,0) = iniMat(1,0);
+        dirMat(1,1) = iniMat(1,1);
+        dirMat(1,2) = iniMat(1,2);
         dirMat(1,3) = 0;
 
         dirMat(2,0) = iniMat(2,0);
@@ -204,8 +204,12 @@ int main(int argc, char *argv[])
         dirMat(3,2) = 0;
         dirMat(3,3) = 1;
 
-        std::cout << "\torientation: (" << dirMat(0,0) << "," << dirMat(0,1) << "," << dirMat(0,2) << "), (" << dirMat(1,0) << "," << dirMat(1,1) << "," << dirMat(1,2) << "), (" << dirMat(2,0) << "," << dirMat(2,1) << "," << dirMat(2,2) << ")" << std::endl;
-
+        // FIXME : the image's orientation seems not to be read in nifti files, although it is correct to nrrd header file.
+        std::cout << "\torientation:" << std::endl;
+        std::cout << "\t(" << dirMat(0,0) << "," << dirMat(0,1) << "," << dirMat(0,2) << "," << dirMat(0,3) << ")" << std::endl;
+        std::cout << "\t(" << dirMat(1,0) << "," << dirMat(1,1) << "," << dirMat(1,2) << "," << dirMat(1,3) << ")" << std::endl;
+        std::cout << "\t(" << dirMat(2,0) << "," << dirMat(2,1) << "," << dirMat(2,2) << "," << dirMat(2,3) << ")" << std::endl;
+        std::cout << "\t(" << dirMat(3,0) << "," << dirMat(3,1) << "," << dirMat(3,2) << "," << dirMat(3,3) << ")" << std::endl;
 
         // Temporary image file
         OutSequence::Pointer image = OutSequence::New();
@@ -342,7 +346,10 @@ int main(int argc, char *argv[])
         dirMat(3,2) = 0;
         dirMat(3,3) = 1;
 
-        std::cout << "\torientation: (" << dirMat(0,0) << "," << dirMat(0,1) << "," << dirMat(0,2) << "), (" << dirMat(1,0) << "," << dirMat(1,1) << "," << dirMat(1,2) << "), (" << dirMat(2,0) << "," << dirMat(2,1) << "," << dirMat(2,2) << ")" << std::endl;
+        std::cout << "\torientation:" << std::endl;
+        std::cout << "\t(" << dirMat(0,0) << "," << dirMat(0,1) << "," << dirMat(0,2) << ")" << std::endl;
+        std::cout << "\t(" << dirMat(1,0) << "," << dirMat(1,1) << "," << dirMat(1,2) << ")" << std::endl;
+        std::cout << "\t(" << dirMat(2,0) << "," << dirMat(2,1) << "," << dirMat(2,2) << ")" << std::endl;
 
         // Temporary image file
         Image::Pointer image = Image::New();

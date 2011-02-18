@@ -9,7 +9,7 @@ one for the final values). Usage: \texttt{-i input\_image\_filename -t
 input\_table\_filename -o output\_image\_filename}
   
 
-\item[btkNrrdToNifti] This program convert an image from Nrrd file (*.nhdr *.nrrd) to a Nifti file (*.nii). The conversion of a DWI image is possible by using the option \texttt{-d}. Usage: \texttt{-i input.nhdr -o output.nii.gz}. Usage for DWI sequence: \texttt{-i input.nhdr -o output.nii.gz -g gradients.bvec -d}.
+\item[btkNrrdToNifti] This program convert an image from Nrrd file (*.nhdr and *.nrrd) to a Nifti file (*.nii or *.nii.gz). The conversion of a DWI image is possible by using the option \texttt{-d}. Usage: \texttt{-i input.nhdr -o output.nii.gz}. Usage for DWI sequence: \texttt{-i input.nhdr -o output.nii.gz -g gradients.bvec -d}.
 
 \item[btkNiftiToNrrd] This program convert a diffusion sequence in nifti
 format\footnote{Currently there is no nifti standard for DWI, so DW images are

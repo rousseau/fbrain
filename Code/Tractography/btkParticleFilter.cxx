@@ -54,6 +54,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "vtkColorTransferFunction.h"
 #include "vtkDoubleArray.h"
 #include "vtkPointData.h"
+#include "vtkAppendPolyData.h"
 
 // ITK includes
 #include "itkImageRegionIteratorWithIndex.h"
@@ -615,49 +616,80 @@ Particle ParticleFilter::GetMAP()
 void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
 {
     // VTK structures
-    vtkSmartPointer<vtkPoints> points   = vtkSmartPointer<vtkPoints>::New();
-    vtkSmartPointer<vtkCellArray> lines = vtkSmartPointer<vtkCellArray>::New();
+    vtkSmartPointer<vtkAppendPolyData> append = vtkSmartPointer<vtkAppendPolyData>::New();
+
+    vtkSmartPointer<vtkPolyData> fiber1       = vtkSmartPointer<vtkPolyData>::New();
+    vtkSmartPointer<vtkPoints> points1        = vtkSmartPointer<vtkPoints>::New();
+    vtkSmartPointer<vtkCellArray> lines1      = vtkSmartPointer<vtkCellArray>::New();
+
+    vtkSmartPointer<vtkPolyData> fiber2       = vtkSmartPointer<vtkPolyData>::New();
+    vtkSmartPointer<vtkPoints> points2        = vtkSmartPointer<vtkPoints>::New();
+    vtkSmartPointer<vtkCellArray> lines2      = vtkSmartPointer<vtkCellArray>::New();
+
     vtkIdType pid[1];
 
 
-    // Build fiber with the MAP estimate
+    // Build fiber with the MAP estimate in world coordinates
 
     Point x0 = map1.getPoint(0);
-    points->InsertNextPoint(x0.x()*m_spacing[0] + m_origin[0], x0.y()*m_spacing[1] + m_origin[1], x0.z()*m_spacing[2] + m_origin[2]);
+    ImageContinuousIndex cix0;
+    cix0[0] = x0.x(); cix0[1] = x0.y(); cix0[2] = x0.z();
+    Image::PointType wx0;
+    m_map->TransformContinuousIndexToPhysicalPoint(cix0, wx0);
+    points1->InsertNextPoint(wx0[0], wx0[1], wx0[2]);
 
     for(unsigned int k=1; k<map1.length(); k++)
     {
         Point p = map1.getPoint(k);
 
         vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
-        pid[0] = points->InsertNextPoint(p.x()*m_spacing[0] + m_origin[0], p.y()*m_spacing[1] + m_origin[1], p.z()*m_spacing[2] + m_origin[2]);
+
+        ImageContinuousIndex cip;
+        cip[0] = p.x(); cip[1] = p.y(); cip[2] = p.z();
+        Image::PointType wp;
+        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp);
+        pid[0] = points1->InsertNextPoint(wp[0], wp[1], wp[2]);
 
         line->GetPointIds()->SetId(0, pid[0]-1);
         line->GetPointIds()->SetId(1, pid[0]);
-        lines->InsertNextCell(line);
+        lines1->InsertNextCell(line);
     }
 
+    fiber1->SetPoints(points1);
+    fiber1->SetLines(lines1);
 
-    x0 = map2.getPoint(0);
-    points->InsertNextPoint(x0.x()*m_spacing[0] + m_origin[0], x0.y()*m_spacing[1] + m_origin[1], x0.z()*m_spacing[2] + m_origin[2]);
+
+    x0 = map1.getPoint(0);
+    cix0[0] = x0.x(); cix0[1] = x0.y(); cix0[2] = x0.z();
+    m_map->TransformContinuousIndexToPhysicalPoint(cix0, wx0);
+    points2->InsertNextPoint(wx0[0], wx0[1], wx0[2]);
 
     for(unsigned int k=1; k<map2.length(); k++)
     {
-        Point p = map2.getPoint(k);
+        Point p = map1.getPoint(k);
 
         vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
-        pid[0] = points->InsertNextPoint(p.x()*m_spacing[0] + m_origin[0], p.y()*m_spacing[1] + m_origin[1], p.z()*m_spacing[2] + m_origin[2]);
+
+        ImageContinuousIndex cip;
+        cip[0] = p.x(); cip[1] = p.y(); cip[2] = p.z();
+        Image::PointType wp;
+        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp);
+        pid[0] = points2->InsertNextPoint(wp[0], wp[1], wp[2]);
 
         line->GetPointIds()->SetId(0, pid[0]-1);
         line->GetPointIds()->SetId(1, pid[0]);
-        lines->InsertNextCell(line);
+        lines2->InsertNextCell(line);
     }
+
+    fiber2->SetPoints(points2);
+    fiber2->SetLines(lines2);
 
 
     // create vtk polydata object
-    m_fiber = vtkSmartPointer<vtkPolyData>::New();
-    m_fiber->SetPoints(points);
-    m_fiber->SetLines(lines);
+    append->AddInput(fiber1);
+    append->AddInput(fiber2);
+    append->Update();
+    m_fiber = append->GetOutput();
 }
 
 void ParticleFilter::saveFiber(int label, unsigned int step, Point begin)
