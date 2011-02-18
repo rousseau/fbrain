@@ -42,6 +42,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
     #include "itkImageFileWriter.h"
     #include "itkBSplineInterpolateImageFunction.h"
     #include "itkVariableSizeMatrix.h"
+    #include "itkContinuousIndex.h"
 
     // STL includes
     #include "cfloat"
@@ -175,6 +176,11 @@ knowledge of the CeCILL-B license and that you accept its terms.
          * DWI image's interpolator.
          */
         typedef itk::BSplineInterpolateImageFunction<Image, Real, Real> ImageInterpolator;
+
+        /**
+         * Dwi image's continuous index.
+         */
+         typedef itk::ContinuousIndex<Real,ImageDimension> ImageContinuousIndex;
 
 
         /**
