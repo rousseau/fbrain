@@ -19,6 +19,14 @@ FIND_PACKAGE(VTK REQUIRED)
 MESSAGE(STATUS "VTK package found")
 INCLUDE(${VTK_USE_FILE})
 
+# Find ANN
+FIND_PACKAGE(ANN REQUIRED)
+IF(ANN_FOUND)
+ELSE(ANN_FOUND)
+  MESSAGE(FATAL_ERROR
+          "ANN not found. Please perform installation.")
+ENDIF(ANN_FOUND)
+
 # Find TCLAP
 MESSAGE(STATUS "Check for TCLAP")
 FIND_PATH(TCLAP_DIRECTORY CmdLine.h /usr/include/tclap)

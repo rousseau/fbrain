@@ -101,8 +101,8 @@ public:
   typedef  std::vector<TransformPointer>            TransformPointerArray;
 
 
-  typedef itk::RigidRegistration< ImageType >       RigidRegistrationType;
-  typedef itk::AffineRegistration< ImageType >      AffineRegistrationType;
+  typedef RigidRegistration< ImageType >       RigidRegistrationType;
+  typedef AffineRegistration< ImageType >      AffineRegistrationType;
 
   typedef vnl_matrix<double> VnlMatrixType;
   typedef itk::Matrix<double,3,3> MatrixType;

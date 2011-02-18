@@ -89,6 +89,8 @@ public:
 namespace btk
 {
 
+using namespace itk;
+
 /** \class AffineRegistration
  * \brief Describe the class briefly here.
  *
