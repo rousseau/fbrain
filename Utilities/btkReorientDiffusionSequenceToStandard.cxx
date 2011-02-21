@@ -56,6 +56,10 @@
 
 #include "vnl/vnl_inverse.h"
 
+// Local includes
+#include "btkLandmarksFileReader.h"
+
+
 int main( int argc, char *argv[] )
 {
 
@@ -98,7 +102,7 @@ int main( int argc, char *argv[] )
 
 
   // Read landmarks
-
+/*
   FILE* fr;
   fr = fopen( lmksFile, "r" );
 
@@ -110,6 +114,18 @@ int main( int argc, char *argv[] )
   fscanf( fr, "%lf %lf %lf\n", &apt_ras[0], &apt_ras[1], &apt_ras[2]);
 
   fclose (fr);
+//*/
+
+    btk::btkLandmarksFileReader::Pointer landRead = btk::btkLandmarksFileReader::New();
+    landRead->SetInputFileName(lmksFile);
+    landRead->Update();
+
+    double *lpt_ras = landRead->GetOutputLPT();
+    double *rpt_ras = landRead->GetOutputRPT();
+    double *apt_ras = landRead->GetOutputPPT();
+    double *ppt_ras = landRead->GetOutputAPT();
+
+//std::cout << "lpt_ras = " << lpt_ras[0] << "," << lpt_ras[1] << "," << lpt_ras[2] << " | rpt_ras = " << rpt_ras[0] << "," << rpt_ras[1] << "," << rpt_ras[2] << " | apt_ras = " << apt_ras[0] << "," << apt_ras[1] << "," << apt_ras[2] << " | ppt_ras = " << ppt_ras[0] << "," << ppt_ras[1] << "," << ppt_ras[2] << std::endl;
 
   // Compute rotation matrix
 

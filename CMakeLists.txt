@@ -7,19 +7,18 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp  ")
 
 #------------------------------------------------------------------------------
 
-# Find ITK.
+# Find ITK
+MESSAGE(STATUS "Check for ITK package")
 FIND_PACKAGE(ITK REQUIRED)
-IF(ITK_FOUND)
-  INCLUDE(${ITK_USE_FILE})
-ENDIF(ITK_FOUND)
+INCLUDE(${ITK_USE_FILE})
 
 # Find VTK package
 MESSAGE(STATUS "Check for VTK package")
 FIND_PACKAGE(VTK REQUIRED)
-MESSAGE(STATUS "VTK package found")
 INCLUDE(${VTK_USE_FILE})
 
 # Find ANN
+MESSAGE(STATUS "Check for ANN package")
 FIND_PACKAGE(ANN REQUIRED)
 IF(ANN_FOUND)
 ELSE(ANN_FOUND)

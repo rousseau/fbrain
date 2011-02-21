@@ -21,8 +21,11 @@ TARGET_LINK_LIBRARIES(btkReorientImageToStandard ITKCommon ITKIO)
 
 #------------------------------------------------------------------------------
 
-ADD_EXECUTABLE(btkReorientDiffusionSequenceToStandard btkReorientDiffusionSequenceToStandard.cxx )
-TARGET_LINK_LIBRARIES(btkReorientDiffusionSequenceToStandard ITKIO )
+ADD_EXECUTABLE(btkReorientDiffusionSequenceToStandard btkReorientDiffusionSequenceToStandard.cxx
+        ${fbrain_SOURCE_DIR}/Code/Various/btkLandmarksFileReader.cxx
+)
+
+TARGET_LINK_LIBRARIES(btkReorientDiffusionSequenceToStandard ITKCommon ITKIO)
 
 #------------------------------------------------------------------------------
 
