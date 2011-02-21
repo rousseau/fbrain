@@ -12,6 +12,7 @@ TARGET_LINK_LIBRARIES(btkNLMDenoising ITKIO)
 
 #------------------------------------------------------------------------------
 
+INCLUDE_DIRECTORIES(${ANN_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Reconstruction)
 
 ADD_EXECUTABLE(btkImageReconstruction btkImageReconstruction.cxx )
