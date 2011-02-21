@@ -53,6 +53,8 @@ TARGET_LINK_LIBRARIES(btkTractography ITKCommon ITKIO vtkHybrid)
 
 INSTALL(TARGETS btkNLMDenoising
                 btkImageReconstruction
+                btkGroupwiseS2SDistortionCorrection
+                btkRBFInterpolationS2S
                 btkTractography
         DESTINATION bin)
 

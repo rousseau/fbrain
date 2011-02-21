@@ -1,9 +1,13 @@
 PROJECT(fbrain)
 
 cmake_minimum_required(VERSION 2.6)
-OPTION(USE_OMP "Use OpenMP" ON)
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp  ")
+#------------------------------------------------------------------------------
+
+OPTION(USE_OMP "Use OpenMP" ON)
+IF(USE_OMP)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp  ")
+ENDIF(USE_OMP)
 
 #------------------------------------------------------------------------------
 
@@ -18,25 +22,25 @@ FIND_PACKAGE(VTK REQUIRED)
 INCLUDE(${VTK_USE_FILE})
 
 # Find ANN
-MESSAGE(STATUS "Check for ANN package")
-FIND_PACKAGE(ANN REQUIRED)
-IF(ANN_FOUND)
-ELSE(ANN_FOUND)
-  MESSAGE(FATAL_ERROR
-          "ANN not found. Please perform installation.")
-ENDIF(ANN_FOUND)
+MESSAGE(STATUS "Check for ANN library")
+FIND_LIBRARY(ANN_LIBRARY ANN)
+IF(ANN_LIBRARY-NOTFOUND)
+    MESSAGE(FATAL_ERROR "ANN library not found !")
+ENDIF(ANN_LIBRARY-NOTFOUND)
+MESSAGE(STATUS "Check for ANN headers")
+FIND_PATH(ANN_INCLUDE_DIR ANN.h /usr/include/ANN)
+IF(ANN_LIBRARY-NOTFOUND)
+    MESSAGE(FATAL_ERROR "ANN headers not found !")
+ENDIF(ANN_LIBRARY-NOTFOUND)
 
 # Find TCLAP
 MESSAGE(STATUS "Check for TCLAP")
 FIND_PATH(TCLAP_DIRECTORY CmdLine.h /usr/include/tclap)
-
 IF(TCLAP_DIRECTORY-NOTFOUND)
   MESSAGE(FATAL_ERROR "TCLAP not found !")
 ENDIF(TCLAP_DIRECTORY-NOTFOUND)
 
 #------------------------------------------------------------------------------
-
-#SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/bin")
 
 SUBDIRS(
   Utilities

@@ -53,7 +53,7 @@
 #include "ludcmp.h"
 #include "interp_rbf_nr.h"
 
-#include "ANN/ANN.h"
+#include "ANN.h"
 
 namespace btk
 {

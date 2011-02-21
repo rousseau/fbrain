@@ -55,4 +55,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkSetStandardCoorSystem
                 btkNiftiToNrrd
                 btkNrrdToNifti
+                btkDWIBaselineImageExtractor
         DESTINATION bin)
