@@ -37,6 +37,7 @@
 #include "btkLandmarksFileReader.h"
 
 // STL includes
+#include "iostream"
 #include "fstream"
 #include "cctype"
 #include "cstdlib"
@@ -110,6 +111,8 @@ void btkLandmarksFileReader::Update()
                     {
                         std::cout << "Error: There is a mistake in the landmarks file !" << std::endl;
                     }
+                    else
+                        found++;
                 }
             }
         }
@@ -168,7 +171,7 @@ bool btkLandmarksFileReader::IsNumber(const std::string &string)
 
     while(isNumber && i<string.size())
     {
-        if(!std::isdigit(string[i]) && string[i] != '.')
+        if(!std::isdigit(string[i]) && string[i] != '.' && string[i] != '-')
             isNumber = false;
 
         i++;

@@ -40,6 +40,7 @@
 
 // ITK includes
 #include "itkMacro.h"
+#include "itkObjectFactory.h"
 #include "itkLightObject.h"
 #include "itkSmartPointer.h"
 
@@ -72,8 +73,8 @@ namespace btk
             btkLandmarksFileReader();
 
         private:
-            int SplitString(std::string &string, char separator, std::vector<std::string> &strings);
-            bool IsNumber(const std::string &string);
+            inline int SplitString(std::string &string, char separator, std::vector<std::string> &strings);
+            inline bool IsNumber(const std::string &string);
 
         private:
             std::string m_filename;
