@@ -146,7 +146,7 @@ double *btkLandmarksFileReader::GetOutputAPT()
     return m_apt;
 }
 
-int btkLandmarksFileReader::SplitString(std::string &string, char separator, std::vector<std::string> &strings)
+inline int btkLandmarksFileReader::SplitString(std::string &string, char separator, std::vector<std::string> &strings)
 {
     strings.clear();
 
@@ -164,7 +164,7 @@ int btkLandmarksFileReader::SplitString(std::string &string, char separator, std
     return strings.size();
 }
 
-bool btkLandmarksFileReader::IsNumber(const std::string &string)
+inline bool btkLandmarksFileReader::IsNumber(const std::string &string)
 {
     bool isNumber  = true;
     unsigned int i = 0;
