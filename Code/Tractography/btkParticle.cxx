@@ -98,12 +98,17 @@ Vector Particle::lastVector() const
 
 void Particle::SetLastVector(Vector v)
 {
-	m_vectors[m_vectors.size()-1] = v;
+    unsigned int size = m_vectors.size();
+
+    if(size > 0)
+        m_vectors[m_vectors.size()-1] = v;
+    else
+        m_vectors.push_back(v);
 }
 
 Point Particle::getPoint(unsigned int i) const
 {
-    assert(i>=0 && i<m_points.size());
+    assert(0<=i && i<m_points.size());
 
     return m_points[i];
 }

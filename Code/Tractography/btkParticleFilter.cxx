@@ -338,7 +338,7 @@ void ParticleFilter::run(int label, Direction dir)
 
             for(unsigned int i=0; i<m_M; i++)
             {
-                if(std::isfinite(weights[i]) && min > weights[i])
+                if(m_cloud[i].isActive() && std::isfinite(weights[i]) && min > weights[i])
                     min = weights[i];
             } // for each particle
 
@@ -356,16 +356,19 @@ void ParticleFilter::run(int label, Direction dir)
 
             for(unsigned int i=0; i<m_M; i++)
             {
-                if(std::isfinite(weights[i]))
-                    weights[i] += shift;
-                else // infinite number
-                    weights[i] = 0;
+                if(m_cloud[i].isActive())
+                {
+                    if(std::isfinite(weights[i]))
+                        weights[i] += shift;
+                    else // infinite number
+                        weights[i] = 0;
 
-                #ifndef NODISPLAY
-                    std::cerr << "w[" << i << "] = " << weights[i] << std::endl;
-                #endif // NODISPLAY
+                    #ifndef NODISPLAY
+                        std::cerr << "w[" << i << "] = " << weights[i] << std::endl;
+                    #endif // NODISPLAY
 
-                sum += weights[i];
+                    sum += weights[i];
+                }
             } // for each particle
 
             #ifndef NODISPLAY
@@ -441,7 +444,8 @@ void ParticleFilter::run(int label, Direction dir)
                         bool found = false;
                         unsigned int i = 0;
 
-                        do {
+                        do
+                        {
                             if(x < intervals[i])
                                 found = true;
                             else
