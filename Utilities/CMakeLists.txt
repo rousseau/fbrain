@@ -5,6 +5,7 @@ INCLUDE_REGULAR_EXPRESSION("^.*$")
 
 INCLUDE_DIRECTORIES(${TCLAP_DIRECTORY})
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/DTI)
+INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Various)
 
 #------------------------------------------------------------------------------
 
@@ -13,8 +14,10 @@ TARGET_LINK_LIBRARIES(btkModifyImageUsingLookUpTable ITKIO )
 
 #------------------------------------------------------------------------------
 
-ADD_EXECUTABLE(btkReorientImageToStandard btkReorientImageToStandard.cxx )
-TARGET_LINK_LIBRARIES(btkReorientImageToStandard ITKIO )
+ADD_EXECUTABLE(btkReorientImageToStandard btkReorientImageToStandard.cxx
+        ${fbrain_SOURCE_DIR}/Code/Various/btkLandmarksFileReader.cxx
+)
+TARGET_LINK_LIBRARIES(btkReorientImageToStandard ITKCommon ITKIO)
 
 #------------------------------------------------------------------------------
 
