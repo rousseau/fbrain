@@ -44,6 +44,11 @@ TARGET_LINK_LIBRARIES(btkNiftiToNrrd ITKIO)
 
 #------------------------------------------------------------------------------
 
+ADD_EXECUTABLE(btkDWIBaselineImageExtractor btkDWIBaselineImageExtractor.cxx)
+TARGET_LINK_LIBRARIES(btkDWIBaselineImageExtractor ITKIO)
+
+#------------------------------------------------------------------------------
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkReorientImageToStandard
                 btkReorientDiffusionSequenceToStandard
