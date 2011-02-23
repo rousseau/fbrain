@@ -129,6 +129,12 @@ knowledge of the CeCILL-B license and that you accept its terms.
                 unsigned int length() const;
 
                 /**
+                 * @brief Get number of points in path
+                 * @return Particle's path length
+                 */
+                unsigned int numberOfPoints() const;
+
+                /**
                  * @brief Get if this particle is active
                  * @return True if particle is active, false otherwise
                  */

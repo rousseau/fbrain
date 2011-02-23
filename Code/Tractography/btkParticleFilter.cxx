@@ -223,12 +223,18 @@ void ParticleFilter::run(int label)
     //
 
     this->run(label, maxDir);
+//    std::cerr << "run 1 finished." << std::endl;
     this->ComputeMap();
+//    std::cerr << "ComputeMap 1 finished." << std::endl;
     Particle map1 = this->GetMAP();
+//    std::cerr << "GetMAP 1 finished." << std::endl;
 
     this->run(label, symDir);
+//    std::cerr << "run 2 finished." << std::endl;
     this->ComputeMap();
+//    std::cerr << "ComputeMap 2 finished." << std::endl;
     Particle map2 = this->GetMAP();
+//    std::cerr << "GetMAP 2 finished." << std::endl;
 
     this->ComputeFiber(map1,map2);
 }
@@ -614,7 +620,7 @@ Particle ParticleFilter::GetMAP()
 	} // for each step k
 
 	return map;
-*/
+//*/
 }
 
 void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
@@ -735,7 +741,7 @@ void ParticleFilter::ComputeMap()
 
         for(unsigned int m=0; m<m_M; m++)
         {
-            if(k <= m_cloud[m].length())
+            if(k < m_cloud[m].numberOfPoints())
             {
                 // Get data
                 Point p = m_cloud[m].getPoint(k);

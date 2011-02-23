@@ -108,21 +108,25 @@ void Particle::SetLastVector(Vector v)
 
 Point Particle::getPoint(unsigned int i) const
 {
-    assert(0<=i && i<m_points.size());
+//    Pr(i); Pr(this->length()); Pr(m_points.size());
+    assert(i>=0);
+    assert(i<m_points.size());
 
     return m_points[i];
 }
 
 Vector Particle::getVector(unsigned int i) const
 {
-    assert(i>=0 && i<m_vectors.size());
+    assert(i>=0);
+    assert(i<m_vectors.size());
 
     return m_vectors[i];
 }
 
 Real Particle::getWeight(unsigned int i) const
 {
-    assert(i>=0 && i<m_weight.size());
+    assert(i>=0);
+    assert(i<m_weight.size());
 
     return m_weight[i];
 }
@@ -130,6 +134,11 @@ Real Particle::getWeight(unsigned int i) const
 unsigned int Particle::length() const
 {
     return m_vectors.size();
+}
+
+unsigned int Particle::numberOfPoints() const
+{
+    return m_points.size();
 }
 
 bool Particle::isActive()
