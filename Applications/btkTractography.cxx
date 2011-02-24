@@ -217,11 +217,18 @@ int main(int argc, char *argv[])
             {
                 Image::IndexType index = it.GetIndex();
 
+                itk::Point<Real,3> worldPoint;
+                labelVolume->TransformIndexToPhysicalPoint(index, worldPoint);
+
+                Mask::IndexType maskIndex;
+                mask->TransformPhysicalPointToIndex(worldPoint, maskIndex);
+
                 // If the seed is not in the mask, there is no need to continue this one
-                if(mask->GetPixel(index) != 0)
+//                if(mask->GetPixel(index) != 0)
+                if(mask->GetPixel(maskIndex) != 0)
                 {
-                    itk::Point<Real,3> worldPoint;
-                    labelVolume->TransformIndexToPhysicalPoint(index,worldPoint);
+//                    itk::Point<Real,3> worldPoint;
+//                    labelVolume->TransformIndexToPhysicalPoint(index,worldPoint);
                     Point begin(worldPoint[0], worldPoint[1], worldPoint[2]);
 
                     // Set up filter's densities
@@ -233,7 +240,8 @@ int main(int argc, char *argv[])
                     // Let's start filtering
                     Display1(displayMode, std::cout << "Filtering label " << label << "..." << std::endl);
                     Display2(displayMode, std::cout << "\tSeed's world coordinates: (" << worldPoint[0] << "," << worldPoint[1] << "," << worldPoint[2] << ")" << std::endl);
-                    Display2(displayMode, std::cout << "\tSeed's image coordinates: (" << index[0] << "," << index[1] << "," << index[2] << ")" << std::endl);
+//                    Display2(displayMode, std::cout << "\tSeed's image coordinates: (" << index[0] << "," << index[1] << "," << index[2] << ")" << std::endl);
+                    Display2(displayMode, std::cout << "\tSeed's image coordinates: (" << maskIndex[0] << "," << maskIndex[1] << "," << maskIndex[2] << ")" << std::endl);
 
                     ParticleFilter filter(modelFun, apriori, likelihood, importance, mask, signalFun->getSize(), signalFun->getOrigin(), signalFun->getSpacing(), nbOfParticles, begin, epsilon, stepSize, displayMode);
                     filter.run(label);
