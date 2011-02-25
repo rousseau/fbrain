@@ -182,6 +182,9 @@ knowledge of the CeCILL-B license and that you accept its terms.
                 unsigned int m_M;           /**< Number of particles */
                 Real         m_epsilon;     /**< Resampling threshold */
                 Real         m_stepSize;    /**< Size of steps */
+                Real         m_kx;          /**< Step size for x axis */
+                Real         m_ky;          /**< Step size for y axis */
+                Real         m_kz;          /**< Step size for z axis */
                 unsigned int m_maxLength;   /**< Maximal length of particles */
 
                 Image::PointType   m_origin;
@@ -197,6 +200,8 @@ knowledge of the CeCILL-B license and that you accept its terms.
                 unsigned int m_dirNum; /**< Current direction number */
 
                 char m_displayMode;
+
+                std::vector<Real> m_vStepSize;
         };
 
     } // namespace btk

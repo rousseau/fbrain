@@ -68,6 +68,11 @@ Vector Vector::operator*(Real factor)
     return Vector(this->x()*factor, this->y()*factor, this->z()*factor);
 }
 
+Vector Vector::operator*(std::vector<Real> factors)
+{
+    return Vector(m_x*factors[0], m_y*factors[1], m_z*factors[2]);
+}
+
 Real Vector::angleWith(Vector v)
 {
     Real normThis = std::sqrt( this->x()*this->x() + this->y()*this->y() + this->z()*this->z() );

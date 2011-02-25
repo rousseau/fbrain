@@ -87,6 +87,13 @@ ParticleFilter::ParticleFilter(SHModel *model, APrioriDensity aPriori, Likelihoo
     m_spacing   = spacing;
     m_model     = model;
     m_dirNum    = 1;
+    m_kx        = m_stepSize/m_spacing[0];
+    m_ky        = m_stepSize/m_spacing[1];
+    m_kz        = m_stepSize/m_spacing[2];
+
+    m_vStepSize.push_back(m_kx);
+    m_vStepSize.push_back(m_ky);
+    m_vStepSize.push_back(m_kz);
 
     std::cout << "\t\tFilter will use " << M << " particles." << std::endl;
     std::cout << "\t\tResampling treshold is set as " << epsilon << "." << std::endl;
@@ -148,6 +155,13 @@ ParticleFilter::ParticleFilter(SHModel *model, APrioriDensity aPriori, Likelihoo
     m_spacing   = spacing;
     m_model     = model;
     m_dirNum    = 1;
+    m_kx        = m_stepSize/m_spacing[0];
+    m_ky        = m_stepSize/m_spacing[1];
+    m_kz        = m_stepSize/m_spacing[2];
+
+    m_vStepSize.push_back(m_kx);
+    m_vStepSize.push_back(m_ky);
+    m_vStepSize.push_back(m_kz);
 
 
     Display2(m_displayMode, std::cout << "\t\tFilter will use " << M << " particles." << std::endl);
@@ -264,7 +278,7 @@ void ParticleFilter::run(int label, Direction dir)
         v0.Normalize();
 
         // Move particle
-        bool isInside = m_cloud[i].addToPath(v0*m_stepSize, m_mask);
+        bool isInside = m_cloud[i].addToPath(v0*m_vStepSize, m_mask);
 
         // Set the initial weight of the particle
         if(isInside)
@@ -320,7 +334,7 @@ void ParticleFilter::run(int label, Direction dir)
                 vk.Normalize();
 
                 // Move particle
-                bool isInside = m_cloud[i].addToPath(vk*m_stepSize, m_mask);
+                bool isInside = m_cloud[i].addToPath(vk*m_vStepSize, m_mask);
 
                 if(isInside)
                 {

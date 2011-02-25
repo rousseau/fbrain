@@ -87,6 +87,15 @@ knowledge of the CeCILL-B license and that you accept its terms.
                 Vector operator*(Real factor);
 
                 /**
+                 * @brief Multiply coordinates by a factor, components by components
+                 * @param factorX Multiplication factor for X-axis
+                 * @param factorY Multiplication factor for Y-axis
+                 * @param factorZ Multiplication factor for Z-axis
+                 * @return New coordinates
+                 */
+                 Vector operator*(std::vector<Real> factors);
+
+                /**
                  * @brief Gives the angle between two vectors in radian
                  * @param v Vector we want to know the angle with this
                  * @return An angle measure in radian
