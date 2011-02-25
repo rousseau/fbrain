@@ -109,7 +109,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
               */
             friend std::ostream &operator<<(std::ostream &os, const CartesianCoordinates& c);
 
-        private:
+        protected:
             Real m_x; /**< X coordinate */
             Real m_y; /**< Y coordinate */
             Real m_z; /**< Z coordinate */

@@ -77,5 +77,13 @@ Real Vector::angleWith(Vector v)
     return std::acos( dotProd / (normThis * normV) );
 }
 
+void Vector::Normalize()
+{
+    Real norm = std::sqrt(m_x*m_x + m_y*m_y + m_z*m_z);
+    m_x /= norm;
+    m_y /= norm;
+    m_z /= norm;
+}
+
 } // namespace btk
 

@@ -258,9 +258,13 @@ void ParticleFilter::run(int label, Direction dir)
         // Simulate a direction using initial density
         Direction u0 = m_aPriori.simulate(dir);
 
+        // Voxel may be anisotropic so we have to compute new vector in the image space
+        Vector tmp = u0.toVector();
+        Vector v0(tmp.x()/m_spacing[0], tmp.y()/m_spacing[1], tmp.z()/m_spacing[2]);
+        v0.Normalize();
+
         // Move particle
-        Vector v0     = u0.toVector() * m_stepSize;
-        bool isInside = m_cloud[i].addToPath(v0, m_mask);
+        bool isInside = m_cloud[i].addToPath(v0*m_stepSize, m_mask);
 
         // Set the initial weight of the particle
         if(isInside)
@@ -309,10 +313,14 @@ void ParticleFilter::run(int label, Direction dir)
                 Real kappa   = m_importance.computeConcentration(mu, xk);
                 Direction uk = m_importance.simulate(mu, kappa);
 
-                // Move particle
-                Vector vk = uk.toVector() * m_stepSize;
 
-                bool isInside = m_cloud[i].addToPath(vk, m_mask);
+                // Voxel may be anisotropic so we have to compute new vector in the image space
+                Vector tmp = uk.toVector();
+                Vector vk(tmp.x()/m_spacing[0], tmp.y()/m_spacing[1], tmp.z()/m_spacing[2]);
+                vk.Normalize();
+
+                // Move particle
+                bool isInside = m_cloud[i].addToPath(vk*m_stepSize, m_mask);
 
                 if(isInside)
                 {

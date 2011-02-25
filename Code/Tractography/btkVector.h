@@ -92,6 +92,11 @@ knowledge of the CeCILL-B license and that you accept its terms.
                  * @return An angle measure in radian
                  */
                 Real angleWith(Vector v);
+
+                /**
+                 * @brief Normalize the vector
+                 */
+                 void Normalize();
         };
 
     } // namespace btk
