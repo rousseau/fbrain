@@ -19,6 +19,7 @@ template<class TImage>
 DiffusionGradientTable<TImage>::DiffusionGradientTable(void)
 {
   m_NumberOfGradients = 0;
+  m_Transform = 0;
 }
 
 //----------------------------------------------------------------------
@@ -82,6 +83,11 @@ void
 DiffusionGradientTable<TInputImage>
 ::RotateGradients()
 {
+
+  if (!m_Transform)
+  {
+    itkExceptionMacro(<<"Transform is not present");
+  }
 
   vnl_matrix< double > Direction;
   vnl_matrix< double > Spacing(3,3);
