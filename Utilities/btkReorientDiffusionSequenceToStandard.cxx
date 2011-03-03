@@ -122,8 +122,8 @@ int main( int argc, char *argv[] )
 
     double *lpt_ras = landRead->GetOutputLPT();
     double *rpt_ras = landRead->GetOutputRPT();
-    double *apt_ras = landRead->GetOutputPPT();
-    double *ppt_ras = landRead->GetOutputAPT();
+    double *apt_ras = landRead->GetOutputAPT();
+    double *ppt_ras = landRead->GetOutputPPT();
 
 //std::cout << "lpt_ras = " << lpt_ras[0] << "," << lpt_ras[1] << "," << lpt_ras[2] << " | rpt_ras = " << rpt_ras[0] << "," << rpt_ras[1] << "," << rpt_ras[2] << " | apt_ras = " << apt_ras[0] << "," << apt_ras[1] << "," << apt_ras[2] << " | ppt_ras = " << ppt_ras[0] << "," << ppt_ras[1] << "," << ppt_ras[2] << std::endl;
 
@@ -217,6 +217,9 @@ int main( int argc, char *argv[] )
 
   transform -> SetCenter( centerPoint );
   transform -> SetRotationMatrix( NQ.transpose() );
+//  TODO Cannot constrain the rotation because sometimes it is necessary to rotate in xy
+//  Something I could do is to round the rotations in xy to n*pi*/2 ...
+//  transform -> SetRotation( 0.0, 0.0, transform -> GetAngleZ() );
 
   // Resampling
 
