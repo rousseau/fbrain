@@ -52,55 +52,130 @@ int main( int argc, char *argv[] )
   try {
 
   const char *inputName = NULL, *outputName = NULL;
+  unsigned int dim;
 
   TCLAP::CmdLine cmd("Sets the direction to the identity, and the origin to the center of the image",
   ' ', "Unversioned");
 
   TCLAP::ValueArg<std::string> inputArg("i","input","Input image",true,"none","string",cmd);
   TCLAP::ValueArg<std::string> outputArg("o","output","Output folder",true,"none","string",cmd);
+  TCLAP::ValueArg<unsigned int> dimArg("d","dimension","Image dimension (3 / 4)",true,3,"string",cmd);
 
   // Parse the argv array.
   cmd.parse( argc, argv );
 
   inputName  = inputArg.getValue().c_str();
   outputName = outputArg.getValue().c_str();
+  dim        = dimArg.getValue();
 
-
-  const    unsigned int    Dimension = 3;
   typedef  short  PixelType;
 
-  typedef itk::Image< PixelType, Dimension >  ImageType;
-  typedef ImageType::PointType  OriginType;
-
-  typedef itk::ImageFileReader< ImageType  > ImageReaderType;
-  ImageReaderType::Pointer  imageReader  = ImageReaderType::New();
-  imageReader -> SetFileName( inputName );
-  imageReader -> Update();
-
-  ImageType::Pointer image = imageReader -> GetOutput();
-
-  ImageType::DirectionType imageDirection = image -> GetDirection();
-  imageDirection.SetIdentity();
-  image -> SetDirection (imageDirection);
-
-  ImageType::SpacingType spacing = image -> GetSpacing();
-  ImageType::SizeType    size    = image -> GetLargestPossibleRegion().GetSize();
-
-  ImageType::PointType origin;
-
-  for (unsigned int i=0; i<Dimension; i++)
+  if (dim==4)
   {
-    origin[i] = (1.0-size[i])*0.5*spacing[i];
+    typedef itk::Image< PixelType, 4 >  ImageType;
+    typedef ImageType::PointType  OriginType;
+
+    typedef itk::ImageFileReader< ImageType  > ImageReaderType;
+    ImageReaderType::Pointer  imageReader  = ImageReaderType::New();
+    imageReader -> SetFileName( inputName );
+    imageReader -> Update();
+
+    ImageType::Pointer image = imageReader -> GetOutput();
+
+    ImageType::DirectionType imageDirection = image -> GetDirection();
+    vnl_matrix<double> imageDirectionVnl(4,4);
+    imageDirectionVnl = imageDirection.GetVnlMatrix();
+
+    vnl_matrix<double> imageSpatialDirectionVnl(3,3);
+    imageSpatialDirectionVnl = imageDirectionVnl.extract(3,3);
+
+    imageDirection.SetIdentity();
+
+    if ( vnl_determinant( imageSpatialDirectionVnl) < 0 )
+      imageDirection(2,2) = -1;
+
+    image -> SetDirection (imageDirection);
+
+    ImageType::SpacingType spacing = image -> GetSpacing();
+    ImageType::SizeType    size    = image -> GetLargestPossibleRegion().GetSize();
+
+    ImageType::PointType origin;
+
+    for (unsigned int i=0; i<3; i++)
+    {
+      origin[i] = (1.0-size[i])*0.5*spacing[i];
+    }
+
+    if ( vnl_determinant( imageSpatialDirectionVnl) < 0 )
+      origin[2] = -origin[2];
+
+
+    image -> SetOrigin( origin );
+
+    typedef itk::ImageFileWriter< ImageType >  WriterType;
+
+    WriterType::Pointer writer =  WriterType::New();
+    writer->SetFileName( outputName );
+    writer->SetInput( image );
+    writer->Update();
+  } else if (dim == 3)
+  {
+    typedef itk::Image< PixelType, 3 >  ImageType;
+    typedef ImageType::PointType  OriginType;
+
+    typedef itk::ImageFileReader< ImageType  > ImageReaderType;
+    ImageReaderType::Pointer  imageReader  = ImageReaderType::New();
+    imageReader -> SetFileName( inputName );
+    imageReader -> Update();
+
+    ImageType::Pointer image = imageReader -> GetOutput();
+
+    ImageType::DirectionType imageDirection = image -> GetDirection();
+    vnl_matrix<double> imageSpatialDirectionVnl(3,3);
+    imageSpatialDirectionVnl = imageDirection.GetVnlMatrix();
+
+    imageDirection.SetIdentity();
+
+    // FIXME To do things in a more general (correct) way, we should detect the
+    // orientation and then do a voxel reorganization. Or just force an image
+    // orientation with det = 1. This can be done with itk classes.
+    // (itkOrientImageFilter)
+
+    if ( vnl_determinant( imageSpatialDirectionVnl) < 0 )
+      imageDirection(2,2) = -1;
+
+    image -> SetDirection (imageDirection);
+
+    ImageType::SpacingType spacing = image -> GetSpacing();
+    ImageType::SizeType    size    = image -> GetLargestPossibleRegion().GetSize();
+
+    ImageType::PointType origin;
+
+    for (unsigned int i=0; i<3; i++)
+    {
+      origin[i] = (1.0-size[i])*0.5*spacing[i];
+    }
+
+    if ( vnl_determinant( imageSpatialDirectionVnl) < 0 )
+      origin[2] = -origin[2];
+
+
+    image -> SetOrigin( origin );
+
+    typedef itk::ImageFileWriter< ImageType >  WriterType;
+
+    WriterType::Pointer writer =  WriterType::New();
+    writer->SetFileName( outputName );
+    writer->SetInput( image );
+    writer->Update();
+
+  } else
+  {
+    std::cout << "ERROR: Image dimension incorrect." << std::endl;
+    return EXIT_FAILURE;
+
   }
 
-  image -> SetOrigin( origin );
-
-  typedef itk::ImageFileWriter< ImageType >  WriterType;
-
-  WriterType::Pointer writer =  WriterType::New();
-  writer->SetFileName( outputName );
-  writer->SetInput( image );
-  writer->Update();
 
   return EXIT_SUCCESS;
 
