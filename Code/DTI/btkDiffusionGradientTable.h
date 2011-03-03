@@ -109,8 +109,15 @@ public:
   typedef Euler3DTransform<double> TransformType;
   typedef typename TransformType::Pointer      TransformPointer;
 
+  // Load gradient table from file
   void LoadFromFile( const char* input );
+
   void RotateGradients();
+
+  // Transform gradients in word coordinates to image coordinates
+  void TransformGradientsToImageCoordinates();
+
+  // Save gradient table to file
   void SaveToFile( const char* output );
 
   // Set/Get transform
