@@ -97,10 +97,11 @@ DiffusionGradientTable<TInputImage>
   Spacing(0,0) = spacing[0]; Spacing(1,1) = spacing[1]; Spacing(2,2) = spacing[2];
   SpacingInv = vnl_inverse(Spacing);
 
-  std::cout << "Direccion = " << std::endl <<  Direction << std::endl;
+/*  std::cout << "Direccion = " << std::endl <<  Direction << std::endl;
   std::cout << "Direccion inverse= " << std::endl <<  DirectionInv << std::endl;
   std::cout << "Spacing = " << std::endl <<  Spacing << std::endl;
-  std::cout << "Spacing inverse = " << std::endl <<  SpacingInv << std::endl;
+  std::cout << "Spacing inverse = " << std::endl <<  SpacingInv << std::endl; */
+
 
   vnl_matrix<double> R = m_Transform -> GetMatrix().GetVnlMatrix();
   vnl_matrix<double> Rinv(3,3);
@@ -111,12 +112,11 @@ DiffusionGradientTable<TInputImage>
 
     vnl_matrix<double> R = m_Transform -> GetMatrix().GetVnlMatrix();
     vnl_vector<double> grad = m_GradientTable.get_row(i);
-//    m_GradientTable.set_row(i, R*grad);
     m_GradientTable.set_row(i, SpacingInv*DirectionInv*Rinv*Direction*Spacing*grad);
 
   }
 
-  std::cout << m_GradientTable << std::endl;
+//  std::cout << m_GradientTable << std::endl;
 
 }
 
@@ -125,9 +125,6 @@ void
 DiffusionGradientTable<TInputImage>
 ::SaveToFile( const char* output )
 {
-
-  RotateGradients();
-
 
   // Fill gradient table in cartesian coordinates
 

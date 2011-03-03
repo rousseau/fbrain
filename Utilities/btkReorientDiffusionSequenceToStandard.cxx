@@ -290,6 +290,7 @@ int main( int argc, char *argv[] )
   gradientTable -> SetImage( image );
   gradientTable -> SetTransform( transform );
   gradientTable -> LoadFromFile( gTableFile);
+  gradientTable -> RotateGradients();
   gradientTable -> SaveToFile( cTableFile);
 
 
