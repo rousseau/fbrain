@@ -122,8 +122,8 @@ public:
   itkGetObjectMacro( Image, ImageType );
 
   // Set/Get number of gradients
-  itkSetMacro( NumberOfGradients, int );
-  itkGetMacro( NumberOfGradients, int );
+  itkSetMacro( NumberOfGradients, unsigned int );
+  itkGetMacro( NumberOfGradients, unsigned int );
 
 protected:
   DiffusionGradientTable();
@@ -135,7 +135,7 @@ private:
   void operator=(const Self&); //purposely not implemented
 
   vnl_matrix< double >      m_GradientTable;
-  int                       m_NumberOfGradients;
+  unsigned int              m_NumberOfGradients;
   TransformPointer          m_Transform;
   ImagePointer              m_Image;
 
