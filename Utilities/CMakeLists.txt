@@ -34,6 +34,11 @@ TARGET_LINK_LIBRARIES(btkSetStandardCoorSystem ITKIO )
 
 #------------------------------------------------------------------------------
 
+ADD_EXECUTABLE(btkAffineRegistration btkAffineRegistration.cxx )
+TARGET_LINK_LIBRARIES(btkAffineRegistration ITKCommon ITKIO ITKNumerics)
+
+#------------------------------------------------------------------------------
+
 ADD_EXECUTABLE(btkNrrdToNifti btkNrrdToNifti.cxx)
 TARGET_LINK_LIBRARIES(btkNrrdToNifti ITKIO)
 

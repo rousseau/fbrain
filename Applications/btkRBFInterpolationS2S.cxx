@@ -1,35 +1,35 @@
 /*==========================================================================
 
-  © Université de Strasbourg - Centre National de la Recherche Scientifique
+© Université de Strasbourg - Centre National de la Recherche Scientifique
 
-  Date: 23/03/2010
-  Author(s): Estanislao Oubel (oubel@unistra.fr)
+Date: 23/03/2010
+Author(s): Estanislao Oubel (oubel@unistra.fr)
 
-  This software is governed by the CeCILL-B license under French law and
-  abiding by the rules of distribution of free software.  You can  use,
-  modify and/ or redistribute the software under the terms of the CeCILL-B
-  license as circulated by CEA, CNRS and INRIA at the following URL
-  "http://www.cecill.info".
+This software is governed by the CeCILL-B license under French law and
+abiding by the rules of distribution of free software. You can use,
+modify and/ or redistribute the software under the terms of the CeCILL-B
+license as circulated by CEA, CNRS and INRIA at the following URL
+"http://www.cecill.info".
 
-  As a counterpart to the access to the source code and  rights to copy,
-  modify and redistribute granted by the license, users are provided only
-  with a limited warranty  and the software's author,  the holder of the
-  economic rights,  and the successive licensors  have only  limited
-  liability.
+As a counterpart to the access to the source code and rights to copy,
+modify and redistribute granted by the license, users are provided only
+with a limited warranty and the software's author, the holder of the
+economic rights, and the successive licensors have only limited
+liability.
 
-  In this respect, the user's attention is drawn to the risks associated
-  with loading,  using,  modifying and/or developing or reproducing the
-  software by the user in light of its specific status of free software,
-  that may mean  that it is complicated to manipulate,  and  that  also
-  therefore means  that it is reserved for developers  and  experienced
-  professionals having in-depth computer knowledge. Users are therefore
-  encouraged to load and test the software's suitability as regards their
-  requirements in conditions enabling the security of their systems and/or
-  data to be ensured and,  more generally, to use and operate it in the
-  same conditions as regards security.
+In this respect, the user's attention is drawn to the risks associated
+with loading, using, modifying and/or developing or reproducing the
+software by the user in light of its specific status of free software,
+that may mean that it is complicated to manipulate, and that also
+therefore means that it is reserved for developers and experienced
+professionals having in-depth computer knowledge. Users are therefore
+encouraged to load and test the software's suitability as regards their
+requirements in conditions enabling the security of their systems and/or
+data to be ensured and, more generally, to use and operate it in the
+same conditions as regards security.
 
-  The fact that you are presently reading this means that you have had
-  knowledge of the CeCILL-B license and that you accept its terms.
+The fact that you are presently reading this means that you have had
+knowledge of the CeCILL-B license and that you accept its terms.
 
 ==========================================================================*/
 
@@ -60,7 +60,7 @@ int main( int argc, char *argv[] )
   double sx, sy, sz;
   int x1, y1, z1, x2, y2, z2;
   double rspa, rgra;
-//  int x1hr, y1hr, z1hr, x2hr, y2hr, z2hr;
+// int x1hr, y1hr, z1hr, x2hr, y2hr, z2hr;
 
   TCLAP::CmdLine cmd("Resampling of dwi sequences using Radial Basis Functions", ' ', "Unversioned");
 
@@ -111,8 +111,8 @@ int main( int argc, char *argv[] )
   cmd.parse( argc, argv );
 
   tpath = tpathArg.getValue().c_str();
-  input  = inputArg.getValue().c_str();
-  ref  = refArg.getValue().c_str();
+  input = inputArg.getValue().c_str();
+  ref = refArg.getValue().c_str();
   output = outputArg.getValue().c_str();
   gtable = gtableArg.getValue().c_str();
 
@@ -137,12 +137,12 @@ int main( int argc, char *argv[] )
 
   // Read sequence
 
-  typedef short         PixelType;
+  typedef short PixelType;
 
-  const   unsigned int  Dimension = 4;
-  typedef itk::Image< PixelType, Dimension >   SequenceType;
+  const unsigned int Dimension = 4;
+  typedef itk::Image< PixelType, Dimension > SequenceType;
 
-  typedef itk::ImageFileReader< SequenceType >  SequenceReaderType;
+  typedef itk::ImageFileReader< SequenceType > SequenceReaderType;
   SequenceReaderType::Pointer sequenceReader = SequenceReaderType::New();
   sequenceReader -> SetFileName( input );
   sequenceReader -> Update();
@@ -254,7 +254,7 @@ int main( int argc, char *argv[] )
 
   SequenceType::IndexType roiStart = HRIndex1;
 
-  SequenceType::SizeType  roiSize;
+  SequenceType::SizeType roiSize;
   roiSize[0] = HRIndex2[0] - HRIndex1[0] + 1;
   roiSize[1] = HRIndex2[1] - HRIndex1[1] + 1;
   roiSize[2] = HRIndex2[2] - HRIndex1[2] + 1;
@@ -307,12 +307,12 @@ int main( int argc, char *argv[] )
       std::cout << "Resampling image " << image << " ... " << std::endl; std::cout.flush();
     }
 
-//    std::cout << "slice nro " << index[2] << std::endl;
+// std::cout << "slice nro " << index[2] << std::endl;
 
     refSequence -> TransformIndexToPhysicalPoint(index,point);
     interpolator -> GetGradientDirection(index[3],theta,phi);
 
-    value =  interpolator -> Evaluate(point, theta, phi, rspa, rgra, 0);
+    value = interpolator -> Evaluate(point, theta, phi, rspa, rgra, 0);
 
     refIt.Set( (short)value );
 
@@ -321,7 +321,7 @@ int main( int argc, char *argv[] )
 
   // Write interpolated sequence
 
-  typedef itk::ImageFileWriter< SequenceType >  SequenceWriterType;
+  typedef itk::ImageFileWriter< SequenceType > SequenceWriterType;
   SequenceWriterType::Pointer sequenceWriter = SequenceWriterType::New();
   sequenceWriter -> SetFileName( output );
   sequenceWriter -> SetInput( refSequence );
@@ -333,7 +333,7 @@ int main( int argc, char *argv[] )
 
   return EXIT_SUCCESS;
 
-  } catch (TCLAP::ArgException &e)  // catch any exceptions
+  } catch (TCLAP::ArgException &e) // catch any exceptions
   { std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; }
 }
 

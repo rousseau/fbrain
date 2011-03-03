@@ -130,7 +130,7 @@ RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
     TransformReaderType::TransformListType::const_iterator titr =
     transforms->begin();
 
-    std::cout << "transform size in " << fullTrafoName << " " << transforms -> size() << std::endl;
+//    std::cout << "transform size in " << fullTrafoName << " " << transforms -> size() << std::endl;
 
     for(unsigned int j=0; j<transforms -> size(); j++,titr++)
     {
@@ -195,7 +195,7 @@ RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
 
   fclose (fr);
 
-  std::cout << "Original gradient table = " << std::endl;
+/*  std::cout << "Original gradient table = " << std::endl;
   for (unsigned int r=0; r < m_ImageSize[3]; r++)
   {
     for (unsigned int c=0; c < 3; c++)
@@ -204,7 +204,7 @@ RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
     }
     std::cout << std::endl;
 
-  }
+  } */
 
 }
 
@@ -276,12 +276,12 @@ RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
 
   }
 
-  std::cout << "[";
+/*  std::cout << "[";
   for (k=0; k<2*m_NumberOfGradients*m_NumberOfSlices; k++)
   {
     std::cout << m_dataPtsSphere[k][0] << " " << m_dataPtsSphere[k][1] << " " << m_dataPtsSphere[k][2] << ";" << std::endl;
   }
-  std::cout << "]" << std::endl;
+  std::cout << "]" << std::endl; */
 
   m_kdTreeSphere = new ANNkd_tree(m_dataPtsSphere, 2*m_NumberOfGradients*m_NumberOfSlices, 3);
 
