@@ -117,6 +117,9 @@ public:
   // Transform gradients in word coordinates to image coordinates
   void TransformGradientsToImageCoordinates();
 
+  // Transform gradients in word coordinates to world coordinates
+  void TransformGradientsToWorldCoordinates();
+
   // Save gradient table to file
   void SaveToFile( const char* output );
 

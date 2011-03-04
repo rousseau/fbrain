@@ -14,6 +14,11 @@ TARGET_LINK_LIBRARIES(btkModifyImageUsingLookUpTable ITKIO )
 
 #------------------------------------------------------------------------------
 
+#ADD_EXECUTABLE(btkConvertGradientTable btkConvertGradientTable.cxx )
+#TARGET_LINK_LIBRARIES(btkConvertGradientTable ITKIO )
+
+#------------------------------------------------------------------------------
+
 ADD_EXECUTABLE(btkReorientImageToStandard btkReorientImageToStandard.cxx
         ${fbrain_SOURCE_DIR}/Code/Various/btkLandmarksFileReader.cxx
 )
@@ -34,8 +39,8 @@ TARGET_LINK_LIBRARIES(btkSetStandardCoorSystem ITKIO )
 
 #------------------------------------------------------------------------------
 
-ADD_EXECUTABLE(btkAffineRegistration btkAffineRegistration.cxx )
-TARGET_LINK_LIBRARIES(btkAffineRegistration ITKCommon ITKIO ITKNumerics)
+#ADD_EXECUTABLE(btkAffineRegistration btkAffineRegistration.cxx )
+#TARGET_LINK_LIBRARIES(btkAffineRegistration ITKCommon ITKIO ITKNumerics)
 
 #------------------------------------------------------------------------------
 
