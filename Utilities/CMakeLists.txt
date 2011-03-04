@@ -14,8 +14,8 @@ TARGET_LINK_LIBRARIES(btkModifyImageUsingLookUpTable ITKIO )
 
 #------------------------------------------------------------------------------
 
-#ADD_EXECUTABLE(btkConvertGradientTable btkConvertGradientTable.cxx )
-#TARGET_LINK_LIBRARIES(btkConvertGradientTable ITKIO )
+ADD_EXECUTABLE(btkConvertGradientTable btkConvertGradientTable.cxx )
+TARGET_LINK_LIBRARIES(btkConvertGradientTable ITKIO )
 
 #------------------------------------------------------------------------------
 

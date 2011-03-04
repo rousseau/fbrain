@@ -158,7 +158,8 @@ DiffusionGradientTable<TInputImage>
   for (unsigned int i=0; i < m_GradientTable.rows(); i++)
   {
     vnl_vector<double> grad = m_GradientTable.get_row(i);
-    grad = SpacingInv*DirectionInv*grad;
+//    grad = SpacingInv*DirectionInv*grad;
+    grad = DirectionInv*grad;
     grad.normalize();
     m_GradientTable.set_row(i, grad);
   }
@@ -188,7 +189,8 @@ DiffusionGradientTable<TInputImage>
   for (unsigned int i=0; i < m_GradientTable.rows(); i++)
   {
     vnl_vector<double> grad = m_GradientTable.get_row(i);
-    grad = Direction*Spacing*grad;
+//    grad = Direction*Spacing*grad;
+    grad = Direction*grad;
     grad.normalize();
     m_GradientTable.set_row(i, grad);
   }
