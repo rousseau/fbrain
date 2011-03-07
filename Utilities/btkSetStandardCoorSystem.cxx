@@ -45,6 +45,10 @@
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 
+#include "itkOrientImageFilter.h"
+#include "itkExtractImageFilter.h"
+#include "itkJoinSeriesImageFilter.h"
+
 
 int main( int argc, char *argv[] )
 {
@@ -69,58 +73,89 @@ int main( int argc, char *argv[] )
   dim        = dimArg.getValue();
 
   typedef  short  PixelType;
+  typedef itk::Image< PixelType, 3 >  ImageType;
+  typedef itk::OrientImageFilter< ImageType, ImageType >  FilterType;
+
 
   if (dim==4)
   {
-    typedef itk::Image< PixelType, 4 >  ImageType;
-    typedef ImageType::PointType  OriginType;
+    typedef itk::Image< PixelType, 4 >  SequenceType;
+    typedef SequenceType::PointType  OriginType;
 
-    typedef itk::ImageFileReader< ImageType  > ImageReaderType;
-    ImageReaderType::Pointer  imageReader  = ImageReaderType::New();
-    imageReader -> SetFileName( inputName );
-    imageReader -> Update();
+    typedef itk::ImageFileReader< SequenceType  > ImageReaderType;
+    ImageReaderType::Pointer  sequenceReader  = ImageReaderType::New();
+    sequenceReader -> SetFileName( inputName );
+    sequenceReader -> Update();
 
-    ImageType::Pointer image = imageReader -> GetOutput();
+    SequenceType::Pointer     sequence = sequenceReader -> GetOutput();
+    SequenceType::SpacingType spacing  = sequence -> GetSpacing();
+    SequenceType::SizeType    size     = sequence -> GetLargestPossibleRegion().GetSize();
 
-    ImageType::DirectionType imageDirection = image -> GetDirection();
-    vnl_matrix<double> imageDirectionVnl(4,4);
-    imageDirectionVnl = imageDirection.GetVnlMatrix();
+    SequenceType::DirectionType sequenceDirection = sequence -> GetDirection();
+    sequenceDirection.SetIdentity();
 
-    vnl_matrix<double> imageSpatialDirectionVnl(3,3);
-    imageSpatialDirectionVnl = imageDirectionVnl.extract(3,3);
+    typedef itk::ExtractImageFilter< SequenceType, ImageType > ExtractorType;
+    ExtractorType::Pointer extractor  = ExtractorType::New();
+    extractor -> SetInput( sequence );
 
-    imageDirection.SetIdentity();
+    SequenceType::RegionType inputRegion = sequence -> GetLargestPossibleRegion();
 
-    if ( vnl_determinant( imageSpatialDirectionVnl) < 0 )
-      imageDirection(2,2) = -1;
+    unsigned int numberOfFrames = size[3];
+    size[3] = 0;
 
-    image -> SetDirection (imageDirection);
+    SequenceType::IndexType start = inputRegion.GetIndex();
 
-    ImageType::SpacingType spacing = image -> GetSpacing();
-    ImageType::SizeType    size    = image -> GetLargestPossibleRegion().GetSize();
+    typedef itk::JoinSeriesImageFilter< ImageType, SequenceType > JoinerType;
+    JoinerType::Pointer joiner = JoinerType::New();
+    joiner -> SetOrigin( 0.0 );
+    joiner -> SetSpacing( spacing[3] );
 
-    ImageType::PointType origin;
+    for (unsigned int i = 0; i < numberOfFrames; i++)
+    {
+      start[3] = i;
+
+      SequenceType::RegionType desiredRegion;
+      desiredRegion.SetSize(  size  );
+      desiredRegion.SetIndex( start );
+
+      extractor -> SetExtractionRegion( desiredRegion );
+
+      FilterType::Pointer filter = FilterType::New();
+      filter -> SetInput( extractor -> GetOutput()  );
+      filter -> UseImageDirectionOn();
+      filter -> SetDesiredCoordinateOrientation( itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RAI );
+      filter -> Update();
+
+      joiner -> SetInput( i, filter -> GetOutput() );
+    }
+
+    joiner -> Update();
+
+    sequence = joiner -> GetOutput();
+    spacing  = sequence -> GetSpacing();
+    size     = sequence -> GetLargestPossibleRegion().GetSize();
+    sequence -> SetDirection (sequenceDirection);
+
+    SequenceType::PointType origin;
 
     for (unsigned int i=0; i<3; i++)
     {
       origin[i] = (1.0-size[i])*0.5*spacing[i];
     }
 
-    if ( vnl_determinant( imageSpatialDirectionVnl) < 0 )
-      origin[2] = -origin[2];
+    sequence -> SetOrigin( origin );
 
-
-    image -> SetOrigin( origin );
-
-    typedef itk::ImageFileWriter< ImageType >  WriterType;
+    typedef itk::ImageFileWriter< SequenceType >  WriterType;
 
     WriterType::Pointer writer =  WriterType::New();
     writer->SetFileName( outputName );
-    writer->SetInput( image );
+    writer->SetInput( sequence );
     writer->Update();
+
+
+
   } else if (dim == 3)
   {
-    typedef itk::Image< PixelType, 3 >  ImageType;
     typedef ImageType::PointType  OriginType;
 
     typedef itk::ImageFileReader< ImageType  > ImageReaderType;
@@ -136,14 +171,14 @@ int main( int argc, char *argv[] )
 
     imageDirection.SetIdentity();
 
-    // FIXME To do things in a more general (correct) way, we should detect the
-    // orientation and then do a voxel reorganization. Or just force an image
-    // orientation with det = 1. This can be done with itk classes.
-    // (itkOrientImageFilter)
+    FilterType::Pointer filter = FilterType::New();
 
-    if ( vnl_determinant( imageSpatialDirectionVnl) < 0 )
-      imageDirection(2,2) = -1;
+    filter -> SetInput( image );
+    filter -> UseImageDirectionOn();
+    filter -> SetDesiredCoordinateOrientation( itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RAI );
+    filter -> Update();
 
+    image = filter -> GetOutput();
     image -> SetDirection (imageDirection);
 
     ImageType::SpacingType spacing = image -> GetSpacing();
@@ -155,10 +190,6 @@ int main( int argc, char *argv[] )
     {
       origin[i] = (1.0-size[i])*0.5*spacing[i];
     }
-
-    if ( vnl_determinant( imageSpatialDirectionVnl) < 0 )
-      origin[2] = -origin[2];
-
 
     image -> SetOrigin( origin );
 
