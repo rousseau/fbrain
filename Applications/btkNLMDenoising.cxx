@@ -38,6 +38,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "itkImageFileWriter.h"
 
 #include "itkImage.h"
+#include "itkConstrainedValueDifferenceImageFilter.h"
 
 #include "../Code/Denoising/btkNLMTool.h"
 
@@ -74,7 +75,8 @@ int main(int argc, char** argv)
     cmd.add( lowerMeanThresholdArg );
     TCLAP::ValueArg< float > lowerVarianceThresholdArg("","lvt","lower variance threshold (0.5 by default) -- for optimized mode only",false,0.5,"float");
     cmd.add( lowerVarianceThresholdArg );
-
+    TCLAP::ValueArg<std::string> outputDifferenceImageArg("d","difference_file","filename of the difference image",false,"","string");
+    cmd.add( outputDifferenceImageArg );
     // Parse the args.
     cmd.parse( argc, argv );
 
@@ -93,7 +95,7 @@ int main(int argc, char** argv)
     int optimized                = optimizedArg.getValue();
     float lowerMeanThreshold     = lowerMeanThresholdArg.getValue();
     float lowerVarianceThreshold = lowerVarianceThresholdArg.getValue();
-  
+    std::string difference_file  = outputDifferenceImageArg.getValue();  
   
   
     //ITK declaration
@@ -147,6 +149,18 @@ int main(int argc, char** argv)
     writer->SetInput( outputImage );
     writer->Update();  
   
+    if (difference_file != ""){
+      itk::ConstrainedValueDifferenceImageFilter<ImageType,ImageType,ImageType>::Pointer diffFilter = itk::ConstrainedValueDifferenceImageFilter<ImageType,ImageType,ImageType>::New();
+      
+      diffFilter->SetInput1( inputImage );
+      diffFilter->SetInput2( outputImage );
+      
+      WriterType::Pointer diffWriter = WriterType::New();  
+      diffWriter->SetFileName( difference_file );
+      diffWriter->SetInput( diffFilter->GetOutput() );
+      diffWriter->Update();         
+    }
+    
     return 1;
     
   } catch (TCLAP::ArgException &e)  // catch any exceptions
