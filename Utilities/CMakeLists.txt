@@ -39,6 +39,11 @@ TARGET_LINK_LIBRARIES(btkSetStandardCoorSystem ITKIO )
 
 #------------------------------------------------------------------------------
 
+ADD_EXECUTABLE(btkPrintImageInfo btkPrintImageInfo.cxx )
+TARGET_LINK_LIBRARIES(btkPrintImageInfo ITKIO )
+
+#------------------------------------------------------------------------------
+
 #ADD_EXECUTABLE(btkAffineRegistration btkAffineRegistration.cxx )
 #TARGET_LINK_LIBRARIES(btkAffineRegistration ITKCommon ITKIO ITKNumerics)
 
