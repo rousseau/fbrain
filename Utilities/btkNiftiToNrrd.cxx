@@ -74,7 +74,7 @@ int main( int argc, char * argv[] )
   outputFile = outputArg.getValue().c_str();
 
   std::string rawFile = outputArg.getValue();
-  rawFile.replace(rawFile.size()-4,4,"raw");
+  rawFile.replace(rawFile.size()-4,7,"raw.gz");
 
    // Read dwi sequence
 
@@ -194,6 +194,7 @@ int main( int argc, char * argv[] )
 
     writer -> SetInput( nrrdImage );
     writer -> SetFileName( outputFile );
+    writer -> UseCompressionOn();
     writer -> Update();
 
   }
@@ -207,6 +208,7 @@ int main( int argc, char * argv[] )
 
     writer -> SetInput( image );
     writer -> SetFileName( outputFile );
+    writer -> UseCompressionOn();
     writer -> Update();
 
   }
@@ -282,7 +284,7 @@ int main( int argc, char * argv[] )
     fprintf( fw, "kinds: space space space list\n");
 
   fprintf( fw, "endian: little\n");
-  fprintf( fw, "encoding: raw\n");
+  fprintf( fw, "encoding: gzip\n");
   fprintf( fw, "space units: \"mm\" \"mm\" \"mm\"\n");
 
   if ( lpsSwitchArg.isSet() )
