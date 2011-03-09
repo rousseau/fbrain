@@ -114,6 +114,8 @@ public:
 
   void RotateGradients();
 
+  void RotateGradientsInWorldCoordinates();
+
   // Transform gradients in word coordinates to image coordinates
   void TransformGradientsToImageCoordinates();
 
@@ -135,6 +137,10 @@ public:
   itkSetMacro( NumberOfGradients, unsigned int );
   itkGetMacro( NumberOfGradients, unsigned int );
 
+  // Set/Get number of gradients
+  itkSetMacro( RotationMatrix, vnl_matrix< double > );
+  itkGetMacro( RotationMatrix, vnl_matrix< double > );
+
 protected:
   DiffusionGradientTable();
   virtual ~DiffusionGradientTable();
@@ -145,6 +151,7 @@ private:
   void operator=(const Self&); //purposely not implemented
 
   vnl_matrix< double >      m_GradientTable;
+  vnl_matrix< double >      m_RotationMatrix;
   unsigned int              m_NumberOfGradients;
   TransformPointer          m_Transform;
   ImagePointer              m_Image;

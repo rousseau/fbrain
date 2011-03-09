@@ -49,27 +49,34 @@
 #include "itkExtractImageFilter.h"
 #include "itkJoinSeriesImageFilter.h"
 
+#include "btkDiffusionGradientTable.h"
+
+#include "itkEuler3DTransform.h"
 
 int main( int argc, char *argv[] )
 {
 
   try {
 
-  const char *inputName = NULL, *outputName = NULL;
+  const char *inputName = NULL, *outputName = NULL, *gTableFile = NULL, *cTableFile = NULL;
   unsigned int dim;
 
   TCLAP::CmdLine cmd("Sets the direction to the identity, and the origin to the center of the image",
   ' ', "Unversioned");
 
-  TCLAP::ValueArg<std::string> inputArg("i","input","Input image",true,"none","string",cmd);
-  TCLAP::ValueArg<std::string> outputArg("o","output","Output folder",true,"none","string",cmd);
-  TCLAP::ValueArg<unsigned int> dimArg("d","dimension","Image dimension (3 / 4)",true,3,"string",cmd);
+  TCLAP::ValueArg<std::string>  inputArg("i","input","Input image",true,"","string",cmd);
+  TCLAP::ValueArg<std::string>  outputArg("o","output","Output folder",true,"","string",cmd);
+  TCLAP::ValueArg<unsigned int> dimArg("d","dimension","Image dimension (3 / 4)",true,3,"unsigned int",cmd);
+  TCLAP::ValueArg<std::string>  gTableArg("g","bvec","Gradient table",false,"","string",cmd);
+  TCLAP::ValueArg<std::string>  cTableArg("c","ctable","Corrected table",false,"","string",cmd);
 
   // Parse the argv array.
   cmd.parse( argc, argv );
 
   inputName  = inputArg.getValue().c_str();
   outputName = outputArg.getValue().c_str();
+  gTableFile = gTableArg.getValue().c_str();
+  cTableFile = cTableArg.getValue().c_str();
   dim        = dimArg.getValue();
 
   typedef  short  PixelType;
@@ -92,7 +99,8 @@ int main( int argc, char *argv[] )
     SequenceType::SizeType    size     = sequence -> GetLargestPossibleRegion().GetSize();
 
     SequenceType::DirectionType sequenceDirection = sequence -> GetDirection();
-    sequenceDirection.SetIdentity();
+    vnl_matrix<double> originalSpatialDirectionVnl(3,3);
+    originalSpatialDirectionVnl = sequenceDirection.GetVnlMatrix().extract(3,3);
 
     typedef itk::ExtractImageFilter< SequenceType, ImageType > ExtractorType;
     ExtractorType::Pointer extractor  = ExtractorType::New();
@@ -126,6 +134,12 @@ int main( int argc, char *argv[] )
       filter -> SetDesiredCoordinateOrientation( itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RAI );
       filter -> Update();
 
+/*      std::cout << "Extractor direction = " << std::endl;
+      std::cout << extractor -> GetOutput() -> GetDirection() << std::endl;
+
+      std::cout << "Reoriented direction = " << std::endl;
+      std::cout << filter -> GetOutput() -> GetDirection() << std::endl; */
+
       joiner -> SetInput( i, filter -> GetOutput() );
     }
 
@@ -134,6 +148,33 @@ int main( int argc, char *argv[] )
     sequence = joiner -> GetOutput();
     spacing  = sequence -> GetSpacing();
     size     = sequence -> GetLargestPossibleRegion().GetSize();
+    sequenceDirection = sequence -> GetDirection();
+
+    // Change gradient table
+
+    vnl_matrix<double> reorientedSpatialDirectionVnl(3,3);
+    reorientedSpatialDirectionVnl = sequenceDirection.GetVnlMatrix().extract(3,3);
+
+    vnl_matrix<double> rotationMatrix;
+    rotationMatrix = reorientedSpatialDirectionVnl.transpose()*originalSpatialDirectionVnl;
+
+    typedef btk::DiffusionGradientTable< SequenceType > GradientTableType;
+    GradientTableType::Pointer gradientTable = GradientTableType::New();
+
+    typedef itk::Euler3DTransform<double> TransformType;
+    TransformType::Pointer transform = TransformType::New();
+
+    gradientTable -> SetNumberOfGradients(numberOfFrames);
+    gradientTable -> SetImage( sequence );
+//    gradientTable -> SetTransform( transform );
+    gradientTable -> SetRotationMatrix( rotationMatrix );
+    gradientTable -> LoadFromFile( gTableFile);
+    gradientTable -> RotateGradients();
+    gradientTable -> SaveToFile( cTableFile);
+
+    // Change sequence
+
+    sequenceDirection.SetIdentity();
     sequence -> SetDirection (sequenceDirection);
 
     SequenceType::PointType origin;
@@ -151,7 +192,6 @@ int main( int argc, char *argv[] )
     writer->SetFileName( outputName );
     writer->SetInput( sequence );
     writer->Update();
-
 
 
   } else if (dim == 3)

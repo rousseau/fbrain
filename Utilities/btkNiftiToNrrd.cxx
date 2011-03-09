@@ -294,18 +294,17 @@ int main( int argc, char * argv[] )
   fprintf( fw, "measurement frame: (1,0,0) (0,1,0) (0,0,1)\n");
   fprintf( fw, "modality:=DWMRI\n");
 
-/*  // Express gradient directions in WC
+  // Express gradient directions in WC
+
   vnl_vector< double > g(3);
   vnl_vector< double > gwc(3);
 
-  for ( unsigned int k=0; k < nrrdImage -> GetVectorLength(); k++ )
+  for ( unsigned int k=0; k < imageSize[3]; k++ )
   {
     g(0) = gValues[0][k]; g(1) = gValues[1][k]; g(2) = gValues[2][k];
-    gwc = nrrdSpaDir * g;
+    gwc = nrrdDir * g;
     gValues[0][k] = gwc(0); gValues[1][k] = gwc(1); gValues[2][k] = gwc(2);
-
   }
-*/
 
   fprintf( fw, "DWMRI_b-value:=%d\n",bValues[bValues.size()-1]);
 

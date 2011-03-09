@@ -82,7 +82,7 @@ DiffusionGradientTable<TInputImage>
 template < typename TInputImage >
 void
 DiffusionGradientTable<TInputImage>
-::RotateGradients()
+::RotateGradientsInWorldCoordinates()
 {
 
   if (!m_Transform)
@@ -91,18 +91,18 @@ DiffusionGradientTable<TInputImage>
   }
 
   vnl_matrix< double > Direction;
-  vnl_matrix< double > Spacing(3,3);
+//  vnl_matrix< double > Spacing(3,3);
   vnl_matrix< double > DirectionInv;
-  vnl_matrix< double > SpacingInv;
+//  vnl_matrix< double > SpacingInv;
 
   Direction = m_Image -> GetDirection().GetVnlMatrix().extract(3,3,0,0);
   DirectionInv = vnl_inverse(Direction);
 
-  typename ImageType::SpacingType spacing = m_Image -> GetSpacing();
+//  typename ImageType::SpacingType spacing = m_Image -> GetSpacing();
 
-  Spacing.fill(0.0);
-  Spacing(0,0) = spacing[0]; Spacing(1,1) = spacing[1]; Spacing(2,2) = spacing[2];
-  SpacingInv = vnl_inverse(Spacing);
+//  Spacing.fill(0.0);
+//  Spacing(0,0) = spacing[0]; Spacing(1,1) = spacing[1]; Spacing(2,2) = spacing[2];
+//  SpacingInv = vnl_inverse(Spacing);
 
 /*  std::cout << "Direccion = " << std::endl <<  Direction << std::endl;
   std::cout << "Direccion inverse= " << std::endl <<  DirectionInv << std::endl;
@@ -119,11 +119,36 @@ DiffusionGradientTable<TInputImage>
 
     vnl_matrix<double> R = m_Transform -> GetMatrix().GetVnlMatrix();
     vnl_vector<double> grad = m_GradientTable.get_row(i);
-    m_GradientTable.set_row(i, SpacingInv*DirectionInv*Rinv*Direction*Spacing*grad);
+//    m_GradientTable.set_row(i, SpacingInv*DirectionInv*Rinv*Direction*Spacing*grad);
+    m_GradientTable.set_row(i, DirectionInv*Rinv*Direction*grad);
 
   }
 
 //  std::cout << m_GradientTable << std::endl;
+
+}
+
+template < typename TInputImage >
+void
+DiffusionGradientTable<TInputImage>
+::RotateGradients()
+{
+
+/*  if (!m_Transform)
+  {
+    itkExceptionMacro(<<"Transform is not present");
+  }
+  */
+
+//  vnl_matrix<double> R = m_Transform -> GetMatrix().GetVnlMatrix();
+
+  for (unsigned int i=0; i < m_GradientTable.rows(); i++)
+  {
+    vnl_vector<double> grad = m_GradientTable.get_row(i);
+    m_GradientTable.set_row(i, m_RotationMatrix*grad);
+  }
+
+  std::cout << "Rotation matrix = " << m_RotationMatrix << std::endl;
 
 }
 
