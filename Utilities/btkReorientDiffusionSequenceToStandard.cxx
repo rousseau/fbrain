@@ -51,6 +51,7 @@
 #include "itkExtractImageFilter.h"
 #include "itkResampleImageFilter.h"
 #include "itkNearestNeighborInterpolateImageFunction.h"
+#include "itkJoinSeriesImageFilter.h"
 
 #include "btkDiffusionGradientTable.h"
 
@@ -77,6 +78,7 @@ int main( int argc, char *argv[] )
   TCLAP::ValueArg<std::string> cTableArg("c","ctable","Corrected table",true,"","string",cmd);
   TCLAP::ValueArg<std::string> lmksArg("l","landmarks","Landmarks file",true,"","string",cmd);
   TCLAP::SwitchArg nnSwitch("","nn","Nearest Neighbor interpolation", cmd, false);
+  TCLAP::SwitchArg fovSwitch("e","extendFOV","Extends the FOV to avoid image cropping", cmd, false);
 
   cmd.parse( argc, argv );
 
@@ -100,32 +102,14 @@ int main( int argc, char *argv[] )
   imageReader -> Update();
   ImageType::Pointer image = imageReader->GetOutput();
 
+  btk::btkLandmarksFileReader::Pointer landRead = btk::btkLandmarksFileReader::New();
+  landRead->SetInputFileName(lmksFile);
+  landRead->Update();
 
-  // Read landmarks
-/*
-  FILE* fr;
-  fr = fopen( lmksFile, "r" );
-
-  double lpt_ras[3], rpt_ras[3], apt_ras[3], ppt_ras[3];
-
-  fscanf( fr, "%lf %lf %lf\n", &lpt_ras[0], &lpt_ras[1], &lpt_ras[2]);
-  fscanf( fr, "%lf %lf %lf\n", &rpt_ras[0], &rpt_ras[1], &rpt_ras[2]);
-  fscanf( fr, "%lf %lf %lf\n", &ppt_ras[0], &ppt_ras[1], &ppt_ras[2]);
-  fscanf( fr, "%lf %lf %lf\n", &apt_ras[0], &apt_ras[1], &apt_ras[2]);
-
-  fclose (fr);
-//*/
-
-    btk::btkLandmarksFileReader::Pointer landRead = btk::btkLandmarksFileReader::New();
-    landRead->SetInputFileName(lmksFile);
-    landRead->Update();
-
-    double *lpt_ras = landRead->GetOutputLPT();
-    double *rpt_ras = landRead->GetOutputRPT();
-    double *apt_ras = landRead->GetOutputAPT();
-    double *ppt_ras = landRead->GetOutputPPT();
-
-//std::cout << "lpt_ras = " << lpt_ras[0] << "," << lpt_ras[1] << "," << lpt_ras[2] << " | rpt_ras = " << rpt_ras[0] << "," << rpt_ras[1] << "," << rpt_ras[2] << " | apt_ras = " << apt_ras[0] << "," << apt_ras[1] << "," << apt_ras[2] << " | ppt_ras = " << ppt_ras[0] << "," << ppt_ras[1] << "," << ppt_ras[2] << std::endl;
+  double *lpt_ras = landRead->GetOutputLPT();
+  double *rpt_ras = landRead->GetOutputRPT();
+  double *apt_ras = landRead->GetOutputAPT();
+  double *ppt_ras = landRead->GetOutputPPT();
 
   // Compute rotation matrix
 
@@ -153,7 +137,6 @@ int main( int argc, char *argv[] )
   R(1,0) = pos_lps(0) ; R(1,1) = pos_lps(1);  R(1,2) = pos_lps(2);
   R(2,0) = sup_lps(0) ; R(2,1) = sup_lps(1);  R(2,2) = sup_lps(2);
 
-
   // Corrects rotation matrix
 
   vnl_matrix<double> PQ = R;
@@ -169,8 +152,7 @@ int main( int argc, char *argv[] )
     PQNQDiff = NQ - PQ;
     if( PQNQDiff.frobenius_norm() < 1e-7 )
     {
-      std::cout << "Polar decomposition used "
-                << ni << " iterations " << std::endl;
+//      std::cout << "Polar decomposition used " << ni << " iterations " << std::endl;
       break;
     }
     else
@@ -216,30 +198,71 @@ int main( int argc, char *argv[] )
   b0 -> TransformContinuousIndexToPhysicalPoint(centerIndex, centerPoint);
 
   transform -> SetCenter( centerPoint );
-  transform -> SetRotationMatrix( NQ.transpose() );
+  transform -> SetRotationMatrix( NQ );
 //  TODO Cannot constrain the rotation because sometimes it is necessary to rotate in xy
 //  Something I could do is to round the rotations in xy to n*pi*/2 ...
 //  transform -> SetRotation( 0.0, 0.0, transform -> GetAngleZ() );
 
+  // Extend FOV according to the transformation
+  Image3DType::SizeType  resamplingSize;
+  Image3DType::IndexType lowerIndex; lowerIndex.Fill(0);
+  Image3DType::IndexType upperIndex; upperIndex.Fill(0);
+
+  if ( fovSwitch.isSet() )
+  {
+    typedef itk::ImageRegionIteratorWithIndex< Image3DType > Image3DIteratorType;
+    Image3DIteratorType b0It( b0, b0 -> GetLargestPossibleRegion() );
+
+    Image3DType::IndexType b0Index;
+    Image3DType::IndexType b0TransformedIndex;
+
+    Image3DType::PointType b0Point;
+    Image3DType::PointType b0TransformedPoint;
+
+    // Even when only the corners are necessary, the code is shorter in this way
+    // (and it's not very expensive to compute it)
+
+    for(b0It.GoToBegin(); !b0It.IsAtEnd(); ++b0It)
+    {
+      b0Index = b0It.GetIndex();
+      b0 -> TransformIndexToPhysicalPoint(b0Index, b0Point);
+      b0TransformedPoint = transform -> TransformPoint(b0Point);
+      b0 -> TransformPhysicalPointToIndex(b0TransformedPoint, b0TransformedIndex);
+
+      for (unsigned int i = 0; i<3; i++)
+        if ( b0TransformedIndex[i] < lowerIndex[i] ) lowerIndex[i] = b0TransformedIndex[i];
+        else if
+           ( b0TransformedIndex[i] > upperIndex[i] ) upperIndex[i] = b0TransformedIndex[i];
+
+    }
+
+
+    resamplingSize[0] = upperIndex[0] - lowerIndex[0] + 1;
+    resamplingSize[1] = upperIndex[1] - lowerIndex[1] + 1;
+    resamplingSize[2] = upperIndex[2] - lowerIndex[2] + 1;
+
+  } else
+  {
+    resamplingSize = b0 -> GetLargestPossibleRegion().GetSize();
+  }
+
+  Image3DType::PointType resamplingOrigin;
+  b0 -> TransformIndexToPhysicalPoint(lowerIndex, resamplingOrigin );
+
+  transform -> SetRotationMatrix( NQ.transpose() );
+
   // Resampling
 
-
   typedef itk::ResampleImageFilter< Image3DType, Image3DType >  ResamplerType;
-  ResamplerType::Pointer resampler = ResamplerType::New();
 
   typedef itk::NearestNeighborInterpolateImageFunction< Image3DType >  InterpolatorType;
   InterpolatorType::Pointer interpolator = InterpolatorType::New();
 
-  if (nn)
-  {
-    resampler -> SetInterpolator(interpolator);
-  }
-
-  typedef itk::ImageRegionIteratorWithIndex< ImageType > ImageIteratorType;
-  ImageIteratorType seqIt(image,image->GetLargestPossibleRegion() );
-  seqIt.GoToBegin();
-
-  typedef itk::ImageRegionIteratorWithIndex< Image3DType > Image3DIteratorType;
+  typedef itk::JoinSeriesImageFilter< Image3DType, ImageType > JoinerType;
+  JoinerType::Pointer joiner = JoinerType::New();
+  joiner -> SetOrigin( 0.0 );
+  // TODO Does it change something the 4th dimension spacing in diffusion sequences?
+  joiner -> SetSpacing( 1 );
 
   for (unsigned int i=0; i<numberOfFrames; i++)
   {
@@ -253,35 +276,36 @@ int main( int argc, char *argv[] )
     extractor -> SetExtractionRegion( region );
     extractor -> Update();
 
+    ResamplerType::Pointer resampler = ResamplerType::New();
+
+    if (nn)
+    {
+      resampler -> SetInterpolator(interpolator);
+    }
+
     resampler -> SetInput( extractor -> GetOutput() );
-    resampler -> SetReferenceImage( extractor -> GetOutput() );
-    resampler -> SetUseReferenceImage( true );
     resampler -> SetTransform(transform);
     resampler -> SetDefaultPixelValue(0);
+    resampler -> SetSize( resamplingSize );
+    resampler -> SetOutputOrigin( resamplingOrigin );
+    resampler -> SetOutputDirection( extractor -> GetOutput() -> GetDirection()  );
+    resampler -> SetOutputSpacing( extractor -> GetOutput() -> GetSpacing() );
+
     resampler -> Update();
 
-    Image3DType::Pointer extractedImage = resampler -> GetOutput();
-
-    Image3DIteratorType imIt( extractedImage, extractedImage -> GetLargestPossibleRegion() );
-
-    for(imIt.GoToBegin(); !imIt.IsAtEnd(); ++imIt)
-    {
-      seqIt.Set( imIt.Get() );
-      ++seqIt;
-    }
+    joiner -> SetInput( i, resampler -> GetOutput() );
 
   }
 
+  joiner -> Update();
 
   typedef itk::ImageFileWriter< ImageType > ImageWriterType;
   ImageWriterType::Pointer  imageWriter  = ImageWriterType::New();
-  imageWriter->SetInput(  image );
-  imageWriter->SetFileName(  outputImageFile );
-  imageWriter->Update();
+  imageWriter -> SetInput( joiner -> GetOutput() );
+  imageWriter -> SetFileName(  outputImageFile );
+  imageWriter -> Update();
 
   // Change gradient table
-
-  std::cout << "number of frames = " << numberOfFrames << std::endl;
 
   typedef btk::DiffusionGradientTable< ImageType > GradientTableType;
   GradientTableType::Pointer gradientTable = GradientTableType::New();
