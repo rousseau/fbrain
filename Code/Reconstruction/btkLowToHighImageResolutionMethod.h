@@ -228,6 +228,7 @@ private:
   SizeType											   m_ResampleSize;
   ImageArrayPointer						 		 m_ResampledImageArray;
   ResamplePointer                  m_Resample;
+  std::vector<bool>                m_ResamplingStatus;
 
   InterpolatorPointer              m_Interpolator;
 

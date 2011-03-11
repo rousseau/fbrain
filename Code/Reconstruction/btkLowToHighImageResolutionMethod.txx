@@ -143,11 +143,6 @@ LowToHighImageResolutionMethod<ImageType>
   m_HighResolutionImage -> SetDirection( m_ImageArray[m_TargetImage]-> GetDirection() );
   m_HighResolutionImage -> FillBuffer( 0 );
 
-  std::cout << "Tamanio region high resolution = " << std::endl;
-
-  std::cout << region << std::endl;
-
-
 }
 
 /*
@@ -168,8 +163,12 @@ LowToHighImageResolutionMethod<ImageType>
     {
       // pass exception to caller
       throw err;
-
     }
+
+    m_ResamplingStatus.resize( m_NumberOfImages );
+    for (unsigned int i=0; i < m_ResamplingStatus.size(); i++)
+      m_ResamplingStatus[i] = false;
+
 
     for (unsigned int i=0; i < m_NumberOfImages; i++)
     {
@@ -203,17 +202,6 @@ LowToHighImageResolutionMethod<ImageType>
 
       }
 
-      // Resample image
-
-      m_Resample = ResampleType::New();
-      m_Resample -> SetTransform( m_TransformArray[i] );
-      m_Resample -> SetInput( m_ImageArray[i] );
-      m_Resample -> SetReferenceImage( m_HighResolutionImage );
-      m_Resample -> SetUseReferenceImage( true );
-      m_Resample -> SetDefaultPixelValue( 0 );
-      m_Resample -> Update();
-
-      m_ResampledImageArray[i] = m_Resample -> GetOutput();
     }
 
     IteratorType imageIt( m_HighResolutionImage, m_HighResolutionImage->GetLargestPossibleRegion() );
@@ -225,7 +213,7 @@ LowToHighImageResolutionMethod<ImageType>
     int value;
     unsigned int counter;
 
-    std::cout << "Creating initial HR image ... " ; std::cout.flush();
+//    std::cout << "Creating initial HR image ... " ; std::cout.flush();
 
     for (imageIt.GoToBegin(); !imageIt.IsAtEnd(); ++imageIt )
     {
@@ -246,7 +234,7 @@ LowToHighImageResolutionMethod<ImageType>
       }
       if ( counter>0 ) imageIt.Set(value/counter);
      }
-     std::cout << "done." << std::endl; std::cout.flush();
+//     std::cout << "done." << std::endl; std::cout.flush();
 
 }
 
@@ -334,6 +322,18 @@ LowToHighImageResolutionMethod<ImageType>
 
   for (unsigned int i=0; i < m_NumberOfImages; i++)
   {
+    if (!m_ResamplingStatus[i])
+    {
+      m_Resample =  ResampleType::New();
+      m_Resample -> SetTransform( m_TransformArray[i] );
+      m_Resample -> SetInput( m_ImageArray[i] );
+      m_Resample -> SetReferenceImage( m_HighResolutionImage );
+      m_Resample -> SetUseReferenceImage( true );
+      m_Resample -> SetDefaultPixelValue( 0 );
+      m_Resample -> Update();
+      m_ResampledImageArray[i] = m_Resample -> GetOutput();
+      m_ResamplingStatus[i] = true;
+    }
 
     imageWriter->SetInput( m_ResampledImageArray[i] );
 
@@ -371,6 +371,19 @@ void
 LowToHighImageResolutionMethod<ImageType>
 ::WriteResampledImages( unsigned int i, const char *filename )
 {
+
+  if (!m_ResamplingStatus[i])
+  {
+    m_Resample =  ResampleType::New();
+    m_Resample -> SetTransform( m_TransformArray[i] );
+    m_Resample -> SetInput( m_ImageArray[i] );
+    m_Resample -> SetReferenceImage( m_HighResolutionImage );
+    m_Resample -> SetUseReferenceImage( true );
+    m_Resample -> SetDefaultPixelValue( 0 );
+    m_Resample -> Update();
+    m_ResampledImageArray[i] = m_Resample -> GetOutput();
+    m_ResamplingStatus[i] = true;
+  }
 
   typename ImageWriterType::Pointer imageWriter = ImageWriterType::New();
 
