@@ -143,6 +143,10 @@ LowToHighImageResolutionMethod<ImageType>
   m_HighResolutionImage -> SetDirection( m_ImageArray[m_TargetImage]-> GetDirection() );
   m_HighResolutionImage -> FillBuffer( 0 );
 
+  std::cout << "Tamanio region high resolution = " << std::endl;
+
+  std::cout << region << std::endl;
+
 
 }
 
