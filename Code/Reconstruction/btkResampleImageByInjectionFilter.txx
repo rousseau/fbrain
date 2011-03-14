@@ -150,18 +150,22 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
   outputRegion.SetIndex(outputStart);
   outputRegion.SetSize(outputSize);
 
-  outputPtr -> SetRegions(outputRegion);
-  outputPtr -> Allocate();
-  outputPtr -> FillBuffer(0);
-
-  outputPtr -> SetOrigin( referenceImage -> GetOrigin() );
-  outputPtr -> SetSpacing( referenceImage -> GetSpacing() );
-  outputPtr -> SetDirection( referenceImage -> GetDirection() );
-
   m_OutputSpacing = referenceImage -> GetSpacing();
 
+  // Weighted sum
+  FloatImagePointer sumImage = FloatImageType::New();
+
+  sumImage -> SetRegions( outputRegion );
+  sumImage -> Allocate();
+  sumImage -> FillBuffer(0.0);
+
+  sumImage -> SetOrigin( referenceImage -> GetOrigin() );
+  sumImage -> SetSpacing( referenceImage -> GetSpacing() );
+  sumImage -> SetDirection( referenceImage -> GetDirection() );
+
+
   // Image of weights
-  OutputImagePointer wtImage = OutputImageType::New();
+  FloatImagePointer wtImage = FloatImageType::New();
 
   wtImage -> SetRegions( outputRegion );
   wtImage -> Allocate();
@@ -219,17 +223,17 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
     radius[1] = ceil(inputSpacing[2] / m_OutputSpacing[1]);
     radius[2] = ceil(inputSpacing[2] / m_OutputSpacing[2]);
 
-    NeighborhoodIteratorType nbIt( radius, outputPtr, outputPtr -> GetLargestPossibleRegion() );
+    FloatNeighborhoodIteratorType nbIt( radius, sumImage, sumImage -> GetLargestPossibleRegion() );
     nbIt.NeedToUseBoundaryConditionOff();
 
-    NeighborhoodIteratorType nbWtIt( radius, wtImage, wtImage -> GetLargestPossibleRegion() );
+    FloatNeighborhoodIteratorType nbWtIt( radius, wtImage, wtImage -> GetLargestPossibleRegion() );
     nbWtIt.NeedToUseBoundaryConditionOff();
 
     // Division of outputImage into regions (for iteration over neighborhoods)
     FaceCalculatorType faceCalculator;
     FaceListType faceList;
 
-    faceList = faceCalculator( outputPtr, outputPtr -> GetLargestPossibleRegion(), radius);
+    faceList = faceCalculator( sumImage, sumImage -> GetLargestPossibleRegion(), radius);
     typename FaceCalculatorType::FaceListType::iterator fit;
     fit=faceList.begin();
 
@@ -284,7 +288,7 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
         m_ImageArray[im] -> TransformIndexToPhysicalPoint( fixedIndex, physicalPoint );
 
         transformedPoint = m_Transform[im][i] -> TransformPoint( physicalPoint);
-        outputPtr -> TransformPhysicalPointToIndex( transformedPoint, outputIndex);
+        sumImage -> TransformPhysicalPointToIndex( transformedPoint, outputIndex);
 
         nbIt.SetLocation(outputIndex);
         nbWtIt.SetLocation(outputIndex);
@@ -295,7 +299,7 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
           {
             nbIndex = nbIt.GetIndex(i);
 
-            outputPtr -> TransformIndexToPhysicalPoint( nbIndex, nbPoint );
+            sumImage -> TransformIndexToPhysicalPoint( nbIndex, nbPoint );
 
             VnlVectorType diffPoint = nbPoint.Get_vnl_vector() - transformedPoint.Get_vnl_vector();
             rotPoint[0] = dot_product(diffPoint,idirTransformed);
@@ -317,7 +321,7 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
             if ( outputRegion.IsInside(nbIndex) )
             {
 
-              outputPtr -> TransformIndexToPhysicalPoint( nbIndex, nbPoint );
+              sumImage -> TransformIndexToPhysicalPoint( nbIndex, nbPoint );
 
               VnlVectorType diffPoint = nbPoint.Get_vnl_vector() - transformedPoint.Get_vnl_vector();
               rotPoint[0] = dot_product(diffPoint,idirTransformed);
@@ -342,19 +346,30 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
 
   }
 
+  // Creates output image
+
+  outputPtr -> SetRegions(outputRegion);
+  outputPtr -> Allocate();
+  outputPtr -> FillBuffer(0);
+
+  outputPtr -> SetOrigin( referenceImage -> GetOrigin() );
+  outputPtr -> SetSpacing( referenceImage -> GetSpacing() );
+  outputPtr -> SetDirection( referenceImage -> GetDirection() );
+
   // Normalization
 
   IteratorType outputIt(outputPtr,outputRegion);
-  ConstIteratorType wtIt(wtImage,outputRegion);
+  ConstFloatIteratorType sumIt(sumImage,outputRegion);
+  ConstFloatIteratorType wtIt(wtImage,outputRegion);
 
   float weight;
 
-  for( outputIt.GoToBegin(), wtIt.GoToBegin(); !wtIt.IsAtEnd(); ++wtIt, ++outputIt  )
+  for( outputIt.GoToBegin(), wtIt.GoToBegin(), sumIt.GoToBegin(); !wtIt.IsAtEnd(); ++wtIt, ++outputIt, ++sumIt  )
   {
      weight = wtIt.Get();
      if (weight != 0)
      {
-        outputIt.Set( outputIt.Get()/weight );
+        outputIt.Set( sumIt.Get()/weight );
      }
   }
 
