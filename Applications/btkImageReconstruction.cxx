@@ -241,30 +241,23 @@ int main( int argc, char *argv[] )
     return EXIT_FAILURE;
     }
 
-
-  std::cout << "Press [c] to continue ... " << std::endl;
-    char c;
-    do {
-      c=getchar();
-    } while (c != 'c');
-
-
   // Register slice by slice
 
   hrImageIni = lowToHighResFilter->GetHighResolutionImage();
 
   for (unsigned int i=0; i<numberOfImages; i++)
   {
-    registration[i] = SliceBySliceRegistrationType::New();
+/*    registration[i] = SliceBySliceRegistrationType::New();
     registration[i] -> SetFixedImage( images[i] );
     registration[i] -> SetMovingImage( hrImageIni );
     registration[i] -> SetImageMask( imageMasks[i] );
+    */
 
     transforms[i] = TransformType::New();
     transforms[i] -> SetImage( images[i] );
     transforms[i] -> Initialize( lowToHighResFilter -> GetTransformArray(i) );
 
-    registration[i] -> SetTransform( transforms[i] );
+//    registration[i] -> SetTransform( transforms[i] );
 
   }
 
@@ -284,6 +277,18 @@ int main( int argc, char *argv[] )
     {
       std::cout << "Registering image " << im << " ... "; std::cout.flush();
 
+      registration[im] = SliceBySliceRegistrationType::New();
+      registration[im] -> SetFixedImage( images[im] );
+      registration[im] -> SetMovingImage( hrImageIni );
+      registration[im] -> SetImageMask( imageMasks[im] );
+
+/*      transforms[im] = TransformType::New();
+      transforms[im] -> SetImage( images[im] );
+      transforms[im] -> Initialize( lowToHighResFilter -> GetTransformArray(im) );
+      */
+
+      registration[im] -> SetTransform( transforms[im] );
+
       try
         {
         registration[im] -> StartRegistration();
@@ -295,12 +300,14 @@ int main( int argc, char *argv[] )
   //      return EXIT_FAILURE;
         }
 
+      transforms[im] = registration[im] -> GetTransform();
+      registration[im] -> Delete();
+
       std::cout << "done. "; std::cout.flush();
 
     }
 
     std::cout << std::endl; std::cout.flush();
-
 
     // Inject images
 
@@ -313,18 +320,30 @@ int main( int argc, char *argv[] )
       resampler -> AddInput( images[i] );
       resampler -> AddRegion( rois[i] );
 
-      unsigned int nslices = registration[i] -> GetTransform() -> GetNumberOfSlices();
+      unsigned int nslices = transforms[i] -> GetNumberOfSlices();
 
       for(unsigned int j=0; j< nslices; j++)
       {
-        resampler -> SetTransform(i, j, registration[i] -> GetTransform() -> GetSliceTransform(j) ) ;
+        resampler -> SetTransform(i, j, transforms[i] -> GetSliceTransform(j) ) ;
       }
-
     }
 
     resampler -> UseReferenceImageOn();
     resampler -> SetReferenceImage( hrImageIni );
     resampler -> Update();
+
+    typedef itk::ImageFileWriter< ImageType >  WriterType;
+
+    WriterType::Pointer writer =  WriterType::New();
+    writer-> SetFileName( outImage );
+    writer-> SetInput( resampler -> GetOutput() );
+    writer-> Update();
+
+    std::cout << "Press [c] to continue ... " << std::endl;
+      char c;
+      do {
+        c=getchar();
+      } while (c != 'c');
 
     if (it == 1)
       hrImageOld = hrImageIni;
@@ -435,7 +454,7 @@ int main( int argc, char *argv[] )
     for (unsigned int i=0; i<numberOfImages; i++)
     {
       TransformWriterType::Pointer transformWriter = TransformWriterType::New();
-      transformWriter -> SetInput( registration[i] -> GetTransform() );
+      transformWriter -> SetInput( transforms[i] );
       transformWriter -> SetFileName ( transform[i].c_str() );
 
       try

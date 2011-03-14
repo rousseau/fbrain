@@ -221,7 +221,7 @@ private:
   ImageArrayPointer 			         m_ImageArray;
   RegionArray                      m_RegionArray;
   ImageMaskArray                   m_ImageMaskArray;
-  RegistrationPointer							 m_Registration;
+//  RegistrationPointer							 m_Registration;
 //  ParametersArrayType              m_InitialRigidParameters;
 
   SpacingType											 m_ResampleSpacing;

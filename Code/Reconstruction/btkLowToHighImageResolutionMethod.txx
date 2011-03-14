@@ -51,7 +51,7 @@ LowToHighImageResolutionMethod<ImageType>
 ::Initialize() throw (ExceptionObject)
 {
 
-  m_Registration = RegistrationType::New();
+/*  m_Registration = RegistrationType::New();
   m_Registration -> SetFixedImage(  m_ImageArray[m_TargetImage]  );
   m_Registration -> SetFixedImageRegion( m_RegionArray[m_TargetImage] );
 
@@ -59,7 +59,7 @@ LowToHighImageResolutionMethod<ImageType>
 
   m_Registration -> SetFixedImageMask( m_ImageMaskArray[m_TargetImage] );
   m_Registration -> InitializeWithMask();
-  m_Registration -> SetEnableObserver( false );
+  m_Registration -> SetEnableObserver( false ); */
 
   // Initial rigid parameters computed from the center of ROIs
 /*  PointType centerPointTarget = m_Registration -> GetRotationCenter();
@@ -154,45 +154,54 @@ LowToHighImageResolutionMethod<ImageType>
 ::StartRegistration( void )
 {
 
-    try
-    {
-      // initialize the interconnects between components
-      this->Initialize();
-    }
-    catch( ExceptionObject& err )
-    {
-      // pass exception to caller
-      throw err;
-    }
+  try
+  {
+    // initialize the interconnects between components
+    this->Initialize();
+  }
+  catch( ExceptionObject& err )
+  {
+    // pass exception to caller
+    throw err;
+  }
 
-    m_ResamplingStatus.resize( m_NumberOfImages );
-    for (unsigned int i=0; i < m_ResamplingStatus.size(); i++)
-      m_ResamplingStatus[i] = false;
+  RegistrationPointer m_Registration = RegistrationType::New();
+  m_Registration -> SetFixedImage(  m_ImageArray[m_TargetImage]  );
+  m_Registration -> SetFixedImageRegion( m_RegionArray[m_TargetImage] );
 
+  // FIXME The following lines should be executed only if masks are set
 
-    for (unsigned int i=0; i < m_NumberOfImages; i++)
-    {
-      m_Registration->SetMovingImage( m_ImageArray[i] );
-      m_Registration->SetMovingImageMask( m_ImageMaskArray[i] );
+  m_Registration -> SetFixedImageMask( m_ImageMaskArray[m_TargetImage] );
+  m_Registration -> InitializeWithMask();
+  m_Registration -> SetEnableObserver( false );
+
+  m_ResamplingStatus.resize( m_NumberOfImages );
+  for (unsigned int i=0; i < m_ResamplingStatus.size(); i++)
+    m_ResamplingStatus[i] = false;
+
+  for (unsigned int i=0; i < m_NumberOfImages; i++)
+  {
+    m_Registration->SetMovingImage( m_ImageArray[i] );
+    m_Registration->SetMovingImageMask( m_ImageMaskArray[i] );
 //      m_Registration->SetInitialTransformParameters( m_InitialRigidParameters[i] );
 
-      if (i != m_TargetImage )
+    if (i != m_TargetImage )
+    {
+      std::cout << "Registering image " << i << " to " << m_TargetImage << " ... "; std::cout.flush();
+
+      try
       {
-        std::cout << "Registering image " << i << " to " << m_TargetImage << " ... "; std::cout.flush();
+        m_Registration->StartRegistration();
+      }
+      catch( itk::ExceptionObject & err )
+      {
+        std::cerr << "ExceptionObject caught !" << std::endl;
+        std::cerr << err << std::endl;
+        throw err;
+      }
 
-        try
-        {
-          m_Registration->StartRegistration();
-        }
-        catch( itk::ExceptionObject & err )
-        {
-          std::cerr << "ExceptionObject caught !" << std::endl;
-          std::cerr << err << std::endl;
-          throw err;
-        }
-
-        std::cout << "done." << std::endl; std::cout.flush();
-        m_TransformArray[i] = m_Registration->GetTransform();
+      std::cout << "done." << std::endl; std::cout.flush();
+      m_TransformArray[i] = m_Registration->GetTransform();
       }
       else
       {
