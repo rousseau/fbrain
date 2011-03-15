@@ -247,18 +247,9 @@ int main( int argc, char *argv[] )
 
   for (unsigned int i=0; i<numberOfImages; i++)
   {
-/*    registration[i] = SliceBySliceRegistrationType::New();
-    registration[i] -> SetFixedImage( images[i] );
-    registration[i] -> SetMovingImage( hrImageIni );
-    registration[i] -> SetImageMask( imageMasks[i] );
-    */
-
     transforms[i] = TransformType::New();
     transforms[i] -> SetImage( images[i] );
     transforms[i] -> Initialize( lowToHighResFilter -> GetTransformArray(i) );
-
-//    registration[i] -> SetTransform( transforms[i] );
-
   }
 
   unsigned int im = numberOfImages;
@@ -271,7 +262,7 @@ int main( int argc, char *argv[] )
 
     // Start registration
 
-//    #pragma omp parallel for private(im) schedule(dynamic)
+    #pragma omp parallel for private(im) schedule(dynamic)
 
     for (im=0; im<numberOfImages; im++)
     {
@@ -281,12 +272,6 @@ int main( int argc, char *argv[] )
       registration[im] -> SetFixedImage( images[im] );
       registration[im] -> SetMovingImage( hrImageIni );
       registration[im] -> SetImageMask( imageMasks[im] );
-
-/*      transforms[im] = TransformType::New();
-      transforms[im] -> SetImage( images[im] );
-      transforms[im] -> Initialize( lowToHighResFilter -> GetTransformArray(im) );
-      */
-
       registration[im] -> SetTransform( transforms[im] );
 
       try
@@ -331,19 +316,6 @@ int main( int argc, char *argv[] )
     resampler -> UseReferenceImageOn();
     resampler -> SetReferenceImage( hrImageIni );
     resampler -> Update();
-
-    typedef itk::ImageFileWriter< ImageType >  WriterType;
-
-    WriterType::Pointer writer =  WriterType::New();
-    writer-> SetFileName( outImage );
-    writer-> SetInput( resampler -> GetOutput() );
-    writer-> Update();
-
-    std::cout << "Press [c] to continue ... " << std::endl;
-      char c;
-      do {
-        c=getchar();
-      } while (c != 'c');
 
     if (it == 1)
       hrImageOld = hrImageIni;
