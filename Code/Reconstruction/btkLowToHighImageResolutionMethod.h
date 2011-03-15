@@ -221,13 +221,14 @@ private:
   ImageArrayPointer 			         m_ImageArray;
   RegionArray                      m_RegionArray;
   ImageMaskArray                   m_ImageMaskArray;
-  RegistrationPointer							 m_Registration;
+//  RegistrationPointer							 m_Registration;
 //  ParametersArrayType              m_InitialRigidParameters;
 
   SpacingType											 m_ResampleSpacing;
   SizeType											   m_ResampleSize;
   ImageArrayPointer						 		 m_ResampledImageArray;
   ResamplePointer                  m_Resample;
+  std::vector<bool>                m_ResamplingStatus;
 
   InterpolatorPointer              m_Interpolator;
 

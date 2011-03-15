@@ -66,7 +66,6 @@ void
 RigidRegistration<ImageType>
 ::Initialize() throw (ExceptionObject)
 {
-
   // Configure transform
 
   m_Transform = TransformType::New();
@@ -105,9 +104,12 @@ RigidRegistration<ImageType>
   m_FixedMask -> SetImage( this -> GetFixedImageMask() );
   m_Metric -> SetFixedImageMask( m_FixedMask );
 
+//  std::cout << this -> GetFixedImageRegion().GetNumberOfPixels() << std::endl;
+
   // FIXME Uncomment after testing NC
 //  m_Metric -> SetNumberOfHistogramBins( 24 );
-  m_Metric -> UseAllPixelsOn();
+//  m_Metric -> UseAllPixelsOn();
+  m_Metric -> SetNumberOfSpatialSamples(0.2*this -> GetFixedImageRegion().GetNumberOfPixels());
 
   // Configure optimizer
 

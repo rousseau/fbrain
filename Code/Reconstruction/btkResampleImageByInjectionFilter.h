@@ -89,11 +89,18 @@ public:
   typedef SmartPointer<Self>                            Pointer;
   typedef SmartPointer<const Self>                      ConstPointer;
 
+  /** Number of dimensions. */
+  itkStaticConstMacro(ImageDimension, unsigned int, TOutputImage::ImageDimension);
+  itkStaticConstMacro(InputImageDimension, unsigned int, TInputImage::ImageDimension);
+
   typedef TInputImage                             InputImageType;
   typedef TOutputImage                            OutputImageType;
   typedef typename InputImageType::Pointer        InputImagePointer;
   typedef typename InputImageType::ConstPointer   InputImageConstPointer;
   typedef typename OutputImageType::Pointer       OutputImagePointer;
+
+  typedef Image<float,ImageDimension>    FloatImageType;
+  typedef typename FloatImageType::Pointer FloatImagePointer;
 
   typedef typename InputImageType::RegionType     InputImageRegionType;
   typedef std::vector<InputImageRegionType>       InputImageRegionVectorType;
@@ -103,13 +110,6 @@ public:
 
   /** Run-time type information (and related methods). */
   itkTypeMacro(ResampleImageByInjectionFilter, ImageToImageFilter);
-
-  /** Number of dimensions. */
-  itkStaticConstMacro(ImageDimension, unsigned int,
-                      TOutputImage::ImageDimension);
-  itkStaticConstMacro(InputImageDimension, unsigned int,
-                      TInputImage::ImageDimension);
-
 
   /** Transform typedef. */
   typedef Euler3DTransform<TInterpolatorPrecisionType> TransformType;
@@ -147,12 +147,19 @@ public:
   /**Const iterator typedef. */
   typedef ImageRegionConstIteratorWithIndex< InputImageType >  ConstIteratorType;
 
+  /**Const float iterator typedef. */
+  typedef ImageRegionConstIteratorWithIndex< FloatImageType >  ConstFloatIteratorType;
+
+
   /**Neighborhood iterator typedef. */
-  typedef NeighborhoodIterator< OutputImageType >   NeighborhoodIteratorType;
+  typedef NeighborhoodIterator< OutputImageType >  NeighborhoodIteratorType;
+
+  /**Float neighborhood iterator typedef. */
+  typedef NeighborhoodIterator< FloatImageType >   FloatNeighborhoodIteratorType;
 
   /**Face calculator typedef. */
   typedef NeighborhoodAlgorithm
-  ::ImageBoundaryFacesCalculator< OutputImageType > FaceCalculatorType;
+  ::ImageBoundaryFacesCalculator< FloatImageType > FaceCalculatorType;
   typedef typename FaceCalculatorType::FaceListType FaceListType;
 
   typedef vnl_matrix<double> VnlMatrixType;

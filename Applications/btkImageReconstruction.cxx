@@ -57,6 +57,7 @@
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 
+#include <stdio.h>
 
 int main( int argc, char *argv[] )
 {
@@ -89,16 +90,16 @@ int main( int argc, char *argv[] )
   TCLAP::ValueArg<unsigned int> iterArg("n","iter","Maximum number of iterations",false, 30,"unsigned int",cmd);
   TCLAP::ValueArg<double> epsilonArg("e","epsilon","Maximum number of iterations",false, 1e-4,"double",cmd);
 
-  TCLAP::SwitchArg  xSwitchArg("","box","Use intersections for roi calculation",false);
-  TCLAP::SwitchArg  ySwitchArg("","mask","Use masks for roi calculation",false);
-  TCLAP::SwitchArg  zSwitchArg("","all","Use the whole image FOV",false);
+  TCLAP::SwitchArg  boxSwitchArg("","box","Use intersections for roi calculation",false);
+  TCLAP::SwitchArg  maskSwitchArg("","mask","Use masks for roi calculation",false);
+  TCLAP::SwitchArg  allSwitchArg("","all","Use the whole image FOV",false);
 
   // xor arguments for roi assessment
 
   std::vector<TCLAP::Arg*>  xorlist;
-  xorlist.push_back(&xSwitchArg);
-  xorlist.push_back(&ySwitchArg);
-  xorlist.push_back(&zSwitchArg);
+  xorlist.push_back(&boxSwitchArg);
+  xorlist.push_back(&maskSwitchArg);
+  xorlist.push_back(&allSwitchArg);
 
   cmd.xorAdd( xorlist );
 
@@ -114,22 +115,11 @@ int main( int argc, char *argv[] )
   itMax = iterArg.getValue();
   epsilon = epsilonArg.getValue();
 
-  // Tells the user if box or mask is used
-
-/*  if ( xSwitchArg.isSet() )
-  {
-    std::cout << "Using automatic roi as mask" << std::endl;
-  }
-
-  if ( ySwitchArg.isSet() )
-  {
-    std::cout << "Using user-provided mask" << std::endl;
-  } */
 
   // typedefs
 
   const    unsigned int    Dimension = 3;
-  typedef  float           PixelType;
+  typedef  short           PixelType;
 
   typedef itk::Image< PixelType, Dimension >  ImageType;
   typedef ImageType::Pointer                  ImagePointer;
@@ -190,14 +180,14 @@ int main( int argc, char *argv[] )
 
     lowToHighResFilter -> SetImageArray(i, images[i] );
 
-    if ( xSwitchArg.isSet() )
+    if ( boxSwitchArg.isSet() )
     {
       intersectionCalculator -> AddImage( images[i] );
     }
 
   }
 
-  if ( xSwitchArg.isSet() )
+  if ( boxSwitchArg.isSet() )
   {
     intersectionCalculator -> Compute();
   }
@@ -207,7 +197,7 @@ int main( int argc, char *argv[] )
   for (unsigned int i=0; i<numberOfImages; i++)
   {
 
-    if ( ySwitchArg.isSet() )
+    if ( maskSwitchArg.isSet() )
     {
       MaskReaderType::Pointer maskReader = MaskReaderType::New();
       maskReader -> SetFileName( mask[i].c_str() );
@@ -221,7 +211,7 @@ int main( int argc, char *argv[] )
 
       lowToHighResFilter -> SetRegionArray( i, rois[i] );
 
-    } else if ( xSwitchArg.isSet() )
+    } else if ( boxSwitchArg.isSet() )
       {
         imageMasks[i] = intersectionCalculator -> GetImageMask(i);
         lowToHighResFilter -> SetImageMaskArray( i, imageMasks[i] );
@@ -231,7 +221,7 @@ int main( int argc, char *argv[] )
         rois[i] = masks[i] -> GetAxisAlignedBoundingBoxRegion();
         lowToHighResFilter -> SetRegionArray( i, rois[i] );
 
-      } else if ( zSwitchArg.isSet() )
+      } else if ( allSwitchArg.isSet() )
         {
           rois[i] = images[i] -> GetLargestPossibleRegion();
 
@@ -257,17 +247,9 @@ int main( int argc, char *argv[] )
 
   for (unsigned int i=0; i<numberOfImages; i++)
   {
-    registration[i] = SliceBySliceRegistrationType::New();
-    registration[i] -> SetFixedImage( images[i] );
-    registration[i] -> SetMovingImage( hrImageIni );
-    registration[i] -> SetImageMask( imageMasks[i] );
-
     transforms[i] = TransformType::New();
     transforms[i] -> SetImage( images[i] );
     transforms[i] -> Initialize( lowToHighResFilter -> GetTransformArray(i) );
-
-    registration[i] -> SetTransform( transforms[i] );
-
   }
 
   unsigned int im = numberOfImages;
@@ -286,6 +268,12 @@ int main( int argc, char *argv[] )
     {
       std::cout << "Registering image " << im << " ... "; std::cout.flush();
 
+      registration[im] = SliceBySliceRegistrationType::New();
+      registration[im] -> SetFixedImage( images[im] );
+      registration[im] -> SetMovingImage( hrImageIni );
+      registration[im] -> SetImageMask( imageMasks[im] );
+      registration[im] -> SetTransform( transforms[im] );
+
       try
         {
         registration[im] -> StartRegistration();
@@ -297,12 +285,14 @@ int main( int argc, char *argv[] )
   //      return EXIT_FAILURE;
         }
 
+      transforms[im] = registration[im] -> GetTransform();
+      registration[im] -> Delete();
+
       std::cout << "done. "; std::cout.flush();
 
     }
 
     std::cout << std::endl; std::cout.flush();
-
 
     // Inject images
 
@@ -315,13 +305,12 @@ int main( int argc, char *argv[] )
       resampler -> AddInput( images[i] );
       resampler -> AddRegion( rois[i] );
 
-      unsigned int nslices = registration[i] -> GetTransform() -> GetNumberOfSlices();
+      unsigned int nslices = transforms[i] -> GetNumberOfSlices();
 
       for(unsigned int j=0; j< nslices; j++)
       {
-        resampler -> SetTransform(i, j, registration[i] -> GetTransform() -> GetSliceTransform(j) ) ;
+        resampler -> SetTransform(i, j, transforms[i] -> GetSliceTransform(j) ) ;
       }
-
     }
 
     resampler -> UseReferenceImageOn();
@@ -372,7 +361,7 @@ int main( int argc, char *argv[] )
     NCMetricType::Pointer nc = NCMetricType::New();
     nc -> SetFixedImage(  imageA );
     nc -> SetMovingImage( imageB );
-    if ( ySwitchArg.isSet() )
+    if ( maskSwitchArg.isSet() )
     {
       nc -> SetFixedImageRegion( rois[0] );
       nc -> SetFixedImageMask( masks[0] );
@@ -437,7 +426,7 @@ int main( int argc, char *argv[] )
     for (unsigned int i=0; i<numberOfImages; i++)
     {
       TransformWriterType::Pointer transformWriter = TransformWriterType::New();
-      transformWriter -> SetInput( registration[i] -> GetTransform() );
+      transformWriter -> SetInput( transforms[i] );
       transformWriter -> SetFileName ( transform[i].c_str() );
 
       try
