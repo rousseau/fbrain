@@ -31,7 +31,7 @@ The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-B license and that you accept its terms.
 */
 
-
+#define Pr(x) std::cerr << #x << " = " << x << std::endl
 // TCLAP include
 #include "CmdLine.h"
 
@@ -48,6 +48,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkImageRegionIterator.h"
 #include "itkMatrix.h"
+#include "vnl/vnl_inverse.h"
 
 
 typedef double PixelType;
@@ -90,7 +91,7 @@ int main(int argc, char *argv[])
     TCLAP::ValueArg<std::string> outArg("o", "output", "Output image", false, "data.nii.gz", "string", cmd);
     TCLAP::ValueArg<std::string> vecArg("g", "gradient_vectors", "Output gradient vectors", false, "data.bvec", "string", cmd);
 
-    TCLAP::SwitchArg dwiArg("d", "dwi", "DWI image conversion", cmd, false);
+    TCLAP::SwitchArg dwiArg("", "dwi", "DWI image conversion", cmd, false);
 
     // Parse arguments
     cmd.parse(argc, argv);
@@ -237,6 +238,20 @@ int main(int argc, char *argv[])
             } // for each scalar
         } // for each vector
 
+        // Conversion loop for gradient vectors (world coordinates to image coordinates)
+        vnl_vector<double> worldCoord(3);
+        vnl_vector<double> imgCoord(3);
+        vnl_matrix<double> wcToImg = vnl_inverse(iniMat.GetVnlMatrix());
+        std::vector<double>::iterator ivx;
+        std::vector<double>::iterator ivy;
+        std::vector<double>::iterator ivz;
+        for(ivx=vx.begin(), ivy=vy.begin(), ivz=vz.begin(); ivx!=vx.end() && ivy!=vy.end() && ivz!=vz.end(); ivx++, ivy++, ivz++)
+        {
+            worldCoord(0) = -(*ivx); worldCoord(1) = -(*ivy); worldCoord(2) = *ivz;
+            imgCoord = wcToImg * worldCoord;
+            *ivx = imgCoord(0); *ivy = imgCoord(1); *ivz = imgCoord(2);
+        }
+
         std::cout << "done." << std::endl;
 
 
@@ -266,7 +281,7 @@ int main(int argc, char *argv[])
 
             bvecFile << std::endl;
 
-            for(std::vector<double>::iterator it=vy.begin(); it != vy.end(); it++)
+            for(std::vector<double>::iterator it=vz.begin(); it != vz.end(); it++)
                 bvecFile << *it << " ";
 
             bvecFile << std::endl;

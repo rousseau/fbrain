@@ -308,14 +308,14 @@ int main( int argc, char * argv[] )
     gValues[0][k] = gwc(0); gValues[1][k] = gwc(1); gValues[2][k] = gwc(2);
   }
 
-  fprintf( fw, "DWMRI_b-value:=%d\n",bValues[bValues.size()-1]);
+  fprintf( fw, "DWMRI_b-value:= %d\n",bValues[bValues.size()-1]);
 
   for ( unsigned int k=0; k < imageSize[3]; k++)
   {
     if ( lpsSwitchArg.isSet() )
-      fprintf( fw, "DWMRI_gradient_%.4d:=%lf %lf %lf\n",k,-gValues[0][k],-gValues[1][k],gValues[2][k]);
+      fprintf( fw, "DWMRI_gradient_%.4d:= %lf %lf %lf\n",k,-gValues[0][k],-gValues[1][k],gValues[2][k]);
     else
-      fprintf( fw, "DWMRI_gradient_%.4d:=%lf %lf %lf\n",k,gValues[0][k],gValues[1][k],gValues[2][k]);
+      fprintf( fw, "DWMRI_gradient_%.4d:= %lf %lf %lf\n",k,gValues[0][k],gValues[1][k],gValues[2][k]);
   }
 
   fclose (fw);
