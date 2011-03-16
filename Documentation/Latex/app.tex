@@ -42,6 +42,14 @@ Minimal usage: \texttt{btkGroupwiseS2SDistortionCorrection -i input.nii
 $\cdots$ -g gradients\_in.bvec -o output.nii -c gradients\_out.bvec -t
 pathToTransforms}.
 
+\begin{itemize}
+ \item[-i] input sequence
+ \item[-g] gradient table for the input sequence
+ \item[-o] output sequence 
+ \item[-c] gradient table for the output sequence
+ \item[-t] folder to save the transformation files \\
+\end{itemize}
+
 \item[btkRBFInterpolationS2S] It performs an interpolation of scattered data
 generated from the application of slice-by-slice transforms. To this end,
 radial basis functions are used.
@@ -49,6 +57,15 @@ radial basis functions are used.
 Minimal usage: \texttt{btkGroupwiseS2SDistortionCorrection -i input.nii
 $\cdots$ -g gradients\_in.bvec -r reference.nii -o output.nii -t
 pathToTransforms}.
+
+\begin{itemize}
+ \item[-i] input sequence
+ \item[-g] gradient table for the input sequence
+ \item[-r] a reference sequence providing the resampling grid
+ \item[-o] output sequence 
+ \item[-c] gradient table for the output sequence
+ \item[-t] folder to save the transformation files \\
+\end{itemize}
 
 \end{description}
 
