@@ -180,6 +180,10 @@ public:
   itkSetMacro( TargetImage, unsigned int );
   itkGetMacro( TargetImage, unsigned int );
 
+  /** Set/Get the margin. */
+  itkSetMacro( Margin, double );
+  itkGetMacro( Margin, double );
+
   /** Set/Get the Transfrom. */
   UserSetObjectMacro( TransformArray, TransformType );
   UserGetObjectMacro( TransformArray, TransformType );
@@ -229,6 +233,7 @@ private:
   ImageArrayPointer						 		 m_ResampledImageArray;
   ResamplePointer                  m_Resample;
   std::vector<bool>                m_ResamplingStatus;
+  double                           m_Margin;
 
   InterpolatorPointer              m_Interpolator;
 

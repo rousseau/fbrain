@@ -71,6 +71,7 @@ int main( int argc, char *argv[] )
   std::vector< std::string > resampled;
   unsigned int itMax;
   double epsilon;
+  double margin;
 
   const char *outImage = NULL;
 
@@ -89,6 +90,9 @@ int main( int argc, char *argv[] )
   TCLAP::ValueArg<std::string> outArg("o","output","High resolution image",true,"none","string",cmd);
   TCLAP::ValueArg<unsigned int> iterArg("n","iter","Maximum number of iterations",false, 30,"unsigned int",cmd);
   TCLAP::ValueArg<double> epsilonArg("e","epsilon","Maximum number of iterations",false, 1e-4,"double",cmd);
+
+  TCLAP::ValueArg<double> marginArg("","margin","Adds a margin to the reconstructed images\
+      to compensate for a small FOV in the reference",false, 0.0,"double",cmd);
 
   TCLAP::SwitchArg  boxSwitchArg("","box","Use intersections for roi calculation",false);
   TCLAP::SwitchArg  maskSwitchArg("","mask","Use masks for roi calculation",false);
@@ -114,6 +118,7 @@ int main( int argc, char *argv[] )
   resampled = resampledArg.getValue();
   itMax = iterArg.getValue();
   epsilon = epsilonArg.getValue();
+  margin = marginArg.getValue();
 
 
   // typedefs
@@ -168,6 +173,7 @@ int main( int argc, char *argv[] )
 
   lowToHighResFilter -> SetNumberOfImages(numberOfImages);
   lowToHighResFilter -> SetTargetImage( 0 );
+  lowToHighResFilter -> SetMargin( margin );
 
   for (unsigned int i=0; i<numberOfImages; i++)
   {
@@ -241,6 +247,15 @@ int main( int argc, char *argv[] )
     return EXIT_FAILURE;
     }
 
+  // Write resampled images
+  if ( resampled.size() > 0 )
+  {
+    for (unsigned int i=0; i<numberOfImages; i++)
+    {
+      lowToHighResFilter -> WriteResampledImages( i, resampled[i].c_str() );
+    }
+  }
+
   // Register slice by slice
 
   hrImageIni = lowToHighResFilter->GetHighResolutionImage();
@@ -286,7 +301,6 @@ int main( int argc, char *argv[] )
         }
 
       transforms[im] = registration[im] -> GetTransform();
-      registration[im] -> Delete();
 
       std::cout << "done. "; std::cout.flush();
 
@@ -383,29 +397,10 @@ int main( int argc, char *argv[] )
     else
       delta = 1;
 
-//    std::cout << "delta = " << epsilon << std::endl<< std::endl;
-
     if (delta < epsilon) break;
 
   }
 
-
-/*  if ( roi.size() > 0 )
-  {
-    for (unsigned int i=0; i<numberOfImages; i++)
-    {
-      intersectionCalculator -> WriteMask( i, roi[i].c_str() );
-    }
-  } */
-
-  // Write resampled images
-  if ( resampled.size() > 0 )
-  {
-    for (unsigned int i=0; i<numberOfImages; i++)
-    {
-      lowToHighResFilter -> WriteResampledImages( i, resampled[i].c_str() );
-    }
-  }
 
   // Write HR image
 
@@ -415,7 +410,6 @@ int main( int argc, char *argv[] )
   writer-> SetFileName( outImage );
   writer-> SetInput( hrImage );
   writer-> Update();
-
 
   // Write transforms
 

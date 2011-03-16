@@ -19,6 +19,7 @@ LowToHighImageResolutionMethod<ImageType>
   m_NumberOfImages = 0;
   m_TargetImage = 0;
   m_InitializeWithMask= false;
+  m_Margin = 0.0;
 
 }
 
@@ -114,14 +115,19 @@ LowToHighImageResolutionMethod<ImageType>
   /* Resampling matrix */
   SpacingType  fixedSpacing   = m_ImageArray[m_TargetImage] -> GetSpacing();
   SizeType     fixedSize      = m_ImageArray[m_TargetImage] -> GetLargestPossibleRegion().GetSize();
+  PointType    fixedOrigin    = m_ImageArray[m_TargetImage] -> GetOrigin();
 
   m_ResampleSpacing[0] = fixedSpacing[0];
   m_ResampleSpacing[1] = fixedSpacing[0];
   m_ResampleSpacing[2] = fixedSpacing[0];
 
-  m_ResampleSize[0] = floor(fixedSize[0]*fixedSpacing[0]/m_ResampleSpacing[0]);
+  m_ResampleSize[0] = floor(fixedSize[0]*fixedSpacing[0]/m_ResampleSpacing[0] + 0.5);
+  m_ResampleSize[1] = floor(fixedSize[1]*fixedSpacing[1]/m_ResampleSpacing[1] + 0.5);
+  m_ResampleSize[2] = floor( (fixedSize[2]*fixedSpacing[2] + 2*m_Margin)/m_ResampleSpacing[2] + 0.5);
+
+/*  m_ResampleSize[0] = floor(fixedSize[0]*fixedSpacing[0]/m_ResampleSpacing[0]);
   m_ResampleSize[1] = floor(fixedSize[1]*fixedSpacing[1]/m_ResampleSpacing[1]);
-  m_ResampleSize[2] = floor(fixedSize[2]*fixedSpacing[2]/m_ResampleSpacing[2]);
+  m_ResampleSize[2] = floor(fixedSize[2]*fixedSpacing[2]/m_ResampleSpacing[2]); */
 
   /* Create high resolution image */
 
@@ -138,10 +144,17 @@ LowToHighImageResolutionMethod<ImageType>
 
   m_HighResolutionImage -> SetRegions( region );
   m_HighResolutionImage -> Allocate();
-  m_HighResolutionImage -> SetOrigin( m_ImageArray[m_TargetImage] -> GetOrigin() );
+  m_HighResolutionImage -> SetOrigin( fixedOrigin );
   m_HighResolutionImage -> SetSpacing( m_ResampleSpacing );
   m_HighResolutionImage -> SetDirection( m_ImageArray[m_TargetImage]-> GetDirection() );
   m_HighResolutionImage -> FillBuffer( 0 );
+
+  IndexType newOriginIndex;
+  PointType newOrigin;
+
+  newOriginIndex[0]=0; newOriginIndex[1]=0; newOriginIndex[2]= -floor( m_Margin / m_ResampleSpacing[2] + 0.5);
+  m_HighResolutionImage -> TransformIndexToPhysicalPoint(newOriginIndex, newOrigin);
+  m_HighResolutionImage -> SetOrigin( newOrigin );
 
 }
 
