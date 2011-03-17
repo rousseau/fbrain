@@ -64,6 +64,11 @@ TARGET_LINK_LIBRARIES(btkDWIBaselineImageExtractor ITKIO)
 
 #------------------------------------------------------------------------------
 
+ADD_EXECUTABLE(btkCropImageUsingMask btkCropImageUsingMask.cxx)
+TARGET_LINK_LIBRARIES(btkCropImageUsingMask ITKIO)
+
+#------------------------------------------------------------------------------
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkReorientImageToStandard
                 btkReorientDiffusionSequenceToStandard
@@ -71,4 +76,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkNiftiToNrrd
                 btkNrrdToNifti
                 btkDWIBaselineImageExtractor
+		btkCropImageUsingMask
         DESTINATION bin)
