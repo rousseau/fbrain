@@ -162,10 +162,6 @@ int main( int argc, char *argv[] )
   writer->SetInput( correctedSequence );
   writer->Update();
 
-  // Write corrected gradient table
-//  The following line is commented since it has no sence for coupe à coupe corrections
-//  filter -> WriteGradientTable( cvec );
-
   // Write transformations
 
   filter -> WriteTransforms( folder );
