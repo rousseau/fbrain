@@ -30,6 +30,46 @@ The full list of optional parameters of the method can be obtained by
 
 \end{description}
 
+\subsection{Reconstruction of DW sequences}
+The reconstruction of diffusion-weighted (DW) sequences aims at
+obtaining a sequence corrected for fetal moving and eddy-current distortions.
+This can be performed in BTK by using the two following applications. 
+\begin{description}
+\item[btkGroupwiseS2SDistortionCorrection] It performs a groupwise
+slice-by-slice registration of the image components of the sequence.
+
+Minimal usage: \texttt{btkGroupwiseS2SDistortionCorrection -i input.nii
+$\cdots$ -g gradients\_in.bvec -o output.nii -c gradients\_out.bvec -t
+pathToTransforms}.
+
+\begin{itemize}
+ \item[-i] input sequence
+ \item[-g] gradient table for the input sequence
+ \item[-o] output sequence 
+ \item[-c] gradient table for the output sequence
+ \item[-t] folder to save the transformation files \\
+\end{itemize}
+
+\item[btkRBFInterpolationS2S] It performs an interpolation of scattered data
+generated from the application of slice-by-slice transforms. To this end,
+radial basis functions are used.
+
+Minimal usage: \texttt{btkGroupwiseS2SDistortionCorrection -i input.nii
+$\cdots$ -g gradients\_in.bvec -r reference.nii -o output.nii -t
+pathToTransforms}.
+
+\begin{itemize}
+ \item[-i] input sequence
+ \item[-g] gradient table for the input sequence
+ \item[-r] a reference sequence providing the resampling grid
+ \item[-o] output sequence 
+ \item[-c] gradient table for the output sequence
+ \item[-t] folder to save the transformation files \\
+\end{itemize}
+
+\end{description}
+
+
 \subsection{Tractography}
 
     \subsubsection*{Standard usage}

@@ -23,8 +23,9 @@ Usage: \texttt{-i input.nii -b bvalues.bval -g gradients.bvec -o output.nhdr
 The list of optional parameters can be obtained by \texttt{btkNiftiToNrrd
 --help}
 
-\item[btkSetStandardCoorSystem] It converts an image to a coordinate
-system with identity direction and origin at the center of the image. 
+\item[btkSetStandardCoorSystem] It transforms an image to a coordinate
+system with identity direction and origin at the center of the image
+(by default, a linear interpolation is used).
 
 Usage: \texttt{btkSetStandardCoorSystem -i image -o output -d 3}. The argument
 $-d$ specifies the image dimension. 
