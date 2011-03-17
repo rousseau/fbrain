@@ -47,8 +47,11 @@ pathToTransforms}.
  \item[-g] gradient table for the input sequence
  \item[-o] output sequence 
  \item[-c] gradient table for the output sequence
- \item[-t] folder to save the transformation files \\
+ \item[-t] folder to save the transformation files
 \end{itemize}
+
+The slice-by-slice transform for a given DW image is saved as a set of $N$
+transforms in ITK format, with $N$ the number of slices in the image.
 
 \item[btkRBFInterpolationS2S] It performs an interpolation of scattered data
 generated from the application of slice-by-slice transforms. To this end,
