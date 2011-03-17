@@ -12,7 +12,7 @@
 
 
 \subsection{Anatomical reconstruction}
-
+\label{subsec:ana_rec}
 \begin{description}
  \item[btkImageReconstruction] This program allows to obtain a
 high-resolution image from a set of low-resolution images, typically
@@ -31,6 +31,7 @@ The full list of optional parameters of the method can be obtained by
 \end{description}
 
 \subsection{Reconstruction of DW sequences}
+\label{subsec:diff_rec}
 The reconstruction of diffusion-weighted (DW) sequences aims at
 obtaining a sequence corrected for fetal moving and eddy-current distortions.
 This can be performed in BTK by using the two following applications. 
@@ -74,7 +75,7 @@ pathToTransforms}.
 
 
 \subsection{Tractography}
-
+\label{subsec:tracto}
     \subsubsection*{Standard usage}
         Suppose you want to perform a tractography on a diffusion weighted MRI dataset. You should have a dwi image, the corresponding gradient vectors' coordinates, a mask of the brain white matter and a label image of the seeds. Assume this data is stored in files named repsectively for instance \texttt{data.nii.gz}, \texttt{data.bvec}, \texttt{mask.nii.gz} and \texttt{seeds.nii.gz}. The tractography is accomplished by the command below.
             \begin{quote}

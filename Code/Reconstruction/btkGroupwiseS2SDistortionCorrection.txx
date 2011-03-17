@@ -144,7 +144,6 @@ GroupwiseS2SDistortionCorrection<TSequence>
     }
 
   }
-
 }
 
 /**
