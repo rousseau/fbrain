@@ -44,8 +44,8 @@ TARGET_LINK_LIBRARIES(btkPrintImageInfo ITKIO )
 
 #------------------------------------------------------------------------------
 
-#ADD_EXECUTABLE(btkAffineRegistration btkAffineRegistration.cxx )
-#TARGET_LINK_LIBRARIES(btkAffineRegistration ITKCommon ITKIO ITKNumerics)
+ADD_EXECUTABLE(btkRegisterDiffusionToAnatomicalData btkRegisterDiffusionToAnatomicalData.cxx )
+TARGET_LINK_LIBRARIES(btkRegisterDiffusionToAnatomicalData ITKCommon ITKIO ITKNumerics)
 
 #------------------------------------------------------------------------------
 
@@ -76,5 +76,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkNiftiToNrrd
                 btkNrrdToNifti
                 btkDWIBaselineImageExtractor
-		btkCropImageUsingMask
+    btkCropImageUsingMask
         DESTINATION bin)
