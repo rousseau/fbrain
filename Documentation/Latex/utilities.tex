@@ -36,7 +36,7 @@ table, which must be modified accordingly.
 Usage: \texttt{btkSetStandardCoorSystem -i image -o output -d 4 -g
 gradients.bvec}\\
 \texttt{-c outputGradients.bvec}
-  
+
   \item[btkReorientImageToStandard] Sometimes it is useful
 to reorient the image to the standard orientation. This is necessary with fetal
 images since in general the fetus is in a random orientation with respect to the
@@ -101,7 +101,7 @@ gradient table.
 input\_mask\_filename -o output\_image\_filename -d 3}, where '-d' is the dimension of the input image (by default 3).
 
 \item[btkRegisterDiffusionToAnatomicalData] This program registers a DW
-sequence to an anatomical image.
+sequence to an anatomical image. 
 
 Recommended usage: \texttt{btkReorientDiffusionSequenceToStandard -i input.nii
 -g
@@ -111,7 +111,7 @@ gradients\_in.bvec -r reference.nii -o output.nii -c gradients\_out.bvec
 \item[-i] input sequence
 \item[-g] gradient table for the input sequence
 \item[-r] reference image (anatomical image)
-\item[-o] resampled sequence
+\item[-o] resampled sequence (by default, linear interpolation is used)
 \item[-c] gradient table for the resampled sequence
 \item[-m] image mask for the B0 image
 \end{itemize}
