@@ -46,9 +46,11 @@
 
 #include "itkImageRegistrationMethod.h"
 #include "itkMattesMutualInformationImageToImageMetric.h"
+#include "itkRegularStepGradientDescentOptimizer.h"
+
 #include "itkLinearInterpolateImageFunction.h"
 #include "itkNearestNeighborInterpolateImageFunction.h"
-#include "itkRegularStepGradientDescentOptimizer.h"
+#include "itkBSplineInterpolateImageFunction.h"
 
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
@@ -132,6 +134,8 @@ int main( int argc, char *argv[] )
   TCLAP::ValueArg<std::string> toutArg("","tout","Estimated transformation",false,"","string",cmd);
   TCLAP::ValueArg<std::string> invToutArg("","itout","Inverse of estimated transformation",false,"","string",cmd);
 
+  TCLAP::SwitchArg nnSwitch("","nn","Nearest neighbor interpolation", cmd, false);
+  TCLAP::SwitchArg bsplineSwitch("","bspline","BSpline interpolation", cmd, false);
 
   // Parse the argv array.
   cmd.parse( argc, argv );
@@ -169,13 +173,22 @@ int main( int argc, char *argv[] )
   typedef itk::Image< PixelType, 4 >  SequenceType;
 
   typedef itk::AffineTransform< double, 3 > TransformType;
+
   typedef itk::RegularStepGradientDescentOptimizer       OptimizerType;
+
   typedef itk::LinearInterpolateImageFunction<
                                     ImageType,
                                     double             > InterpolatorType;
+
   typedef itk::NearestNeighborInterpolateImageFunction<
                                     ImageType,
                                     double             > NNInterpolatorType;
+
+  typedef itk::BSplineInterpolateImageFunction<
+                                    ImageType,
+                                    double,
+                                    double             > BSplineInterpolatorType;
+
   typedef itk::ImageRegistrationMethod<
                                     ImageType,
                                     ImageType    > RegistrationType;
@@ -195,12 +208,11 @@ int main( int argc, char *argv[] )
   TransformType::Pointer      transform     = TransformType::New();
   OptimizerType::Pointer      optimizer     = OptimizerType::New();
   InterpolatorType::Pointer   interpolator  = InterpolatorType::New();
-  NNInterpolatorType::Pointer nn_interpolator  = NNInterpolatorType::New();
   RegistrationType::Pointer   registration  = RegistrationType::New();
 
-  registration->SetOptimizer(     optimizer     );
-  registration->SetTransform(     transform     );
-  registration->SetInterpolator(  interpolator  );
+  registration->SetOptimizer(    optimizer    );
+  registration->SetTransform(    transform    );
+  registration->SetInterpolator( interpolator );
 
   MetricType::Pointer metric = MetricType::New();
   registration->SetMetric( metric  );
@@ -396,6 +408,19 @@ int main( int argc, char *argv[] )
      resample -> SetUseReferenceImage( true );
      resample -> SetReferenceImage( reference );
      resample -> SetDefaultPixelValue( 0 );
+
+     if ( nnSwitch.isSet() )
+     {
+       NNInterpolatorType::Pointer nnInterpolator = NNInterpolatorType::New();
+       resample -> SetInterpolator(nnInterpolator);
+     } else if ( bsplineSwitch.isSet() )
+       {
+         BSplineInterpolatorType::Pointer bsplineInterpolator = BSplineInterpolatorType::New();
+         bsplineInterpolator -> SetSplineOrder(3);
+         resample -> SetInterpolator(bsplineInterpolator);
+       }
+
+
      resample -> Update();
 
      joiner -> SetInput( i, resample -> GetOutput() );
