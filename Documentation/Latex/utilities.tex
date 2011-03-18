@@ -100,4 +100,23 @@ gradient table.
 \item[btkCropImageUsingMask] This program crops one (3D or 4D) image using a 3D mask. Usage: \texttt{-i input\_image\_filename -m
 input\_mask\_filename -o output\_image\_filename -d 3}, where '-d' is the dimension of the input image (by default 3).
 
+\item[btkRegisterDiffusionToAnatomicalData] This program registers a DW
+sequence to an anatomical image.
+
+Recommended usage: \texttt{btkReorientDiffusionSequenceToStandard -i input.nii
+-g
+gradients\_in.bvec -r reference.nii -o output.nii -c gradients\_out.bvec
+--mask mask.nii}.
+\begin{itemize}
+\item[-i] input sequence
+\item[-g] gradient table for the input sequence
+\item[-r] reference image (anatomical image)
+\item[-o] resampled sequence
+\item[-c] gradient table for the resampled sequence
+\item[-m] image mask for the B0 image
+\end{itemize}
+
+The list of optional parameters can be obtained by \texttt{btkNiftiToNrrd
+--help}
+
 \end{description}

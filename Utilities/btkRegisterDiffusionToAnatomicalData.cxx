@@ -118,7 +118,7 @@ int main( int argc, char *argv[] )
   TCLAP::ValueArg<std::string> referenceArg("r","reference","Anatomical image",true,"","string",cmd);
   TCLAP::ValueArg<std::string> outputArg("o","output","Registered diffusion sequence",true,"","string",cmd);
   TCLAP::ValueArg<std::string> cTableArg("c","ctable","Corrected table",true,"","string",cmd);
-  TCLAP::ValueArg<std::string> maskArg("","mask","Mask for the reference image",false,"","string",cmd);
+  TCLAP::ValueArg<std::string> maskArg("m","mask","Mask for the reference image",false,"","string",cmd);
 
   TCLAP::ValueArg<unsigned int> x1Arg("","x1","x min of ROI in diffusion",false,0,"int",cmd);
   TCLAP::ValueArg<unsigned int> x2Arg("","x2","x max of ROI in diffusion",false,0,"int",cmd);
