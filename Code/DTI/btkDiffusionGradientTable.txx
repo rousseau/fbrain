@@ -110,6 +110,11 @@ DiffusionGradientTable<TInputImage>
   std::cout << "Spacing inverse = " << std::endl <<  SpacingInv << std::endl; */
 
 
+  // FIXME Here the transformation provided should be used to rotate the gradients
+  // It's the calling program who should take care of providing the correct transform
+  // After correcting this, all the programs using thsi class should be modified accordingly
+
+
   vnl_matrix<double> R = m_Transform -> GetMatrix().GetVnlMatrix();
   vnl_matrix<double> Rinv(3,3);
   Rinv = vnl_inverse(R);

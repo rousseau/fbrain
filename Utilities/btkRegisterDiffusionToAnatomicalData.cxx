@@ -39,13 +39,16 @@
 
 #include "tclap/CmdLine.h"
 
-#include "itkImageRegistrationMethod.h"
+#include "itkImage.h"
+
 #include "itkAffineTransform.h"
+#include "itkEuler3DTransform.h"
+
+#include "itkImageRegistrationMethod.h"
 #include "itkMattesMutualInformationImageToImageMetric.h"
 #include "itkLinearInterpolateImageFunction.h"
 #include "itkNearestNeighborInterpolateImageFunction.h"
 #include "itkRegularStepGradientDescentOptimizer.h"
-#include "itkImage.h"
 
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
@@ -58,6 +61,8 @@
 #include "itkImageMaskSpatialObject.h"
 #include "itkDiscreteGaussianImageFilter.h"
 #include "itkJoinSeriesImageFilter.h"
+
+#include "btkDiffusionGradientTable.h"
 
 
 //  The following section of code implements a Command observer
@@ -104,12 +109,15 @@ int main( int argc, char *argv[] )
 
   const char *inputName = NULL, *referenceName = NULL, *outputName = NULL;
   const char *toutName = NULL, *invToutName = NULL, *maskName = NULL;
+  const char *gTableName = NULL, *cTableName = NULL;
 
   TCLAP::CmdLine cmd("Registers diffusion to anatomical data.", ' ', "Unversioned");
 
   TCLAP::ValueArg<std::string> inputArg("i","input","Diffusion sequence",true,"","string",cmd);
+  TCLAP::ValueArg<std::string> gTableArg("g","gtable","Gradient table",true,"","string",cmd);
   TCLAP::ValueArg<std::string> referenceArg("r","reference","Anatomical image",true,"","string",cmd);
   TCLAP::ValueArg<std::string> outputArg("o","output","Registered diffusion sequence",true,"","string",cmd);
+  TCLAP::ValueArg<std::string> cTableArg("c","ctable","Corrected table",true,"","string",cmd);
   TCLAP::ValueArg<std::string> maskArg("","mask","Mask for the reference image",false,"","string",cmd);
 
   TCLAP::ValueArg<unsigned int> x1Arg("","x1","x min of ROI in diffusion",false,0,"int",cmd);
@@ -149,6 +157,9 @@ int main( int argc, char *argv[] )
 
   toutName = toutArg.getValue().c_str();
   invToutName = invToutArg.getValue().c_str();
+
+  gTableName = gTableArg.getValue().c_str();
+  cTableName = cTableArg.getValue().c_str();
 
   // Typedefs
 
@@ -401,6 +412,48 @@ int main( int argc, char *argv[] )
   writer->SetInput( joiner -> GetOutput() );
 
   if (strcmp(outputName,"")) writer->Update();
+
+  // Change and write gradient table
+
+  typedef btk::DiffusionGradientTable< SequenceType > GradientTableType;
+  GradientTableType::Pointer gradientTable = GradientTableType::New();
+
+  vnl_matrix<double> R(3,3);
+  R.set_identity();
+
+  R = inverseTransform -> GetMatrix().GetVnlMatrix();
+
+  vnl_matrix<double> PQ = R;
+  vnl_matrix<double> NQ = R;
+  vnl_matrix<double> PQNQDiff;
+
+  for(unsigned int ni = 0; ni < 100; ni++ )
+  {
+    // Average current Qi with its inverse transpose
+    NQ = ( PQ + vnl_inverse_transpose( PQ ) ) / 2.0;
+    PQNQDiff = NQ - PQ;
+    if( PQNQDiff.frobenius_norm() < 1e-7 )
+    {
+//      std::cout << "Polar decomposition used " << ni << " iterations " << std::endl;
+      break;
+    }
+    else
+    {
+      PQ = NQ;
+    }
+  }
+
+  typedef itk::Euler3DTransform<double> EulerTransformType;
+  EulerTransformType::Pointer eulerTransform = EulerTransformType::New();
+
+  eulerTransform -> SetRotationMatrix( NQ );
+
+  gradientTable -> SetNumberOfGradients( inputLength );
+  gradientTable -> SetImage( input );
+  gradientTable -> SetTransform( eulerTransform );
+  gradientTable -> LoadFromFile( gTableName );
+  gradientTable -> RotateGradientsInWorldCoordinates();
+  gradientTable -> SaveToFile( cTableName);
 
   // Write transformation if required
 
