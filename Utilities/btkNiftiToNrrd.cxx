@@ -317,9 +317,9 @@ int main( int argc, char * argv[] )
   for ( unsigned int k=0; k < imageSize[3]; k++)
   {
     if ( lpsSwitchArg.isSet() )
-      fprintf( fw, "DWMRI_gradient_%.4d:= %lf %lf %lf\n",k,-gValues[0][k],-gValues[1][k],gValues[2][k]);
+      fprintf( fw, "DWMRI_gradient_%.4d:= %.14lf %.14lf %.14lf\n",k,-gValues[0][k],-gValues[1][k],gValues[2][k]);
     else
-      fprintf( fw, "DWMRI_gradient_%.4d:= %lf %lf %lf\n",k,gValues[0][k],gValues[1][k],gValues[2][k]);
+      fprintf( fw, "DWMRI_gradient_%.4d:= %.14lf %.14lf %.14lf\n",k,gValues[0][k],gValues[1][k],gValues[2][k]);
   }
 
   fclose (fw);

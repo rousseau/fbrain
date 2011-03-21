@@ -248,11 +248,11 @@ DiffusionGradientTable<TInputImage>
 
       if ( j < (m_NumberOfGradients-1) )
       {
-        fprintf( fw, "%f ", m_GradientTable(j,i) );
+        fprintf( fw, "%.14lf ", m_GradientTable(j,i) );
       }
       else
       {
-        fprintf( fw, "%f\n", m_GradientTable(j,i) );
+        fprintf( fw, "%.14lf\n", m_GradientTable(j,i) );
       }
 
     }
