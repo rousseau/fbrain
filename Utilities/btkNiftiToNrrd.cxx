@@ -58,13 +58,17 @@ int main( int argc, char * argv[] )
 
   TCLAP::CmdLine cmd("Converts a dwi sequence in nifti format to nrrd format", ' ', "Unversioned");
 
-  TCLAP::ValueArg<std::string> inputArg("i","input","DWI Sequence (.nii)",true,"","string",cmd);
+  TCLAP::ValueArg<std::string> inputArg("i","input","DW Sequence (.nii,.nii.gz)",true,"","string",cmd);
   TCLAP::ValueArg<std::string> bvalArg("b","bval","b-values",true,"","string",cmd);
   TCLAP::ValueArg<std::string> bvecArg("g","bvec","Gradient directions",true,"","string",cmd);
   TCLAP::ValueArg<std::string> outputArg("o","output","Sequence in NRRD format",true,"","string",cmd);
 
-  TCLAP::SwitchArg  lsssSwitchArg("","lsss","Data organization as list space space space (default is sssl)",cmd,false);
-  TCLAP::SwitchArg  lpsSwitchArg("","lps","Word coordinates in LPS (default is RAS)",cmd,false);
+  TCLAP::SwitchArg  lsssSwitchArg("v","vectorImage","The output is volume interleaved (an image of "
+  "vectors of diffusion values). By default, the output is voxel interleaved (you go through the "
+  "DWI values for each voxel before moving on to the values for the next voxel). ",cmd,false);
+
+  TCLAP::SwitchArg  lpsSwitchArg("","lps","Word coordinates expressed in LPS (Left-Posterior-Superior). "
+  "By default RAS (Right-Anterior-Superior) is used.",cmd,false);
 
   cmd.parse( argc, argv );
 
