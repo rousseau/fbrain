@@ -91,8 +91,8 @@ int main( int argc, char *argv[] )
   TCLAP::ValueArg<unsigned int> iterArg("n","iter","Maximum number of iterations",false, 30,"unsigned int",cmd);
   TCLAP::ValueArg<double> epsilonArg("e","epsilon","Maximum number of iterations",false, 1e-4,"double",cmd);
 
-  TCLAP::ValueArg<double> marginArg("","margin","Adds a margin to the reconstructed images\
-      to compensate for a small FOV in the reference",false, 0.0,"double",cmd);
+  TCLAP::ValueArg<double> marginArg("","margin","Adds a margin to the reconstructed images"
+  "to compensate for a small FOV in the reference. The value must be provided in millimeters.",false, 0.0,"double",cmd);
 
   TCLAP::SwitchArg  boxSwitchArg("","box","Use intersections for roi calculation",false);
   TCLAP::SwitchArg  maskSwitchArg("","mask","Use masks for roi calculation",false);
