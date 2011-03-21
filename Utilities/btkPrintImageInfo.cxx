@@ -164,20 +164,21 @@ int main( int argc, char *argv[] )
 {
 
   const char *inputFile = NULL;
+  unsigned int dim;
 
   TCLAP::CmdLine cmd("Prints some image information.", ' ', "Unversioned");
 
   TCLAP::ValueArg<std::string> inputArg("i","input","Input image",true,"","string",cmd);
-  TCLAP::SwitchArg seqSwitchArg("s","sequence","Input image is a sequence (4D)",cmd,false);
+  TCLAP::ValueArg<unsigned int> dimArg("d","dimension","Image dimension (3 / 4)",true,3,"unsigned int",cmd);
 
   cmd.parse( argc, argv );
 
   inputFile = inputArg.getValue().c_str();
+  dim       = dimArg.getValue();
 
   typedef itk::Image< short, 3 >  ImageType;
 
-
-  if ( seqSwitchArg.isSet() )
+  if (dim==4)
   {
     typedef itk::Image< short, 4 >  SequenceType;
 
@@ -206,22 +207,24 @@ int main( int argc, char *argv[] )
         itk::SpatialOrientationAdapter().FromDirectionCosines( extractor -> GetOutput() -> GetDirection() )
         ) << std::endl;
 
-  } else
-  {
+  } else if (dim==3)
+    {
+      typedef itk::ImageFileReader< ImageType > ImageReaderType;
+      ImageReaderType::Pointer  imageReader  = ImageReaderType::New();
+      imageReader->SetFileName(  inputFile );
+      imageReader->Update();
+      ImageType::Pointer image = imageReader->GetOutput();
+      image->Print(std::cout);
 
-
-    typedef itk::ImageFileReader< ImageType > ImageReaderType;
-    ImageReaderType::Pointer  imageReader  = ImageReaderType::New();
-    imageReader->SetFileName(  inputFile );
-    imageReader->Update();
-    ImageType::Pointer image = imageReader->GetOutput();
-    image->Print(std::cout);
-
-    std::cout << std::endl << "Anatomical orientation = " << SO_OrientationToString(
+      std::cout << std::endl << "Anatomical orientation = " << SO_OrientationToString(
         itk::SpatialOrientationAdapter().FromDirectionCosines( image -> GetDirection() )
         ) << std::endl;
+    } else
+      {
+        std::cout << "ERROR: Image dimension unsupported." << std::endl;
+        return EXIT_FAILURE;
 
-  }
+      }
 
   return EXIT_SUCCESS;
 }
