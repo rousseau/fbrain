@@ -332,7 +332,7 @@ RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
 template<class TInputImage, class TCoordRep>
 void
 RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
-::Initialize( const ImageRegionType & region)
+::Initialize( ImageRegionType & region)
 {
   // In case of leave1out
 

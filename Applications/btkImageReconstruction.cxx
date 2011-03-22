@@ -89,7 +89,8 @@ int main( int argc, char *argv[] )
 
   TCLAP::ValueArg<std::string> outArg("o","output","High resolution image",true,"none","string",cmd);
   TCLAP::ValueArg<unsigned int> iterArg("n","iter","Maximum number of iterations",false, 30,"unsigned int",cmd);
-  TCLAP::ValueArg<double> epsilonArg("e","epsilon","Maximum number of iterations",false, 1e-4,"double",cmd);
+  TCLAP::ValueArg<double> epsilonArg("e","epsilon","Minimal percent change between two iterations"
+      "considered as convergence.",false, 1e-4,"double",cmd);
 
   TCLAP::ValueArg<double> marginArg("","margin","Adds a margin to the reconstructed images"
   "to compensate for a small FOV in the reference. The value must be provided in millimeters.",false, 0.0,"double",cmd);
