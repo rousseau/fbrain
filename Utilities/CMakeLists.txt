@@ -59,8 +59,8 @@ TARGET_LINK_LIBRARIES(btkNiftiToNrrd ITKIO)
 
 #------------------------------------------------------------------------------
 
-ADD_EXECUTABLE(btkDWIBaselineImageExtractor btkDWIBaselineImageExtractor.cxx)
-TARGET_LINK_LIBRARIES(btkDWIBaselineImageExtractor ITKIO)
+ADD_EXECUTABLE(btkDWIImageExtractor btkDWIImageExtractor.cxx)
+TARGET_LINK_LIBRARIES(btkDWIImageExtractor ITKIO)
 
 #------------------------------------------------------------------------------
 
@@ -75,6 +75,7 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkSetStandardCoorSystem
                 btkNiftiToNrrd
                 btkNrrdToNifti
-                btkDWIBaselineImageExtractor
+                btkDWIImageExtractor
+		btkCropImageUsingMask
     btkCropImageUsingMask
         DESTINATION bin)

@@ -43,14 +43,20 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
+#include "itkExtractImageFilter.h"
 
 
-typedef double ScalarType;
+typedef short ScalarType;
+
+const unsigned int SequenceDimension = 4;
+typedef itk::Image<ScalarType,SequenceDimension> Sequence;
+typedef itk::ImageFileReader<Sequence> SequenceFileReader;
 
 const unsigned int ImageDimension = 3;
 typedef itk::Image<ScalarType,ImageDimension> Image;
-typedef itk::ImageFileReader<Image> ImageFileReader;
 typedef itk::ImageFileWriter<Image> ImageFileWriter;
+
+typedef itk::ExtractImageFilter<Sequence,Image> ExtractImageFilter;
 
 
 int main(int argc, char *argv[])
@@ -58,6 +64,7 @@ int main(int argc, char *argv[])
     // Command line variables
     std::string inputFileName;
     std::string outputFileName;
+    unsigned int imageIndex;
 
 
     //
@@ -72,6 +79,7 @@ int main(int argc, char *argv[])
         // Defines arguments
         TCLAP::ValueArg<std::string> inputArg("i", "input", "Input DWI sequence", true, "", "string", cmd);
         TCLAP::ValueArg<std::string> outputArg("o", "output", "Output image", false, "B0.nii.gz", "string", cmd);
+        TCLAP::ValueArg<unsigned int> imageIndexArg("", "image_index", "Index of the image to extract", false, 0, "unsigned int", cmd);
 
         // Parsing arguments
         cmd.parse(argc, argv);
@@ -79,6 +87,7 @@ int main(int argc, char *argv[])
         // Get back argument's values
         inputFileName  = inputArg.getValue();
         outputFileName = outputArg.getValue();
+        imageIndex     = imageIndexArg.getValue();
     }
     catch(TCLAP::ArgException &e)
     {
@@ -91,9 +100,24 @@ int main(int argc, char *argv[])
 
     std::cout << "Reading DWI sequence..." << std::flush;
 
-    ImageFileReader::Pointer reader = ImageFileReader::New();
+    SequenceFileReader::Pointer reader = SequenceFileReader::New();
     reader->SetFileName(inputFileName);
     reader->Update();
+
+    std::cout << "done." << std::endl;
+
+
+    // Extract image filter
+    std::cout << "Extract image..." << std::flush;
+
+    ExtractImageFilter::Pointer filter = ExtractImageFilter::New();
+
+    filter->SetInput(reader->GetOutput());
+    Sequence::RegionType region = reader->GetOutput()->GetLargestPossibleRegion();
+    region.SetSize(3,0);
+    region.SetIndex(3,imageIndex);
+    filter->SetExtractionRegion(region);
+    filter->Update();
 
     std::cout << "done." << std::endl;
 
@@ -103,7 +127,7 @@ int main(int argc, char *argv[])
     std::cout << "Writing baseline image..." << std::flush;
 
     ImageFileWriter::Pointer writer = ImageFileWriter::New();
-    writer->SetInput(reader->GetOutput());
+    writer->SetInput(filter->GetOutput());
     writer->SetFileName(outputFileName);
 
     try
