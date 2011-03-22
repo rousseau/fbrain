@@ -61,9 +61,9 @@ same conditions as regards security.
 
 Baby Brain Toolkit (BTK) depends on:
 \begin{itemize}
- \item CMake (www.cmake.org): this library can be installed for debian-based
-distribution using the following command line : \texttt{apt-get install
-cmake cmake-curses-gui}
+ \item CMake (www.cmake.org), Tclap (tclap.sourceforge.net), OpenMP (openmp.org), VTK (www.vtk.org), ANN (www.cs.umd.edu/~mount/ANN).
+ \item these libraries can be installed for debian-based distribution using the following command line: \texttt{apt-get install
+cmake cmake-curses-gui libtclap-dev libgomp1 libvtk5-dev libann-dev}
  \item Insight Toolkit (ITK) version 3.20 (it can be download at www.itk.org). Extract this file (the directory InsightToolkit-3.20 is created). Make another directory where all the build files will be placed, e.g. InsightToolkit-3.20-build:
 \begin{verbatim}
 mkdir InsightToolkit-3.20-build
@@ -77,18 +77,6 @@ ITK_USE_OPTIMIZED_REGISTRATION = ON
 ITK_USE_REVIEW = ON
 \end{verbatim}
 Then press \texttt{[c]} to configure and \texttt{[g]} to generate the make file. Finally, type \texttt{make} at the prompt to obtain the final build of ITK.
- \item Tclap library: this library can be installed for debian-based
-distribution using the following command line : \texttt{apt-get install
-libtclap-dev}
- \item OpenMP library: this library can be installed for debian-based
-distribution using the following command line : \texttt{apt-get install
-libgomp1}
- \item VTK library: this library can be installed for debian-based
-distribution using the following command line : \texttt{apt-get install
-libvtk5-dev}
- \item ANN library (www.cs.umd.edu/~mount/ANN): this library can be installed
-for debian-based distribution using the following command line : \texttt{apt-get
-install libann-dev}
 
 \end{itemize}
 
