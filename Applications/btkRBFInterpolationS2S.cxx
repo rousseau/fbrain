@@ -47,221 +47,195 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "itkImageFileWriter.h"
 #include "time.h"
 
+#include "itkTransformFileReader.h"
+#include "itkImageMaskSpatialObject.h"
+
 
 int main( int argc, char *argv[] )
 {
 
   try {
 
-  const char *input = NULL, *ref = NULL, *output = NULL;
+  const char *input = NULL, *refFile = NULL, *output = NULL;
+  const char *maskFile = NULL, *trefFile = NULL;
   const char *gtable = NULL, *rbf = NULL;
   const char *tpath = NULL;
 
-  double sx, sy, sz;
-  int x1, y1, z1, x2, y2, z2;
   double rspa, rgra;
-// int x1hr, y1hr, z1hr, x2hr, y2hr, z2hr;
 
   TCLAP::CmdLine cmd("Resampling of dwi sequences using Radial Basis Functions", ' ', "Unversioned");
 
-  TCLAP::ValueArg<std::string> inputArg("i","input","Original sequence (.nii;.nii.gz)",true,"none","string");
-  TCLAP::ValueArg<std::string> refArg("r","ref","Reference sequence (.nii;.nii.gz)",true,"none","string");
-  TCLAP::ValueArg<std::string> outputArg("o","output","Corrected sequence (.nii;.nii.gz)",false,"none","string");
-  TCLAP::ValueArg<std::string> gtableArg("g","gradients","Gradient table (.bvec)",true,"none","string");
-  TCLAP::ValueArg<std::string> tpathArg("t","tpath","Path to transforms",true,"none","string");
+  TCLAP::ValueArg<std::string> inputArg("i","input","Original sequence (.nii;.nii.gz)",true,"","string",cmd);
 
-  TCLAP::ValueArg<float> sxArg("","sx","New spacing in x",false,0,"float");
-  TCLAP::ValueArg<float> syArg("","sy","New spacing in y",false,0,"float");
-  TCLAP::ValueArg<float> szArg("","sz","New spacing in z",false,0,"float");
+  TCLAP::ValueArg<std::string> outputArg("o","output","Corrected sequence (.nii;.nii.gz)",true,"","string",cmd);
+  TCLAP::ValueArg<std::string> gtableArg("g","gradients","Gradient table (.bvec)",true,"","string",cmd);
+  TCLAP::ValueArg<std::string> tpathArg("t","tpath","Path to transforms",true,"none","string",cmd);
+  TCLAP::ValueArg<std::string> maskArg("m","mask","Image mask in the resampling space (.nii;.nii.gz)",false,"","string",cmd);
 
-  TCLAP::ValueArg<int> x1Arg("","x1","ROI's min x value",false,0,"int");
-  TCLAP::ValueArg<int> y1Arg("","y1","ROI's min y value",false,0,"int");
-  TCLAP::ValueArg<int> z1Arg("","z1","ROI's min z value",false,0,"int");
-  TCLAP::ValueArg<int> x2Arg("","x2","ROI's max x value",false,0,"int");
-  TCLAP::ValueArg<int> y2Arg("","y2","ROI's max x value",false,0,"int");
-  TCLAP::ValueArg<int> z2Arg("","z2","ROI's max x value",false,0,"int");
+  TCLAP::ValueArg<std::string> refArg("r","ref","Reference image to specify the resampling grid (.nii;.nii.gz)",false,"","string",cmd);
+  TCLAP::ValueArg<std::string> trefArg("","tref","Transform from reference to sequence (.nii;.nii.gz)",false,"","string",cmd);
 
-  TCLAP::ValueArg<std::string> rbfArg("","rbf","Radial basis function",false,"gauss","string");
-  TCLAP::ValueArg<float> rspaArg("","rspa","Spatial kernel width",false,1,"float");
-  TCLAP::ValueArg<float> rgraArg("","rgra","Angular kernel width",false,0.5,"float");
+  TCLAP::ValueArg<std::string> rbfArg("","rbf","Radial basis function",false,"gauss","string",cmd);
+  TCLAP::ValueArg<float> rspaArg("","rspa","Spatial kernel width",false,1,"float",cmd);
+  TCLAP::ValueArg<float> rgraArg("","rgra","Angular kernel width",false,0.5,"float",cmd);
 
-  cmd.add( z2Arg );
-  cmd.add( y2Arg );
-  cmd.add( x2Arg );
-  cmd.add( z1Arg );
-  cmd.add( y1Arg );
-  cmd.add( x1Arg );
-
-  cmd.add( szArg );
-  cmd.add( syArg );
-  cmd.add( sxArg );
-
-  cmd.add( tpathArg );
-  cmd.add( gtableArg );
-  cmd.add( outputArg );
-  cmd.add( refArg );
-  cmd.add( inputArg );
-
-  cmd.add( rbfArg );
-
-  cmd.add( rspaArg );
-  cmd.add( rgraArg );
+  TCLAP::SwitchArg oriSwitch("","originalSpace","Original resampling space", cmd, false);
+  TCLAP::SwitchArg refSwitch("","referenceSpace","Resampling space provided by image reference", cmd, false);
 
   // Parse the argv array.
   cmd.parse( argc, argv );
 
   tpath = tpathArg.getValue().c_str();
-  input = inputArg.getValue().c_str();
-  ref = refArg.getValue().c_str();
+  input  = inputArg.getValue().c_str();
+  refFile  = refArg.getValue().c_str();
   output = outputArg.getValue().c_str();
   gtable = gtableArg.getValue().c_str();
 
-  sx = sxArg.getValue();
-  sy = syArg.getValue();
-  sz = szArg.getValue();
-
-  // ROI on original image
-  x1 = x1Arg.getValue();
-  y1 = y1Arg.getValue();
-  z1 = z1Arg.getValue();
-
-  x2 = x2Arg.getValue();
-  y2 = y2Arg.getValue();
-  z2 = z2Arg.getValue();
+  maskFile = maskArg.getValue().c_str();
+  trefFile = trefArg.getValue().c_str();
 
   // Interpolation parameters
   rbf = rbfArg.getValue().c_str();
   rspa = rspaArg.getValue();
   rgra = rgraArg.getValue();
 
-
   // Read sequence
 
-  typedef short PixelType;
+  typedef short         PixelType;
 
-  const unsigned int Dimension = 4;
-  typedef itk::Image< PixelType, Dimension > SequenceType;
+  const   unsigned int  Dimension = 4;
+  typedef itk::Image< PixelType, Dimension >   SequenceType;
+  typedef itk::ImageFileReader< SequenceType >  SequenceReaderType;
 
-  typedef itk::ImageFileReader< SequenceType > SequenceReaderType;
   SequenceReaderType::Pointer sequenceReader = SequenceReaderType::New();
   sequenceReader -> SetFileName( input );
   sequenceReader -> Update();
+  SequenceType::Pointer       sequence     = sequenceReader -> GetOutput();
 
-  SequenceType::Pointer sequence = sequenceReader -> GetOutput();
+  // Read mask for DW sequence
 
-  // Read reference
+  typedef itk::Image< unsigned char, 3 >   ImageMaskType;
+  typedef itk::ImageFileReader< ImageMaskType >  ImageMaskReaderType;
 
-  SequenceReaderType::Pointer refSequenceReader = SequenceReaderType::New();
-  refSequenceReader -> SetFileName( ref );
-  refSequenceReader -> Update();
+  ImageMaskReaderType::Pointer imageMaskReader = ImageMaskReaderType::New();
+  imageMaskReader -> SetFileName( maskFile );
+  imageMaskReader -> Update();
 
-  SequenceType::Pointer refSequence = refSequenceReader -> GetOutput();
+  typedef itk::ImageMaskSpatialObject< 3 >  MaskType;
+  MaskType::Pointer mask = MaskType::New();
+  mask -> SetImage( imageMaskReader -> GetOutput() );
 
+  // Calcule 4D diffusion ROI for input sequence from mask
 
-  // Create high resolution sequence (only in space by the moment)
+  SequenceType::RegionType seqROI = sequence -> GetLargestPossibleRegion();
+  SequenceType::IndexType  seqROIIndex = seqROI.GetIndex();
+  SequenceType::SizeType   seqROISize  = seqROI.GetSize();;
 
-  // High resolution spacing
+  MaskType::IndexType seqROI3DIndex = mask -> GetAxisAlignedBoundingBoxRegion().GetIndex();
+  MaskType::SizeType  seqROI3DSize  = mask -> GetAxisAlignedBoundingBoxRegion().GetSize();
 
-  SequenceType::SpacingType spacing = sequence -> GetSpacing();
+  seqROIIndex[0] = seqROI3DIndex[0];
+  seqROIIndex[1] = seqROI3DIndex[1];
+  seqROIIndex[2] = seqROI3DIndex[2];
+  seqROIIndex[3] = 1; // The roi starts at the first diffusion image
 
-  SequenceType::SpacingType hrSpacing;
+  seqROISize[0] = seqROI3DSize[0];
+  seqROISize[1] = seqROI3DSize[1];
+  seqROISize[2] = seqROI3DSize[2];
+  seqROISize[3] = seqROISize[3] - 1;
 
-  if (sx > 0)
+  seqROI.SetIndex(seqROIIndex);
+  seqROI.SetSize(seqROISize);
+
+  SequenceType::RegionType recROI = seqROI; // By default we reconstruct on the original grid
+
+   // Create reconstructed sequence
+
+  SequenceType::Pointer recSequence = SequenceType::New();
+
+  SequenceType::SpacingType   recSpacing   = sequence -> GetSpacing();
+  SequenceType::RegionType    recRegion    = sequence -> GetLargestPossibleRegion();
+  SequenceType::SizeType      recSize      = recRegion.GetSize();
+  SequenceType::IndexType     recIndex     = recRegion.GetIndex();
+  SequenceType::PointType     recOrigin    = sequence -> GetOrigin();
+  SequenceType::DirectionType recDirection = sequence -> GetDirection();
+
+  typedef itk::Image< PixelType, 3 >   ImageType;
+  typedef itk::ImageFileReader< ImageType >  ImageReaderType;
+
+  if ( oriSwitch.isSet() )
   {
-    hrSpacing[0] = sx;
+
+  } else if ( refSwitch.isSet() )
+  {
+    ImageReaderType::Pointer refImageReader = ImageReaderType::New();
+    refImageReader -> SetFileName( refFile );
+    refImageReader -> Update();
+
+    ImageType::Pointer       refImage     = refImageReader -> GetOutput();
+    ImageType::SpacingType   refSpacing   = refImage -> GetSpacing();
+    ImageType::SizeType      refSize      = refImage -> GetLargestPossibleRegion().GetSize();
+    ImageType::IndexType     refIndex     = refImage -> GetLargestPossibleRegion().GetIndex();
+    ImageType::DirectionType refDirection = refImage -> GetDirection();
+    ImageType::PointType     refOrigin    = refImage -> GetOrigin();
+
+    recSpacing[0] = refSpacing[0];  recSpacing[1] = refSpacing[1]; recSpacing[2] = refSpacing[2];
+
+    for(unsigned int i=0; i<3; i++)
+      for(unsigned int j=0; j<3; j++)
+        recDirection(i,j)= refDirection(i,j);
+
+    recSize[0] = refSize[0];  recSize[1] = refSize[1]; recSize[2] = refSize[2];
+    recIndex[0] = refIndex[0];  recIndex[1] = refIndex[1]; recIndex[2] = refIndex[2];
+
+    recRegion.SetIndex( recIndex );
+    recRegion.SetSize( recSize );
+
+    recOrigin[0] = refOrigin[0];  recOrigin[1] = refOrigin[1]; recOrigin[2] = refOrigin[2];
+
   } else
+    {
+      recSpacing[2] = recSpacing[0];
+      recSize[2]    = floor( recSize[2]*recSpacing[2] / recSpacing[0] + 0.5 );
+      recRegion.SetSize( recSize );
+
+      SequenceType::IndexType recROIIndex = recROI.GetIndex();
+      SequenceType::SizeType  recROISize  = recROI.GetSize();
+
+      recROIIndex[2] = floor (recROIIndex[2] * sequence -> GetSpacing()[2] / recSpacing[2] + 0.5);
+      recROISize[2]  = floor (recROISize[2] * sequence -> GetSpacing()[2] / recSpacing[2] + 0.5);
+
+      recROI.SetIndex( recROIIndex );
+      recROI.SetSize( recROISize );
+    }
+
+  recSequence -> SetRegions( recRegion );
+  recSequence -> Allocate();
+  recSequence -> FillBuffer(0.0);
+
+  recSequence -> SetDirection( recDirection);
+  recSequence -> SetOrigin( recOrigin );
+  recSequence -> SetSpacing( recSpacing );
+
+  // Read transform ref -> dwi
+
+  typedef itk::AffineTransform< double, 3 > TransformType;
+  TransformType::Pointer tref;
+
+  // Read transformation file
+  if ( refSwitch.isSet() )
   {
-    hrSpacing[0] = spacing[0];
+    typedef itk::TransformFileReader     TransformReaderType;
+    typedef TransformReaderType::TransformListType * TransformListType;
+
+    TransformReaderType::Pointer transformReader = TransformReaderType::New();
+    transformReader->SetFileName( trefFile );
+    transformReader->Update();
+
+    TransformListType transforms = transformReader->GetTransformList();
+    TransformReaderType::TransformListType::const_iterator titr = transforms->begin();
+    tref = dynamic_cast< TransformType * >( titr->GetPointer() ) ;
   }
-
-  if (sy > 0)
-  {
-    hrSpacing[1] = sy;
-  } else
-  {
-    hrSpacing[1] = spacing[1];
-  }
-
-  if (sz > 0)
-  {
-    hrSpacing[2] = sz;
-  } else
-  {
-    hrSpacing[2] = spacing[2];
-  }
-
-  hrSpacing[3] = spacing[3];
-
-  // High resolution size
-
-  SequenceType::SizeType size = sequence -> GetLargestPossibleRegion().GetSize();
-
-  SequenceType::SizeType hrSize;
-  hrSize[0] = ceil (size[0]*spacing[0]/hrSpacing[0]);
-  hrSize[1] = ceil (size[1]*spacing[1]/hrSpacing[1]);
-  hrSize[2] = ceil (size[2]*spacing[2]/hrSpacing[2]);
-  hrSize[3] = ceil (size[3]*spacing[3]/hrSpacing[3]);
-
-  // Create HR image
-
-  SequenceType::Pointer hrSequence = SequenceType::New();
-
-  SequenceType::IndexType hrStart;
-  hrStart[0] = 0;
-  hrStart[1] = 0;
-  hrStart[2] = 0;
-  hrStart[3] = 0;
-
-  SequenceType::RegionType hrRegion;
-  hrRegion.SetSize(hrSize);
-  hrRegion.SetIndex(hrStart);
-
-  hrSequence -> SetRegions(hrRegion);
-  hrSequence -> Allocate();
-  hrSequence -> FillBuffer(0.0);
-
-  hrSequence -> SetDirection( sequence -> GetDirection() );
-  hrSequence -> SetOrigin( sequence -> GetOrigin() );
-  hrSequence -> SetSpacing( hrSpacing );
-
-  // Resampling in ROI (testing purposes)
-  // ROI definition on HR image
-
-  // Compute points defining the ROI on the high resolution image
-
-  SequenceType::IndexType LRIndex1;
-  LRIndex1[0] = x1; LRIndex1[1] = y1; LRIndex1[2] = z1; LRIndex1[3] = 1;
-
-  SequenceType::PointType LRPoint1;
-  sequence -> TransformIndexToPhysicalPoint(LRIndex1, LRPoint1);
-
-  SequenceType::IndexType HRIndex1;
-  hrSequence -> TransformPhysicalPointToIndex(LRPoint1, HRIndex1);
-
-
-  SequenceType::IndexType LRIndex2;
-  LRIndex2[0] = x2; LRIndex2[1] = y2; LRIndex2[2] = z2; LRIndex2[3] = 1;
-
-  SequenceType::PointType LRPoint2;
-  sequence -> TransformIndexToPhysicalPoint(LRIndex2, LRPoint2);
-
-  SequenceType::IndexType HRIndex2;
-  hrSequence -> TransformPhysicalPointToIndex(LRPoint2, HRIndex2);
-
-  // Create ROI in high resolution
-
-  SequenceType::RegionType hrROI;
-
-  SequenceType::IndexType roiStart = HRIndex1;
-
-  SequenceType::SizeType roiSize;
-  roiSize[0] = HRIndex2[0] - HRIndex1[0] + 1;
-  roiSize[1] = HRIndex2[1] - HRIndex1[1] + 1;
-  roiSize[2] = HRIndex2[2] - HRIndex1[2] + 1;
-  roiSize[3] = 30;
-
-  hrROI.SetIndex(roiStart);
-  hrROI.SetSize(roiSize);
 
   // Create interpolator
   // WARNING : THE ORDER OF PARAMETER SETTING IS IMPORTANT !!!!
@@ -271,35 +245,31 @@ int main( int argc, char *argv[] )
   interpolator -> SetInputImage( sequence );
   interpolator -> SetTransforms(tpath);
   interpolator -> SetGradientTable( gtable );
-  std::cout << "Initializing interpolator ... "; std::cout.flush();
-  interpolator -> Initialize( hrROI );
-  std::cout << "done. " << std::endl; std::cout.flush();
+  interpolator -> Initialize( seqROI );
 
   typedef itk::ImageRegionIteratorWithIndex<SequenceType> IteratorType;
 
-  IteratorType refIt(refSequence, hrROI);
+  IteratorType recIt( recSequence, recROI);
 
   SequenceType::IndexType index;
-  SequenceType::PointType point;
+  SequenceType::PointType pointSeq;
+  SequenceType::PointType pointRef;
+  ImageType::PointType pointRef3D;
+  ImageType::PointType pointSeq3D;
 
   double theta;
   double phi;
-
   double value;
-  double error;
 
   clock_t start, finish;
-
-  double mse = 0;
-  double time = 0;
 
   start = clock();
 
   unsigned int image = 0;
 
-  for (refIt.GoToBegin(); !refIt.IsAtEnd(); ++refIt)
+  for (recIt.GoToBegin(); !recIt.IsAtEnd(); ++recIt)
   {
-    index = refIt.GetIndex();
+    index = recIt.GetIndex();
 
     if (index[3]!=image)
     {
@@ -307,24 +277,41 @@ int main( int argc, char *argv[] )
       std::cout << "Resampling image " << image << " ... " << std::endl; std::cout.flush();
     }
 
-// std::cout << "slice nro " << index[2] << std::endl;
+    value = 0;
 
-    refSequence -> TransformIndexToPhysicalPoint(index,point);
-    interpolator -> GetGradientDirection(index[3],theta,phi);
+    recSequence -> TransformIndexToPhysicalPoint(index,pointRef);
+    pointRef3D[0] = pointRef[0];  pointRef3D[1] = pointRef[1]; pointRef3D[2] = pointRef[2];
 
-    value = interpolator -> Evaluate(point, theta, phi, rspa, rgra, 0);
+    if ( mask -> IsInside(pointRef3D) )
+    {
+      if ( refSwitch.isSet() )
+        pointSeq3D = tref -> TransformPoint( pointRef3D );
+      else
+        pointSeq3D = pointRef3D;
 
-    refIt.Set( (short)value );
+      pointSeq[0] = pointSeq3D[0];
+      pointSeq[1] = pointSeq3D[1];
+      pointSeq[2] = pointSeq3D[2];
+      pointSeq[3] = pointRef[3];
+
+      interpolator -> GetGradientDirection(index[3],theta,phi);
+
+      value =  interpolator -> Evaluate(pointSeq, theta, phi, rspa, rgra, 0);
+    }
+
+    recIt.Set( (short)value );
 
   }
   finish = clock();
 
+  std::cout << "duracion (seg) = " << (finish - start) / CLOCKS_PER_SEC << std::endl;
+
   // Write interpolated sequence
 
-  typedef itk::ImageFileWriter< SequenceType > SequenceWriterType;
+  typedef itk::ImageFileWriter< SequenceType >  SequenceWriterType;
   SequenceWriterType::Pointer sequenceWriter = SequenceWriterType::New();
   sequenceWriter -> SetFileName( output );
-  sequenceWriter -> SetInput( refSequence );
+  sequenceWriter -> SetInput( recSequence );
 
   if ( strcmp(output,"none") != 0 )
   {
@@ -333,7 +320,6 @@ int main( int argc, char *argv[] )
 
   return EXIT_SUCCESS;
 
-  } catch (TCLAP::ArgException &e) // catch any exceptions
+  } catch (TCLAP::ArgException &e)  // catch any exceptions
   { std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; }
 }
-
