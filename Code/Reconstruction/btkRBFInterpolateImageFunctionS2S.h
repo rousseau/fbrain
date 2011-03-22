@@ -161,7 +161,10 @@ public:
 
   void SetInputImage(const InputImageType *ptr);
 
-  void Initialize( const ImageRegionType & region );
+  // The region used as argument for initialize is a region in the original
+  // sequence. It's used to construct a tree with the points used for
+  // interpolation
+  void Initialize( ImageRegionType & region );
   void SetTransforms( const char * tpath );
 
 
