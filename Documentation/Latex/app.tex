@@ -54,6 +54,11 @@ pathToTransforms}.
 The slice-by-slice transform for a given DW image is saved as a set of $N$
 transforms in ITK format, with $N$ the number of slices in the image.
 
+NOTE: For slice registration, 20\% of the samples are used for computing the
+image metric. As the region of interest of the slice can be small, this number
+of samples might be insufficient to compute the metric accurately. However,
+this percent of samples has been sufficient for the tested sequences. 
+
 \item[btkRBFInterpolationS2S] It performs an interpolation of scattered data
 generated from the application of slice-by-slice transforms. To this end,
 radial basis functions are used.
