@@ -65,22 +65,26 @@ int main( int argc, char *argv[] )
 
   TCLAP::CmdLine cmd("Resampling of dwi sequences using Radial Basis Functions", ' ', "Unversioned");
 
-  TCLAP::ValueArg<std::string> inputArg("i","input","Original sequence (.nii;.nii.gz)",true,"","string",cmd);
+  TCLAP::ValueArg<std::string> inputArg("i","input","Original sequence",true,"","string",cmd);
 
-  TCLAP::ValueArg<std::string> outputArg("o","output","Corrected sequence (.nii;.nii.gz)",true,"","string",cmd);
-  TCLAP::ValueArg<std::string> gtableArg("g","gradients","Gradient table (.bvec)",true,"","string",cmd);
+  TCLAP::ValueArg<std::string> outputArg("o","output","Corrected sequence",true,"","string",cmd);
+  TCLAP::ValueArg<std::string> gtableArg("g","gradients","Gradient table",true,"","string",cmd);
   TCLAP::ValueArg<std::string> tpathArg("t","tpath","Path to transforms",true,"none","string",cmd);
-  TCLAP::ValueArg<std::string> maskArg("m","mask","Image mask in the resampling space (.nii;.nii.gz)",false,"","string",cmd);
+  TCLAP::ValueArg<std::string> maskArg("m","mask","Image mask for the input sequence",true,"","string",cmd);
 
-  TCLAP::ValueArg<std::string> refArg("r","ref","Reference image to specify the resampling grid (.nii;.nii.gz)",false,"","string",cmd);
-  TCLAP::ValueArg<std::string> trefArg("","tref","Transform from reference to sequence (.nii;.nii.gz)",false,"","string",cmd);
+  TCLAP::ValueArg<std::string> refArg("r","ref","Reference image to specify the resampling grid"
+      ,false,"","string",cmd);
+  TCLAP::ValueArg<std::string> trefArg("","tref","Transform from reference to sequence"
+      ,false,"","string",cmd);
 
   TCLAP::ValueArg<std::string> rbfArg("","rbf","Radial basis function",false,"gauss","string",cmd);
   TCLAP::ValueArg<float> rspaArg("","rspa","Spatial kernel width",false,1,"float",cmd);
   TCLAP::ValueArg<float> rgraArg("","rgra","Angular kernel width",false,0.5,"float",cmd);
 
-  TCLAP::SwitchArg oriSwitch("","originalSpace","Original resampling space", cmd, false);
-  TCLAP::SwitchArg refSwitch("","referenceSpace","Resampling space provided by image reference", cmd, false);
+  TCLAP::SwitchArg oriSwitch("","originalSpace","Original resampling space. "
+      "By default, an isovoxel reconstruction is performed.", cmd, false);
+  TCLAP::SwitchArg refSwitch("","referenceSpace","Resampling space provided by image reference. "
+      "By default, an isovoxel reconstruction is performed.", cmd, false);
 
   // Parse the argv array.
   cmd.parse( argc, argv );
