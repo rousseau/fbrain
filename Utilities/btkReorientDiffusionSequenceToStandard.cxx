@@ -129,6 +129,8 @@ int main( int argc, char *argv[] )
 
   sup_lps = vnl_cross_3d(left_lps,pos_lps);
 
+  // TODO The following code is quite repeated throug the library
+  // we should include it somewhere else
 
   vnl_matrix<double> R(3,3);
   R.set_identity();

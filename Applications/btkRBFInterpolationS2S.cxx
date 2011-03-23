@@ -50,6 +50,8 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "itkTransformFileReader.h"
 #include "itkImageMaskSpatialObject.h"
 
+#include "btkDiffusionGradientTable.h"
+#include "itkEuler3DTransform.h"
 
 int main( int argc, char *argv[] )
 {
@@ -58,7 +60,7 @@ int main( int argc, char *argv[] )
 
   const char *input = NULL, *refFile = NULL, *output = NULL;
   const char *maskFile = NULL, *trefFile = NULL;
-  const char *gtable = NULL, *rbf = NULL;
+  const char *ctable = NULL, *gtable = NULL, *rbf = NULL;
   const char *tpath = NULL;
 
   double rspa, rgra;
@@ -76,6 +78,7 @@ int main( int argc, char *argv[] )
       ,false,"","string",cmd);
   TCLAP::ValueArg<std::string> trefArg("","tref","Transform from reference to sequence"
       ,false,"","string",cmd);
+  TCLAP::ValueArg<std::string> ctableArg("c","ctable","Corrected gradient table",false,"","string",cmd);
 
   TCLAP::ValueArg<std::string> rbfArg("","rbf","Radial basis function",false,"gauss","string",cmd);
   TCLAP::ValueArg<float> rspaArg("","rspa","Spatial kernel width",false,1,"float",cmd);
@@ -94,9 +97,11 @@ int main( int argc, char *argv[] )
   refFile  = refArg.getValue().c_str();
   output = outputArg.getValue().c_str();
   gtable = gtableArg.getValue().c_str();
+  ctable = ctableArg.getValue().c_str();
 
   maskFile = maskArg.getValue().c_str();
   trefFile = trefArg.getValue().c_str();
+
 
   // Interpolation parameters
   rbf = rbfArg.getValue().c_str();
@@ -133,7 +138,9 @@ int main( int argc, char *argv[] )
 
   SequenceType::RegionType seqROI = sequence -> GetLargestPossibleRegion();
   SequenceType::IndexType  seqROIIndex = seqROI.GetIndex();
-  SequenceType::SizeType   seqROISize  = seqROI.GetSize();;
+  SequenceType::SizeType   seqROISize  = seqROI.GetSize();
+
+  unsigned int numberOfFrames = seqROISize[3];
 
   MaskType::IndexType seqROI3DIndex = mask -> GetAxisAlignedBoundingBoxRegion().GetIndex();
   MaskType::SizeType  seqROI3DSize  = mask -> GetAxisAlignedBoundingBoxRegion().GetSize();
@@ -335,6 +342,50 @@ int main( int argc, char *argv[] )
   SequenceWriterType::Pointer sequenceWriter = SequenceWriterType::New();
   sequenceWriter -> SetFileName( output );
   sequenceWriter -> SetInput( recSequence );
+
+  // Correct gradient table, if necessary
+
+  // First, correct rotation matrix
+
+  vnl_matrix<double> R(3,3);
+  R = tref -> GetMatrix().GetVnlMatrix();
+
+  vnl_matrix<double> PQ = R;
+  vnl_matrix<double> NQ = R;
+  vnl_matrix<double> PQNQDiff;
+
+  const unsigned int maximumIterations = 100;
+
+  for(unsigned int ni = 0; ni < maximumIterations; ni++ )
+  {
+    // Average current Qi with its inverse transpose
+    NQ = ( PQ + vnl_inverse_transpose( PQ ) ) / 2.0;
+    PQNQDiff = NQ - PQ;
+    if( PQNQDiff.frobenius_norm() < 1e-7 )
+    {
+//      std::cout << "Polar decomposition used " << ni << " iterations " << std::endl;
+      break;
+    }
+    else
+    {
+      PQ = NQ;
+    }
+  }
+
+  typedef itk::Euler3DTransform<double> EulerTransformType;
+  EulerTransformType::Pointer transform = EulerTransformType::New();
+  transform -> SetRotationMatrix( NQ );
+
+  typedef btk::DiffusionGradientTable< SequenceType > GradientTableType;
+  GradientTableType::Pointer gradientTable = GradientTableType::New();
+
+  gradientTable -> SetNumberOfGradients(numberOfFrames);
+  gradientTable -> SetImage( sequence );
+  gradientTable -> SetTransform( transform );
+  gradientTable -> LoadFromFile( gtable);
+  gradientTable -> RotateGradientsInWorldCoordinates();
+  gradientTable -> SaveToFile( ctable);
+
 
   if ( strcmp(output,"none") != 0 )
   {
