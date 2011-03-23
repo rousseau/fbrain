@@ -2,7 +2,7 @@
 Copyright or © or Copr. Université de Strasbourg - Centre National de la Recherche Scientifique
 
 16 march 2011
-rousseau@unistra.fr
+rousseau @ unistra . fr
 
 This software is governed by the CeCILL-B license under French law and
 abiding by the rules of distribution of free software.  You can  use, 

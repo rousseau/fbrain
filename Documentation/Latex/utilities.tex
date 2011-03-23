@@ -8,6 +8,7 @@ look up table defined in a ascii file (2 columns, one for the original values,
 one for the final values). Usage: \texttt{-i input\_image\_filename -t
 input\_table\_filename -o output\_image\_filename}
   
+\item[btkExtractOneImageFromSequence] This program extracts one image from a 4D sequence. Usage: \texttt{-i input\_image\_filename -o output\_image\_filename --image\_index index}
 
 \item[btkNrrdToNifti] This program convert an image from Nrrd file (*.nhdr and *.nrrd) to a Nifti file (*.nii or *.nii.gz). The conversion of a DWI image is possible by using the option \texttt{-d}. Usage: \texttt{-i input.nhdr -o output.nii.gz}. Usage for DWI sequence: \texttt{-i input.nhdr -o output.nii.gz -g gradients.bvec -d}.
 
