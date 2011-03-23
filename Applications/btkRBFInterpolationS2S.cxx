@@ -232,10 +232,11 @@ int main( int argc, char *argv[] )
   // Read transform ref -> dwi
 
   typedef itk::AffineTransform< double, 3 > TransformType;
-  TransformType::Pointer tref;
+  TransformType::Pointer tref = TransformType::New();
+  tref -> SetIdentity();
 
   // Read transformation file
-  if ( refSwitch.isSet() )
+  if ( refSwitch.isSet() && strcmp(trefFile,""))
   {
     typedef itk::TransformFileReader     TransformReaderType;
     typedef TransformReaderType::TransformListType * TransformListType;
@@ -247,11 +248,7 @@ int main( int argc, char *argv[] )
     TransformListType transforms = transformReader->GetTransformList();
     TransformReaderType::TransformListType::const_iterator titr = transforms->begin();
     tref = dynamic_cast< TransformType * >( titr->GetPointer() ) ;
-  } else
-    {
-      tref = TransformType::New();
-      tref -> SetIdentity();
-    }
+  }
 
   // Create interpolator
   // WARNING : THE ORDER OF PARAMETER SETTING IS IMPORTANT !!!!
@@ -312,12 +309,12 @@ int main( int argc, char *argv[] )
     recSequence -> TransformIndexToPhysicalPoint(index,pointRef);
     pointRef3D[0] = pointRef[0];  pointRef3D[1] = pointRef[1]; pointRef3D[2] = pointRef[2];
 
+    if (refSwitch.isSet())
+      pointRef3D = tref -> TransformPoint(pointRef3D);
+
     if ( mask -> IsInside(pointRef3D) )
     {
-      if ( refSwitch.isSet() )
-        pointSeq3D = tref -> TransformPoint( pointRef3D );
-      else
-        pointSeq3D = pointRef3D;
+      pointSeq3D = pointRef3D;
 
       pointSeq[0] = pointSeq3D[0];
       pointSeq[1] = pointSeq3D[1];
@@ -345,7 +342,7 @@ int main( int argc, char *argv[] )
 
   // Correct gradient table, if necessary
 
-  // First, correct rotation matrix
+  // First, find rotation matrix
 
   vnl_matrix<double> R(3,3);
   R = tref -> GetMatrix().GetVnlMatrix();
@@ -354,9 +351,7 @@ int main( int argc, char *argv[] )
   vnl_matrix<double> NQ = R;
   vnl_matrix<double> PQNQDiff;
 
-  const unsigned int maximumIterations = 100;
-
-  for(unsigned int ni = 0; ni < maximumIterations; ni++ )
+  for(unsigned int ni = 0; ni < 100; ni++ )
   {
     // Average current Qi with its inverse transpose
     NQ = ( PQ + vnl_inverse_transpose( PQ ) ) / 2.0;
