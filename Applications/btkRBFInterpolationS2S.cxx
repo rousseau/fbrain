@@ -137,12 +137,13 @@ int main( int argc, char *argv[] )
   seqROIIndex[0] = seqROI3DIndex[0];
   seqROIIndex[1] = seqROI3DIndex[1];
   seqROIIndex[2] = seqROI3DIndex[2];
-  seqROIIndex[3] = 1; // The roi starts at the first diffusion image
+  seqROIIndex[3] = 0; // The roi starts at the first diffusion image
 
   seqROISize[0] = seqROI3DSize[0];
   seqROISize[1] = seqROI3DSize[1];
   seqROISize[2] = seqROI3DSize[2];
-  seqROISize[3] = seqROISize[3] - 1;
+//  seqROISize[3] = seqROISize[3] - 1;
+  seqROISize[3] = 2;
 
   seqROI.SetIndex(seqROIIndex);
   seqROI.SetSize(seqROISize);
@@ -195,8 +196,8 @@ int main( int argc, char *argv[] )
 
   } else
     {
-      recSpacing[2] = recSpacing[0];
       recSize[2]    = floor( recSize[2]*recSpacing[2] / recSpacing[0] + 0.5 );
+      recSpacing[2] = recSpacing[0];
       recRegion.SetSize( recSize );
 
       SequenceType::IndexType recROIIndex = recROI.GetIndex();
@@ -265,9 +266,23 @@ int main( int argc, char *argv[] )
 
   start = clock();
 
-  unsigned int image = 0;
+  // First resample the T2 image
+  typedef itk::LinearInterpolateImageFunction< SequenceType,
+                                               double >      LinearInterpolatorType;
+  LinearInterpolatorType::Pointer linearInterpolator = LinearInterpolatorType::New();
+  linearInterpolator -> SetInputImage( sequence );
 
   for (recIt.GoToBegin(); !recIt.IsAtEnd(); ++recIt)
+  {
+    index = recIt.GetIndex();
+    if (index[3] ==1) break;
+    recSequence -> TransformIndexToPhysicalPoint(index,pointRef);
+    recIt.Set( linearInterpolator -> Evaluate(pointRef) );
+  }
+
+  unsigned int image = 0;
+
+  for (; !recIt.IsAtEnd(); ++recIt)
   {
     index = recIt.GetIndex();
 

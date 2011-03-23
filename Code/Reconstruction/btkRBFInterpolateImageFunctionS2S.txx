@@ -350,8 +350,15 @@ RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
   }
 
   ImageRegionType region2 = region;
+
   ImageSizeType size2 = region2.GetSize();
   ImageIndexType start2 = region2.GetIndex();
+
+  size2[3] = 1;
+  start2[3] = 1;
+
+  region2.SetSize(size2);
+  region2.SetIndex(start2);
 
   m_NumberOfSlices = size2[2];
   m_FirstSlice     = start2[2];
@@ -360,9 +367,6 @@ RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
   this -> RotateGradients();
 
   std::cout << m_NumberOfSlices << " " << m_FirstSlice << " " << m_LastSlice << std::endl;
-
-  size2[3] = 1;
-  region2.SetSize(size2);
 
   IndexType index;
   PointType point;
