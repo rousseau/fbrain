@@ -153,8 +153,7 @@ int main( int argc, char *argv[] )
   seqROISize[0] = seqROI3DSize[0];
   seqROISize[1] = seqROI3DSize[1];
   seqROISize[2] = seqROI3DSize[2];
-//  seqROISize[3] = seqROISize[3] - 1;
-  seqROISize[3] = 2;
+  seqROISize[3] = seqROISize[3];
 
   seqROI.SetIndex(seqROIIndex);
   seqROI.SetSize(seqROISize);
