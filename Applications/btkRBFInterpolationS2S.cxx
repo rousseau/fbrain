@@ -240,7 +240,11 @@ int main( int argc, char *argv[] )
     TransformListType transforms = transformReader->GetTransformList();
     TransformReaderType::TransformListType::const_iterator titr = transforms->begin();
     tref = dynamic_cast< TransformType * >( titr->GetPointer() ) ;
-  }
+  } else
+    {
+      tref = TransformType::New();
+      tref -> SetIdentity();
+    }
 
   // Create interpolator
   // WARNING : THE ORDER OF PARAMETER SETTING IS IMPORTANT !!!!
