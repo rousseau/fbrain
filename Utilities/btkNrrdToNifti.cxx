@@ -51,7 +51,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "vnl/vnl_inverse.h"
 
 
-typedef double PixelType;
+typedef short PixelType;
 const unsigned int InDimension  = 3;
 const unsigned int OutDimension = 4;
 
