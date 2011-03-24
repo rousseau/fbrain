@@ -81,6 +81,7 @@ int main(int argc, char *argv[])
     std::string inFileName;
     std::string outFileName;
     std::string vecFileName;
+    std::string bvalFileName;
     bool dwi;
 
     // Define command line parser
@@ -90,6 +91,7 @@ int main(int argc, char *argv[])
     TCLAP::ValueArg<std::string> inArg("i", "input", "Input image", true, "", "string", cmd);
     TCLAP::ValueArg<std::string> outArg("o", "output", "Output image", false, "data.nii.gz", "string", cmd);
     TCLAP::ValueArg<std::string> vecArg("g", "gradient_vectors", "Output gradient vectors", false, "data.bvec", "string", cmd);
+    TCLAP::ValueArg<std::string> bvalArg("b", "b_values", "Output b-values file", false, "data.bval", "string", cmd);
 
     TCLAP::SwitchArg dwiArg("", "dwi", "DWI image conversion", cmd, false);
 
@@ -100,6 +102,7 @@ int main(int argc, char *argv[])
     inFileName   = inArg.getValue();
     outFileName  = outArg.getValue();
     vecFileName  = vecArg.getValue();
+    bvalFileName = bvalArg.getValue();
     dwi          = dwiArg.getValue();
 
 
@@ -119,17 +122,21 @@ int main(int argc, char *argv[])
         std::fstream headFile(inFileName.c_str(), std::fstream::in);
 
         std::string s;
+        unsigned int bvalue = 0;
         bool stop = false;
 
         while(!stop && (headFile >> s))
         {
-            if(s == "DWMRI_gradient_0000:=")
+            if(s == "DWMRI_b-value:=")
+                headFile >> bvalue;
+            else if(s == "DWMRI_gradient_0000:=")
                 stop = true;
         }
 
         std::vector<double> vx;
         std::vector<double> vy;
         std::vector<double> vz;
+        std::vector<unsigned int> bvals;
 
         if(stop == true)
         {
@@ -140,6 +147,11 @@ int main(int argc, char *argv[])
                 vx.push_back(x);
                 vy.push_back(y);
                 vz.push_back(z);
+
+                if(x == 0 && y == 0 && z == 0)
+                    bvals.push_back(0);
+                else
+                    bvals.push_back(bvalue);
 
                 headFile >> s;
             }
@@ -267,8 +279,10 @@ int main(int argc, char *argv[])
 
         try
         {
+            // image
             writer->Update();
 
+            // gradient table
             std::fstream bvecFile(vecFileName.c_str(), std::fstream::out);
 
             for(std::vector<double>::iterator it=vx.begin(); it != vx.end(); it++)
@@ -287,6 +301,14 @@ int main(int argc, char *argv[])
             bvecFile << std::endl;
 
             bvecFile.close();
+
+            // b-values
+            std::fstream bvalFile(bvalFileName.c_str(), std::fstream::out);
+
+            for(std::vector<unsigned int>::iterator it=bvals.begin(); it != bvals.end(); it++)
+                bvalFile << *it << " ";
+
+            bvalFile.close();
 
             std::cout << "done." << std::endl;
         }
