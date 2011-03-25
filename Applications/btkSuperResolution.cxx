@@ -49,7 +49,7 @@
 
 #include "btkSuperResolutionImageFilter.h"
 
-#include "tclap/CmdLine.h"
+#include "CmdLine.h"
 
 
 int main( int argc, char *argv[] )
@@ -72,10 +72,11 @@ int main( int argc, char *argv[] )
 
   TCLAP::CmdLine cmd("Resample a set of images using the injection method", ' ', "Unversioned");
 
-  TCLAP::MultiArg<std::string> inputArg("i","input","image file",true,"string",cmd);
-  TCLAP::MultiArg<std::string> maskArg("m","mask","mask file",false,"string",cmd);
-  TCLAP::ValueArg<std::string> refArg  ("r","reference","Reference image",true,"none","string",cmd);
-  TCLAP::ValueArg<std::string> outArg  ("o","output","High resolution image",true,"none","string",cmd);
+  TCLAP::MultiArg<std::string> inputArg("i","input","Low-resolution image file",true,"string",cmd);
+  TCLAP::MultiArg<std::string> maskArg("m","mask","low-resolution image mask file",false,"string",cmd);
+  TCLAP::ValueArg<std::string> refArg  ("r","reconstructed","Reconstructed image for initialization. "
+      "Typically the output of btkImageReconstruction is used." ,true,"none","string",cmd);
+  TCLAP::ValueArg<std::string> outArg  ("o","output","Super resolution output image",true,"none","string",cmd);
   TCLAP::ValueArg<int> iterArg  ("","iter","Number of iterations",false, 10,"int",cmd);
 
   TCLAP::MultiArg<std::string> transArg("t","transform","transform file",false,"string",cmd);
