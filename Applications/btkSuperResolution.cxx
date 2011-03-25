@@ -162,7 +162,7 @@ int main( int argc, char *argv[] )
     // set transformation
 // FIXME Uncomment after testing with simulated images
 
-    TransformReaderType::Pointer transformReader = TransformReaderType::New();
+/*    TransformReaderType::Pointer transformReader = TransformReaderType::New();
     transformReader -> SetFileName( transform[i] );
     transformReader -> Update();
 
@@ -173,6 +173,7 @@ int main( int argc, char *argv[] )
     {
       resampler -> SetTransform(i, j, dynamic_cast< TransformType * >( titr->GetPointer() ) ) ;
     }
+    */
 
   }
 

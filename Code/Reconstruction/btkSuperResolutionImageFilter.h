@@ -48,7 +48,6 @@
 #include "btkUserMacro.h"
 #include "vnl/vnl_sparse_matrix.h"
 #include "btkLinearInterpolateImageFunctionWithWeights.h"
-// #include "itkNearestNeighborInterpolateImageFunction.h"
 #include "btkOrientedSpatialFunction.h"
 #include "itkImageDuplicator.h"
 #include "itkContinuousIndex.h"
@@ -335,8 +334,7 @@ private:
   void operator=( const Self& ); //purposely not implemented
 
   void CreateH();
-  void OptimizeByMSE();
-  void Optimize();
+  void OptimizeByBackprojection();
 
   SizeType                    m_Size;              // Size of the output image
   TransformPointerArrayType   m_Transform;         // Coordinate transform to use
