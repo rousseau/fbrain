@@ -48,7 +48,8 @@ namespace btk
 Particle::Particle(Point p)
         : m_points(1,p)
 {
-    m_active = true;
+    m_outside = false;
+    m_active  = true;
 }
 
 void Particle::setWeight(Real w)
@@ -59,19 +60,23 @@ void Particle::setWeight(Real w)
     m_weight.push_back(w);
 }
 
-bool Particle::addToPath(Vector v, Mask::Pointer mask)
+char Particle::addToPath(Vector v, Mask::Pointer mask)
 {
     Point p = this->lastPoint()+v;
 
-    bool isIn = this->IsInside(p, mask);
+    char isIn = this->IsInside(p, mask);
 
-    if(isIn)
+    if(isIn == 0 || isIn == 2)
+    {
+        m_points.push_back(p);
+        m_vectors.push_back(v);
+        m_outside = true;
+    }
+    else if(isIn == 1)
     {
         m_points.push_back(p);
         m_vectors.push_back(v);
     }
-    else // not in mask
-        m_active = false;
 
     return isIn;
 }
@@ -81,6 +86,14 @@ Real Particle::weight() const
     return m_weight.back();
 }
 
+void Particle::SetLastWeight(Real w)
+{
+    assert(w >= 0);
+    assert(w <= 1);
+
+    m_weight[m_weight.size()-1] = w;
+}
+
 Point Particle::lastPoint() const
 {
     return m_points.back();
@@ -88,7 +101,7 @@ Point Particle::lastPoint() const
 
 void Particle::SetLastPoint(Point p)
 {
-	m_points[m_points.size()-1] = p;
+    m_points[m_points.size()-1] = p;
 }
 
 Vector Particle::lastVector() const
@@ -98,17 +111,11 @@ Vector Particle::lastVector() const
 
 void Particle::SetLastVector(Vector v)
 {
-    unsigned int size = m_vectors.size();
-
-    if(size > 0)
-        m_vectors[m_vectors.size()-1] = v;
-    else
-        m_vectors.push_back(v);
+    m_vectors[m_vectors.size()-1] = v;
 }
 
 Point Particle::getPoint(unsigned int i) const
 {
-//    Pr(i); Pr(this->length()); Pr(m_points.size());
     assert(i>=0);
     assert(i<m_points.size());
 
@@ -133,17 +140,25 @@ Real Particle::getWeight(unsigned int i) const
 
 unsigned int Particle::length() const
 {
+    assert(m_points.size() == m_vectors.size()+1);
+    assert(m_vectors.size() == m_weight.size());
+
     return m_vectors.size();
 }
 
-unsigned int Particle::numberOfPoints() const
+bool Particle::isOutside()
 {
-    return m_points.size();
+    return m_outside;
 }
 
 bool Particle::isActive()
 {
     return m_active;
+}
+
+void Particle::setActive(bool active)
+{
+    m_active = active;
 }
 
 std::ostream &operator<<(std::ostream &os, Particle p)
@@ -159,7 +174,7 @@ std::ostream &operator<<(std::ostream &os, Particle p)
     return os;
 }
 
-bool Particle::IsInside(Point p, Mask::Pointer mask)
+char Particle::IsInside(Point p, Mask::Pointer mask)
 {
     Mask::IndexType index;
     index[0] = std::floor(p.x() + 0.5);
@@ -168,24 +183,14 @@ bool Particle::IsInside(Point p, Mask::Pointer mask)
 
     MaskRegion region = mask->GetLargestPossibleRegion();
 
-    bool isIn = false;
+    char isIn = 0;
 
     if(index[0] >= 0 && index[0] < (unsigned int)region.GetSize(0) &&
        index[1] >= 0 && index[1] < (unsigned int)region.GetSize(1) &&
        index[2] >= 0 && index[2] < (unsigned int)region.GetSize(2))
-        isIn = !EQUAL(mask->GetPixel(index),0);
+        isIn = mask->GetPixel(index);
 
     return isIn;
-}
-
-void Particle::SetActive()
-{
-	m_active = true;
-}
-
-void Particle::SetInactive()
-{
-	m_active = false;
 }
 
 } // namespace btk

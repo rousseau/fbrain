@@ -56,7 +56,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
          * Display a variable and its value on standard error output.
          * @param x Variable to display
          */
-        #define Pr(x) std::cerr << #x << " = " << x << std::endl
+        #define Pr(x) std::cerr << #x << " = " << (x) << std::endl
 
         /**
          * Display information in level one display mode.
@@ -80,7 +80,17 @@ knowledge of the CeCILL-B license and that you accept its terms.
         /**
          * Double epsilon
          */
-        const Real EPSILON = DBL_EPSILON;
+        const Real EPSILON  = DBL_EPSILON;
+
+        /**
+         * Double maximum
+         */
+        const Real MAX_REAL = DBL_MAX;
+
+        /**
+         * Double minimum
+         */
+         const Real MIN_REAL = DBL_MIN;
 
         /**
          * Equality test on floating point numbers, according to the machine precision.
@@ -88,11 +98,11 @@ knowledge of the CeCILL-B license and that you accept its terms.
          * @param b Right operand
          * @return True if a=b, false otherwise
          */
-        inline bool EQUAL(Real a, Real b)
+        inline bool EQUAL(Real a, Real b, Real epsilon=EPSILON)
         {
             Real diff = std::abs(a-b);
 
-            return (diff < EPSILON);
+            return (diff < epsilon);
         }
 
         /**

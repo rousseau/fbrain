@@ -266,7 +266,10 @@ void SignalExtractor::extract()
 
             // Fill B0 reference image (moy of all reference images)
             for(B0It.GoToBegin(), maskIt.GoToBegin(), dataIt.GoToBegin(); !B0It.IsAtEnd() && !maskIt.IsAtEnd() && !dataIt.IsAtEnd(); ++B0It, ++maskIt, ++dataIt)
-                B0It.Set(B0It.Get() + dataIt.Get()/m_refIm->size());
+            {
+                if(maskIt.Get() == 1)
+                    B0It.Set(B0It.Get() + dataIt.Get()/m_refIm->size());
+            }
         } // for refImIt
 
 /*
@@ -285,7 +288,7 @@ void SignalExtractor::extract()
             std::cout << "Error: " << std::endl;
             std::cout << err << std::endl;
         }
-*/
+//*/
         Display2(m_displayMode, std::cout << "done." << std::endl);
 
 
@@ -312,6 +315,7 @@ void SignalExtractor::extract()
         m_signal->SetDirection(m_data->GetDirection());
 
         m_signal->Allocate();
+        m_signal->FillBuffer(0);
 
 
         // Normalize signal
@@ -344,15 +348,13 @@ void SignalExtractor::extract()
 
                 SequenceIterator signalIt(m_signal, signalRegion);
 
-                // Fill current image (normalization : divide signal by reference image's one)
+                // Fill current image (normalization : divide signal by reference image)
                 for(B0It.GoToBegin(), dataIt.GoToBegin(), signalIt.GoToBegin(), maskIt.GoToBegin();
                         !B0It.IsAtEnd() && !dataIt.IsAtEnd() && !signalIt.IsAtEnd() && !maskIt.IsAtEnd();
                             ++B0It, ++dataIt, ++signalIt, ++maskIt)
                 {
-                    if(maskIt.Get() != 0)    // is in mask
+                    if(maskIt.Get() == 1)    // is in mask
                         signalIt.Set((B0It.Get() != 0. ? dataIt.Get() / B0It.Get() : 0.));
-                    else    // is out of mask
-                        signalIt.Set(0);
                 }
             }
             else // the nth image is a reference image
@@ -458,10 +460,6 @@ void SignalExtractor::save()
         Display2(m_displayMode, std::cout << "done." << std::endl);
 
     Display1(m_displayMode, std::cout << "done." << std::endl);
-
-
-    delete m_sigmas;
-    delete m_directions;
 }
 
 std::vector<Direction> *SignalExtractor::GetDirections()
@@ -524,10 +522,20 @@ void SignalExtractor::computeSigmas()
         Sequence::Pointer coeffs = Sequence::New();
         coeffs->SetRegions(m_signal->GetLargestPossibleRegion());
         coeffs->Allocate();
+        coeffs->FillBuffer(0);
+
+        // Define mask iterator
+        MaskIterator maskIt(m_mask, m_mask->GetLargestPossibleRegion());
+
+        // Volume dimensions for each gradient image
+        std::vector<Real> volumeSize;
 
         // For each image
         for(unsigned int k=0; k<kMax; k++)
         {
+            // Initialize the number of voxels in volume
+            volumeSize.push_back(0);
+
             // Set the correct index
             Sequence::IndexType loopIndex;
             loopIndex[0] = 0; loopIndex[1] = 0;
@@ -551,16 +559,21 @@ void SignalExtractor::computeSigmas()
             SequenceIterator coeffsIt(coeffs, loopRegion);
 
             // Compute coefficients for each positions in current image
-            for(signalIt.GoToBegin(), coeffsIt.GoToBegin(); !signalIt.IsAtEnd() && !coeffsIt.IsAtEnd(); ++signalIt, ++coeffsIt)
+            for(signalIt.GoToBegin(), coeffsIt.GoToBegin(), maskIt.GoToBegin(); !signalIt.IsAtEnd() && !coeffsIt.IsAtEnd() && !maskIt.IsAtEnd(); ++signalIt, ++coeffsIt, ++maskIt)
             {
-                Real sum = signalIt.GetPixel(offset1);
-                sum     += signalIt.GetPixel(offset2);
-                sum     += signalIt.GetPixel(offset3);
-                sum     += signalIt.GetPixel(offset4);
-                sum     += signalIt.GetPixel(offset5);
-                sum     += signalIt.GetPixel(offset6);
+                if(maskIt.Get() == 1)
+                {
+                    Real sum = signalIt.GetPixel(offset1);
+                    sum     += signalIt.GetPixel(offset2);
+                    sum     += signalIt.GetPixel(offset3);
+                    sum     += signalIt.GetPixel(offset4);
+                    sum     += signalIt.GetPixel(offset5);
+                    sum     += signalIt.GetPixel(offset6);
 
-                coeffsIt.Set(_sqrt6on7 * (signalIt.GetCenterPixel() - _1on6*sum));
+                    coeffsIt.Set(_sqrt6on7 * (signalIt.GetCenterPixel() - _1on6*sum));
+
+                    volumeSize[k]++;
+                }
             } // for signalIt && coeffsIt
         } // for k
 
@@ -568,8 +581,6 @@ void SignalExtractor::computeSigmas()
     //
     // Compute sigmas
     //
-
-        Real norm = 1. / (xMax * yMax * zMax);
 
         // For each image
         for(unsigned int k=0; k<kMax; k++)
@@ -586,10 +597,13 @@ void SignalExtractor::computeSigmas()
             Real sum = 0;
 
             // Compute standard deviation (sigma)
-            for(coeffsIt.GoToBegin(); !coeffsIt.IsAtEnd(); ++coeffsIt)
-                sum += coeffsIt.Get() * coeffsIt.Get();
+            for(coeffsIt.GoToBegin(), maskIt.GoToBegin(); !coeffsIt.IsAtEnd() && !maskIt.IsAtEnd(); ++coeffsIt, ++maskIt)
+            {
+                if(maskIt.Get() == 1)
+                    sum += coeffsIt.Get() * coeffsIt.Get();
+            }
 
-            m_sigmas->push_back(std::sqrt(norm * sum));
+            m_sigmas->push_back(std::sqrt((1.0/volumeSize[k]) * sum));
         } // for k
 }
 

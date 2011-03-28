@@ -221,6 +221,21 @@ Signal::Signal(Sequence::Pointer signal, std::vector<Real> *sigmas, std::vector<
     Image::PointType iorigin;
     iorigin[0] = origin[0]; iorigin[1] = origin[1]; iorigin[2] = origin[2];
 
+    itk::Matrix<Real,3,3> dirMat;
+    itk::Matrix<Real,4,4> iniMat = signal->GetDirection();
+
+    dirMat(0,0) = iniMat(0,0);
+    dirMat(0,1) = iniMat(0,1);
+    dirMat(0,2) = iniMat(0,2);
+
+    dirMat(1,0) = iniMat(1,0);
+    dirMat(1,1) = iniMat(1,1);
+    dirMat(1,2) = iniMat(1,2);
+
+    dirMat(2,0) = iniMat(2,0);
+    dirMat(2,1) = iniMat(2,1);
+    dirMat(2,2) = iniMat(2,2);
+
 
     // Put sequence in array of images
     for(unsigned int k=0; k<kMax; k++)
@@ -230,6 +245,7 @@ Signal::Signal(Sequence::Pointer signal, std::vector<Real> *sigmas, std::vector<
         m_signal[k]->SetRegions(iSize);
         m_signal[k]->SetOrigin(iorigin);
         m_signal[k]->SetSpacing(ispacing);
+        m_signal[k]->SetDirection(dirMat);
         m_signal[k]->Allocate();
 
         // Define correct sequence region

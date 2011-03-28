@@ -71,9 +71,9 @@ knowledge of the CeCILL-B license and that you accept its terms.
                  * @brief Add vector to particle's vector path and move it
                  * @param v Vector
                  * @param mask Image mask
-                 * @return True if the particle is active, false otherwise
+                 * @return 0 if p is out of the mask, 1 if p is in the mask and 2 if p is in the exclusion mask
                  */
-                bool addToPath(Vector v, Mask::Pointer mask);
+                char addToPath(Vector v, Mask::Pointer mask);
 
                 /**
                  * @brief Get particle's weight
@@ -82,12 +82,22 @@ knowledge of the CeCILL-B license and that you accept its terms.
                 Real   weight() const;
 
                 /**
+                 * @brief Set particle's last weight
+                 * @param w Weight to set
+                 */
+                 void SetLastWeight(Real w);
+
+                /**
                  * @brief Get last point of the particle
                  * @return Last particle's point
                  */
                 Point  lastPoint() const;
 
-				void SetLastPoint(Point p);
+                /**
+                 * @brief Set last position of the particle
+                 * @param p Point to set
+                 */
+                 void SetLastPoint(Point p);
 
                 /**
                  * @brief Get last vector of the particle
@@ -96,10 +106,10 @@ knowledge of the CeCILL-B license and that you accept its terms.
                 Vector lastVector() const;
 
                 /**
-                 * @brief Set last vector of the particle
+                 * @brief Set last displacement vector of the particle
                  * @param v Vector to set
                  */
-				void SetLastVector(Vector v);
+                 void SetLastVector(Vector v);
 
                 /**
                  * @brief Get a point on path
@@ -129,16 +139,23 @@ knowledge of the CeCILL-B license and that you accept its terms.
                 unsigned int length() const;
 
                 /**
-                 * @brief Get number of points in path
-                 * @return Particle's path length
+                 * @brief Get if this particle is outside the mask
+                 * @return True if the particle is outside, false otherwise
                  */
-                unsigned int numberOfPoints() const;
+                 bool isOutside();
 
                 /**
                  * @brief Get if this particle is active
-                 * @return True if particle is active, false otherwise
+                 * @return True if the particle is active, false otherwise
                  */
-                bool isActive();
+                 bool isActive();
+
+                /**
+                 * @brief Set if this particle is active
+                 * @param outside False if the particle should be inactive
+                 */
+                void setActive(bool active);
+
 
                 /**
                  * @brief Put particle on stream
@@ -148,27 +165,18 @@ knowledge of the CeCILL-B license and that you accept its terms.
                  */
                 friend std::ostream &operator<<(std::ostream &os, Particle p);
 
-                /**
-                 * @brief Set a particle to active state
-                 */
-				void SetActive();
-
-				/**
-				 * @brief Set a particle to inactive state
-				 */
-				void SetInactive();
-
             private:
                 /**
                  * @brief Test if a point is in a mask
                  * @param p Point to test
                  * @param mask Image mask
-                 * @return True if p is in mask, false if p is out of mask
+                 * @return 0 if p is out of the mask, 1 if p is in the mask and 2 if p is in the exclusion mask
                  */
-                bool IsInside(Point p, Mask::Pointer mask);
+                char IsInside(Point p, Mask::Pointer mask);
 
             private:
-                bool m_active;  /**< Particle's activation state */
+                bool m_active; /**< Particle's active state */
+                bool m_outside; /**< Particle's outside mask state */
 
                 std::vector<Real>   m_weight;   /**< Particule's weights */
                 std::vector<Point>  m_points;   /**< Set of particle's points on path */

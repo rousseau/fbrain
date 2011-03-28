@@ -211,7 +211,7 @@ void SHModelEstimator::estimate()
                     Mask::IndexType mindex;
                     mindex[0] = x; mindex[1] = y; mindex[2] = z;
 
-                    if(m_mask->GetPixel(mindex) != 0) // is in mask
+                    if(m_mask->GetPixel(mindex) == 1) // is in mask
                     {
                         // Define region for signal
                         signalIndex[0] = x; signalIndex[1] = y;
@@ -269,13 +269,13 @@ void SHModelEstimator::estimate()
 
 void SHModelEstimator::save()
 {
-    std::cout << "Saving data..." << std::endl;
+    Display1(m_displayMode, std::cout << "Saving data..." << std::endl);
 
     //
     // Model file
     //
 
-        std::cout << "\tmodel into file \"model.nii.gz\"..." << std::flush;
+        Display2(m_displayMode, std::cout << "\tmodel into file \"model.nii.gz\"..." << std::flush);
 
         SequenceWriter::Pointer writer = SequenceWriter::New();
 
@@ -285,7 +285,7 @@ void SHModelEstimator::save()
         try
         {
             writer->Update();
-            std::cout << "done." << std::endl;
+            Display2(m_displayMode, std::cout << "done." << std::endl);
         }
         catch(itk::ImageFileWriterException &err)
         {
@@ -294,9 +294,9 @@ void SHModelEstimator::save()
         }
 
 
-    std::cout << "done." << std::endl;
+    Display1(m_displayMode, std::cout << "done." << std::endl);
 
-    delete m_directions;
+//    delete m_directions;
 }
 
 Sequence::Pointer SHModelEstimator::GetModel()
@@ -469,11 +469,11 @@ void SHModelEstimator::computeOmegaMatrix()
     YtY = Yt * Y;
 
     // Get YtY + lL
-    L *= m_lambda;
+    L     *= m_lambda;
     YtYplL = YtY + L;
 
     // Get (YtYplL)^-1
-    tmp         = YtYplL.GetInverse();
+    tmp            = YtYplL.GetInverse();
     YtYplLInverted = tmp;
 
     #ifndef NDEBUG

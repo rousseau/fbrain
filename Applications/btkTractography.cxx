@@ -76,6 +76,7 @@ int main(int argc, char *argv[])
 
     bool verboseMode;
     bool quietMode;
+    bool saveTmpFiles;
 
     unsigned int modelOrder;
     Real lambda;
@@ -106,6 +107,7 @@ int main(int argc, char *argv[])
 
             TCLAP::SwitchArg verboseSwitchArg("", "verbose", "Display more informations on standard output", cmd, false);
             TCLAP::SwitchArg quietSwitchArg("", "quiet", "Display no information on either standard and error outputs", cmd, false);
+            TCLAP::SwitchArg saveTmpSwitchArg("", "save_temporary_files", "Save diffusion signal, model coefficients, variance and spherical coordinates of gradient directions in files", cmd, false);
 
             TCLAP::ValueArg<unsigned int> orderArg("", "model_order", "Order of the model (i.e. of spherical harmonics)", false, 4, "unsigned int", cmd);
             TCLAP::ValueArg<Real>    lambdArg("", "model_regularization", "Regularization coefficient of the model", false, 0.006, "Real", cmd);
@@ -127,8 +129,9 @@ int main(int argc, char *argv[])
             outMapFileName    = outMapArg.getValue();
             outFibersFileName = outFibersArg.getValue();
 
-            verboseMode = verboseSwitchArg.getValue();
-            quietMode   = quietSwitchArg.getValue();
+            verboseMode  = verboseSwitchArg.getValue();
+            quietMode    = quietSwitchArg.getValue();
+            saveTmpFiles = saveTmpSwitchArg.getValue();
 
             modelOrder     = orderArg.getValue();
             lambda         = lambdArg.getValue();
@@ -160,8 +163,10 @@ int main(int argc, char *argv[])
         std::vector<Real>      *sigmas     = extractor->GetSigmas();
         Mask::Pointer           mask       = extractor->GetMask();
 
-        delete extractor;
+        if(saveTmpFiles)
+            extractor->save();
 
+        delete extractor;
 
 
     //
@@ -173,7 +178,11 @@ int main(int argc, char *argv[])
 
         Sequence::Pointer model = estimator->GetModel();
 
+        if(saveTmpFiles)
+            estimator->save();
+
         delete estimator;
+
 
 
 
@@ -277,8 +286,11 @@ int main(int argc, char *argv[])
                 max = it.Get();
         }
 
-        for(it.GoToBegin(); !it.IsAtEnd(); ++it)
-            it.Set(it.Get() / max);
+        if(max > 0)
+        {
+            for(it.GoToBegin(); !it.IsAtEnd(); ++it)
+                it.Set(it.Get() / max);
+        }
 
 
         // Write connection map image
@@ -296,12 +308,25 @@ int main(int argc, char *argv[])
         }
 
         // Write fiber polydata
-        append->Update();
-        vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
-        writer->SetInput(append->GetOutput());
-        writer->SetFileName(outFibersFileName.c_str());
-        writer->SetFileTypeToBinary();
-        writer->Write();
+        unsigned int nbOfInputs = append->GetNumberOfInputPorts();
+        bool saveFibers = true;
+        unsigned int i = 0;
+
+        do
+        {
+            if(append->GetNumberOfInputConnections(i++) < 1)
+                saveFibers = false;
+        } while(saveFibers && i<nbOfInputs);
+
+        if(saveFibers)
+        {
+            append->Update();
+            vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
+            writer->SetInput(append->GetOutput());
+            writer->SetFileName(outFibersFileName.c_str());
+            writer->SetFileTypeToBinary();
+            writer->Write();
+        }
 
 
     return EXIT_SUCCESS;
