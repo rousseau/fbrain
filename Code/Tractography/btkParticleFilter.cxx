@@ -368,7 +368,7 @@ void ParticleFilter::run(int label, Direction dir)
         {
             if(m_cloud[m].isActive()) // m is active
             {
-                if(!std::isfinite(weights[m])) // no infinite weight
+                if(std::isfinite(weights[m])) // no infinite weight
                     weights[m] += shift;
                 else // infinite number
                     weights[m] = 0;
