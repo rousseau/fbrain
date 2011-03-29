@@ -159,6 +159,7 @@ int main( int argc, char *argv[] )
     imageRegion.SetSize (roiSize);
     resampler -> AddRegion( imageRegion );
 
+
     // set transformation
 // FIXME Uncomment after testing with simulated images
 
@@ -186,6 +187,7 @@ int main( int argc, char *argv[] )
   resampler -> UseReferenceImageOn();
   resampler -> SetReferenceImage( refReader -> GetOutput() );
   resampler -> SetIterations(iter);
+//  resampler -> SetOptimizationMethod( ResamplerType::BACKPROJECTION);
 
   resampler -> Update();
 

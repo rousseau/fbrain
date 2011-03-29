@@ -75,8 +75,7 @@ SuperResolutionImageFilter<TInputImage, TOutputImage,TInterpolatorPrecisionType>
   m_SimulatedImagesUpdated = false;
 
   m_Iterations = 100;
-
-
+  m_OptimizationMethod = MSE;
 }
 
 

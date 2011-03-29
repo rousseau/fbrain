@@ -81,12 +81,19 @@ using namespace itk;
  *
  * \ingroup GeometricTransforms
  */
+
 template <class TInputImage, class TOutputImage,
           class TInterpolatorPrecisionType=double>
 class SuperResolutionImageFilter:
     public ImageToImageFilter<TInputImage, TOutputImage>
 {
 public:
+
+  typedef enum {
+    MSE=0,
+    BACKPROJECTION=1,
+  } OptimizationMethods;
+
   /** Standard class typedefs. */
   typedef SuperResolutionImageFilter                Self;
   typedef ImageToImageFilter<TInputImage,TOutputImage>  Superclass;
@@ -310,6 +317,10 @@ public:
   // Set number of iterations
   itkSetMacro(Iterations, unsigned int);
 
+  // Set/Get output image region
+  itkSetMacro(OptimizationMethod, unsigned int);
+  itkGetMacro(OptimizationMethod, unsigned int);
+
 #ifdef ITK_USE_CONCEPT_CHECKING
   /** Begin concept checking */
   itkConceptMacro(OutputHasNumericTraitsCheck,
@@ -363,6 +374,8 @@ private:
   DirectionType               m_OutputDirection;   // output image direction cosines
   IndexType                   m_OutputStartIndex;  // output image start index
   bool                        m_UseReferenceImage;
+
+  unsigned int m_OptimizationMethod;
 
 };
 
