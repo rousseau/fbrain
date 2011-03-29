@@ -248,6 +248,15 @@ int main( int argc, char *argv[] )
     return EXIT_FAILURE;
     }
 
+//  typedef itk::ImageFileWriter< ImageType >  WriterType;
+//
+//  WriterType::Pointer writer =  WriterType::New();
+//  writer-> SetFileName( outImage );
+//  writer-> SetInput( lowToHighResFilter->GetHighResolutionImage() );
+//  writer-> Update();
+//
+//  return EXIT_SUCCESS;
+
   // Write resampled images
   if ( resampled.size() > 0 )
   {
@@ -298,7 +307,7 @@ int main( int argc, char *argv[] )
         {
         std::cerr << "ExceptionObject caught !" << std::endl;
         std::cerr << err << std::endl;
-  //      return EXIT_FAILURE;
+//        return EXIT_FAILURE;
         }
 
       transforms[im] = registration[im] -> GetTransform();

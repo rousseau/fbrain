@@ -108,7 +108,6 @@ LowToHighImageResolutionMethod<ImageType>
 
 */
 
-
    /* Create interpolator */
    m_Interpolator = InterpolatorType::New();
 
@@ -117,17 +116,58 @@ LowToHighImageResolutionMethod<ImageType>
   SizeType     fixedSize      = m_ImageArray[m_TargetImage] -> GetLargestPossibleRegion().GetSize();
   PointType    fixedOrigin    = m_ImageArray[m_TargetImage] -> GetOrigin();
 
+  // Combine masks to redefine the resampling region
+
+  IndexType indexMin;
+  IndexType indexMax;
+  IndexType index;
+  IndexType targetIndex;
+  PointType point;
+//  SizeType  newSize();
+
+  indexMin = m_ImageArray[m_TargetImage] -> GetLargestPossibleRegion().GetIndex();
+
+  indexMax[0] = fixedSize[0]-1;
+  indexMax[1] = fixedSize[1]-1;
+  indexMax[2] = fixedSize[2]-1;
+
+  for (unsigned int i=0; i<m_NumberOfImages; i++)
+  {
+    if (i != m_TargetImage)
+    {
+      IteratorType regionIt(m_ImageArray[i],m_RegionArray[i]);
+      for(regionIt.GoToBegin(); !regionIt.IsAtEnd(); ++regionIt )
+      {
+        index = regionIt.GetIndex();
+        m_ImageArray[i] -> TransformIndexToPhysicalPoint(index,point);
+        m_ImageArray[m_TargetImage] -> TransformPhysicalPointToIndex(point,targetIndex);
+
+        for (unsigned int k=0; k<3; k++)
+        {
+          if (targetIndex[k]<indexMin[k])
+            indexMin[k]=targetIndex[k];
+          else
+            if (targetIndex[k]>indexMax[k])
+              indexMax[k]=targetIndex[k];
+        }
+      }
+    }
+  }
+
+/*  std::cout << "index min = " << indexMin << std::endl;
+  std::cout << "index = " << m_ImageArray[m_TargetImage] -> GetLargestPossibleRegion().GetIndex() << std::endl;
+
+  std::cout << "index max = " << indexMax << std::endl;
+  std::cout << "size = " << m_ImageArray[m_TargetImage] -> GetLargestPossibleRegion().GetSize()  << std::endl; */
+
+
   m_ResampleSpacing[0] = fixedSpacing[0];
   m_ResampleSpacing[1] = fixedSpacing[0];
   m_ResampleSpacing[2] = fixedSpacing[0];
 
-  m_ResampleSize[0] = floor(fixedSize[0]*fixedSpacing[0]/m_ResampleSpacing[0] + 0.5);
-  m_ResampleSize[1] = floor(fixedSize[1]*fixedSpacing[1]/m_ResampleSpacing[1] + 0.5);
-  m_ResampleSize[2] = floor( (fixedSize[2]*fixedSpacing[2] + 2*m_Margin)/m_ResampleSpacing[2] + 0.5);
-
-/*  m_ResampleSize[0] = floor(fixedSize[0]*fixedSpacing[0]/m_ResampleSpacing[0]);
-  m_ResampleSize[1] = floor(fixedSize[1]*fixedSpacing[1]/m_ResampleSpacing[1]);
-  m_ResampleSize[2] = floor(fixedSize[2]*fixedSpacing[2]/m_ResampleSpacing[2]); */
+  m_ResampleSize[0] = floor((indexMax[0]-indexMin[0]+1)*fixedSpacing[0]/m_ResampleSpacing[0] + 0.5);
+  m_ResampleSize[1] = floor((indexMax[1]-indexMin[1]+1)*fixedSpacing[1]/m_ResampleSpacing[1] + 0.5);
+  m_ResampleSize[2] = floor(((indexMax[2]-indexMin[2]+1)*fixedSpacing[2] + 2*m_Margin)/m_ResampleSpacing[2] + 0.5);
 
   /* Create high resolution image */
 
@@ -152,7 +192,10 @@ LowToHighImageResolutionMethod<ImageType>
   IndexType newOriginIndex;
   PointType newOrigin;
 
-  newOriginIndex[0]=0; newOriginIndex[1]=0; newOriginIndex[2]= -floor( m_Margin / m_ResampleSpacing[2] + 0.5);
+  newOriginIndex[0] = floor(indexMin[0]*fixedSpacing[0]/m_ResampleSpacing[0] + 0.5);
+  newOriginIndex[1] = floor(indexMin[1]*fixedSpacing[1]/m_ResampleSpacing[1] + 0.5);
+  newOriginIndex[2] = floor(indexMin[2]*fixedSpacing[2]/m_ResampleSpacing[2] + 0.5) - floor( m_Margin / m_ResampleSpacing[2] + 0.5);
+
   m_HighResolutionImage -> TransformIndexToPhysicalPoint(newOriginIndex, newOrigin);
   m_HighResolutionImage -> SetOrigin( newOrigin );
 
