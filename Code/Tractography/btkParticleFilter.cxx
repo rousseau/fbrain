@@ -54,6 +54,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "vtkColorTransferFunction.h"
 #include "vtkDoubleArray.h"
 #include "vtkPointData.h"
+#include "vtkCellData.h"
 #include "vtkAppendPolyData.h"
 
 // ITK includes
@@ -64,8 +65,8 @@ knowledge of the CeCILL-B license and that you accept its terms.
 // OpenMP includes
 #include "omp.h"
 
-//#define NOPARA
-#define NODISPLAY
+
+#define KAPPA 30
 
 
 namespace btk
@@ -97,7 +98,7 @@ ParticleFilter::ParticleFilter(SHModel *model, APrioriDensity aPriori, Likelihoo
 
     std::cout << "\t\tFilter will use " << M << " particles." << std::endl;
     std::cout << "\t\tResampling treshold is set as " << epsilon << "." << std::endl;
-    std::cout << "\t\tThe moving step is fixed at " << m_stepSize << " of voxel." << std::endl;
+    std::cout << "\t\tThe moving step is fixed at " << m_stepSize << " mm." << std::endl;
     std::cout << "\t\tThere will be " << m_maxLength << " steps." << std::endl;
 
 
@@ -112,6 +113,7 @@ ParticleFilter::ParticleFilter(SHModel *model, APrioriDensity aPriori, Likelihoo
     m_map->SetSpacing(spacing);
     m_map->SetDirection(m_model->GetDirection());
     m_map->Allocate();
+    m_map->FillBuffer(0);
 
     itk::Point<Real,3> worldPoint;
     worldPoint[0] = x0.x(); worldPoint[1] = x0.y(); worldPoint[2] = x0.z();
@@ -166,7 +168,7 @@ ParticleFilter::ParticleFilter(SHModel *model, APrioriDensity aPriori, Likelihoo
 
     Display2(m_displayMode, std::cout << "\t\tFilter will use " << M << " particles." << std::endl);
     Display2(m_displayMode, std::cout << "\t\tResampling treshold is set as " << epsilon << "." << std::endl);
-    Display2(m_displayMode, std::cout << "\t\tThe moving step is fixed at " << m_stepSize << " of voxel." << std::endl);
+    Display2(m_displayMode, std::cout << "\t\tThe moving step is fixed at " << m_stepSize << " mm." << std::endl);
 
 
     // Initialize random number generator
@@ -237,18 +239,12 @@ void ParticleFilter::run(int label)
     //
 
     this->run(label, maxDir);
-//    std::cerr << "run 1 finished." << std::endl;
     this->ComputeMap();
-//    std::cerr << "ComputeMap 1 finished." << std::endl;
     Particle map1 = this->GetMAP();
-//    std::cerr << "GetMAP 1 finished." << std::endl;
 
     this->run(label, symDir);
-//    std::cerr << "run 2 finished." << std::endl;
     this->ComputeMap();
-//    std::cerr << "ComputeMap 2 finished." << std::endl;
     Particle map2 = this->GetMAP();
-//    std::cerr << "GetMAP 2 finished." << std::endl;
 
     this->ComputeFiber(map1,map2);
 }
@@ -258,34 +254,55 @@ void ParticleFilter::run(int label, Direction dir)
     m_k     = 0;
     m_cloud = std::vector<Particle>(m_M, Particle(m_x0));
 
+    m_maxSize = 0;
+    m_maxStep = 0;
+    unsigned int tmp = m_M;
+
     //
     // Initial sampling (vMF in mean direction dir and a priori kappa)
     //
 
     Display2(m_displayMode, std::cout << "\tBegin initial sampling..." << std::flush);
 
-    #ifndef NOPARA
+
+    Real *weights = new Real[m_M];
+    unsigned int nbInsPart = m_M;
+
+
     #pragma omp parallel for
-    #endif // NOPARA
-    for(unsigned int i=0; i<m_M; i++)
+    for(unsigned int m=0; m<m_M; m++)
     {
         // Simulate a direction using initial density
-        Direction u0 = m_aPriori.simulate(dir);
-
-        // Voxel may be anisotropic so we have to compute new vector in the image space
-        Vector tmp = u0.toVector();
-        Vector v0(tmp.x()/m_spacing[0], tmp.y()/m_spacing[1], tmp.z()/m_spacing[2]);
-        v0.Normalize();
+        Direction u0 = m_importance.simulate(dir,KAPPA);
 
         // Move particle
-        bool isInside = m_cloud[i].addToPath(v0*m_vStepSize, m_mask);
+        bool isInside = m_cloud[m].addToPath(u0.toVector()*m_stepSize, m_mask);
 
         // Set the initial weight of the particle
-        if(isInside)
-            m_cloud[i].setWeight(1.0/(Real)m_M);
-        else
-            m_cloud[i].setWeight(0);
+        if(isInside == 0 || isInside == 2) // outside mask or in exclusion zone
+        {
+            nbInsPart--;
+            m_cloud[m].setActive(false);
+        }
     } // for i
+
+    Real w    = 1.0/(Real)m_M;
+    Real logw = std::log(w);
+
+    #pragma omp parallel for
+    for(unsigned int m=0; m<m_M; m++)
+    {
+        weights[m] = logw;
+        m_cloud[m].setWeight(w);
+    }
+
+    this->saveCloudInVTK(label, m_k, m_x0);
+
+    if(tmp - nbInsPart > m_maxSize)
+    {
+        m_maxSize = tmp - nbInsPart;
+        m_maxStep = m_k;
+    }
 
     m_k++;
 
@@ -293,226 +310,198 @@ void ParticleFilter::run(int label, Direction dir)
 
 
     //
-    // Next sampling
+    // Sequential sampling
     //
 
-    unsigned int nbOfActiveParticles = m_M;
-    Real *weights = new Real[m_M];
 
-    for(unsigned int m=0; m<m_M; m++)
-        weights[m] = 0;
-
-
-    while(nbOfActiveParticles > 0)
+    while(nbInsPart > 0)
     {
+        tmp = nbInsPart;
+
         Display2(m_displayMode, std::cout << "\tBegin sampling " << m_k << "..." << std::flush);
 
-        #ifndef NODISPLAY
-            std::cerr << std::endl << std::endl << "step " << m_k << std::endl;
-        #endif // NODISPLAY
-
-        #ifndef NOPARA
         #pragma omp parallel for
-        #endif // NOPARA
-        for(unsigned int i=0; i<m_M; i++)
+        for(unsigned int m=0; m<m_M; m++)
         {
-            if(m_cloud[i].isActive())
+            if(m_cloud[m].isActive()) // m is active
             {
                 // Informations about current particle
-                Direction ukm1 = m_cloud[i].lastVector().toDirection();
-                Point xk       = m_cloud[i].lastPoint();
+                Direction ukm1 = m_cloud[m].lastVector().toDirection();
+                Point xk       = m_cloud[m].lastPoint();
 
                 // Simulating next direction according importance density
                 Direction mu = m_importance.computeMeanDirection(xk, ukm1);
-                Real kappa   = m_importance.computeConcentration(mu, xk);
+                Real kappa   = KAPPA;
                 Direction uk = m_importance.simulate(mu, kappa);
 
-
-                // Voxel may be anisotropic so we have to compute new vector in the image space
-                Vector tmp = uk.toVector();
-                Vector vk(tmp.x()/m_spacing[0], tmp.y()/m_spacing[1], tmp.z()/m_spacing[2]);
-                vk.Normalize();
-
                 // Move particle
-                bool isInside = m_cloud[i].addToPath(vk*m_vStepSize, m_mask);
+                char isInside = m_cloud[m].addToPath(uk.toVector()*m_stepSize, m_mask);
 
-                if(isInside)
-                {
-                    // Compute particle's weight
-                    Real likelihood = m_likelihood.compute(uk, xk, mu);
-                    Real apriori    = m_aPriori.compute(uk, ukm1);
-                    Real importance = m_importance.compute(uk, mu, kappa);
+                // Compute particle's weight
+                Real likelihood = m_likelihood.compute(uk, xk, mu);
+                Real apriori    = m_aPriori.compute(uk, ukm1);
+                Real importance = m_importance.compute(uk, mu, kappa);
 
-                    weights[i] = std::log(m_cloud[i].weight()) + likelihood + apriori - importance;
-                }
-                else
-                {
-                    nbOfActiveParticles--;
-                    weights[i] = 0;
-                }
-            } // particle not active
-            else
-                weights[i] = 0;
-
-            #ifndef NODISPLAY
-                std::cerr << "_w[" << i << "] = " << weights[i] << std::endl;
-            #endif // NODISPLAY
+                weights[m] += likelihood + apriori - importance;
+            }
         } // for i particles
 
-        if(nbOfActiveParticles > 0)
+
+        // Search minimal weight
+        Real min = MAX_REAL;
+        Real max = MIN_REAL;
+
+        for(unsigned int m=0; m<m_M; m++)
         {
-            // Search minimal weight
-            Real min = 0;
+            if(m_cloud[m].isActive() && std::isfinite(weights[m]) && min > weights[m]) // m is active, no infinite weight and weight is minimal
+                min = weights[m];
 
-            for(unsigned int i=0; i<m_M; i++)
+            if(m_cloud[m].isActive() && std::isfinite(weights[m]) && max < weights[m]) // m is active, no infinite weight and weight is minimal
+                max = weights[m];
+        } // for each particle
+
+        // Compute the sum of particles' weight (after an interval shift)
+        Real sum   = 0;
+        Real shift = (min < 0) ? -min+1 : 0;
+
+        for(unsigned int m=0; m<m_M; m++)
+        {
+            if(m_cloud[m].isActive()) // m is active
             {
-                if(m_cloud[i].isActive() && std::isfinite(weights[i]) && min > weights[i])
-                    min = weights[i];
-            } // for each particle
+                if(std::isfinite(weights[m])) // no infinite weight
+                    weights[m] += shift;
+                else // infinite number
+                    weights[m] = 0;
 
-            #ifndef NODISPLAY
-                std::cerr << std::endl << "min = " << min << std::endl;
-            #endif // NODISPLAY
+                sum += weights[m];
+            }
+        } // for each particle
 
-            // Compute the sum of particles' weight (after an interval shift)
-            Real sum   = 0;
-            Real shift = (min < 0) ? -min+1 : 0;
 
-            #ifndef NODISPLAY
-                std::cerr << "shift = " << shift << std::endl << std::endl;
-            #endif // NODISPLAY
+        // Normalize particles' weights
+        #pragma omp parallel for
+        for(unsigned int m=0; m<m_M; m++)
+        {
+            if(m_cloud[m].isActive()) // m is active
+                m_cloud[m].setWeight(weights[m]/sum);
+        }
 
-            for(unsigned int i=0; i<m_M; i++)
+
+        // Compute sum square of particles' weights
+        Real sumSquare = 0;
+        for(unsigned int m=0; m<m_M; m++)
+        {
+            if(m_cloud[m].isActive()) // m is active
+                sumSquare += m_cloud[m].weight() * m_cloud[m].weight();
+        }
+
+        // Compute resampling threshold
+        Real ESS = 1. / sumSquare;
+
+        if(!std::isfinite(ESS))
+            nbInsPart = 0;
+        else
+        {
+            // Resample if ESS is below a threshold
+            // keeping proportionnality of weights
+            if(ESS < m_epsilon*(nbInsPart))
             {
-                if(m_cloud[i].isActive())
+                Display2(m_displayMode, std::cout << " (Resampling, ESS = " << (ESS/nbInsPart)*100.0 << "%) " << std::flush);
+                this->ResampleCloud(nbInsPart, weights);
+            }
+            else // ESS >= m_epsilon*(nbInsPart)
+                Display2(m_displayMode, std::cout << " (ESS = " << (ESS/nbInsPart)*100.0 << "%) " << std::flush);
+
+            for(unsigned int m=0; m<m_M; m++)
+            {
+                if(m_cloud[m].isOutside() && m_cloud[m].isActive())
                 {
-                    if(std::isfinite(weights[i]))
-                        weights[i] += shift;
-                    else // infinite number
-                        weights[i] = 0;
-
-                    #ifndef NODISPLAY
-                        std::cerr << "w[" << i << "] = " << weights[i] << std::endl;
-                    #endif // NODISPLAY
-
-                    sum += weights[i];
+                    m_cloud[m].setActive(false);
+                    nbInsPart--;
                 }
-            } // for each particle
-
-            #ifndef NODISPLAY
-                std::cerr << std::endl << "sum = " << sum << std::endl << std::endl;
-            #endif // NODISPLAY
-
-            // Normalize particles' weights
-            #ifndef NOPARA
-            #pragma omp parallel for
-            #endif // NOPARA
-            for(unsigned int i=0; i<m_M; i++)
-            {
-                m_cloud[i].setWeight(weights[i]/sum);
-
-                #ifndef NODISPLAY
-                    std::cerr << "~w[" << i << "] = " << m_cloud[i].weight() << std::endl;
-                #endif // NODISPLAY
             }
+        }
 
+        this->saveCloudInVTK(label, m_k, m_x0);
 
-            // Compute sum square of particles' weights
-            Real sumSquare = 0;
-            for(unsigned int i=0; i<m_M; i++)
-            {
-                sumSquare += m_cloud[i].weight() * m_cloud[i].weight();
-            }
+        if(tmp - nbInsPart > m_maxSize)
+        {
+            m_maxSize = tmp - nbInsPart;
+            m_maxStep = m_k;
+        }
 
-
-
-            // Compute resampling threshold
-            Real ESS = 1. / sumSquare;
-
-            if(!std::isfinite(ESS))
-                nbOfActiveParticles = 0;
-            else
-            {
-
-                #ifndef NODISPLAY
-                    std::cerr << std::endl << "actives particles remaining = " << nbOfActiveParticles << std::endl << std::endl;
-                #endif // NODISPLAY
-
-                // Resample if ESS is below a threshold
-                // keeping proportionnality of weights
-                if(ESS < m_epsilon*m_M)
-                {
-                    Display2(m_displayMode, std::cout << " (Resampling, ESS = " << ESS << ") " << std::flush);
-
-                    Real cumul = 0;
-
-                    Real *intervals = new Real[m_M-1];
-
-
-                    // Create proportionnal intervals
-                    // between 0 and 1
-                    for(unsigned int i=0; i<m_M-1; i++)
-                    {
-                        cumul += m_cloud[i].weight();
-                        intervals[i] = cumul;
-                    } // for i
-
-
-                    nbOfActiveParticles = m_M;
-
-
-                    // Get M particles from the cloud
-                    // keeping proportionnality
-                    // (multinomial resampling)
-                    for(unsigned int m=0; m<m_M; m++)
-                    {
-                        // Simulate x ~ U(0,1)
-                        Real x = (Real)rand() / (Real)RAND_MAX;
-
-                        bool found = false;
-                        unsigned int i = 0;
-
-                        do
-                        {
-                            if(x < intervals[i])
-                                found = true;
-                            else
-                                i++;
-                        } while(!found && i < m_M-1);
-
-                        m_cloud[m].SetLastPoint(m_cloud[i].lastPoint());
-                        m_cloud[m].SetLastVector(m_cloud[i].lastVector());
-                        m_cloud[m].setWeight(1.0/(Real)m_M);
-
-                        if(m_cloud[i].isActive())
-                            m_cloud[m].SetActive();
-                        else
-                        {
-                            m_cloud[m].SetInactive();
-                            nbOfActiveParticles--;
-                        }
-                    } // for m
-
-
-                    // Clean space memory
-                    delete[] intervals;
-
-                } // ESS < m_epsilon
-                else
-                    Display2(m_displayMode, std::cout << " (ESS = " << ESS << ") " << std::flush);
-            }
-
-            m_k++;
-
-        } // endif nbOfActiveParticles > 0
+        m_k++;
 
         Display2(m_displayMode, std::cout << "done." << std::endl);
-    } // for k steps
+    } // while there are active particles or for k steps
 
     delete[] weights;
 
     m_dirNum++;
 }
+
+void ParticleFilter::ResampleCloud(unsigned int nbInsPart, Real *weights)
+{
+    assert(nbInsPart <= m_M);
+    assert(nbInsPart > 0);
+
+    Real cumul          = 0;
+    Real *intervals     = new Real[nbInsPart];
+    unsigned int *index = new unsigned int[nbInsPart];
+
+
+    // Create proportionnal intervals
+    // between 0 and 1 for inside particles
+    unsigned int count = 0;
+    for(unsigned int m=0; m<m_M; m++)
+    {
+        if(m_cloud[m].isActive()) // m is active
+        {
+            cumul += m_cloud[m].weight();
+            intervals[count] = cumul;
+            index[count] = m;
+            count++;
+        }
+    } // for i
+
+
+    Real w    = 1.0/(Real)nbInsPart;
+    Real logw = std::log(w);
+
+    // Get M particles from the cloud
+    // keeping proportionnality
+    // (multinomial resampling)
+    for(unsigned int m=0; m<m_M; m++)
+    {
+        if(m_cloud[m].isActive()) // m is active
+        {
+            // Simulate x ~ U(0,1)
+            Real x = (Real)rand() / (Real)RAND_MAX;
+
+            bool found = false;
+            unsigned int i = 0;
+
+            do
+            {
+                if(x < intervals[i])
+                    found = true;
+                else
+                    i++;
+            } while(!found && i < nbInsPart);
+
+            m_cloud[m].SetLastPoint(m_cloud[index[i]].lastPoint());
+            m_cloud[m].SetLastVector(m_cloud[index[i]].lastVector());
+            m_cloud[m].SetLastWeight(w);
+            weights[m] = logw;
+        }
+    } // for m
+
+
+    // Clean space memory
+    delete[] index;
+    delete[] intervals;
+}
+
 
 void ParticleFilter::saveCloudInVTK(int label, unsigned int step, Point begin)
 {
@@ -520,56 +509,57 @@ void ParticleFilter::saveCloudInVTK(int label, unsigned int step, Point begin)
     // Build VTK PolyData from particle's cloud
     //
 
-    vtkSmartPointer<vtkPoints> points      = vtkSmartPointer<vtkPoints>::New();
-    vtkSmartPointer<vtkCellArray> lines    = vtkSmartPointer<vtkCellArray>::New();
+    vtkSmartPointer<vtkPoints>      points = vtkSmartPointer<vtkPoints>::New();
+    vtkSmartPointer<vtkCellArray>    lines = vtkSmartPointer<vtkCellArray>::New();
     vtkSmartPointer<vtkDoubleArray> colors = vtkSmartPointer<vtkDoubleArray>::New();
 
     vtkIdType pid[1];
-
-    // color map (search min and max values)
-    Real max = m_cloud[0].weight();
-    Real min = m_cloud[0].weight();
-
-    std::vector<Particle>::iterator it;
-    for(it = m_cloud.begin(); it != m_cloud.end(); it++)
-    {
-        if(it->weight() > max)
-            max = it->weight();
-
-        if(it->weight() < min)
-            min = it->weight();
-    } // for it
-
-    vtkSmartPointer<vtkColorTransferFunction> map = vtkSmartPointer<vtkColorTransferFunction>::New();
-    map->AddRGBPoint(min, 1, 0, 0);
-    map->AddRGBPoint(max, 0, 0, 1);
+    colors->SetNumberOfComponents(1);
 
 
     // create all points and lines
-    std::vector<Particle>::iterator pIt;
-    for(pIt = m_cloud.begin(); pIt != m_cloud.end(); pIt++)
+    for(std::vector<Particle>::iterator pIt = m_cloud.begin(); pIt != m_cloud.end(); pIt++)
     {
-        Point x0 = pIt->getPoint(0);
-        points->InsertNextPoint(x0.x()*m_spacing[0]+ m_origin[0], x0.y()*m_spacing[1] + m_origin[1], x0.z()*m_spacing[2] + m_origin[2]);
-
-        double color[3];
-        map->GetColor(pIt->weight(), color);
-        colors->InsertNextTupleValue(color);
-
-        for(unsigned int i=1; i<pIt->length()+1; i++)
+        if(pIt->isActive())
         {
-            vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
-            Point p = pIt->getPoint(i);
+            ImageContinuousIndex cix;
+            Image::PointType wx;
 
-            pid[0] = points->InsertNextPoint(p.x()*m_spacing[0] + m_origin[0], p.y()*m_spacing[1] + m_origin[1], p.z()*m_spacing[2] + m_origin[2]);
-            line->GetPointIds()->SetId(0, pid[0]-1);
-            line->GetPointIds()->SetId(1, pid[0]);
-            lines->InsertNextCell(line);
+            Point x0 = pIt->getPoint(0);
 
-            map->GetColor(pIt->weight(), color);
+            cix[0] = x0.x(); cix[1] = x0.y(); cix[2] = x0.z();
+            m_map->TransformContinuousIndexToPhysicalPoint(cix, wx);
+
+            points->InsertNextPoint(wx[0], wx[1], wx[2]);
+
+            double color[1]; color[0] = pIt->weight();
             colors->InsertNextTupleValue(color);
-        } // for i
-    } // for pIt
+
+
+            for(unsigned int i=1; i<=pIt->length(); i++)
+            {
+                vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
+                Point xk = pIt->getPoint(i);
+
+                cix[0] = xk.x(); cix[1] = xk.y(); cix[2] = xk.z();
+                m_map->TransformContinuousIndexToPhysicalPoint(cix, wx);
+
+                pid[0] = points->InsertNextPoint(wx[0], wx[1], wx[2]);
+
+                Point xkm1 = pIt->getPoint(i-1);
+                Vector vk  = pIt->getVector(i-1);
+
+                if((xk + vk*(-1)) == xkm1) // points are linked or not
+                {
+                    line->GetPointIds()->SetId(0, pid[0]-1);
+                    line->GetPointIds()->SetId(1, pid[0]);
+                    lines->InsertNextCell(line);
+                }
+
+                colors->InsertNextTupleValue(color);
+            } // for i
+        }
+    } // for each particle
 
     // create vtk polydata object
     vtkSmartPointer<vtkPolyData> cloud = vtkSmartPointer<vtkPolyData>::New();
@@ -594,55 +584,38 @@ void ParticleFilter::saveCloudInVTK(int label, unsigned int step, Point begin)
 
 Particle ParticleFilter::GetMAP()
 {
-//*
-    // MAP estimate of probablity law
-    // Search the particle with maximal importance weight
-    Particle map = m_cloud[0];
-    Real max = m_cloud[0].weight();
+    Particle map(m_x0);
 
-    for(unsigned int m=1; m<m_cloud.size(); m++)
+    for(unsigned int k=1; k<m_maxStep; k++)
     {
-        if(max < m_cloud[m].weight())
+        Real x=0, y=0, z=0;
+        Real sum = 0;
+
+        for(std::vector<Particle>::iterator p=m_cloud.begin(); p != m_cloud.end(); p++)
         {
-            max = m_cloud[m].weight();
-            map = m_cloud[m];
-        }
-    } // for each particle in cloud
+            if(p->length() == m_maxStep) // the length must be m_maxStep
+            {
+                Real w   = p->getWeight(k-1);
+                Point pt = p->getPoint(k);
+
+                sum += w;
+                x   += w*pt.x();
+                y   += w*pt.y();
+                z   += w*pt.z();
+            }
+        } // for each particle
+
+        x /= sum;
+        y /= sum;
+        z /= sum;
+
+        Point pt = map.getPoint(k-1);
+        Vector v(x-pt.x(), y-pt.y(), z-pt.z());
+        map.addToPath(v, m_mask);
+        map.setWeight(1);
+    } // for each step
 
     return map;
-//*/
-
-/*
-	std::vector<Point> map;
-
-	for(unsigned int k=0; k<m_k; k++)
-	{
-		unsigned int imap = 0;
-		Real         max  = 0;
-		unsigned int num  = 0;
-
-		for(unsigned int m=0; m<m_M; m++)
-		{
-			if(m_cloud[m].length() <= k)
-			{
-				Real tmp = m_cloud[m].getWeight(k);
-
-				if(max < tmp)
-				{
-					max  = tmp;
-					imap = m;
-				}
-
-				num++;
-			}
-		} // for each particle m
-
-		if(num > 0)
-			map.push_back(m_cloud[imap].getPoint(k));
-	} // for each step k
-
-	return map;
-//*/
 }
 
 void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
@@ -691,14 +664,14 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
     fiber1->SetLines(lines1);
 
 
-    x0 = map1.getPoint(0);
+    x0 = map2.getPoint(0);
     cix0[0] = x0.x(); cix0[1] = x0.y(); cix0[2] = x0.z();
     m_map->TransformContinuousIndexToPhysicalPoint(cix0, wx0);
     points2->InsertNextPoint(wx0[0], wx0[1], wx0[2]);
 
     for(unsigned int k=1; k<map2.length(); k++)
     {
-        Point p = map1.getPoint(k);
+        Point p = map2.getPoint(k);
 
         vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
 
@@ -744,101 +717,76 @@ vtkSmartPointer<vtkPolyData> ParticleFilter::GetFiber()
 
 void ParticleFilter::ComputeMap()
 {
-    // Accumulator map
-    Image::Pointer accumulator = Image::New();
-    accumulator->SetRegions(m_map->GetLargestPossibleRegion().GetSize());
-    accumulator->SetOrigin(m_map->GetOrigin());
-    accumulator->SetSpacing(m_map->GetSpacing());
-    accumulator->SetDirection(m_map->GetDirection());
-    accumulator->Allocate();
-
-
-    //
-    // Data extraction
-    //
-
-    for(unsigned int k=0; k<=m_k; k++)
+    for(std::vector<Particle>::iterator particle = m_cloud.begin(); particle != m_cloud.end(); particle++)
     {
-        accumulator->FillBuffer(0);
 
-        for(unsigned int m=0; m<m_M; m++)
+        for(unsigned int k=0; k<=particle->length(); k++)
         {
-            if(k < m_cloud[m].numberOfPoints())
-            {
-                // Get data
-                Point p = m_cloud[m].getPoint(k);
-                Real  w = m_cloud[m].getWeight(k);
-//                Real  w = 1;
+            // Get data
+            Point p = particle->getPoint(k);
+            Real  w = (k == 0) ? 1.0/(Real)m_M : particle->getWeight(k-1);
 
-                // Tri-linear interpolation
-                short x = (short)std::floor(p.x());
-                short y = (short)std::floor(p.y());
-                short z = (short)std::floor(p.z());
+            // Tri-linear interpolation
+            short x = (short)std::floor(p.x());
+            short y = (short)std::floor(p.y());
+            short z = (short)std::floor(p.z());
 
-                Real wx = (Real)(p.x() - x);
-                Real wy = (Real)(p.y() - y);
-                Real wz = (Real)(p.z() - z);
+            Real wx = (Real)(p.x() - x);
+            Real wy = (Real)(p.y() - y);
+            Real wz = (Real)(p.z() - z);
 
-                // Set particle's weight at particle's position
-                Image::IndexType index;
+            // Set particle's weight at particle's position
+            Image::IndexType index;
 
-                index[0] = x; index[1] = y; index[2] = z;
-                if(0 <= (unsigned int)index[0] && (unsigned int)index[0] < accumulator->GetLargestPossibleRegion().GetSize(0) &&
-                   0 <= (unsigned int)index[1] && (unsigned int)index[1] < accumulator->GetLargestPossibleRegion().GetSize(1) &&
-                   0 <= (unsigned int)index[2] && (unsigned int)index[2] < accumulator->GetLargestPossibleRegion().GetSize(2))
-                    accumulator->SetPixel(index, accumulator->GetPixel(index) + (1-wz)*(1-wx)*(1-wy) * w);
+            index[0] = x; index[1] = y; index[2] = z;
+            if(0 <= (unsigned int)index[0] && (unsigned int)index[0] < m_map->GetLargestPossibleRegion().GetSize(0) &&
+               0 <= (unsigned int)index[1] && (unsigned int)index[1] < m_map->GetLargestPossibleRegion().GetSize(1) &&
+               0 <= (unsigned int)index[2] && (unsigned int)index[2] < m_map->GetLargestPossibleRegion().GetSize(2))
+                m_map->SetPixel(index, m_map->GetPixel(index) + (1-wz)*(1-wx)*(1-wy) * w);
 
-                index[0] = x; index[1] = y+1; index[2] = z;
-                if(0 <= (unsigned int)index[0] && (unsigned int)index[0] < accumulator->GetLargestPossibleRegion().GetSize(0) &&
-                   0 <= (unsigned int)index[1] && (unsigned int)index[1] < accumulator->GetLargestPossibleRegion().GetSize(1) &&
-                   0 <= (unsigned int)index[2] && (unsigned int)index[2] < accumulator->GetLargestPossibleRegion().GetSize(2))
-                    accumulator->SetPixel(index, accumulator->GetPixel(index) + (1-wz)*(1-wx)*wy * w);
+            index[0] = x; index[1] = y+1; index[2] = z;
+            if(0 <= (unsigned int)index[0] && (unsigned int)index[0] < m_map->GetLargestPossibleRegion().GetSize(0) &&
+               0 <= (unsigned int)index[1] && (unsigned int)index[1] < m_map->GetLargestPossibleRegion().GetSize(1) &&
+               0 <= (unsigned int)index[2] && (unsigned int)index[2] < m_map->GetLargestPossibleRegion().GetSize(2))
+                m_map->SetPixel(index, m_map->GetPixel(index) + (1-wz)*(1-wx)*wy * w);
 
-                index[0] = x+1; index[1] = y; index[2] = z;
-                if(0 <= (unsigned int)index[0] && (unsigned int)index[0] < accumulator->GetLargestPossibleRegion().GetSize(0) &&
-                   0 <= (unsigned int)index[1] && (unsigned int)index[1] < accumulator->GetLargestPossibleRegion().GetSize(1) &&
-                   0 <= (unsigned int)index[2] && (unsigned int)index[2] < accumulator->GetLargestPossibleRegion().GetSize(2))
-                    accumulator->SetPixel(index, accumulator->GetPixel(index) + (1-wz)*wx*(1-wy) * w);
+            index[0] = x+1; index[1] = y; index[2] = z;
+            if(0 <= (unsigned int)index[0] && (unsigned int)index[0] < m_map->GetLargestPossibleRegion().GetSize(0) &&
+               0 <= (unsigned int)index[1] && (unsigned int)index[1] < m_map->GetLargestPossibleRegion().GetSize(1) &&
+               0 <= (unsigned int)index[2] && (unsigned int)index[2] < m_map->GetLargestPossibleRegion().GetSize(2))
+                m_map->SetPixel(index, m_map->GetPixel(index) + (1-wz)*wx*(1-wy) * w);
 
-                index[0] = x+1; index[1] = y+1; index[2] = z;
-                if(0 <= (unsigned int)index[0] && (unsigned int)index[0] < accumulator->GetLargestPossibleRegion().GetSize(0) &&
-                   0 <= (unsigned int)index[1] && (unsigned int)index[1] < accumulator->GetLargestPossibleRegion().GetSize(1) &&
-                   0 <= (unsigned int)index[2] && (unsigned int)index[2] < accumulator->GetLargestPossibleRegion().GetSize(2))
-                    accumulator->SetPixel(index, accumulator->GetPixel(index) + (1-wz)*wx*wy * w);
+            index[0] = x+1; index[1] = y+1; index[2] = z;
+            if(0 <= (unsigned int)index[0] && (unsigned int)index[0] < m_map->GetLargestPossibleRegion().GetSize(0) &&
+               0 <= (unsigned int)index[1] && (unsigned int)index[1] < m_map->GetLargestPossibleRegion().GetSize(1) &&
+               0 <= (unsigned int)index[2] && (unsigned int)index[2] < m_map->GetLargestPossibleRegion().GetSize(2))
+                m_map->SetPixel(index, m_map->GetPixel(index) + (1-wz)*wx*wy * w);
 
-                index[0] = x; index[1] = y; index[2] = z+1;
-                if(0 <= (unsigned int)index[0] && (unsigned int)index[0] < accumulator->GetLargestPossibleRegion().GetSize(0) &&
-                   0 <= (unsigned int)index[1] && (unsigned int)index[1] < accumulator->GetLargestPossibleRegion().GetSize(1) &&
-                   0 <= (unsigned int)index[2] && (unsigned int)index[2] < accumulator->GetLargestPossibleRegion().GetSize(2))
-                    accumulator->SetPixel(index, accumulator->GetPixel(index) + wz*(1-wx)*(1-wy) * w);
+            index[0] = x; index[1] = y; index[2] = z+1;
+            if(0 <= (unsigned int)index[0] && (unsigned int)index[0] < m_map->GetLargestPossibleRegion().GetSize(0) &&
+               0 <= (unsigned int)index[1] && (unsigned int)index[1] < m_map->GetLargestPossibleRegion().GetSize(1) &&
+               0 <= (unsigned int)index[2] && (unsigned int)index[2] < m_map->GetLargestPossibleRegion().GetSize(2))
+                m_map->SetPixel(index, m_map->GetPixel(index) + wz*(1-wx)*(1-wy) * w);
 
-                index[0] = x; index[1] = y+1; index[2] = z+1;
-                if(0 <= (unsigned int)index[0] && (unsigned int)index[0] < accumulator->GetLargestPossibleRegion().GetSize(0) &&
-                   0 <= (unsigned int)index[1] && (unsigned int)index[1] < accumulator->GetLargestPossibleRegion().GetSize(1) &&
-                   0 <= (unsigned int)index[2] && (unsigned int)index[2] < accumulator->GetLargestPossibleRegion().GetSize(2))
-                    accumulator->SetPixel(index, accumulator->GetPixel(index) + wz*(1-wx)*wy * w);
+            index[0] = x; index[1] = y+1; index[2] = z+1;
+            if(0 <= (unsigned int)index[0] && (unsigned int)index[0] < m_map->GetLargestPossibleRegion().GetSize(0) &&
+               0 <= (unsigned int)index[1] && (unsigned int)index[1] < m_map->GetLargestPossibleRegion().GetSize(1) &&
+               0 <= (unsigned int)index[2] && (unsigned int)index[2] < m_map->GetLargestPossibleRegion().GetSize(2))
+                m_map->SetPixel(index, m_map->GetPixel(index) + wz*(1-wx)*wy * w);
 
-                index[0] = x+1; index[1] = y; index[2] = z+1;
-                if(0 <= (unsigned int)index[0] && (unsigned int)index[0] < accumulator->GetLargestPossibleRegion().GetSize(0) &&
-                   0 <= (unsigned int)index[1] && (unsigned int)index[1] < accumulator->GetLargestPossibleRegion().GetSize(1) &&
-                   0 <= (unsigned int)index[2] && (unsigned int)index[2] < accumulator->GetLargestPossibleRegion().GetSize(2))
-                    accumulator->SetPixel(index, accumulator->GetPixel(index) + wz*wx*(1-wy) * w);
+            index[0] = x+1; index[1] = y; index[2] = z+1;
+            if(0 <= (unsigned int)index[0] && (unsigned int)index[0] < m_map->GetLargestPossibleRegion().GetSize(0) &&
+               0 <= (unsigned int)index[1] && (unsigned int)index[1] < m_map->GetLargestPossibleRegion().GetSize(1) &&
+               0 <= (unsigned int)index[2] && (unsigned int)index[2] < m_map->GetLargestPossibleRegion().GetSize(2))
+                m_map->SetPixel(index, m_map->GetPixel(index) + wz*wx*(1-wy) * w);
 
-                index[0] = x+1; index[1] = y+1; index[2] = z+1;
-                if(0 <= (unsigned int)index[0] && (unsigned int)index[0] < accumulator->GetLargestPossibleRegion().GetSize(0) &&
-                   0 <= (unsigned int)index[1] && (unsigned int)index[1] < accumulator->GetLargestPossibleRegion().GetSize(1) &&
-                   0 <= (unsigned int)index[2] && (unsigned int)index[2] < accumulator->GetLargestPossibleRegion().GetSize(2))
-                    accumulator->SetPixel(index, accumulator->GetPixel(index) + wz*wx*wy * w);
-            }
-        } // for each particle
-
-        // Add accumulator to connectivity map
-        ImageIterator in(accumulator, accumulator->GetLargestPossibleRegion());
-        ImageIterator out(m_map, m_map->GetLargestPossibleRegion());
-
-        for(in.GoToBegin(), out.GoToBegin(); !in.IsAtEnd() && !out.IsAtEnd(); ++in, ++out)
-            out.Set(out.Get() + in.Get());
-    } // for each step
+            index[0] = x+1; index[1] = y+1; index[2] = z+1;
+            if(0 <= (unsigned int)index[0] && (unsigned int)index[0] < m_map->GetLargestPossibleRegion().GetSize(0) &&
+               0 <= (unsigned int)index[1] && (unsigned int)index[1] < m_map->GetLargestPossibleRegion().GetSize(1) &&
+               0 <= (unsigned int)index[2] && (unsigned int)index[2] < m_map->GetLargestPossibleRegion().GetSize(2))
+                m_map->SetPixel(index, m_map->GetPixel(index) + wz*wx*wy * w);
+        }
+    }
 }
 
 void ParticleFilter::saveConnectionMap(int label, Point begin)

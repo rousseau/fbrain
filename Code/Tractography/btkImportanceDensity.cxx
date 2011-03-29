@@ -118,6 +118,7 @@ Direction ImportanceDensity::computeMeanDirection(Point xk, Direction ukm1)
 
 Direction ImportanceDensity::simulate(Direction mean, Real kappa)
 {
+
     // Sample random scalar
     Real y = (Real)std::rand() / (Real)RAND_MAX;
     Real w = 1.0/kappa * std::log(std::exp(-kappa) + kappa * 2.0/kappa * std::sinh(kappa) * y);
@@ -185,33 +186,29 @@ Real ImportanceDensity::computeConcentration(Direction mu, Point xk)
 {
     Matrix Psi = m_model->odfAt(xk);
 
-    Real min = Psi(0,0), max = Psi(0,0), sum = 0;
-    for(unsigned int i=0; i<Psi.Rows(); i++)
-    {
-        if(min > Psi(i,0))
-            min = Psi(i,0);
-
-        if(max < Psi(i,0))
-            max = Psi(i,0);
-
-        sum += Psi(i,0);
-    }
-
-    Real psi  = ((m_model->odfAt(mu, xk)-min)/(max-min));
+    Real psi  = (m_model->odfAt(mu, xk));
     Real psi2 = psi*psi;
 
     Real sintheta  = std::sin(mu.theta());
     Real sin2theta = sintheta*sintheta;
 
-    Real h = 0.1;
+    Real h  = 0.000001;
+    Real h2 = h*h;
+    Real mutheta   = mu.theta();
+    Real muphi     = mu.phi();
+    Real muthetaph = mutheta + h;
+    Real muthetamh = mutheta - h;
+    Real muphiph   = muphi + h;
+    Real muphimh   = muphi - h;
+
     Real psi_theta_theta =
-        ( ((m_model->odfAt(Direction(mu.theta()+h,mu.phi()), xk)-min)/(max-min))/sum - 2.0*psi + ((m_model->odfAt(Direction(mu.theta()-h, mu.phi()), xk)-min)/(max-min))/sum )
+        ( m_model->odfAt(Direction(muthetaph, muphi), xk) - 2.0*psi + m_model->odfAt(Direction(muthetamh, muphi), xk) )
         /
-        (h*h);
+        (h2);
     Real psi_phi_phi =
-        ( ((m_model->odfAt(Direction(mu.theta(),mu.phi()+h), xk)-min)/(max-min))/sum - 2.0*psi + ((m_model->odfAt(Direction(mu.theta(), mu.phi()-h), xk)-min)/(max-min))/sum )
+        ( m_model->odfAt(Direction(mutheta, muphiph), xk) - 2.0*psi + m_model->odfAt(Direction(mutheta, muphimh), xk) )
         /
-        (h*h);
+        (h2);
 
     Real e = psi - psi_theta_theta;
     Real G = psi2 * sin2theta;
@@ -220,7 +217,8 @@ Real ImportanceDensity::computeConcentration(Direction mu, Point xk)
 
     Real H = 0.5 * ( (e*G + g*E) / (E*G) );
 
-    return std::exp(H*0.017);
+
+    return H;
 }
 
 } // namespace btk

@@ -58,8 +58,9 @@ knowledge of the CeCILL-B license and that you accept its terms.
             /**
              * @brief Constructor
              * @param filename Filename of model ITK image
+             * @param directionsfilename Filename of directions
              */
-            SHModel(const std::string &filename);
+            SHModel(const std::string &filename, const std::string &directionsfilename);
 
             /**
              * @brief Constructor
@@ -89,6 +90,15 @@ knowledge of the CeCILL-B license and that you accept its terms.
              * @return Signal value at this point and direction
              */
             Matrix signalAt(Point p);
+
+            /**
+             * @brief Get signal value at given direction and position
+             * The value is interpolated
+             * @param p Point in the image where the signal value is requested
+             * @param g Gradient directions
+             * @return Signal value at this point and in specified directions
+             */
+            Matrix signalAt(Point p, std::vector<Direction> *g);
 
             /**
              * @brief Get ODF value at given direction and position
@@ -161,8 +171,9 @@ knowledge of the CeCILL-B license and that you accept its terms.
             /**
              * @brief Read image file and directions file
              * @param filename Filename of model ITK image
+             * @param directionsfilename Filenam of directions
              */
-            Sequence::Pointer readFiles(const std::string &filename);
+            Sequence::Pointer readFiles(const std::string &filename, const std::string &directionsfilename);
 
             /**
              * @brief Compute Legendre matrix

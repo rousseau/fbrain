@@ -73,6 +73,13 @@ knowledge of the CeCILL-B license and that you accept its terms.
              * @return The translated point in the 3D space
              */
             Point operator+(Vector v);
+
+            /**
+             * @brief Verify if this point is equal to the point in paramaters
+             * @param p Point to compare
+             * @return True if the two point are equal, false otherwise
+             */
+             bool operator==(Point p);
     };
 
     } // namespace btk

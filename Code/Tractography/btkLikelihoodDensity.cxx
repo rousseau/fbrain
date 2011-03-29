@@ -67,7 +67,7 @@ Real LikelihoodDensity::compute(Direction uk, Point xk, Direction mean)
     // 2. Compute alpha = arcos(vk.mean)
     Vector vk   = uk.toVector();
     Vector vmean = mean.toVector();
-    Real alpha   = std::acos(vk.x()*vmean.x() + vk.y()*vmean.y() + vk.z()*vmean.z());
+    Real alpha   = -std::acos(vk.x()*vmean.x() + vk.y()*vmean.y() + vk.z()*vmean.z());
 
 
     // 3. Compute rotation axis = (vk/\mean)
@@ -113,7 +113,7 @@ Real LikelihoodDensity::compute(Direction uk, Point xk, Direction mean)
     // 6. Compute densities
     Real density = 0;
     Matrix S     = m_signal->signalAt(xk);
-    Matrix M     = m_model->signalAt(xk);
+    Matrix M     = m_model->signalAt(xk,&g);
 
     for(unsigned int i=0; i<g.size(); i++)
     {

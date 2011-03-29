@@ -12,6 +12,11 @@ TARGET_LINK_LIBRARIES(btkNLMDenoising ITKIO)
 
 #------------------------------------------------------------------------------
 
+ADD_EXECUTABLE(btkNLMDenoising4DImage btkNLMDenoising4DImage.cxx )
+TARGET_LINK_LIBRARIES(btkNLMDenoising4DImage ITKIO)
+
+#------------------------------------------------------------------------------
+
 INCLUDE_DIRECTORIES(${ANN_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Reconstruction)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/DTI)
@@ -53,6 +58,7 @@ TARGET_LINK_LIBRARIES(btkTractography ITKCommon ITKIO vtkHybrid)
 #------------------------------------------------------------------------------
 
 INSTALL(TARGETS btkNLMDenoising
+                btkNLMDenoising4DImage
                 btkImageReconstruction
                 btkGroupwiseS2SDistortionCorrection
                 btkRBFInterpolationS2S

@@ -52,5 +52,10 @@ Point Point::operator+(Vector v)
     return Point(v.x()+this->x(), v.y()+this->y(), v.z()+this->z());
 }
 
+bool Point::operator==(Point p)
+{
+    return (EQUAL(this->x(),p.x(), 1e-10) && EQUAL(this->y(),p.y(), 1e-10) && EQUAL(this->z(),p.z(), 1e-10));
+}
+
 } // namespace btk
 

@@ -42,20 +42,24 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "btkSphericalHarmonics.h"
 
 
+#define SPH_RESOLUTION 65
+
+
 namespace btk
 {
 
-SHModel::SHModel(const std::string &filename)
+SHModel::SHModel(const std::string &filename, const std::string &directionsfilename)
 {
     m_model      = 0;
     m_interp     = 0;
     m_directions = 0;
 
     m_Y     = 0;
+    m_Yori  = 0;
     m_P     = 0;
     m_Sharp = 0;
 
-    m_reso = 16;
+    m_reso = SPH_RESOLUTION;
 
     m_maxTheta = M_PI;
     m_pasTheta = m_maxTheta / (Real)m_reso;
@@ -68,7 +72,7 @@ SHModel::SHModel(const std::string &filename)
 
 
     // Reading files
-    Sequence::Pointer model = this->readFiles(filename);
+    Sequence::Pointer model = this->readFiles(filename, directionsfilename);
 
     // Getting images sizes
     SequenceRegion smodelRegion = model->GetLargestPossibleRegion();
@@ -106,6 +110,7 @@ SHModel::SHModel(const std::string &filename)
     // SH basis matrix
     std::cout << "\tSpherical harmonics basis matrix..." << std::flush;
     this->computeSHBasisMatrix();
+    this->computeSHBasisOriMatrix();
     std::cout << "done." << std::endl;
 
     // Compute Legendre matrix
@@ -228,7 +233,7 @@ SHModel::SHModel(Sequence::Pointer model, std::vector<Direction> *originalDirect
 
     Display1(m_displayMode, std::cout << "Loading model..." << std::endl);
 
-    m_reso = 16;
+    m_reso = SPH_RESOLUTION;
 
     m_maxTheta = M_PI;
     m_pasTheta = m_maxTheta / (Real)m_reso;
@@ -380,7 +385,7 @@ SHModel::SHModel(Sequence::Pointer model, std::vector<Direction> *originalDirect
     Display1(m_displayMode, std::cout << "done." << std::endl);
 }
 
-Sequence::Pointer SHModel::readFiles(const std::string &filename)
+Sequence::Pointer SHModel::readFiles(const std::string &filename, const std::string &directionsfilename)
 {
     std::cout << "Loading model file \"" << filename << "\"..." << std::endl;
 
@@ -393,6 +398,37 @@ Sequence::Pointer SHModel::readFiles(const std::string &filename)
         reader->SetFileName(filename);
         reader->Update();
         std::cout << "done." << std::endl;
+
+    //
+    // Read direction's file
+    //
+
+        std::cout << "\tReading gradient directions' file..." << std::flush;
+
+        // Open file
+        std::fstream dirFile(directionsfilename.c_str(), std::fstream::in);
+
+        if(!dirFile.is_open())  // Unable to open file
+        {
+            std::cout << "Error: unable to read file !" << std::endl;
+            exit(EXIT_FAILURE);
+        }
+        else                           // File is open
+        {
+            m_originalDirections = new std::vector<Direction>;
+
+            Real theta = 0, phi = 0;
+
+            while((dirFile >> theta) && (dirFile >> phi))
+                m_originalDirections->push_back(Direction(theta,phi));
+        }
+
+        // Close file
+        dirFile.close();
+
+        std::cout << "done." << std::endl;
+
+
 
     return reader->GetOutput();
 }
@@ -461,6 +497,43 @@ Matrix SHModel::signalAt(Point p)
     return (Y * C);
 }
 
+Matrix SHModel::signalAt(Point p, std::vector<Direction> *g)
+{
+    // Compute spherical harmonics basis matrix
+    Matrix Y(g->size(), m_R);
+
+    // Compute Y matrix
+    Real _4PI  = 4.0 * M_PI;
+
+    unsigned int j = 0;
+
+    for(unsigned int u=0; u<g->size(); u++)
+    {
+        for(unsigned int l=0; l<=m_order; l+=2)
+        {
+            Real coef = std::sqrt((2.0*(Real)l + 1.0) / _4PI);
+
+            for(int m=-(int)l; m<=(int)l; m++)
+                Y(u,j++) = coef * SphericalHarmonics::computeBasis(g->at(u), l, m);
+        } // for l
+
+        j = 0;
+    } // for u
+
+
+    // Evaluate Orientation Diffusion Function at each gradient direction
+    Matrix C(m_R, 1);
+
+    ImageInterpolator::ContinuousIndexType index;
+    index[0] = p.x(); index[1] = p.y(); index[2] = p.z();
+
+    for(unsigned int i=0; i<m_R; i++)
+        C(i,0) = m_interp[i]->EvaluateAtContinuousIndex(index);
+
+
+    return (Y * C);
+}
+
 Real SHModel::odfAt(Direction u, Point p)
 {
     assert(m_P);
@@ -496,6 +569,7 @@ Real SHModel::odfAt(Direction u, Point p)
 
 
     return (Y * (P * (Sharp * C)))(0,0);
+//    return (Y * (P * C))(0,0);
 }
 
 Matrix SHModel::odfAt(Point p)
@@ -520,6 +594,7 @@ Matrix SHModel::odfAt(Point p)
 
 
     return (Y * (P * (Sharp * C)));
+//    return (Y * (P * C));
 }
 
 Direction SHModel::getMaxDirectionAt(Point p)
