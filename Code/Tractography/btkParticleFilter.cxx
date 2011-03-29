@@ -66,6 +66,8 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "omp.h"
 
 
+#define Ind(i,j) (m_M*(i) + (j))
+
 #define KAPPA 30
 
 
@@ -254,9 +256,9 @@ void ParticleFilter::run(int label, Direction dir)
     m_k     = 0;
     m_cloud = std::vector<Particle>(m_M, Particle(m_x0));
 
-    m_maxSize = 0;
-    m_maxStep = 0;
-    unsigned int tmp = m_M;
+//    m_maxSize = 0;
+//    m_maxStep = 0;
+//    unsigned int tmp = m_M;
 
     //
     // Initial sampling (vMF in mean direction dir and a priori kappa)
@@ -298,11 +300,11 @@ void ParticleFilter::run(int label, Direction dir)
 
     this->saveCloudInVTK(label, m_k, m_x0);
 
-    if(tmp - nbInsPart > m_maxSize)
-    {
-        m_maxSize = tmp - nbInsPart;
-        m_maxStep = m_k;
-    }
+//    if(tmp - nbInsPart > m_maxSize)
+//    {
+//        m_maxSize = tmp - nbInsPart;
+//        m_maxStep = m_k;
+//    }
 
     m_k++;
 
@@ -314,9 +316,9 @@ void ParticleFilter::run(int label, Direction dir)
     //
 
 
-    while(nbInsPart > 0)
+    while(nbInsPart > 0/* && m_k <= 4*/)
     {
-        tmp = nbInsPart;
+//        tmp = nbInsPart;
 
         Display2(m_displayMode, std::cout << "\tBegin sampling " << m_k << "..." << std::flush);
 
@@ -341,6 +343,7 @@ void ParticleFilter::run(int label, Direction dir)
                 Real likelihood = m_likelihood.compute(uk, xk, mu);
                 Real apriori    = m_aPriori.compute(uk, ukm1);
                 Real importance = m_importance.compute(uk, mu, kappa);
+                m_cloud[m].addLikelihood(likelihood);
 
                 weights[m] += likelihood + apriori - importance;
             }
@@ -349,15 +352,15 @@ void ParticleFilter::run(int label, Direction dir)
 
         // Search minimal weight
         Real min = MAX_REAL;
-        Real max = MIN_REAL;
+//        Real max = MIN_REAL;
 
         for(unsigned int m=0; m<m_M; m++)
         {
             if(m_cloud[m].isActive() && std::isfinite(weights[m]) && min > weights[m]) // m is active, no infinite weight and weight is minimal
                 min = weights[m];
 
-            if(m_cloud[m].isActive() && std::isfinite(weights[m]) && max < weights[m]) // m is active, no infinite weight and weight is minimal
-                max = weights[m];
+//            if(m_cloud[m].isActive() && std::isfinite(weights[m]) && max < weights[m]) // m is active, no infinite weight and weight is minimal
+//                max = weights[m];
         } // for each particle
 
         // Compute the sum of particles' weight (after an interval shift)
@@ -368,7 +371,7 @@ void ParticleFilter::run(int label, Direction dir)
         {
             if(m_cloud[m].isActive()) // m is active
             {
-                if(!std::isfinite(weights[m])) // no infinite weight
+                if(std::isfinite(weights[m])) // no infinite weight
                     weights[m] += shift;
                 else // infinite number
                     weights[m] = 0;
@@ -424,11 +427,11 @@ void ParticleFilter::run(int label, Direction dir)
 
         this->saveCloudInVTK(label, m_k, m_x0);
 
-        if(tmp - nbInsPart > m_maxSize)
-        {
-            m_maxSize = tmp - nbInsPart;
-            m_maxStep = m_k;
-        }
+//        if(tmp - nbInsPart > m_maxSize)
+//        {
+//            m_maxSize = tmp - nbInsPart;
+//            m_maxStep = m_k;
+//        }
 
         m_k++;
 
@@ -584,36 +587,163 @@ void ParticleFilter::saveCloudInVTK(int label, unsigned int step, Point begin)
 
 Particle ParticleFilter::GetMAP()
 {
+//    Particle map(m_x0);
+//
+//    for(unsigned int k=1; k<m_maxStep; k++)
+//    {
+//        Real x=0, y=0, z=0;
+//        Real sum = 0;
+//
+//        for(std::vector<Particle>::iterator p=m_cloud.begin(); p != m_cloud.end(); p++)
+//        {
+//            if(p->length() == m_maxStep) // the length must be m_maxStep
+//            {
+//                Real w   = p->getWeight(k-1);
+//                Point pt = p->getPoint(k);
+//
+//                sum += w;
+//                x   += w*pt.x();
+//                y   += w*pt.y();
+//                z   += w*pt.z();
+//            }
+//        } // for each particle
+//
+//        x /= sum;
+//        y /= sum;
+//        z /= sum;
+//
+//        Point pt = map.getPoint(k-1);
+//        Vector v(x-pt.x(), y-pt.y(), z-pt.z());
+//        map.addToPath(v, m_mask);
+//        map.setWeight(1);
+//    } // for each step
+//
+//    return map;
+    unsigned int t = m_k-1;
+    Real *delta = new Real[(t*m_M)];
+    Real *psi   = new Real[(t-1)*m_M];
+
+
+    // Compute delta and psi by dynamic programming
+
+    for(unsigned int m=0; m<m_M; m++)
+    {
+        delta[Ind(0,m)] = m_aPriori.compute(m_cloud[m].getVector(1).toDirection(), m_cloud[m].getVector(0).toDirection()) + m_cloud[m].getLikelihood(0);
+    }
+//std::cerr << "delta(0) :" << std::endl;
+//for(unsigned int j=0; j<m_M; j++)
+//{
+//    std::cerr << "delta(0," << j << ") = " << delta[Ind(0,j)] << "\t";
+//}
+//std::cerr << std::endl;
+
+    for(unsigned int k=1; k<t; k++)
+    {
+        for(unsigned int m=0; m<m_M; m++)
+        {
+            if(k+1 < m_cloud[m].length())
+            {
+                Real max          = MIN_REAL;
+                unsigned int imax = 0;
+
+                for(unsigned int i=0; i<m_M; i++)
+                {
+                    if(i != m && k < m_cloud[i].length())
+                    {
+                        Real tmp = delta[Ind(k-1,i)] + m_aPriori.compute(m_cloud[m].getVector(k+1).toDirection(), m_cloud[i].getVector(k).toDirection());
+
+                        if(tmp > max)
+                        {
+                            max  = tmp;
+                            imax = i;
+                        }
+                    }
+                }
+
+                if(EQUAL(max,MIN_REAL))
+                {
+                    delta[Ind(k,m)] = m_cloud[m].getLikelihood(k);
+                    psi[Ind(k-1,m)] = m;
+                }
+                else
+                {
+                    delta[Ind(k,m)] = m_cloud[m].getLikelihood(k) + max;
+                    psi[Ind(k-1,m)] = imax;
+                }
+            }
+            else
+            {
+                delta[Ind(k,m)] = MIN_REAL;
+                psi[Ind(k-1,m)] = 0;
+            }
+        }
+    }
+
+//std::cerr << "delta(i>0,j) :" << std::endl;
+//for(unsigned int i=0; i<t; i++)
+//{
+//    for(unsigned int j=0; j<m_M; j++)
+//    {
+//        std::cerr << "delta(" << i << "," << j << ") = " << delta[Ind(i,j)] << "\t";
+//    }
+//    std::cerr << std::endl;
+//}
+//std::cerr << std::endl;
+//std::cerr << "psi(i,j) :" << std::endl;
+//for(unsigned int i=0; i<t-1; i++)
+//{
+//    for(unsigned int j=0; j<m_M; j++)
+//    {
+//        std::cerr << "psi(" << i << "," << j << ") = " << psi[Ind(i,j)] << "\t";
+//    }
+//    std::cerr << std::endl;
+//}
+//std::cerr << std::endl;
+
+    // Backtracking
+
+    std::vector<Direction> states;
+
+    Real max          = MIN_REAL;
+    unsigned int mmax = 0;
+
+    for(unsigned int m=0; m<m_M; m++)
+    {
+        Real tmp = delta[Ind(t-1,m)];
+
+        if(max < tmp)
+        {
+            max  = tmp;
+            mmax = m;
+        }
+    }
+    states.push_back(m_cloud[mmax].getVector(t).toDirection());
+
+//std::cerr << "map(" << t-1 << ") = " << mmax << std::endl;
+
+    for(int k=t-2; k>=0; k--)
+    {
+        mmax = psi[Ind(k,mmax)];
+        states.push_back(m_cloud[mmax].getVector(k+1).toDirection());
+//std::cerr << "map(" << k << ") = " << mmax << std::endl;
+    }
+    states.push_back(m_cloud[mmax].getVector(0).toDirection());
+
+
+    delete[] psi;
+    delete[] delta;
+
+
+    // Get MAP estimate
+
     Particle map(m_x0);
 
-    for(unsigned int k=1; k<m_maxStep; k++)
+    for(unsigned int k=0; k<states.size(); k++)
     {
-        Real x=0, y=0, z=0;
-        Real sum = 0;
-
-        for(std::vector<Particle>::iterator p=m_cloud.begin(); p != m_cloud.end(); p++)
-        {
-            if(p->length() == m_maxStep) // the length must be m_maxStep
-            {
-                Real w   = p->getWeight(k-1);
-                Point pt = p->getPoint(k);
-
-                sum += w;
-                x   += w*pt.x();
-                y   += w*pt.y();
-                z   += w*pt.z();
-            }
-        } // for each particle
-
-        x /= sum;
-        y /= sum;
-        z /= sum;
-
-        Point pt = map.getPoint(k-1);
-        Vector v(x-pt.x(), y-pt.y(), z-pt.z());
-        map.addToPath(v, m_mask);
+        map.addToPath(states[states.size()-1-k].toVector()*m_stepSize, m_mask);
         map.setWeight(1);
-    } // for each step
+    }
+
 
     return map;
 }

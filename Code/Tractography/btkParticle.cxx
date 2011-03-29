@@ -138,6 +138,19 @@ Real Particle::getWeight(unsigned int i) const
     return m_weight[i];
 }
 
+void Particle::addLikelihood(Real likelihood)
+{
+    m_likelihood.push_back(likelihood);
+}
+
+Real Particle::getLikelihood(unsigned int k) const
+{
+    assert(k>=0);
+    assert(k<m_likelihood.size());
+
+    return m_likelihood[k];
+}
+
 unsigned int Particle::length() const
 {
     assert(m_points.size() == m_vectors.size()+1);
