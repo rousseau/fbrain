@@ -71,7 +71,7 @@ int main( int argc, char *argv[] )
 
   TCLAP::ValueArg<std::string> outputArg("o","output","Corrected sequence",true,"","string",cmd);
   TCLAP::ValueArg<std::string> gtableArg("g","gradients","Gradient table",true,"","string",cmd);
-  TCLAP::ValueArg<std::string> tpathArg("t","tpath","Path to transforms",true,"none","string",cmd);
+  TCLAP::ValueArg<std::string> tpathArg("t","tpath","Path to transforms",true,"","string",cmd);
   TCLAP::ValueArg<std::string> maskArg("m","mask","Image mask for the input sequence",true,"","string",cmd);
 
   TCLAP::ValueArg<std::string> refArg("r","ref","Reference image to specify the resampling grid"
@@ -339,52 +339,57 @@ int main( int argc, char *argv[] )
   sequenceWriter -> SetFileName( output );
   sequenceWriter -> SetInput( recSequence );
 
-  // Correct gradient table, if necessary
-
-  // First, find rotation matrix
-
-  vnl_matrix<double> R(3,3);
-  R = tref -> GetMatrix().GetVnlMatrix();
-
-  vnl_matrix<double> PQ = R;
-  vnl_matrix<double> NQ = R;
-  vnl_matrix<double> PQNQDiff;
-
-  for(unsigned int ni = 0; ni < 100; ni++ )
-  {
-    // Average current Qi with its inverse transpose
-    NQ = ( PQ + vnl_inverse_transpose( PQ ) ) / 2.0;
-    PQNQDiff = NQ - PQ;
-    if( PQNQDiff.frobenius_norm() < 1e-7 )
-    {
-//      std::cout << "Polar decomposition used " << ni << " iterations " << std::endl;
-      break;
-    }
-    else
-    {
-      PQ = NQ;
-    }
-  }
-
-  typedef itk::Euler3DTransform<double> EulerTransformType;
-  EulerTransformType::Pointer transform = EulerTransformType::New();
-  transform -> SetRotationMatrix( NQ );
-
-  typedef btk::DiffusionGradientTable< SequenceType > GradientTableType;
-  GradientTableType::Pointer gradientTable = GradientTableType::New();
-
-  gradientTable -> SetNumberOfGradients(numberOfFrames);
-  gradientTable -> SetImage( sequence );
-  gradientTable -> SetTransform( transform );
-  gradientTable -> LoadFromFile( gtable);
-  gradientTable -> RotateGradientsInWorldCoordinates();
-  gradientTable -> SaveToFile( ctable);
-
-
-  if ( strcmp(output,"none") != 0 )
+  if ( strcmp(output,"") != 0 )
   {
     sequenceWriter -> Update();
   }
+
+  // Correct gradient table, if necessary
+
+  if ( strcmp(ctable,"") != 0 )
+  {
+
+    // First, find rotation matrix
+
+    vnl_matrix<double> R(3,3);
+    R = tref -> GetMatrix().GetVnlMatrix();
+
+    vnl_matrix<double> PQ = R;
+    vnl_matrix<double> NQ = R;
+    vnl_matrix<double> PQNQDiff;
+
+    for(unsigned int ni = 0; ni < 100; ni++ )
+    {
+      // Average current Qi with its inverse transpose
+      NQ = ( PQ + vnl_inverse_transpose( PQ ) ) / 2.0;
+      PQNQDiff = NQ - PQ;
+      if( PQNQDiff.frobenius_norm() < 1e-7 )
+      {
+  //      std::cout << "Polar decomposition used " << ni << " iterations " << std::endl;
+        break;
+      }
+      else
+      {
+        PQ = NQ;
+      }
+    }
+
+    typedef itk::Euler3DTransform<double> EulerTransformType;
+    EulerTransformType::Pointer transform = EulerTransformType::New();
+    transform -> SetRotationMatrix( NQ );
+
+    typedef btk::DiffusionGradientTable< SequenceType > GradientTableType;
+    GradientTableType::Pointer gradientTable = GradientTableType::New();
+
+    gradientTable -> SetNumberOfGradients(numberOfFrames);
+    gradientTable -> SetImage( sequence );
+    gradientTable -> SetTransform( transform );
+    gradientTable -> LoadFromFile( gtable);
+    gradientTable -> RotateGradientsInWorldCoordinates();
+    gradientTable -> SaveToFile( ctable);
+
+  }
+
 
   return EXIT_SUCCESS;
 
