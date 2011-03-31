@@ -43,6 +43,7 @@
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "btkGroupwiseS2SDistortionCorrection.h"
+#include "itkImageMaskSpatialObject.h"
 
 
 int main( int argc, char *argv[] )
@@ -50,45 +51,20 @@ int main( int argc, char *argv[] )
 
   try {
 
-  const char *input = NULL, *output = NULL, *mgrad = NULL, *folder = NULL;
+  const char *input = NULL, *output = NULL, *mgrad = NULL, *folder = NULL, *maskFile = NULL;
   const char *bvec = NULL, *cvec = NULL;
-
-  int x1, y1, z1, x2, y2, z2;
 
   TCLAP::CmdLine cmd("Correct distortions caused by eddy currents in dwi sequences", ' ', "Unversioned");
 
-  TCLAP::ValueArg<std::string> inputArg("i","input","Original sequence",true,"homer","string");
-  TCLAP::ValueArg<std::string> outputArg("o","output","Corrected sequence",true,"homer","string");
-  TCLAP::ValueArg<std::string> folderArg("f","folder","Folder for transformatios",true,"homer","string");
-  TCLAP::ValueArg<std::string> mgradArg("m","mgrad","Mean gradient",false,"none","string");
+  TCLAP::ValueArg<std::string> inputArg("i","input","Original sequence",true,"homer","string",cmd);
+  TCLAP::ValueArg<std::string> bvecArg("g","bvec","Gradient directions",true,"","string",cmd);
+  TCLAP::ValueArg<std::string> maskArg("m","mask","Mask in the B0 image",true,"","string",cmd);
 
-  TCLAP::ValueArg<std::string> bvecArg("g","bvec","Gradient directions",true,"","string");
-  TCLAP::ValueArg<std::string> cvecArg("c","cvec","Corrected directions",true,"","string");
+  TCLAP::ValueArg<std::string> outputArg("o","output","Corrected sequence",true,"homer","string",cmd);
+  TCLAP::ValueArg<std::string> cvecArg("c","cvec","Corrected directions",true,"","string",cmd);
 
-  TCLAP::ValueArg<int> x1Arg("","x1","ROI's min x value",false,0,"int");
-  TCLAP::ValueArg<int> y1Arg("","y1","ROI's min y value",false,0,"int");
-  TCLAP::ValueArg<int> z1Arg("","z1","ROI's min z value",false,0,"int");
-  TCLAP::ValueArg<int> x2Arg("","x2","ROI's max x value",false,0,"int");
-  TCLAP::ValueArg<int> y2Arg("","y2","ROI's max x value",false,0,"int");
-  TCLAP::ValueArg<int> z2Arg("","z2","ROI's max x value",false,0,"int");
-
-
-  // Add the argument nameArg to the CmdLine object. The CmdLine object
-  // uses this Arg to parse the command line.
-  cmd.add( z2Arg );
-  cmd.add( y2Arg );
-  cmd.add( x2Arg );
-  cmd.add( z1Arg );
-  cmd.add( y1Arg );
-  cmd.add( x1Arg );
-
-  cmd.add( outputArg );
-  cmd.add( inputArg );
-  cmd.add( folderArg );
-  cmd.add( mgradArg );
-
-  cmd.add( bvecArg );
-  cmd.add( cvecArg );
+  TCLAP::ValueArg<std::string> folderArg("f","folder","Folder for transformatios",true,"homer","string",cmd);
+  TCLAP::ValueArg<std::string> mgradArg("","meanGradient","Mean gradient",false,"none","string",cmd);
 
   // Parse the argv array.
   cmd.parse( argc, argv );
@@ -97,6 +73,7 @@ int main( int argc, char *argv[] )
   output = outputArg.getValue().c_str();
   mgrad = mgradArg.getValue().c_str();
   folder = folderArg.getValue().c_str();
+  maskFile = maskArg.getValue().c_str();
 
   bvec = bvecArg.getValue().c_str();
   cvec = cvecArg.getValue().c_str();
@@ -104,8 +81,8 @@ int main( int argc, char *argv[] )
   // Read sequence
 
   typedef short         PixelType;
-
   const   unsigned int  Dimension = 4;
+
   typedef itk::Image< PixelType, Dimension >   SequenceType;
 
   typedef itk::ImageFileReader< SequenceType >  SequenceReaderType;
@@ -115,29 +92,23 @@ int main( int argc, char *argv[] )
 
   SequenceType::Pointer sequence = sequenceReader -> GetOutput();
 
-  // ROI
 
-  x1 = x1Arg.getValue();
-  y1 = y1Arg.getValue();
-  z1 = z1Arg.getValue();
+  // Read image mask and create spatial object
 
-  x2 = x2Arg.getValue();
-  y2 = y2Arg.getValue();
-  z2 = z2Arg.getValue();
+  typedef itk::Image< unsigned char, 3 >   ImageMaskType;
+  typedef itk::ImageFileReader< ImageMaskType >  ImageMaskReaderType;
 
-  // Create fixed image region
+  ImageMaskReaderType::Pointer imageMaskReader = ImageMaskReaderType::New();
+  imageMaskReader -> SetFileName( maskFile );
+  imageMaskReader -> Update();
 
-  typedef itk::Image< PixelType, 3 >   ImageType;
+  ImageMaskType::Pointer imageMask = imageMaskReader -> GetOutput();
 
-  ImageType::RegionType fixedImageRegion;
-  ImageType::IndexType  fixedImageRegionIndex;
-  ImageType::SizeType   fixedImageRegionSize;
+  typedef itk::ImageMaskSpatialObject< 3 >   MaskType;
+  MaskType::Pointer mask = MaskType::New();
 
-  fixedImageRegionIndex[0] = x1; fixedImageRegionIndex[1]= y1; fixedImageRegionIndex[2]= z1;
-  fixedImageRegionSize[0]  = x2 - x1 + 1; fixedImageRegionSize[1] = y2 - y1 + 1; fixedImageRegionSize[2] = z2 - z1 + 1;
+  mask -> SetImage( imageMask );
 
-  fixedImageRegion.SetIndex(fixedImageRegionIndex);
-  fixedImageRegion.SetSize(fixedImageRegionSize);
 
   // Distortion correction
 
@@ -145,7 +116,7 @@ int main( int argc, char *argv[] )
   FilterType::Pointer filter = FilterType::New();
 
   filter -> SetInput( sequence );
-  filter -> SetFixedImageRegion( fixedImageRegion );
+  filter -> SetFixedImageRegion( mask -> GetAxisAlignedBoundingBoxRegion() );
   filter -> SetGradientTable( bvec );
   filter -> StartRegistration( );
 
@@ -166,6 +137,7 @@ int main( int argc, char *argv[] )
 
   filter -> WriteTransforms( folder );
 
+  typedef itk::Image< PixelType, 3 >   ImageType;
   typedef itk::ImageFileWriter< ImageType >  ImageWriterType;
   ImageWriterType::Pointer imageWriter =  ImageWriterType::New();
 
