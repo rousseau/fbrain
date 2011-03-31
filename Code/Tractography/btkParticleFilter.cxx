@@ -68,7 +68,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 #define Ind(i,j) (m_M*(i) + (j))
 
-#define KAPPA 30
+#define KAPPA 90
 
 
 namespace btk
@@ -256,9 +256,6 @@ void ParticleFilter::run(int label, Direction dir)
     m_k     = 0;
     m_cloud = std::vector<Particle>(m_M, Particle(m_x0));
 
-//    m_maxSize = 0;
-//    m_maxStep = 0;
-//    unsigned int tmp = m_M;
 
     //
     // Initial sampling (vMF in mean direction dir and a priori kappa)
@@ -267,7 +264,7 @@ void ParticleFilter::run(int label, Direction dir)
     Display2(m_displayMode, std::cout << "\tBegin initial sampling..." << std::flush);
 
 
-    Real *weights = new Real[m_M];
+    Real *weights    = new Real[m_M];
     unsigned int nbInsPart = m_M;
 
 
@@ -298,13 +295,7 @@ void ParticleFilter::run(int label, Direction dir)
         m_cloud[m].setWeight(w);
     }
 
-    this->saveCloudInVTK(label, m_k, m_x0);
-
-//    if(tmp - nbInsPart > m_maxSize)
-//    {
-//        m_maxSize = tmp - nbInsPart;
-//        m_maxStep = m_k;
-//    }
+//    this->saveCloudInVTK(label, m_k, m_x0);
 
     m_k++;
 
@@ -316,10 +307,8 @@ void ParticleFilter::run(int label, Direction dir)
     //
 
 
-    while(nbInsPart > 0/* && m_k <= 4*/)
+    while(nbInsPart > 0)
     {
-//        tmp = nbInsPart;
-
         Display2(m_displayMode, std::cout << "\tBegin sampling " << m_k << "..." << std::flush);
 
         #pragma omp parallel for
@@ -337,7 +326,7 @@ void ParticleFilter::run(int label, Direction dir)
                 Direction uk = m_importance.simulate(mu, kappa);
 
                 // Move particle
-                char isInside = m_cloud[m].addToPath(uk.toVector()*m_stepSize, m_mask);
+                m_cloud[m].addToPath(uk.toVector()*m_stepSize, m_mask);
 
                 // Compute particle's weight
                 Real likelihood = m_likelihood.compute(uk, xk, mu);
@@ -345,48 +334,30 @@ void ParticleFilter::run(int label, Direction dir)
                 Real importance = m_importance.compute(uk, mu, kappa);
                 m_cloud[m].addLikelihood(likelihood);
 
-                weights[m] += likelihood + apriori - importance;
+                weights[m] = m_cloud[m].weight() * std::exp(likelihood + apriori - importance);
+                std::cerr << "weights[" << m << "] = " << weights[m] << std::endl;
             }
         } // for i particles
 
-
-        // Search minimal weight
-        Real min = MAX_REAL;
-//        Real max = MIN_REAL;
-
-        for(unsigned int m=0; m<m_M; m++)
-        {
-            if(m_cloud[m].isActive() && std::isfinite(weights[m]) && min > weights[m]) // m is active, no infinite weight and weight is minimal
-                min = weights[m];
-
-//            if(m_cloud[m].isActive() && std::isfinite(weights[m]) && max < weights[m]) // m is active, no infinite weight and weight is minimal
-//                max = weights[m];
-        } // for each particle
-
-        // Compute the sum of particles' weight (after an interval shift)
+        // Compute the sum of particles' weight
         Real sum   = 0;
-        Real shift = (min < 0) ? -min+1 : 0;
 
         for(unsigned int m=0; m<m_M; m++)
         {
             if(m_cloud[m].isActive()) // m is active
             {
-                if(std::isfinite(weights[m])) // no infinite weight
-                    weights[m] += shift;
-                else // infinite number
-                    weights[m] = 0;
-
                 sum += weights[m];
             }
         } // for each particle
-
 
         // Normalize particles' weights
         #pragma omp parallel for
         for(unsigned int m=0; m<m_M; m++)
         {
             if(m_cloud[m].isActive()) // m is active
+            {
                 m_cloud[m].setWeight(weights[m]/sum);
+            }
         }
 
 
@@ -395,7 +366,9 @@ void ParticleFilter::run(int label, Direction dir)
         for(unsigned int m=0; m<m_M; m++)
         {
             if(m_cloud[m].isActive()) // m is active
+            {
                 sumSquare += m_cloud[m].weight() * m_cloud[m].weight();
+            }
         }
 
         // Compute resampling threshold
@@ -425,13 +398,7 @@ void ParticleFilter::run(int label, Direction dir)
             }
         }
 
-        this->saveCloudInVTK(label, m_k, m_x0);
-
-//        if(tmp - nbInsPart > m_maxSize)
-//        {
-//            m_maxSize = tmp - nbInsPart;
-//            m_maxStep = m_k;
-//        }
+//        this->saveCloudInVTK(label, m_k, m_x0);
 
         m_k++;
 
@@ -439,6 +406,8 @@ void ParticleFilter::run(int label, Direction dir)
     } // while there are active particles or for k steps
 
     delete[] weights;
+
+    this->saveCloudInVTK(label, m_k-1, m_x0);
 
     m_dirNum++;
 }
@@ -523,8 +492,8 @@ void ParticleFilter::saveCloudInVTK(int label, unsigned int step, Point begin)
     // create all points and lines
     for(std::vector<Particle>::iterator pIt = m_cloud.begin(); pIt != m_cloud.end(); pIt++)
     {
-        if(pIt->isActive())
-        {
+//        if(pIt->isActive())
+//        {
             ImageContinuousIndex cix;
             Image::PointType wx;
 
@@ -561,7 +530,7 @@ void ParticleFilter::saveCloudInVTK(int label, unsigned int step, Point begin)
 
                 colors->InsertNextTupleValue(color);
             } // for i
-        }
+//        }
     } // for each particle
 
     // create vtk polydata object
