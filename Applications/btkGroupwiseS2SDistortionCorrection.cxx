@@ -56,15 +56,15 @@ int main( int argc, char *argv[] )
 
   TCLAP::CmdLine cmd("Correct distortions caused by eddy currents in dwi sequences", ' ', "Unversioned");
 
-  TCLAP::ValueArg<std::string> inputArg("i","input","Original sequence",true,"homer","string",cmd);
+  TCLAP::ValueArg<std::string> inputArg("i","input","Original sequence",true,"","string",cmd);
   TCLAP::ValueArg<std::string> bvecArg("g","bvec","Gradient directions",true,"","string",cmd);
   TCLAP::ValueArg<std::string> maskArg("m","mask","Mask in the B0 image",true,"","string",cmd);
 
-  TCLAP::ValueArg<std::string> outputArg("o","output","Corrected sequence",true,"homer","string",cmd);
+  TCLAP::ValueArg<std::string> outputArg("o","output","Corrected sequence",true,"","string",cmd);
   TCLAP::ValueArg<std::string> cvecArg("c","cvec","Corrected directions",true,"","string",cmd);
 
-  TCLAP::ValueArg<std::string> folderArg("f","folder","Folder for transformatios",true,"homer","string",cmd);
-  TCLAP::ValueArg<std::string> mgradArg("","meanGradient","Mean gradient",false,"none","string",cmd);
+  TCLAP::ValueArg<std::string> folderArg("f","folder","Folder for transformatios",true,"","string",cmd);
+  TCLAP::ValueArg<std::string> mgradArg("","meanGradient","Mean gradient",false,"","string",cmd);
 
   // Parse the argv array.
   cmd.parse( argc, argv );
@@ -141,7 +141,7 @@ int main( int argc, char *argv[] )
   typedef itk::ImageFileWriter< ImageType >  ImageWriterType;
   ImageWriterType::Pointer imageWriter =  ImageWriterType::New();
 
-  if ( strcmp(mgrad,"none") != 0 )
+  if ( strcmp(mgrad,"") != 0 )
   {
     imageWriter->SetFileName( mgrad );
     imageWriter->SetInput( filter -> GetMeanGradient() );
