@@ -118,17 +118,21 @@ Direction ImportanceDensity::computeMeanDirection(Point xk, Direction ukm1)
 
 Direction ImportanceDensity::simulate(Direction mean, Real kappa)
 {
+    Vector X;
 
-    // Sample random scalar
-    Real y = (Real)std::rand() / (Real)RAND_MAX;
-    Real w = 1.0/kappa * std::log(std::exp(-kappa) + kappa * 2.0/kappa * std::sinh(kappa) * y);
+    do
+    {
+        // Sample random scalar
+        Real y = (Real)std::rand() / (Real)RAND_MAX;
+        Real w = 1.0/kappa * std::log(std::exp(-kappa) + kappa * 2.0/kappa * std::sinh(kappa) * y);
 
-    // Sample random angle (to get random unit vector)
-    Real angle = ((Real)std::rand() / (Real)RAND_MAX) * m_2PI;
+        // Sample random angle (to get random unit vector)
+        Real angle = ((Real)std::rand() / (Real)RAND_MAX) * m_2PI;
 
-    // Concatenate to obtain unit vector with vmf distribution with mean = (0,0,1)
-    Real cst = std::sqrt(1-w*w);
-    Vector X(cst*std::cos(angle), cst*std::sin(angle), w);
+        // Concatenate to obtain unit vector with vmf distribution with mean = (0,0,1)
+        Real cst = std::sqrt(1-w*w);
+        X = Vector(cst*std::cos(angle), cst*std::sin(angle), w);
+    } while(X.toDirection().theta() > m_angleThreshold);
 
     Real theta, phi;
     Vector vmean = mean.toVector();
