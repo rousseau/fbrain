@@ -63,7 +63,7 @@ int main( int argc, char *argv[] )
   const char *ctable = NULL, *gtable = NULL, *rbf = NULL;
   const char *tpath = NULL;
 
-  double rspa, rgra;
+  double rspa, rgra, factor;
 
   TCLAP::CmdLine cmd("Resampling of dwi sequences using Radial Basis Functions", ' ', "Unversioned");
 
@@ -83,6 +83,8 @@ int main( int argc, char *argv[] )
   TCLAP::ValueArg<std::string> rbfArg("","rbf","Radial basis function",false,"gauss","string",cmd);
   TCLAP::ValueArg<float> rspaArg("","rspa","Spatial kernel width",false,1,"float",cmd);
   TCLAP::ValueArg<float> rgraArg("","rgra","Angular kernel width",false,0.5,"float",cmd);
+  TCLAP::ValueArg<float> factorArg("","factor","The voxel size of the reconstructed image is the original "
+      "in-plane spacing divided by this value.",false, 1.0,"float",cmd);
 
   TCLAP::SwitchArg oriSwitch("","originalSpace","Original resampling space. "
       "By default, an isovoxel reconstruction is performed.", cmd, false);
@@ -107,6 +109,7 @@ int main( int argc, char *argv[] )
   rbf = rbfArg.getValue().c_str();
   rspa = rspaArg.getValue();
   rgra = rgraArg.getValue();
+  factor = factorArg.getValue();
 
   // Read sequence
 
@@ -160,6 +163,8 @@ int main( int argc, char *argv[] )
 
   SequenceType::RegionType recROI = seqROI; // By default we reconstruct on the original grid
 
+  std::cout << "reconstruction roi = " << recROI << std::endl;
+
    // Create reconstructed sequence
 
   SequenceType::Pointer recSequence = SequenceType::New();
@@ -206,19 +211,38 @@ int main( int argc, char *argv[] )
 
   } else
     {
-      recSize[2]    = floor( recSize[2]*recSpacing[2] / recSpacing[0] + 0.5 );
-      recSpacing[2] = recSpacing[0];
+			double resolution;
+			resolution = recSpacing[0] / factor;
+
+      recSize[0] = floor( recSize[0]*recSpacing[0] / resolution + 0.5 );
+      recSize[1] = floor( recSize[1]*recSpacing[1] / resolution + 0.5 );
+      recSize[2] = floor( recSize[2]*recSpacing[2] / resolution + 0.5 );
+
+      recSpacing[0] = resolution;
+      recSpacing[1] = resolution;
+      recSpacing[2] = resolution;
+
+      std::cout << "recSpacing = " << recSpacing << std::endl;
+
       recRegion.SetSize( recSize );
 
       SequenceType::IndexType recROIIndex = recROI.GetIndex();
       SequenceType::SizeType  recROISize  = recROI.GetSize();
 
+      recROIIndex[0] = floor (recROIIndex[0] * sequence -> GetSpacing()[0] / recSpacing[0] + 0.5);
+      recROIIndex[1] = floor (recROIIndex[1] * sequence -> GetSpacing()[1] / recSpacing[1] + 0.5);
       recROIIndex[2] = floor (recROIIndex[2] * sequence -> GetSpacing()[2] / recSpacing[2] + 0.5);
+
+      recROISize[0]  = floor (recROISize[0] * sequence -> GetSpacing()[0] / recSpacing[0] + 0.5);
+      recROISize[1]  = floor (recROISize[1] * sequence -> GetSpacing()[1] / recSpacing[1] + 0.5);
       recROISize[2]  = floor (recROISize[2] * sequence -> GetSpacing()[2] / recSpacing[2] + 0.5);
 
       recROI.SetIndex( recROIIndex );
       recROI.SetSize( recROISize );
     }
+
+  std::cout << "recROI = " << recROI << std::endl;
+  std::cout << "recRegion = " << recRegion << std::endl;
 
   recSequence -> SetRegions( recRegion );
   recSequence -> Allocate();
