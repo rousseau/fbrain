@@ -31,7 +31,7 @@ Please check that images are not flipped.
 
 \subsection{Anatomical image reconstruction}
 Anatomical image reconstruction can be performed by using \textbf{btkImageReconstruction} (Section
-\ref{subsec:ana_rec})\footnote{Best results are be obtained by using a mask for each anatomical image. Such image masks can be easily created using ITKSnap for instance.}, followed by a re-orientation procedure using \textbf{btkSetStandardCoorSystem} and \textbf{btkReorientImageToStandard} (Section \ref{sec:utilities})\footnote{Note that the landmarks file is obtained using external software (Slicer). Please see Section \ref{sec:utilities} for details about this step.}:
+\ref{subsec:ana_rec})\footnote{Best results are obtained by using a mask for each anatomical image. Such image masks can be easily created using ITKSnap for instance.}, followed by a re-orientation procedure using \textbf{btkSetStandardCoorSystem} and \textbf{btkReorientImageToStandard} (Section \ref{sec:utilities})\footnote{Note that the landmarks file is obtained using external software (Slicer). Please see Section \ref{sec:utilities} for details about this step.}:
 
 \begin{verbatim}
  
@@ -40,7 +40,7 @@ btkImageReconstruction -i ana01.nii.gz -i ana02.nii.gz -i ana03.nii.gz
                        -o ana3D.nii.gz --mask
 
 btkSetStandardCoorSystem -i ana3D.nii.gz -o ana3D_standard.nii.gz -d 3
-btkReorientImageToStandard -i ana3D_standard.nii.gz -o ana3D_oriented.nii.gz -l landmarks
+btkReorientImageToStandard -i ana3D_standard.nii.gz -o ana3D_oriented.nii.gz -l landmarks.fcsv
 
 \end{verbatim}
 
