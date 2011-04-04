@@ -6,6 +6,7 @@ INCLUDE_REGULAR_EXPRESSION("^.*$")
 INCLUDE_DIRECTORIES(${TCLAP_DIRECTORY})
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/DTI)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Various)
+INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Reconstruction)
 
 #------------------------------------------------------------------------------
 
@@ -69,6 +70,14 @@ TARGET_LINK_LIBRARIES(btkCropImageUsingMask ITKIO)
 
 #------------------------------------------------------------------------------
 
+ADD_EXECUTABLE(btkBinarizeLabels btkBinarizeLabels.cxx )
+TARGET_LINK_LIBRARIES(btkBinarizeLabels ITKIO ITKNumerics ITKStatistics)
+
+ADD_EXECUTABLE(btkResampleLabelsByInjection btkResampleLabelsByInjection.cxx )
+TARGET_LINK_LIBRARIES(btkResampleLabelsByInjection ITKIO ITKNumerics )
+
+#------------------------------------------------------------------------------
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkReorientImageToStandard
                 btkReorientDiffusionSequenceToStandard
@@ -76,5 +85,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkNiftiToNrrd
                 btkNrrdToNifti
                 btkExtractOneImageFromSequence
-            		btkCropImageUsingMask
+                btkCropImageUsingMask
         DESTINATION bin)
