@@ -37,7 +37,7 @@
 #pragma warning ( disable : 4786 )
 #endif
 
-#include "tclap/CmdLine.h"
+#include "CmdLine.h"
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"

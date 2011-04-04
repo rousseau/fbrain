@@ -49,7 +49,7 @@
 
 #include "btkResampleLabelsByInjectionFilter.h"
 
-#include "tclap/CmdLine.h"
+#include "CmdLine.h"
 
 
 int main( int argc, char *argv[] )
