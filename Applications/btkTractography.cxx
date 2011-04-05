@@ -77,6 +77,7 @@ int main(int argc, char *argv[])
     bool verboseMode;
     bool quietMode;
     bool saveTmpFiles;
+    bool lps;
 
     unsigned int modelOrder;
     Real lambda;
@@ -108,6 +109,7 @@ int main(int argc, char *argv[])
             TCLAP::SwitchArg verboseSwitchArg("", "verbose", "Display more informations on standard output", cmd, false);
             TCLAP::SwitchArg quietSwitchArg("", "quiet", "Display no information on either standard and error outputs", cmd, false);
             TCLAP::SwitchArg saveTmpSwitchArg("", "save_temporary_files", "Save diffusion signal, model coefficients, variance and spherical coordinates of gradient directions in files", cmd, false);
+            TCLAP::SwitchArg lpsSwitchArg("", "lps", "Word coordinates expressed in LPS (Left-Posterior-Superior). By default RAS (Right-Anterior-Superior) is used.", cmd, false);
 
             TCLAP::ValueArg<unsigned int> orderArg("", "model_order", "Order of the model (i.e. of spherical harmonics)", false, 4, "unsigned int", cmd);
             TCLAP::ValueArg<Real>    lambdArg("", "model_regularization", "Regularization coefficient of the model", false, 0.006, "Real", cmd);
@@ -132,6 +134,7 @@ int main(int argc, char *argv[])
             verboseMode  = verboseSwitchArg.getValue();
             quietMode    = quietSwitchArg.getValue();
             saveTmpFiles = saveTmpSwitchArg.getValue();
+            lps          = lpsSwitchArg.getValue();
 
             modelOrder     = orderArg.getValue();
             lambda         = lambdArg.getValue();
@@ -249,6 +252,10 @@ int main(int argc, char *argv[])
                     Display2(displayMode, std::cout << "\tSeed's image coordinates: (" << maskIndex[0] << "," << maskIndex[1] << "," << maskIndex[2] << ")" << std::endl);
 
                     ParticleFilter filter(modelFun, apriori, likelihood, importance, mask, signalFun->getSize(), signalFun->getOrigin(), signalFun->getSpacing(), nbOfParticles, begin, epsilon, stepSize, displayMode);
+
+                    if(lps)
+                        filter.SetLPSOn();
+
                     filter.run(label);
 
 

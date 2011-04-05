@@ -93,6 +93,7 @@ ParticleFilter::ParticleFilter(SHModel *model, APrioriDensity aPriori, Likelihoo
     m_kx        = m_stepSize/m_spacing[0];
     m_ky        = m_stepSize/m_spacing[1];
     m_kz        = m_stepSize/m_spacing[2];
+    m_lps       = false;
 
     m_vStepSize.push_back(m_kx);
     m_vStepSize.push_back(m_ky);
@@ -162,6 +163,7 @@ ParticleFilter::ParticleFilter(SHModel *model, APrioriDensity aPriori, Likelihoo
     m_kx        = m_stepSize/m_spacing[0];
     m_ky        = m_stepSize/m_spacing[1];
     m_kz        = m_stepSize/m_spacing[2];
+    m_lps       = false;
 
     m_vStepSize.push_back(m_kx);
     m_vStepSize.push_back(m_ky);
@@ -499,7 +501,10 @@ void ParticleFilter::saveCloudInVTK(int label, unsigned int step, Point begin)
             cix[0] = x0.x(); cix[1] = x0.y(); cix[2] = x0.z();
             m_map->TransformContinuousIndexToPhysicalPoint(cix, wx);
 
-            points->InsertNextPoint(wx[0], wx[1], wx[2]);
+            if(m_lps)
+                points->InsertNextPoint(wx[0], wx[1], wx[2]);
+            else // ras
+                points->InsertNextPoint(-wx[0], -wx[1], wx[2]);
 
             double color[1]; color[0] = pIt->weight();
             colors->InsertNextTupleValue(color);
@@ -513,7 +518,10 @@ void ParticleFilter::saveCloudInVTK(int label, unsigned int step, Point begin)
                 cix[0] = xk.x(); cix[1] = xk.y(); cix[2] = xk.z();
                 m_map->TransformContinuousIndexToPhysicalPoint(cix, wx);
 
-                pid[0] = points->InsertNextPoint(wx[0], wx[1], wx[2]);
+                if(m_lps)
+                    pid[0] = points->InsertNextPoint(wx[0], wx[1], wx[2]);
+                else // ras
+                    pid[0] = points->InsertNextPoint(-wx[0], -wx[1], wx[2]);
 
                 Point xkm1 = pIt->getPoint(i-1);
                 Vector vk  = pIt->getVector(i-1);
@@ -524,12 +532,18 @@ void ParticleFilter::saveCloudInVTK(int label, unsigned int step, Point begin)
                     cix[0] = p.x(); cix[1] = p.y(); cix[2] = p.z();
                     m_map->TransformContinuousIndexToPhysicalPoint(cix, wx);
 
-                    pid[0] = points->InsertNextPoint(wx[0], wx[1], wx[2]);
+                    if(m_lps)
+                        pid[0] = points->InsertNextPoint(wx[0], wx[1], wx[2]);
+                    else // ras
+                        pid[0] = points->InsertNextPoint(-wx[0], -wx[1], wx[2]);
 
                     cix[0] = xk.x(); cix[1] = xk.y(); cix[2] = xk.z();
                     m_map->TransformContinuousIndexToPhysicalPoint(cix, wx);
 
-                    pid[0] = points->InsertNextPoint(wx[0], wx[1], wx[2]);
+                    if(m_lps)
+                        pid[0] = points->InsertNextPoint(wx[0], wx[1], wx[2]);
+                    else // ras
+                        pid[0] = points->InsertNextPoint(-wx[0], -wx[1], wx[2]);
                 }
 
                 line->GetPointIds()->SetId(0, pid[0]-1);
@@ -725,7 +739,11 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
     cix0[0] = x0.x(); cix0[1] = x0.y(); cix0[2] = x0.z();
     Image::PointType wx0;
     m_map->TransformContinuousIndexToPhysicalPoint(cix0, wx0);
-    points1->InsertNextPoint(wx0[0], wx0[1], wx0[2]);
+
+    if(m_lps)
+        points1->InsertNextPoint(wx0[0], wx0[1], wx0[2]);
+    else // ras
+        points1->InsertNextPoint(-wx0[0], -wx0[1], wx0[2]);
 
     for(unsigned int k=1; k<map1.length(); k++)
     {
@@ -737,7 +755,11 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
         cip[0] = p.x(); cip[1] = p.y(); cip[2] = p.z();
         Image::PointType wp;
         m_map->TransformContinuousIndexToPhysicalPoint(cip, wp);
-        pid[0] = points1->InsertNextPoint(wp[0], wp[1], wp[2]);
+
+        if(m_lps)
+            pid[0] = points1->InsertNextPoint(wp[0], wp[1], wp[2]);
+        else // ras
+            pid[0] = points1->InsertNextPoint(-wp[0], -wp[1], wp[2]);
 
         line->GetPointIds()->SetId(0, pid[0]-1);
         line->GetPointIds()->SetId(1, pid[0]);
@@ -751,7 +773,11 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
     x0 = map2.getPoint(0);
     cix0[0] = x0.x(); cix0[1] = x0.y(); cix0[2] = x0.z();
     m_map->TransformContinuousIndexToPhysicalPoint(cix0, wx0);
-    points2->InsertNextPoint(wx0[0], wx0[1], wx0[2]);
+
+    if(m_lps)
+        points1->InsertNextPoint(wx0[0], wx0[1], wx0[2]);
+    else // ras
+        points1->InsertNextPoint(-wx0[0], -wx0[1], wx0[2]);
 
     for(unsigned int k=1; k<map2.length(); k++)
     {
@@ -763,7 +789,11 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
         cip[0] = p.x(); cip[1] = p.y(); cip[2] = p.z();
         Image::PointType wp;
         m_map->TransformContinuousIndexToPhysicalPoint(cip, wp);
-        pid[0] = points2->InsertNextPoint(wp[0], wp[1], wp[2]);
+
+        if(m_lps)
+            pid[0] = points1->InsertNextPoint(wp[0], wp[1], wp[2]);
+        else // ras
+            pid[0] = points1->InsertNextPoint(-wp[0], -wp[1], wp[2]);
 
         line->GetPointIds()->SetId(0, pid[0]-1);
         line->GetPointIds()->SetId(1, pid[0]);
@@ -915,6 +945,11 @@ void ParticleFilter::saveConnectionMap(int label, Point begin)
 Image::Pointer ParticleFilter::GetConnectionMap()
 {
     return m_map;
+}
+
+void ParticleFilter::SetLPSOn()
+{
+    m_lps = true;
 }
 
 } // namespace btk

@@ -143,6 +143,11 @@ knowledge of the CeCILL-B license and that you accept its terms.
                  */
                 vtkSmartPointer<vtkPolyData> GetFiber();
 
+                /**
+                 * @brief Set on coordinates expressed in LPS (Left-Posterior-Superior)
+                 */
+                void SetLPSOn();
+
 
             private:
                 /**
@@ -211,6 +216,8 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
                 unsigned int m_maxStep;
                 unsigned int m_maxSize;
+
+                bool m_lps;
         };
 
     } // namespace btk
