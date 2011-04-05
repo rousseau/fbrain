@@ -111,7 +111,7 @@ int main( int argc, char *argv[] )
 
   const char *inputName = NULL, *referenceName = NULL, *outputName = NULL;
   const char *toutName = NULL, *invToutName = NULL, *maskName = NULL;
-  const char *gTableName = NULL, *cTableName = NULL;
+  const char *gTableName = NULL, *cTableName = NULL, *mgradName = NULL, *mgradResampled = NULL;
 
   TCLAP::CmdLine cmd("Registers diffusion to anatomical data.", ' ', "Unversioned");
 
@@ -121,6 +121,8 @@ int main( int argc, char *argv[] )
   TCLAP::ValueArg<std::string> outputArg("o","output","Registered diffusion sequence",true,"","string",cmd);
   TCLAP::ValueArg<std::string> cTableArg("c","ctable","Corrected table",true,"","string",cmd);
   TCLAP::ValueArg<std::string> maskArg("m","mask","Mask for the reference image",false,"","string",cmd);
+  TCLAP::ValueArg<std::string> mgradArg("","meanGradient","Mean gradient",false,"","string",cmd);
+  TCLAP::ValueArg<std::string> mgradResampledArg("","meanGradientResampled","Mean gradient resampled",false,"","string",cmd);
 
   TCLAP::ValueArg<unsigned int> x1Arg("","x1","x min of ROI in diffusion",false,0,"int",cmd);
   TCLAP::ValueArg<unsigned int> x2Arg("","x2","x max of ROI in diffusion",false,0,"int",cmd);
@@ -140,10 +142,12 @@ int main( int argc, char *argv[] )
   // Parse the argv array.
   cmd.parse( argc, argv );
 
-  inputName     = inputArg.getValue().c_str();
-  referenceName = referenceArg.getValue().c_str();
-  outputName    = outputArg.getValue().c_str();
-  maskName      = maskArg.getValue().c_str();
+  inputName      = inputArg.getValue().c_str();
+  referenceName  = referenceArg.getValue().c_str();
+  outputName     = outputArg.getValue().c_str();
+  maskName       = maskArg.getValue().c_str();
+  mgradName      = mgradArg.getValue().c_str();
+  mgradResampled = mgradResampledArg.getValue().c_str();
 
   unsigned int x1 = x1Arg.getValue();
   unsigned int x2 = x2Arg.getValue();
@@ -238,6 +242,15 @@ int main( int argc, char *argv[] )
 
   ImageType::Pointer    reference = imageReader -> GetOutput();
   SequenceType::Pointer input     = sequenceReader -> GetOutput();
+  ImageType::Pointer    mgrad;
+
+  if ( strcmp(mgradName,"") )
+  {
+    ImageReaderType::Pointer    mgradReader    = ImageReaderType::New();
+    mgradReader -> SetFileName( mgradName );
+    mgradReader -> Update();
+    mgrad = mgradReader -> GetOutput();
+  }
 
   // Extract B0 from sequence
 
@@ -263,6 +276,7 @@ int main( int argc, char *argv[] )
   ImageType::Pointer b0 = extractor -> GetOutput();
 
   registration -> SetFixedImage( b0 );
+//  registration -> SetFixedImage( mgrad );
   registration -> SetMovingImage( reference );
 
   // Fixed image region
@@ -428,7 +442,30 @@ int main( int argc, char *argv[] )
 
   joiner -> Update();
 
-  // Write resampled sequence
+
+  // Resample mean gradient (if necessary)
+
+  typedef itk::ImageFileWriter< ImageType >  ImageWriterType;
+
+  if ( strcmp(mgradName,"") )
+  {
+    ResampleFilterType::Pointer resample = ResampleFilterType::New();
+
+    resample -> SetTransform( inverseTransform );
+    resample -> SetInput( mgrad );
+    resample -> SetUseReferenceImage( true );
+    resample -> SetReferenceImage( reference );
+    resample -> SetDefaultPixelValue( 0 );
+
+    ImageWriterType::Pointer imageWriter =  ImageWriterType::New();
+    imageWriter -> SetFileName( mgradResampled );
+    imageWriter -> SetInput( resample -> GetOutput() );
+
+    if ( strcmp(mgradResampled,"") ) imageWriter->Update();
+
+  }
+
+    // Write resampled sequence
 
   typedef itk::ImageFileWriter< SequenceType >  WriterType;
 
