@@ -173,16 +173,8 @@ knowledge of the CeCILL-B license and that you accept its terms.
                 /**
                  * @brief Resample all particles
                  * @param nbInsPart Number of particles inside mask
-                 * @param weights Table of log weights
                  */
-                 void ResampleCloud(unsigned int nbInsPart, Real *weights);
-
-//                 /**
-//                  * @brief Resample one particle
-//                  * @param nbInsPart Number of particles inside mask
-//                  * @param partIndex Index of the particule in the cloud
-//                  */
-//                  void ResampleParticle(unsigned int nbInsPart, unsigned int partIndex);
+                 void ResampleCloud(unsigned int nbInsPart);
 
             private:
                 APrioriDensity    m_aPriori;       /**< A priori density */

@@ -249,6 +249,7 @@ void ParticleFilter::run(int label)
     Particle map2 = this->GetMAP();
 
     this->ComputeFiber(map1,map2);
+//    this->saveFiber(label, 0, m_x0);
 }
 
 void ParticleFilter::run(int label, Direction dir)
@@ -335,7 +336,6 @@ void ParticleFilter::run(int label, Direction dir)
                 m_cloud[m].addLikelihood(likelihood);
 
                 weights[m] = m_cloud[m].weight() * std::exp(likelihood + apriori - importance);
-                std::cerr << "weights[" << m << "] = " << weights[m] << std::endl;
             }
         } // for i particles
 
@@ -372,7 +372,7 @@ void ParticleFilter::run(int label, Direction dir)
         }
 
         // Compute resampling threshold
-        Real ESS = 1. / sumSquare;
+        Real ESS = 1.0 / sumSquare;
 
         if(!std::isfinite(ESS))
             nbInsPart = 0;
@@ -383,7 +383,7 @@ void ParticleFilter::run(int label, Direction dir)
             if(ESS < m_epsilon*(nbInsPart))
             {
                 Display2(m_displayMode, std::cout << " (Resampling, ESS = " << (ESS/nbInsPart)*100.0 << "%) " << std::flush);
-                this->ResampleCloud(nbInsPart, weights);
+                this->ResampleCloud(nbInsPart);
             }
             else // ESS >= m_epsilon*(nbInsPart)
                 Display2(m_displayMode, std::cout << " (ESS = " << (ESS/nbInsPart)*100.0 << "%) " << std::flush);
@@ -412,7 +412,7 @@ void ParticleFilter::run(int label, Direction dir)
     m_dirNum++;
 }
 
-void ParticleFilter::ResampleCloud(unsigned int nbInsPart, Real *weights)
+void ParticleFilter::ResampleCloud(unsigned int nbInsPart)
 {
     assert(nbInsPart <= m_M);
     assert(nbInsPart > 0);
@@ -438,7 +438,6 @@ void ParticleFilter::ResampleCloud(unsigned int nbInsPart, Real *weights)
 
 
     Real w    = 1.0/(Real)nbInsPart;
-    Real logw = std::log(w);
 
     // Get M particles from the cloud
     // keeping proportionnality
@@ -460,11 +459,9 @@ void ParticleFilter::ResampleCloud(unsigned int nbInsPart, Real *weights)
                 else
                     i++;
             } while(!found && i < nbInsPart);
-
             m_cloud[m].SetLastPoint(m_cloud[index[i]].lastPoint());
             m_cloud[m].SetLastVector(m_cloud[index[i]].lastVector());
             m_cloud[m].SetLastWeight(w);
-            weights[m] = logw;
         }
     } // for m
 
@@ -520,13 +517,24 @@ void ParticleFilter::saveCloudInVTK(int label, unsigned int step, Point begin)
 
                 Point xkm1 = pIt->getPoint(i-1);
                 Vector vk  = pIt->getVector(i-1);
+                Point p    = xk + vk*(-1);
 
-                if((xk + vk*(-1)) == xkm1) // points are linked or not
+                if(!(p == xkm1)) // points are note linked
                 {
-                    line->GetPointIds()->SetId(0, pid[0]-1);
-                    line->GetPointIds()->SetId(1, pid[0]);
-                    lines->InsertNextCell(line);
+                    cix[0] = p.x(); cix[1] = p.y(); cix[2] = p.z();
+                    m_map->TransformContinuousIndexToPhysicalPoint(cix, wx);
+
+                    pid[0] = points->InsertNextPoint(wx[0], wx[1], wx[2]);
+
+                    cix[0] = xk.x(); cix[1] = xk.y(); cix[2] = xk.z();
+                    m_map->TransformContinuousIndexToPhysicalPoint(cix, wx);
+
+                    pid[0] = points->InsertNextPoint(wx[0], wx[1], wx[2]);
                 }
+
+                line->GetPointIds()->SetId(0, pid[0]-1);
+                line->GetPointIds()->SetId(1, pid[0]);
+                lines->InsertNextCell(line);
 
                 colors->InsertNextTupleValue(color);
             } // for i
@@ -556,40 +564,8 @@ void ParticleFilter::saveCloudInVTK(int label, unsigned int step, Point begin)
 
 Particle ParticleFilter::GetMAP()
 {
-//    Particle map(m_x0);
-//
-//    for(unsigned int k=1; k<m_maxStep; k++)
-//    {
-//        Real x=0, y=0, z=0;
-//        Real sum = 0;
-//
-//        for(std::vector<Particle>::iterator p=m_cloud.begin(); p != m_cloud.end(); p++)
-//        {
-//            if(p->length() == m_maxStep) // the length must be m_maxStep
-//            {
-//                Real w   = p->getWeight(k-1);
-//                Point pt = p->getPoint(k);
-//
-//                sum += w;
-//                x   += w*pt.x();
-//                y   += w*pt.y();
-//                z   += w*pt.z();
-//            }
-//        } // for each particle
-//
-//        x /= sum;
-//        y /= sum;
-//        z /= sum;
-//
-//        Point pt = map.getPoint(k-1);
-//        Vector v(x-pt.x(), y-pt.y(), z-pt.z());
-//        map.addToPath(v, m_mask);
-//        map.setWeight(1);
-//    } // for each step
-//
-//    return map;
     unsigned int t = m_k-1;
-    Real *delta = new Real[(t*m_M)];
+    Real *delta = new Real[t*m_M];
     Real *psi   = new Real[(t-1)*m_M];
 
 
@@ -599,6 +575,7 @@ Particle ParticleFilter::GetMAP()
     {
         delta[Ind(0,m)] = m_aPriori.compute(m_cloud[m].getVector(1).toDirection(), m_cloud[m].getVector(0).toDirection()) + m_cloud[m].getLikelihood(0);
     }
+
 //std::cerr << "delta(0) :" << std::endl;
 //for(unsigned int j=0; j<m_M; j++)
 //{
@@ -617,15 +594,21 @@ Particle ParticleFilter::GetMAP()
 
                 for(unsigned int i=0; i<m_M; i++)
                 {
-                    if(i != m && k < m_cloud[i].length())
+                    if(/*i != m && */k < m_cloud[i].length())
                     {
-                        Real tmp = delta[Ind(k-1,i)] + m_aPriori.compute(m_cloud[m].getVector(k+1).toDirection(), m_cloud[i].getVector(k).toDirection());
+                        Point xki = m_cloud[i].getPoint(k+1);
+                        Point xkj = m_cloud[m].getPoint(k+1);
+//Pr(std::sqrt(xki.x()*xkj.x() + xki.y()*xkj.y() + xki.z()*xkj.z()));
+//                        if(std::sqrt(xki.x()*xkj.x() + xki.y()*xkj.y() + xki.z()*xkj.z()) < 1)
+//                        {
+                            Real tmp = delta[Ind(k-1,i)] + m_aPriori.compute(m_cloud[m].getVector(k+1).toDirection(), m_cloud[i].getVector(k).toDirection());
 
-                        if(tmp > max)
-                        {
-                            max  = tmp;
-                            imax = i;
-                        }
+                            if(tmp > max)
+                            {
+                                max  = tmp;
+                                imax = i;
+                            }
+//                        }
                     }
                 }
 
@@ -643,7 +626,7 @@ Particle ParticleFilter::GetMAP()
             else
             {
                 delta[Ind(k,m)] = MIN_REAL;
-                psi[Ind(k-1,m)] = 0;
+                psi[Ind(k-1,m)] = m;
             }
         }
     }
@@ -694,7 +677,9 @@ Particle ParticleFilter::GetMAP()
     {
         mmax = psi[Ind(k,mmax)];
         states.push_back(m_cloud[mmax].getVector(k+1).toDirection());
+
 //std::cerr << "map(" << k << ") = " << mmax << std::endl;
+
     }
     states.push_back(m_cloud[mmax].getVector(0).toDirection());
 
