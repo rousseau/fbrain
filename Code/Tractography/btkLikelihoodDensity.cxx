@@ -120,7 +120,7 @@ Real LikelihoodDensity::compute(Direction uk, Point xk, Direction mean)
         Real mesuredSignal   = S(i,0);
         Real estimatedSignal = M(i,0);
 
-        density += this->computeNormalDensity(m_sigmas->at(i), mesuredSignal - estimatedSignal);
+        density += this->computeNormalDensity(m_sigmas->at(i)*2.0, mesuredSignal - estimatedSignal);
     } // for i
 
 
@@ -136,7 +136,7 @@ Real LikelihoodDensity::computeNormalDensity(Real sigma, Real x)
         return ( -std::log(sigma) - m_logSqrt2PI - 0.5 * fraction * fraction );
     }
     else
-        return 1;
+        return 0;
 }
 
 } // namespace btk

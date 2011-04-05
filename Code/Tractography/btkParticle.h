@@ -133,6 +133,19 @@ knowledge of the CeCILL-B license and that you accept its terms.
                 Real getWeight(unsigned int i) const;
 
                 /**
+                 * @brief Add log likelihood to path
+                 * @param likelihood Log likelihood value
+                 */
+                 void addLikelihood(Real likelihood);
+
+                /**
+                 * @brief Get the computed log likelihood on path
+                 * @param k Step number on the path
+                 * @return Log likelihood of path at step k
+                 */
+                 Real getLikelihood(unsigned int k) const;
+
+                /**
                  * @brief Get path's length
                  * @return Particle's path length
                  */
@@ -181,6 +194,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
                 std::vector<Real>   m_weight;   /**< Particule's weights */
                 std::vector<Point>  m_points;   /**< Set of particle's points on path */
                 std::vector<Vector> m_vectors;  /**< Set of particle's vectors on path */
+                std::vector<Real>   m_likelihood;   /**< Log likelihood on path */
         };
 
     } // namespace btk
