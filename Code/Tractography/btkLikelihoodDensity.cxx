@@ -136,7 +136,7 @@ Real LikelihoodDensity::computeNormalDensity(Real sigma, Real x)
         return ( -std::log(sigma) - m_logSqrt2PI - 0.5 * fraction * fraction );
     }
     else
-        return 1;
+        return 0;
 }
 
 } // namespace btk
