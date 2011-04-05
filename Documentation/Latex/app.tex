@@ -94,12 +94,14 @@ Minimal usage: \texttt{btkRBFInterpolationS2S -i input.nii -g gradients.bvec
                 \label{btkTractography-fig:standard-pipeline}
             \end{figure}
 
+        By default, Right-Anterior-Superior (RAS) coordinate system is used to ensure compatibility with Slicer3D. However, it can be forced to use Left-Posterior-Superior (LPS) coordinate system by using option \texttt{--lps} on command line.
+
     \subsubsection*{Advanced usage}
         In addition to standard arguments of \texttt{btkTractography} program, there are some other parameters that let you to alter algorithm's behaviour. These options can be classified into three groups : model's options, constraints on trajectory and filter's options. The first group options allow you to tweak the model (for more details about it, please refer to~\cite{descoteaux_regularized_2007}). The second group options let you to control the particle's trajectory. These options provide prior informations to the algorithm. The last group options are dedicated to the particle filter control.
 
         Since the default parameters values may work in the most of cases, they are optional. A list is of optional features is avaible by using the command
             \begin{quote}
-                \texttt{btkTractography -\hspace{0.1mm}-help}
+                \texttt{btkTractography -\hspace{0.1mm}-help} \hspace{0.5mm} or \hspace{0.5mm} \texttt{btkTractography -h}
             \end{quote}
         and program's arguments are much more described below.
 
