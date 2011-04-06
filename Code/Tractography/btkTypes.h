@@ -115,6 +115,8 @@ knowledge of the CeCILL-B license and that you accept its terms.
             return std::floor(x + 0.5);
         }
 
+        typedef float Float;
+
         /**
          * ITK matrix type.
          */
@@ -129,7 +131,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
         /**
          * DWI sequence.
          */
-        typedef itk::Image<Real, SequenceDimension> Sequence;
+        typedef itk::Image<Float, SequenceDimension> Sequence;
 
         /**
          * DWI sequence's region.
@@ -160,7 +162,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
         /**
          * DWI image (reference or gradient).
          */
-        typedef itk::Image<Real, ImageDimension> Image;
+        typedef itk::Image<Float, ImageDimension> Image;
 
         /**
          * DWI image's (reference or gradient) region.
@@ -185,7 +187,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
         /**
          * DWI image's interpolator.
          */
-        typedef itk::BSplineInterpolateImageFunction<Image, Real, Real> ImageInterpolator;
+        typedef itk::BSplineInterpolateImageFunction<Image, Float, Float> ImageInterpolator;
 
         /**
          * Dwi image's continuous index.
