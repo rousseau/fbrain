@@ -63,7 +63,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
              * @param order Model's order
              * @param lambda Regularization term
              */
-            SHModelEstimator(const std::string &signalFileName, const std::string &directionsFileName, const std::string &maskFileName, unsigned int order, Real lambda);
+            SHModelEstimator(const std::string &signalFileName, const std::string &directionsFileName, const std::string &maskFileName, unsigned int order, Real lambda, char displayMode);
 
             /**
              * @brief Constructor

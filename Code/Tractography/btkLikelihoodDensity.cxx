@@ -120,7 +120,7 @@ Real LikelihoodDensity::compute(Direction uk, Point xk, Direction mean)
         Real mesuredSignal   = S(i,0);
         Real estimatedSignal = M(i,0);
 
-        density += this->computeNormalDensity(m_sigmas->at(i)*2.0, mesuredSignal - estimatedSignal);
+        density += this->computeNormalDensity(m_sigmas->at(i), mesuredSignal - estimatedSignal);
     } // for i
 
 
