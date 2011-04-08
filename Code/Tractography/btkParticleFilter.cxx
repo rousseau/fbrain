@@ -68,7 +68,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 #define Ind(i,j) (m_M*(i) + (j))
 
-#define KAPPA 90
+#define KAPPA 40
 
 
 namespace btk
@@ -608,13 +608,15 @@ Particle ParticleFilter::GetMAP()
 
                 for(unsigned int i=0; i<m_M; i++)
                 {
-                    if(/*i != m && */k < m_cloud[i].length())
+                    if(k < m_cloud[i].length())
                     {
                         Point xki = m_cloud[i].getPoint(k+1);
-                        Point xkj = m_cloud[m].getPoint(k+1);
-//Pr(std::sqrt(xki.x()*xkj.x() + xki.y()*xkj.y() + xki.z()*xkj.z()));
-//                        if(std::sqrt(xki.x()*xkj.x() + xki.y()*xkj.y() + xki.z()*xkj.z()) < 1)
-//                        {
+                        Point xkm = m_cloud[m].getPoint(k+1);
+
+                        Real distance = std::sqrt( (xki.x()-xkm.x())*(xki.x()-xkm.x()) + (xki.y()-xkm.y())*(xki.y()-xkm.y()) + (xki.z()-xkm.z())*(xki.z()-xkm.z()));
+
+                        if(distance <= 0.01)
+                        {
                             Real tmp = delta[Ind(k-1,i)] + m_aPriori.compute(m_cloud[m].getVector(k+1).toDirection(), m_cloud[i].getVector(k).toDirection());
 
                             if(tmp > max)
@@ -622,7 +624,7 @@ Particle ParticleFilter::GetMAP()
                                 max  = tmp;
                                 imax = i;
                             }
-//                        }
+                        }
                     }
                 }
 

@@ -48,7 +48,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 namespace btk
 {
 
-SHModelEstimator::SHModelEstimator(const std::string &signalFileName, const std::string &directionsFileName, const std::string &maskFileName, unsigned int order, Real lambda)
+SHModelEstimator::SHModelEstimator(const std::string &signalFileName, const std::string &directionsFileName, const std::string &maskFileName, unsigned int order, Real lambda, char displayMode)
 {
     m_directions = 0;
     m_Y          = 0;
@@ -62,6 +62,8 @@ SHModelEstimator::SHModelEstimator(const std::string &signalFileName, const std:
     m_2PI = 2. * M_PI;
 
     this->readFiles(signalFileName, directionsFileName, maskFileName);
+
+    m_displayMode = displayMode;
 }
 
 SHModelEstimator::SHModelEstimator(Sequence::Pointer signal, std::vector<Direction> *directions, Mask::Pointer mask, unsigned int order, Real lambda, char displayMode)
