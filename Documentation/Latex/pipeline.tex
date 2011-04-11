@@ -26,8 +26,13 @@ dwi.bvec
 dwi.bval 
 \end{verbatim}
 
+Please check that images are not flipped.\\
 
-Please check that images are not flipped.
+\underline{NOTE}: The set of three files .nii.gz, .bvec, and .bval used to
+describe a DW sequences are represented in BTK just by the basename (``dwi'' in
+the previous example), and the sequences must be provided in this way to the
+different applications. This allows to have shorter command lines and a the use
+of consistent filenames.
 
 \subsection{Anatomical image reconstruction}
 Anatomical image reconstruction can be performed by using \textbf{btkImageReconstruction} (Section

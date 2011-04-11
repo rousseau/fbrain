@@ -58,9 +58,9 @@ int main( int argc, char *argv[] )
 
   try {
 
-  const char *input = NULL, *refFile = NULL, *output = NULL;
+  const char *refFile = NULL;
   const char *maskFile = NULL, *trefFile = NULL;
-  const char *ctable = NULL, *gtable = NULL, *rbf = NULL;
+  const char *rbf = NULL;
   const char *tpath = NULL;
 
   double rspa, rgra, factor;
@@ -68,48 +68,64 @@ int main( int argc, char *argv[] )
   TCLAP::CmdLine cmd("Resampling of dwi sequences using Radial Basis Functions", ' ', "Unversioned");
 
   TCLAP::ValueArg<std::string> inputArg("i","input","Original sequence",true,"","string",cmd);
-
   TCLAP::ValueArg<std::string> outputArg("o","output","Corrected sequence",true,"","string",cmd);
-  TCLAP::ValueArg<std::string> gtableArg("g","gradients","Gradient table",true,"","string",cmd);
-  TCLAP::ValueArg<std::string> tpathArg("t","tpath","Path to transforms",true,"","string",cmd);
+  TCLAP::ValueArg<std::string> tpathArg("t","transformation-folder","Path to transforms",true,"","string",cmd);
   TCLAP::ValueArg<std::string> maskArg("m","mask","Image mask for the input sequence",true,"","string",cmd);
 
-  TCLAP::ValueArg<std::string> refArg("r","ref","Reference image to specify the resampling grid"
+  TCLAP::ValueArg<std::string> refArg("r","reference","Reference image to specify the resampling grid"
       ,false,"","string",cmd);
   TCLAP::ValueArg<std::string> trefArg("","tref","Transform from reference to sequence"
       ,false,"","string",cmd);
-  TCLAP::ValueArg<std::string> ctableArg("c","ctable","Corrected gradient table",false,"","string",cmd);
 
   TCLAP::ValueArg<std::string> rbfArg("","rbf","Radial basis function",false,"gauss","string",cmd);
   TCLAP::ValueArg<float> rspaArg("","rspa","Spatial kernel width",false,1,"float",cmd);
   TCLAP::ValueArg<float> rgraArg("","rgra","Angular kernel width",false,0.5,"float",cmd);
-  TCLAP::ValueArg<float> factorArg("","factor","The voxel size of the reconstructed image is the original "
+  TCLAP::ValueArg<float> factorArg("","resampling-factor","The voxel size of the reconstructed image is the original "
       "in-plane spacing divided by this value.",false, 1.0,"float",cmd);
 
-  TCLAP::SwitchArg oriSwitch("","originalSpace","Original resampling space. "
+  TCLAP::SwitchArg oriSwitch("","original-space","Original resampling space. "
       "By default, an isovoxel reconstruction is performed.", cmd, false);
-  TCLAP::SwitchArg refSwitch("","referenceSpace","Resampling space provided by image reference. "
+  TCLAP::SwitchArg refSwitch("","reference-space","Resampling space provided by image reference. "
       "By default, an isovoxel reconstruction is performed.", cmd, false);
 
   // Parse the argv array.
   cmd.parse( argc, argv );
 
-  tpath = tpathArg.getValue().c_str();
-  input  = inputArg.getValue().c_str();
+  tpath    = tpathArg.getValue().c_str();
   refFile  = refArg.getValue().c_str();
-  output = outputArg.getValue().c_str();
-  gtable = gtableArg.getValue().c_str();
-  ctable = ctableArg.getValue().c_str();
-
   maskFile = maskArg.getValue().c_str();
   trefFile = trefArg.getValue().c_str();
-
 
   // Interpolation parameters
   rbf = rbfArg.getValue().c_str();
   rspa = rspaArg.getValue();
   rgra = rgraArg.getValue();
   factor = factorArg.getValue();
+
+  char input[255];
+  strcpy( input, (char*)inputArg.getValue().c_str() );
+  strcat ( input,".nii" );
+
+  char bvec[255];
+  strcpy( bvec, (char*)inputArg.getValue().c_str() );
+  strcat ( bvec,".bvec" );
+
+  char bval[255];
+  strcpy( bval, (char*)inputArg.getValue().c_str() );
+  strcat ( bval,".bval" );
+
+  char output[255];
+  strcpy( output, (char*)outputArg.getValue().c_str() );
+  strcat ( output,".nii.gz" );
+
+  char bvec_out[255];
+  strcpy( bvec_out, (char*)outputArg.getValue().c_str() );
+  strcat ( bvec_out,".bvec" );
+
+  char bval_out[255];
+  strcpy( bval_out, (char*)outputArg.getValue().c_str() );
+  strcat ( bval_out,".bval" );
+
 
   // Read sequence
 
@@ -163,8 +179,6 @@ int main( int argc, char *argv[] )
 
   SequenceType::RegionType recROI = seqROI; // By default we reconstruct on the original grid
 
-  std::cout << "reconstruction roi = " << recROI << std::endl;
-
    // Create reconstructed sequence
 
   SequenceType::Pointer recSequence = SequenceType::New();
@@ -211,8 +225,8 @@ int main( int argc, char *argv[] )
 
   } else
     {
-			double resolution;
-			resolution = recSpacing[0] / factor;
+      double resolution;
+      resolution = recSpacing[0] / factor;
 
       recSize[0] = floor( recSize[0]*recSpacing[0] / resolution + 0.5 );
       recSize[1] = floor( recSize[1]*recSpacing[1] / resolution + 0.5 );
@@ -221,8 +235,6 @@ int main( int argc, char *argv[] )
       recSpacing[0] = resolution;
       recSpacing[1] = resolution;
       recSpacing[2] = resolution;
-
-      std::cout << "recSpacing = " << recSpacing << std::endl;
 
       recRegion.SetSize( recSize );
 
@@ -240,9 +252,6 @@ int main( int argc, char *argv[] )
       recROI.SetIndex( recROIIndex );
       recROI.SetSize( recROISize );
     }
-
-  std::cout << "recROI = " << recROI << std::endl;
-  std::cout << "recRegion = " << recRegion << std::endl;
 
   recSequence -> SetRegions( recRegion );
   recSequence -> Allocate();
@@ -280,7 +289,7 @@ int main( int argc, char *argv[] )
   InterpolatorType::Pointer interpolator = InterpolatorType::New();
   interpolator -> SetInputImage( sequence );
   interpolator -> SetTransforms(tpath);
-  interpolator -> SetGradientTable( gtable );
+  interpolator -> SetGradientTable( bvec );
   interpolator -> Initialize( seqROI );
 
   typedef itk::ImageRegionIteratorWithIndex<SequenceType> IteratorType;
@@ -362,58 +371,51 @@ int main( int argc, char *argv[] )
   SequenceWriterType::Pointer sequenceWriter = SequenceWriterType::New();
   sequenceWriter -> SetFileName( output );
   sequenceWriter -> SetInput( recSequence );
+  sequenceWriter -> Update();
 
-  if ( strcmp(output,"") != 0 )
+  // Correct gradient table
+
+  vnl_matrix<double> R(3,3);
+  R = tref -> GetMatrix().GetVnlMatrix();
+
+  vnl_matrix<double> PQ = R;
+  vnl_matrix<double> NQ = R;
+  vnl_matrix<double> PQNQDiff;
+
+  for(unsigned int ni = 0; ni < 100; ni++ )
   {
-    sequenceWriter -> Update();
-  }
-
-  // Correct gradient table, if necessary
-
-  if ( strcmp(ctable,"") != 0 )
-  {
-
-    // First, find rotation matrix
-
-    vnl_matrix<double> R(3,3);
-    R = tref -> GetMatrix().GetVnlMatrix();
-
-    vnl_matrix<double> PQ = R;
-    vnl_matrix<double> NQ = R;
-    vnl_matrix<double> PQNQDiff;
-
-    for(unsigned int ni = 0; ni < 100; ni++ )
+    // Average current Qi with its inverse transpose
+    NQ = ( PQ + vnl_inverse_transpose( PQ ) ) / 2.0;
+    PQNQDiff = NQ - PQ;
+    if( PQNQDiff.frobenius_norm() < 1e-7 )
     {
-      // Average current Qi with its inverse transpose
-      NQ = ( PQ + vnl_inverse_transpose( PQ ) ) / 2.0;
-      PQNQDiff = NQ - PQ;
-      if( PQNQDiff.frobenius_norm() < 1e-7 )
-      {
-  //      std::cout << "Polar decomposition used " << ni << " iterations " << std::endl;
-        break;
-      }
-      else
-      {
-        PQ = NQ;
-      }
+//      std::cout << "Polar decomposition used " << ni << " iterations " << std::endl;
+      break;
     }
-
-    typedef itk::Euler3DTransform<double> EulerTransformType;
-    EulerTransformType::Pointer transform = EulerTransformType::New();
-    transform -> SetRotationMatrix( NQ );
-
-    typedef btk::DiffusionGradientTable< SequenceType > GradientTableType;
-    GradientTableType::Pointer gradientTable = GradientTableType::New();
-
-    gradientTable -> SetNumberOfGradients(numberOfFrames);
-    gradientTable -> SetImage( sequence );
-    gradientTable -> SetTransform( transform );
-    gradientTable -> LoadFromFile( gtable);
-    gradientTable -> RotateGradientsInWorldCoordinates();
-    gradientTable -> SaveToFile( ctable);
-
+    else
+    {
+      PQ = NQ;
+    }
   }
 
+  typedef itk::Euler3DTransform<double> EulerTransformType;
+  EulerTransformType::Pointer transform = EulerTransformType::New();
+  transform -> SetRotationMatrix( NQ );
+
+  typedef btk::DiffusionGradientTable< SequenceType > GradientTableType;
+  GradientTableType::Pointer gradientTable = GradientTableType::New();
+
+  gradientTable -> SetNumberOfGradients(numberOfFrames);
+  gradientTable -> SetImage( sequence );
+  gradientTable -> SetTransform( transform );
+  gradientTable -> LoadFromFile( bvec);
+  gradientTable -> RotateGradientsInWorldCoordinates();
+  gradientTable -> SaveToFile( bvec_out);
+
+  // Write b-values
+  char clcopybval[255];
+  sprintf(clcopybval,"cp %s %s",bval,bval_out);
+  system(clcopybval);
 
   return EXIT_SUCCESS;
 

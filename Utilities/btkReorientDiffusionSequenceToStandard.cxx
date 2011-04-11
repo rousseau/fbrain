@@ -67,29 +67,47 @@ int main( int argc, char *argv[] )
   try {
 
   // Parse arguments
-  const char *inputImageFile = NULL, *outputImageFile = NULL, *lmksFile = NULL;
-  const char *gTableFile = NULL, *cTableFile = NULL;
+  const char *lmksFile = NULL;
 
   TCLAP::CmdLine cmd("Reorient a DWI sequence to standard orientation", ' ', "Unversioned");
 
   TCLAP::ValueArg<std::string> inputArg("i","input","Input image",true,"","string",cmd);
-  TCLAP::ValueArg<std::string> gTableArg("g","gtable","Gradient table",true,"","string",cmd);
   TCLAP::ValueArg<std::string> outputArg("o","output","Reoriented image",true,"","string",cmd);
-  TCLAP::ValueArg<std::string> cTableArg("c","ctable","Corrected table",true,"","string",cmd);
   TCLAP::ValueArg<std::string> lmksArg("l","landmarks","Landmarks file",true,"","string",cmd);
   TCLAP::SwitchArg nnSwitch("","nn","Nearest Neighbor interpolation", cmd, false);
   TCLAP::SwitchArg fovSwitch("e","extendFOV","Extends the FOV to avoid image cropping", cmd, false);
 
   cmd.parse( argc, argv );
 
-  inputImageFile  = inputArg.getValue().c_str();
-  gTableFile      = gTableArg.getValue().c_str();
-  outputImageFile = outputArg.getValue().c_str();
-  cTableFile      = cTableArg.getValue().c_str();
   lmksFile        = lmksArg.getValue().c_str();
   bool nn         = nnSwitch.getValue();
 
   const    unsigned int    Dimension = 4;
+
+  char inputImageFile[255];
+  strcpy( inputImageFile, (char*)inputArg.getValue().c_str() );
+  strcat ( inputImageFile,".nii" );
+
+  char bvec[255];
+  strcpy( bvec, (char*)inputArg.getValue().c_str() );
+  strcat ( bvec,".bvec" );
+
+  char bval[255];
+  strcpy( bval, (char*)inputArg.getValue().c_str() );
+  strcat ( bval,".bval" );
+
+  char outputImageFile[255];
+  strcpy( outputImageFile, (char*)outputArg.getValue().c_str() );
+  strcat ( outputImageFile,".nii.gz" );
+
+  char bvec_out[255];
+  strcpy( bvec_out, (char*)outputArg.getValue().c_str() );
+  strcat ( bvec_out,".bvec" );
+
+  char bval_out[255];
+  strcpy( bval_out, (char*)outputArg.getValue().c_str() );
+  strcat ( bval_out,".bval" );
+
 
   // Read image
 
@@ -315,9 +333,14 @@ int main( int argc, char *argv[] )
   gradientTable -> SetNumberOfGradients(numberOfFrames);
   gradientTable -> SetImage( image );
   gradientTable -> SetTransform( transform );
-  gradientTable -> LoadFromFile( gTableFile);
+  gradientTable -> LoadFromFile( bvec);
   gradientTable -> RotateGradientsInWorldCoordinates();
-  gradientTable -> SaveToFile( cTableFile);
+  gradientTable -> SaveToFile( bvec_out);
+
+  // Write b-values
+  char clcopybval[255];
+  sprintf(clcopybval,"cp %s %s",bval,bval_out);
+  system(clcopybval);
 
 
   } catch (TCLAP::ArgException &e)  // catch any exceptions

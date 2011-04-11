@@ -67,16 +67,10 @@ int main( int argc, char *argv[] )
   TCLAP::ValueArg<std::string>  inputArg("i","input","Input image",true,"","string",cmd);
   TCLAP::ValueArg<std::string>  outputArg("o","output","Output folder",true,"","string",cmd);
   TCLAP::ValueArg<unsigned int> dimArg("d","dimension","Image dimension (3 / 4)",true,3,"unsigned int",cmd);
-  TCLAP::ValueArg<std::string>  gTableArg("g","bvec","Gradient table",false,"","string",cmd);
-  TCLAP::ValueArg<std::string>  cTableArg("c","ctable","Corrected table",false,"","string",cmd);
 
   // Parse the argv array.
   cmd.parse( argc, argv );
 
-  inputName  = inputArg.getValue().c_str();
-  outputName = outputArg.getValue().c_str();
-  gTableFile = gTableArg.getValue().c_str();
-  cTableFile = cTableArg.getValue().c_str();
   dim        = dimArg.getValue();
 
   typedef  short  PixelType;
@@ -86,6 +80,32 @@ int main( int argc, char *argv[] )
 
   if (dim==4)
   {
+
+    char inputName[255];
+    strcpy( inputName, (char*)inputArg.getValue().c_str() );
+    strcat ( inputName,".nii" );
+
+    char bvec[255];
+    strcpy( bvec, (char*)inputArg.getValue().c_str() );
+    strcat ( bvec,".bvec" );
+
+    char bval[255];
+    strcpy( bval, (char*)inputArg.getValue().c_str() );
+    strcat ( bval,".bval" );
+
+    char outputName[255];
+    strcpy( outputName, (char*)outputArg.getValue().c_str() );
+    strcat ( outputName,".nii.gz" );
+
+    char bvec_out[255];
+    strcpy( bvec_out, (char*)outputArg.getValue().c_str() );
+    strcat ( bvec_out,".bvec" );
+
+    char bval_out[255];
+    strcpy( bval_out, (char*)outputArg.getValue().c_str() );
+    strcat ( bval_out,".bval" );
+
+
     typedef itk::Image< PixelType, 4 >  SequenceType;
     typedef SequenceType::PointType  OriginType;
 
@@ -134,12 +154,6 @@ int main( int argc, char *argv[] )
       filter -> SetDesiredCoordinateOrientation( itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RAI );
       filter -> Update();
 
-/*      std::cout << "Extractor direction = " << std::endl;
-      std::cout << extractor -> GetOutput() -> GetDirection() << std::endl;
-
-      std::cout << "Reoriented direction = " << std::endl;
-      std::cout << filter -> GetOutput() -> GetDirection() << std::endl; */
-
       joiner -> SetInput( i, filter -> GetOutput() );
     }
 
@@ -166,11 +180,15 @@ int main( int argc, char *argv[] )
 
     gradientTable -> SetNumberOfGradients(numberOfFrames);
     gradientTable -> SetImage( sequence );
-//    gradientTable -> SetTransform( transform );
     gradientTable -> SetRotationMatrix( rotationMatrix );
-    gradientTable -> LoadFromFile( gTableFile);
+    gradientTable -> LoadFromFile( bvec);
     gradientTable -> RotateGradients();
-    gradientTable -> SaveToFile( cTableFile);
+    gradientTable -> SaveToFile( bvec_out );
+
+    // Write b-values
+    char clcopybval[255];
+    sprintf(clcopybval,"cp %s %s",bval,bval_out);
+    system(clcopybval);
 
     // Change sequence
 
@@ -196,6 +214,13 @@ int main( int argc, char *argv[] )
 
   } else if (dim == 3)
   {
+
+    char inputName[255];
+    strcpy( inputName, (char*)inputArg.getValue().c_str() );
+
+    char outputName[255];
+    strcpy( outputName, (char*)outputArg.getValue().c_str() );
+
     typedef ImageType::PointType  OriginType;
 
     typedef itk::ImageFileReader< ImageType  > ImageReaderType;

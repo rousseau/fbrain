@@ -51,32 +51,48 @@ int main( int argc, char *argv[] )
 
   try {
 
-  const char *input = NULL, *output = NULL, *mgrad = NULL, *folder = NULL, *maskFile = NULL;
-  const char *bvec = NULL, *cvec = NULL;
+  const char *mgrad = NULL, *folder = NULL, *maskFile = NULL;
 
   TCLAP::CmdLine cmd("Correct distortions caused by eddy currents in dwi sequences", ' ', "Unversioned");
 
   TCLAP::ValueArg<std::string> inputArg("i","input","Original sequence",true,"","string",cmd);
-  TCLAP::ValueArg<std::string> bvecArg("g","bvec","Gradient directions",true,"","string",cmd);
   TCLAP::ValueArg<std::string> maskArg("m","mask","Mask in the B0 image",true,"","string",cmd);
-
   TCLAP::ValueArg<std::string> outputArg("o","output","Corrected sequence",true,"","string",cmd);
-  TCLAP::ValueArg<std::string> cvecArg("c","cvec","Corrected directions",true,"","string",cmd);
+  TCLAP::ValueArg<std::string> folderArg("f","transformation-folder","Folder for transformatios",true,"","string",cmd);
 
-  TCLAP::ValueArg<std::string> folderArg("f","folder","Folder for transformatios",true,"","string",cmd);
-  TCLAP::ValueArg<std::string> mgradArg("","meanGradient","Mean gradient",false,"","string",cmd);
+  TCLAP::ValueArg<std::string> mgradArg("","mean-gradient","Mean gradient",false,"","string",cmd);
 
   // Parse the argv array.
   cmd.parse( argc, argv );
 
-  input  = inputArg.getValue().c_str();
-  output = outputArg.getValue().c_str();
   mgrad = mgradArg.getValue().c_str();
   folder = folderArg.getValue().c_str();
   maskFile = maskArg.getValue().c_str();
 
-  bvec = bvecArg.getValue().c_str();
-  cvec = cvecArg.getValue().c_str();
+  char input[255];
+  strcpy( input, (char*)inputArg.getValue().c_str() );
+  strcat ( input,".nii" );
+
+  char bvec[255];
+  strcpy( bvec, (char*)inputArg.getValue().c_str() );
+  strcat ( bvec,".bvec" );
+
+  char bval[255];
+  strcpy( bval, (char*)inputArg.getValue().c_str() );
+  strcat ( bval,".bval" );
+
+  char output[255];
+  strcpy( output, (char*)outputArg.getValue().c_str() );
+  strcat ( output,".nii.gz" );
+
+  char bvec_out[255];
+  strcpy( bvec_out, (char*)outputArg.getValue().c_str() );
+  strcat ( bvec_out,".bvec" );
+
+  char bval_out[255];
+  strcpy( bval_out, (char*)outputArg.getValue().c_str() );
+  strcat ( bval_out,".bval" );
+
 
   // Read sequence
 
@@ -132,6 +148,16 @@ int main( int argc, char *argv[] )
   writer->SetFileName( output );
   writer->SetInput( correctedSequence );
   writer->Update();
+
+  // Write gradient table
+  char clcopybvec[255];
+  sprintf(clcopybvec,"cp %s %s",bvec,bvec_out);
+  system(clcopybvec);
+
+  // Write b-values
+  char clcopybval[255];
+  sprintf(clcopybval,"cp %s %s",bval,bval_out);
+  system(clcopybval);
 
   // Write transformations
 

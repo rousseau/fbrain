@@ -109,20 +109,18 @@ public:
 int main( int argc, char *argv[] )
 {
 
-  const char *inputName = NULL, *referenceName = NULL, *outputName = NULL;
+  const char *referenceName = NULL;
   const char *toutName = NULL, *invToutName = NULL, *maskName = NULL;
-  const char *gTableName = NULL, *cTableName = NULL, *mgradName = NULL, *mgradResampled = NULL;
+  const char *mgradName = NULL, *mgradResampled = NULL;
 
   TCLAP::CmdLine cmd("Registers diffusion to anatomical data.", ' ', "Unversioned");
 
   TCLAP::ValueArg<std::string> inputArg("i","input","Diffusion sequence",true,"","string",cmd);
-  TCLAP::ValueArg<std::string> gTableArg("g","gtable","Gradient table",true,"","string",cmd);
   TCLAP::ValueArg<std::string> referenceArg("r","reference","Anatomical image",true,"","string",cmd);
   TCLAP::ValueArg<std::string> outputArg("o","output","Registered diffusion sequence",true,"","string",cmd);
-  TCLAP::ValueArg<std::string> cTableArg("c","ctable","Corrected table",true,"","string",cmd);
   TCLAP::ValueArg<std::string> maskArg("m","mask","Mask for the reference image",false,"","string",cmd);
-  TCLAP::ValueArg<std::string> mgradArg("","meanGradient","Mean gradient",false,"","string",cmd);
-  TCLAP::ValueArg<std::string> mgradResampledArg("","meanGradientResampled","Mean gradient resampled",false,"","string",cmd);
+  TCLAP::ValueArg<std::string> mgradArg("","mean-gradient","Mean gradient",false,"","string",cmd);
+  TCLAP::ValueArg<std::string> mgradResampledArg("","mean-gradient-resampled","Mean gradient resampled",false,"","string",cmd);
 
   TCLAP::ValueArg<unsigned int> x1Arg("","x1","x min of ROI in diffusion",false,0,"int",cmd);
   TCLAP::ValueArg<unsigned int> x2Arg("","x2","x max of ROI in diffusion",false,0,"int",cmd);
@@ -133,8 +131,8 @@ int main( int argc, char *argv[] )
   TCLAP::ValueArg<unsigned int> z1Arg("","z1","z min of ROI in diffusion",false,0,"int",cmd);
   TCLAP::ValueArg<unsigned int> z2Arg("","z2","z max of ROI in diffusion",false,0,"int",cmd);
 
-  TCLAP::ValueArg<std::string> toutArg("","tout","Estimated transformation",false,"","string",cmd);
-  TCLAP::ValueArg<std::string> invToutArg("","itout","Inverse of estimated transformation",false,"","string",cmd);
+  TCLAP::ValueArg<std::string> toutArg("","transformation","Estimated transformation",false,"","string",cmd);
+  TCLAP::ValueArg<std::string> invToutArg("","inverse-transformation","Inverse of estimated transformation",false,"","string",cmd);
 
   TCLAP::SwitchArg nnSwitch("","nn","Nearest neighbor interpolation", cmd, false);
   TCLAP::SwitchArg bsplineSwitch("","bspline","BSpline interpolation", cmd, false);
@@ -142,9 +140,7 @@ int main( int argc, char *argv[] )
   // Parse the argv array.
   cmd.parse( argc, argv );
 
-  inputName      = inputArg.getValue().c_str();
   referenceName  = referenceArg.getValue().c_str();
-  outputName     = outputArg.getValue().c_str();
   maskName       = maskArg.getValue().c_str();
   mgradName      = mgradArg.getValue().c_str();
   mgradResampled = mgradResampledArg.getValue().c_str();
@@ -166,8 +162,30 @@ int main( int argc, char *argv[] )
   toutName = toutArg.getValue().c_str();
   invToutName = invToutArg.getValue().c_str();
 
-  gTableName = gTableArg.getValue().c_str();
-  cTableName = cTableArg.getValue().c_str();
+  char inputName[255];
+  strcpy( inputName, (char*)inputArg.getValue().c_str() );
+  strcat ( inputName,".nii" );
+
+  char bvec[255];
+  strcpy( bvec, (char*)inputArg.getValue().c_str() );
+  strcat ( bvec,".bvec" );
+
+  char bval[255];
+  strcpy(  bval, (char*)inputArg.getValue().c_str() );
+  strcat (  bval,".bval" );
+
+  char outputName[255];
+  strcpy( outputName, (char*)outputArg.getValue().c_str() );
+  strcat ( outputName,".nii.gz" );
+
+  char bvec_out[255];
+  strcpy( bvec_out, (char*)outputArg.getValue().c_str() );
+  strcat ( bvec_out,".bvec" );
+
+  char bval_out[255];
+  strcpy( bval_out, (char*)outputArg.getValue().c_str() );
+  strcat ( bval_out,".bval" );
+
 
   // Typedefs
 
@@ -513,9 +531,17 @@ int main( int argc, char *argv[] )
   gradientTable -> SetNumberOfGradients( inputLength );
   gradientTable -> SetImage( input );
   gradientTable -> SetTransform( eulerTransform );
-  gradientTable -> LoadFromFile( gTableName );
+  gradientTable -> LoadFromFile( bvec );
   gradientTable -> RotateGradientsInWorldCoordinates();
-  gradientTable -> SaveToFile( cTableName);
+  gradientTable -> SaveToFile( bvec_out);
+
+  // Write b-values
+
+  // Write b-values
+  char clcopybval[255];
+  sprintf(clcopybval,"cp %s %s",bval,bval_out);
+  system(clcopybval);
+
 
   // Write transformation if required
 

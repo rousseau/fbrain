@@ -14,12 +14,11 @@ input\_table\_filename -o output\_image\_filename}
 
 \item[btkNiftiToNrrd] This program convert a diffusion sequence in nifti
 format\footnote{Currently there is no nifti standard for DWI, so DW images are
-saved as a standard nifti sequence and two text files containing the b-values
-(.bval) and the gradient directions (.bvec).} (*.nii, *.nii.gz) to the nrrd
-format (*.nhdr). 
+saved as a standard nifti sequence (*.nii, *.nii.gz) and two text files
+containing the b-values (.bval) and the gradient directions (.bvec).}  to the
+nrrd format (*.nhdr). 
 
-Usage: \texttt{-i input.nii -b bvalues.bval -g gradients.bvec -o output.nhdr
-}
+Usage: \texttt{-i input -o output.nhdr}
 
 The list of optional parameters can be obtained by \texttt{btkNiftiToNrrd
 --help}
@@ -28,15 +27,9 @@ The list of optional parameters can be obtained by \texttt{btkNiftiToNrrd
 system with identity direction and origin at the center of the image
 (by default, a linear interpolation is used).
 
-Usage: \texttt{btkSetStandardCoorSystem -i image -o output -d 3}. The argument
-$-d$ specifies the image dimension. 
-
-For diffusion sequences, the command line changes to provide the gradient
-table, which must be modified accordingly.
-
-Usage: \texttt{btkSetStandardCoorSystem -i image -o output -d 4 -g
-gradients.bvec}\\
-\texttt{-c outputGradients.bvec}
+Usage: \texttt{btkSetStandardCoorSystem -i image -o output -d dimension}. The
+argument $-d$ specifies the image dimension (3 for images and 4 for sequences). 
+\\
 
   \item[btkReorientImageToStandard] Sometimes it is useful
 to reorient the image to the standard orientation. This is necessary with fetal
@@ -91,12 +84,10 @@ is in a random orientation with respect to the scanner. This is particularly
 important in DWI because colormaps lack of significance, which makes difficult
 the identification of specific bundles 
 
-Usage: \texttt{btkReorientDiffusionSequenceToStandard -i image -g
-gradients.bvec -l landmarks -o output -c gradients\_corr.bvec}.
+Usage: \texttt{btkReorientDiffusionSequenceToStandard -i image -o output -l
+landmarks}.
 
 \texttt{landmarks} is a landmarks file obtained as explained above.
-\texttt{gradients\_corr.bvec} is a text file containing the corrected
-gradient table.
 
 \item[btkCropImageUsingMask] This program crops one (3D or 4D) image using a 3D mask. Usage: \texttt{-i input\_image\_filename -m
 input\_mask\_filename -o output\_image\_filename -d 3}, where '-d' is the dimension of the input image (by default 3).
@@ -104,16 +95,12 @@ input\_mask\_filename -o output\_image\_filename -d 3}, where '-d' is the dimens
 \item[btkRegisterDiffusionToAnatomicalData] This program registers a DW
 sequence to an anatomical image. 
 
-Recommended usage: \texttt{btkReorientDiffusionSequenceToStandard -i input.nii
--g
-gradients\_in.bvec -r reference.nii -o output.nii -c gradients\_out.bvec
---mask mask.nii}.
+Recommended usage: \texttt{btkReorientDiffusionSequenceToStandard -i input
+-o output -r reference.nii --mask mask.nii}.
 \begin{itemize}
 \item[-i] input sequence
-\item[-g] gradient table for the input sequence
-\item[-r] reference image (anatomical image)
 \item[-o] resampled sequence (by default, linear interpolation is used)
-\item[-c] gradient table for the resampled sequence
+\item[-r] reference image (anatomical image)
 \item[-m] image mask for the B0 image
 \end{itemize}
 

@@ -52,15 +52,13 @@ int main( int argc, char * argv[] )
 {
   try{
 
-  const char *inputFile = NULL, *bvalFile = NULL, *bvecFile = NULL, *outputFile = NULL;
+  const char *outputFile = NULL;
 
   // Parse arguments
 
   TCLAP::CmdLine cmd("Converts a dwi sequence in nifti format to nrrd format", ' ', "Unversioned");
 
-  TCLAP::ValueArg<std::string> inputArg("i","input","DW Sequence (.nii,.nii.gz)",true,"","string",cmd);
-  TCLAP::ValueArg<std::string> bvalArg("b","bval","b-values",true,"","string",cmd);
-  TCLAP::ValueArg<std::string> bvecArg("g","bvec","Gradient directions",true,"","string",cmd);
+  TCLAP::ValueArg<std::string> inputArg("i","input","Diffusion-weighted sequence",true,"","string",cmd);
   TCLAP::ValueArg<std::string> outputArg("o","output","Sequence in NRRD format",true,"","string",cmd);
 
   TCLAP::SwitchArg  lsssSwitchArg("v","vectorImage","The output is volume interleaved (an image of "
@@ -72,15 +70,25 @@ int main( int argc, char * argv[] )
 
   cmd.parse( argc, argv );
 
-  inputFile  = inputArg.getValue().c_str();
-  bvalFile   = bvalArg.getValue().c_str();
-  bvecFile   = bvecArg.getValue().c_str();
   outputFile = outputArg.getValue().c_str();
 
   std::string rawFile = outputArg.getValue();
   rawFile.replace(rawFile.size()-4,7,"raw.gz");
 
-   // Read dwi sequence
+  char inputFile[255];
+  strcpy( inputFile, (char*)inputArg.getValue().c_str() );
+  strcat ( inputFile,".nii" );
+
+  char bvecFile[255];
+  strcpy( bvecFile, (char*)inputArg.getValue().c_str() );
+  strcat ( bvecFile,".bvec" );
+
+  char bvalFile[255];
+  strcpy( bvalFile, (char*)inputArg.getValue().c_str() );
+  strcat ( bvalFile,".bval" );
+
+
+  // Read dwi sequence
 
   typedef short         PixelType;
   const   unsigned int  Dimension = 4;
