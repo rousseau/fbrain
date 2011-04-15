@@ -94,6 +94,8 @@ Minimal usage: \texttt{btkRBFInterpolationS2S -i input.nii -g gradients.bvec
                 \label{btkTractography-fig:standard-pipeline}
             \end{figure}
 
+        The file named \texttt{seeds.nii.gz} is a label map which is used to generate seeds for the algorithm. The spacing in millimeters between seeds can be adjust with the option \texttt{-\hspace{0.1mm}-seed\_spacing}.
+
         By default, Right-Anterior-Superior (RAS) coordinate system is used to ensure compatibility with Slicer3D. However, it can be forced to use Left-Posterior-Superior (LPS) coordinate system by using option \texttt{--lps} on command line.
 
     \subsubsection*{Advanced usage}
