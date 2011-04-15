@@ -38,11 +38,14 @@ knowledge of the CeCILL-B license and that you accept its terms.
     #include "itkImage.h"
     #include "itkImageRegion.h"
     #include "itkImageRegionIterator.h"
+    #include "itkImageRegionIteratorWithIndex.h"
     #include "itkImageFileReader.h"
     #include "itkImageFileWriter.h"
     #include "itkBSplineInterpolateImageFunction.h"
     #include "itkVariableSizeMatrix.h"
     #include "itkContinuousIndex.h"
+    #include "itkResampleImageFilter.h"
+    #include "itkNearestNeighborInterpolateImageFunction.h"
 
     // STL includes
     #include "cfloat"
@@ -196,7 +199,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 
         /**
-         * Size of a Mask.
+         * Dimension of a Mask.
          */
         const unsigned int MaskDimension = 3;
 
@@ -225,6 +228,35 @@ knowledge of the CeCILL-B license and that you accept its terms.
          */
         typedef itk::ImageFileWriter<Mask> MaskWriter;
 
+        /**
+         * Dimension of a label map
+         */
+        const unsigned int LabelDimension = 3;
+
+        /**
+         * Label map
+         */
+        typedef itk::Image<short, LabelDimension> LabelMap;
+
+        /**
+         * Label map's reader
+         */
+        typedef itk::ImageFileReader<LabelMap> LabelMapReader;
+
+        /**
+         * Label map's iterator
+         */
+        typedef itk::ImageRegionIteratorWithIndex<LabelMap> LabelMapIterator;
+
+        /**
+         * Label map's resampler
+         */
+        typedef itk::ResampleImageFilter<LabelMap,LabelMap> LabelResampler;
+
+        /**
+         * Label map's interpolator
+         */
+        typedef itk::NearestNeighborInterpolateImageFunction<LabelMap,double> LabelInterpolator;
 
     } // namespace btk
 

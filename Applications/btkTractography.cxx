@@ -52,9 +52,7 @@
 #include "btkSignalExtractor.h"
 #include "btkSHModel.h"
 #include "btkSHModelEstimator.h"
-//#include "btkSHModelDensity.h"
 #include "btkImportanceDensity.h"
-//#include "btkInitialDensity.h"
 #include "btkAPrioriDensity.h"
 #include "btkLikelihoodDensity.h"
 #include "btkParticleFilter.h"
@@ -86,6 +84,7 @@ int main(int argc, char *argv[])
     Real epsilon;
     Real Kappa;
     Real angleThreshold;
+    Float seedSpacing;
 
 
     try
@@ -118,6 +117,7 @@ int main(int argc, char *argv[])
             TCLAP::ValueArg<Real>    stepSizeArg("", "step_size", "Step size of particles displacement", false, 0.5, "Real", cmd);
             TCLAP::ValueArg<Real>    KappaArg("", "curve_constraint", "Curve constraint of a particle's trajectory", false, 30.0, "Real", cmd);
             TCLAP::ValueArg<Real>    angleThreshArg("", "angular_threshold", "Angular threshold between successive displacement vector of a particle's trajectory", false, M_PI/3., "Real", cmd);
+            TCLAP::ValueArg<Real>    seedSpacingArg("", "seed_spacing", "Spacing in mm between seeds", false, 1.0, "float", cmd);
 
             // Parsing arguments
             cmd.parse(argc, argv);
@@ -143,6 +143,7 @@ int main(int argc, char *argv[])
             stepSize       = stepSizeArg.getValue();
             Kappa          = KappaArg.getValue();
             angleThreshold = angleThreshArg.getValue();
+            seedSpacing    = seedSpacingArg.getValue();
     }
     catch(TCLAP::ArgException &e)
     {
@@ -201,12 +202,13 @@ int main(int argc, char *argv[])
         Signal *signalFun = new Signal(signal, sigmas, directions, displayMode);
 
         // Read label image if any and verify sizes
-        ImageReader::Pointer labelReader = ImageReader::New();
+        LabelMapReader::Pointer labelReader = LabelMapReader::New();
         labelReader->SetFileName(labelFilename);
         labelReader->Update();
-        Image::Pointer labelVolume = labelReader->GetOutput();
+        LabelMap::Pointer labelVolume = labelReader->GetOutput();
 
 
+        // Initialize output structures
         vtkSmartPointer<vtkAppendPolyData> append = vtkSmartPointer<vtkAppendPolyData>::New();
 
         Image::Pointer connectMap = Image::New();
@@ -217,20 +219,44 @@ int main(int argc, char *argv[])
         connectMap->Allocate();
         connectMap->FillBuffer(0);
 
+        // Resample label map
+        LabelResampler::Pointer resampler = LabelResampler::New();
+        resampler->SetInput(labelVolume);
+
+        LabelInterpolator::Pointer interpolator = LabelInterpolator::New();
+        resampler->SetInterpolator(interpolator);
+
+        LabelMap::SpacingType spacing = labelVolume->GetSpacing();
+        LabelMap::SizeType size = labelVolume->GetLargestPossibleRegion().GetSize();
+        size[0] *= spacing[0]/seedSpacing; size[1] *= spacing[1]/seedSpacing; size[2] *= spacing[2]/seedSpacing;
+        resampler->SetSize(size);
+
+        LabelMap::DirectionType direction = labelVolume->GetDirection();
+        resampler->SetOutputDirection(direction);
+
+        LabelMap::PointType origin = labelVolume->GetOrigin();
+        resampler->SetOutputOrigin(origin);
+
+        spacing[0] = seedSpacing; spacing[1] = seedSpacing; spacing[2] = seedSpacing;
+        resampler->SetOutputSpacing(spacing);
+
+        resampler->Update();
+        LabelMap::Pointer resampledLabelVolume = resampler->GetOutput();
+
 
         // Apply filter on each labeled voxels
-        ImageIterator it(labelVolume, labelVolume->GetLargestPossibleRegion());
+        LabelMapIterator labelIt(resampledLabelVolume, resampledLabelVolume->GetLargestPossibleRegion());
 
-        for(it.GoToBegin(); !it.IsAtEnd(); ++it)
+        for(labelIt.GoToBegin(); !labelIt.IsAtEnd(); ++labelIt)
         {
-            int label = (int)it.Get();
+            int label = (int)labelIt.Get();
 
             if(label != 0)
             {
-                Image::IndexType index = it.GetIndex();
+                LabelMap::IndexType index = labelIt.GetIndex();
 
                 itk::Point<Real,3> worldPoint;
-                labelVolume->TransformIndexToPhysicalPoint(index, worldPoint);
+                resampledLabelVolume->TransformIndexToPhysicalPoint(index, worldPoint);
 
                 Mask::IndexType maskIndex;
                 mask->TransformPhysicalPointToIndex(worldPoint, maskIndex);
@@ -285,7 +311,7 @@ int main(int argc, char *argv[])
 
         // Normalize connection map
         Real max = 0;
-        it = ImageIterator(connectMap, connectMap->GetLargestPossibleRegion());
+        ImageIterator it(connectMap, connectMap->GetLargestPossibleRegion());
 
         for(it.GoToBegin(); !it.IsAtEnd(); ++it)
         {
