@@ -253,6 +253,25 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 
   }
 
+}
+
+template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
+void
+SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
+::OptimizeByLeastSquares()
+{
+
+  vnl_vector<double> x(1);
+  x[0] = 10;
+
+  vnl_my_cost_fun f;
+  vnl_conjugate_gradient cg(f);
+  cg.minimize(x);
+
+  std::cout << "Function value = " << f.f(x) << " at " << x << std::endl;
+
+  cg.diagnose_outcome();
+
 
 }
 
@@ -534,7 +553,6 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 
   UpdateSimulatedImages();
 
-  return;
 }
 
 
@@ -558,7 +576,14 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 ::GenerateData()
 {
   CreateH();
-  OptimizeByBackprojection();
+  if (m_OptimizationMethod == MSE)
+  {
+    OptimizeByLeastSquares();  
+  } else
+    {
+      OptimizeByBackprojection();
+    }
+  
   UpdateSimulatedImages();
 
   // Get the output pointers

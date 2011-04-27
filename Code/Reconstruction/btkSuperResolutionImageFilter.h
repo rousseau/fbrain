@@ -47,6 +47,8 @@
 #include "itkSize.h"
 #include "btkUserMacro.h"
 #include "vnl/vnl_sparse_matrix.h"
+#include "vnl/algo/vnl_conjugate_gradient.h"
+#include "vnl/vnl_cost_function.h"
 #include "btkLinearInterpolateImageFunctionWithWeights.h"
 #include "btkOrientedSpatialFunction.h"
 #include "itkImageDuplicator.h"
@@ -341,11 +343,28 @@ protected:
   void GenerateData();
 
 private:
+
+  class vnl_my_cost_fun : public vnl_cost_function
+  {
+    public: vnl_my_cost_fun(): vnl_cost_function(1) {}
+
+    double f(const vnl_vector<double>& x)
+    {
+      return (x[0]-5)*(x[0]-5)+10;
+    }
+
+    void gradf(const vnl_vector<double>& x, vnl_vector<double>& g)
+    {
+      g[0] = 2 *x[0]-10;
+    }
+  }; 
+
   SuperResolutionImageFilter( const Self& ); //purposely not implemented
   void operator=( const Self& ); //purposely not implemented
 
   void CreateH();
   void OptimizeByBackprojection();
+  void OptimizeByLeastSquares();
 
   SizeType                    m_Size;              // Size of the output image
   TransformPointerArrayType   m_Transform;         // Coordinate transform to use
