@@ -357,7 +357,7 @@ private:
     {
       g[0] = 2 *x[0]-10;
     }
-  }; 
+  };
 
   SuperResolutionImageFilter( const Self& ); //purposely not implemented
   void operator=( const Self& ); //purposely not implemented
@@ -382,6 +382,12 @@ private:
   std::vector< VnlVectorType >       m_y;
   std::vector< VnlVectorType >       m_ysim;
   VnlVectorType                      m_x;
+
+  // Precomputed values for optimization
+
+  VnlSparseMatrixType HtH;
+  VnlVectorType HtY;
+  double YtY;
 
   unsigned int m_Iterations;
 

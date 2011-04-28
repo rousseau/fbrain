@@ -261,7 +261,113 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 ::OptimizeByLeastSquares()
 {
 
-  vnl_vector<double> x(1);
+  VnlSparseMatrixType H;
+  VnlSparseMatrixType Ht;
+  VnlVectorType 			Y;
+
+  // Precompute some matrices
+  unsigned int ncols = m_x.size();
+  unsigned int nrows = 0;
+
+  for(unsigned int im = 0; im < m_ImageArray.size(); im++)
+    nrows += m_H[im].rows();
+
+  // TODO These matrices are a reorganization of existing ones to perform a simpler
+  // optimization. We should chose a representation for the final version of the library
+  // if a lot of memory is used.
+
+  H.set_size(nrows,ncols);
+  Ht.set_size(ncols,nrows);
+//  HtH.set_size(ncols,ncols);
+  Y.set_size(nrows);
+//  HtY.set_size(ncols);
+
+  std::cout << "nrows = " << nrows << std::endl;
+  std::cout << "ncols = " << ncols << std::endl;
+
+  std::cout << "Precomputing H, Ht, and Y" << std::endl; std::cout.flush();
+
+  unsigned int offset = 0;
+
+  // Create H, Ht, and Y
+
+  for(unsigned int im = 0; im < m_ImageArray.size(); im++)
+  {
+    unsigned int nrows = m_H[im].rows();
+
+    std::cout << nrows << std::endl;
+
+    for (unsigned int i = 0; i < nrows; i++)
+    {
+      VnlSparseMatrixType::row & r = m_H[im].get_row(i);
+      VnlSparseMatrixType::row::iterator col_iter = r.begin();
+
+      for ( ;col_iter != r.end(); ++col_iter)
+      {
+        H( i + offset, (*col_iter).first ) = (*col_iter).second;
+        Ht( (*col_iter).first, i + offset ) = (*col_iter).second;
+      }
+
+      Y[i+offset] = m_y[im][i];
+    }
+    offset += nrows;
+  }
+
+  // precalcule Ht * H
+  std::cout << "Precomputing Ht*H" << std::endl; std::cout.flush();
+
+  HtH = Ht * H;
+  H.clear();
+
+/*  for (unsigned int i = 0; i < m_HtH_ls.rows(); i++)
+  {
+    for (unsigned int j = 0; j < m_HtH_ls.cols(); j++)
+    {
+//      std::cout << i << "," << j << std::endl;
+      double dot_product = 0.0;
+
+      VnlSparseMatrixType::row & r = Ht.get_row(i);
+      VnlSparseMatrixType::row::iterator row_iter = r.begin();
+
+      VnlSparseMatrixType::row & c = Ht.get_row(j);
+      VnlSparseMatrixType::row::iterator col_iter = c.begin();
+
+      if ( col_iter != c.end() )
+        for ( ;row_iter != r.end(); ++row_iter)
+          dot_product += (*row_iter).second * H.get((*row_iter).first,j );
+
+      m_HtH_ls( i, j ) = dot_product;
+    }
+  }
+  */
+
+  // precalcule Ht * Y
+  std::cout << "Precomputing Ht*Y" << std::endl; std::cout.flush();
+
+  Ht.mult(Y,HtY);
+  Ht.clear();
+
+
+/*  for (unsigned int i = 0; i < m_HtH_ls.rows(); i++)
+  {
+    double dot_product = 0.0;
+
+    VnlSparseMatrixType::row & r = Ht.get_row(i);
+    VnlSparseMatrixType::row::iterator row_iter = r.begin();
+
+    for ( ;row_iter != r.end(); ++row_iter)
+      dot_product += (*row_iter).second * Y.get((*row_iter).first);
+
+    m_HtY_ls( i ) = dot_product;
+  }
+*/
+
+  // precalcule Yt * Y (m_YtY_ls)
+  std::cout << "Precomputing Yt*Y" << std::endl; std::cout.flush();
+  YtY = Y.squared_magnitude();
+
+
+/*  vnl_vector<double> x(1);
   x[0] = 10;
 
   vnl_my_cost_fun f;
@@ -271,7 +377,7 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   std::cout << "Function value = " << f.f(x) << " at " << x << std::endl;
 
   cg.diagnose_outcome();
-
+*/
 
 }
 
@@ -337,6 +443,8 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 
   m_x.set_size( ncols );
 
+  std::cout << "Number of voxels SR image = " << m_x.size() << std::endl;
+
   // Fills x vector, since it does not change during H contruction
   OutputIteratorType hrIt( this -> GetReferenceImage(), m_OutputImageRegion );
 
@@ -371,6 +479,8 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
     std::cout << "Creating H matrix for image " << im << std::endl; std::cout.flush();
 
     unsigned int nrows = m_InputImageRegion[im].GetNumberOfPixels();
+
+    std::cout << "Number of voxels input image " << im << " = " << nrows << std::endl;
 
     m_H[im].set_size(nrows, ncols);
     m_Ht[im].set_size(ncols, nrows);
@@ -508,6 +618,7 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 
     }
 
+    // Create the transpose of H
 
     for (unsigned int i = 0; i < nrows; i++)
     {
@@ -578,12 +689,12 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   CreateH();
   if (m_OptimizationMethod == MSE)
   {
-    OptimizeByLeastSquares();  
+    OptimizeByLeastSquares();
   } else
     {
       OptimizeByBackprojection();
     }
-  
+
   UpdateSimulatedImages();
 
   // Get the output pointers
