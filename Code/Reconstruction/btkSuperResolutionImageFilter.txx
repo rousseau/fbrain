@@ -264,9 +264,15 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   VnlSparseMatrixType H;
   VnlSparseMatrixType Ht;
   VnlVectorType 			Y;
+  vnl_vector<double>  x;
+
+  x.set_size( m_x.size() );
+  for(unsigned int i=0; i<m_x.size(); i++)
+    x[i] = m_x[i];
+
 
   // Precompute some matrices
-  unsigned int ncols = m_x.size();
+  unsigned int ncols = x.size();
   unsigned int nrows = 0;
 
   for(unsigned int im = 0; im < m_ImageArray.size(); im++)
@@ -367,17 +373,14 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   YtY = Y.squared_magnitude();
 
 
-/*  vnl_vector<double> x(1);
-  x[0] = 10;
-
-  vnl_my_cost_fun f;
+  LeastSquaresVnlCostFunction f;
   vnl_conjugate_gradient cg(f);
   cg.minimize(x);
 
-  std::cout << "Function value = " << f.f(x) << " at " << x << std::endl;
+//  std::cout << "Function value = " << f.f(x) << " at " << x << std::endl;
 
   cg.diagnose_outcome();
-*/
+
 
 }
 

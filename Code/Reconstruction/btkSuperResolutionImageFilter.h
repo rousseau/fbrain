@@ -48,7 +48,7 @@
 #include "btkUserMacro.h"
 #include "vnl/vnl_sparse_matrix.h"
 #include "vnl/algo/vnl_conjugate_gradient.h"
-#include "vnl/vnl_cost_function.h"
+#include "btkLeastSquaresVnlCostFunction.h"
 #include "btkLinearInterpolateImageFunctionWithWeights.h"
 #include "btkOrientedSpatialFunction.h"
 #include "itkImageDuplicator.h"
@@ -344,12 +344,13 @@ protected:
 
 private:
 
-  class vnl_my_cost_fun : public vnl_cost_function
+/*  class vnl_my_cost_fun : public vnl_cost_function
   {
     public: vnl_my_cost_fun(): vnl_cost_function(1) {}
 
     double f(const vnl_vector<double>& x)
     {
+      std::cout << m_x.size();
       return (x[0]-5)*(x[0]-5)+10;
     }
 
@@ -357,7 +358,7 @@ private:
     {
       g[0] = 2 *x[0]-10;
     }
-  };
+  };*/
 
   SuperResolutionImageFilter( const Self& ); //purposely not implemented
   void operator=( const Self& ); //purposely not implemented
@@ -405,7 +406,7 @@ private:
 };
 
 
-} // end namespace itk
+} // end namespace btk
 
 #ifndef ITK_MANUAL_INSTANTIATION
 #include "btkSuperResolutionImageFilter.txx"
