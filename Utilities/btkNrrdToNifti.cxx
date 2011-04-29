@@ -127,10 +127,16 @@ int main(int argc, char *argv[])
 
         while(!stop && (headFile >> s))
         {
-            if(s == "DWMRI_b-value:=")
+            if(s == "DWMRI_b-value")
+            {
+                headFile >> s;
                 headFile >> bvalue;
-            else if(s == "DWMRI_gradient_0000:=")
+            }
+            else if(s == "DWMRI_gradient_0000")
+            {
+                headFile >> s;
                 stop = true;
+            }
         }
 
         std::vector<double> vx;
@@ -153,6 +159,7 @@ int main(int argc, char *argv[])
                 else
                     bvals.push_back(bvalue);
 
+                headFile >> s;
                 headFile >> s;
             }
 
