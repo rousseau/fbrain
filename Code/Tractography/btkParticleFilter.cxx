@@ -68,7 +68,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 #define Ind(i,j) (m_M*(i) + (j))
 
-#define KAPPA 40
+#define KAPPA 180
 
 
 namespace btk
@@ -338,6 +338,8 @@ void ParticleFilter::run(int label, Direction dir)
                 m_cloud[m].addLikelihood(likelihood);
 
                 weights[m] = m_cloud[m].weight() * std::exp(likelihood + apriori - importance);
+
+                assert(weights[m] >= 0.0);
             }
         } // for i particles
 
@@ -352,12 +354,17 @@ void ParticleFilter::run(int label, Direction dir)
             }
         } // for each particle
 
+        if(sum <= 0.0)
+            sum = 1;
+        assert(sum > 0.0);
+
         // Normalize particles' weights
         #pragma omp parallel for
         for(unsigned int m=0; m<m_M; m++)
         {
             if(m_cloud[m].isActive()) // m is active
             {
+                assert(weights[m]/sum >= 0.0);
                 m_cloud[m].setWeight(weights[m]/sum);
             }
         }
@@ -390,6 +397,7 @@ void ParticleFilter::run(int label, Direction dir)
             else // ESS >= m_epsilon*(nbInsPart)
                 Display2(m_displayMode, std::cout << " (ESS = " << (ESS/nbInsPart)*100.0 << "%) " << std::flush);
 
+
             for(unsigned int m=0; m<m_M; m++)
             {
                 if(m_cloud[m].isOutside() && m_cloud[m].isActive())
@@ -398,6 +406,7 @@ void ParticleFilter::run(int label, Direction dir)
                     nbInsPart--;
                 }
             }
+
         }
 
 //        this->saveCloudInVTK(label, m_k, m_x0);
@@ -409,7 +418,7 @@ void ParticleFilter::run(int label, Direction dir)
 
     delete[] weights;
 
-    this->saveCloudInVTK(label, m_k-1, m_x0);
+//    this->saveCloudInVTK(label, m_k-1, m_x0);
 
     m_dirNum++;
 }
@@ -441,6 +450,8 @@ void ParticleFilter::ResampleCloud(unsigned int nbInsPart)
 
     Real w    = 1.0/(Real)nbInsPart;
 
+    assert(w >= 0.0);
+
     // Get M particles from the cloud
     // keeping proportionnality
     // (multinomial resampling)
@@ -461,6 +472,7 @@ void ParticleFilter::ResampleCloud(unsigned int nbInsPart)
                 else
                     i++;
             } while(!found && i < nbInsPart);
+
             m_cloud[m].SetLastPoint(m_cloud[index[i]].lastPoint());
             m_cloud[m].SetLastVector(m_cloud[index[i]].lastVector());
             m_cloud[m].SetLastWeight(w);
@@ -487,7 +499,6 @@ void ParticleFilter::saveCloudInVTK(int label, unsigned int step, Point begin)
     vtkIdType pid[1];
     colors->SetNumberOfComponents(1);
 
-
     // create all points and lines
     for(std::vector<Particle>::iterator pIt = m_cloud.begin(); pIt != m_cloud.end(); pIt++)
     {
@@ -508,7 +519,6 @@ void ParticleFilter::saveCloudInVTK(int label, unsigned int step, Point begin)
 
             double color[1]; color[0] = pIt->weight();
             colors->InsertNextTupleValue(color);
-
 
             for(unsigned int i=1; i<=pIt->length(); i++)
             {
@@ -585,6 +595,7 @@ Particle ParticleFilter::GetMAP()
 
     // Compute delta and psi by dynamic programming
 
+    #pragma omp parallel for
     for(unsigned int m=0; m<m_M; m++)
     {
         delta[Ind(0,m)] = m_aPriori.compute(m_cloud[m].getVector(1).toDirection(), m_cloud[m].getVector(0).toDirection()) + m_cloud[m].getLikelihood(0);
@@ -599,6 +610,7 @@ Particle ParticleFilter::GetMAP()
 
     for(unsigned int k=1; k<t; k++)
     {
+        #pragma omp parallel for
         for(unsigned int m=0; m<m_M; m++)
         {
             if(k+1 < m_cloud[m].length())
@@ -606,14 +618,14 @@ Particle ParticleFilter::GetMAP()
                 Real max          = MIN_REAL;
                 unsigned int imax = 0;
 
+                Point xkp1m = m_cloud[m].getPoint(k+1);
+
                 for(unsigned int i=0; i<m_M; i++)
                 {
                     if(k < m_cloud[i].length())
                     {
-                        Point xki = m_cloud[i].getPoint(k+1);
-                        Point xkm = m_cloud[m].getPoint(k+1);
-
-                        Real distance = std::sqrt( (xki.x()-xkm.x())*(xki.x()-xkm.x()) + (xki.y()-xkm.y())*(xki.y()-xkm.y()) + (xki.z()-xkm.z())*(xki.z()-xkm.z()));
+                        Point xkp1i     = m_cloud[i].getPoint(k+1);
+                        Real distance = std::sqrt( (xkp1i.x()-xkp1m.x())*(xkp1i.x()-xkp1m.x()) + (xkp1i.y()-xkp1m.y())*(xkp1i.y()-xkp1m.y()) + (xkp1i.z()-xkp1m.z())*(xkp1i.z()-xkp1m.z()));
 
                         if(distance <= 0.01)
                         {
@@ -641,7 +653,7 @@ Particle ParticleFilter::GetMAP()
             }
             else
             {
-                delta[Ind(k,m)] = MIN_REAL;
+                delta[Ind(k,m)] = 0;
                 psi[Ind(k-1,m)] = m;
             }
         }
@@ -668,9 +680,10 @@ Particle ParticleFilter::GetMAP()
 //}
 //std::cerr << std::endl;
 
+
     // Backtracking
 
-    std::vector<Direction> states;
+    std::vector<Point> points;
 
     Real max          = MIN_REAL;
     unsigned int mmax = 0;
@@ -685,32 +698,30 @@ Particle ParticleFilter::GetMAP()
             mmax = m;
         }
     }
-    states.push_back(m_cloud[mmax].getVector(t).toDirection());
 
-//std::cerr << "map(" << t-1 << ") = " << mmax << std::endl;
+    points.push_back(m_cloud[mmax].getPoint(t));
 
     for(int k=t-2; k>=0; k--)
     {
         mmax = psi[Ind(k,mmax)];
-        states.push_back(m_cloud[mmax].getVector(k+1).toDirection());
-
-//std::cerr << "map(" << k << ") = " << mmax << std::endl;
-
+        points.push_back(m_cloud[mmax].getPoint(k+1));
     }
-    states.push_back(m_cloud[mmax].getVector(0).toDirection());
 
 
     delete[] psi;
     delete[] delta;
 
 
-    // Get MAP estimate
+    // Compute MAP estimate
 
     Particle map(m_x0);
 
-    for(unsigned int k=0; k<states.size(); k++)
+    for(int k=points.size()-1; k>=0; k--)
     {
-        map.addToPath(states[states.size()-1-k].toVector()*m_stepSize, m_mask);
+        Point p1 = map.lastPoint();
+        Point p2 = points[k];
+        Vector v(p2.x()-p1.x(), p2.y()-p1.y(), p2.z()-p1.z());
+        map.addToPath(v*m_stepSize, m_mask);
         map.setWeight(1);
     }
 
@@ -777,9 +788,9 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
     m_map->TransformContinuousIndexToPhysicalPoint(cix0, wx0);
 
     if(m_lps)
-        points1->InsertNextPoint(wx0[0], wx0[1], wx0[2]);
+        points2->InsertNextPoint(wx0[0], wx0[1], wx0[2]);
     else // ras
-        points1->InsertNextPoint(-wx0[0], -wx0[1], wx0[2]);
+        points2->InsertNextPoint(-wx0[0], -wx0[1], wx0[2]);
 
     for(unsigned int k=1; k<map2.length(); k++)
     {
@@ -793,9 +804,9 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
         m_map->TransformContinuousIndexToPhysicalPoint(cip, wp);
 
         if(m_lps)
-            pid[0] = points1->InsertNextPoint(wp[0], wp[1], wp[2]);
+            pid[0] = points2->InsertNextPoint(wp[0], wp[1], wp[2]);
         else // ras
-            pid[0] = points1->InsertNextPoint(-wp[0], -wp[1], wp[2]);
+            pid[0] = points2->InsertNextPoint(-wp[0], -wp[1], wp[2]);
 
         line->GetPointIds()->SetId(0, pid[0]-1);
         line->GetPointIds()->SetId(1, pid[0]);
