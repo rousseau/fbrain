@@ -153,6 +153,47 @@ void SignalExtractor::readFiles(const std::string &vectorsFileName, const std::s
 void SignalExtractor::extract()
 {
     SequenceRegion dataRegion = m_data->GetLargestPossibleRegion();
+
+    // Resample mask image
+    MaskResampler::Pointer maskResampler = MaskResampler::New();
+    maskResampler->SetInput(m_mask);
+
+    MaskInterpolator::Pointer maskInterpolator = MaskInterpolator::New();
+    maskResampler->SetInterpolator(maskInterpolator);
+
+    Mask::SizeType msize;
+    msize[0] = dataRegion.GetSize(0); msize[1] = dataRegion.GetSize(1); msize[2] = dataRegion.GetSize(2);
+    maskResampler->SetSize(msize);
+
+    itk::Matrix<Real,3,3> dirMat;
+    itk::Matrix<Real,4,4> iniMat = m_data->GetDirection();
+
+    dirMat(0,0) = iniMat(0,0);
+    dirMat(0,1) = iniMat(0,1);
+    dirMat(0,2) = iniMat(0,2);
+
+    dirMat(1,0) = iniMat(1,0);
+    dirMat(1,1) = iniMat(1,1);
+    dirMat(1,2) = iniMat(1,2);
+
+    dirMat(2,0) = iniMat(2,0);
+    dirMat(2,1) = iniMat(2,1);
+    dirMat(2,2) = iniMat(2,2);
+
+    maskResampler->SetOutputDirection(dirMat);
+
+    Mask::PointType morigin;
+    morigin[0] = m_data->GetOrigin()[0]; morigin[1] = m_data->GetOrigin()[1]; morigin[2] = m_data->GetOrigin()[2];
+    maskResampler->SetOutputOrigin(morigin);
+
+    Mask::SpacingType mspacing;
+    mspacing[0] = m_data->GetSpacing()[0]; mspacing[1] = m_data->GetSpacing()[1]; mspacing[2] = m_data->GetSpacing()[2];
+    maskResampler->SetOutputSpacing(mspacing);
+
+    maskResampler->Update();
+    m_mask = maskResampler->GetOutput();
+
+
     MaskRegion maskRegion     = m_mask->GetLargestPossibleRegion();
 
     unsigned int nbOfImages = m_directions->size() + m_refIm->size();
@@ -221,21 +262,6 @@ void SignalExtractor::extract()
         b0origin[1] = m_data->GetOrigin()[1];
         b0origin[2] = m_data->GetOrigin()[2];
         B0->SetOrigin(b0origin);
-
-        itk::Matrix<Real,3,3> dirMat;
-        itk::Matrix<Real,4,4> iniMat = m_data->GetDirection();
-
-        dirMat(0,0) = iniMat(0,0);
-        dirMat(0,1) = iniMat(0,1);
-        dirMat(0,2) = iniMat(0,2);
-
-        dirMat(1,0) = iniMat(1,0);
-        dirMat(1,1) = iniMat(1,1);
-        dirMat(1,2) = iniMat(1,2);
-
-        dirMat(2,0) = iniMat(2,0);
-        dirMat(2,1) = iniMat(2,1);
-        dirMat(2,2) = iniMat(2,2);
 
         B0->SetDirection(dirMat);
 

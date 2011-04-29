@@ -229,6 +229,17 @@ knowledge of the CeCILL-B license and that you accept its terms.
         typedef itk::ImageFileWriter<Mask> MaskWriter;
 
         /**
+         * Image mask's resampler
+         */
+        typedef itk::ResampleImageFilter<Mask,Mask> MaskResampler;
+
+        /**
+         * Image mask's interpolator
+         */
+        typedef itk::NearestNeighborInterpolateImageFunction<Mask,double> MaskInterpolator;
+
+
+        /**
          * Dimension of a label map
          */
         const unsigned int LabelDimension = 3;

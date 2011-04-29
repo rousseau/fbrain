@@ -111,6 +111,12 @@ knowledge of the CeCILL-B license and that you accept its terms.
             Image::SpacingType getSpacing();
 
             /**
+             * @brief Get image's direction
+             * @return Direction of the 3D image
+             */
+             Image::DirectionType getDirection();
+
+            /**
              * @brief Get gradient directions
              * @return Pointer to vector of gradient directions
              */

@@ -390,6 +390,11 @@ Image::SpacingType Signal::getSpacing()
     return m_signal[0]->GetSpacing();
 }
 
+Image::DirectionType Signal::getDirection()
+{
+    return m_signal[0]->GetDirection();
+}
+
 std::vector<Direction> *Signal::getDirections()
 {
     return m_directions;

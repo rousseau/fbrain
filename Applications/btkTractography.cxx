@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
             TCLAP::ValueArg<unsigned int> orderArg("", "model_order", "Order of the model (i.e. of spherical harmonics)", false, 4, "unsigned int", cmd);
             TCLAP::ValueArg<Real>    lambdArg("", "model_regularization", "Regularization coefficient of the model", false, 0.006, "Real", cmd);
             TCLAP::ValueArg<unsigned int> particlesArg("", "number_of_particles", "Number of particles", false, 1000, "unsigned int", cmd);
-            TCLAP::ValueArg<Real>    epsilonArg("", "resampling_threshold", "Resampling treshold", false, 0.6, "Real", cmd);
+            TCLAP::ValueArg<Real>    epsilonArg("", "resampling_threshold", "Resampling treshold", false, 0.01, "Real", cmd);
             TCLAP::ValueArg<Real>    stepSizeArg("", "step_size", "Step size of particles displacement", false, 0.5, "Real", cmd);
             TCLAP::ValueArg<Real>    KappaArg("", "curve_constraint", "Curve constraint of a particle's trajectory", false, 30.0, "Real", cmd);
             TCLAP::ValueArg<Real>    angleThreshArg("", "angular_threshold", "Angular threshold between successive displacement vector of a particle's trajectory", false, M_PI/3., "Real", cmd);
@@ -219,30 +219,30 @@ int main(int argc, char *argv[])
         connectMap->Allocate();
         connectMap->FillBuffer(0);
 
-        // Resample label map
-        LabelResampler::Pointer resampler = LabelResampler::New();
-        resampler->SetInput(labelVolume);
 
-        LabelInterpolator::Pointer interpolator = LabelInterpolator::New();
-        resampler->SetInterpolator(interpolator);
+        // Resample label map
+        LabelResampler::Pointer labelResampler = LabelResampler::New();
+        labelResampler->SetInput(labelVolume);
+
+        LabelInterpolator::Pointer labelInterpolator = LabelInterpolator::New();
+        labelResampler->SetInterpolator(labelInterpolator);
 
         LabelMap::SpacingType spacing = labelVolume->GetSpacing();
         LabelMap::SizeType size = labelVolume->GetLargestPossibleRegion().GetSize();
         size[0] *= spacing[0]/seedSpacing; size[1] *= spacing[1]/seedSpacing; size[2] *= spacing[2]/seedSpacing;
-        resampler->SetSize(size);
+        labelResampler->SetSize(size);
 
         LabelMap::DirectionType direction = labelVolume->GetDirection();
-        resampler->SetOutputDirection(direction);
+        labelResampler->SetOutputDirection(direction);
 
         LabelMap::PointType origin = labelVolume->GetOrigin();
-        resampler->SetOutputOrigin(origin);
+        labelResampler->SetOutputOrigin(origin);
 
         spacing[0] = seedSpacing; spacing[1] = seedSpacing; spacing[2] = seedSpacing;
-        resampler->SetOutputSpacing(spacing);
+        labelResampler->SetOutputSpacing(spacing);
 
-        resampler->Update();
-        LabelMap::Pointer resampledLabelVolume = resampler->GetOutput();
-
+        labelResampler->Update();
+        LabelMap::Pointer resampledLabelVolume = labelResampler->GetOutput();
 
         // Apply filter on each labeled voxels
         LabelMapIterator labelIt(resampledLabelVolume, resampledLabelVolume->GetLargestPossibleRegion());
