@@ -645,15 +645,15 @@ Particle ParticleFilter::GetMAP()
                     delta[Ind(k,m)] = m_cloud[m].getLikelihood(k);
                     psi[Ind(k-1,m)] = m;
                 }
-                else
+                else // max <> MIN_REAL
                 {
                     delta[Ind(k,m)] = m_cloud[m].getLikelihood(k) + max;
                     psi[Ind(k-1,m)] = imax;
                 }
             }
-            else
+            else // k+1 >= m_cloud[m].length()
             {
-                delta[Ind(k,m)] = 0;
+                delta[Ind(k,m)] = delta[Ind(k-1,m)] + std::abs(delta[Ind(k-1,m)] - delta[Ind(k-2,m)]);
                 psi[Ind(k-1,m)] = m;
             }
         }
@@ -699,12 +699,19 @@ Particle ParticleFilter::GetMAP()
         }
     }
 
-    points.push_back(m_cloud[mmax].getPoint(t));
+    int len = m_cloud[mmax].length();
+    points.push_back(m_cloud[mmax].getPoint(len));
 
     for(int k=t-2; k>=0; k--)
     {
         mmax = psi[Ind(k,mmax)];
-        points.push_back(m_cloud[mmax].getPoint(k+1));
+
+        int len = m_cloud[mmax].length();
+
+        if(k+1 <= len)
+            points.push_back(m_cloud[mmax].getPoint(k+1));
+        else // k+1 > len
+            points.push_back(m_cloud[mmax].getPoint(len));
     }
 
 
