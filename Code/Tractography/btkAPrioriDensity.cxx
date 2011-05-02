@@ -62,15 +62,6 @@ Real APrioriDensity::compute(Direction uk, Direction ukm1)
     return m_C + m_K * (vk.x()*vkm1.x() + vk.y()*vkm1.y() + vk.z()*vkm1.z());
 }
 
-//Real APrioriDensity::compute(Direction uk, Direction ukm1)
-//{
-//    Vector vk   = uk.toVector();
-//    Vector vkm1 = ukm1.toVector();
-//
-//    return ( m_K / (4.0*M_PI*std::sinh(m_K)) ) * std::exp( m_K * (vk.x()*vkm1.x() + vk.y()*vkm1.y() + vk.z()*vkm1.z()) );
-////    return ( m_K / (2.0*M_PI*(std::exp(m_K)-std::exp(-m_K))) ) * std::exp( m_K * (vk.x()*vkm1.x() + vk.y()*vkm1.y() + vk.z()*vkm1.z()) );
-//}
-
 Direction APrioriDensity::simulate(Direction mean)
 {
     // Sample random scalar
@@ -126,6 +117,11 @@ Direction APrioriDensity::simulate(Direction mean)
     }
 
     return Direction(theta,phi);
+}
+
+Real APrioriDensity::getConcentration() const
+{
+    return m_K;
 }
 
 } // namespace btk

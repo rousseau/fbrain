@@ -73,6 +73,12 @@ knowledge of the CeCILL-B license and that you accept its terms.
                  */
                 Direction simulate(Direction mean);
 
+                /**
+                 * @brief Get concentration of the density
+                 * @return Concentration of the density
+                 */
+                Real getConcentration() const;
+
             private:
                 Real m_K;   /**< Concentration */
                 Real m_C;   /**< Coefficient (for vMF computing) */

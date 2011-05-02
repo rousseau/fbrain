@@ -58,6 +58,18 @@ Vector Direction::toVector()
     return Vector(c.x(), c.y(), c.z());
 }
 
+void Direction::setNull()
+{
+    m_theta = 0;
+    m_phi   = 0;
+    m_rho   = 0;
+}
+
+bool Direction::isNull()
+{
+    return (m_theta == 0) && (m_phi == 0) && (m_rho == 0);
+}
+
 std::ostream &operator<<(std::ostream &os, const Direction& u)
 {
     return os << "(" << u.m_theta << ", " << u.m_phi << ")";

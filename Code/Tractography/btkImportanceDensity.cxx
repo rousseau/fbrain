@@ -113,7 +113,13 @@ Direction ImportanceDensity::computeMeanDirection(Point xk, Direction ukm1)
     else if(maxima.size() == 1)
         return maxima.front();
     else // maxima.size() == 0
-        return ukm1;
+    {
+//        return ukm1;
+        Direction nullDir;
+        nullDir.setNull();
+
+        return nullDir;
+    }
 }
 
 Direction ImportanceDensity::simulate(Direction mean, Real kappa)

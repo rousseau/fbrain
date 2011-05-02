@@ -325,19 +325,28 @@ void ParticleFilter::run(int label, Direction dir)
 
                 // Simulating next direction according importance density
                 Direction mu = m_importance.computeMeanDirection(xk, ukm1);
-                Real kappa   = KAPPA;
+                Real kappa   = mu.isNull() ? m_aPriori.getConcentration() : KAPPA;
                 Direction uk = m_importance.simulate(mu, kappa);
 
                 // Move particle
                 m_cloud[m].addToPath(uk.toVector()*m_stepSize, m_mask);
 
                 // Compute particle's weight
-                Real likelihood = m_likelihood.compute(uk, xk, mu);
-                Real apriori    = m_aPriori.compute(uk, ukm1);
-                Real importance = m_importance.compute(uk, mu, kappa);
-                m_cloud[m].addLikelihood(likelihood);
+                if(mu.isNull())
+                {
+                    m_cloud[m].addLikelihood(0);
 
-                weights[m] = m_cloud[m].weight() * std::exp(likelihood + apriori - importance);
+                    weights[m] = m_cloud[m].weight();
+                }
+                else // mu is not null
+                {
+                    Real likelihood = m_likelihood.compute(uk, xk, mu);
+                    Real apriori    = m_aPriori.compute(uk, ukm1);
+                    Real importance = m_importance.compute(uk, mu, kappa);
+                    m_cloud[m].addLikelihood(likelihood);
+
+                    weights[m] = m_cloud[m].weight() * std::exp(likelihood + apriori - importance);
+                }
 
                 assert(weights[m] >= 0.0);
             }

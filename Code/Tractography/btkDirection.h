@@ -75,6 +75,17 @@ knowledge of the CeCILL-B license and that you accept its terms.
             Vector toVector();
 
             /**
+             * @brief Set the direction to be null
+             */
+            void setNull();
+
+            /**
+             * @brief Get if the direction is null
+             * @return True if the direction is null, false otherwise
+             */
+            bool isNull();
+
+            /**
              * @brief Display the vector on stream outputs
              * @param os Current output stream
              * @param u Direction to display
