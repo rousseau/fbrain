@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
             TCLAP::ValueArg<std::string>  maskArg("m", "mask", "White matter mask", true, "", "string", cmd);
             TCLAP::ValueArg<std::string> labelArg("l", "label", "Label volume of seeds", true, "", "string", cmd);
 
-            TCLAP::ValueArg<std::string>    outMapArg("", "map", "Output connection map file", false, "map.nii.gz", "string", cmd);
+            TCLAP::ValueArg<std::string>    outMapArg("", "map", "Output connection map file", false, "map", "string", cmd);
             TCLAP::ValueArg<std::string> outFibersArg("", "fibers", "Output fibers file", false, "fibers", "string", cmd);
 
             TCLAP::SwitchArg verboseSwitchArg("", "verbose", "Display more informations on standard output", cmd, false);
@@ -210,14 +210,7 @@ int main(int argc, char *argv[])
 
         // Initialize output structures
         std::vector<vtkSmartPointer<vtkAppendPolyData> > fibers;
-
-        Image::Pointer connectMap = Image::New();
-        connectMap->SetOrigin(signalFun->getOrigin());
-        connectMap->SetSpacing(signalFun->getSpacing());
-        connectMap->SetRegions(signalFun->getSize());
-        connectMap->SetDirection(modelFun->GetDirection());
-        connectMap->Allocate();
-        connectMap->FillBuffer(0);
+        std::vector<Image::Pointer> connectMaps;
 
 
         // Resample label map
@@ -292,7 +285,18 @@ int main(int argc, char *argv[])
                     fibers[label-1]->AddInput(filter.GetFiber());
 
 
-                    ImageIterator out(connectMap, connectMap->GetLargestPossibleRegion());
+                    if((unsigned int)label > connectMaps.size())
+                    {
+                        connectMaps.push_back(Image::New());
+                        connectMaps.back()->SetOrigin(signalFun->getOrigin());
+                        connectMaps.back()->SetSpacing(signalFun->getSpacing());
+                        connectMaps.back()->SetRegions(signalFun->getSize());
+                        connectMaps.back()->SetDirection(modelFun->GetDirection());
+                        connectMaps.back()->Allocate();
+                        connectMaps.back()->FillBuffer(0);
+                    }
+
+                    ImageIterator out(connectMaps[label-1], connectMaps[label-1]->GetLargestPossibleRegion());
                     ImageIterator  in(filter.GetConnectionMap(), filter.GetConnectionMap()->GetLargestPossibleRegion());
 
                     for(in.GoToBegin(), out.GoToBegin(); !in.IsAtEnd() && !out.IsAtEnd(); ++in, ++out)
@@ -313,35 +317,39 @@ int main(int argc, char *argv[])
     // Writing files
     //
 
-        // Normalize connection map
-        Real max = 0;
-        ImageIterator it(connectMap, connectMap->GetLargestPossibleRegion());
-
-        for(it.GoToBegin(); !it.IsAtEnd(); ++it)
+        // Normalize and write connection map image
+        for(unsigned int label = 0; label < connectMaps.size(); label++)
         {
-            if(max < it.Get())
-                max = it.Get();
-        }
+            Real max = 0;
+            ImageIterator it(connectMaps[label], connectMaps[label]->GetLargestPossibleRegion());
 
-        if(max > 0)
-        {
             for(it.GoToBegin(); !it.IsAtEnd(); ++it)
-                it.Set(it.Get() / max);
-        }
+            {
+                if(max < it.Get())
+                    max = it.Get();
+            }
 
+            if(max > 0)
+            {
+                for(it.GoToBegin(); !it.IsAtEnd(); ++it)
+                    it.Set(it.Get() / max);
+            }
 
-        // Write connection map image
-        try
-        {
-            ImageWriter::Pointer writer = ImageWriter::New();
-            writer->SetFileName(outMapFileName.c_str());
-            writer->SetInput(connectMap);
-            writer->Update();
-        }
-        catch(itk::ImageFileWriterException &err)
-        {
-            std::cout << "Error: " << std::endl;
-            std::cout << err << std::endl;
+            try
+            {
+                std::stringstream filename;
+                filename << outMapFileName << "-" << label+1 << ".nii.gz";
+
+                ImageWriter::Pointer writer = ImageWriter::New();
+                writer->SetFileName(filename.str().c_str());
+                writer->SetInput(connectMaps[label]);
+                writer->Update();
+            }
+            catch(itk::ImageFileWriterException &err)
+            {
+                std::cout << "Error: " << std::endl;
+                std::cout << err << std::endl;
+            }
         }
 
         // Write fiber polydata
