@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
             TCLAP::ValueArg<std::string> labelArg("l", "label", "Label volume of seeds", true, "", "string", cmd);
 
             TCLAP::ValueArg<std::string>    outMapArg("", "map", "Output connection map file", false, "map.nii.gz", "string", cmd);
-            TCLAP::ValueArg<std::string> outFibersArg("", "fibers", "Output fibers file", false, "fibers.vtk", "string", cmd);
+            TCLAP::ValueArg<std::string> outFibersArg("", "fibers", "Output fibers file", false, "fibers", "string", cmd);
 
             TCLAP::SwitchArg verboseSwitchArg("", "verbose", "Display more informations on standard output", cmd, false);
             TCLAP::SwitchArg quietSwitchArg("", "quiet", "Display no information on either standard and error outputs", cmd, false);
@@ -209,7 +209,7 @@ int main(int argc, char *argv[])
 
 
         // Initialize output structures
-        vtkSmartPointer<vtkAppendPolyData> append = vtkSmartPointer<vtkAppendPolyData>::New();
+        std::vector<vtkSmartPointer<vtkAppendPolyData> > fibers;
 
         Image::Pointer connectMap = Image::New();
         connectMap->SetOrigin(signalFun->getOrigin());
@@ -286,7 +286,11 @@ int main(int argc, char *argv[])
 
 
                     // Save data
-                    append->AddInput(filter.GetFiber());
+
+                    if((unsigned int)label > fibers.size())
+                        fibers.push_back(vtkSmartPointer<vtkAppendPolyData>::New());
+                    fibers[label-1]->AddInput(filter.GetFiber());
+
 
                     ImageIterator out(connectMap, connectMap->GetLargestPossibleRegion());
                     ImageIterator  in(filter.GetConnectionMap(), filter.GetConnectionMap()->GetLargestPossibleRegion());
@@ -341,24 +345,30 @@ int main(int argc, char *argv[])
         }
 
         // Write fiber polydata
-        unsigned int nbOfInputs = append->GetNumberOfInputPorts();
-        bool saveFibers = true;
-        unsigned int i = 0;
-
-        do
+        for(unsigned int label = 0; label < fibers.size(); label++)
         {
-            if(append->GetNumberOfInputConnections(i++) < 1)
-                saveFibers = false;
-        } while(saveFibers && i<nbOfInputs);
+            unsigned int nbOfInputs = fibers[label]->GetNumberOfInputPorts();
+            bool saveFibers = true;
+            unsigned int i = 0;
 
-        if(saveFibers)
-        {
-            append->Update();
-            vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
-            writer->SetInput(append->GetOutput());
-            writer->SetFileName(outFibersFileName.c_str());
-            writer->SetFileTypeToBinary();
-            writer->Write();
+            do
+            {
+                if(fibers[label]->GetNumberOfInputConnections(i++) < 1)
+                    saveFibers = false;
+            } while(saveFibers && i<nbOfInputs);
+
+            if(saveFibers)
+            {
+                std::stringstream filename;
+                filename << outFibersFileName << "-" << label+1 << ".vtk";
+
+                fibers[label]->Update();
+                vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
+                writer->SetInput(fibers[label]->GetOutput());
+                writer->SetFileName(filename.str().c_str());
+                writer->SetFileTypeToBinary();
+                writer->Write();
+            }
         }
 
 
