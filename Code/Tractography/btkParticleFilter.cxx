@@ -867,7 +867,8 @@ void ParticleFilter::ComputeMap()
         {
             // Get data
             Point p = particle->getPoint(k);
-            Real  w = (k == 0) ? 1.0/(Real)m_M : particle->getWeight(k-1);
+//            Real  w = (k == 0) ? 1.0/(Real)m_M : particle->getWeight(k-1);
+            Real w  = 1;
 
             // Tri-linear interpolation
             short x = (short)std::floor(p.x());
