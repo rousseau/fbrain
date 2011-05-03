@@ -47,7 +47,7 @@
 
 #include <iostream>
 
-#include "CmdLine.h"
+#include <tclap/CmdLine.h>
 
 typedef itk::SpatialOrientation::ValidCoordinateOrientationFlags
 SO_OrientationType;

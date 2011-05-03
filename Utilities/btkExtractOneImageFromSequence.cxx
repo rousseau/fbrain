@@ -35,7 +35,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 
 // TCLAP include
-#include "CmdLine.h"
+#include <tclap/CmdLine.h>
 
 // STL includes
 #include "iostream"

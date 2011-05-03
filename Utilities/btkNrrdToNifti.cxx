@@ -33,7 +33,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 #define Pr(x) std::cerr << #x << " = " << x << std::endl
 // TCLAP include
-#include "CmdLine.h"
+#include <tclap/CmdLine.h>
 
 // STL includes
 #include "string"
