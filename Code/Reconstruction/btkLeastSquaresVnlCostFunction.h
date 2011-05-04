@@ -56,56 +56,41 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
   typedef vnl_vector<float> VnlVectorType;
   typedef vnl_sparse_matrix<float> VnlSparseMatrixType;
 
-  double f(const vnl_vector<float>& x)
+  double f(const vnl_vector<double>& x)
   {
+    std::cout << "In f(.)" << std::endl; std::cout.flush();
+
+    vnl_vector<float>  x_float;
+    x_float = vnl_matops::d2f(x);
+
     vnl_vector<float> HxMinusY;
-    H.mult(x,HxMinusY);
+    H.mult(x_float,HxMinusY);
 
     return HxMinusY.squared_magnitude();
   }
 
   // TODO Hvec should be pass as a const argument, see how to improve this
   // (an error is obtained with get_row function)
-  void SetParameters(std::vector< VnlSparseMatrixType >& Hvec, const std::vector< VnlVectorType >& yvec)
+  void SetParameters(const VnlSparseMatrixType & Hin, const VnlVectorType & Yin)
   {
+
+    H = Hin;
+    Y = Yin;
+
+    std::cout << "Hin = " << &Hin << std::endl;
+    std::cout << "H = " << &H << std::endl;
 
     vnl_sparse_matrix<float> Ht;
 
-    // Precompute some matrices
-    unsigned int ncols = Hvec[0].cols();
-    unsigned int nrows = 0;
+    unsigned int Hcols = H.cols();
+    unsigned int Hrows = H.rows();
 
-    for(unsigned int im = 0; im < Hvec.size(); im++)
-      nrows += Hvec[im].rows();
+    Ht.set_size(Hcols,Hrows);
 
-    H.set_size(nrows,ncols);
-    Ht.set_size(ncols,nrows);
-    Y.set_size(nrows);
-
-    // Precalcule H, Ht, and Y
+    // Calculate Ht
     std::cout << "Precomputing H, Ht, and Y" << std::endl; std::cout.flush();
-
-    unsigned int offset = 0;
-
-    // Create H, Ht, and Y
-
-    for(unsigned int im = 0; im < Hvec.size(); im++)
-    {
-      for (unsigned int i = 0; i < Hvec[im].rows(); i++)
-      {
-        vnl_sparse_matrix<float>::row & r = Hvec[im].get_row(i);
-        vnl_sparse_matrix<float>::row::iterator col_iter = r.begin();
-
-        for ( ;col_iter != r.end(); ++col_iter)
-        {
-          H( i + offset, (*col_iter).first ) = (*col_iter).second;
-          Ht( (*col_iter).first, i + offset ) = (*col_iter).second;
-        }
-
-        Y[i+offset] = yvec[im][i];
-      }
-      offset += Hvec[im].rows();
-    }
+    for( H.reset(); H.next(); )
+      Ht( H.getcolumn(), H.getrow() ) = H.value();
 
     // precalcule Ht * H
     std::cout << "Precomputing Ht*H" << std::endl; std::cout.flush();
@@ -118,14 +103,23 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
 
   }
 
-  void gradf(const vnl_vector<float>& x, vnl_vector<float>& g)
+  void gradf(const vnl_vector<double>& x, vnl_vector<double>& g)
   {
+    vnl_vector<float>  x_float;
+    vnl_vector<float>  g_float;
+
+    x_float = vnl_matops::d2f(x);
+
     std::cout << "in gradf " << std::endl; std::cout.flush();
 
     VnlVectorType HtHx;
 
-    HtH.mult(x,HtHx);
-    g = (HtY + HtHx)*2.0;
+    HtH.mult(x_float,HtHx);
+    g_float = (HtY + HtHx)*2.0;
+
+    for (unsigned int i=0; i<g.size(); i++)
+      g[i] = g_float[i];
+
 
     std::cout << "exiting of gradf " << std::endl; std::cout.flush();
   }

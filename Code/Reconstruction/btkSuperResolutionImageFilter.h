@@ -361,12 +361,12 @@ private:
   std::vector<InputImagePointer>     m_SimulatedImages;
   bool    m_SimulatedImagesUpdated;
 
-  std::vector< VnlSparseMatrixType > m_H;
-  std::vector< VnlSparseMatrixType > m_Ht;
-  std::vector< VnlSparseMatrixType > m_Hbp;
-  std::vector< VnlVectorType >       m_y;
+  VnlSparseMatrixType m_H;
+  VnlSparseMatrixType m_Ht;
+  VnlSparseMatrixType m_Hbp;
+  VnlVectorType       m_y;
   std::vector< VnlVectorType >       m_ysim;
-  VnlVectorType                      m_x;
+  VnlVectorType       m_x;
 
   // Precomputed values for optimization
 

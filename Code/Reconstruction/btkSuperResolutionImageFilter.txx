@@ -195,8 +195,16 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   LeastSquaresVnlCostFunction f;
   f.SetParameters(m_H,m_y);
 
+  std::cout << "after setting parameters" << std::endl; std::cout.flush();
+
   vnl_conjugate_gradient cg(f);
+
+  std::cout << "after conjugate gradient" << std::endl; std::cout.flush();
+
   cg.minimize(x);
+
+  std::cout << "after minimize" << std::endl; std::cout.flush();
+
   cg.diagnose_outcome();
 }
 
@@ -219,19 +227,12 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   SpacingType spacing_lr = m_ImageArray[0] -> GetSpacing();
   SpacingType spacing_hr = this -> GetReferenceImage() -> GetSpacing();
 
-//  std::cout << "Spacing low resolution = " << spacing_lr << std::endl;
-//  std::cout << "Spacing high resolution = " << spacing_hr << std::endl;
-
   PointType start_lr_pt;
   m_ImageArray[0] -> TransformIndexToPhysicalPoint(start_lr,start_lr_pt);
   start_lr_pt = start_lr_pt - (spacing_lr - spacing_hr) / 2.0;
 
   IndexType start_hr;
   this -> GetReferenceImage() -> TransformPhysicalPointToIndex(start_lr_pt, start_hr);
-
-//  start_hr[0] = (int)(start_lr[0] * spacing_lr[0] / spacing_hr[0]);
-//  start_hr[1] = (int)(start_lr[1] * spacing_lr[1] / spacing_hr[1]);
-//  start_hr[2] = (int)(start_lr[2] * spacing_lr[2] / spacing_hr[2]);
 
   SizeType  size_hr;
   size_hr[0] = (int)(size_lr[0] * spacing_lr[0] / spacing_hr[0]);
@@ -246,19 +247,11 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   m_OutputImageRegion.SetIndex( start_hr );
   m_OutputImageRegion.SetSize(  size_hr );
 
-//  std::cout << "HR region = " << std::endl;
-//  std::cout << m_OutputImageRegion << std::endl;
-
   // matrix resizing
 
   unsigned int ncols = m_OutputImageRegion.GetNumberOfPixels();
 
-  m_H.resize(m_ImageArray.size());
-  m_Ht.resize(m_ImageArray.size());
-  m_Hbp.resize(m_ImageArray.size());
-
-  m_y.resize(m_ImageArray.size());
-  m_ysim.resize(m_ImageArray.size());
+//  m_ysim.resize(m_ImageArray.size());
 
   m_x.set_size( ncols );
 
@@ -291,21 +284,24 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
     std::cout << delta << std::endl;
   }
 
+  // Set size of matrices
+
+  unsigned int nrows = 0;
+  for(unsigned int im = 0; im < m_ImageArray.size(); im++)
+    nrows += m_InputImageRegion[im].GetNumberOfPixels();
+
+  m_H.set_size(nrows, ncols);
+//  m_Ht.set_size(ncols, nrows);
+//  m_Hbp.set_size(ncols,nrows);
+  m_y.set_size(nrows);
+//  m_ysim[im].set_size(nrows);
+
   // H is different for each input image
+  unsigned int offset = 0;
 
   for(unsigned int im = 0; im < m_ImageArray.size(); im++)
   {
     std::cout << "Creating H matrix for image " << im << std::endl; std::cout.flush();
-
-    unsigned int nrows = m_InputImageRegion[im].GetNumberOfPixels();
-
-    std::cout << "Number of voxels input image " << im << " = " << nrows << std::endl;
-
-    m_H[im].set_size(nrows, ncols);
-    m_Ht[im].set_size(ncols, nrows);
-    m_Hbp[im].set_size(ncols,nrows);
-    m_y[im].set_size(nrows);
-    m_ysim[im].set_size(nrows);
 
     // Neighborhood iterator
 
@@ -378,7 +374,7 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 
         lrLinearIndex = lrDiffIndex[0] + lrDiffIndex[1]*inputSize[0] + lrDiffIndex[2]*inputSize[0]*inputSize[1];
 
-        m_y[im][lrLinearIndex] = fixedIt.Get();
+        m_y[lrLinearIndex + offset] = fixedIt.Get();
 
         m_ImageArray[im] -> TransformIndexToPhysicalPoint( lrIndex, lrPoint );
         nbIt.SetLocation( lrIndex);
@@ -422,8 +418,8 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
                 hrDiffIndex[2] = hrIndex[2] - start_hr[2];
 
                 hrLinearIndex = hrDiffIndex[0] + hrDiffIndex[1]*size_hr[0] + hrDiffIndex[2]*size_hr[0]*size_hr[1];
-                m_H[im](lrLinearIndex,hrLinearIndex) = interpolator -> GetOverlap(n)* lrValue;
-                m_Hbp[im](hrLinearIndex,lrLinearIndex) = lrValue;
+                m_H(lrLinearIndex + offset,hrLinearIndex) = interpolator -> GetOverlap(n)* lrValue;
+//                m_Hbp(hrLinearIndex,lrLinearIndex + offset) = lrValue;
 
               }
 
@@ -437,30 +433,35 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 
     }
 
-    // Create the transpose of H
-
-    for (unsigned int i = 0; i < nrows; i++)
-    {
-      double sum = m_H[im].sum_row(i);
-
-      VnlSparseMatrixType::row & r = m_H[im].get_row(i);
-      VnlSparseMatrixType::row::iterator col_iter = r.begin();
-
-      for ( ;col_iter != r.end(); ++col_iter)
-      {
-        (*col_iter).second = (*col_iter).second / sum;
-        m_Ht[im]((*col_iter).first,i) = (*col_iter).second;
-      }
-
-    }
+    offset += m_InputImageRegion[im].GetNumberOfPixels();
 
     // Create simulated images
 
-    m_H[im].mult(m_x,m_ysim[im]);
+//    m_H[im].mult(m_x,m_ysim[im]);
 
   }
 
-  UpdateSimulatedImages();
+  // Normalize H
+
+  m_H.normalize_rows();
+
+/*  for (unsigned int i = 0; i < m_H.rows(); i++)
+  {
+    double sum = m_H[im].sum_row(i);
+
+    VnlSparseMatrixType::row & r = m_H[im].get_row(i);
+    VnlSparseMatrixType::row::iterator col_iter = r.begin();
+
+    for ( ;col_iter != r.end(); ++col_iter)
+    {
+      (*col_iter).second = (*col_iter).second / sum;
+      m_Ht[im]((*col_iter).first,i) = (*col_iter).second;
+    }
+
+  }
+*/
+
+//  UpdateSimulatedImages();
 
 }
 
