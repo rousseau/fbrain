@@ -365,7 +365,6 @@ private:
   void operator=( const Self& ); //purposely not implemented
 
   void CreateH();
-  void OptimizeByBackprojection();
   void OptimizeByLeastSquares();
 
   SizeType                    m_Size;              // Size of the output image

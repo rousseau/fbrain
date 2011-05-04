@@ -183,79 +183,6 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   return absIndex;
 }
 
-
-template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
-void
-SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
-::OptimizeByBackprojection()
-{
-
-  VnlVectorType dx;
-  VnlVectorType dy;
-
-  dx.set_size( m_x.size() );
-  dy.set_size( m_y.size() );
-
-  IndexType index;
-
-  unsigned int counter = 0;
-  double sumOfWeights;
-
-  for (unsigned int it=0; it<m_Iterations; it++)
-  {
-    dx.fill( 0.0 );
-
-    std::cout << "iteration no " << it << std::endl; std::cout.flush();
-
-    for (unsigned int i=0; i<m_x.size(); i++)
-    {
-      index = LinearToAbsoluteIndex(i, m_OutputImageRegion);
-
-      counter = 0;
-      sumOfWeights = 0.0;
-
-      for (unsigned int im = 0; im < m_ImageArray.size(); im++)
-      {
-        VnlSparseMatrixType::row const& r = m_Hbp[im].get_row(i);
-        VnlSparseMatrixType::row::const_iterator col_iter = r.begin();
-
-        for ( ;col_iter != r.end(); ++col_iter)
-        {
-            dx[i] = dx[i] + (m_y[im][(*col_iter).first] - m_ysim[im][(*col_iter).first])*((*col_iter).second);
-            sumOfWeights += (*col_iter).second;
-        }
-
-      }
-
-      if ( sumOfWeights > 0.0 )
-        dx[i] = dx[i] / (10.0 * sumOfWeights);
-
-    }
-
-
-    for (unsigned int i = 0; i < dx.size(); i++)
-    {
-      m_x[i] = m_x[i] + dx[i];
-    }
-
-    double rms = 0.0;
-
-    for (unsigned int im = 0; im < m_ImageArray.size(); im++)
-    {
-      m_H[im].mult(m_x,m_ysim[im]);
-      dy = m_y[im] - m_ysim[im];
-
-      rms+= dy.rms();
-    }
-
-    rms/=m_ImageArray.size();
-
-    std::cout << "rms value = " << rms << std::endl;
-
-  }
-
-}
-
 template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
 void
 SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
@@ -579,13 +506,7 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 ::GenerateData()
 {
   CreateH();
-  if (m_OptimizationMethod == MSE)
-  {
-    OptimizeByLeastSquares();
-  } else
-    {
-      OptimizeByBackprojection();
-    }
+  OptimizeByLeastSquares();
 
   UpdateSimulatedImages();
 
