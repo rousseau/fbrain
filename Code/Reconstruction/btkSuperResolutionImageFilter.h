@@ -345,22 +345,6 @@ protected:
 
 private:
 
-/*  class vnl_my_cost_fun : public vnl_cost_function
-  {
-    public: vnl_my_cost_fun(): vnl_cost_function(1) {}
-
-    double f(const vnl_vector<double>& x)
-    {
-      std::cout << m_x.size();
-      return (x[0]-5)*(x[0]-5)+10;
-    }
-
-    void gradf(const vnl_vector<double>& x, vnl_vector<double>& g)
-    {
-      g[0] = 2 *x[0]-10;
-    }
-  };*/
-
   SuperResolutionImageFilter( const Self& ); //purposely not implemented
   void operator=( const Self& ); //purposely not implemented
 
