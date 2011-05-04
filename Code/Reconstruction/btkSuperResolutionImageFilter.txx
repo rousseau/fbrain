@@ -454,27 +454,6 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 
     }
 
-
-/*    unsigned int emptyRows = 0;
-    unsigned int emptyCols = 0;
-
-    for (unsigned int i = 0; i < nrows; i++)
-    {
-      if ( m_H[im].empty_row(i) )
-        emptyRows++;
-    }
-
-    for (unsigned int i = 0; i < ncols; i++)
-    {
-      if ( m_Ht[im].empty_row(i) )
-        emptyCols++;
-    }
-
-    std::cout << "Rows = " << nrows << " Empty rows = " << emptyRows << std::endl;
-    std::cout << "cols = " << ncols << " Empty cols = " << emptyCols << std::endl;
-
-    */
-
     // Create simulated images
 
     m_H[im].mult(m_x,m_ysim[im]);
