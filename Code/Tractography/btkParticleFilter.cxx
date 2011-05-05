@@ -251,7 +251,6 @@ void ParticleFilter::run(int label)
     Particle map2 = this->GetMAP();
 
     this->ComputeFiber(map1,map2);
-//    this->saveFiber(label, 0, m_x0);
 }
 
 void ParticleFilter::run(int label, Direction dir)
@@ -597,148 +596,163 @@ void ParticleFilter::saveCloudInVTK(int label, unsigned int step, Point begin)
 
 Particle ParticleFilter::GetMAP()
 {
-    unsigned int t = m_k-1;
-    Real *delta = new Real[t*m_M];
-    Real *psi   = new Real[(t-1)*m_M];
+    Particle map(m_x0);
 
-
-    // Compute delta and psi by dynamic programming
-
-    #pragma omp parallel for
-    for(unsigned int m=0; m<m_M; m++)
+    if(m_k > 2)
     {
-        delta[Ind(0,m)] = m_aPriori.compute(m_cloud[m].getVector(1).toDirection(), m_cloud[m].getVector(0).toDirection()) + m_cloud[m].getLikelihood(0);
-    }
+        unsigned int t = m_k-1;
+        Real *delta = new Real[t*m_M];
+        Real *psi   = new Real[(t-1)*m_M];
 
-//std::cerr << "delta(0) :" << std::endl;
-//for(unsigned int j=0; j<m_M; j++)
-//{
-//    std::cerr << "delta(0," << j << ") = " << delta[Ind(0,j)] << "\t";
-//}
-//std::cerr << std::endl;
 
-    for(unsigned int k=1; k<t; k++)
-    {
+        // Compute delta and psi by dynamic programming
+
         #pragma omp parallel for
         for(unsigned int m=0; m<m_M; m++)
         {
-            if(k+1 < m_cloud[m].length())
+            if(m_cloud[m].length() > 1)
             {
-                Real max          = MIN_REAL;
-                unsigned int imax = 0;
+                assert(m_cloud[m].length() > 1);
+                delta[Ind(0,m)] = m_aPriori.compute(m_cloud[m].getVector(1).toDirection(), m_cloud[m].getVector(0).toDirection()) + m_cloud[m].getLikelihood(0);
+            }
+            else
+                delta[Ind(0,m)] = std::log(1.0/m_M);
+        }
 
-                Point xkp1m = m_cloud[m].getPoint(k+1);
+    //std::cerr << "delta(0) :" << std::endl;
+    //for(unsigned int j=0; j<m_M; j++)
+    //{
+    //    std::cerr << "delta(0," << j << ") = " << delta[Ind(0,j)] << "\t";
+    //}
+    //std::cerr << std::endl;
 
-                for(unsigned int i=0; i<m_M; i++)
+        for(unsigned int k=1; k<t; k++)
+        {
+            #pragma omp parallel for
+            for(unsigned int m=0; m<m_M; m++)
+            {
+                if(k+1 < m_cloud[m].length())
                 {
-                    if(k < m_cloud[i].length())
+                    Real max          = MIN_REAL;
+                    unsigned int imax = 0;
+
+                    Point xkp1m = m_cloud[m].getPoint(k+1);
+
+                    for(unsigned int i=0; i<m_M; i++)
                     {
-                        Point xkp1i     = m_cloud[i].getPoint(k+1);
-                        Real distance = std::sqrt( (xkp1i.x()-xkp1m.x())*(xkp1i.x()-xkp1m.x()) + (xkp1i.y()-xkp1m.y())*(xkp1i.y()-xkp1m.y()) + (xkp1i.z()-xkp1m.z())*(xkp1i.z()-xkp1m.z()));
-
-                        if(distance <= 0.01)
+                        if(k < m_cloud[i].length())
                         {
-                            Real tmp = delta[Ind(k-1,i)] + m_aPriori.compute(m_cloud[m].getVector(k+1).toDirection(), m_cloud[i].getVector(k).toDirection());
+                            Point xkp1i     = m_cloud[i].getPoint(k+1);
+                            Real distance = std::sqrt( (xkp1i.x()-xkp1m.x())*(xkp1i.x()-xkp1m.x()) + (xkp1i.y()-xkp1m.y())*(xkp1i.y()-xkp1m.y()) + (xkp1i.z()-xkp1m.z())*(xkp1i.z()-xkp1m.z()));
 
-                            if(tmp > max)
+                            if(distance <= 0.01)
                             {
-                                max  = tmp;
-                                imax = i;
+                                assert(m_cloud[m].length() > k+1);
+                                assert(m_cloud[i].length() > k);
+                                Real tmp = delta[Ind(k-1,i)] + m_aPriori.compute(m_cloud[m].getVector(k+1).toDirection(), m_cloud[i].getVector(k).toDirection());
+
+                                if(tmp > max)
+                                {
+                                    max  = tmp;
+                                    imax = i;
+                                }
                             }
                         }
                     }
-                }
 
-                if(EQUAL(max,MIN_REAL))
+                    if(EQUAL(max,MIN_REAL))
+                    {
+                        delta[Ind(k,m)] = m_cloud[m].getLikelihood(k);
+                        psi[Ind(k-1,m)] = m;
+                    }
+                    else // max <> MIN_REAL
+                    {
+                        delta[Ind(k,m)] = m_cloud[m].getLikelihood(k) + max;
+                        psi[Ind(k-1,m)] = imax;
+                    }
+                }
+                else // k+1 >= m_cloud[m].length()
                 {
-                    delta[Ind(k,m)] = m_cloud[m].getLikelihood(k);
+                    if(k == 1)
+                        delta[Ind(1,m)] = delta[Ind(0,m)];
+                    else // k > 1
+                        delta[Ind(k,m)] = delta[Ind(k-1,m)] + std::abs(delta[Ind(k-1,m)] - delta[Ind(k-2,m)]);
+
                     psi[Ind(k-1,m)] = m;
                 }
-                else // max <> MIN_REAL
-                {
-                    delta[Ind(k,m)] = m_cloud[m].getLikelihood(k) + max;
-                    psi[Ind(k-1,m)] = imax;
-                }
-            }
-            else // k+1 >= m_cloud[m].length()
-            {
-                delta[Ind(k,m)] = delta[Ind(k-1,m)] + std::abs(delta[Ind(k-1,m)] - delta[Ind(k-2,m)]);
-                psi[Ind(k-1,m)] = m;
             }
         }
-    }
 
-//std::cerr << "delta(i>0,j) :" << std::endl;
-//for(unsigned int i=0; i<t; i++)
-//{
-//    for(unsigned int j=0; j<m_M; j++)
-//    {
-//        std::cerr << "delta(" << i << "," << j << ") = " << delta[Ind(i,j)] << "\t";
-//    }
-//    std::cerr << std::endl;
-//}
-//std::cerr << std::endl;
-//std::cerr << "psi(i,j) :" << std::endl;
-//for(unsigned int i=0; i<t-1; i++)
-//{
-//    for(unsigned int j=0; j<m_M; j++)
-//    {
-//        std::cerr << "psi(" << i << "," << j << ") = " << psi[Ind(i,j)] << "\t";
-//    }
-//    std::cerr << std::endl;
-//}
-//std::cerr << std::endl;
+    //std::cerr << "delta(i>0,j) :" << std::endl;
+    //for(unsigned int i=0; i<t; i++)
+    //{
+    //    for(unsigned int j=0; j<m_M; j++)
+    //    {
+    //        std::cerr << "delta(" << i << "," << j << ") = " << delta[Ind(i,j)] << "\t";
+    //    }
+    //    std::cerr << std::endl;
+    //}
+    //std::cerr << std::endl;
+    //std::cerr << "psi(i,j) :" << std::endl;
+    //for(unsigned int i=0; i<t-1; i++)
+    //{
+    //    for(unsigned int j=0; j<m_M; j++)
+    //    {
+    //        std::cerr << "psi(" << i << "," << j << ") = " << psi[Ind(i,j)] << "\t";
+    //    }
+    //    std::cerr << std::endl;
+    //}
+    //std::cerr << std::endl;
 
 
-    // Backtracking
+        // Backtracking
 
-    std::vector<Point> points;
+        std::vector<Point> points;
 
-    Real max          = MIN_REAL;
-    unsigned int mmax = 0;
+        Real max          = MIN_REAL;
+        unsigned int mmax = 0;
 
-    for(unsigned int m=0; m<m_M; m++)
-    {
-        Real tmp = delta[Ind(t-1,m)];
-
-        if(max < tmp)
+        for(unsigned int m=0; m<m_M; m++)
         {
-            max  = tmp;
-            mmax = m;
+            Real tmp = delta[Ind(t-1,m)];
+
+            if(max < tmp)
+            {
+                max  = tmp;
+                mmax = m;
+            }
         }
-    }
-
-    int len = m_cloud[mmax].length();
-    points.push_back(m_cloud[mmax].getPoint(len));
-
-    for(int k=t-2; k>=0; k--)
-    {
-        mmax = psi[Ind(k,mmax)];
 
         int len = m_cloud[mmax].length();
+        points.push_back(m_cloud[mmax].getPoint(len));
 
-        if(k+1 <= len)
-            points.push_back(m_cloud[mmax].getPoint(k+1));
-        else // k+1 > len
-            points.push_back(m_cloud[mmax].getPoint(len));
-    }
+        for(int k=t-2; k>=0; k--)
+        {
+            mmax = psi[Ind(k,mmax)];
+
+            int len = m_cloud[mmax].length();
+
+            if(k+1 <= len)
+                points.push_back(m_cloud[mmax].getPoint(k+1));
+            else // k+1 > len
+                points.push_back(m_cloud[mmax].getPoint(len));
+        }
 
 
-    delete[] psi;
-    delete[] delta;
+        delete[] psi;
+        delete[] delta;
 
 
-    // Compute MAP estimate
+        // Compute MAP estimate
 
-    Particle map(m_x0);
-
-    for(int k=points.size()-1; k>=0; k--)
-    {
-        Point p1 = map.lastPoint();
-        Point p2 = points[k];
-        Vector v(p2.x()-p1.x(), p2.y()-p1.y(), p2.z()-p1.z());
-        map.addToPath(v*m_stepSize, m_mask);
-        map.setWeight(1);
+        for(int k=points.size()-1; k>=0; k--)
+        {
+            Point p1 = map.lastPoint();
+            Point p2 = points[k];
+            Vector v(p2.x()-p1.x(), p2.y()-p1.y(), p2.z()-p1.z());
+            map.addToPath(v*m_stepSize, m_mask);
+            map.setWeight(1);
+        }
     }
 
 
