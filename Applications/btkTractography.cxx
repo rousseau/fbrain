@@ -209,6 +209,7 @@ int main(int argc, char *argv[])
 
 
         // Initialize output structures
+        std::vector<int> labels;
         std::vector<vtkSmartPointer<vtkAppendPolyData> > fibers;
         std::vector<Image::Pointer> connectMaps;
 
@@ -239,6 +240,7 @@ int main(int argc, char *argv[])
 
         // Apply filter on each labeled voxels
         LabelMapIterator labelIt(resampledLabelVolume, resampledLabelVolume->GetLargestPossibleRegion());
+
 
         for(labelIt.GoToBegin(); !labelIt.IsAtEnd(); ++labelIt)
         {
@@ -280,13 +282,15 @@ int main(int argc, char *argv[])
 
                     // Save data
 
-                    if((unsigned int)label > fibers.size())
-                        fibers.push_back(vtkSmartPointer<vtkAppendPolyData>::New());
-                    fibers[label-1]->AddInput(filter.GetFiber());
+                    assert(fibers.size() == connectMaps.size());
 
+                    for(int l=fibers.size(); l<label; l++)
+                        labels.push_back(-1);
 
-                    if((unsigned int)label > connectMaps.size())
+                    if(labels[label-1] == -1)
                     {
+                        fibers.push_back(vtkSmartPointer<vtkAppendPolyData>::New());
+
                         connectMaps.push_back(Image::New());
                         connectMaps.back()->SetOrigin(signalFun->getOrigin());
                         connectMaps.back()->SetSpacing(signalFun->getSpacing());
@@ -294,9 +298,14 @@ int main(int argc, char *argv[])
                         connectMaps.back()->SetDirection(modelFun->GetDirection());
                         connectMaps.back()->Allocate();
                         connectMaps.back()->FillBuffer(0);
+
+                        labels[label-1] = fibers.size()-1;
                     }
 
-                    ImageIterator out(connectMaps[label-1], connectMaps[label-1]->GetLargestPossibleRegion());
+
+                    fibers[labels[label-1]]->AddInput(filter.GetFiber());
+
+                    ImageIterator out(connectMaps[labels[label-1]], connectMaps[labels[label-1]]->GetLargestPossibleRegion());
                     ImageIterator  in(filter.GetConnectionMap(), filter.GetConnectionMap()->GetLargestPossibleRegion());
 
                     for(in.GoToBegin(), out.GoToBegin(); !in.IsAtEnd() && !out.IsAtEnd(); ++in, ++out)
@@ -318,10 +327,10 @@ int main(int argc, char *argv[])
     //
 
         // Normalize and write connection map image
-        for(unsigned int label = 0; label < connectMaps.size(); label++)
+        for(unsigned int label = 0; label < labels.size(); label++)
         {
             Real max = 0;
-            ImageIterator it(connectMaps[label], connectMaps[label]->GetLargestPossibleRegion());
+            ImageIterator it(connectMaps[labels[label]], connectMaps[labels[label]]->GetLargestPossibleRegion());
 
             for(it.GoToBegin(); !it.IsAtEnd(); ++it)
             {
@@ -342,7 +351,7 @@ int main(int argc, char *argv[])
 
                 ImageWriter::Pointer writer = ImageWriter::New();
                 writer->SetFileName(filename.str().c_str());
-                writer->SetInput(connectMaps[label]);
+                writer->SetInput(connectMaps[labels[label]]);
                 writer->Update();
             }
             catch(itk::ImageFileWriterException &err)
@@ -353,15 +362,15 @@ int main(int argc, char *argv[])
         }
 
         // Write fiber polydata
-        for(unsigned int label = 0; label < fibers.size(); label++)
+        for(unsigned int label = 0; label < labels.size(); label++)
         {
-            unsigned int nbOfInputs = fibers[label]->GetNumberOfInputPorts();
+            unsigned int nbOfInputs = fibers[labels[label]]->GetNumberOfInputPorts();
             bool saveFibers = true;
             unsigned int i = 0;
 
             do
             {
-                if(fibers[label]->GetNumberOfInputConnections(i++) < 1)
+                if(fibers[labels[label]]->GetNumberOfInputConnections(i++) < 1)
                     saveFibers = false;
             } while(saveFibers && i<nbOfInputs);
 
@@ -372,7 +381,7 @@ int main(int argc, char *argv[])
 
                 fibers[label]->Update();
                 vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
-                writer->SetInput(fibers[label]->GetOutput());
+                writer->SetInput(fibers[labels[label]]->GetOutput());
                 writer->SetFileName(filename.str().c_str());
                 writer->SetFileTypeToBinary();
                 writer->Write();
