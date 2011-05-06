@@ -196,8 +196,8 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   vnl_vector<double>  x;
   x = vnl_matops::f2d(m_x);
 
-  LeastSquaresVnlCostFunction f;
-  f.SetParameters(m_H,m_y);
+  LeastSquaresVnlCostFunction f(x.size());
+  f.SetParameters(m_H,m_y,x);
 
   std::cout << "after setting parameters" << std::endl; std::cout.flush();
 
@@ -293,6 +293,8 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   unsigned int nrows = 0;
   for(unsigned int im = 0; im < m_ImageArray.size(); im++)
     nrows += m_InputImageRegion[im].GetNumberOfPixels();
+
+  std::cout << "rows in h = " << nrows << std::endl;
 
   m_H.set_size(nrows, ncols);
 //  m_Ht.set_size(ncols, nrows);
@@ -443,23 +445,17 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 
   // Normalize H
 
-  m_H.normalize_rows();
-
-/*  for (unsigned int i = 0; i < m_H.rows(); i++)
+  for (unsigned int i = 0; i < m_H.rows(); i++)
   {
-    double sum = m_H[im].sum_row(i);
+    double sum = m_H.sum_row(i);
 
-    VnlSparseMatrixType::row & r = m_H[im].get_row(i);
+    VnlSparseMatrixType::row & r = m_H.get_row(i);
     VnlSparseMatrixType::row::iterator col_iter = r.begin();
 
     for ( ;col_iter != r.end(); ++col_iter)
-    {
       (*col_iter).second = (*col_iter).second / sum;
-      m_Ht[im]((*col_iter).first,i) = (*col_iter).second;
-    }
-
   }
-*/
+
   // Create simulated images
 
   m_H.mult(m_x,m_ysim);
@@ -487,8 +483,8 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 ::GenerateData()
 {
   CreateH();
-//  OptimizeByLeastSquares();
-//  UpdateSimulatedImages();
+  OptimizeByLeastSquares();
+  UpdateSimulatedImages();
 
   // Get the output pointers
   OutputImagePointer outputPtr = this->GetOutput();

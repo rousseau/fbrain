@@ -51,7 +51,7 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
   vnl_vector<float> HtY;
   vnl_vector<float> Y;
 
-  public: LeastSquaresVnlCostFunction(): vnl_cost_function(1) {}
+  public: LeastSquaresVnlCostFunction(unsigned int dim): vnl_cost_function(dim) {}
 
   typedef vnl_vector<float> VnlVectorType;
   typedef vnl_sparse_matrix<float> VnlSparseMatrixType;
@@ -63,34 +63,45 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
     vnl_vector<float>  x_float;
     x_float = vnl_matops::d2f(x);
 
+    vnl_vector<float> Hx;
+    H.mult(x_float,Hx);
+
     vnl_vector<float> HxMinusY;
-    H.mult(x_float,HxMinusY);
+    HxMinusY = Hx - Y;
 
-    HxMinusY = HxMinusY - Y;
+//    HxMinusY = HxMinusY - Y;
 
-    double value = HxMinusY.squared_magnitude();
+    double value = HxMinusY.squared_magnitude() / HxMinusY.size();
 
     std::cout << "error = " << value << std::endl;
 
+    double maxval = HxMinusY[0];
+    double minval = HxMinusY[0];
 
-    for( H.reset(); H.next(); )
-    {
-      std::cout << H.value() << std::endl;
-    }
+//    for (unsigned int i = 0; i<Y.size(); i++)
+//    {
+//      if (HxMinusY[i] > maxval) maxval = HxMinusY[i];
+//      if (HxMinusY[i] < minval) minval = HxMinusY[i];
+
+//      if ( (i>67000) && (i<68000) )
+//        if ( (HxMinusY[i]>1000) || (HxMinusY[i]<-1000) )
+//          std::cout << HxMinusY[i] << " at " << i << std::endl;
+//        std::cout << i << " " << Hx[i] << " " << Y[i] << " " << HxMinusY[i] << " " << std::endl;
+
+//    }
+
+//    std::cout << "maxval = " << maxval << " " << " minval = " << minval << std::endl;
 
     return value;
   }
 
   // TODO Hvec should be pass as a const argument, see how to improve this
   // (an error is obtained with get_row function)
-  void SetParameters(const VnlSparseMatrixType & Hin, const VnlVectorType & Yin)
+  void SetParameters(const VnlSparseMatrixType & Hin, const VnlVectorType & Yin, const vnl_vector<double>& x)
   {
 
     H = Hin;
     Y = Yin;
-
-//    for (unsigned int i=0; i<Y.size(); i++)
-//      std::cout << Y[i] << std::endl;
 
     vnl_sparse_matrix<float> Ht;
 
@@ -102,10 +113,7 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
     // Calculate Ht
     std::cout << "Precomputing H, Ht, and Y" << std::endl; std::cout.flush();
     for( H.reset(); H.next(); )
-    {
       Ht( H.getcolumn(), H.getrow() ) = H.value();
-//      std::cout << H.value() << " " << Hin.get( H.getrow(), H.getcolumn() ) << std::endl;
-    }
 
     // precalcule Ht * H
     std::cout << "Precomputing Ht*H" << std::endl; std::cout.flush();
@@ -133,7 +141,7 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
     g_float = (HtY + HtHx)*2.0;
 
     for (unsigned int i=0; i<g.size(); i++)
-      g[i] = g_float[i];
+      g[i] = g_float[i] / Y.size();
 
 
     std::cout << "exiting of gradf " << std::endl; std::cout.flush();
