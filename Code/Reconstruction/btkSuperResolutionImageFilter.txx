@@ -123,6 +123,7 @@ void
 SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 ::UpdateSimulatedImages()
 {
+  unsigned int offset = 0;
 
   for (unsigned int im = 0; im < m_ImageArray.size(); im++)
   {
@@ -133,9 +134,10 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 
     IndexType start = m_InputImageRegion[im].GetIndex();
     SizeType  size  = m_InputImageRegion[im].GetSize();
+    unsigned int nvoxels = m_InputImageRegion[im].GetNumberOfPixels();
     IndexType diffIndex;
 
-    for( unsigned int i=0; i<m_ysim[im].size(); i++)
+    for( unsigned int i=0; i<nvoxels; i++)
     {
 
       diffIndex[2] = i / (size[0]*size[1]);
@@ -149,9 +151,11 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
       absIndex[1] = diffIndex[1] + start[1];
       absIndex[2] = diffIndex[2] + start[2];
 
-      m_SimulatedImages[im]->SetPixel(absIndex,m_ysim[im][i]);
+      m_SimulatedImages[im]->SetPixel(absIndex,m_ysim[i + offset]);
 
     }
+
+    offset = offset + nvoxels;
 
   }
 
@@ -435,10 +439,6 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 
     offset += m_InputImageRegion[im].GetNumberOfPixels();
 
-    // Create simulated images
-
-//    m_H[im].mult(m_x,m_ysim[im]);
-
   }
 
   // Normalize H
@@ -460,9 +460,10 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 
   }
 */
+  // Create simulated images
 
-//  UpdateSimulatedImages();
-
+  m_H.mult(m_x,m_ysim);
+  UpdateSimulatedImages();
 }
 
 
@@ -486,9 +487,8 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 ::GenerateData()
 {
   CreateH();
-  OptimizeByLeastSquares();
-
-  UpdateSimulatedImages();
+//  OptimizeByLeastSquares();
+//  UpdateSimulatedImages();
 
   // Get the output pointers
   OutputImagePointer outputPtr = this->GetOutput();

@@ -66,7 +66,19 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
     vnl_vector<float> HxMinusY;
     H.mult(x_float,HxMinusY);
 
-    return HxMinusY.squared_magnitude();
+    HxMinusY = HxMinusY - Y;
+
+    double value = HxMinusY.squared_magnitude();
+
+    std::cout << "error = " << value << std::endl;
+
+
+    for( H.reset(); H.next(); )
+    {
+      std::cout << H.value() << std::endl;
+    }
+
+    return value;
   }
 
   // TODO Hvec should be pass as a const argument, see how to improve this
@@ -77,8 +89,8 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
     H = Hin;
     Y = Yin;
 
-    std::cout << "Hin = " << &Hin << std::endl;
-    std::cout << "H = " << &H << std::endl;
+//    for (unsigned int i=0; i<Y.size(); i++)
+//      std::cout << Y[i] << std::endl;
 
     vnl_sparse_matrix<float> Ht;
 
@@ -90,7 +102,10 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
     // Calculate Ht
     std::cout << "Precomputing H, Ht, and Y" << std::endl; std::cout.flush();
     for( H.reset(); H.next(); )
+    {
       Ht( H.getcolumn(), H.getrow() ) = H.value();
+//      std::cout << H.value() << " " << Hin.get( H.getrow(), H.getcolumn() ) << std::endl;
+    }
 
     // precalcule Ht * H
     std::cout << "Precomputing Ht*H" << std::endl; std::cout.flush();

@@ -365,7 +365,7 @@ private:
   VnlSparseMatrixType m_Ht;
   VnlSparseMatrixType m_Hbp;
   VnlVectorType       m_y;
-  std::vector< VnlVectorType >       m_ysim;
+  VnlVectorType       m_ysim;
   VnlVectorType       m_x;
 
   // Precomputed values for optimization
