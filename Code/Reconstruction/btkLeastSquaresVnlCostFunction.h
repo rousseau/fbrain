@@ -138,7 +138,7 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
     VnlVectorType HtHx;
 
     HtH.mult(x_float,HtHx);
-    g_float = (HtY + HtHx)*2.0;
+    g_float = (-HtY + HtHx)*2.0;
 
     for (unsigned int i=0; i<g.size(); i++)
       g[i] = g_float[i] / Y.size();

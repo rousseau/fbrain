@@ -210,6 +210,9 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   std::cout << "after minimize" << std::endl; std::cout.flush();
 
   cg.diagnose_outcome();
+
+  m_x = vnl_matops::d2f(x);
+
 }
 
 template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
