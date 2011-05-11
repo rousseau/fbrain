@@ -69,28 +69,9 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
     vnl_vector<float> HxMinusY;
     HxMinusY = Hx - Y;
 
-//    HxMinusY = HxMinusY - Y;
-
     double value = HxMinusY.squared_magnitude() / HxMinusY.size();
 
     std::cout << "error = " << value << std::endl;
-
-    double maxval = HxMinusY[0];
-    double minval = HxMinusY[0];
-
-//    for (unsigned int i = 0; i<Y.size(); i++)
-//    {
-//      if (HxMinusY[i] > maxval) maxval = HxMinusY[i];
-//      if (HxMinusY[i] < minval) minval = HxMinusY[i];
-
-//      if ( (i>67000) && (i<68000) )
-//        if ( (HxMinusY[i]>1000) || (HxMinusY[i]<-1000) )
-//          std::cout << HxMinusY[i] << " at " << i << std::endl;
-//        std::cout << i << " " << Hx[i] << " " << Y[i] << " " << HxMinusY[i] << " " << std::endl;
-
-//    }
-
-//    std::cout << "maxval = " << maxval << " " << " minval = " << minval << std::endl;
 
     return value;
   }
