@@ -69,7 +69,9 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
     vnl_vector<float> HxMinusY;
     HxMinusY = Hx - Y;
 
-    double value = HxMinusY.squared_magnitude() / HxMinusY.size();
+    std::cout << x[1000] << " " << x_float.size() << std::endl;
+
+    double value = HxMinusY.squared_magnitude() / HxMinusY.size() + 0.001*x_float.squared_magnitude() / x_float.size();
 
     std::cout << "error = " << value << std::endl;
 
@@ -122,7 +124,7 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
     g_float = (-HtY + HtHx)*2.0;
 
     for (unsigned int i=0; i<g.size(); i++)
-      g[i] = g_float[i] / Y.size();
+      g[i] = g_float[i] / Y.size() + 0.001*2*x_float[i]/x_float.size();
 
 
     std::cout << "exiting of gradf " << std::endl; std::cout.flush();
