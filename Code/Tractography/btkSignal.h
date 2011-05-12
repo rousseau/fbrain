@@ -63,7 +63,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
              * @param sigmasFilename Filename of signal's standard deviations
              * @param dirFileName Directions' filename
              */
-            Signal(const std::string &filename, const std::string &sigmasFilename, const std::string &dirFileName);
+            Signal(const std::string &filename, const std::string &sigmasFilename, const std::string &dirFileName, char displayMode=0);
 
             /**
              * @brief Constructor

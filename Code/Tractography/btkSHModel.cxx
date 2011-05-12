@@ -48,11 +48,13 @@ knowledge of the CeCILL-B license and that you accept its terms.
 namespace btk
 {
 
-SHModel::SHModel(const std::string &filename, const std::string &directionsfilename)
+SHModel::SHModel(const std::string &filename, const std::string &directionsfilename, char displayMode)
 {
     m_model      = 0;
     m_interp     = 0;
     m_directions = 0;
+
+    m_displayMode = displayMode;
 
     m_Y     = 0;
     m_Yori  = 0;
@@ -82,8 +84,8 @@ SHModel::SHModel(const std::string &filename, const std::string &directionsfilen
     unsigned int zMax = smodelRegion.GetSize(2);
     unsigned int kMax = smodelRegion.GetSize(3);
 
-    std::cout << "\tThere are " << kMax << " images of size ";
-    std::cout << xMax << "x" << yMax << "x" << zMax << "." << std::endl;
+//    std::cout << "\tThere are " << kMax << " images of size ";
+//    std::cout << xMax << "x" << yMax << "x" << zMax << "." << std::endl;
 
 
     // Compute order
@@ -92,11 +94,11 @@ SHModel::SHModel(const std::string &filename, const std::string &directionsfilen
     m_R        = kMax;
 
 
-    std::cout << "\tModel is at order " << m_order << "." << std::endl;
+//    std::cout << "\tModel is at order " << m_order << "." << std::endl;
 
 
     // Generate directions following resolution
-    std::cout << "\tGenerating directions (sampling resolution " << m_reso << "x" << m_reso << ")..." << std::flush;
+//    std::cout << "\tGenerating directions (sampling resolution " << m_reso << "x" << m_reso << ")..." << std::flush;
     m_directions = new std::vector<Direction>;
 
     for(unsigned int i=0; i<m_reso+1; i++)
@@ -104,34 +106,34 @@ SHModel::SHModel(const std::string &filename, const std::string &directionsfilen
         for(unsigned int j=0; j<m_reso; j++)
             m_directions->push_back(Direction(i*m_pasTheta,j*m_pasPhi));
     }
-    std::cout << "done." << std::endl;
+//    std::cout << "done." << std::endl;
 
 
     // SH basis matrix
-    std::cout << "\tSpherical harmonics basis matrix..." << std::flush;
+//    std::cout << "\tSpherical harmonics basis matrix..." << std::flush;
     this->computeSHBasisMatrix();
     this->computeSHBasisOriMatrix();
-    std::cout << "done." << std::endl;
+//    std::cout << "done." << std::endl;
 
     // Compute Legendre matrix
-    std::cout << "\tComputing Legendre matrix..." << std::flush;
+//    std::cout << "\tComputing Legendre matrix..." << std::flush;
     this->computeLegendreMatrix();
-    std::cout << "done." << std::endl;
+//    std::cout << "done." << std::endl;
 
     // Build sharp coefficients
-    std::cout << "\tBuilding sharper ODF matrix..." << std::flush;
+//    std::cout << "\tBuilding sharper ODF matrix..." << std::flush;
     this->buildSharperODFMatrix();
-    std::cout << "done." << std::endl;
+//    std::cout << "done." << std::endl;
 
 
     // Allocate space memory for the array of images
-    std::cout << "\tAllocating space memory..." << std::flush;
+//    std::cout << "\tAllocating space memory..." << std::flush;
     m_model  = new Image::Pointer[kMax];
     m_interp = new ImageInterpolator::Pointer[kMax];
-    std::cout << "done." << std::endl;
+//    std::cout << "done." << std::endl;
 
 
-    std::cout << "\tPreparing and interpolating data..." << std::flush;
+//    std::cout << "\tPreparing and interpolating data..." << std::flush;
 
     // Define images region
     ImageRegion iRegion;
@@ -209,10 +211,10 @@ SHModel::SHModel(const std::string &filename, const std::string &directionsfilen
         m_interp[k]->SetInputImage(m_model[k]);
     } // for k
 
-    std::cout << "done." << std::endl;
+//    std::cout << "done." << std::endl;
 
 
-    std::cout << "done." << std::endl;
+//    std::cout << "done." << std::endl;
 }
 
 SHModel::SHModel(Sequence::Pointer model, std::vector<Direction> *originalDirections, char displayMode)
@@ -387,23 +389,23 @@ SHModel::SHModel(Sequence::Pointer model, std::vector<Direction> *originalDirect
 
 Sequence::Pointer SHModel::readFiles(const std::string &filename, const std::string &directionsfilename)
 {
-    std::cout << "Loading model file \"" << filename << "\"..." << std::endl;
+//    std::cout << "Loading model file \"" << filename << "\"..." << std::endl;
 
     //
     // Read model file
     //
 
-        std::cout << "\tReading model's file..." << std::flush;
+//        std::cout << "\tReading model's file..." << std::flush;
         SequenceReader::Pointer reader = SequenceReader::New();
         reader->SetFileName(filename);
         reader->Update();
-        std::cout << "done." << std::endl;
+//        std::cout << "done." << std::endl;
 
     //
     // Read direction's file
     //
 
-        std::cout << "\tReading gradient directions' file..." << std::flush;
+//        std::cout << "\tReading gradient directions' file..." << std::flush;
 
         // Open file
         std::fstream dirFile(directionsfilename.c_str(), std::fstream::in);
@@ -426,7 +428,7 @@ Sequence::Pointer SHModel::readFiles(const std::string &filename, const std::str
         // Close file
         dirFile.close();
 
-        std::cout << "done." << std::endl;
+//        std::cout << "done." << std::endl;
 
 
 

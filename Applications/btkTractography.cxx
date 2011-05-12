@@ -326,7 +326,10 @@ int main(int argc, char *argv[])
     // Writing files
     //
 
+        Display1(displayMode, std::cout << "Writing results..." << std::endl);
+
         // Normalize and write connection map image
+        Display2(displayMode, std::cout << "\tWriting connectivity maps..." << std::flush);
         for(unsigned int label = 0; label < labels.size(); label++)
         {
             Real max = 0;
@@ -360,8 +363,10 @@ int main(int argc, char *argv[])
                 std::cout << err << std::endl;
             }
         }
+        Display2(displayMode, std::cout << "done." << std::endl);
 
         // Write fiber polydata
+        Display2(displayMode, std::cout << "\tWriting fibers..." << std::flush);
         for(unsigned int label = 0; label < labels.size(); label++)
         {
             unsigned int nbOfInputs = fibers[labels[label]]->GetNumberOfInputPorts();
@@ -387,6 +392,7 @@ int main(int argc, char *argv[])
                 writer->Write();
             }
         }
+        Display2(displayMode, std::cout << "done." << std::endl);
 
 
     return EXIT_SUCCESS;

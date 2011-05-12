@@ -60,7 +60,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
              * @param filename Filename of model ITK image
              * @param directionsfilename Filename of directions
              */
-            SHModel(const std::string &filename, const std::string &directionsfilename);
+            SHModel(const std::string &filename, const std::string &directionsfilename, char displayMode=0);
 
             /**
              * @brief Constructor
