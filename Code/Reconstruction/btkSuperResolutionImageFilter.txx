@@ -196,8 +196,12 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   vnl_vector<double>  x;
   x = vnl_matops::f2d(m_x);
 
+  SizeType size = m_OutputImageRegion.GetSize();
+  vnl_vector<int>  x_size(3);
+  x_size[0] = size[0]; x_size[1] = size[1]; x_size[2] = size[2];
+
   LeastSquaresVnlCostFunction f(x.size());
-  f.SetParameters(m_H,m_y,x);
+  f.SetParameters(m_H,m_y,x,x_size);
 
   std::cout << "after setting parameters" << std::endl; std::cout.flush();
 
@@ -250,6 +254,9 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   end_hr[0] = start_hr[0] + size_hr[0] - 1 ;
   end_hr[1] = start_hr[1] + size_hr[1] - 1 ;
   end_hr[2] = start_hr[2] + size_hr[2] - 1 ;
+
+  //FIXME Check the calculation of m_OutputImageRegion, there is a difference
+  // of 1 pixel in Z with respect to the saved SR image ...
 
   m_OutputImageRegion.SetIndex( start_hr );
   m_OutputImageRegion.SetSize(  size_hr );
