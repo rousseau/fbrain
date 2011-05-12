@@ -274,7 +274,7 @@ void ParticleFilter::run(int label, Direction dir)
     for(unsigned int m=0; m<m_M; m++)
     {
         // Simulate a direction using initial density
-        Direction u0 = m_importance.simulate(dir,KAPPA);
+        Direction u0 = m_importance.simulate(dir,m_importance.computeConcentration(dir,m_x0));
 
         // Move particle
         bool isInside = m_cloud[m].addToPath(u0.toVector()*m_stepSize, m_mask);
@@ -324,7 +324,7 @@ void ParticleFilter::run(int label, Direction dir)
 
                 // Simulating next direction according importance density
                 Direction mu = m_importance.computeMeanDirection(xk, ukm1);
-                Real kappa   = mu.isNull() ? m_aPriori.getConcentration() : KAPPA;
+                Real kappa   = mu.isNull() ? m_aPriori.getConcentration() : m_importance.computeConcentration(mu,xk);
                 Direction uk = m_importance.simulate(mu, kappa);
 
                 // Move particle
@@ -345,8 +345,17 @@ void ParticleFilter::run(int label, Direction dir)
                     m_cloud[m].addLikelihood(likelihood);
 
                     weights[m] = m_cloud[m].weight() * std::exp(likelihood + apriori - importance);
-                }
 
+//                    if(!(weights[m] >= 0.0))
+//                    {
+//                        Pr(likelihood);
+//                        Pr(apriori);
+//                        Pr(importance);
+//                        Pr(weights[m]);
+//                    }
+                } // FIXME : parfois weights[m] = -nan
+                if(!(weights[m] >= 0.0))
+                    weights[m] = 0.0;
                 assert(weights[m] >= 0.0);
             }
         } // for i particles

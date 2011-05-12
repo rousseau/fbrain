@@ -43,11 +43,11 @@ knowledge of the CeCILL-B license and that you accept its terms.
 namespace btk
 {
 
-ImportanceDensity::ImportanceDensity(SHModel *model, Real angleThreshold)
+ImportanceDensity::ImportanceDensity(Signal *signal, SHModel *model, Real angleThreshold)
 {
     assert(model);
 
-
+    m_signal         = signal;
     m_model          = model;
     m_angleThreshold = angleThreshold / 2.0;
     m_2PI            = 2.0 * M_PI;
@@ -77,6 +77,7 @@ Direction ImportanceDensity::computeMeanDirection(Point xk, Direction ukm1)
 
             if(alpha <= m_angleThreshold)
             {
+                // TODO : proportions en fonction de l'état précédent (angles) et plus amplitude
                 mus.push_back(*it);
                 values.push_back(m_model->odfAt(*it, xk));
                 sum += values.back();
@@ -107,8 +108,14 @@ Direction ImportanceDensity::computeMeanDirection(Point xk, Direction ukm1)
         }
         else if(mus.size() == 1)
             return mus.front();
-        else
-            return ukm1;
+        else // mus.size() == 0
+        {
+//            return ukm1;
+            Direction nullDir;
+            nullDir.setNull();
+
+            return nullDir;
+        }
     }
     else if(maxima.size() == 1)
         return maxima.front();
@@ -194,41 +201,91 @@ Real ImportanceDensity::compute(Direction uk, Direction mean, Real kappa)
 
 Real ImportanceDensity::computeConcentration(Direction mu, Point xk)
 {
-    Matrix Psi = m_model->odfAt(xk);
+//    Matrix Psi = m_model->odfAt(xk);
+//
+//    Real psi  = (m_model->odfAt(mu, xk));
+//    Real psi2 = psi*psi;
+//
+//    Real sintheta  = std::sin(mu.theta());
+//    Real sin2theta = sintheta*sintheta;
+//
+//    Real h  = 0.000001;
+//    Real h2 = h*h;
+//    Real mutheta   = mu.theta();
+//    Real muphi     = mu.phi();
+//    Real muthetaph = mutheta + h;
+//    Real muthetamh = mutheta - h;
+//    Real muphiph   = muphi + h;
+//    Real muphimh   = muphi - h;
+//
+//    Real psi_theta_theta =
+//        ( m_model->odfAt(Direction(muthetaph, muphi), xk) - 2.0*psi + m_model->odfAt(Direction(muthetamh, muphi), xk) )
+//        /
+//        (h2);
+//    Real psi_phi_phi =
+//        ( m_model->odfAt(Direction(mutheta, muphiph), xk) - 2.0*psi + m_model->odfAt(Direction(mutheta, muphimh), xk) )
+//        /
+//        (h2);
+//
+//    Real e = psi - psi_theta_theta;
+//    Real G = psi2 * sin2theta;
+//    Real g = psi * sin2theta - psi_phi_phi;
+//    Real E = psi2;
+//
+//    Real H = 0.5 * ( (e*G + g*E) / (E*G) );
+//
+//
+//    return H;
 
-    Real psi  = (m_model->odfAt(mu, xk));
-    Real psi2 = psi*psi;
+    // TODO : nrmse de la direction (restreint à un angle solide) => à vérifier
+    Matrix S = m_signal->signalAt(xk);
+    Matrix M = m_model->signalAt(xk);
 
-    Real sintheta  = std::sin(mu.theta());
-    Real sin2theta = sintheta*sintheta;
+    Vector vmu = mu.toVector();
+    std::vector<Direction> *directions = m_signal->getDirections();
 
-    Real h  = 0.000001;
-    Real h2 = h*h;
-    Real mutheta   = mu.theta();
-    Real muphi     = mu.phi();
-    Real muthetaph = mutheta + h;
-    Real muthetamh = mutheta - h;
-    Real muphiph   = muphi + h;
-    Real muphimh   = muphi - h;
+    Real sumSquare = 0;
+    Real min = MAX_REAL, max = MIN_REAL;
+    unsigned int n = 0;
 
-    Real psi_theta_theta =
-        ( m_model->odfAt(Direction(muthetaph, muphi), xk) - 2.0*psi + m_model->odfAt(Direction(muthetamh, muphi), xk) )
-        /
-        (h2);
-    Real psi_phi_phi =
-        ( m_model->odfAt(Direction(mutheta, muphiph), xk) - 2.0*psi + m_model->odfAt(Direction(mutheta, muphimh), xk) )
-        /
-        (h2);
+    for(unsigned int g=0; g<S.Rows(); g++)
+    {
+        Vector vg = directions->at(g).toVector();
 
-    Real e = psi - psi_theta_theta;
-    Real G = psi2 * sin2theta;
-    Real g = psi * sin2theta - psi_phi_phi;
-    Real E = psi2;
+        Real scalarProduct = vg.x()*vmu.x() + vg.y()*vmu.y() + vg.z()*vmu.z();
+        Real normVG        = vg.x()*vg.x() + vg.y()*vg.y() + vg.z()*vg.z();
+        Real normVMU       = vmu.x()*vmu.x() + vmu.y()*vmu.y() + vmu.z()*vmu.z();
+        Real angle         = std::acos( scalarProduct / std::sqrt(normVG * normVMU) );
 
-    Real H = 0.5 * ( (e*G + g*E) / (E*G) );
+        if(angle <= m_angleThreshold)
+        {
+            Real diff = M(g,0) - S(g,0);
+            sumSquare += diff*diff;
 
+            if(min > M(g,0))
+            {
+                if(M(g,0) > S(g,0))
+                    min = S(g,0);
+                else
+                    min = M(g,0);
+            }
 
-    return H;
+            if(max < M(g,0))
+            {
+                if(M(g,0) < S(g,0))
+                    max = S(g,0);
+                else
+                    max = M(g,0);
+            }
+
+            n++;
+        }
+    }
+
+    Real nrmse = std::sqrt(sumSquare / n) / (max - min);
+
+    // TODO : calcul de concentration
+    return 435.1455649013809 * std::exp(-25.74351897609373 * nrmse + 44.9437993453943 * nrmse * nrmse);
 }
 
 } // namespace btk

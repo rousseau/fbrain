@@ -39,6 +39,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
     #include "btkTypes.h"
     #include "btkPoint.h"
     #include "btkDirection.h"
+    #include "btkSignal.h"
     #include "btkSHModel.h"
 
 
@@ -56,10 +57,11 @@ knowledge of the CeCILL-B license and that you accept its terms.
             /**
              * @brief Constructor
              * Importante density need von Mises-Fisher density and Q-ball HS model
+             * @param signal Diffusion signal
              * @param model Q-ball HS model of MRI data
              * @param angleThreshold Angle threshold
              */
-            ImportanceDensity(SHModel *model, Real angleThreshold);
+            ImportanceDensity(Signal *signal, SHModel *model, Real angleThreshold);
 
             /**
              * @brief Simulate a direction
@@ -100,6 +102,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
         private:
             SHModel *m_model;       /**< Q-ball HS model of MRI data */
+            Signal  *m_signal;      /**< Diffusion signal */
             Real m_angleThreshold;  /**< Threshold angle of importance function */
 
             Real m_2PI;     /**< Precomputed constant */

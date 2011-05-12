@@ -262,7 +262,7 @@ int main(int argc, char *argv[])
                     Point begin(worldPoint[0], worldPoint[1], worldPoint[2]);
 
                     // Set up filter's densities
-                    ImportanceDensity importance(modelFun, angleThreshold);
+                    ImportanceDensity importance(signalFun, modelFun, angleThreshold);
                     APrioriDensity    apriori(Kappa);
                     LikelihoodDensity likelihood(signalFun, modelFun);
 
