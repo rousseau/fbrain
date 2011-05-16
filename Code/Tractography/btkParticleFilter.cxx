@@ -325,7 +325,7 @@ void ParticleFilter::run(int label, Direction dir)
                 // Simulating next direction according importance density
                 Direction mu = m_importance.computeMeanDirection(xk, ukm1);
                 Real kappa   = mu.isNull() ? m_aPriori.getConcentration() : m_importance.computeConcentration(mu,xk);
-                Direction uk = m_importance.simulate(mu, kappa);
+                Direction uk = mu.isNull() ? m_importance.simulate(ukm1, kappa) : m_importance.simulate(mu, kappa);
 
                 // Move particle
                 m_cloud[m].addToPath(uk.toVector()*m_stepSize, m_mask);
@@ -426,7 +426,7 @@ void ParticleFilter::run(int label, Direction dir)
 
         }
 
-//        this->saveCloudInVTK(label, m_k, m_x0);
+        this->saveCloudInVTK(label, m_k, m_x0);
 
         m_k++;
 
