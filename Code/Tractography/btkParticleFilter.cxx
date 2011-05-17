@@ -426,7 +426,7 @@ void ParticleFilter::run(int label, Direction dir)
 
         }
 
-        this->saveCloudInVTK(label, m_k, m_x0);
+//        this->saveCloudInVTK(label, m_k, m_x0);
 
         m_k++;
 
@@ -797,22 +797,48 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
     else // ras
         points1->InsertNextPoint(-wx0[0], -wx0[1], wx0[2]);
 
-    for(unsigned int k=1; k<map1.length(); k++)
+//    for(unsigned int k=1; k<map1.length(); k++)
+//    {
+//        Point p = map1.getPoint(k);
+//
+//        Image::PointType wp;
+//
+//        ImageContinuousIndex cip;
+//        cip[0] = p.x(); cip[1] = p.y(); cip[2] = p.z();
+//        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp);
+//
+//        if(m_lps)
+//            pid[0] = points1->InsertNextPoint( wp[0], wp[1], wp[2] );
+//        else // ras
+//            pid[0] = points1->InsertNextPoint( -wp[0], -wp[1], wp[2] );
+//
+//        vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
+//        line->GetPointIds()->SetId(0, pid[0]-1);
+//        line->GetPointIds()->SetId(1, pid[0]);
+//        lines1->InsertNextCell(line);
+//    }
+    for(unsigned int k=2; k<map1.length(); k++)
     {
-        Point p = map1.getPoint(k);
+        Point p1 = map1.getPoint(k-2);
+        Point p2 = map1.getPoint(k-1);
+        Point p3 = map1.getPoint(k);
 
-        vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
+        Image::PointType wp1, wp2, wp3;
 
         ImageContinuousIndex cip;
-        cip[0] = p.x(); cip[1] = p.y(); cip[2] = p.z();
-        Image::PointType wp;
-        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp);
+        cip[0] = p1.x(); cip[1] = p1.y(); cip[2] = p1.z();
+        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp1);
+        cip[0] = p2.x(); cip[1] = p2.y(); cip[2] = p2.z();
+        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp2);
+        cip[0] = p3.x(); cip[1] = p3.y(); cip[2] = p3.z();
+        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp3);
 
         if(m_lps)
-            pid[0] = points1->InsertNextPoint(wp[0], wp[1], wp[2]);
+            pid[0] = points1->InsertNextPoint( (wp1[0]+wp2[0]+wp3[0])/3.0, (wp1[1]+wp2[1]+wp3[1])/3.0, (wp1[2]+wp2[2]+wp3[2])/3.0 );
         else // ras
-            pid[0] = points1->InsertNextPoint(-wp[0], -wp[1], wp[2]);
+            pid[0] = points1->InsertNextPoint( -(wp1[0]+wp2[0]+wp3[0])/3.0, -(wp1[1]+wp2[1]+wp3[1])/3.0, (wp1[2]+wp2[2]+wp3[2])/3.0 );
 
+        vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
         line->GetPointIds()->SetId(0, pid[0]-1);
         line->GetPointIds()->SetId(1, pid[0]);
         lines1->InsertNextCell(line);
@@ -831,22 +857,48 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
     else // ras
         points2->InsertNextPoint(-wx0[0], -wx0[1], wx0[2]);
 
-    for(unsigned int k=1; k<map2.length(); k++)
+//    for(unsigned int k=1; k<map1.length(); k++)
+//    {
+//        Point p = map2.getPoint(k);
+//
+//        Image::PointType wp;
+//
+//        ImageContinuousIndex cip;
+//        cip[0] = p.x(); cip[1] = p.y(); cip[2] = p.z();
+//        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp);
+//
+//        if(m_lps)
+//            pid[0] = points2->InsertNextPoint( wp[0], wp[1], wp[2] );
+//        else // ras
+//            pid[0] = points2->InsertNextPoint( -wp[0], -wp[1], wp[2] );
+//
+//        vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
+//        line->GetPointIds()->SetId(0, pid[0]-1);
+//        line->GetPointIds()->SetId(1, pid[0]);
+//        lines2->InsertNextCell(line);
+//    }
+    for(unsigned int k=2; k<map2.length(); k++)
     {
-        Point p = map2.getPoint(k);
+        Point p1 = map2.getPoint(k-2);
+        Point p2 = map2.getPoint(k-1);
+        Point p3 = map2.getPoint(k);
 
-        vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
+        Image::PointType wp1, wp2, wp3;
 
         ImageContinuousIndex cip;
-        cip[0] = p.x(); cip[1] = p.y(); cip[2] = p.z();
-        Image::PointType wp;
-        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp);
+        cip[0] = p1.x(); cip[1] = p1.y(); cip[2] = p1.z();
+        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp1);
+        cip[0] = p2.x(); cip[1] = p2.y(); cip[2] = p2.z();
+        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp2);
+        cip[0] = p3.x(); cip[1] = p3.y(); cip[2] = p3.z();
+        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp3);
 
         if(m_lps)
-            pid[0] = points2->InsertNextPoint(wp[0], wp[1], wp[2]);
+            pid[0] = points2->InsertNextPoint( (wp1[0]+wp2[0]+wp3[0])/3.0, (wp1[1]+wp2[1]+wp3[1])/3.0, (wp1[2]+wp2[2]+wp3[2])/3.0 );
         else // ras
-            pid[0] = points2->InsertNextPoint(-wp[0], -wp[1], wp[2]);
+            pid[0] = points2->InsertNextPoint( -(wp1[0]+wp2[0]+wp3[0])/3.0, -(wp1[1]+wp2[1]+wp3[1])/3.0, (wp1[2]+wp2[2]+wp3[2])/3.0 );
 
+        vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
         line->GetPointIds()->SetId(0, pid[0]-1);
         line->GetPointIds()->SetId(1, pid[0]);
         lines2->InsertNextCell(line);
