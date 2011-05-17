@@ -173,7 +173,81 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
     delete[] sspec;
   }
 
-  public: LeastSquaresVnlCostFunction(unsigned int dim): vnl_cost_function(dim) { lambda = 0.001; }
+  public: LeastSquaresVnlCostFunction(unsigned int dim): vnl_cost_function(dim) { lambda = 0.0; }
+
+  // 3D convolution : over the spectra
+  void get_derivative_x(const vnl_vector<double>& x, vnl_vector<float>& deriv_x) {
+
+    vnl_vector<float>  x_float;
+    x_float = vnl_matops::d2f(x);
+
+    float* kernel = new float[2];
+    kernel[0] = -1; kernel[1] = 1;
+
+    float * drow = new float[x_size.width];
+    float * srow = new float[x_size.width];
+
+    for (unsigned int l = 0; l < x_size.depth; l++) {
+      for (unsigned int py = 0; py < x_size.height; py++) {
+        get_row(x_float, x_size, py, l, srow);
+        convol1d(kernel, 2, srow, x_size.width, drow);
+        set_row(deriv_x, x_size, py, l, drow);
+      }
+    }
+
+    delete[] drow;
+    delete[] srow;
+  }
+
+  // 3D convolution : over the spectra
+  void get_derivative_y(const vnl_vector<double>& x, vnl_vector<float>& deriv_y) {
+
+    vnl_vector<float>  x_float;
+    x_float = vnl_matops::d2f(x);
+
+    float* kernel = new float[2];
+    kernel[0] = -1; kernel[1] = 1;
+
+    float * dcol = new float[x_size.height];
+    float * scol = new float[x_size.height];
+
+    for (unsigned int l = 0; l < x_size.depth; l++) {
+      for (unsigned int px = 0; px < x_size.width; px++) {
+        get_col(x_float, x_size, px, l, scol);
+        convol1d(kernel, 2, scol, x_size.height, dcol);
+        set_col(deriv_y, x_size, px, l, dcol);
+      }
+    }
+
+    delete[] dcol;
+    delete[] scol;
+  }
+
+  // 3D convolution : over the spectra
+  void get_derivative_z(const vnl_vector<double>& x, vnl_vector<float>& deriv_z) {
+
+    vnl_vector<float>  x_float;
+    x_float = vnl_matops::d2f(x);
+
+    float* kernel = new float[2];
+    kernel[0] = -1; kernel[1] = 1;
+
+    float * dspec = new float[x_size.depth];
+    float * sspec = new float[x_size.depth];
+
+    for (unsigned int py = 0; py < x_size.height; py++) {
+      for (unsigned int px = 0; px < x_size.width; px++) {
+        get_spec(x_float, x_size, py, px, sspec);
+        convol1d(kernel, 2, sspec, x_size.depth, dspec);
+        set_spec(deriv_z, x_size, py, px, dspec);
+      }
+    }
+
+    delete[] dspec;
+    delete[] sspec;
+  }
+
+
 
   typedef vnl_vector<float> VnlVectorType;
   typedef vnl_sparse_matrix<float> VnlSparseMatrixType;

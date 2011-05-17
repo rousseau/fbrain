@@ -203,16 +203,11 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   LeastSquaresVnlCostFunction f(x.size());
   f.SetParameters(m_H,m_y,x,x_size);
 
-  std::cout << "after setting parameters" << std::endl; std::cout.flush();
+  // Compute the derivative in x
+//  f.get_derivative_x(x,m_x);
 
   vnl_conjugate_gradient cg(f);
-
-  std::cout << "after conjugate gradient" << std::endl; std::cout.flush();
-
   cg.minimize(x);
-
-  std::cout << "after minimize" << std::endl; std::cout.flush();
-
   cg.diagnose_outcome();
 
   m_x = vnl_matops::d2f(x);
@@ -228,6 +223,8 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   // FIXME: replace the following code with an user-provided region
   // Just for testing purposes we have set it to the region covered
   // by the axial image mask
+
+  // Calculate m_OutputImageRegion
 
   IndexType start_lr = m_InputImageRegion[0].GetIndex();
   SizeType  size_lr  = m_InputImageRegion[0].GetSize();
@@ -261,7 +258,7 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   m_OutputImageRegion.SetIndex( start_hr );
   m_OutputImageRegion.SetSize(  size_hr );
 
-  // matrix resizing
+  // Fill x
 
   unsigned int ncols = m_OutputImageRegion.GetNumberOfPixels();
 
