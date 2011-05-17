@@ -4,6 +4,7 @@ INCLUDE_REGULAR_EXPRESSION("^.*$")
 #------------------------------------------------------------------------------
 
 INCLUDE_DIRECTORIES(${TCLAP_DIRECTORY})
+INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Reconstruction)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/DTI)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Various)
 
@@ -69,6 +70,14 @@ TARGET_LINK_LIBRARIES(btkCropImageUsingMask ITKIO)
 
 #------------------------------------------------------------------------------
 
+#------------------------------------------------------------------------------
+
+ADD_EXECUTABLE(btkLowResolutionImageSimulator btkLowResolutionImageSimulator.cxx)
+TARGET_LINK_LIBRARIES(btkLowResolutionImageSimulator ITKIO)
+
+#------------------------------------------------------------------------------
+
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkReorientImageToStandard
                 btkReorientDiffusionSequenceToStandard
@@ -76,5 +85,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkNiftiToNrrd
                 btkNrrdToNifti
                 btkExtractOneImageFromSequence
-            		btkCropImageUsingMask
+                btkCropImageUsingMask
         DESTINATION bin)
