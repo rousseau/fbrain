@@ -284,7 +284,7 @@ int main(int argc, char *argv[])
 
                     assert(fibers.size() == connectMaps.size());
 
-                    for(int l=fibers.size(); l<label; l++)
+                    for(int l=labels.size(); l<label; l++)
                         labels.push_back(-1);
 
                     if(labels[label-1] == -1)
@@ -332,35 +332,38 @@ int main(int argc, char *argv[])
         Display2(displayMode, std::cout << "\tWriting connectivity maps..." << std::flush);
         for(unsigned int label = 0; label < labels.size(); label++)
         {
-            Real max = 0;
-            ImageIterator it(connectMaps[labels[label]], connectMaps[labels[label]]->GetLargestPossibleRegion());
-
-            for(it.GoToBegin(); !it.IsAtEnd(); ++it)
+            if(labels[label] != -1)
             {
-                if(max < it.Get())
-                    max = it.Get();
-            }
+                Real max = 0;
+                ImageIterator it(connectMaps[labels[label]], connectMaps[labels[label]]->GetLargestPossibleRegion());
 
-            if(max > 0)
-            {
                 for(it.GoToBegin(); !it.IsAtEnd(); ++it)
-                    it.Set(it.Get() / max);
-            }
+                {
+                    if(max < it.Get())
+                        max = it.Get();
+                }
 
-            try
-            {
-                std::stringstream filename;
-                filename << outMapFileName << "-" << label+1 << ".nii.gz";
+                if(max > 0)
+                {
+                    for(it.GoToBegin(); !it.IsAtEnd(); ++it)
+                        it.Set(it.Get() / max);
+                }
 
-                ImageWriter::Pointer writer = ImageWriter::New();
-                writer->SetFileName(filename.str().c_str());
-                writer->SetInput(connectMaps[labels[label]]);
-                writer->Update();
-            }
-            catch(itk::ImageFileWriterException &err)
-            {
-                std::cout << "Error: " << std::endl;
-                std::cout << err << std::endl;
+                try
+                {
+                    std::stringstream filename;
+                    filename << outMapFileName << "-" << label+1 << ".nii.gz";
+
+                    ImageWriter::Pointer writer = ImageWriter::New();
+                    writer->SetFileName(filename.str().c_str());
+                    writer->SetInput(connectMaps[labels[label]]);
+                    writer->Update();
+                }
+                catch(itk::ImageFileWriterException &err)
+                {
+                    std::cout << "Error: " << std::endl;
+                    std::cout << err << std::endl;
+                }
             }
         }
         Display2(displayMode, std::cout << "done." << std::endl);
@@ -369,30 +372,35 @@ int main(int argc, char *argv[])
         Display2(displayMode, std::cout << "\tWriting fibers..." << std::flush);
         for(unsigned int label = 0; label < labels.size(); label++)
         {
-            unsigned int nbOfInputs = fibers[labels[label]]->GetNumberOfInputPorts();
-            bool saveFibers = true;
-            unsigned int i = 0;
-
-            do
+            if(labels[label] != -1)
             {
-                if(fibers[labels[label]]->GetNumberOfInputConnections(i++) < 1)
-                    saveFibers = false;
-            } while(saveFibers && i<nbOfInputs);
+                unsigned int nbOfInputs = fibers[labels[label]]->GetNumberOfInputPorts();
+                bool saveFibers = true;
+                unsigned int i = 0;
 
-            if(saveFibers)
-            {
-                std::stringstream filename;
-                filename << outFibersFileName << "-" << label+1 << ".vtk";
+                do
+                {
+                    if(fibers[labels[label]]->GetNumberOfInputConnections(i++) < 1)
+                        saveFibers = false;
+                } while(saveFibers && i<nbOfInputs);
 
-                fibers[label]->Update();
-                vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
-                writer->SetInput(fibers[labels[label]]->GetOutput());
-                writer->SetFileName(filename.str().c_str());
-                writer->SetFileTypeToBinary();
-                writer->Write();
+                if(saveFibers)
+                {
+                    std::stringstream filename;
+                    filename << outFibersFileName << "-" << label+1 << ".vtk";
+
+                    fibers[labels[label]]->Update();
+                    vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
+                    writer->SetInput(fibers[labels[label]]->GetOutput());
+                    writer->SetFileName(filename.str().c_str());
+                    writer->SetFileTypeToBinary();
+                    writer->Write();
+                }
             }
         }
         Display2(displayMode, std::cout << "done." << std::endl);
+
+    Display1(displayMode, std::cout << "done." << std::endl);
 
 
     return EXIT_SUCCESS;
