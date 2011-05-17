@@ -70,10 +70,13 @@ TARGET_LINK_LIBRARIES(btkCropImageUsingMask ITKIO)
 
 #------------------------------------------------------------------------------
 
-#------------------------------------------------------------------------------
-
 ADD_EXECUTABLE(btkLowResolutionImageSimulator btkLowResolutionImageSimulator.cxx)
 TARGET_LINK_LIBRARIES(btkLowResolutionImageSimulator ITKIO)
+
+#------------------------------------------------------------------------------
+
+ADD_EXECUTABLE(btkAverageImagesWithReference btkAverageImagesWithReference.cxx)
+TARGET_LINK_LIBRARIES(btkAverageImagesWithReference ITKIO)
 
 #------------------------------------------------------------------------------
 
