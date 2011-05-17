@@ -201,43 +201,6 @@ Real ImportanceDensity::compute(Direction uk, Direction mean, Real kappa)
 
 Real ImportanceDensity::computeConcentration(Direction mu, Point xk)
 {
-//    Matrix Psi = m_model->odfAt(xk);
-//
-//    Real psi  = (m_model->odfAt(mu, xk));
-//    Real psi2 = psi*psi;
-//
-//    Real sintheta  = std::sin(mu.theta());
-//    Real sin2theta = sintheta*sintheta;
-//
-//    Real h  = 0.000001;
-//    Real h2 = h*h;
-//    Real mutheta   = mu.theta();
-//    Real muphi     = mu.phi();
-//    Real muthetaph = mutheta + h;
-//    Real muthetamh = mutheta - h;
-//    Real muphiph   = muphi + h;
-//    Real muphimh   = muphi - h;
-//
-//    Real psi_theta_theta =
-//        ( m_model->odfAt(Direction(muthetaph, muphi), xk) - 2.0*psi + m_model->odfAt(Direction(muthetamh, muphi), xk) )
-//        /
-//        (h2);
-//    Real psi_phi_phi =
-//        ( m_model->odfAt(Direction(mutheta, muphiph), xk) - 2.0*psi + m_model->odfAt(Direction(mutheta, muphimh), xk) )
-//        /
-//        (h2);
-//
-//    Real e = psi - psi_theta_theta;
-//    Real G = psi2 * sin2theta;
-//    Real g = psi * sin2theta - psi_phi_phi;
-//    Real E = psi2;
-//
-//    Real H = 0.5 * ( (e*G + g*E) / (E*G) );
-//
-//
-//    return H;
-
-    // TODO : nrmse de la direction (restreint à un angle solide) => à vérifier
     Matrix S = m_signal->signalAt(xk);
     Matrix M = m_model->signalAt(xk);
 

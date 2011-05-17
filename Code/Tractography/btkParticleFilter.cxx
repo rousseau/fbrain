@@ -628,12 +628,6 @@ Particle ParticleFilter::GetMAP()
                 delta[Ind(0,m)] = std::log(1.0/m_M);
         }
 
-    //std::cerr << "delta(0) :" << std::endl;
-    //for(unsigned int j=0; j<m_M; j++)
-    //{
-    //    std::cerr << "delta(0," << j << ") = " << delta[Ind(0,j)] << "\t";
-    //}
-    //std::cerr << std::endl;
 
         for(unsigned int k=1; k<t; k++)
         {
@@ -691,27 +685,6 @@ Particle ParticleFilter::GetMAP()
                 }
             }
         }
-
-    //std::cerr << "delta(i>0,j) :" << std::endl;
-    //for(unsigned int i=0; i<t; i++)
-    //{
-    //    for(unsigned int j=0; j<m_M; j++)
-    //    {
-    //        std::cerr << "delta(" << i << "," << j << ") = " << delta[Ind(i,j)] << "\t";
-    //    }
-    //    std::cerr << std::endl;
-    //}
-    //std::cerr << std::endl;
-    //std::cerr << "psi(i,j) :" << std::endl;
-    //for(unsigned int i=0; i<t-1; i++)
-    //{
-    //    for(unsigned int j=0; j<m_M; j++)
-    //    {
-    //        std::cerr << "psi(" << i << "," << j << ") = " << psi[Ind(i,j)] << "\t";
-    //    }
-    //    std::cerr << std::endl;
-    //}
-    //std::cerr << std::endl;
 
 
         // Backtracking
@@ -797,26 +770,7 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
     else // ras
         points1->InsertNextPoint(-wx0[0], -wx0[1], wx0[2]);
 
-//    for(unsigned int k=1; k<map1.length(); k++)
-//    {
-//        Point p = map1.getPoint(k);
-//
-//        Image::PointType wp;
-//
-//        ImageContinuousIndex cip;
-//        cip[0] = p.x(); cip[1] = p.y(); cip[2] = p.z();
-//        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp);
-//
-//        if(m_lps)
-//            pid[0] = points1->InsertNextPoint( wp[0], wp[1], wp[2] );
-//        else // ras
-//            pid[0] = points1->InsertNextPoint( -wp[0], -wp[1], wp[2] );
-//
-//        vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
-//        line->GetPointIds()->SetId(0, pid[0]-1);
-//        line->GetPointIds()->SetId(1, pid[0]);
-//        lines1->InsertNextCell(line);
-//    }
+
     for(unsigned int k=2; k<map1.length(); k++)
     {
         Point p1 = map1.getPoint(k-2);
@@ -857,26 +811,7 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
     else // ras
         points2->InsertNextPoint(-wx0[0], -wx0[1], wx0[2]);
 
-//    for(unsigned int k=1; k<map1.length(); k++)
-//    {
-//        Point p = map2.getPoint(k);
-//
-//        Image::PointType wp;
-//
-//        ImageContinuousIndex cip;
-//        cip[0] = p.x(); cip[1] = p.y(); cip[2] = p.z();
-//        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp);
-//
-//        if(m_lps)
-//            pid[0] = points2->InsertNextPoint( wp[0], wp[1], wp[2] );
-//        else // ras
-//            pid[0] = points2->InsertNextPoint( -wp[0], -wp[1], wp[2] );
-//
-//        vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
-//        line->GetPointIds()->SetId(0, pid[0]-1);
-//        line->GetPointIds()->SetId(1, pid[0]);
-//        lines2->InsertNextCell(line);
-//    }
+
     for(unsigned int k=2; k<map2.length(); k++)
     {
         Point p1 = map2.getPoint(k-2);
