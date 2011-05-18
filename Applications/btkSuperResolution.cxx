@@ -83,6 +83,7 @@ int main( int argc, char *argv[] )
 
   TCLAP::MultiArg<std::string> transArg("t","transform","transform file",false,"string",cmd);
 
+
   // Parse the argv array.
   cmd.parse( argc, argv );
 
@@ -163,10 +164,9 @@ int main( int argc, char *argv[] )
     resampler -> AddRegion( imageRegion );
 
 
-    // set transformation
-// FIXME Uncomment after testing with simulated images
+    // Comment when testing with simulated images
 
-/*    TransformReaderType::Pointer transformReader = TransformReaderType::New();
+    TransformReaderType::Pointer transformReader = TransformReaderType::New();
     transformReader -> SetFileName( transform[i] );
     transformReader -> Update();
 
@@ -177,7 +177,8 @@ int main( int argc, char *argv[] )
     {
       resampler -> SetTransform(i, j, dynamic_cast< TransformType * >( titr->GetPointer() ) ) ;
     }
-    */
+
+    // Finish comment when testing with simulated images
 
   }
 
@@ -191,8 +192,6 @@ int main( int argc, char *argv[] )
   resampler -> SetReferenceImage( refReader -> GetOutput() );
   resampler -> SetIterations(iter);
   resampler -> SetLambda( lambda );
-//  resampler -> SetOptimizationMethod( ResamplerType::BACKPROJECTION);
-
   resampler -> Update();
 
   // Write image

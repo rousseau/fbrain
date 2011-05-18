@@ -406,10 +406,7 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 
           if ( lrValue > 0)
           {
-
-// FIXME Exchange lines after testing with simulated images
-//          transformedPoint = m_Transform[im][i] -> TransformPoint( nbPoint);
-            transformedPoint = nbPoint;
+            transformedPoint = m_Transform[im][i] -> TransformPoint( nbPoint);
 
             this->GetReferenceImage() -> TransformPhysicalPointToContinuousIndex( transformedPoint, hrContIndex );
 
@@ -692,8 +689,7 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 {
   unsigned long latestTime = Object::GetMTime();
 
-// FIXME Uncomment after testing with simulated images
-/*  if( m_Transform.size()!=0 )
+  if( m_Transform.size()!=0 )
     {
       for(unsigned int i=0; i<m_Transform.size(); i++)
       {
@@ -706,7 +702,7 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
         }
       }
     }
-*/
+
   return latestTime;
 }
 

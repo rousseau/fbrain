@@ -198,9 +198,15 @@ public:
 
     this -> SetInput(_arg);
 
+    // Add transforms for this image
     m_Transform.resize( m_Transform.size() + 1 );
     SizeType _argSize = _arg -> GetLargestPossibleRegion().GetSize();
     m_Transform[m_Transform.size()-1].resize(_argSize[2]);
+
+    // Initialize transforms
+    for (unsigned int i=0; i<_argSize[2]; i++)
+      m_Transform[m_Transform.size()-1][i] = TransformType::New();
+
 
     typename DuplicatorType::Pointer duplicator = DuplicatorType::New();
     duplicator -> SetInputImage (_arg);
