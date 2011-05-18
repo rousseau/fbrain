@@ -76,6 +76,7 @@ SuperResolutionImageFilter<TInputImage, TOutputImage,TInterpolatorPrecisionType>
   m_SimulatedImagesUpdated = false;
 
   m_Iterations = 100;
+  m_Lambda = 0.1;
   m_OptimizationMethod = MSE;
 }
 
@@ -202,6 +203,7 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 
   LeastSquaresVnlCostFunction f(x.size());
   f.SetParameters(m_H,m_y,x,x_size);
+  f.SetLambda( m_Lambda );
 
   // Compute the derivative in x
 //  f.get_derivative_x(x,m_x);

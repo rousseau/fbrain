@@ -173,7 +173,7 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
     delete[] sspec;
   }
 
-  public: LeastSquaresVnlCostFunction(unsigned int dim): vnl_cost_function(dim) { lambda = 0.0; }
+  public: LeastSquaresVnlCostFunction(unsigned int dim): vnl_cost_function(dim) { lambda = 0.1; }
 
   // 3D convolution : over the spectra
   void get_derivative_x(const vnl_vector<double>& x, vnl_vector<float>& deriv_x) {
@@ -382,6 +382,13 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
 
     std::cout << "exiting of gradf " << std::endl; std::cout.flush();
   }
+
+  void SetLambda(float value)
+  {
+    lambda = value;
+  }
+
+
 };
 
 } // namespace btk

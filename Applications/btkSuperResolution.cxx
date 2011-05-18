@@ -67,6 +67,7 @@ int main( int argc, char *argv[] )
   std::vector< int > x1, y1, z1, x2, y2, z2;
 
   unsigned int iter;
+  float lambda;
 
   // Parse arguments
 
@@ -78,6 +79,7 @@ int main( int argc, char *argv[] )
       "Typically the output of btkImageReconstruction is used." ,true,"none","string",cmd);
   TCLAP::ValueArg<std::string> outArg  ("o","output","Super resolution output image",true,"none","string",cmd);
   TCLAP::ValueArg<int> iterArg  ("","iter","Number of iterations",false, 10,"int",cmd);
+  TCLAP::ValueArg<float> lambdaArg  ("","lambda","Regularization factor",false, 0.1,"float",cmd);
 
   TCLAP::MultiArg<std::string> transArg("t","transform","transform file",false,"string",cmd);
 
@@ -90,6 +92,7 @@ int main( int argc, char *argv[] )
   outImage = outArg.getValue().c_str();
   transform = transArg.getValue();
   iter = iterArg.getValue();
+  lambda = lambdaArg.getValue();
 
   // typedefs
   const   unsigned int    Dimension = 3;
@@ -187,6 +190,7 @@ int main( int argc, char *argv[] )
   resampler -> UseReferenceImageOn();
   resampler -> SetReferenceImage( refReader -> GetOutput() );
   resampler -> SetIterations(iter);
+  resampler -> SetLambda( lambda );
 //  resampler -> SetOptimizationMethod( ResamplerType::BACKPROJECTION);
 
   resampler -> Update();

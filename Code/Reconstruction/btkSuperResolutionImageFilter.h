@@ -324,6 +324,10 @@ public:
   itkSetMacro(OptimizationMethod, unsigned int);
   itkGetMacro(OptimizationMethod, unsigned int);
 
+  // Set lambda
+  itkSetMacro(Lambda, float);
+
+
 #ifdef ITK_USE_CONCEPT_CHECKING
   /** Begin concept checking */
   itkConceptMacro(OutputHasNumericTraitsCheck,
@@ -367,6 +371,8 @@ private:
   VnlVectorType       m_y;
   VnlVectorType       m_ysim;
   VnlVectorType       m_x;
+
+  float m_Lambda;
 
   // Precomputed values for optimization
 
