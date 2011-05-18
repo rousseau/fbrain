@@ -68,7 +68,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 #define Ind(i,j) (m_M*(i) + (j))
 
-#define KAPPA 40
+#define KAPPA 180
 
 
 namespace btk
@@ -251,7 +251,6 @@ void ParticleFilter::run(int label)
     Particle map2 = this->GetMAP();
 
     this->ComputeFiber(map1,map2);
-//    this->saveFiber(label, 0, m_x0);
 }
 
 void ParticleFilter::run(int label, Direction dir)
@@ -275,7 +274,7 @@ void ParticleFilter::run(int label, Direction dir)
     for(unsigned int m=0; m<m_M; m++)
     {
         // Simulate a direction using initial density
-        Direction u0 = m_importance.simulate(dir,KAPPA);
+        Direction u0 = m_importance.simulate(dir,m_importance.computeConcentration(dir,m_x0));
 
         // Move particle
         bool isInside = m_cloud[m].addToPath(u0.toVector()*m_stepSize, m_mask);
@@ -325,19 +324,39 @@ void ParticleFilter::run(int label, Direction dir)
 
                 // Simulating next direction according importance density
                 Direction mu = m_importance.computeMeanDirection(xk, ukm1);
-                Real kappa   = KAPPA;
-                Direction uk = m_importance.simulate(mu, kappa);
+                Real kappa   = mu.isNull() ? m_aPriori.getConcentration() : m_importance.computeConcentration(mu,xk);
+                Direction uk = mu.isNull() ? m_importance.simulate(ukm1, kappa) : m_importance.simulate(mu, kappa);
 
                 // Move particle
                 m_cloud[m].addToPath(uk.toVector()*m_stepSize, m_mask);
 
                 // Compute particle's weight
-                Real likelihood = m_likelihood.compute(uk, xk, mu);
-                Real apriori    = m_aPriori.compute(uk, ukm1);
-                Real importance = m_importance.compute(uk, mu, kappa);
-                m_cloud[m].addLikelihood(likelihood);
+                if(mu.isNull())
+                {
+                    m_cloud[m].addLikelihood(0);
 
-                weights[m] = m_cloud[m].weight() * std::exp(likelihood + apriori - importance);
+                    weights[m] = m_cloud[m].weight();
+                }
+                else // mu is not null
+                {
+                    Real likelihood = m_likelihood.compute(uk, xk, mu);
+                    Real apriori    = m_aPriori.compute(uk, ukm1);
+                    Real importance = m_importance.compute(uk, mu, kappa);
+                    m_cloud[m].addLikelihood(likelihood);
+
+                    weights[m] = m_cloud[m].weight() * std::exp(likelihood + apriori - importance);
+
+//                    if(!(weights[m] >= 0.0))
+//                    {
+//                        Pr(likelihood);
+//                        Pr(apriori);
+//                        Pr(importance);
+//                        Pr(weights[m]);
+//                    }
+                } // FIXME : parfois weights[m] = -nan
+                if(!(weights[m] >= 0.0))
+                    weights[m] = 0.0;
+                assert(weights[m] >= 0.0);
             }
         } // for i particles
 
@@ -352,12 +371,17 @@ void ParticleFilter::run(int label, Direction dir)
             }
         } // for each particle
 
+        if(sum <= 0.0)
+            sum = 1;
+        assert(sum > 0.0);
+
         // Normalize particles' weights
         #pragma omp parallel for
         for(unsigned int m=0; m<m_M; m++)
         {
             if(m_cloud[m].isActive()) // m is active
             {
+                assert(weights[m]/sum >= 0.0);
                 m_cloud[m].setWeight(weights[m]/sum);
             }
         }
@@ -390,6 +414,7 @@ void ParticleFilter::run(int label, Direction dir)
             else // ESS >= m_epsilon*(nbInsPart)
                 Display2(m_displayMode, std::cout << " (ESS = " << (ESS/nbInsPart)*100.0 << "%) " << std::flush);
 
+
             for(unsigned int m=0; m<m_M; m++)
             {
                 if(m_cloud[m].isOutside() && m_cloud[m].isActive())
@@ -398,6 +423,7 @@ void ParticleFilter::run(int label, Direction dir)
                     nbInsPart--;
                 }
             }
+
         }
 
 //        this->saveCloudInVTK(label, m_k, m_x0);
@@ -409,7 +435,7 @@ void ParticleFilter::run(int label, Direction dir)
 
     delete[] weights;
 
-    this->saveCloudInVTK(label, m_k-1, m_x0);
+//    this->saveCloudInVTK(label, m_k-1, m_x0);
 
     m_dirNum++;
 }
@@ -441,6 +467,8 @@ void ParticleFilter::ResampleCloud(unsigned int nbInsPart)
 
     Real w    = 1.0/(Real)nbInsPart;
 
+    assert(w >= 0.0);
+
     // Get M particles from the cloud
     // keeping proportionnality
     // (multinomial resampling)
@@ -461,6 +489,7 @@ void ParticleFilter::ResampleCloud(unsigned int nbInsPart)
                 else
                     i++;
             } while(!found && i < nbInsPart);
+
             m_cloud[m].SetLastPoint(m_cloud[index[i]].lastPoint());
             m_cloud[m].SetLastVector(m_cloud[index[i]].lastVector());
             m_cloud[m].SetLastWeight(w);
@@ -487,7 +516,6 @@ void ParticleFilter::saveCloudInVTK(int label, unsigned int step, Point begin)
     vtkIdType pid[1];
     colors->SetNumberOfComponents(1);
 
-
     // create all points and lines
     for(std::vector<Particle>::iterator pIt = m_cloud.begin(); pIt != m_cloud.end(); pIt++)
     {
@@ -508,7 +536,6 @@ void ParticleFilter::saveCloudInVTK(int label, unsigned int step, Point begin)
 
             double color[1]; color[0] = pIt->weight();
             colors->InsertNextTupleValue(color);
-
 
             for(unsigned int i=1; i<=pIt->length(); i++)
             {
@@ -578,140 +605,136 @@ void ParticleFilter::saveCloudInVTK(int label, unsigned int step, Point begin)
 
 Particle ParticleFilter::GetMAP()
 {
-    unsigned int t = m_k-1;
-    Real *delta = new Real[t*m_M];
-    Real *psi   = new Real[(t-1)*m_M];
+    Particle map(m_x0);
 
-
-    // Compute delta and psi by dynamic programming
-
-    for(unsigned int m=0; m<m_M; m++)
+    if(m_k > 2)
     {
-        delta[Ind(0,m)] = m_aPriori.compute(m_cloud[m].getVector(1).toDirection(), m_cloud[m].getVector(0).toDirection()) + m_cloud[m].getLikelihood(0);
-    }
+        unsigned int t = m_k-1;
+        Real *delta = new Real[t*m_M];
+        Real *psi   = new Real[(t-1)*m_M];
 
-//std::cerr << "delta(0) :" << std::endl;
-//for(unsigned int j=0; j<m_M; j++)
-//{
-//    std::cerr << "delta(0," << j << ") = " << delta[Ind(0,j)] << "\t";
-//}
-//std::cerr << std::endl;
 
-    for(unsigned int k=1; k<t; k++)
-    {
+        // Compute delta and psi by dynamic programming
+
+        #pragma omp parallel for
         for(unsigned int m=0; m<m_M; m++)
         {
-            if(k+1 < m_cloud[m].length())
+            if(m_cloud[m].length() > 1)
             {
-                Real max          = MIN_REAL;
-                unsigned int imax = 0;
+                assert(m_cloud[m].length() > 1);
+                delta[Ind(0,m)] = m_aPriori.compute(m_cloud[m].getVector(1).toDirection(), m_cloud[m].getVector(0).toDirection()) + m_cloud[m].getLikelihood(0);
+            }
+            else
+                delta[Ind(0,m)] = std::log(1.0/m_M);
+        }
 
-                for(unsigned int i=0; i<m_M; i++)
+
+        for(unsigned int k=1; k<t; k++)
+        {
+            #pragma omp parallel for
+            for(unsigned int m=0; m<m_M; m++)
+            {
+                if(k+1 < m_cloud[m].length())
                 {
-                    if(k < m_cloud[i].length())
+                    Real max          = MIN_REAL;
+                    unsigned int imax = 0;
+
+                    Point xkp1m = m_cloud[m].getPoint(k+1);
+
+                    for(unsigned int i=0; i<m_M; i++)
                     {
-                        Point xki = m_cloud[i].getPoint(k+1);
-                        Point xkm = m_cloud[m].getPoint(k+1);
-
-                        Real distance = std::sqrt( (xki.x()-xkm.x())*(xki.x()-xkm.x()) + (xki.y()-xkm.y())*(xki.y()-xkm.y()) + (xki.z()-xkm.z())*(xki.z()-xkm.z()));
-
-                        if(distance <= 0.01)
+                        if(k < m_cloud[i].length())
                         {
-                            Real tmp = delta[Ind(k-1,i)] + m_aPriori.compute(m_cloud[m].getVector(k+1).toDirection(), m_cloud[i].getVector(k).toDirection());
+                            Point xkp1i     = m_cloud[i].getPoint(k+1);
+                            Real distance = std::sqrt( (xkp1i.x()-xkp1m.x())*(xkp1i.x()-xkp1m.x()) + (xkp1i.y()-xkp1m.y())*(xkp1i.y()-xkp1m.y()) + (xkp1i.z()-xkp1m.z())*(xkp1i.z()-xkp1m.z()));
 
-                            if(tmp > max)
+                            if(distance <= 0.01)
                             {
-                                max  = tmp;
-                                imax = i;
+                                assert(m_cloud[m].length() > k+1);
+                                assert(m_cloud[i].length() > k);
+                                Real tmp = delta[Ind(k-1,i)] + m_aPriori.compute(m_cloud[m].getVector(k+1).toDirection(), m_cloud[i].getVector(k).toDirection());
+
+                                if(tmp > max)
+                                {
+                                    max  = tmp;
+                                    imax = i;
+                                }
                             }
                         }
                     }
-                }
 
-                if(EQUAL(max,MIN_REAL))
+                    if(EQUAL(max,MIN_REAL))
+                    {
+                        delta[Ind(k,m)] = m_cloud[m].getLikelihood(k);
+                        psi[Ind(k-1,m)] = m;
+                    }
+                    else // max <> MIN_REAL
+                    {
+                        delta[Ind(k,m)] = m_cloud[m].getLikelihood(k) + max;
+                        psi[Ind(k-1,m)] = imax;
+                    }
+                }
+                else // k+1 >= m_cloud[m].length()
                 {
-                    delta[Ind(k,m)] = m_cloud[m].getLikelihood(k);
+                    if(k == 1)
+                        delta[Ind(1,m)] = delta[Ind(0,m)];
+                    else // k > 1
+                        delta[Ind(k,m)] = delta[Ind(k-1,m)] + std::abs(delta[Ind(k-1,m)] - delta[Ind(k-2,m)]);
+
                     psi[Ind(k-1,m)] = m;
                 }
-                else
-                {
-                    delta[Ind(k,m)] = m_cloud[m].getLikelihood(k) + max;
-                    psi[Ind(k-1,m)] = imax;
-                }
-            }
-            else
-            {
-                delta[Ind(k,m)] = MIN_REAL;
-                psi[Ind(k-1,m)] = m;
             }
         }
-    }
 
-//std::cerr << "delta(i>0,j) :" << std::endl;
-//for(unsigned int i=0; i<t; i++)
-//{
-//    for(unsigned int j=0; j<m_M; j++)
-//    {
-//        std::cerr << "delta(" << i << "," << j << ") = " << delta[Ind(i,j)] << "\t";
-//    }
-//    std::cerr << std::endl;
-//}
-//std::cerr << std::endl;
-//std::cerr << "psi(i,j) :" << std::endl;
-//for(unsigned int i=0; i<t-1; i++)
-//{
-//    for(unsigned int j=0; j<m_M; j++)
-//    {
-//        std::cerr << "psi(" << i << "," << j << ") = " << psi[Ind(i,j)] << "\t";
-//    }
-//    std::cerr << std::endl;
-//}
-//std::cerr << std::endl;
 
-    // Backtracking
+        // Backtracking
 
-    std::vector<Direction> states;
+        std::vector<Point> points;
 
-    Real max          = MIN_REAL;
-    unsigned int mmax = 0;
+        Real max          = MIN_REAL;
+        unsigned int mmax = 0;
 
-    for(unsigned int m=0; m<m_M; m++)
-    {
-        Real tmp = delta[Ind(t-1,m)];
-
-        if(max < tmp)
+        for(unsigned int m=0; m<m_M; m++)
         {
-            max  = tmp;
-            mmax = m;
+            Real tmp = delta[Ind(t-1,m)];
+
+            if(max < tmp)
+            {
+                max  = tmp;
+                mmax = m;
+            }
         }
-    }
-    states.push_back(m_cloud[mmax].getVector(t).toDirection());
 
-//std::cerr << "map(" << t-1 << ") = " << mmax << std::endl;
+        int len = m_cloud[mmax].length();
+        points.push_back(m_cloud[mmax].getPoint(len));
 
-    for(int k=t-2; k>=0; k--)
-    {
-        mmax = psi[Ind(k,mmax)];
-        states.push_back(m_cloud[mmax].getVector(k+1).toDirection());
+        for(int k=t-2; k>=0; k--)
+        {
+            mmax = psi[Ind(k,mmax)];
 
-//std::cerr << "map(" << k << ") = " << mmax << std::endl;
+            int len = m_cloud[mmax].length();
 
-    }
-    states.push_back(m_cloud[mmax].getVector(0).toDirection());
-
-
-    delete[] psi;
-    delete[] delta;
+            if(k+1 <= len)
+                points.push_back(m_cloud[mmax].getPoint(k+1));
+            else // k+1 > len
+                points.push_back(m_cloud[mmax].getPoint(len));
+        }
 
 
-    // Get MAP estimate
+        delete[] psi;
+        delete[] delta;
 
-    Particle map(m_x0);
 
-    for(unsigned int k=0; k<states.size(); k++)
-    {
-        map.addToPath(states[states.size()-1-k].toVector()*m_stepSize, m_mask);
-        map.setWeight(1);
+        // Compute MAP estimate
+
+        for(int k=points.size()-1; k>=0; k--)
+        {
+            Point p1 = map.lastPoint();
+            Point p2 = points[k];
+            Vector v(p2.x()-p1.x(), p2.y()-p1.y(), p2.z()-p1.z());
+            map.addToPath(v*m_stepSize, m_mask);
+            map.setWeight(1);
+        }
     }
 
 
@@ -747,22 +770,29 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
     else // ras
         points1->InsertNextPoint(-wx0[0], -wx0[1], wx0[2]);
 
-    for(unsigned int k=1; k<map1.length(); k++)
-    {
-        Point p = map1.getPoint(k);
 
-        vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
+    for(unsigned int k=2; k<map1.length(); k++)
+    {
+        Point p1 = map1.getPoint(k-2);
+        Point p2 = map1.getPoint(k-1);
+        Point p3 = map1.getPoint(k);
+
+        Image::PointType wp1, wp2, wp3;
 
         ImageContinuousIndex cip;
-        cip[0] = p.x(); cip[1] = p.y(); cip[2] = p.z();
-        Image::PointType wp;
-        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp);
+        cip[0] = p1.x(); cip[1] = p1.y(); cip[2] = p1.z();
+        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp1);
+        cip[0] = p2.x(); cip[1] = p2.y(); cip[2] = p2.z();
+        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp2);
+        cip[0] = p3.x(); cip[1] = p3.y(); cip[2] = p3.z();
+        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp3);
 
         if(m_lps)
-            pid[0] = points1->InsertNextPoint(wp[0], wp[1], wp[2]);
+            pid[0] = points1->InsertNextPoint( (wp1[0]+wp2[0]+wp3[0])/3.0, (wp1[1]+wp2[1]+wp3[1])/3.0, (wp1[2]+wp2[2]+wp3[2])/3.0 );
         else // ras
-            pid[0] = points1->InsertNextPoint(-wp[0], -wp[1], wp[2]);
+            pid[0] = points1->InsertNextPoint( -(wp1[0]+wp2[0]+wp3[0])/3.0, -(wp1[1]+wp2[1]+wp3[1])/3.0, (wp1[2]+wp2[2]+wp3[2])/3.0 );
 
+        vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
         line->GetPointIds()->SetId(0, pid[0]-1);
         line->GetPointIds()->SetId(1, pid[0]);
         lines1->InsertNextCell(line);
@@ -777,26 +807,33 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
     m_map->TransformContinuousIndexToPhysicalPoint(cix0, wx0);
 
     if(m_lps)
-        points1->InsertNextPoint(wx0[0], wx0[1], wx0[2]);
+        points2->InsertNextPoint(wx0[0], wx0[1], wx0[2]);
     else // ras
-        points1->InsertNextPoint(-wx0[0], -wx0[1], wx0[2]);
+        points2->InsertNextPoint(-wx0[0], -wx0[1], wx0[2]);
 
-    for(unsigned int k=1; k<map2.length(); k++)
+
+    for(unsigned int k=2; k<map2.length(); k++)
     {
-        Point p = map2.getPoint(k);
+        Point p1 = map2.getPoint(k-2);
+        Point p2 = map2.getPoint(k-1);
+        Point p3 = map2.getPoint(k);
 
-        vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
+        Image::PointType wp1, wp2, wp3;
 
         ImageContinuousIndex cip;
-        cip[0] = p.x(); cip[1] = p.y(); cip[2] = p.z();
-        Image::PointType wp;
-        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp);
+        cip[0] = p1.x(); cip[1] = p1.y(); cip[2] = p1.z();
+        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp1);
+        cip[0] = p2.x(); cip[1] = p2.y(); cip[2] = p2.z();
+        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp2);
+        cip[0] = p3.x(); cip[1] = p3.y(); cip[2] = p3.z();
+        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp3);
 
         if(m_lps)
-            pid[0] = points1->InsertNextPoint(wp[0], wp[1], wp[2]);
+            pid[0] = points2->InsertNextPoint( (wp1[0]+wp2[0]+wp3[0])/3.0, (wp1[1]+wp2[1]+wp3[1])/3.0, (wp1[2]+wp2[2]+wp3[2])/3.0 );
         else // ras
-            pid[0] = points1->InsertNextPoint(-wp[0], -wp[1], wp[2]);
+            pid[0] = points2->InsertNextPoint( -(wp1[0]+wp2[0]+wp3[0])/3.0, -(wp1[1]+wp2[1]+wp3[1])/3.0, (wp1[2]+wp2[2]+wp3[2])/3.0 );
 
+        vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
         line->GetPointIds()->SetId(0, pid[0]-1);
         line->GetPointIds()->SetId(1, pid[0]);
         lines2->InsertNextCell(line);
@@ -840,7 +877,8 @@ void ParticleFilter::ComputeMap()
         {
             // Get data
             Point p = particle->getPoint(k);
-            Real  w = (k == 0) ? 1.0/(Real)m_M : particle->getWeight(k-1);
+//            Real  w = (k == 0) ? 1.0/(Real)m_M : particle->getWeight(k-1);
+            Real w  = 1;
 
             // Tri-linear interpolation
             short x = (short)std::floor(p.x());

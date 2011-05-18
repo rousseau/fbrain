@@ -39,7 +39,7 @@
 
 #include "itkImage.h"
 #include "itkImageFileReader.h"
-#include "CmdLine.h"
+#include <tclap/CmdLine.h>
 #include "btkDiffusionGradientTable.h"
 
 int main( int argc, char *argv[] )

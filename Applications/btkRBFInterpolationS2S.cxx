@@ -40,7 +40,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkLinearInterpolateImageFunction.h"
 #include "itkImage.h"
-#include "CmdLine.h"
+#include <tclap/CmdLine.h>
 #include "btkRBFInterpolateImageFunctionS2S.h"
 
 #include "itkImageFileReader.h"

@@ -63,7 +63,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
              * @param sigmasFilename Filename of signal's standard deviations
              * @param dirFileName Directions' filename
              */
-            Signal(const std::string &filename, const std::string &sigmasFilename, const std::string &dirFileName);
+            Signal(const std::string &filename, const std::string &sigmasFilename, const std::string &dirFileName, char displayMode=0);
 
             /**
              * @brief Constructor
@@ -109,6 +109,12 @@ knowledge of the CeCILL-B license and that you accept its terms.
              * @return Spacing of the 3D image
              */
             Image::SpacingType getSpacing();
+
+            /**
+             * @brief Get image's direction
+             * @return Direction of the 3D image
+             */
+             Image::DirectionType getDirection();
 
             /**
              * @brief Get gradient directions
