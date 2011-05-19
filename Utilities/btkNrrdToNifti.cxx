@@ -50,6 +50,9 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "itkMatrix.h"
 #include "vnl/vnl_inverse.h"
 
+// BTK includes
+#include "btkNrrdField.h"
+
 
 typedef short PixelType;
 const unsigned int InDimension  = 3;
@@ -122,19 +125,29 @@ int main(int argc, char *argv[])
         std::fstream headFile(inFileName.c_str(), std::fstream::in);
 
         std::string s;
+        std::string key;
+        std::string value;
         unsigned int bvalue = 0;
         bool stop = false;
 
-        while(!stop && (headFile >> s))
+        while(!stop && !headFile.eof() && !headFile.fail() && !headFile.bad())
         {
-            if(s == "DWMRI_b-value")
+            char buf[256];
+            headFile.getline(buf, 256);
+            s = buf;
+
+            btk::btkNrrdField field(s);
+            key   = field.GetKey();
+            value = field.GetValue();
+
+            if(key == "DWMRI_b-value")
             {
-                headFile >> s;
-                headFile >> bvalue;
+                std::stringstream st;
+                st << value;
+                st >> bvalue;
             }
-            else if(s == "DWMRI_gradient_0000")
+            else if(key == "DWMRI_gradient_0000")
             {
-                headFile >> s;
                 stop = true;
             }
         }
@@ -148,19 +161,32 @@ int main(int argc, char *argv[])
         {
             double x,y,z;
 
-            while((headFile >> x) && (headFile >> y) && (headFile >> z))
+            std::stringstream st;
+            st << value;
+            st >> x; vx.push_back(x);
+            st >> y; vy.push_back(y);
+            st >> z; vz.push_back(z);
+
+            while(!headFile.eof() && !headFile.fail() && !headFile.bad())
             {
-                vx.push_back(x);
-                vy.push_back(y);
-                vz.push_back(z);
+                char buf[256];
+                headFile.getline(buf, 256);
+                s = buf;
+
+                btk::btkNrrdField field(s);
+                key   = field.GetKey();
+                value = field.GetValue();
+
+                st.clear();
+                st << value;
+                st >> x; vx.push_back(x);
+                st >> y; vy.push_back(y);
+                st >> z; vz.push_back(z);
 
                 if(x == 0 && y == 0 && z == 0)
                     bvals.push_back(0);
                 else
                     bvals.push_back(bvalue);
-
-                headFile >> s;
-                headFile >> s;
             }
 
         }
