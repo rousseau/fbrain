@@ -130,12 +130,12 @@ int main(int argc, char *argv[])
         unsigned int bvalue = 0;
         bool stop = false;
 
+        char buf[256];
+        headFile.getline(buf, 256);
+        s = buf;
+
         while(!stop && !headFile.eof() && !headFile.fail() && !headFile.bad())
         {
-            char buf[256];
-            headFile.getline(buf, 256);
-            s = buf;
-
             btk::btkNrrdField field(s);
             key   = field.GetKey();
             value = field.GetValue();
@@ -150,6 +150,9 @@ int main(int argc, char *argv[])
             {
                 stop = true;
             }
+
+            headFile.getline(buf,256);
+            s = buf;
         }
 
         std::vector<double> vx;
@@ -169,10 +172,6 @@ int main(int argc, char *argv[])
 
             while(!headFile.eof() && !headFile.fail() && !headFile.bad())
             {
-                char buf[256];
-                headFile.getline(buf, 256);
-                s = buf;
-
                 btk::btkNrrdField field(s);
                 key   = field.GetKey();
                 value = field.GetValue();
@@ -187,8 +186,10 @@ int main(int argc, char *argv[])
                     bvals.push_back(0);
                 else
                     bvals.push_back(bvalue);
-            }
 
+                headFile.getline(buf,256);
+                s = buf;
+            }
         }
 
         headFile.close();
