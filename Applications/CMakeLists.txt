@@ -24,6 +24,9 @@ INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/DTI)
 ADD_EXECUTABLE(btkImageReconstruction btkImageReconstruction.cxx )
 TARGET_LINK_LIBRARIES(btkImageReconstruction ITKIO ITKNumerics)
 
+ADD_EXECUTABLE(btkSuperResolution btkSuperResolution.cxx )
+TARGET_LINK_LIBRARIES(btkSuperResolution ITKIO ITKNumerics)
+
 ADD_EXECUTABLE(btkGroupwiseS2SDistortionCorrection btkGroupwiseS2SDistortionCorrection.cxx )
 TARGET_LINK_LIBRARIES(btkGroupwiseS2SDistortionCorrection ITKIO ITKNumerics ${ANN_LIBRARY})
 

@@ -169,17 +169,23 @@ public:
 
   void SetParameters( const ParametersType & parameters )
   {
-  for(unsigned int i=0; i<m_NumberOfSlices; i++)
-  {
-    ParametersType param(m_ParametersPerSlice);
 
-    for (unsigned int p=0; p<m_ParametersPerSlice; p++)
+    std::cout << "Number of slices = " << m_NumberOfSlices << std::endl;
+    std::cout << "Parameters per slice = " << m_ParametersPerSlice << std::endl;
+
+    this -> m_Parameters = parameters;
+
+    for(unsigned int i=0; i<m_NumberOfSlices; i++)
     {
-      param[p] = this->m_Parameters[p + i*m_ParametersPerSlice];
-    }
-    m_TransformList[i] -> SetParameters( param );
+      ParametersType param(m_ParametersPerSlice);
 
-  }
+      for (unsigned int p=0; p<m_ParametersPerSlice; p++)
+      {
+        param[p] = this->m_Parameters[p + i*m_ParametersPerSlice];
+      }
+      m_TransformList[i] -> SetParameters( param );
+
+    }
   }
 
 

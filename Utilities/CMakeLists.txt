@@ -4,6 +4,7 @@ INCLUDE_REGULAR_EXPRESSION("^.*$")
 #------------------------------------------------------------------------------
 
 INCLUDE_DIRECTORIES(${TCLAP_DIRECTORY})
+INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Reconstruction)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/DTI)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Various)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Reconstruction)
@@ -75,6 +76,16 @@ TARGET_LINK_LIBRARIES(btkBinarizeLabels ITKIO ITKNumerics ITKStatistics)
 
 ADD_EXECUTABLE(btkResampleLabelsByInjection btkResampleLabelsByInjection.cxx )
 TARGET_LINK_LIBRARIES(btkResampleLabelsByInjection ITKIO ITKNumerics )
+
+#------------------------------------------------------------------------------
+
+ADD_EXECUTABLE(btkLowResolutionImageSimulator btkLowResolutionImageSimulator.cxx)
+TARGET_LINK_LIBRARIES(btkLowResolutionImageSimulator ITKIO)
+
+#------------------------------------------------------------------------------
+
+ADD_EXECUTABLE(btkAverageImagesWithReference btkAverageImagesWithReference.cxx)
+TARGET_LINK_LIBRARIES(btkAverageImagesWithReference ITKIO)
 
 #------------------------------------------------------------------------------
 
