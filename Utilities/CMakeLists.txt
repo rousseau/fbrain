@@ -8,6 +8,7 @@ INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Reconstruction)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/DTI)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Various)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Reconstruction)
+INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Various)
 
 #------------------------------------------------------------------------------
 
@@ -51,7 +52,8 @@ TARGET_LINK_LIBRARIES(btkRegisterDiffusionToAnatomicalData ITKCommon ITKIO ITKNu
 
 #------------------------------------------------------------------------------
 
-ADD_EXECUTABLE(btkNrrdToNifti btkNrrdToNifti.cxx)
+ADD_EXECUTABLE(btkNrrdToNifti btkNrrdToNifti.cxx
+        ${fbrain_SOURCE_DIR}/Code/Various/btkNrrdField.cxx)
 TARGET_LINK_LIBRARIES(btkNrrdToNifti ITKIO)
 
 #------------------------------------------------------------------------------
