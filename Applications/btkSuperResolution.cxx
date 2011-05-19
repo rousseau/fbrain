@@ -176,12 +176,7 @@ int main( int argc, char *argv[] )
     TransformType::Pointer trans = dynamic_cast< TransformType * >( titr->GetPointer() );
 
     for(unsigned int j=0; j< trans -> GetNumberOfSlices(); j++)
-    {
       resampler -> SetTransform(i, j, trans -> GetSliceTransform(j) ) ;
-      std::cout << trans -> GetSliceTransform(j) -> GetParameters() << " ; " << trans -> GetSliceTransform(j) -> GetFixedParameters() << std::endl;
-    }
-    std::cout << std::endl;
-
 
     // Finish comment when testing with simulated images
 
