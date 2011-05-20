@@ -169,17 +169,19 @@ public:
 
   void SetParameters( const ParametersType & parameters )
   {
-  for(unsigned int i=0; i<m_NumberOfSlices; i++)
-  {
-    ParametersType param(m_ParametersPerSlice);
 
-    for (unsigned int p=0; p<m_ParametersPerSlice; p++)
+    this -> m_Parameters = parameters;
+
+    for(unsigned int i=0; i<m_NumberOfSlices; i++)
     {
-      param[p] = this->m_Parameters[p + i*m_ParametersPerSlice];
-    }
-    m_TransformList[i] -> SetParameters( param );
+      ParametersType param(m_ParametersPerSlice);
 
-  }
+      for (unsigned int p=0; p<m_ParametersPerSlice; p++)
+        param[p] = this->m_Parameters[p + i*m_ParametersPerSlice];
+
+      m_TransformList[i] -> SetParameters( param );
+
+    }
   }
 
 
@@ -187,8 +189,6 @@ public:
   void PrintSelf(std::ostream &os, Indent indent) const
   {
     Superclass::PrintSelf(os,indent);
-
-    std::cout << indent << "Parameters = " << this->GetParameters() << std::endl;
   }
 
   TransformType * GetSliceTransform( unsigned int i ) const
@@ -215,13 +215,8 @@ public:
       inverseRigidTransform -> GetInverse( inverseRigidTransform );
       inverseRigidTransform -> SetCenter( m_TransformList[i] -> GetCenter() );
 
-//      std::cout << inverseRigidTransform -> GetParameters() << " " << m_TransformList[i] -> GetOffset()  << std::endl;
-
       m_TransformList[i] -> SetParameters( inverseRigidTransform -> GetParameters() );
       m_TransformList[i] -> SetCenter( m_TransformList[i] -> GetCenter() );
-
-//      std::cout << GetSliceTransform(i) -> GetParameters() << " " << GetSliceTransform(i) -> GetOffset()  << std::endl;
-
 
     }
   }
@@ -231,8 +226,6 @@ public:
     this -> m_FixedParameters = fp;
 
     m_NumberOfSlices = this -> m_FixedParameters[0];
-
-    std::cout << "Transform list size = " << m_TransformList.size() << std::endl;
 
     if (m_TransformList.size() == 0 )
     {
@@ -257,12 +250,9 @@ public:
     for ( unsigned int j = 0; j<m_NumberOfSlices; j++)
     {
       for ( unsigned int i = 0; i < NDimensions; i++ )
-      {
         c[i] = this -> m_FixedParameters[j*NDimensions + i + 1];
-      }
 
       m_TransformList[j] -> SetCenter ( c );
-      std::cout << m_TransformList[j] -> GetCenter() << std::endl;
     }
 
   }
@@ -284,10 +274,6 @@ public:
     }
     return this->m_FixedParameters;
   }
-
-
-
-
 
 
   itkGetMacro( NumberOfSlices, unsigned int);

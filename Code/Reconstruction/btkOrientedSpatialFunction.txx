@@ -33,8 +33,6 @@
 
 ==========================================================================*/
 
-
-
 #ifndef __itkOrientedSpatialFunction_txx
 #define __itkOrientedSpatialFunction_txx
 
@@ -55,21 +53,26 @@ OrientedSpatialFunction<TOutput, VImageDimension, TInput>
   m_Spacing.set_size(3);
   m_Spacing.fill(1.0);
 
+  // Gaussian setup
+
   m_Gaussian = GaussianFunctionType::New();
   m_Gaussian -> SetNormalized(false);
 
   ArrayType mean;
   mean[0] = 0; mean[1] = 0; mean[2] = 0;
-  m_Gaussian -> SetMean( mean  );
+  m_Gaussian -> SetMean( mean );
 
   ArrayType sigma;
-//  double cst = 2*sqrt(2*log(2.0));
 
   sigma[0] = 0.5*m_Spacing[0];
   sigma[1] = 0.5*m_Spacing[1];
   sigma[2] = 0.5*m_Spacing[2];
 
   m_Gaussian -> SetSigma( sigma );
+
+  // End Gaussian setup
+
+  m_PSF = GAUSSIAN;
 
 }
 
@@ -103,11 +106,23 @@ OrientedSpatialFunction<TOutput, VImageDimension, TInput>
   // perpendicular to the slice? Why a difference with other dimensions?
   // Perhaps I should use 0.5? Or is it too small?
 
-  if ( ( fabs(icoor) <= 0.5 * m_Spacing[0] ) &&
-       ( fabs(jcoor) <= 0.5 * m_Spacing[1] ) &&
-       ( fabs(kcoor) <= 0.5 * m_Spacing[2]) )
+  switch (m_PSF)
+  {
+  case BOXCAR:
+    std::cout << "in boxcar " << std::endl;
+    if ( ( fabs(icoor) <= 0.5 * m_Spacing[0] ) &&
+           ( fabs(jcoor) <= 0.5 * m_Spacing[1] ) &&
+           ( fabs(kcoor) <= 0.5 * m_Spacing[2]) )
+          value = 1.0;
+    break;
+  case GAUSSIAN:
     value = m_Gaussian -> Evaluate( diffPoint );
-//    value = 1.0;
+    break;
+  default:
+    std::cout << "in default " << std::endl;
+    std::cout << "Unknown function" << std::endl;
+    break;
+  }
 
   return (TOutput) value;
 }
