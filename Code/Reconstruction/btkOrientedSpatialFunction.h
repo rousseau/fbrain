@@ -65,6 +65,12 @@ class OrientedSpatialFunction
 : public SpatialFunction<TOutput, VImageDimension, TInput>
 {
 public:
+
+  typedef enum {
+    BOXCAR=0,
+    GAUSSIAN=1,
+  } PSF_type;
+
   /** Standard class typedefs. */
   typedef OrientedSpatialFunction                                 Self;
   typedef SpatialFunction<TOutput, VImageDimension, TInput>       Superclass;
@@ -106,13 +112,12 @@ public:
 
   /** Prints class information */
 
-  /** Set/Get spacing */
+  /** Set spacing */
   void SetSpacing(SpacingType spacing)
   {
     m_Spacing = spacing.GetVnlVector();
 
     ArrayType sigma;
-//    double cst = 2*sqrt(2*log(2.0));
 
     sigma[0] = 0.5*m_Spacing[0];
     sigma[1] = 0.5*m_Spacing[1];
@@ -122,22 +127,24 @@ public:
 
   }
 
-  /** Set/Get direction */
+  /** Set direction */
   void SetDirection(DirectionType direction)
   {
     m_Direction = direction.GetVnlMatrix();
     m_idir = m_Direction.get_column(0);
     m_jdir = m_Direction.get_column(1);
     m_kdir = m_Direction.get_column(2);
-
-//    std::cout << "direction set" << std::endl;
   }
 
-  /** Set/Get position */
+  /** Set center */
   void SetCenter(PointType center)
   {
     m_Center = center.GetVnlVector();
   }
+
+  /** Set/Get PSF */
+  itkSetMacro(PSF, unsigned int);
+  itkGetMacro(PSF, unsigned int);
 
 
 protected:
@@ -156,6 +163,8 @@ private:
   vnl_vector<double> m_idir;
   vnl_vector<double> m_jdir;
   vnl_vector<double> m_kdir;
+
+  unsigned int m_PSF;
 
   typename GaussianFunctionType::Pointer m_Gaussian;
 

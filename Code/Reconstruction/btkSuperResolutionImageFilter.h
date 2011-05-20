@@ -97,6 +97,11 @@ public:
     BACKPROJECTION=1,
   } OptimizationMethods;
 
+  typedef enum {
+    BOXCAR=0,
+    GAUSSIAN=1,
+  } PSF_type;
+
   /** Standard class typedefs. */
   typedef SuperResolutionImageFilter                Self;
   typedef ImageToImageFilter<TInputImage,TOutputImage>  Superclass;
@@ -173,9 +178,6 @@ public:
   /**Interpolator typedef. */
   typedef LinearInterpolateImageFunctionWithWeights<TOutputImage, double> InterpolatorType;
 
-  /**Interpolator typedef. */
-//  typedef NearestNeighborInterpolateImageFunction<TInputImage, double> NNInterpolatorType;
-
   /** Duplicator typedef. */
   typedef ImageDuplicator< InputImageType > DuplicatorType;
 
@@ -231,16 +233,6 @@ public:
   IndexType LinearToAbsoluteIndex( unsigned int linearIndex, InputImageRegionType region );
 
   void UpdateSimulatedImages();
-
-
-  /** Get the transform array. */
-//  TransformType* GetTransform( int i)
-//  {
-//    return this -> m_Transform[i].GetPointer();
-//  }
-
-  /** Get the transform array. */
-//  itkGetMacroNoDeb( Transform, TransformPointerArrayType );
 
   /** Set the size of the output image. */
   itkSetMacro( Size, SizeType );
@@ -323,15 +315,21 @@ public:
   itkSetMacro(OutputImageRegion, OutputImageRegionType);
   itkGetMacro(OutputImageRegion, OutputImageRegionType);
 
-  // Set number of iterations
+  // Set/Get number of iterations
   itkSetMacro(Iterations, unsigned int);
+  itkGetMacro(Iterations, unsigned int);
 
-  // Set/Get output image region
+  // Set/Get the optimization method
   itkSetMacro(OptimizationMethod, unsigned int);
   itkGetMacro(OptimizationMethod, unsigned int);
 
-  // Set lambda
+  // Set/Get lambda
   itkSetMacro(Lambda, float);
+  itkGetMacro(Lambda, float);
+
+  // Set/Get PSF
+  itkSetMacro(PSF, unsigned int);
+  itkGetMacro(PSF, unsigned int);
 
 
 #ifdef ITK_USE_CONCEPT_CHECKING
@@ -398,6 +396,7 @@ private:
   bool                        m_UseReferenceImage;
 
   unsigned int m_OptimizationMethod;
+  unsigned int m_PSF;
 
 };
 

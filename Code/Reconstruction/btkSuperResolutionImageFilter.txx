@@ -78,6 +78,7 @@ SuperResolutionImageFilter<TInputImage, TOutputImage,TInterpolatorPrecisionType>
   m_Iterations = 100;
   m_Lambda = 0.1;
   m_OptimizationMethod = MSE;
+  m_PSF = GAUSSIAN;
 }
 
 
@@ -204,9 +205,6 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   LeastSquaresVnlCostFunction f(x.size());
   f.SetParameters(m_H,m_y,x,x_size);
   f.SetLambda( m_Lambda );
-
-  // Compute the derivative in x
-//  f.get_derivative_x(x,m_x);
 
   vnl_conjugate_gradient cg(f);
   cg.minimize(x);
@@ -344,6 +342,7 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
     // PSF definition
 
     typename FunctionType::Pointer function = FunctionType::New();
+    function -> SetPSF( m_PSF );
     function -> SetDirection( m_ImageArray[im]  -> GetDirection() );
     function -> SetSpacing( m_ImageArray[im] -> GetSpacing() );
 

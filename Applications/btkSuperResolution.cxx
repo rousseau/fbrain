@@ -82,6 +82,8 @@ int main( int argc, char *argv[] )
   TCLAP::ValueArg<std::string> outArg  ("o","output","Super resolution output image",true,"none","string",cmd);
   TCLAP::ValueArg<int> iterArg  ("","iter","Number of iterations",false, 10,"int",cmd);
   TCLAP::ValueArg<float> lambdaArg  ("","lambda","Regularization factor",false, 0.1,"float",cmd);
+  TCLAP::SwitchArg  boxcarSwitchArg("","boxcar","A boxcar-shaped PSF is assumed as imaging model"
+      " (by default a Gaussian-shaped PSF is employed.).",false);
 
   TCLAP::MultiArg<std::string> transArg("t","transform","transform file",false,"string",cmd);
 
@@ -192,6 +194,8 @@ int main( int argc, char *argv[] )
   resampler -> SetReferenceImage( refReader -> GetOutput() );
   resampler -> SetIterations(iter);
   resampler -> SetLambda( lambda );
+  if ( boxcarSwitchArg.isSet() )
+    resampler -> SetPSF( ResamplerType::BOXCAR );
   resampler -> Update();
 
   // Write image
