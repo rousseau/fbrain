@@ -316,6 +316,7 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 //  m_Ht.set_size(ncols, nrows);
 //  m_Hbp.set_size(ncols,nrows);
   m_y.set_size(nrows);
+  m_y.fill(0.0);
 //  m_ysim[im].set_size(nrows);
 
   // H is different for each input image
@@ -389,56 +390,65 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
       for(fixedIt.GoToBegin(); !fixedIt.IsAtEnd(); ++fixedIt)
       {
         lrIndex = fixedIt.GetIndex();
-
-        lrDiffIndex[0] = lrIndex[0] - inputIndex[0];
-        lrDiffIndex[1] = lrIndex[1] - inputIndex[1];
-        lrDiffIndex[2] = lrIndex[2] - inputIndex[2];
-
-        lrLinearIndex = lrDiffIndex[0] + lrDiffIndex[1]*inputSize[0] + lrDiffIndex[2]*inputSize[0]*inputSize[1];
-
-        m_y[lrLinearIndex + offset] = fixedIt.Get();
-
         m_ImageArray[im] -> TransformIndexToPhysicalPoint( lrIndex, lrPoint );
-        nbIt.SetLocation( lrIndex);
-        function -> SetCenter( lrPoint );
 
-        for(unsigned int k=0; k<deltaIndexes.size(); k++)
+        if ( interpolator -> IsInsideBuffer( lrPoint ) )
         {
-          nbIndex[0] = deltaIndexes[k][0] + lrIndex[0];
-          nbIndex[1] = deltaIndexes[k][1] + lrIndex[1];
-          nbIndex[2] = deltaIndexes[k][2] + lrIndex[2];
 
-          m_ImageArray[im] -> TransformContinuousIndexToPhysicalPoint( nbIndex, nbPoint );
-          lrValue = function -> Evaluate(nbPoint);
+          lrDiffIndex[0] = lrIndex[0] - inputIndex[0];
+          lrDiffIndex[1] = lrIndex[1] - inputIndex[1];
+          lrDiffIndex[2] = lrIndex[2] - inputIndex[2];
 
-          if ( lrValue > 0)
+          lrLinearIndex = lrDiffIndex[0] + lrDiffIndex[1]*inputSize[0] + lrDiffIndex[2]*inputSize[0]*inputSize[1];
+
+          m_y[lrLinearIndex + offset] = fixedIt.Get();
+
+          m_ImageArray[im] -> TransformIndexToPhysicalPoint( lrIndex, lrPoint );
+          nbIt.SetLocation( lrIndex);
+          function -> SetCenter( lrPoint );
+
+          for(unsigned int k=0; k<deltaIndexes.size(); k++)
           {
-            transformedPoint = m_Transform[im][i] -> TransformPoint( nbPoint);
+            nbIndex[0] = deltaIndexes[k][0] + lrIndex[0];
+            nbIndex[1] = deltaIndexes[k][1] + lrIndex[1];
+            nbIndex[2] = deltaIndexes[k][2] + lrIndex[2];
 
-            this->GetReferenceImage() -> TransformPhysicalPointToContinuousIndex( transformedPoint, hrContIndex );
+            m_ImageArray[im] -> TransformContinuousIndexToPhysicalPoint( nbIndex, nbPoint );
+            lrValue = function -> Evaluate(nbPoint);
 
-            bool isInsideHR = true;
-
-            if ( (hrContIndex[0] < start_hr[0]) || (hrContIndex[0] > end_hr[0]) ||
-                 (hrContIndex[1] < start_hr[1]) || (hrContIndex[1] > end_hr[1]) ||
-                 (hrContIndex[2] < start_hr[2]) || (hrContIndex[2] > end_hr[2]) )
-               isInsideHR = false;
-
-            if ( isInsideHR )
+            if ( lrValue > 0)
             {
-              hrValue = interpolator -> Evaluate( transformedPoint );
+              transformedPoint = m_Transform[im][i] -> TransformPoint( nbPoint);
 
-              for(unsigned int n=0; n<interpolator -> GetContributingNeighbors(); n++)
+              this->GetReferenceImage() -> TransformPhysicalPointToContinuousIndex( transformedPoint, hrContIndex );
+
+              bool isInsideHR = true;
+
+              // FIXME This checking should be done for all points first, and discard the point
+              // if al least one point is out of the reference image
+
+              if ( (hrContIndex[0] < start_hr[0]) || (hrContIndex[0] > end_hr[0]) ||
+                   (hrContIndex[1] < start_hr[1]) || (hrContIndex[1] > end_hr[1]) ||
+                   (hrContIndex[2] < start_hr[2]) || (hrContIndex[2] > end_hr[2]) )
+                 isInsideHR = false;
+
+              if ( isInsideHR )
               {
-                hrIndex = interpolator -> GetIndex(n);
+                hrValue = interpolator -> Evaluate( transformedPoint );
 
-                hrDiffIndex[0] = hrIndex[0] - start_hr[0];
-                hrDiffIndex[1] = hrIndex[1] - start_hr[1];
-                hrDiffIndex[2] = hrIndex[2] - start_hr[2];
+                for(unsigned int n=0; n<interpolator -> GetContributingNeighbors(); n++)
+                {
+                  hrIndex = interpolator -> GetIndex(n);
 
-                hrLinearIndex = hrDiffIndex[0] + hrDiffIndex[1]*size_hr[0] + hrDiffIndex[2]*size_hr[0]*size_hr[1];
-                m_H(lrLinearIndex + offset,hrLinearIndex) = interpolator -> GetOverlap(n)* lrValue;
-//                m_Hbp(hrLinearIndex,lrLinearIndex + offset) = lrValue;
+                  hrDiffIndex[0] = hrIndex[0] - start_hr[0];
+                  hrDiffIndex[1] = hrIndex[1] - start_hr[1];
+                  hrDiffIndex[2] = hrIndex[2] - start_hr[2];
+
+                  hrLinearIndex = hrDiffIndex[0] + hrDiffIndex[1]*size_hr[0] + hrDiffIndex[2]*size_hr[0]*size_hr[1];
+                  m_H(lrLinearIndex + offset, hrLinearIndex) = interpolator -> GetOverlap(n)* lrValue;
+  //                m_Hbp(hrLinearIndex,lrLinearIndex + offset) = lrValue;
+
+                }
 
               }
 
