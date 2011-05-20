@@ -103,10 +103,11 @@ OrientedSpatialFunction<TOutput, VImageDimension, TInput>
   // perpendicular to the slice? Why a difference with other dimensions?
   // Perhaps I should use 0.5? Or is it too small?
 
-  if ( ( fabs(icoor) <= 0.5 * m_Spacing[0] ) &&
+/*  if ( ( fabs(icoor) <= 0.5 * m_Spacing[0] ) &&
        ( fabs(jcoor) <= 0.5 * m_Spacing[1] ) &&
        ( fabs(kcoor) <= 0.5 * m_Spacing[2]) )
-    value = m_Gaussian -> Evaluate( diffPoint );
+*/
+   value = m_Gaussian -> Evaluate( diffPoint );
 //    value = 1.0;
 
   return (TOutput) value;

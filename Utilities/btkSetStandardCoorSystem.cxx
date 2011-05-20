@@ -58,7 +58,6 @@ int main( int argc, char *argv[] )
 
   try {
 
-  const char *inputName = NULL, *outputName = NULL, *gTableFile = NULL, *cTableFile = NULL;
   unsigned int dim;
 
   TCLAP::CmdLine cmd("Sets the direction to the identity, and the origin to the center of the image",
