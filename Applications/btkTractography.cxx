@@ -241,7 +241,17 @@ int main(int argc, char *argv[])
         // Apply filter on each labeled voxels
         LabelMapIterator labelIt(resampledLabelVolume, resampledLabelVolume->GetLargestPossibleRegion());
 
+        unsigned int numOfSeeds = 0;
 
+        for(labelIt.GoToBegin(); !labelIt.IsAtEnd(); ++labelIt)
+        {
+            if(labelIt.Get() > 0)
+                numOfSeeds++;
+        }
+
+        unsigned int numOfSeedsDone = 0;
+
+        Display1(displayMode, std::cout << "Running tractography..." << std::endl);
         for(labelIt.GoToBegin(); !labelIt.IsAtEnd(); ++labelIt)
         {
             int label = (int)labelIt.Get();
@@ -268,7 +278,8 @@ int main(int argc, char *argv[])
 
 
                     // Let's start filtering
-                    Display1(displayMode, std::cout << "Filtering label " << label << "..." << std::endl);
+                    Display1(displayMode, std::cout << "\tProgress: " << (Real)numOfSeedsDone / (Real)numOfSeeds * 100 << "%" << std::endl);
+                    Display2(displayMode, std::cout << "Filtering label " << label << "..." << std::endl);
                     Display2(displayMode, std::cout << "\tSeed's world coordinates: (" << worldPoint[0] << "," << worldPoint[1] << "," << worldPoint[2] << ")" << std::endl);
                     Display2(displayMode, std::cout << "\tSeed's image coordinates: (" << maskIndex[0] << "," << maskIndex[1] << "," << maskIndex[2] << ")" << std::endl);
 
@@ -311,10 +322,13 @@ int main(int argc, char *argv[])
                     for(in.GoToBegin(), out.GoToBegin(); !in.IsAtEnd() && !out.IsAtEnd(); ++in, ++out)
                         out.Set(out.Get() + in.Get());
 
-                    Display1(displayMode, std::cout << "done." << std::endl);
+                    Display2(displayMode, std::cout << "done." << std::endl);
+
+                    numOfSeedsDone++;
                 }
             }
         } // for each labeled voxels
+        Display1(displayMode, std::cout << "done." << std::endl);
 
         delete signalFun;
         delete modelFun;
