@@ -52,6 +52,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 // BTK includes
 #include "btkNrrdField.h"
+#include "btkNiftiFilenameRadix.h"
 
 
 typedef short PixelType;
@@ -87,14 +88,14 @@ int main(int argc, char *argv[])
     std::string bvalFileName;
     bool dwi;
 
+    std::string outRadix;
+
     // Define command line parser
     TCLAP::CmdLine cmd("Nrrd to Nifti Converter", ' ', "0.1");
 
     // Define command line arguments
     TCLAP::ValueArg<std::string> inArg("i", "input", "Input image", true, "", "string", cmd);
     TCLAP::ValueArg<std::string> outArg("o", "output", "Output image (default \"data.nii.gz\")", false, "data.nii.gz", "string", cmd);
-    TCLAP::ValueArg<std::string> vecArg("g", "gradient_vectors", "Output gradient vectors (default \"data.bvec\")", false, "data.bvec", "string", cmd);
-    TCLAP::ValueArg<std::string> bvalArg("b", "b_values", "Output b-values file (default \"data.bval\")", false, "data.bval", "string", cmd);
 
     TCLAP::SwitchArg dwiArg("", "dwi", "DWI image conversion", cmd, false);
 
@@ -104,9 +105,11 @@ int main(int argc, char *argv[])
     // Get back arguments' values
     inFileName   = inArg.getValue();
     outFileName  = outArg.getValue();
-    vecFileName  = vecArg.getValue();
-    bvalFileName = bvalArg.getValue();
     dwi          = dwiArg.getValue();
+
+    outRadix     = btk::GetRadixOf(outFileName);
+    vecFileName  = outRadix + ".bvec";
+    bvalFileName = outRadix + ".bval";
 
 
     if(dwi)
