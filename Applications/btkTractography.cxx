@@ -256,6 +256,8 @@ int main(int argc, char *argv[])
 
         unsigned int numOfSeedsDone = 0;
 
+        std::cout << std::fixed;
+        std::cout << std::setprecision(2);
         Display1(displayMode, std::cout << "Running tractography..." << std::endl);
         for(labelIt.GoToBegin(); !labelIt.IsAtEnd(); ++labelIt)
         {
@@ -283,7 +285,7 @@ int main(int argc, char *argv[])
 
 
                     // Let's start filtering
-                    Display1(displayMode, std::cout << "\tProgress: " << (Real)numOfSeedsDone / (Real)numOfSeeds * 100 << "%" << std::endl);
+                    Display1(displayMode, std::cout << "\tProgress: " << (Real)numOfSeedsDone / (Real)numOfSeeds * 100 << "%\r" << std::flush);
                     Display2(displayMode, std::cout << "Filtering label " << label << "..." << std::endl);
                     Display2(displayMode, std::cout << "\tSeed's world coordinates: (" << worldPoint[0] << "," << worldPoint[1] << "," << worldPoint[2] << ")" << std::endl);
                     Display2(displayMode, std::cout << "\tSeed's image coordinates: (" << maskIndex[0] << "," << maskIndex[1] << "," << maskIndex[2] << ")" << std::endl);
@@ -333,7 +335,7 @@ int main(int argc, char *argv[])
                 }
             }
         } // for each labeled voxels
-        Display1(displayMode, std::cout << "done." << std::endl);
+        Display1(displayMode, std::cout << "\tProgress: 100.00%" << std::endl << "done." << std::endl);
 
         delete signalFun;
         delete modelFun;
