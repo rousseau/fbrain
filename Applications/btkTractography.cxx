@@ -56,6 +56,7 @@
 #include "btkAPrioriDensity.h"
 #include "btkLikelihoodDensity.h"
 #include "btkParticleFilter.h"
+#include "btkNiftiFilenameRadix.h"
 
 
 using namespace btk;
@@ -86,6 +87,8 @@ int main(int argc, char *argv[])
     Real angleThreshold;
     Float seedSpacing;
 
+    std::string inRadix;
+
 
     try
     {
@@ -98,7 +101,6 @@ int main(int argc, char *argv[])
 
             // Defines arguments
             TCLAP::ValueArg<std::string>   dwiArg("d", "dwi", "Dwi sequence", true, "", "string", cmd);
-            TCLAP::ValueArg<std::string>   vecArg("g", "gradient_vectors", "Gradient vectors", true, "", "string", cmd);
             TCLAP::ValueArg<std::string>  maskArg("m", "mask", "White matter mask", true, "", "string", cmd);
             TCLAP::ValueArg<std::string> labelArg("l", "label", "Label volume of seeds", true, "", "string", cmd);
 
@@ -124,7 +126,6 @@ int main(int argc, char *argv[])
 
             // Get back arguments' values
             dwiFileName    = dwiArg.getValue();
-            vecFileName    = vecArg.getValue();
             maskFileName   = maskArg.getValue();
             labelFilename  = labelArg.getValue();
 
@@ -144,6 +145,10 @@ int main(int argc, char *argv[])
             Kappa          = KappaArg.getValue();
             angleThreshold = angleThreshArg.getValue();
             seedSpacing    = seedSpacingArg.getValue();
+
+
+            inRadix     = GetRadixOf(dwiFileName);
+            vecFileName = inRadix + ".bvec";
     }
     catch(TCLAP::ArgException &e)
     {
