@@ -65,7 +65,7 @@ int main( int argc, char *argv[] )
 
   TCLAP::ValueArg<std::string>  inputArg("i","input","Input image",true,"","string",cmd);
   TCLAP::ValueArg<std::string>  outputArg("o","output","Output folder",true,"","string",cmd);
-  TCLAP::ValueArg<unsigned int> dimArg("d","dimension","Image dimension (3 / 4)",true,3,"unsigned int",cmd);
+  TCLAP::ValueArg<unsigned int> dimArg("d","dimension","Image dimension (3 or 4, default is 3)",true,3,"unsigned int",cmd);
 
   // Parse the argv array.
   cmd.parse( argc, argv );

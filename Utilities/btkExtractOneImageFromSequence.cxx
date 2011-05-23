@@ -117,8 +117,8 @@ int main(int argc, char *argv[])
 
         // Defines arguments
         TCLAP::ValueArg<std::string> inputArg("i", "input", "Input DWI sequence", true, "", "string", cmd);
-        TCLAP::ValueArg<std::string> outputArg("o", "output", "Output image", false, "B0.nii.gz", "string", cmd);
-        TCLAP::ValueArg<unsigned int> imageIndexArg("", "image_index", "Index of the image to extract", false, 0, "unsigned int", cmd);
+        TCLAP::ValueArg<std::string> outputArg("o", "output", "Output image filename (default \"B0.nii.gz\")", false, "B0.nii.gz", "string", cmd);
+        TCLAP::ValueArg<unsigned int> imageIndexArg("", "image_index", "Index of the image to extract (default 0)", false, 0, "unsigned int", cmd);
 
         // Parsing arguments
         cmd.parse(argc, argv);
@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
     //Guessing the component type
     typedef itk::ImageIOBase::IOComponentType ScalarPixelType;
     itk::ImageIOBase::Pointer imageIO = itk::ImageIOFactory::CreateImageIO(inputFileName.c_str(), itk::ImageIOFactory::ReadMode);
- 
+
     imageIO->SetFileName(inputFileName);
     imageIO->ReadImageInformation();
     const ScalarPixelType pixelType = imageIO->GetComponentType();

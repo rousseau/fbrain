@@ -122,14 +122,14 @@ int main( int argc, char *argv[] )
   TCLAP::ValueArg<std::string> mgradArg("","mean-gradient","Mean gradient",false,"","string",cmd);
   TCLAP::ValueArg<std::string> mgradResampledArg("","mean-gradient-resampled","Mean gradient resampled",false,"","string",cmd);
 
-  TCLAP::ValueArg<unsigned int> x1Arg("","x1","x min of ROI in diffusion",false,0,"int",cmd);
-  TCLAP::ValueArg<unsigned int> x2Arg("","x2","x max of ROI in diffusion",false,0,"int",cmd);
+  TCLAP::ValueArg<unsigned int> x1Arg("","x1","x min of ROI in diffusion (default is 0)",false,0,"int",cmd);
+  TCLAP::ValueArg<unsigned int> x2Arg("","x2","x max of ROI in diffusion (default is 0)",false,0,"int",cmd);
 
-  TCLAP::ValueArg<unsigned int> y1Arg("","y1","y min of ROI in diffusion",false,0,"int",cmd);
-  TCLAP::ValueArg<unsigned int> y2Arg("","y2","y max of ROI in diffusion",false,0,"int",cmd);
+  TCLAP::ValueArg<unsigned int> y1Arg("","y1","y min of ROI in diffusion (default is 0)",false,0,"int",cmd);
+  TCLAP::ValueArg<unsigned int> y2Arg("","y2","y max of ROI in diffusion (default is 0)",false,0,"int",cmd);
 
-  TCLAP::ValueArg<unsigned int> z1Arg("","z1","z min of ROI in diffusion",false,0,"int",cmd);
-  TCLAP::ValueArg<unsigned int> z2Arg("","z2","z max of ROI in diffusion",false,0,"int",cmd);
+  TCLAP::ValueArg<unsigned int> z1Arg("","z1","z min of ROI in diffusion (default is 0)",false,0,"int",cmd);
+  TCLAP::ValueArg<unsigned int> z2Arg("","z2","z max of ROI in diffusion (default is 0)",false,0,"int",cmd);
 
   TCLAP::ValueArg<std::string> toutArg("","transformation","Estimated transformation",false,"","string",cmd);
   TCLAP::ValueArg<std::string> invToutArg("","inverse-transformation","Inverse of estimated transformation",false,"","string",cmd);
