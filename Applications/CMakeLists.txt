@@ -57,6 +57,10 @@ ADD_EXECUTABLE(btkTractography
 )
 
 TARGET_LINK_LIBRARIES(btkTractography ITKCommon ITKIO vtkHybrid)
+#------------------------------------------------------------------------------
+
+ADD_EXECUTABLE(btkLabelPropagation btkLabelPropagation.cxx )
+TARGET_LINK_LIBRARIES(btkLabelPropagation ITKIO)
 
 #------------------------------------------------------------------------------
 
@@ -66,5 +70,6 @@ INSTALL(TARGETS btkNLMDenoising
                 btkGroupwiseS2SDistortionCorrection
                 btkRBFInterpolationS2S
                 btkTractography
+                btkLabelPropagation
         DESTINATION bin)
 
