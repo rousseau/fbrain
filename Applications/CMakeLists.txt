@@ -36,6 +36,7 @@ TARGET_LINK_LIBRARIES(btkRBFInterpolationS2S ITKIO ITKNumerics ${ANN_LIBRARY})
 #------------------------------------------------------------------------------
 
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Tractography)
+INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Various)
 
 ADD_EXECUTABLE(btkTractography
         btkTractography.cxx

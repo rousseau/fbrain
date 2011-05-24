@@ -56,6 +56,7 @@
 #include "btkAPrioriDensity.h"
 #include "btkLikelihoodDensity.h"
 #include "btkParticleFilter.h"
+#include "btkNiftiFilenameRadix.h"
 
 
 using namespace btk;
@@ -86,6 +87,8 @@ int main(int argc, char *argv[])
     Real angleThreshold;
     Float seedSpacing;
 
+    std::string inRadix;
+
 
     try
     {
@@ -98,33 +101,31 @@ int main(int argc, char *argv[])
 
             // Defines arguments
             TCLAP::ValueArg<std::string>   dwiArg("d", "dwi", "Dwi sequence", true, "", "string", cmd);
-            TCLAP::ValueArg<std::string>   vecArg("g", "gradient_vectors", "Gradient vectors", true, "", "string", cmd);
             TCLAP::ValueArg<std::string>  maskArg("m", "mask", "White matter mask", true, "", "string", cmd);
             TCLAP::ValueArg<std::string> labelArg("l", "label", "Label volume of seeds", true, "", "string", cmd);
 
-            TCLAP::ValueArg<std::string>    outMapArg("", "map", "Output connection map file", false, "map", "string", cmd);
-            TCLAP::ValueArg<std::string> outFibersArg("", "fibers", "Output fibers file", false, "fibers", "string", cmd);
+            TCLAP::ValueArg<std::string>    outMapArg("", "map", "Output connection map filename (default \"map-label\")", false, "map", "string", cmd);
+            TCLAP::ValueArg<std::string> outFibersArg("", "fibers", "Output fibers filename (default \"fibers-label\")", false, "fibers", "string", cmd);
 
             TCLAP::SwitchArg verboseSwitchArg("", "verbose", "Display more informations on standard output", cmd, false);
             TCLAP::SwitchArg quietSwitchArg("", "quiet", "Display no information on either standard and error outputs", cmd, false);
             TCLAP::SwitchArg saveTmpSwitchArg("", "save_temporary_files", "Save diffusion signal, model coefficients, variance and spherical coordinates of gradient directions in files", cmd, false);
             TCLAP::SwitchArg lpsSwitchArg("", "lps", "Word coordinates expressed in LPS (Left-Posterior-Superior). By default RAS (Right-Anterior-Superior) is used.", cmd, false);
 
-            TCLAP::ValueArg<unsigned int> orderArg("", "model_order", "Order of the model (i.e. of spherical harmonics)", false, 4, "unsigned int", cmd);
-            TCLAP::ValueArg<Real>    lambdArg("", "model_regularization", "Regularization coefficient of the model", false, 0.006, "Real", cmd);
-            TCLAP::ValueArg<unsigned int> particlesArg("", "number_of_particles", "Number of particles", false, 1000, "unsigned int", cmd);
-            TCLAP::ValueArg<Real>    epsilonArg("", "resampling_threshold", "Resampling treshold", false, 0.01, "Real", cmd);
-            TCLAP::ValueArg<Real>    stepSizeArg("", "step_size", "Step size of particles displacement", false, 0.5, "Real", cmd);
-            TCLAP::ValueArg<Real>    KappaArg("", "curve_constraint", "Curve constraint of a particle's trajectory", false, 30.0, "Real", cmd);
-            TCLAP::ValueArg<Real>    angleThreshArg("", "angular_threshold", "Angular threshold between successive displacement vector of a particle's trajectory", false, M_PI/3., "Real", cmd);
-            TCLAP::ValueArg<Real>    seedSpacingArg("", "seed_spacing", "Spacing in mm between seeds", false, 1.0, "float", cmd);
+            TCLAP::ValueArg<unsigned int> orderArg("", "model_order", "Order of the model (i.e. of spherical harmonics) (default 4)", false, 4, "unsigned int", cmd);
+            TCLAP::ValueArg<Real>    lambdArg("", "model_regularization", "Regularization coefficient of the model (default 0.006)", false, 0.006, "Real", cmd);
+            TCLAP::ValueArg<unsigned int> particlesArg("", "number_of_particles", "Number of particles (default 1000)", false, 1000, "unsigned int", cmd);
+            TCLAP::ValueArg<Real>    epsilonArg("", "resampling_threshold", "Resampling treshold (default 0.01)", false, 0.01, "Real", cmd);
+            TCLAP::ValueArg<Real>    stepSizeArg("", "step_size", "Step size of particles displacement (default 0.5)", false, 0.5, "Real", cmd);
+            TCLAP::ValueArg<Real>    KappaArg("", "curve_constraint", "Curve constraint of a particle's trajectory (default 30)", false, 30.0, "Real", cmd);
+            TCLAP::ValueArg<Real>    angleThreshArg("", "angular_threshold", "Angular threshold between successive displacement vector of a particle's trajectory (default PI/3)", false, M_PI/3., "Real", cmd);
+            TCLAP::ValueArg<Real>    seedSpacingArg("", "seed_spacing", "Spacing in mm between seeds (default 1)", false, 1.0, "float", cmd);
 
             // Parsing arguments
             cmd.parse(argc, argv);
 
             // Get back arguments' values
             dwiFileName    = dwiArg.getValue();
-            vecFileName    = vecArg.getValue();
             maskFileName   = maskArg.getValue();
             labelFilename  = labelArg.getValue();
 
@@ -144,6 +145,10 @@ int main(int argc, char *argv[])
             Kappa          = KappaArg.getValue();
             angleThreshold = angleThreshArg.getValue();
             seedSpacing    = seedSpacingArg.getValue();
+
+
+            inRadix     = GetRadixOf(dwiFileName);
+            vecFileName = inRadix + ".bvec";
     }
     catch(TCLAP::ArgException &e)
     {
@@ -251,6 +256,8 @@ int main(int argc, char *argv[])
 
         unsigned int numOfSeedsDone = 0;
 
+        std::cout << std::fixed;
+        std::cout << std::setprecision(2);
         Display1(displayMode, std::cout << "Running tractography..." << std::endl);
         for(labelIt.GoToBegin(); !labelIt.IsAtEnd(); ++labelIt)
         {
@@ -278,7 +285,7 @@ int main(int argc, char *argv[])
 
 
                     // Let's start filtering
-                    Display1(displayMode, std::cout << "\tProgress: " << (Real)numOfSeedsDone / (Real)numOfSeeds * 100 << "%" << std::endl);
+                    Display1(displayMode, std::cout << "\tProgress: " << (Real)numOfSeedsDone / (Real)numOfSeeds * 100 << "%\r" << std::flush);
                     Display2(displayMode, std::cout << "Filtering label " << label << "..." << std::endl);
                     Display2(displayMode, std::cout << "\tSeed's world coordinates: (" << worldPoint[0] << "," << worldPoint[1] << "," << worldPoint[2] << ")" << std::endl);
                     Display2(displayMode, std::cout << "\tSeed's image coordinates: (" << maskIndex[0] << "," << maskIndex[1] << "," << maskIndex[2] << ")" << std::endl);
@@ -328,7 +335,7 @@ int main(int argc, char *argv[])
                 }
             }
         } // for each labeled voxels
-        Display1(displayMode, std::cout << "done." << std::endl);
+        Display1(displayMode, std::cout << "\tProgress: 100.00%" << std::endl << "done." << std::endl);
 
         delete signalFun;
         delete modelFun;

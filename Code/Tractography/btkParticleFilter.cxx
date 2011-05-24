@@ -345,18 +345,10 @@ void ParticleFilter::run(int label, Direction dir)
                     m_cloud[m].addLikelihood(likelihood);
 
                     weights[m] = m_cloud[m].weight() * std::exp(likelihood + apriori - importance);
+                }
 
-//                    if(!(weights[m] >= 0.0))
-//                    {
-//                        Pr(likelihood);
-//                        Pr(apriori);
-//                        Pr(importance);
-//                        Pr(weights[m]);
-//                    }
-                } // FIXME : parfois weights[m] = -nan
-                if(!(weights[m] >= 0.0))
-                    weights[m] = 0.0;
-                assert(weights[m] >= 0.0);
+                if(!std::isfinite(weights[m]) || std::isnan(weights[m]))
+                    weights[m] = 0;
             }
         } // for i particles
 

@@ -80,7 +80,7 @@ Minimal usage: \texttt{btkRBFInterpolationS2S -i input -m mask.nii -o output
     \subsubsection*{Standard usage}
         Suppose you want to perform a tractography on a diffusion weighted MRI dataset. You should have a dwi image, the corresponding gradient vectors' coordinates, a mask of the brain white matter and a label image of the seeds. Assume this data is stored in files named repsectively for instance \texttt{data.nii.gz}, \texttt{data.bvec}, \texttt{mask.nii.gz} and \texttt{seeds.nii.gz}. The tractography is accomplished by the command below.
             \begin{quote}
-                \texttt{btkTractography -d data.nii.gz -g data.bvec -m mask.nii.gz -l seeds.nii.gz}
+                \texttt{btkTractography -d data.nii.gz -m mask.nii.gz -l seeds.nii.gz}
             \end{quote}
         When the program terminates its task, the probability connection map and the fibers estimation are saved in files respectively named \texttt{map.nii.gz} and \texttt{fibers.vtk}. The connection map is a volume image of probability intensities (\texttt{i.e.} intensities between 0 and 1) with the same origin, orientation and spacing as the diffusion weighted image. The fibers are polygonal data of VTK library in world coordinates. The standard pipeline of the program is shown in Fig.~\ref{btkTractography-fig:standard-pipeline}.
             \begin{figure}
@@ -93,6 +93,8 @@ Minimal usage: \texttt{btkRBFInterpolationS2S -i input -m mask.nii -o output
         The file named \texttt{seeds.nii.gz} is a label map which is used to generate seeds for the algorithm. The spacing in millimeters between seeds can be adjust with the option \texttt{-\hspace{0.1mm}-seed\_spacing}.
 
         By default, Right-Anterior-Superior (RAS) coordinate system is used to ensure compatibility with Slicer3D. However, it can be forced to use Left-Posterior-Superior (LPS) coordinate system by using option \texttt{--lps} on command line.
+
+        If the DWI sequence contains more than one baseline image, the program takes the average of all baseline images. The baseline images can be everywhere in the sequence. It should be recognized by null vector in corresponding gradient's table.
 
     \subsubsection*{Advanced usage}
         In addition to standard arguments of \texttt{btkTractography} program, there are some other parameters that let you to alter algorithm's behaviour. These options can be classified into three groups : model's options, constraints on trajectory and filter's options. The first group options allow you to tweak the model (for more details about it, please refer to~\cite{descoteaux_regularized_2007}). The second group options let you to control the particle's trajectory. These options provide prior informations to the algorithm. The last group options are dedicated to the particle filter control.

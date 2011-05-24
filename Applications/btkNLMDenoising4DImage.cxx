@@ -5,16 +5,16 @@ Copyright or © or Copr. Université de Strasbourg - Centre National de la Reche
 rousseau@unistra.fr
 
 This software is governed by the CeCILL-B license under French law and
-abiding by the rules of distribution of free software.  You can  use, 
+abiding by the rules of distribution of free software.  You can  use,
 modify and/ or redistribute the software under the terms of the CeCILL-B
 license as circulated by CEA, CNRS and INRIA at the following URL
-"http://www.cecill.info". 
+"http://www.cecill.info".
 
 As a counterpart to the access to the source code and  rights to copy,
 modify and redistribute granted by the license, users are provided only
 with a limited warranty  and the software's author,  the holder of the
 economic rights,  and the successive licensors  have only  limited
-liability. 
+liability.
 
 In this respect, the user's attention is drawn to the risks associated
 with loading,  using,  modifying and/or developing or reproducing the
@@ -23,9 +23,9 @@ that may mean  that it is complicated to manipulate,  and  that  also
 therefore means  that it is reserved for developers  and  experienced
 professionals having in-depth computer knowledge. Users are therefore
 encouraged to load and test the software's suitability as regards their
-requirements in conditions enabling the security of their systems and/or 
-data to be ensured and,  more generally, to use and operate it in the 
-same conditions as regards security. 
+requirements in conditions enabling the security of their systems and/or
+data to be ensured and,  more generally, to use and operate it in the
+same conditions as regards security.
 
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-B license and that you accept its terms.
@@ -46,8 +46,8 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 int main(int argc, char** argv)
 {
-  
-  try {  
+
+  try {
 
     TCLAP::CmdLine cmd("Command description message", ' ', "1.0", true);
 
@@ -57,7 +57,7 @@ int main(int argc, char** argv)
     cmd.add( outputImageArg );
     TCLAP::ValueArg<std::string> inputMaskArg("m","mask_file","filename of the mask image",false,"","string");
     cmd.add( inputMaskArg );
-    TCLAP::ValueArg< float > paddingArg("p","pad","padding value (used if no mask image is provided), default is -1",false,-1,"float");
+    TCLAP::ValueArg< float > paddingArg("p","pad","padding value (used if no mask image is provided, default is -1)",false,-1,"float");
     cmd.add( paddingArg );
     TCLAP::ValueArg< int > hwnArg("","hwn","patch half size (default is 1)",false,1,"int");
     cmd.add( hwnArg );
@@ -79,8 +79,8 @@ int main(int argc, char** argv)
     // Parse the args.
     cmd.parse( argc, argv );
 
-    
-    // Get the value parsed by each arg. 
+
+    // Get the value parsed by each arg.
     std::string input_file       = inputImageArg.getValue();
     std::string output_file      = outputImageArg.getValue();
 
@@ -94,8 +94,8 @@ int main(int argc, char** argv)
     int optimized                = optimizedArg.getValue();
     float lowerMeanThreshold     = lowerMeanThresholdArg.getValue();
     float lowerVarianceThreshold = lowerVarianceThresholdArg.getValue();
-  
-  
+
+
     //ITK declaration
     typedef short PixelType;
     const   unsigned int        Dimension = 4;
@@ -132,9 +132,9 @@ int main(int argc, char** argv)
     desired3DSize[2] = input4DSize[2];
     desired3DSize[3] = 0;
 
-    concatenator->SetOrigin( inputImage->GetOrigin()[3] );  
+    concatenator->SetOrigin( inputImage->GetOrigin()[3] );
     concatenator->SetSpacing( inputImage->GetSpacing()[3] );
-  
+
     Image4DType::IndexType start = input4DRegion.GetIndex();
     uint numberOf3Dimages = input4DSize[3];
 
@@ -160,9 +160,9 @@ int main(int argc, char** argv)
       Image3DPointer maskImage = Image3DType::New();
 
       btkNLMTool<PixelType> myTool;
-  
+
       myTool.SetInput(input3DImage);
-  
+
       if (mask_file!=""){               //reading the mask image
 	Reader3DType::Pointer maskReader = Reader3DType::New();
 	maskReader->SetFileName( mask_file );
@@ -171,34 +171,34 @@ int main(int argc, char** argv)
 	myTool.SetMaskImage(maskImage);
       }
       else                                 //creating a mask image using the padding value
-	myTool.SetPaddingValue(padding);  
-  
+	myTool.SetPaddingValue(padding);
+
       myTool.SetPatchSize(hwn);
       myTool.SetSpatialBandwidth(hwvs);
       myTool.SetSmoothing(beta);
       myTool.SetCentralPointStrategy(center);
       myTool.SetBlockwiseStrategy(block);
-      myTool.SetOptimizationStrategy(optimized);  
+      myTool.SetOptimizationStrategy(optimized);
       myTool.SetLowerThresholds(lowerMeanThreshold, lowerVarianceThreshold);
-  
+
       myTool.ComputeOutput();
       myTool.GetOutput(output3DImage);
-  
+
       concatenator->PushBackInput(output3DImage);
     }
- 
 
-    //Write the result 
-  
-    Writer4DType::Pointer writer = Writer4DType::New();  
+
+    //Write the result
+
+    Writer4DType::Pointer writer = Writer4DType::New();
     writer->SetFileName( output_file );
     writer->SetInput( concatenator->GetOutput() );
-    writer->Update();  
-  
+    writer->Update();
+
     return 1;
-    
+
   } catch (TCLAP::ArgException &e)  // catch any exceptions
   { std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; }
-    
-    
+
+
 }

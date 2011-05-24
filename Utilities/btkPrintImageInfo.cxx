@@ -169,7 +169,7 @@ int main( int argc, char *argv[] )
   TCLAP::CmdLine cmd("Prints some image information.", ' ', "Unversioned");
 
   TCLAP::ValueArg<std::string> inputArg("i","input","Input image",true,"","string",cmd);
-  TCLAP::ValueArg<unsigned int> dimArg("d","dimension","Image dimension (3 / 4)",true,3,"unsigned int",cmd);
+  TCLAP::ValueArg<unsigned int> dimArg("d","dimension","Image dimension (3 or 4, default is 3)",true,3,"unsigned int",cmd);
 
   cmd.parse( argc, argv );
 
