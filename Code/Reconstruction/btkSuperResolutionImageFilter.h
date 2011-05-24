@@ -331,6 +331,9 @@ public:
   itkSetMacro(PSF, unsigned int);
   itkGetMacro(PSF, unsigned int);
 
+  // Compute H
+  void CreateH();
+
 
 #ifdef ITK_USE_CONCEPT_CHECKING
   /** Begin concept checking */
@@ -356,7 +359,6 @@ private:
   SuperResolutionImageFilter( const Self& ); //purposely not implemented
   void operator=( const Self& ); //purposely not implemented
 
-  void CreateH();
   void OptimizeByLeastSquares();
 
   SizeType                    m_Size;              // Size of the output image

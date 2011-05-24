@@ -84,6 +84,9 @@ TARGET_LINK_LIBRARIES(btkResampleLabelsByInjection ITKIO ITKNumerics )
 ADD_EXECUTABLE(btkLowResolutionImageSimulator btkLowResolutionImageSimulator.cxx)
 TARGET_LINK_LIBRARIES(btkLowResolutionImageSimulator ITKIO)
 
+ADD_EXECUTABLE(btkSimulateLowResolutionImage btkSimulateLowResolutionImage.cxx)
+TARGET_LINK_LIBRARIES(btkSimulateLowResolutionImage ITKIO)
+
 #------------------------------------------------------------------------------
 
 ADD_EXECUTABLE(btkAverageImagesWithReference btkAverageImagesWithReference.cxx)
