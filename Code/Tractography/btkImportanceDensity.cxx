@@ -226,29 +226,26 @@ Real ImportanceDensity::computeConcentration(Direction mu, Point xk)
             sumSquare += diff*diff;
 
             if(min > M(g,0))
-            {
-                if(M(g,0) > S(g,0))
-                    min = S(g,0);
-                else
-                    min = M(g,0);
-            }
+                min = M(g,0);
+
+            if(min > S(g,0))
+                min = S(g,0);
 
             if(max < M(g,0))
-            {
-                if(M(g,0) < S(g,0))
-                    max = S(g,0);
-                else
-                    max = M(g,0);
-            }
+                max = M(g,0);
+
+            if(max < S(g,0))
+                max = S(g,0);
 
             n++;
         }
     }
 
-    Real nrmse = std::sqrt(sumSquare / n) / (max - min);
 
-    // TODO : calcul de concentration
-    return 435.1455649013809 * std::exp(-25.74351897609373 * nrmse + 44.9437993453943 * nrmse * nrmse);
+    Real nrmse = std::sqrt(sumSquare / n) / (max - min);
+    Real kappa = (nrmse > 0.3) ? 10 : 435.1455649013809 * std::exp(-25.74351897609373 * nrmse + 44.9437993453943 * nrmse*nrmse);
+
+    return (kappa <= 200) ? kappa : 200;
 }
 
 } // namespace btk
