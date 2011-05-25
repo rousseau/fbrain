@@ -6,9 +6,8 @@ INCLUDE_REGULAR_EXPRESSION("^.*$")
 INCLUDE_DIRECTORIES(${TCLAP_DIRECTORY})
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Reconstruction)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/DTI)
-INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Various)
+INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/InputOutput)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Reconstruction)
-INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Various)
 
 #------------------------------------------------------------------------------
 
@@ -23,14 +22,14 @@ TARGET_LINK_LIBRARIES(btkConvertGradientTable ITKIO )
 #------------------------------------------------------------------------------
 
 ADD_EXECUTABLE(btkReorientImageToStandard btkReorientImageToStandard.cxx
-        ${fbrain_SOURCE_DIR}/Code/Various/btkLandmarksFileReader.cxx
+        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkLandmarksFileReader.cxx
 )
 TARGET_LINK_LIBRARIES(btkReorientImageToStandard ITKCommon ITKIO)
 
 #------------------------------------------------------------------------------
 
 ADD_EXECUTABLE(btkReorientDiffusionSequenceToStandard btkReorientDiffusionSequenceToStandard.cxx
-        ${fbrain_SOURCE_DIR}/Code/Various/btkLandmarksFileReader.cxx
+        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkLandmarksFileReader.cxx
 )
 
 TARGET_LINK_LIBRARIES(btkReorientDiffusionSequenceToStandard ITKCommon ITKIO)
@@ -53,7 +52,7 @@ TARGET_LINK_LIBRARIES(btkRegisterDiffusionToAnatomicalData ITKCommon ITKIO ITKNu
 #------------------------------------------------------------------------------
 
 ADD_EXECUTABLE(btkNrrdToNifti btkNrrdToNifti.cxx
-        ${fbrain_SOURCE_DIR}/Code/Various/btkNrrdField.cxx)
+        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkNrrdField.cxx)
 TARGET_LINK_LIBRARIES(btkNrrdToNifti ITKIO)
 
 #------------------------------------------------------------------------------
