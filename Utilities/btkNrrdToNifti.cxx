@@ -173,6 +173,11 @@ int main(int argc, char *argv[])
             st >> y; vy.push_back(y);
             st >> z; vz.push_back(z);
 
+                if(x == 0 && y == 0 && z == 0)
+                    bvals.push_back(0);
+                else
+                    bvals.push_back(bvalue);
+
             while(!headFile.eof() && !headFile.fail() && !headFile.bad())
             {
                 btk::btkNrrdField field(s);

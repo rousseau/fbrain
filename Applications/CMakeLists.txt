@@ -36,7 +36,7 @@ TARGET_LINK_LIBRARIES(btkRBFInterpolationS2S ITKIO ITKNumerics ${ANN_LIBRARY})
 #------------------------------------------------------------------------------
 
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Tractography)
-INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Various)
+INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/InputOutput)
 
 ADD_EXECUTABLE(btkTractography
         btkTractography.cxx
@@ -56,8 +56,31 @@ ADD_EXECUTABLE(btkTractography
         ${fbrain_SOURCE_DIR}/Code/Tractography/btkParticle.cxx
         ${fbrain_SOURCE_DIR}/Code/Tractography/btkParticleFilter.cxx
 )
-
 TARGET_LINK_LIBRARIES(btkTractography ITKCommon ITKIO vtkHybrid)
+
+#------------------------------------------------------------------------------
+
+INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography)
+
+ADD_EXECUTABLE(btkDtiParticleFilteringTractography
+        btkDtiParticleFilteringTractography.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkCartesianCoordinates.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalCoordinates.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkVector.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkDirection.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkPoint.cxx
+        ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPSignalExtractor.cxx
+        ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPSignal.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalHarmonics.cxx
+        ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPAPrioriDensity.cxx
+        ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPLikelihoodDensity.cxx
+        ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPImportanceDensity.cxx
+        ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPParticle.cxx
+        ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPParticleFilter.cxx
+)
+
+TARGET_LINK_LIBRARIES(btkDtiParticleFilteringTractography ITKCommon ITKIO vtkHybrid)
+
 #------------------------------------------------------------------------------
 
 ADD_EXECUTABLE(btkLabelPropagation btkLabelPropagation.cxx )
@@ -72,5 +95,6 @@ INSTALL(TARGETS btkNLMDenoising
                 btkRBFInterpolationS2S
                 btkTractography
                 btkLabelPropagation
+                btkDtiParticleFilteringTractography
         DESTINATION bin)
 
