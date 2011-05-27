@@ -99,6 +99,10 @@ int CropImageUsingMask(std::string input_file, std::string output_file, std::str
           if(k>upSize[2]) upSize[2] = k;
         }
       }
+  if(imageDimension == 4){
+    downSize[3]= 0;
+    upSize[3]  = imageSize[3]-1;
+  }
   std::cout<<"Bounding box : ("<<downSize[0]<<","<<downSize[1]<<","<<downSize[2]<<") (";
   std::cout<<upSize[0]<<","<<upSize[1]<<","<<upSize[2]<<")\n";
 
