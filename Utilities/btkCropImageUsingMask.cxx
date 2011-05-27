@@ -145,7 +145,7 @@ int main(int argc, char** argv)
       CropImageUsingMask<3>(input_file, output_file, mask_file);
       break;
     case 4:  
-      CropImageUsingMask<3>(input_file, output_file, mask_file);
+      CropImageUsingMask<4>(input_file, output_file, mask_file);
       break;
     default:
       std::cerr << "unsupported dimension" << std::endl;
