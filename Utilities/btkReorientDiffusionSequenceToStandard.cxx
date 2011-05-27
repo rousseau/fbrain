@@ -44,7 +44,7 @@
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 
-#include <tclap/CmdLine.h>
+#include "CmdLine.h"
 #include "vnl/vnl_cross.h"
 
 #include "itkEuler3DTransform.h"
@@ -52,6 +52,7 @@
 #include "itkResampleImageFilter.h"
 #include "itkNearestNeighborInterpolateImageFunction.h"
 #include "itkJoinSeriesImageFilter.h"
+#include "itkOrientImageFilter.h"
 
 #include "btkDiffusionGradientTable.h"
 
@@ -108,7 +109,6 @@ int main( int argc, char *argv[] )
   strcpy( bval_out, (char*)outputArg.getValue().c_str() );
   strcat ( bval_out,".bval" );
 
-
   // Read image
 
   typedef itk::Image< short, Dimension >  ImageType;
@@ -120,6 +120,10 @@ int main( int argc, char *argv[] )
   imageReader -> Update();
   ImageType::Pointer image = imageReader->GetOutput();
 
+  std::cout << "original origin =  " << image -> GetOrigin() << std::endl;
+
+  // Read landmarks
+
   btk::btkLandmarksFileReader::Pointer landRead = btk::btkLandmarksFileReader::New();
   landRead->SetInputFileName(lmksFile);
   landRead->Update();
@@ -129,23 +133,137 @@ int main( int argc, char *argv[] )
   double *apt_ras = landRead->GetOutputAPT();
   double *ppt_ras = landRead->GetOutputPPT();
 
-  // Compute rotation matrix
+  // Convert points to lps coordinates
+
+  Image3DType::PointType leftPoint, rightPoint, anteriorPoint, posteriorPoint;
+
+  leftPoint[0]      = -lpt_ras[0]; leftPoint[1]      = -lpt_ras[1]; leftPoint[2]      = lpt_ras[2];
+  rightPoint[0]     = -rpt_ras[0]; rightPoint[1]     = -rpt_ras[1]; rightPoint[2]     = rpt_ras[2];
+  anteriorPoint[0]  = -apt_ras[0]; anteriorPoint[1]  = -apt_ras[1]; anteriorPoint[2]  = apt_ras[2];
+  posteriorPoint[0] = -ppt_ras[0]; posteriorPoint[1] = -ppt_ras[1]; posteriorPoint[2] = ppt_ras[2];
+
+  // Extract b0 original sequence
+
+  ImageType::SizeType     size    = image -> GetLargestPossibleRegion().GetSize();
+  ImageType::IndexType    index   = image -> GetLargestPossibleRegion().GetIndex();
+  ImageType::SpacingType  spacing = image -> GetSpacing();
+  unsigned int numberOfFrames = size[3];
+
+  typedef itk::ExtractImageFilter< ImageType, Image3DType > ExtractorType;
+  ExtractorType::Pointer extractor = ExtractorType::New();
+  extractor -> SetInput( image );
+
+  ImageType::RegionType region;
+  index[3] = 0;
+  size[3]  = 0;
+  region.SetIndex(index);
+  region.SetSize(size);
+
+  extractor -> SetExtractionRegion( region );
+  extractor -> Update();
+
+  Image3DType::Pointer b0_ori = extractor -> GetOutput();
+
+  // Recover original direction matrix
+
+  vnl_matrix<double> oriDirection(3,3);
+  oriDirection = b0_ori -> GetDirection().GetVnlMatrix();
+
+  // Reorient sequence to RAI
+
+  typedef itk::JoinSeriesImageFilter< Image3DType, ImageType > JoinerType;
+  JoinerType::Pointer joiner = JoinerType::New();
+  joiner -> SetOrigin( 1.0 );
+  joiner -> SetSpacing( spacing[3] );
+
+  typedef itk::OrientImageFilter< Image3DType, Image3DType >  FilterType;
+
+  for (unsigned int i = 0; i < numberOfFrames; i++)
+  {
+    index[3] = i;
+
+    ImageType::RegionType desiredRegion;
+    desiredRegion.SetSize(  size  );
+    desiredRegion.SetIndex( index );
+
+    extractor -> SetExtractionRegion( desiredRegion );
+
+    FilterType::Pointer filter = FilterType::New();
+    filter -> SetInput( extractor -> GetOutput()  );
+    filter -> UseImageDirectionOn();
+    filter -> SetDesiredCoordinateOrientation( itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RAI );
+    filter -> Update();
+
+    joiner -> SetInput( i, filter -> GetOutput() );
+  }
+
+  joiner -> Update();
+  image = joiner -> GetOutput();
+
+  // Store original Direction and origin.
+  index[3] = 0;
+
+  region.SetIndex(index);
+  region.SetSize(size);
+
+  extractor -> SetInput( image );
+  extractor -> SetExtractionRegion( region );
+  extractor -> Update();
+
+  Image3DType::Pointer b0_reo = extractor -> GetOutput();
+
+  vnl_matrix<double> reoDirection(3,3);
+  reoDirection = b0_reo -> GetDirection().GetVnlMatrix();
+  vnl_matrix<double> reoDirectionTrans(3,3);
+  reoDirectionTrans = reoDirection.transpose();
+
+
+  // Reorient gradients accordingly
+
+  typedef btk::DiffusionGradientTable< ImageType > GradientTableType;
+  GradientTableType::Pointer gradientTable = GradientTableType::New();
+
+  vnl_matrix<double> rotationMatrix;
+  rotationMatrix = reoDirectionTrans*oriDirection;
+
+  gradientTable -> SetNumberOfGradients(numberOfFrames);
+  gradientTable -> SetRotationMatrix( rotationMatrix );
+  gradientTable -> LoadFromFile( bvec);
+  gradientTable -> RotateGradients();
+
+  // Create the image in standard orientation
+  // p = I*S*idx + O_center
+
+  ImageType::Pointer stdImage = joiner -> GetOutput();
+
+  ImageType::DirectionType stdImageDirection  = stdImage -> GetDirection();
+  stdImageDirection.SetIdentity();
+  stdImage -> SetDirection (stdImageDirection);
+
+  ImageType::SpacingType stdSpacing  = stdImage -> GetSpacing();
+  ImageType::SizeType 	 stdSize     = stdImage -> GetLargestPossibleRegion().GetSize();
+  ImageType::IndexType   stdIndex    = stdImage -> GetLargestPossibleRegion().GetIndex();
+
+  ImageType::PointType stdOrigin;
+
+  for (unsigned int i=0; i<3; i++)
+    stdOrigin[i] = (1.0-stdSize[i])*0.5*stdSpacing[i];
+
+  stdImage -> SetOrigin( stdOrigin );
+
+
+  // Obtain directions LPS directions in standard image
 
   vnl_vector<double> left_lps(3), pos_lps(3), sup_lps(3);
 
-  left_lps(0) = rpt_ras[0] - lpt_ras[0];
-  left_lps(1) = rpt_ras[1] - lpt_ras[1];
-  left_lps(2) = lpt_ras[2] - rpt_ras[2];
-
+  left_lps = reoDirectionTrans*( leftPoint.GetVnlVector() - rightPoint.GetVnlVector() );
   left_lps.normalize();
 
-  pos_lps(0) = apt_ras[0] - ppt_ras[0];
-  pos_lps(1) = apt_ras[1] - ppt_ras[1];
-  pos_lps(2) = ppt_ras[2] - apt_ras[2];
-
+  pos_lps = reoDirectionTrans*( posteriorPoint.GetVnlVector() - anteriorPoint.GetVnlVector() );
   pos_lps.normalize();
 
   sup_lps = vnl_cross_3d(left_lps,pos_lps);
+
 
   // TODO The following code is quite repeated throug the library
   // we should include it somewhere else
@@ -183,47 +301,44 @@ int main( int argc, char *argv[] )
 
   // Correct and write image
 
+  ExtractorType::Pointer stdExtractor = ExtractorType::New();
+  stdExtractor -> SetInput( stdImage );
+
+  stdIndex[3] = 0;
+  stdSize[3]  = 0;
+
+  ImageType::RegionType stdRegion;
+  stdRegion.SetIndex(stdIndex);
+  stdRegion.SetSize(stdSize);
+
+  stdExtractor -> SetExtractionRegion( stdRegion );
+  stdExtractor -> Update();
+
+  Image3DType::Pointer stdB0 = stdExtractor -> GetOutput();
+
   typedef itk::Euler3DTransform<double> TransformType;
   TransformType::Pointer transform = TransformType::New();
-
-  ImageType::SizeType size = image -> GetLargestPossibleRegion().GetSize();
-  ImageType::IndexType index = image -> GetLargestPossibleRegion().GetIndex();
-  unsigned int numberOfFrames = size[3];
 
   typedef itk::ContinuousIndex< double, 3 > ContinuousIndexType;
   ContinuousIndexType centerIndex;
 
-  centerIndex[0] = (size[0] - 1.0)/2.0;
-  centerIndex[1] = (size[1] - 1.0)/2.0;
-  centerIndex[2] = (size[2] - 1.0)/2.0;
+  centerIndex[0] = (stdSize[0] - 1.0) / 2.0;
+  centerIndex[1] = (stdSize[1] - 1.0) / 2.0;
+  centerIndex[2] = (stdSize[2] - 1.0) / 2.0;
 
   Image3DType::PointType centerPoint;
 
-  typedef itk::ExtractImageFilter< ImageType, Image3DType > ExtractorType;
-  ExtractorType::Pointer extractor = ExtractorType::New();
-
-  extractor -> SetInput( image );
-  index[3] = 0;
-  size[3]  = 0;
-
-  ImageType::RegionType region;
-  region.SetIndex(index);
-  region.SetSize(size);
-
-  extractor -> SetExtractionRegion( region );
-  extractor -> Update();
-
-  Image3DType::Pointer b0 = extractor -> GetOutput();
-
-  b0 -> TransformContinuousIndexToPhysicalPoint(centerIndex, centerPoint);
+  stdB0 -> TransformContinuousIndexToPhysicalPoint(centerIndex, centerPoint);
 
   transform -> SetCenter( centerPoint );
   transform -> SetRotationMatrix( NQ );
+
 //  TODO Cannot constrain the rotation because sometimes it is necessary to rotate in xy
 //  Something I could do is to round the rotations in xy to n*pi*/2 ...
 //  transform -> SetRotation( 0.0, 0.0, transform -> GetAngleZ() );
 
   // Extend FOV according to the transformation
+
   Image3DType::SizeType  resamplingSize;
   Image3DType::IndexType lowerIndex; lowerIndex.Fill(0);
   Image3DType::IndexType upperIndex; upperIndex.Fill(0);
@@ -231,7 +346,7 @@ int main( int argc, char *argv[] )
   if ( fovSwitch.isSet() )
   {
     typedef itk::ImageRegionIteratorWithIndex< Image3DType > Image3DIteratorType;
-    Image3DIteratorType b0It( b0, b0 -> GetLargestPossibleRegion() );
+    Image3DIteratorType b0It( b0_reo, b0_reo -> GetLargestPossibleRegion() );
 
     Image3DType::IndexType b0Index;
     Image3DType::IndexType b0TransformedIndex;
@@ -245,9 +360,9 @@ int main( int argc, char *argv[] )
     for(b0It.GoToBegin(); !b0It.IsAtEnd(); ++b0It)
     {
       b0Index = b0It.GetIndex();
-      b0 -> TransformIndexToPhysicalPoint(b0Index, b0Point);
+      b0_reo -> TransformIndexToPhysicalPoint(b0Index, b0Point);
       b0TransformedPoint = transform -> TransformPoint(b0Point);
-      b0 -> TransformPhysicalPointToIndex(b0TransformedPoint, b0TransformedIndex);
+      b0_reo -> TransformPhysicalPointToIndex(b0TransformedPoint, b0TransformedIndex);
 
       for (unsigned int i = 0; i<3; i++)
         if ( b0TransformedIndex[i] < lowerIndex[i] ) lowerIndex[i] = b0TransformedIndex[i];
@@ -263,11 +378,11 @@ int main( int argc, char *argv[] )
 
   } else
   {
-    resamplingSize = b0 -> GetLargestPossibleRegion().GetSize();
+    resamplingSize = stdB0 -> GetLargestPossibleRegion().GetSize();
   }
 
   Image3DType::PointType resamplingOrigin;
-  b0 -> TransformIndexToPhysicalPoint(lowerIndex, resamplingOrigin );
+  stdB0 -> TransformIndexToPhysicalPoint(lowerIndex, resamplingOrigin );
 
   transform -> SetRotationMatrix( NQ.transpose() );
 
@@ -279,22 +394,22 @@ int main( int argc, char *argv[] )
   InterpolatorType::Pointer interpolator = InterpolatorType::New();
 
   typedef itk::JoinSeriesImageFilter< Image3DType, ImageType > JoinerType;
-  JoinerType::Pointer joiner = JoinerType::New();
-  joiner -> SetOrigin( 0.0 );
+  JoinerType::Pointer joiner2 = JoinerType::New();
+  joiner2 -> SetOrigin( 0.0 );
   // TODO Does it change something the 4th dimension spacing in diffusion sequences?
-  joiner -> SetSpacing( 1 );
+  joiner2 -> SetSpacing( 1 );
 
   for (unsigned int i=0; i<numberOfFrames; i++)
   {
-    index[3] = i;
-    size[3]  = 0;
+    stdIndex[3] = i;
+    stdSize[3]  = 0;
 
-    ImageType::RegionType region;
-    region.SetIndex(index);
-    region.SetSize(size);
+    ImageType::RegionType stdRegion;
+    stdRegion.SetIndex( stdIndex );
+    stdRegion.SetSize( stdSize );
 
-    extractor -> SetExtractionRegion( region );
-    extractor -> Update();
+    stdExtractor -> SetExtractionRegion( stdRegion );
+    stdExtractor -> Update();
 
     ResamplerType::Pointer resampler = ResamplerType::New();
 
@@ -303,37 +418,33 @@ int main( int argc, char *argv[] )
       resampler -> SetInterpolator(interpolator);
     }
 
-    resampler -> SetInput( extractor -> GetOutput() );
+    resampler -> SetInput( stdExtractor -> GetOutput() );
     resampler -> SetTransform(transform);
     resampler -> SetDefaultPixelValue(0);
     resampler -> SetSize( resamplingSize );
     resampler -> SetOutputOrigin( resamplingOrigin );
-    resampler -> SetOutputDirection( extractor -> GetOutput() -> GetDirection()  );
-    resampler -> SetOutputSpacing( extractor -> GetOutput() -> GetSpacing() );
+    resampler -> SetOutputDirection( stdExtractor -> GetOutput() -> GetDirection()  );
+    resampler -> SetOutputSpacing( stdExtractor -> GetOutput() -> GetSpacing() );
 
     resampler -> Update();
 
-    joiner -> SetInput( i, resampler -> GetOutput() );
+    joiner2 -> SetInput( i, resampler -> GetOutput() );
 
   }
 
-  joiner -> Update();
+  joiner2 -> Update();
 
   typedef itk::ImageFileWriter< ImageType > ImageWriterType;
   ImageWriterType::Pointer  imageWriter  = ImageWriterType::New();
-  imageWriter -> SetInput( joiner -> GetOutput() );
+  imageWriter -> SetInput( joiner2 -> GetOutput() );
   imageWriter -> SetFileName(  outputImageFile );
   imageWriter -> Update();
 
   // Change gradient table
 
-  typedef btk::DiffusionGradientTable< ImageType > GradientTableType;
-  GradientTableType::Pointer gradientTable = GradientTableType::New();
-
   gradientTable -> SetNumberOfGradients(numberOfFrames);
-  gradientTable -> SetImage( image );
+  gradientTable -> SetImage( stdImage );
   gradientTable -> SetTransform( transform );
-  gradientTable -> LoadFromFile( bvec);
   gradientTable -> RotateGradientsInWorldCoordinates();
   gradientTable -> SaveToFile( bvec_out);
 

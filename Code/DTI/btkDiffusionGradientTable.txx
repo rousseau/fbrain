@@ -45,6 +45,16 @@ void
 DiffusionGradientTable<TInputImage>
 ::LoadFromFile( const char* input )
 {
+  /*
+
+  In nifti format the gradients are in image coordinates,
+  i.e. g = S*[i j k]', where S is the diagonal matrix of
+  spacings and [i j k]' are the voxel indexes.
+
+  WARNING: sometimes dcm2nii generates a table of gradients
+  in RAS world coordinates
+
+  */
 
   m_GradientTable.set_size( m_NumberOfGradients,3 );
 
@@ -75,8 +85,6 @@ DiffusionGradientTable<TInputImage>
 
   fclose (fr);
 
-//  std::cout << m_GradientTable << std::endl;
-
 }
 
 template < typename TInputImage >
@@ -85,30 +93,17 @@ DiffusionGradientTable<TInputImage>
 ::RotateGradientsInWorldCoordinates()
 {
 
+
   if (!m_Transform)
   {
     itkExceptionMacro(<<"Transform is not present");
   }
 
   vnl_matrix< double > Direction;
-//  vnl_matrix< double > Spacing(3,3);
   vnl_matrix< double > DirectionInv;
-//  vnl_matrix< double > SpacingInv;
 
   Direction = m_Image -> GetDirection().GetVnlMatrix().extract(3,3,0,0);
   DirectionInv = vnl_inverse(Direction);
-
-//  typename ImageType::SpacingType spacing = m_Image -> GetSpacing();
-
-//  Spacing.fill(0.0);
-//  Spacing(0,0) = spacing[0]; Spacing(1,1) = spacing[1]; Spacing(2,2) = spacing[2];
-//  SpacingInv = vnl_inverse(Spacing);
-
-/*  std::cout << "Direccion = " << std::endl <<  Direction << std::endl;
-  std::cout << "Direccion inverse= " << std::endl <<  DirectionInv << std::endl;
-  std::cout << "Spacing = " << std::endl <<  Spacing << std::endl;
-  std::cout << "Spacing inverse = " << std::endl <<  SpacingInv << std::endl; */
-
 
   // FIXME Here the transformation provided should be used to rotate the gradients
   // It's the calling program who should take care of providing the correct transform
@@ -124,12 +119,9 @@ DiffusionGradientTable<TInputImage>
 
     vnl_matrix<double> R = m_Transform -> GetMatrix().GetVnlMatrix();
     vnl_vector<double> grad = m_GradientTable.get_row(i);
-//    m_GradientTable.set_row(i, SpacingInv*DirectionInv*Rinv*Direction*Spacing*grad);
     m_GradientTable.set_row(i, DirectionInv*Rinv*Direction*grad);
 
   }
-
-//  std::cout << m_GradientTable << std::endl;
 
 }
 
@@ -139,21 +131,11 @@ DiffusionGradientTable<TInputImage>
 ::RotateGradients()
 {
 
-/*  if (!m_Transform)
-  {
-    itkExceptionMacro(<<"Transform is not present");
-  }
-  */
-
-//  vnl_matrix<double> R = m_Transform -> GetMatrix().GetVnlMatrix();
-
   for (unsigned int i=0; i < m_GradientTable.rows(); i++)
   {
     vnl_vector<double> grad = m_GradientTable.get_row(i);
     m_GradientTable.set_row(i, m_RotationMatrix*grad);
   }
-
-  std::cout << "Rotation matrix = " << m_RotationMatrix << std::endl;
 
 }
 
@@ -163,38 +145,42 @@ DiffusionGradientTable<TInputImage>
 ::TransformGradientsToImageCoordinates()
 {
 
-  std::cout << m_GradientTable << std::endl;
+  /*
+
+  Please be aware that this method assumes that gradients are
+  in RAS world coordinates, since it's the way in which sometimes
+  dcm2nii stores gradients. If gradients are expressed in LPS the
+  result will be incorrect.
+
+  */
+
+  std::cout << "Table in RAS WC = " << std::endl;
+  std::cout <<  m_GradientTable << std::endl << std::endl;
 
   vnl_matrix< double > Direction;
-  vnl_matrix< double > Spacing(3,3);
   vnl_matrix< double > DirectionInv;
-  vnl_matrix< double > SpacingInv;
 
   Direction = m_Image -> GetDirection().GetVnlMatrix().extract(3,3,0,0);
+
+  // The direction matrix provided by ITK transforms points into
+  // LPS, so a correction must be performed by multiplying 1st and
+  // 2nd rows by -1 for obtaining points in RAS
+
+  Direction.scale_row(0,-1);
+  Direction.scale_row(1,-1);
+
   DirectionInv = vnl_inverse(Direction);
-
-  typename ImageType::SpacingType spacing = m_Image -> GetSpacing();
-
-  Spacing.fill(0.0);
-  Spacing(0,0) = spacing[0]; Spacing(1,1) = spacing[1]; Spacing(2,2) = spacing[2];
-  SpacingInv = vnl_inverse(Spacing);
-
-//  std::cout << "Direccion = " << std::endl <<  Direction << std::endl;
-//  std::cout << "Direccion inverse= " << std::endl <<  DirectionInv << std::endl;
-//  std::cout << "Spacing = " << std::endl <<  Spacing << std::endl;
-//  std::cout << "Spacing inverse = " << std::endl <<  SpacingInv << std::endl;
-
 
   for (unsigned int i=0; i < m_GradientTable.rows(); i++)
   {
     vnl_vector<double> grad = m_GradientTable.get_row(i);
-//    grad = SpacingInv*DirectionInv*grad;
     grad = DirectionInv*grad;
     grad.normalize();
     m_GradientTable.set_row(i, grad);
   }
 
-  std::cout << m_GradientTable << std::endl;
+  std::cout << "Table in image coordinates = " << std::endl;
+  std::cout <<  m_GradientTable << std::endl << std::endl;
 
 }
 
@@ -205,27 +191,37 @@ DiffusionGradientTable<TInputImage>
 ::TransformGradientsToWorldCoordinates()
 {
 
-  std::cout << m_GradientTable << std::endl;
+  /*
+
+  Please be aware that this method assumes that gradients are
+  in RAS world coordinates, since it's the way in which sometimes
+  dcm2nii stores gradients.
+
+  */
+
+  std::cout << "Table in image coordinates = " << std::endl;
+  std::cout <<  m_GradientTable << std::endl << std::endl;
 
   vnl_matrix< double > Direction;
-  vnl_matrix< double > Spacing(3,3);
-
   Direction = m_Image -> GetDirection().GetVnlMatrix().extract(3,3,0,0);
 
-  typename ImageType::SpacingType spacing = m_Image -> GetSpacing();
-  Spacing.fill(0.0);
-  Spacing(0,0) = spacing[0]; Spacing(1,1) = spacing[1]; Spacing(2,2) = spacing[2];
+  // The direction matrix provided by ITK transforms points into
+  // LPS, so a correction must be performed by multiplying 1st and
+  // 2nd rows by -1 for obtaining points in RAS
+
+  Direction.scale_row(0,-1);
+  Direction.scale_row(1,-1);
 
   for (unsigned int i=0; i < m_GradientTable.rows(); i++)
   {
     vnl_vector<double> grad = m_GradientTable.get_row(i);
-//    grad = Direction*Spacing*grad;
     grad = Direction*grad;
     grad.normalize();
     m_GradientTable.set_row(i, grad);
   }
 
-  std::cout << m_GradientTable << std::endl;
+  std::cout << "Table in RAS WC = " << std::endl;
+  std::cout <<  m_GradientTable << std::endl << std::endl;
 
 }
 

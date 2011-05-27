@@ -129,9 +129,6 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 
   for (unsigned int im = 0; im < m_ImageArray.size(); im++)
   {
-
-    std::cout << "Updating image " << im << std::endl;
-
     IndexType absIndex;
 
     IndexType start = m_InputImageRegion[im].GetIndex();
@@ -229,9 +226,6 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   IndexType start_lr = m_InputImageRegion[0].GetIndex();
   SizeType  size_lr  = m_InputImageRegion[0].GetSize();
 
-  std::cout << "LR region = " << std::endl;
-  std::cout << m_InputImageRegion[0] << std::endl;
-
   SpacingType spacing_lr = m_ImageArray[0] -> GetSpacing();
   SpacingType spacing_hr = this -> GetReferenceImage() -> GetSpacing();
 
@@ -262,18 +256,11 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   end_hr[1] = start_hr[1] + size_hr[1] - 1 ;
   end_hr[2] = start_hr[2] + size_hr[2] - 1 ;
 
-  std::cout << "Output image region = "<< std::endl;
-  std::cout << m_OutputImageRegion << std::endl;
-
   // Fill x
 
   unsigned int ncols = m_OutputImageRegion.GetNumberOfPixels();
 
-//  m_ysim.resize(m_ImageArray.size());
-
   m_x.set_size( ncols );
-
-  std::cout << "Number of voxels SR image = " << m_x.size() << std::endl;
 
   // Fills x vector, since it does not change during H contruction
   OutputIteratorType hrIt( this -> GetReferenceImage(), m_OutputImageRegion );
@@ -299,7 +286,6 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   {
     delta[2] = i * 0.5 / (double) npoints;
     deltaIndexes.push_back(delta);
-    std::cout << delta << std::endl;
   }
 
   // Set size of matrices
@@ -308,42 +294,22 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   for(unsigned int im = 0; im < m_ImageArray.size(); im++)
     nrows += m_InputImageRegion[im].GetNumberOfPixels();
 
-  std::cout << "rows in h = " << nrows << std::endl;
-
   m_H.set_size(nrows, ncols);
-//  m_Ht.set_size(ncols, nrows);
-//  m_Hbp.set_size(ncols,nrows);
   m_y.set_size(nrows);
   m_y.fill(0.0);
-//  m_ysim[im].set_size(nrows);
 
   // H is different for each input image
   unsigned int offset = 0;
 
   for(unsigned int im = 0; im < m_ImageArray.size(); im++)
   {
-    std::cout << "Creating H matrix for image " << im << std::endl; std::cout.flush();
-
-    // Neighborhood iterator
-
-    typename NeighborhoodIteratorType::RadiusType radius;
-
     SpacingType inputSpacing = m_ImageArray[im] -> GetSpacing();
-
-    // FIXME: the radius should depend on the specific PSF
-    // One posibility is to create a member function of the
-    // PSF to provide the support region of the function ...
-    radius[0] = 1; radius[1] = 1; radius[2] = 1;
-
-    NeighborhoodIteratorType nbIt( radius, m_ImageArray[im], m_ImageArray[im] -> GetLargestPossibleRegion() );
-    nbIt.NeedToUseBoundaryConditionOff();
-
 
     // PSF definition
 
     typename FunctionType::Pointer function = FunctionType::New();
     function -> SetPSF( m_PSF );
-    function -> SetDirection( m_ImageArray[im]  -> GetDirection() );
+    function -> SetDirection( m_ImageArray[im] -> GetDirection() );
     function -> SetSpacing( m_ImageArray[im] -> GetSpacing() );
 
     // Iteration over slices
@@ -403,7 +369,6 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
           m_y[lrLinearIndex + offset] = fixedIt.Get();
 
           m_ImageArray[im] -> TransformIndexToPhysicalPoint( lrIndex, lrPoint );
-          nbIt.SetLocation( lrIndex);
           function -> SetCenter( lrPoint );
 
           for(unsigned int k=0; k<deltaIndexes.size(); k++)
@@ -445,7 +410,6 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 
                   hrLinearIndex = hrDiffIndex[0] + hrDiffIndex[1]*size_hr[0] + hrDiffIndex[2]*size_hr[0]*size_hr[1];
                   m_H(lrLinearIndex + offset, hrLinearIndex) = interpolator -> GetOverlap(n)* lrValue;
-  //                m_Hbp(hrLinearIndex,lrLinearIndex + offset) = lrValue;
 
                 }
 
@@ -550,8 +514,6 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
     hrIndex[0] = hrDiffIndex[0] + hrStart[0];
     hrIndex[1] = hrDiffIndex[1] + hrStart[1];
     hrIndex[2] = hrDiffIndex[2] + hrStart[2];
-
-//    std::cout << hrIndex << std::endl;
 
     outputPtr -> SetPixel(hrIndex, m_x[i] );
 
