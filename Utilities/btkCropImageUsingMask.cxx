@@ -73,7 +73,7 @@ int CropImageUsingMask(std::string input_file, std::string output_file, std::str
   typename ImageType::RegionType region;
   region.SetSize(input_reader->GetOutput()->GetLargestPossibleRegion().GetSize());
   typename ImageType::SizeType imageSize = region.GetSize();  
-  typename ImageType::IndexType pixelIndex;	
+  typename MaskType::IndexType pixelIndex;	
   typename ImageType::SizeType downSize, upSize;
 
   for(uint i=0; i<imageDimension; i++){
