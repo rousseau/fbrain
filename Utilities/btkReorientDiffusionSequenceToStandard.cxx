@@ -346,7 +346,7 @@ int main( int argc, char *argv[] )
   if ( fovSwitch.isSet() )
   {
     typedef itk::ImageRegionIteratorWithIndex< Image3DType > Image3DIteratorType;
-    Image3DIteratorType b0It( b0_reo, b0_reo -> GetLargestPossibleRegion() );
+    Image3DIteratorType b0It( stdB0, stdB0 -> GetLargestPossibleRegion() );
 
     Image3DType::IndexType b0Index;
     Image3DType::IndexType b0TransformedIndex;
@@ -360,9 +360,9 @@ int main( int argc, char *argv[] )
     for(b0It.GoToBegin(); !b0It.IsAtEnd(); ++b0It)
     {
       b0Index = b0It.GetIndex();
-      b0_reo -> TransformIndexToPhysicalPoint(b0Index, b0Point);
+      stdB0 -> TransformIndexToPhysicalPoint(b0Index, b0Point);
       b0TransformedPoint = transform -> TransformPoint(b0Point);
-      b0_reo -> TransformPhysicalPointToIndex(b0TransformedPoint, b0TransformedIndex);
+      stdB0 -> TransformPhysicalPointToIndex(b0TransformedPoint, b0TransformedIndex);
 
       for (unsigned int i = 0; i<3; i++)
         if ( b0TransformedIndex[i] < lowerIndex[i] ) lowerIndex[i] = b0TransformedIndex[i];
@@ -370,7 +370,6 @@ int main( int argc, char *argv[] )
            ( b0TransformedIndex[i] > upperIndex[i] ) upperIndex[i] = b0TransformedIndex[i];
 
     }
-
 
     resamplingSize[0] = upperIndex[0] - lowerIndex[0] + 1;
     resamplingSize[1] = upperIndex[1] - lowerIndex[1] + 1;
