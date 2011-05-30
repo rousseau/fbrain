@@ -73,7 +73,7 @@ int CropImageUsingMask(std::string input_file, std::string output_file, std::str
   typename ImageType::RegionType region;
   region.SetSize(input_reader->GetOutput()->GetLargestPossibleRegion().GetSize());
   typename ImageType::SizeType imageSize = region.GetSize();  
-  typename ImageType::IndexType pixelIndex;	
+  typename MaskType::IndexType pixelIndex;	
   typename ImageType::SizeType downSize, upSize;
 
   for(uint i=0; i<imageDimension; i++){
@@ -99,6 +99,10 @@ int CropImageUsingMask(std::string input_file, std::string output_file, std::str
           if(k>upSize[2]) upSize[2] = k;
         }
       }
+  if(imageDimension == 4){
+    downSize[3]= 0;
+    upSize[3]  = imageSize[3]-1;
+  }
   std::cout<<"Bounding box : ("<<downSize[0]<<","<<downSize[1]<<","<<downSize[2]<<") (";
   std::cout<<upSize[0]<<","<<upSize[1]<<","<<upSize[2]<<")\n";
 
@@ -145,7 +149,7 @@ int main(int argc, char** argv)
       CropImageUsingMask<3>(input_file, output_file, mask_file);
       break;
     case 4:  
-      CropImageUsingMask<3>(input_file, output_file, mask_file);
+      CropImageUsingMask<4>(input_file, output_file, mask_file);
       break;
     default:
       std::cerr << "unsupported dimension" << std::endl;
