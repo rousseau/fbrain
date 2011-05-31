@@ -173,7 +173,7 @@ int main( int argc, char *argv[] )
 
   typedef itk::JoinSeriesImageFilter< Image3DType, ImageType > JoinerType;
   JoinerType::Pointer joiner = JoinerType::New();
-  joiner -> SetOrigin( 1.0 );
+  joiner -> SetOrigin( 0.0 );
   joiner -> SetSpacing( spacing[3] );
 
   typedef itk::OrientImageFilter< Image3DType, Image3DType >  FilterType;
@@ -198,19 +198,34 @@ int main( int argc, char *argv[] )
   }
 
   joiner -> Update();
-  image = joiner -> GetOutput();
+
+  ImageType::Pointer image_reo = joiner -> GetOutput();
 
   // Store original Direction and origin.
-  index[3] = 0;
+  ImageType::SizeType size_reo = image_reo -> GetLargestPossibleRegion().GetSize();
+  ImageType::IndexType index_reo = image_reo -> GetLargestPossibleRegion().GetIndex();
 
-  region.SetIndex(index);
-  region.SetSize(size);
+  size_reo[3] = 0;
+  index_reo[3] = 0;
 
-  extractor -> SetInput( image );
-  extractor -> SetExtractionRegion( region );
-  extractor -> Update();
+  ImageType::RegionType region_reo;
+  region_reo.SetIndex(index_reo);
+  region_reo.SetSize(size_reo);
 
-  Image3DType::Pointer b0_reo = extractor -> GetOutput();
+/*  std::cout << " image region = " << std::endl;
+  std::cout << image -> GetLargestPossibleRegion() << std::endl;
+
+  std::cout << " required region = " << std::endl;
+  std::cout << region << std::endl;
+*/
+
+  ExtractorType::Pointer extractor_reo = ExtractorType::New();
+
+  extractor_reo -> SetInput( image_reo );
+  extractor_reo -> SetExtractionRegion( region_reo );
+  extractor_reo -> Update();
+
+  Image3DType::Pointer b0_reo = extractor_reo -> GetOutput();
 
   vnl_matrix<double> reoDirection(3,3);
   reoDirection = b0_reo -> GetDirection().GetVnlMatrix();
