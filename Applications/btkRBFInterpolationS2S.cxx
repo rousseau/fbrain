@@ -79,7 +79,7 @@ int main( int argc, char *argv[] )
 
   TCLAP::ValueArg<std::string> rbfArg("","rbf","Radial basis function (default gauss)",false,"gauss","string",cmd);
   TCLAP::ValueArg<float> rspaArg("","rspa","Spatial kernel width (default 1)",false,1,"float",cmd);
-  TCLAP::ValueArg<float> rgraArg("","rgra","Angular kernel width (default 0.5)",false,0.5,"float",cmd);
+  TCLAP::ValueArg<float> rgraArg("","rgra","Angular kernel width (default 0.5)",false,0.2,"float",cmd);
   TCLAP::ValueArg<float> factorArg("","resampling-factor","The voxel size of the reconstructed image is the original "
       "in-plane spacing divided by this value. (default 1)",false, 1.0,"float",cmd);
 
