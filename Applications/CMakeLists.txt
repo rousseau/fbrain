@@ -8,12 +8,12 @@ INCLUDE_DIRECTORIES(${TCLAP_DIRECTORY})
 #------------------------------------------------------------------------------
 
 ADD_EXECUTABLE(btkNLMDenoising btkNLMDenoising.cxx )
-TARGET_LINK_LIBRARIES(btkNLMDenoising ITKIO)
+TARGET_LINK_LIBRARIES(btkNLMDenoising ${ITK_LIBRARIES})
 
 #------------------------------------------------------------------------------
 
 ADD_EXECUTABLE(btkNLMDenoising4DImage btkNLMDenoising4DImage.cxx )
-TARGET_LINK_LIBRARIES(btkNLMDenoising4DImage ITKIO)
+TARGET_LINK_LIBRARIES(btkNLMDenoising4DImage ${ITK_LIBRARIES})
 
 #------------------------------------------------------------------------------
 
@@ -22,16 +22,16 @@ INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Reconstruction)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/DTI)
 
 ADD_EXECUTABLE(btkImageReconstruction btkImageReconstruction.cxx )
-TARGET_LINK_LIBRARIES(btkImageReconstruction ITKIO ITKNumerics)
+TARGET_LINK_LIBRARIES(btkImageReconstruction ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkSuperResolution btkSuperResolution.cxx )
-TARGET_LINK_LIBRARIES(btkSuperResolution ITKIO ITKNumerics)
+TARGET_LINK_LIBRARIES(btkSuperResolution ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkGroupwiseS2SDistortionCorrection btkGroupwiseS2SDistortionCorrection.cxx )
-TARGET_LINK_LIBRARIES(btkGroupwiseS2SDistortionCorrection ITKIO ITKNumerics ${ANN_LIBRARY})
+TARGET_LINK_LIBRARIES(btkGroupwiseS2SDistortionCorrection ${ITK_LIBRARIES} ${ANN_LIBRARY})
 
 ADD_EXECUTABLE(btkRBFInterpolationS2S btkRBFInterpolationS2S.cxx )
-TARGET_LINK_LIBRARIES(btkRBFInterpolationS2S ITKIO ITKNumerics ${ANN_LIBRARY})
+TARGET_LINK_LIBRARIES(btkRBFInterpolationS2S ${ITK_LIBRARIES} ${ANN_LIBRARY})
 
 #------------------------------------------------------------------------------
 
@@ -56,7 +56,7 @@ ADD_EXECUTABLE(btkTractography
         ${fbrain_SOURCE_DIR}/Code/Tractography/btkParticle.cxx
         ${fbrain_SOURCE_DIR}/Code/Tractography/btkParticleFilter.cxx
 )
-TARGET_LINK_LIBRARIES(btkTractography ITKCommon ITKIO vtkHybrid)
+TARGET_LINK_LIBRARIES(btkTractography ${ITK_LIBRARIES} vtkHybrid)
 
 #------------------------------------------------------------------------------
 
@@ -79,12 +79,12 @@ ADD_EXECUTABLE(btkDtiParticleFilteringTractography
         ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPParticleFilter.cxx
 )
 
-TARGET_LINK_LIBRARIES(btkDtiParticleFilteringTractography ITKCommon ITKIO vtkHybrid)
+TARGET_LINK_LIBRARIES(btkDtiParticleFilteringTractography ${ITK_LIBRARIES} vtkHybrid)
 
 #------------------------------------------------------------------------------
 
 ADD_EXECUTABLE(btkLabelPropagation btkLabelPropagation.cxx )
-TARGET_LINK_LIBRARIES(btkLabelPropagation ITKIO)
+TARGET_LINK_LIBRARIES(btkLabelPropagation ${ITK_LIBRARIES})
 
 #------------------------------------------------------------------------------
 

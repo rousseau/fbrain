@@ -59,20 +59,31 @@ same conditions as regards security.
 
 \subsubsection{Dependencies}
 
-Baby Brain Toolkit (BTK) depends on:
+Baby Brain Toolkit (BTK) needs the following packages:
 \begin{itemize}
- \item CMake (www.cmake.org), Tclap (tclap.sourceforge.net), OpenMP (openmp.org), VTK (www.vtk.org), ANN (www.cs.umd.edu/\string~mount/ANN). These libraries can be installed for debian-based distribution using the following command line: \texttt{apt-get install cmake cmake-curses-gui libtclap-dev libgomp1 libvtk5-dev libann-dev}
- \item Insight Toolkit (ITK) version 3.20 (it can be download at www.itk.org). Extract this file (the directory InsightToolkit-3.20 is created). Make another directory where all the build files will be placed, e.g. InsightToolkit-3.20-build:
+ \item CMake (www.cmake.org), Tclap (tclap.sourceforge.net), OpenMP (openmp.org), VTK (www.vtk.org), ANN (www.cs.umd.edu/\string~mount/ANN). These libraries can be installed using the following command line: 
+ \begin{itemize}
+ \item for debian-based distributions: \texttt{apt-get install cmake cmake-curses-gui libtclap-dev libgomp1 libvtk5-dev libann-dev}
+ \item for MacOSX using macports: \texttt{port install cmake tclap vtk5 libANN}
+ \end{itemize}
+ \item Install Git: this library can be installed using the following command line : 
+ \begin{itemize}
+ \item for debian-based distribution: \texttt{apt-get install git-core}
+ \item for MacOSX using macports: \texttt{port install git-core}
+ \end{itemize}
+ \item Insight Toolkit (ITK) version 4:
 \begin{verbatim}
-mkdir InsightToolkit-3.20-build
-cd InsightToolkit-3.20-build
-ccmake ../InsightToolkit-3.20/
+git clone git://itk.org/ITK.git
+mkdir ITK-build
+cd ITK-build
+ccmake ../ITK/
 \end{verbatim}
 This will bring up the CMake configuration screen. Press \texttt{[c]} for configure and then use \texttt{[t]} to toggle the advanced mode. Make the following changes:
 \begin{verbatim}
-BUILD_TYPE = Release
-ITK_USE_OPTIMIZED_REGISTRATION = ON
+BUILD_TESTING = OFF
+CMAKE_BUILD_TYPE = Release
 ITK_USE_REVIEW = ON
+ITK_BUILD_ALL_MODULES = ON
 \end{verbatim}
 Then press \texttt{[c]} to configure and \texttt{[g]} to generate the make file. Finally, type \texttt{make} at the prompt to obtain the final build of ITK.
 
@@ -80,7 +91,6 @@ Then press \texttt{[c]} to configure and \texttt{[g]} to generate the make file.
 
 \subsubsection{Download and compile the BTK sources}
 \begin{itemize}
- \item Install Git: this library can be installed for debian-based distribution using the following command line : \texttt{apt-get install git-core}
  \item Get the BTK sources: \texttt{git clone https://github.com/rousseau/fbrain.git }
  \item Then:
 \begin{verbatim}

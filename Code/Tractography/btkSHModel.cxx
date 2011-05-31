@@ -43,7 +43,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 
 #define SPH_RESOLUTION 120
-#define MAXIMA_THRESHOLD 0.45
+//#define MAXIMA_THRESHOLD 0.45
 
 
 namespace btk
@@ -67,8 +67,8 @@ SHModel::SHModel(const std::string &filename, const std::string &directionsfilen
     m_maxTheta = M_PI;
     m_pasTheta = m_maxTheta / (Real)m_reso;
 
-//    m_maxPhi = 2.0 * M_PI;
-    m_maxPhi = M_PI;
+    m_maxPhi = 2.0 * M_PI;
+//    m_maxPhi = M_PI;
     m_pasPhi = m_maxPhi / (Real)m_reso;
 
     m_4PI = 4. * M_PI;
@@ -103,16 +103,16 @@ SHModel::SHModel(const std::string &filename, const std::string &directionsfilen
 //    std::cout << "\tGenerating directions (sampling resolution " << m_reso << "x" << m_reso << ")..." << std::flush;
     m_directions = new std::vector<Direction>;
 
-//    for(unsigned int i=0; i<m_reso+1; i++)
-//    {
-//        for(unsigned int j=0; j<m_reso; j++)
-//            m_directions->push_back(Direction(i*m_pasTheta,j*m_pasPhi));
-//    }
-    for(unsigned int i=0; i<m_reso; i++)
+    for(unsigned int i=0; i<m_reso+1; i++)
     {
-        for(unsigned int j=0; j<m_reso-1; j++)
+        for(unsigned int j=0; j<m_reso; j++)
             m_directions->push_back(Direction(i*m_pasTheta,j*m_pasPhi));
     }
+//    for(unsigned int i=0; i<m_reso; i++)
+//    {
+//        for(unsigned int j=0; j<m_reso-1; j++)
+//            m_directions->push_back(Direction(i*m_pasTheta,j*m_pasPhi));
+//    }
 //    std::cout << "done." << std::endl;
 
 
@@ -247,8 +247,8 @@ SHModel::SHModel(Sequence::Pointer model, std::vector<Direction> *originalDirect
     m_maxTheta = M_PI;
     m_pasTheta = m_maxTheta / (Real)m_reso;
 
-//    m_maxPhi = 2.0 * M_PI;
-    m_maxPhi = M_PI;
+    m_maxPhi = 2.0 * M_PI;
+//    m_maxPhi = M_PI;
     m_pasPhi = m_maxPhi / (Real)m_reso;
 
     m_4PI = 4. * M_PI;
@@ -279,16 +279,16 @@ SHModel::SHModel(Sequence::Pointer model, std::vector<Direction> *originalDirect
     Display2(m_displayMode, std::cout << "\tGenerating directions (sampling resolution " << m_reso << "x" << m_reso << ")..." << std::flush);
     m_directions = new std::vector<Direction>;
 
-//    for(unsigned int i=0; i<m_reso+1; i++)
-//    {
-//        for(unsigned int j=0; j<m_reso; j++)
-//            m_directions->push_back(Direction(i*m_pasTheta,j*m_pasPhi));
-//    }
-    for(unsigned int i=0; i<m_reso; i++)
+    for(unsigned int i=0; i<m_reso+1; i++)
     {
-        for(unsigned int j=0; j<m_reso-1; j++)
+        for(unsigned int j=0; j<m_reso; j++)
             m_directions->push_back(Direction(i*m_pasTheta,j*m_pasPhi));
     }
+//    for(unsigned int i=0; i<m_reso; i++)
+//    {
+//        for(unsigned int j=0; j<m_reso-1; j++)
+//            m_directions->push_back(Direction(i*m_pasTheta,j*m_pasPhi));
+//    }
     Display2(m_displayMode, std::cout << "done." << std::endl);
 
 
@@ -647,161 +647,161 @@ std::vector<Direction> SHModel::getMaxDirectionsAt(Point p)
             max = Psi(i,0);
     }
 
-//    unsigned int thetaRes = m_reso+1;
-//    unsigned int phiRes   = m_reso;
-//
-//
-//    for(unsigned int i=1; i<thetaRes-1; i++)
-//    {
-//        for(unsigned int j=0; j<phiRes; j++)
-//        {
-//            Real odf1, odf2, odf3, odf4, odf5, odf6, odf7, odf8;
-//            Real odf = Psi(phiRes*i + j, 0);
-//
-//            if(j == 0)
-//            {
-//                odf1 = Psi(phiRes*(i-1)+(phiRes-1), 0);
-//                odf2 = Psi(phiRes*(i-1)+j, 0);
-//                odf3 = Psi(phiRes*(i-1)+(j+1), 0);
-//                odf4 = Psi(phiRes*i+(phiRes-1), 0);
-//                odf5 = Psi(phiRes*i+(j+1), 0);
-//                odf6 = Psi(phiRes*(i+1)+(phiRes-1), 0);
-//                odf7 = Psi(phiRes*(i+1)+j, 0);
-//                odf8 = Psi(phiRes*(i+1)+(j+1), 0);
-//            }
-//            else if(j == phiRes-1)
-//            {
-//                odf1 = Psi(phiRes*(i-1)+(j-1), 0);
-//                odf2 = Psi(phiRes*(i-1)+j, 0);
-//                odf3 = Psi(phiRes*(i-1)+(0), 0);
-//                odf4 = Psi(phiRes*i+(j-1), 0);
-//                odf5 = Psi(phiRes*i+(0), 0);
-//                odf6 = Psi(phiRes*(i+1)+(j-1), 0);
-//                odf7 = Psi(phiRes*(i+1)+j, 0);
-//                odf8 = Psi(phiRes*(i+1)+(0), 0);
-//            }
-//            else // j != 0 && j != phiRes-1
-//            {
-//                odf1 = Psi(phiRes*(i-1)+(j-1), 0);
-//                odf2 = Psi(phiRes*(i-1)+j, 0);
-//                odf3 = Psi(phiRes*(i-1)+(j+1), 0);
-//                odf4 = Psi(phiRes*i+(j-1), 0);
-//                odf5 = Psi(phiRes*i+(j+1), 0);
-//                odf6 = Psi(phiRes*(i+1)+(j-1), 0);
-//                odf7 = Psi(phiRes*(i+1)+j, 0);
-//                odf8 = Psi(phiRes*(i+1)+(j+1), 0);
-//            }
-//
-//            if(odf > odf1 && odf > odf2 && odf > odf3 && odf > odf4 && odf > odf5 && odf > odf6 && odf > odf7 && odf > odf8)
-//            {
-//                if((Psi(phiRes*i+j,0)-min)/(max-min) > 0.9)
-//                    maxima.push_back(Direction(i*m_pasTheta,j*m_pasPhi));
-//            }
-//        } // for each phi
-//    } // for each theta
+    unsigned int thetaRes = m_reso+1;
+    unsigned int phiRes   = m_reso;
 
-    unsigned int phiRes = m_reso-1;
-    bool isGreater;
-    unsigned int j;
 
-    // i=0
-    isGreater = true;
-    j = 0;
-
-    do
+    for(unsigned int i=1; i<thetaRes-1; i++)
     {
-        isGreater = ( Psi(phiRes + j,0) < Psi(0,0) );
-        j++;
-    } while(isGreater && j<phiRes);
-
-    if(isGreater)
-    {
-        if((Psi(0,0)-min)/(max-min) > MAXIMA_THRESHOLD)
+        for(unsigned int j=0; j<phiRes; j++)
         {
-            maxima.push_back(Direction(0,0));
-            maxima.push_back(Direction(M_PI,0));
-        }
-    }
+            Real odf1, odf2, odf3, odf4, odf5, odf6, odf7, odf8;
+            Real odf = Psi(phiRes*i + j, 0);
 
-//    // i=|theta|
+            if(j == 0)
+            {
+                odf1 = Psi(phiRes*(i-1)+(phiRes-1), 0);
+                odf2 = Psi(phiRes*(i-1)+j, 0);
+                odf3 = Psi(phiRes*(i-1)+(j+1), 0);
+                odf4 = Psi(phiRes*i+(phiRes-1), 0);
+                odf5 = Psi(phiRes*i+(j+1), 0);
+                odf6 = Psi(phiRes*(i+1)+(phiRes-1), 0);
+                odf7 = Psi(phiRes*(i+1)+j, 0);
+                odf8 = Psi(phiRes*(i+1)+(j+1), 0);
+            }
+            else if(j == phiRes-1)
+            {
+                odf1 = Psi(phiRes*(i-1)+(j-1), 0);
+                odf2 = Psi(phiRes*(i-1)+j, 0);
+                odf3 = Psi(phiRes*(i-1)+(0), 0);
+                odf4 = Psi(phiRes*i+(j-1), 0);
+                odf5 = Psi(phiRes*i+(0), 0);
+                odf6 = Psi(phiRes*(i+1)+(j-1), 0);
+                odf7 = Psi(phiRes*(i+1)+j, 0);
+                odf8 = Psi(phiRes*(i+1)+(0), 0);
+            }
+            else // j != 0 && j != phiRes-1
+            {
+                odf1 = Psi(phiRes*(i-1)+(j-1), 0);
+                odf2 = Psi(phiRes*(i-1)+j, 0);
+                odf3 = Psi(phiRes*(i-1)+(j+1), 0);
+                odf4 = Psi(phiRes*i+(j-1), 0);
+                odf5 = Psi(phiRes*i+(j+1), 0);
+                odf6 = Psi(phiRes*(i+1)+(j-1), 0);
+                odf7 = Psi(phiRes*(i+1)+j, 0);
+                odf8 = Psi(phiRes*(i+1)+(j+1), 0);
+            }
+
+            if(odf > odf1 && odf > odf2 && odf > odf3 && odf > odf4 && odf > odf5 && odf > odf6 && odf > odf7 && odf > odf8)
+            {
+                if((Psi(phiRes*i+j,0)-min)/(max-min) > 0.9)
+                    maxima.push_back(Direction(i*m_pasTheta,j*m_pasPhi));
+            }
+        } // for each phi
+    } // for each theta
+
+//    unsigned int phiRes = m_reso-1;
+//    bool isGreater;
+//    unsigned int j;
+//
+//    // i=0
 //    isGreater = true;
 //    j = 0;
 //
 //    do
 //    {
-//        isGreater = ( Psi(phiRes*phiRes,0) < Psi(m_reso-1,0) );
+//        isGreater = ( Psi(phiRes + j,0) < Psi(0,0) );
 //        j++;
 //    } while(isGreater && j<phiRes);
 //
 //    if(isGreater)
 //    {
-//        if((Psi(m_reso-1,0)-min)/(max-min) > MAXIMA_THRESHOLD)
+//        if((Psi(0,0)-min)/(max-min) > MAXIMA_THRESHOLD)
 //        {
-//            maxima.push_back(Direction(M_PI,0));
 //            maxima.push_back(Direction(0,0));
+//            maxima.push_back(Direction(M_PI,0));
 //        }
 //    }
-
-    // j=0 & general case
-    for(unsigned int i=1; i<m_reso-1; i++)
-    {
-        for(unsigned int j=0; j<phiRes; j++)
-        {
-            Real odf, odf1, odf2, odf3, odf4, odf5, odf6, odf7, odf8;
-
-            if(j == 0)
-            {
-                odf = Psi(phiRes*i,0);
-
-                odf1 = Psi(phiRes*(i-1),0);
-                odf2 = Psi(phiRes*(i+1),0);
-                odf3 = Psi(phiRes*(i-1) + (phiRes-1),0);
-                odf4 = Psi(phiRes*i + (phiRes-1),0);
-                odf5 = Psi(phiRes*(i+1) + (phiRes-1),0);
-                odf6 = Psi(phiRes*(i-1) + 1,0);
-                odf7 = Psi(phiRes*i + 1,0);
-                odf8 = Psi(phiRes*(i+1) + 1,0);
-            }
-            else if(j == phiRes-1)
-            {
-                odf = Psi(phiRes*i,phiRes-1);
-
-                odf1 = Psi(phiRes*(i-1) + (phiRes-1),0);
-                odf2 = Psi(phiRes*(i+1) + (phiRes-1),0);
-                odf3 = Psi(phiRes*(i-1) + (phiRes-2),0);
-                odf4 = Psi(phiRes*i + (phiRes-2),0);
-                odf5 = Psi(phiRes*(i+1) + (phiRes-2),0);
-                odf6 = Psi(phiRes*(i-1),0);
-                odf7 = Psi(phiRes*i,0);
-                odf8 = Psi(phiRes*(i+1),0);
-            }
-            else // general case
-            {
-                odf = Psi(phiRes*i + j,0);
-
-                odf1 = Psi(phiRes*(i-1) + (j+1),0);
-                odf2 = Psi(phiRes*i + (j+1),0);
-                odf3 = Psi(phiRes*(i+1) + (j+1),0);
-                odf4 = Psi(phiRes*(i-1) + j,0);
-                odf5 = Psi(phiRes*(i+1) + j,0);
-                odf6 = Psi(phiRes*(i-1) + (j-1),0);
-                odf7 = Psi(phiRes*i + (j-1),0);
-                odf8 = Psi(phiRes*(i+1) + (j-1),0);
-            }
-
-            if(odf > odf1 && odf > odf2 && odf > odf3 && odf > odf4 && odf > odf5 && odf > odf6 && odf > odf7 && odf > odf8)
-            {
-                if((Psi(phiRes*i,0)-min)/(max-min) > MAXIMA_THRESHOLD)
-                {
-                    Direction u(i*m_pasTheta,j*m_pasPhi);
-                    Vector v = u.toVector();
-
-                    maxima.push_back(u);
-                    maxima.push_back(Vector(-v.x(), -v.y(), -v.z()).toDirection());
-                }
-            }
-        }
-    }
+//
+////    // i=|theta|
+////    isGreater = true;
+////    j = 0;
+////
+////    do
+////    {
+////        isGreater = ( Psi(phiRes*phiRes,0) < Psi(m_reso-1,0) );
+////        j++;
+////    } while(isGreater && j<phiRes);
+////
+////    if(isGreater)
+////    {
+////        if((Psi(m_reso-1,0)-min)/(max-min) > MAXIMA_THRESHOLD)
+////        {
+////            maxima.push_back(Direction(M_PI,0));
+////            maxima.push_back(Direction(0,0));
+////        }
+////    }
+//
+//    // j=0 & general case
+//    for(unsigned int i=1; i<m_reso-1; i++)
+//    {
+//        for(unsigned int j=0; j<phiRes; j++)
+//        {
+//            Real odf, odf1, odf2, odf3, odf4, odf5, odf6, odf7, odf8;
+//
+//            if(j == 0)
+//            {
+//                odf = Psi(phiRes*i,0);
+//
+//                odf1 = Psi(phiRes*(i-1),0);
+//                odf2 = Psi(phiRes*(i+1),0);
+//                odf3 = Psi(phiRes*(i-1) + (phiRes-1),0);
+//                odf4 = Psi(phiRes*i + (phiRes-1),0);
+//                odf5 = Psi(phiRes*(i+1) + (phiRes-1),0);
+//                odf6 = Psi(phiRes*(i-1) + 1,0);
+//                odf7 = Psi(phiRes*i + 1,0);
+//                odf8 = Psi(phiRes*(i+1) + 1,0);
+//            }
+//            else if(j == phiRes-1)
+//            {
+//                odf = Psi(phiRes*i,phiRes-1);
+//
+//                odf1 = Psi(phiRes*(i-1) + (phiRes-1),0);
+//                odf2 = Psi(phiRes*(i+1) + (phiRes-1),0);
+//                odf3 = Psi(phiRes*(i-1) + (phiRes-2),0);
+//                odf4 = Psi(phiRes*i + (phiRes-2),0);
+//                odf5 = Psi(phiRes*(i+1) + (phiRes-2),0);
+//                odf6 = Psi(phiRes*(i-1),0);
+//                odf7 = Psi(phiRes*i,0);
+//                odf8 = Psi(phiRes*(i+1),0);
+//            }
+//            else // general case
+//            {
+//                odf = Psi(phiRes*i + j,0);
+//
+//                odf1 = Psi(phiRes*(i-1) + (j+1),0);
+//                odf2 = Psi(phiRes*i + (j+1),0);
+//                odf3 = Psi(phiRes*(i+1) + (j+1),0);
+//                odf4 = Psi(phiRes*(i-1) + j,0);
+//                odf5 = Psi(phiRes*(i+1) + j,0);
+//                odf6 = Psi(phiRes*(i-1) + (j-1),0);
+//                odf7 = Psi(phiRes*i + (j-1),0);
+//                odf8 = Psi(phiRes*(i+1) + (j-1),0);
+//            }
+//
+//            if(odf > odf1 && odf > odf2 && odf > odf3 && odf > odf4 && odf > odf5 && odf > odf6 && odf > odf7 && odf > odf8)
+//            {
+//                if((Psi(phiRes*i,0)-min)/(max-min) > MAXIMA_THRESHOLD)
+//                {
+//                    Direction u(i*m_pasTheta,j*m_pasPhi);
+//                    Vector v = u.toVector();
+//
+//                    maxima.push_back(u);
+//                    maxima.push_back(Vector(-v.x(), -v.y(), -v.z()).toDirection());
+//                }
+//            }
+//        }
+//    }
 
 
     return maxima;

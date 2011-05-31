@@ -38,7 +38,7 @@
 #endif
 
 #include "itkImage.h"
-#include "tclap/CmdLine.h"
+#include <tclap/CmdLine.h>
 
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
