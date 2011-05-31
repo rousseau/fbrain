@@ -278,20 +278,35 @@ SliceToSliceInterpolateImageFunction< TInputImage, TCoordRep >
   // In case of leave1out
 //  std::cout << "Number of piwels in region = " << region.GetNumberOfPixels() << std::endl; std::cout.flush();
 
+	ImageRegionType maxRegion = this->GetInputImage()->GetLargestPossibleRegion();
+	ImageSizeType maxRegionSize = maxRegion.GetSize();
+
   ImageIndexType start = region.GetIndex();
   ImageSizeType  size = region.GetSize();
 
   ImageRegionType extRegion;
 
   ImageIndexType  extStart;
+
   extStart[0]= start[0] - 5;
+	if (extStart[0]<0) extStart[0] = 0;
+
   extStart[1]= start[1] - 5;
+	if (extStart[1]<0) extStart[1] = 0;
+
   extStart[2]= start[2] - 1;
+	if (extStart[2]<0) extStart[2] = 0;
 
   ImageSizeType   extSize;
+
   extSize[0]= size[0] + 10;
+	if (extSize[0]>maxRegionSize[0]) extSize[0] = maxRegionSize[0];
+
   extSize[1]= size[1] + 10;
+	if (extSize[1]>maxRegionSize[1]) extSize[1] = maxRegionSize[1];
+
   extSize[2]= size[2] + 2;
+	if (extSize[2]>maxRegionSize[2]) extSize[2] = maxRegionSize[2];
 
 
   extRegion.SetSize(extSize);
