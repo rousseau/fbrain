@@ -204,6 +204,7 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   f.SetLambda( m_Lambda );
 
   vnl_conjugate_gradient cg(f);
+
   cg.minimize(x);
   cg.diagnose_outcome();
 
@@ -409,7 +410,8 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
                   hrDiffIndex[2] = hrIndex[2] - start_hr[2];
 
                   hrLinearIndex = hrDiffIndex[0] + hrDiffIndex[1]*size_hr[0] + hrDiffIndex[2]*size_hr[0]*size_hr[1];
-                  m_H(lrLinearIndex + offset, hrLinearIndex) = interpolator -> GetOverlap(n)* lrValue;
+                   m_H(lrLinearIndex + offset, hrLinearIndex) += interpolator -> GetOverlap(n)* lrValue;
+
 
                 }
 
@@ -440,6 +442,7 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 
     for ( ;col_iter != r.end(); ++col_iter)
       (*col_iter).second = (*col_iter).second / sum;
+
   }
 
   // Create simulated images

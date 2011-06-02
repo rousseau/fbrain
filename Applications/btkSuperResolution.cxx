@@ -76,6 +76,7 @@ int main( int argc, char *argv[] )
 
   TCLAP::MultiArg<std::string> inputArg("i","input","Low-resolution image file",true,"string",cmd);
   TCLAP::MultiArg<std::string> maskArg("m","mask","low-resolution image mask file",false,"string",cmd);
+  TCLAP::MultiArg<std::string> transArg("t","transform","transform file",false,"string",cmd);
   TCLAP::ValueArg<std::string> refArg  ("r","reconstructed","Reconstructed image for initialization. "
       "Typically the output of btkImageReconstruction is used." ,true,"","string",cmd);
   TCLAP::ValueArg<std::string> outArg  ("o","output","Super resolution output image",true,"","string",cmd);
@@ -83,9 +84,6 @@ int main( int argc, char *argv[] )
   TCLAP::ValueArg<float> lambdaArg  ("","lambda","Regularization factor (default = 0.1)",false, 0.1,"float",cmd);
   TCLAP::SwitchArg  boxcarSwitchArg("","boxcar","A boxcar-shaped PSF is assumed as imaging model"
       " (by default a Gaussian-shaped PSF is employed.).",false);
-
-  TCLAP::MultiArg<std::string> transArg("t","transform","transform file",false,"string",cmd);
-
 
   // Parse the argv array.
   cmd.parse( argc, argv );
