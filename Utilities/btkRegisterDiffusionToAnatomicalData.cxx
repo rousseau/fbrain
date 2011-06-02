@@ -195,6 +195,7 @@ int main( int argc, char *argv[] )
   typedef itk::Image< PixelType, 4 >  SequenceType;
 
   typedef itk::AffineTransform< double, 3 > TransformType;
+  //typedef itk::Euler3DTransform<double> TransformType;
 
   typedef itk::RegularStepGradientDescentOptimizer       OptimizerType;
 
@@ -294,7 +295,6 @@ int main( int argc, char *argv[] )
   ImageType::Pointer b0 = extractor -> GetOutput();
 
   registration -> SetFixedImage( b0 );
-//  registration -> SetFixedImage( mgrad );
   registration -> SetMovingImage( reference );
 
   // Fixed image region
@@ -323,7 +323,7 @@ int main( int argc, char *argv[] )
       fixedImageRegion.SetSize(fixedImageRegionSize);
     } else
       {
-        fixedImageRegion = reference -> GetLargestPossibleRegion();
+        fixedImageRegion = b0 -> GetLargestPossibleRegion();
       }
 
   fixedImageRegionIndex = fixedImageRegion.GetIndex();
