@@ -69,6 +69,8 @@ int main( int argc, char *argv[] )
 
   // Parse arguments
   const char *lmksFile = NULL;
+  const char *mgradResampled = NULL;
+  const char *mgradName = NULL;
 
   TCLAP::CmdLine cmd("Reorient a DWI sequence to standard orientation", ' ', "Unversioned");
 
@@ -77,11 +79,17 @@ int main( int argc, char *argv[] )
   TCLAP::ValueArg<std::string> lmksArg("l","landmarks","Landmarks file",true,"","string",cmd);
   TCLAP::SwitchArg nnSwitch("","nn","Nearest Neighbor interpolation", cmd, false);
   TCLAP::SwitchArg fovSwitch("e","extendFOV","Extends the FOV to avoid image cropping", cmd, false);
+  TCLAP::ValueArg<std::string> mgradArg("","mean-gradient","Mean gradient",false,"","string",cmd);
+  TCLAP::ValueArg<std::string> mgradResampledArg("","mean-gradient-resampled","Mean gradient resampled",false,"","string",cmd);
 
   cmd.parse( argc, argv );
 
   lmksFile        = lmksArg.getValue().c_str();
   bool nn         = nnSwitch.getValue();
+
+  mgradName = mgradArg.getValue().c_str();
+  mgradResampled = mgradResampledArg.getValue().c_str();
+
 
   const    unsigned int    Dimension = 4;
 
@@ -120,7 +128,16 @@ int main( int argc, char *argv[] )
   imageReader -> Update();
   ImageType::Pointer image = imageReader->GetOutput();
 
-  std::cout << "original origin =  " << image -> GetOrigin() << std::endl;
+  typedef itk::ImageFileReader< Image3DType > Image3DReaderType;
+
+  Image3DType::Pointer mgrad;
+  if ( strcmp(mgradName,"") )
+  {
+    Image3DReaderType::Pointer    mgradReader    = Image3DReaderType::New();
+    mgradReader -> SetFileName( mgradName );
+    mgradReader -> Update();
+    mgrad = mgradReader -> GetOutput();
+  }
 
   // Read landmarks
 
@@ -169,14 +186,28 @@ int main( int argc, char *argv[] )
   vnl_matrix<double> oriDirection(3,3);
   oriDirection = b0_ori -> GetDirection().GetVnlMatrix();
 
+  // Reorient mean gradient to RAI
+
+  typedef itk::OrientImageFilter< Image3DType, Image3DType >  FilterType;
+
+  Image3DType::Pointer mgrad_reo;
+
+  if ( strcmp(mgradName,"") )
+  {
+    FilterType::Pointer filter = FilterType::New();
+    filter -> SetInput( mgrad  );
+    filter -> UseImageDirectionOn();
+    filter -> SetDesiredCoordinateOrientation( itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RAI );
+    filter -> Update();
+    mgrad_reo = filter -> GetOutput();
+  }
+
   // Reorient sequence to RAI
 
   typedef itk::JoinSeriesImageFilter< Image3DType, ImageType > JoinerType;
   JoinerType::Pointer joiner = JoinerType::New();
   joiner -> SetOrigin( 0.0 );
   joiner -> SetSpacing( spacing[3] );
-
-  typedef itk::OrientImageFilter< Image3DType, Image3DType >  FilterType;
 
   for (unsigned int i = 0; i < numberOfFrames; i++)
   {
@@ -212,13 +243,6 @@ int main( int argc, char *argv[] )
   region_reo.SetIndex(index_reo);
   region_reo.SetSize(size_reo);
 
-/*  std::cout << " image region = " << std::endl;
-  std::cout << image -> GetLargestPossibleRegion() << std::endl;
-
-  std::cout << " required region = " << std::endl;
-  std::cout << region << std::endl;
-*/
-
   ExtractorType::Pointer extractor_reo = ExtractorType::New();
 
   extractor_reo -> SetInput( image_reo );
@@ -231,7 +255,6 @@ int main( int argc, char *argv[] )
   reoDirection = b0_reo -> GetDirection().GetVnlMatrix();
   vnl_matrix<double> reoDirectionTrans(3,3);
   reoDirectionTrans = reoDirection.transpose();
-
 
   // Reorient gradients accordingly
 
@@ -260,12 +283,27 @@ int main( int argc, char *argv[] )
   ImageType::IndexType   stdIndex    = stdImage -> GetLargestPossibleRegion().GetIndex();
 
   ImageType::PointType stdOrigin;
+  Image3DType::PointType stdOrigin3D;
 
   for (unsigned int i=0; i<3; i++)
+  {
     stdOrigin[i] = (1.0-stdSize[i])*0.5*stdSpacing[i];
+    stdOrigin3D[i] = stdOrigin[i];
+  }
 
   stdImage -> SetOrigin( stdOrigin );
 
+  // Create the mean gradient in standard orientation
+
+  Image3DType::Pointer mgrad_std = mgrad_reo;
+
+  if ( strcmp(mgradName,"") )
+  {
+    Image3DType::DirectionType mgrad_std_direction  = mgrad_std -> GetDirection();
+    mgrad_std_direction.SetIdentity();
+    mgrad_std -> SetDirection (mgrad_std_direction);
+    mgrad_std -> SetOrigin(stdOrigin3D);
+  }
 
   // Obtain directions LPS directions in standard image
 
@@ -448,11 +486,42 @@ int main( int argc, char *argv[] )
 
   joiner2 -> Update();
 
+
+  Image3DType::Pointer mgrad_resampled;
+
+  if ( strcmp(mgradName,"") )
+  {
+    ResamplerType::Pointer resampler = ResamplerType::New();
+
+    if (nn)
+    {
+      resampler -> SetInterpolator(interpolator);
+    }
+
+    resampler -> SetInput( mgrad_std );
+    resampler -> SetTransform( transform );
+    resampler -> SetDefaultPixelValue(0);
+    resampler -> UseReferenceImageOn();
+    resampler -> SetReferenceImage( mgrad_std );
+
+    resampler -> Update();
+    mgrad_resampled = resampler -> GetOutput();
+  }
+
   typedef itk::ImageFileWriter< ImageType > ImageWriterType;
   ImageWriterType::Pointer  imageWriter  = ImageWriterType::New();
   imageWriter -> SetInput( joiner2 -> GetOutput() );
   imageWriter -> SetFileName(  outputImageFile );
   imageWriter -> Update();
+
+  typedef itk::ImageFileWriter< Image3DType > Image3DWriterType;
+  if ( strcmp(mgradName,"") )
+  {
+    Image3DWriterType::Pointer  image3DWriter  = Image3DWriterType::New();
+    image3DWriter -> SetInput( mgrad_resampled );
+    image3DWriter -> SetFileName(  mgradResampled );
+    image3DWriter -> Update();
+  }
 
   // Change gradient table
 
