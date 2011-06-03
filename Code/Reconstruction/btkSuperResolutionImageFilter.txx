@@ -75,7 +75,7 @@ SuperResolutionImageFilter<TInputImage, TOutputImage,TInterpolatorPrecisionType>
   m_DefaultPixelValue = 0;
   m_SimulatedImagesUpdated = false;
 
-  m_Iterations = 100;
+  m_Iterations = 30;
   m_Lambda = 0.1;
   m_OptimizationMethod = MSE;
   m_PSF = GAUSSIAN;
@@ -204,7 +204,7 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   f.SetLambda( m_Lambda );
 
   vnl_conjugate_gradient cg(f);
-
+  cg.set_max_function_evals(m_Iterations);
   cg.minimize(x);
   cg.diagnose_outcome();
 
