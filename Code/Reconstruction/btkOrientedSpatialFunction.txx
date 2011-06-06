@@ -109,7 +109,6 @@ OrientedSpatialFunction<TOutput, VImageDimension, TInput>
   switch (m_PSF)
   {
   case BOXCAR:
-    std::cout << "in boxcar " << std::endl;
     if ( ( fabs(icoor) <= 0.5 * m_Spacing[0] ) &&
            ( fabs(jcoor) <= 0.5 * m_Spacing[1] ) &&
            ( fabs(kcoor) <= 0.5 * m_Spacing[2]) )

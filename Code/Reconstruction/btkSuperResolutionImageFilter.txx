@@ -200,7 +200,7 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   x_size[0] = size[0]; x_size[1] = size[1]; x_size[2] = size[2];
 
   LeastSquaresVnlCostFunction f(x.size());
-  f.SetParameters(m_H,m_y,x,x_size);
+  f.SetParameters(m_H,m_y,x_size);
   f.SetLambda( m_Lambda );
 
   vnl_conjugate_gradient cg(f);

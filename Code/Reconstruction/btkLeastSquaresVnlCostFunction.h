@@ -47,7 +47,8 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
   private:
 
   vnl_sparse_matrix<float> H;
-  vnl_sparse_matrix<float> HtH;
+//  vnl_sparse_matrix<float> HtH;
+  vnl_sparse_matrix<float> Ht;
   vnl_vector<float> HtY;
   vnl_vector<float> Y;
 
@@ -307,17 +308,22 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
 
   // TODO Hvec should be pass as a const argument, see how to improve this
   // (an error is obtained with get_row function)
-  void SetParameters(const VnlSparseMatrixType & Hin, const VnlVectorType & Yin, const vnl_vector<double>& x, const vnl_vector<int>& x_size_in)
+  void SetParameters(VnlSparseMatrixType & Hin, VnlVectorType & Yin, const vnl_vector<int>& x_size_in)
   {
 
     H = Hin;
     Y = Yin;
 
+    // FIXME Just a temporary solution to memory problems.
+    // Find another solution after experiments for miccai workshop 2011.
+    Hin.set_size(0,0);
+    Yin.set_size(0);
+
     x_size.width 	= x_size_in[0];
     x_size.height = x_size_in[1];
     x_size.depth  = x_size_in[2];
 
-    vnl_sparse_matrix<float> Ht;
+//    vnl_sparse_matrix<float> Ht;
 
     unsigned int Hcols = H.cols();
     unsigned int Hrows = H.rows();
@@ -330,13 +336,13 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
       Ht( H.getcolumn(), H.getrow() ) = H.value();
 
     // precalcule Ht * H
-    std::cout << "Precomputing Ht*H" << std::endl; std::cout.flush();
-    HtH = Ht * H;
+//    std::cout << "Precomputing Ht*H" << std::endl; std::cout.flush();
+//    HtH = Ht * H;
 
     // precalcule Ht * Y
     std::cout << "Precomputing Ht*Y" << std::endl; std::cout.flush();
     Ht.mult(Y,HtY);
-    Ht.clear();
+//    Ht.set_size(0,0);
 
   }
 
@@ -349,9 +355,14 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
 
     std::cout << "in gradf " << std::endl; std::cout.flush();
 
-    VnlVectorType HtHx;
+    vnl_vector<float> Hx;
+    H.mult(x_float,Hx);
 
-    HtH.mult(x_float,HtHx);
+    VnlVectorType HtHx;
+    Ht.mult(Hx,HtHx);
+//    HtH.mult(x_float,HtHx);
+    Hx.clear();
+
     g_float = (-HtY + HtHx)*2.0;
 
     // regularization term
