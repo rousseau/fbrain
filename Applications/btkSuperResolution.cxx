@@ -80,10 +80,10 @@ int main( int argc, char *argv[] )
   TCLAP::ValueArg<std::string> refArg  ("r","reconstructed","Reconstructed image for initialization. "
       "Typically the output of btkImageReconstruction is used." ,true,"","string",cmd);
   TCLAP::ValueArg<std::string> outArg  ("o","output","Super resolution output image",true,"","string",cmd);
-  TCLAP::ValueArg<int> iterArg  ("","iter","Number of iterations (default = 30)",false, 30,"int",cmd);
+  TCLAP::ValueArg<int> iterArg  ("","iter","Number of iterations (default = 20)",false, 20,"int",cmd);
   TCLAP::ValueArg<float> lambdaArg  ("","lambda","Regularization factor (default = 0.1)",false, 0.1,"float",cmd);
   TCLAP::SwitchArg  boxcarSwitchArg("","boxcar","A boxcar-shaped PSF is assumed as imaging model"
-      " (by default a Gaussian-shaped PSF is employed.).",false);
+      " (by default a Gaussian-shaped PSF is employed.).",cmd,false);
 
   // Parse the argv array.
   cmd.parse( argc, argv );
