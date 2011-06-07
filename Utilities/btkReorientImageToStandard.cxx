@@ -48,8 +48,10 @@
 #include "vnl/vnl_cross.h"
 
 #include "itkEuler3DTransform.h"
+#include "itkExtractImageFilter.h"
 #include "itkResampleImageFilter.h"
 #include "itkNearestNeighborInterpolateImageFunction.h"
+#include "itkOrientImageFilter.h"
 
 #include "vnl/vnl_inverse.h"
 
@@ -63,80 +65,113 @@ int main( int argc, char *argv[] )
   try {
 
   // Parse arguments
-  const char *inputImageFile = NULL, *outputImageFile = NULL, *lmksFile = NULL;
 
-  TCLAP::CmdLine cmd("Change the image orientation", ' ', "Unversioned");
+  TCLAP::CmdLine cmd("Reorient an image to standard orientation", ' ', "Unversioned");
 
   TCLAP::ValueArg<std::string> inputArg("i","input","Input image",true,"","string",cmd);
-  TCLAP::ValueArg<std::string> outputArg("o","output","Reoriented image",true,"none","string",cmd);
-  TCLAP::ValueArg<std::string> lmksArg("l","landmarks","Landmarks file",true,"none","string",cmd);
+  TCLAP::ValueArg<std::string> outputArg("o","output","Reoriented image",true,"","string",cmd);
+  TCLAP::ValueArg<std::string> lmksArg("l","landmarks","Landmarks file",true,"","string",cmd);
   TCLAP::SwitchArg nnSwitch("","nn","Nearest Neighbor interpolation", cmd, false);
+  TCLAP::SwitchArg fovSwitch("e","extend-fov","Extends the FOV to avoid image cropping", cmd, false);
 
   cmd.parse( argc, argv );
 
-  inputImageFile  = inputArg.getValue().c_str();
-  outputImageFile = outputArg.getValue().c_str();
-  lmksFile        = lmksArg.getValue().c_str();
-  bool nn = nnSwitch.getValue();
+  const char *inputImageFile  = inputArg.getValue().c_str();
+  const char *outputImageFile = outputArg.getValue().c_str();
+  const char *lmksFile   = lmksArg.getValue().c_str();
+
+  bool nn         = nnSwitch.getValue();
 
   const    unsigned int    Dimension = 3;
 
   // Read image
 
   typedef itk::Image< short, Dimension >  ImageType;
-
   typedef itk::ImageFileReader< ImageType > ImageReaderType;
   ImageReaderType::Pointer  imageReader  = ImageReaderType::New();
   imageReader -> SetFileName(  inputImageFile );
   imageReader -> Update();
   ImageType::Pointer image = imageReader->GetOutput();
 
-
   // Read landmarks
-/*
-  FILE* fr;
-  fr = fopen( lmksFile, "r" );
 
-  double lpt_ras[3], rpt_ras[3], apt_ras[3], ppt_ras[3];
+  btk::btkLandmarksFileReader::Pointer landRead = btk::btkLandmarksFileReader::New();
+  landRead->SetInputFileName(lmksFile);
+  landRead->Update();
 
-  fscanf( fr, "%lf %lf %lf\n", &lpt_ras[0], &lpt_ras[1], &lpt_ras[2]);
-  fscanf( fr, "%lf %lf %lf\n", &rpt_ras[0], &rpt_ras[1], &rpt_ras[2]);
-  fscanf( fr, "%lf %lf %lf\n", &ppt_ras[0], &ppt_ras[1], &ppt_ras[2]);
-  fscanf( fr, "%lf %lf %lf\n", &apt_ras[0], &apt_ras[1], &apt_ras[2]);
+  double *lpt_ras = landRead->GetOutputLPT();
+  double *rpt_ras = landRead->GetOutputRPT();
+  double *apt_ras = landRead->GetOutputAPT();
+  double *ppt_ras = landRead->GetOutputPPT();
 
-  fclose (fr);
-//*/
+  // Convert points to lps coordinates
 
-    btk::btkLandmarksFileReader::Pointer landRead = btk::btkLandmarksFileReader::New();
-    landRead->SetInputFileName(lmksFile);
-    landRead->Update();
+  ImageType::PointType leftPoint, rightPoint, anteriorPoint, posteriorPoint;
 
-    double *lpt_ras = landRead->GetOutputLPT();
-    double *rpt_ras = landRead->GetOutputRPT();
-    double *ppt_ras = landRead->GetOutputPPT();
-    double *apt_ras = landRead->GetOutputAPT();
+  leftPoint[0]      = -lpt_ras[0]; leftPoint[1]      = -lpt_ras[1]; leftPoint[2]      = lpt_ras[2];
+  rightPoint[0]     = -rpt_ras[0]; rightPoint[1]     = -rpt_ras[1]; rightPoint[2]     = rpt_ras[2];
+  anteriorPoint[0]  = -apt_ras[0]; anteriorPoint[1]  = -apt_ras[1]; anteriorPoint[2]  = apt_ras[2];
+  posteriorPoint[0] = -ppt_ras[0]; posteriorPoint[1] = -ppt_ras[1]; posteriorPoint[2] = ppt_ras[2];
 
-//std::cout << "lpt_ras = " << lpt_ras[0] << "," << lpt_ras[1] << "," << lpt_ras[2] << " | rpt_ras = " << rpt_ras[0] << "," << rpt_ras[1] << "," << rpt_ras[2] << " | apt_ras = " << apt_ras[0] << "," << apt_ras[1] << "," << apt_ras[2] << " | ppt_ras = " << ppt_ras[0] << "," << ppt_ras[1] << "," << ppt_ras[2] << std::endl;
+  // Recover original direction matrix
 
+  vnl_matrix<double> oriDirection(3,3);
+  oriDirection = image -> GetDirection().GetVnlMatrix();
 
-  // Compute rotation matrix
+  // Reorient mean gradient to RAI
+
+  typedef itk::OrientImageFilter< ImageType, ImageType >  FilterType;
+
+  // Reorient sequence to RAI
+
+  FilterType::Pointer filter = FilterType::New();
+  filter -> SetInput( image  );
+  filter -> UseImageDirectionOn();
+  filter -> SetDesiredCoordinateOrientation( itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RAI );
+  filter -> Update();
+
+  ImageType::Pointer image_reo = filter -> GetOutput();
+
+  vnl_matrix<double> reoDirection(3,3);
+  reoDirection = image_reo -> GetDirection().GetVnlMatrix();
+
+  vnl_matrix<double> reoDirectionTrans(3,3);
+  reoDirectionTrans = reoDirection.transpose();
+
+  // Create the image in standard orientation
+  // p = I*S*idx + O_center
+
+  ImageType::Pointer stdImage = image_reo;
+
+  ImageType::DirectionType stdImageDirection  = stdImage -> GetDirection();
+  stdImageDirection.SetIdentity();
+  stdImage -> SetDirection (stdImageDirection);
+
+  ImageType::SpacingType stdSpacing  = stdImage -> GetSpacing();
+  ImageType::SizeType 	 stdSize     = stdImage -> GetLargestPossibleRegion().GetSize();
+  ImageType::IndexType   stdIndex    = stdImage -> GetLargestPossibleRegion().GetIndex();
+
+  ImageType::PointType stdOrigin;
+
+  for (unsigned int i=0; i<3; i++)
+    stdOrigin[i] = (1.0-stdSize[i])*0.5*stdSpacing[i];
+
+  stdImage -> SetOrigin( stdOrigin );
+
+  // Obtain directions LPS directions in standard image
 
   vnl_vector<double> left_lps(3), pos_lps(3), sup_lps(3);
 
-  left_lps(0) = rpt_ras[0] - lpt_ras[0];
-  left_lps(1) = rpt_ras[1] - lpt_ras[1];
-  left_lps(2) = lpt_ras[2] - rpt_ras[2];
-
+  left_lps = reoDirectionTrans*( leftPoint.GetVnlVector() - rightPoint.GetVnlVector() );
   left_lps.normalize();
 
-  pos_lps(0) = apt_ras[0] - ppt_ras[0];
-  pos_lps(1) = apt_ras[1] - ppt_ras[1];
-  pos_lps(2) = ppt_ras[2] - apt_ras[2];
-
+  pos_lps = reoDirectionTrans*( posteriorPoint.GetVnlVector() - anteriorPoint.GetVnlVector() );
   pos_lps.normalize();
 
   sup_lps = vnl_cross_3d(left_lps,pos_lps);
 
+  // TODO The following code is quite repeated throug the library
+  // we should include it somewhere else
 
   vnl_matrix<double> R(3,3);
   R.set_identity();
@@ -160,8 +195,7 @@ int main( int argc, char *argv[] )
     PQNQDiff = NQ - PQ;
     if( PQNQDiff.frobenius_norm() < 1e-7 )
     {
-//      std::cout << "Polar decomposition used "
-//                << ni << " iterations " << std::endl;
+//      std::cout << "Polar decomposition used " << ni << " iterations " << std::endl;
       break;
     }
     else
@@ -170,30 +204,74 @@ int main( int argc, char *argv[] )
     }
   }
 
-  // Correct and write image
-
   typedef itk::Euler3DTransform<double> TransformType;
   TransformType::Pointer transform = TransformType::New();
 
-  ImageType::SizeType size = image -> GetLargestPossibleRegion().GetSize();
-
-  typedef itk::ContinuousIndex< double, Dimension > ContinuousIndexType;
+  typedef itk::ContinuousIndex< double, 3 > ContinuousIndexType;
   ContinuousIndexType centerIndex;
 
-  centerIndex[0] = (size[0] - 1.0)/2.0;
-  centerIndex[1] = (size[1] - 1.0)/2.0;
-  centerIndex[2] = (size[2] - 1.0)/2.0;
+  centerIndex[0] = (stdSize[0] - 1.0) / 2.0;
+  centerIndex[1] = (stdSize[1] - 1.0) / 2.0;
+  centerIndex[2] = (stdSize[2] - 1.0) / 2.0;
 
   ImageType::PointType centerPoint;
-  image -> TransformContinuousIndexToPhysicalPoint(centerIndex, centerPoint);
-//  std::cout << "Center point = " << centerPoint << std::endl;
+
+  stdImage -> TransformContinuousIndexToPhysicalPoint(centerIndex, centerPoint);
 
   transform -> SetCenter( centerPoint );
   transform -> SetRotationMatrix( NQ );
-  transform -> SetRotationMatrix( NQ.transpose() );
 
-//  std::cout << "Rotation matrix corrected = " << std::endl << NQ.transpose() << std::endl;
+//  TODO Cannot constrain the rotation because sometimes it is necessary to rotate in xy
+//  Something I could do is to round the rotations in xy to n*pi*/2 ...
 //  transform -> SetRotation( 0.0, 0.0, transform -> GetAngleZ() );
+
+  // Extend FOV according to the transformation
+
+  ImageType::SizeType  resamplingSize;
+  ImageType::IndexType lowerIndex; lowerIndex.Fill(0);
+  ImageType::IndexType upperIndex; upperIndex.Fill(0);
+
+  if ( fovSwitch.isSet() )
+  {
+    typedef itk::ImageRegionIteratorWithIndex< ImageType > ImageIteratorType;
+    ImageIteratorType stdImageIt( stdImage, stdImage -> GetLargestPossibleRegion() );
+
+    ImageType::IndexType index;
+    ImageType::IndexType transformedIndex;
+
+    ImageType::PointType point;
+    ImageType::PointType transformedPoint;
+
+    // Even when only the corners are necessary, the code is shorter in this way
+    // (and it's not very expensive to compute it)
+
+    for(stdImageIt.GoToBegin(); !stdImageIt.IsAtEnd(); ++stdImageIt)
+    {
+      index = stdImageIt.GetIndex();
+      stdImage -> TransformIndexToPhysicalPoint(index, point);
+      transformedPoint = transform -> TransformPoint(point);
+      stdImage -> TransformPhysicalPointToIndex(transformedPoint, transformedIndex);
+
+      for (unsigned int i = 0; i<3; i++)
+        if ( transformedIndex[i] < lowerIndex[i] ) lowerIndex[i] = transformedIndex[i];
+        else if
+           ( transformedIndex[i] > upperIndex[i] ) upperIndex[i] = transformedIndex[i];
+
+    }
+
+    resamplingSize[0] = upperIndex[0] - lowerIndex[0] + 1;
+    resamplingSize[1] = upperIndex[1] - lowerIndex[1] + 1;
+    resamplingSize[2] = upperIndex[2] - lowerIndex[2] + 1;
+
+  } else
+  {
+    resamplingSize = stdImage -> GetLargestPossibleRegion().GetSize();
+  }
+
+  ImageType::PointType resamplingOrigin;
+  stdImage -> TransformIndexToPhysicalPoint(lowerIndex, resamplingOrigin );
+
+  transform -> SetRotationMatrix( NQ.transpose() );
 
   // Resampling
 
@@ -202,31 +280,23 @@ int main( int argc, char *argv[] )
 
   typedef itk::NearestNeighborInterpolateImageFunction< ImageType >  InterpolatorType;
   InterpolatorType::Pointer interpolator = InterpolatorType::New();
+  if (nn) resampler -> SetInterpolator(interpolator);
 
-  resampler -> SetInput( image );
-  resampler -> SetReferenceImage( image );
-  resampler -> SetUseReferenceImage( true );
+  resampler -> SetInput( stdImage );
   resampler -> SetTransform(transform);
   resampler -> SetDefaultPixelValue(0);
-
-  if (nn)
-  {
-    resampler -> SetInterpolator(interpolator);
-  }
-
+  resampler -> SetSize( resamplingSize );
+  resampler -> SetOutputOrigin( resamplingOrigin );
+  resampler -> SetOutputDirection( stdImage -> GetDirection()  );
+  resampler -> SetOutputSpacing( stdImage -> GetSpacing() );
 
   resampler -> Update();
 
-  ImageType::Pointer reorientedImage = resampler -> GetOutput();
-
-
   typedef itk::ImageFileWriter< ImageType > ImageWriterType;
   ImageWriterType::Pointer  imageWriter  = ImageWriterType::New();
-  imageWriter->SetInput(  reorientedImage );
-  imageWriter->SetFileName(  outputImageFile );
-  imageWriter->Update();
-
-  // Transform landmarks
+  imageWriter -> SetInput( resampler -> GetOutput() );
+  imageWriter -> SetFileName(  outputImageFile );
+  imageWriter -> Update();
 
   } catch (TCLAP::ArgException &e)  // catch any exceptions
   { std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; }
