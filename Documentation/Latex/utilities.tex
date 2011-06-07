@@ -34,8 +34,7 @@ argument $-d$ specifies the image dimension (3 for images and 4 for sequences).
   \item[btkReorientImageToStandard] Sometimes it is useful
 to reorient the image to the standard orientation. This is necessary with fetal
 images since in general the fetus is in a random orientation with respect to the
-scanner. To do this with BTK, before it is necessary to convert the image
-to a coordinate system by using \texttt{btkSetStandardCoorSystem}.
+scanner.
 
 Usage: \texttt{btkReorientImageToStandard -i image -o output -l landmarks}.
 \texttt{landmarks} is a text file containing points that define the left-right
