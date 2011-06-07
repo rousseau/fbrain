@@ -23,15 +23,7 @@ Usage: \texttt{-i input -o output.nhdr}
 The list of optional parameters can be obtained by \texttt{btkNiftiToNrrd
 --help}
 
-\item[btkSetStandardCoorSystem] It transforms an image to a coordinate
-system with identity direction and origin at the center of the image
-(by default, a linear interpolation is used).
-
-Usage: \texttt{btkSetStandardCoorSystem -i image -o output -d dimension}. The
-argument $-d$ specifies the image dimension (3 for images and 4 for sequences). 
-\\
-
-  \item[btkReorientImageToStandard] Sometimes it is useful
+\item[btkReorientImageToStandard] Sometimes it is useful
 to reorient the image to the standard orientation. This is necessary with fetal
 images since in general the fetus is in a random orientation with respect to the
 scanner.
