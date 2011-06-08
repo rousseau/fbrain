@@ -88,7 +88,7 @@ int main( int argc, char *argv[] )
   TCLAP::MultiArg<std::string> resampledArg("","ir","Resampled image with initial transform",false,"string",cmd);
 
   TCLAP::ValueArg<std::string> outArg("o","output","High resolution image",true,"","string",cmd);
-  TCLAP::ValueArg<unsigned int> iterArg("n","iter","Maximum number of iterations (default 30)",false, 30,"unsigned int",cmd);
+  TCLAP::ValueArg<unsigned int> iterArg("n","iter","Maximum number of iterations (default 10)",false, 10,"unsigned int",cmd);
   TCLAP::ValueArg<double> epsilonArg("e","epsilon","Minimal percent change between two iterations"
       "considered as convergence. (default 0.0001)",false, 1e-4,"double",cmd);
 
