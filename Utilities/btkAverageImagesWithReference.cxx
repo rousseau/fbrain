@@ -44,6 +44,7 @@
 #include "itkImageFileWriter.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkLinearInterpolateImageFunction.h"
+#include "itkNearestNeighborInterpolateImageFunction.h"
 
 
 int main( int argc, char *argv[] )
@@ -59,6 +60,7 @@ int main( int argc, char *argv[] )
   TCLAP::MultiArg<std::string> inputArg("i","input","image file",true,"string",cmd);
   TCLAP::ValueArg<std::string> outArg("o","output","High resolution image",true,"","string",cmd);
   TCLAP::ValueArg<std::string> refArg("r","reference","Reference image",true,"","string",cmd);
+  TCLAP::SwitchArg nnSwitch("","nn","Nearest Neighbor interpolation", cmd, false);
 
   // Parse the argv array.
   cmd.parse( argc, argv );
@@ -100,6 +102,9 @@ int main( int argc, char *argv[] )
   IteratorType refIt( refImage, refImage -> GetLargestPossibleRegion() );
 
   typedef itk::LinearInterpolateImageFunction<ImageType,double> InterpolatorType;
+  typedef itk::NearestNeighborInterpolateImageFunction< ImageType >  NNInterpolatorType;
+
+  NNInterpolatorType::Pointer nn_interpolator = NNInterpolatorType::New();
   InterpolatorType::Pointer interpolator = InterpolatorType::New();
 
   ImageType::IndexType index;
@@ -116,18 +121,28 @@ int main( int argc, char *argv[] )
 
     for (unsigned int i=0; i < numberOfImages; i++)
     {
-      interpolator -> SetInputImage( imageArray[i] );
-
-      if ( interpolator -> IsInsideBuffer( point ) )
+      if (nnSwitch.isSet())
       {
-        value += interpolator -> Evaluate( point );
-        counter++;
+        nn_interpolator -> SetInputImage( imageArray[i] );
+        if ( nn_interpolator -> IsInsideBuffer( point ) )
+        {
+          value += nn_interpolator -> Evaluate( point );
+          counter++;
+        }
+      }
+      else
+      {
+        interpolator -> SetInputImage( imageArray[i] );
+        if ( interpolator -> IsInsideBuffer( point ) )
+        {
+          value += interpolator -> Evaluate( point );
+          counter++;
+        }
       }
     }
 
     if ( counter>0 ) refIt.Set(value/counter);
     else refIt.Set(0.0);
-
   }
 
   // Write average
