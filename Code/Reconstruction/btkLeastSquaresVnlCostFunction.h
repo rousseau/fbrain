@@ -384,11 +384,13 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
 
     delete[] kernel;
 
-
     for (unsigned int i=0; i<g.size(); i++)
       g[i] = g_float[i] / Y.size();
 
-    g_float = g_float + 2*lambda*(KxX + KyX + KzX)/ x_float.size();
+    g_float = 2*lambda*(KxX + KyX + KzX)/ x_float.size();
+
+    for (unsigned int i=0; i<g.size(); i++)
+      g[i] = g[i] + g_float[i];
 
 
     std::cout << "exiting of gradf " << std::endl; std::cout.flush();
