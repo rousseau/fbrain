@@ -48,6 +48,7 @@
 #include "btkUserMacro.h"
 #include "vnl/vnl_sparse_matrix.h"
 #include "vnl/algo/vnl_conjugate_gradient.h"
+#include "vnl/algo/vnl_levenberg_marquardt.h"
 //#include "vnl_conjugate_gradient.h"
 #include "btkLeastSquaresVnlCostFunction.h"
 #include "btkLinearInterpolateImageFunctionWithWeights.h"

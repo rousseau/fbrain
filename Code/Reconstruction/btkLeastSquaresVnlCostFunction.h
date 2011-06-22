@@ -266,6 +266,8 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
     vnl_vector<float> HxMinusY;
     HxMinusY = Hx - Y;
 
+    Hx.clear();
+
     // Calculate the square of 1st derivatives along x, y, and z
 
     float* kernel = new float[3];
@@ -392,6 +394,7 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
     for (unsigned int i=0; i<g.size(); i++)
       g[i] = g[i] + g_float[i];
 
+    std::cout << "gradient magniture = " << g.magnitude() << std::endl;
 
     std::cout << "exiting of gradf " << std::endl; std::cout.flush();
   }
