@@ -210,6 +210,8 @@ public:
     for (unsigned int i=0; i<_argSize[2]; i++)
       m_Transform[m_Transform.size()-1][i] = TransformType::New();
 
+    // TODO Is it really necessary to create always the simulated images?
+    // If we create them only on request?
 
     typename DuplicatorType::Pointer duplicator = DuplicatorType::New();
     duplicator -> SetInputImage (_arg);

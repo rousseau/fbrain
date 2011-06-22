@@ -41,13 +41,17 @@
 
 namespace btk
 {
-
+template <class TImage>
 class LeastSquaresVnlCostFunction : public vnl_cost_function
 {
   private:
 
+  typedef TImage ImageType;
+  typedef typename ImageType::Pointer ImagePointer;
+  typedef typename ImageType::ConstPointer ImageConstPointer;
+  typedef typename ImageType::RegionType RegionType;
+
   vnl_sparse_matrix<float> H;
-//  vnl_sparse_matrix<float> HtH;
   vnl_sparse_matrix<float> Ht;
   vnl_vector<float> HtY;
   vnl_vector<float> Y;
@@ -59,6 +63,10 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
      unsigned int height;
      unsigned int depth;
   } x_size;
+
+  std::vector<ImagePointer>  m_Images;
+  std::vector<RegionType>    m_Regions;
+  ImageConstPointer					 m_ReferenceImage;
 
   void set(float * array, int size, float value) {
     for (int i = 0; i < size; i++)
@@ -248,8 +256,6 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
     delete[] sspec;
   }
 
-
-
   typedef vnl_vector<float> VnlVectorType;
   typedef vnl_sparse_matrix<float> VnlSparseMatrixType;
 
@@ -402,6 +408,21 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
   void SetLambda(float value)
   {
     lambda = value;
+  }
+
+  void AddImage( ImageType* image )
+  {
+    m_Images.push_back( image );
+  }
+
+  void AddRegion( RegionType region)
+  {
+    m_Regions.push_back( region );
+  }
+
+  void SetReferenceImage( const ImageType * image )
+  {
+    m_ReferenceImage = image;
   }
 
 

@@ -199,8 +199,15 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   vnl_vector<int>  x_size(3);
   x_size[0] = size[0]; x_size[1] = size[1]; x_size[2] = size[2];
 
-  LeastSquaresVnlCostFunction f(x.size());
-  f.SetParameters(m_H,m_y,x_size);
+  LeastSquaresVnlCostFunction<InputImageType> f(x.size());
+
+  for(unsigned int im = 0; im < m_ImageArray.size(); im++)
+  {
+    f.AddImage(m_ImageArray[im]);
+    f.AddRegion(m_InputImageRegion[im]);
+  }
+  f.SetReferenceImage(this -> GetReferenceImage());
+
   f.SetLambda( m_Lambda );
 
   vnl_conjugate_gradient cg(f);
