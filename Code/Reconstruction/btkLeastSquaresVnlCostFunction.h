@@ -49,7 +49,12 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
   typedef TImage ImageType;
   typedef typename ImageType::Pointer ImagePointer;
   typedef typename ImageType::ConstPointer ImageConstPointer;
+
   typedef typename ImageType::RegionType RegionType;
+  typedef typename ImageType::SizeType   SizeType;
+
+  typedef Euler3DTransform<double> TransformType;
+  typedef typename TransformType::Pointer TransformPointerType;
 
   vnl_sparse_matrix<float> H;
   vnl_sparse_matrix<float> Ht;
@@ -67,6 +72,7 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
   std::vector<ImagePointer>  m_Images;
   std::vector<RegionType>    m_Regions;
   ImageConstPointer					 m_ReferenceImage;
+  std::vector< std::vector<TransformPointerType> > m_Transforms;
 
   void set(float * array, int size, float value) {
     for (int i = 0; i < size; i++)
@@ -400,7 +406,6 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
     for (unsigned int i=0; i<g.size(); i++)
       g[i] = g[i] + g_float[i];
 
-    std::cout << "gradient magniture = " << g.magnitude() << std::endl;
 
     std::cout << "exiting of gradf " << std::endl; std::cout.flush();
   }
@@ -413,6 +418,16 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
   void AddImage( ImageType* image )
   {
     m_Images.push_back( image );
+
+    // Add transforms for this image
+    m_Transforms.resize( m_Transforms.size() + 1 );
+    SizeType imageSize = image -> GetLargestPossibleRegion().GetSize();
+    m_Transforms[m_Transforms.size()-1].resize( imageSize[2]);
+
+    // Initialize transforms
+    for (unsigned int i=0; i<imageSize[2]; i++)
+      m_Transforms[m_Transforms.size()-1][i] = TransformType::New();
+
   }
 
   void AddRegion( RegionType region)
@@ -423,6 +438,11 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
   void SetReferenceImage( const ImageType * image )
   {
     m_ReferenceImage = image;
+  }
+
+  void SetTransform( int i, int j, TransformType* transform )
+  {
+    m_Transforms[i][j] = transform;
   }
 
 

@@ -205,6 +205,8 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   {
     f.AddImage(m_ImageArray[im]);
     f.AddRegion(m_InputImageRegion[im]);
+    for(unsigned int i=0; i<m_Transform[im].size(); i++)
+      f.SetTransform(im,i,m_Transform[im][i]);
   }
   f.SetReferenceImage(this -> GetReferenceImage());
 
