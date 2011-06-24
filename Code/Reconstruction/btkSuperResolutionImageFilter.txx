@@ -191,15 +191,26 @@ void
 SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 ::OptimizeByLeastSquares()
 {
+  // Fill x
+  m_OutputImageRegion = this -> GetReferenceImage() -> GetLargestPossibleRegion();
+  unsigned int ncols = m_OutputImageRegion.GetNumberOfPixels();
 
-  vnl_vector<double>  x;
-  x = vnl_matops::f2d(m_x);
+  std::cout << "number of columns = " << ncols << std::endl;
+
+  m_x.set_size( ncols );
+  OutputIteratorType hrIt( this -> GetReferenceImage(), m_OutputImageRegion );
+  unsigned int linearIndex = 0;
+
+  for (hrIt.GoToBegin(); !hrIt.IsAtEnd(); ++hrIt, linearIndex++)
+    m_x[linearIndex] = hrIt.Get();
 
   SizeType size = m_OutputImageRegion.GetSize();
   vnl_vector<int>  x_size(3);
   x_size[0] = size[0]; x_size[1] = size[1]; x_size[2] = size[2];
 
-  LeastSquaresVnlCostFunction<InputImageType> f(x.size());
+  // Setup cost function
+
+  LeastSquaresVnlCostFunction<InputImageType> f(m_x.size());
 
   for(unsigned int im = 0; im < m_ImageArray.size(); im++)
   {
@@ -209,17 +220,19 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
       f.SetTransform(im,i,m_Transform[im][i]);
   }
   f.SetReferenceImage(this -> GetReferenceImage());
-
   f.SetLambda( m_Lambda );
+  f.Initialize();
+
+  // Setup optimizer
 
   vnl_conjugate_gradient cg(f);
   cg.set_max_function_evals(m_Iterations);
   cg.set_g_tolerance(1e-10);
 
-  cg.minimize(x);
-  cg.diagnose_outcome();
+  // Start minimization
 
-  m_x = vnl_matops::d2f(x);
+  cg.minimize(m_x);
+  cg.diagnose_outcome();
 
 }
 
@@ -458,8 +471,8 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 
   // Create simulated images
 
-  m_H.mult(m_x,m_ysim);
-  UpdateSimulatedImages();
+//  m_H.mult(m_x,m_ysim);
+//  UpdateSimulatedImages();
 }
 
 
@@ -482,9 +495,9 @@ void
 SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 ::GenerateData()
 {
-  CreateH();
+//  CreateH();
   OptimizeByLeastSquares();
-  UpdateSimulatedImages();
+//  UpdateSimulatedImages();
 
   // Get the output pointers
   OutputImagePointer outputPtr = this->GetOutput();

@@ -55,7 +55,7 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
 
   typedef typename ImageType::RegionType  RegionType;
   typedef typename ImageType::SizeType    SizeType;
-  typedef typename ImageType::SizeType    IndexType;
+  typedef typename ImageType::IndexType   IndexType;
   typedef typename ImageType::SpacingType SpacingType;
   typedef typename ImageType::PointType   PointType;
 
@@ -389,6 +389,9 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
 
   void Initialize()
   {
+    std::cout << "start initialization " << std::endl;
+
+
     IndexType start_hr;
     SizeType  size_hr;
 
@@ -517,7 +520,7 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
               {
                 transformedPoint = m_Transforms[im][i] -> TransformPoint( nbPoint);
 
-                m_ReferenceImage() -> TransformPhysicalPointToContinuousIndex( transformedPoint, hrContIndex );
+                m_ReferenceImage -> TransformPhysicalPointToContinuousIndex( transformedPoint, hrContIndex );
 
                 bool isInsideHR = true;
 
@@ -584,6 +587,8 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
 
     // Precalcule Ht * Y
     Ht.mult(Y,HtY);
+
+    std::cout << "end initialization " << std::endl;
 
   }
 

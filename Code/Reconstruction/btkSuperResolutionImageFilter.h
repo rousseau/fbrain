@@ -189,7 +189,7 @@ public:
 
   typedef vnl_matrix<float> VnlMatrixType;
   typedef itk::Matrix<float,3,3> MatrixType;
-  typedef vnl_vector<float> VnlVectorType;
+  typedef vnl_vector<double> VnlVectorType;
 
   typedef vnl_sparse_matrix<float> VnlSparseMatrixType;
 
