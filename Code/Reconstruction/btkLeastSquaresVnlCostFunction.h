@@ -38,6 +38,9 @@
 
 #include "vnl/vnl_cost_function.h"
 #include "vnl/vnl_matops.h"
+#include "btkLinearInterpolateImageFunctionWithWeights.h"
+#include "btkOrientedSpatialFunction.h"
+#include "itkImageRegionConstIteratorWithIndex.h"
 
 namespace btk
 {
@@ -46,15 +49,29 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
 {
   private:
 
-  typedef TImage ImageType;
+  typedef TImage   ImageType;
   typedef typename ImageType::Pointer ImagePointer;
   typedef typename ImageType::ConstPointer ImageConstPointer;
 
-  typedef typename ImageType::RegionType RegionType;
-  typedef typename ImageType::SizeType   SizeType;
+  typedef typename ImageType::RegionType  RegionType;
+  typedef typename ImageType::SizeType    SizeType;
+  typedef typename ImageType::SizeType    IndexType;
+  typedef typename ImageType::SpacingType SpacingType;
+  typedef typename ImageType::PointType   PointType;
 
   typedef Euler3DTransform<double> TransformType;
   typedef typename TransformType::Pointer TransformPointerType;
+
+  typedef LinearInterpolateImageFunctionWithWeights<ImageType, double> InterpolatorType;
+  typedef typename InterpolatorType::Pointer InterpolatorPointer;
+
+  typedef ContinuousIndex<double, TImage::ImageDimension> ContinuousIndexType;
+
+  /**Blurring function typedef. */
+  typedef OrientedSpatialFunction<double, 3, PointType> FunctionType;
+
+  /**Const iterator typedef. */
+  typedef ImageRegionConstIteratorWithIndex< ImageType >  ConstIteratorType;
 
   vnl_sparse_matrix<float> H;
   vnl_sparse_matrix<float> Ht;
@@ -73,6 +90,7 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
   std::vector<RegionType>    m_Regions;
   ImageConstPointer					 m_ReferenceImage;
   std::vector< std::vector<TransformPointerType> > m_Transforms;
+  RegionType m_OutputImageRegion;
 
   void set(float * array, int size, float value) {
     for (int i = 0; i < size; i++)
@@ -367,6 +385,206 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
 
 
     std::cout << "exiting of gradf " << std::endl; std::cout.flush();
+  }
+
+  void Initialize()
+  {
+    IndexType start_hr;
+    SizeType  size_hr;
+
+    m_OutputImageRegion = m_ReferenceImage -> GetLargestPossibleRegion();
+    start_hr = m_OutputImageRegion.GetIndex();
+    size_hr = m_OutputImageRegion.GetSize();
+
+    IndexType end_hr;
+    end_hr[0] = start_hr[0] + size_hr[0] - 1 ;
+    end_hr[1] = start_hr[1] + size_hr[1] - 1 ;
+    end_hr[2] = start_hr[2] + size_hr[2] - 1 ;
+
+    // Interpolator for HR image
+
+    InterpolatorPointer interpolator = InterpolatorType::New();
+    interpolator -> SetInputImage( m_ReferenceImage );
+
+    // Differential continuous indexes to perform the neighborhood iteration
+    SpacingType spacing_lr = m_Images[0] -> GetSpacing();
+    SpacingType spacing_hr = m_ReferenceImage -> GetSpacing();
+
+    std::vector<ContinuousIndexType> deltaIndexes;
+    int npoints =  spacing_lr[2] / (2.0 * spacing_hr[2]) ;
+    ContinuousIndexType delta;
+    delta[0] = 0.0; delta[1] = 0.0;
+
+    for (int i = -npoints ; i <= npoints; i++ )
+    {
+      delta[2] = i * 0.5 / (double) npoints;
+      deltaIndexes.push_back(delta);
+    }
+
+    // Set size of matrices
+    unsigned int ncols = m_OutputImageRegion.GetNumberOfPixels();
+
+    unsigned int nrows = 0;
+    for(unsigned int im = 0; im < m_Images.size(); im++)
+      nrows += m_Regions[im].GetNumberOfPixels();
+
+    H.set_size(nrows, ncols);
+    Y.set_size(nrows);
+    Y.fill(0.0);
+
+    unsigned int offset = 0;
+
+    for(unsigned int im = 0; im < m_Images.size(); im++)
+    {
+      SpacingType inputSpacing = m_Images[im] -> GetSpacing();
+
+      // PSF definition
+
+      typename FunctionType::Pointer function = FunctionType::New();
+      function -> SetPSF( 1 );
+      function -> SetDirection( m_Images[im] -> GetDirection() );
+      function -> SetSpacing( m_Images[im] -> GetSpacing() );
+
+      // Iteration over slices
+
+      IndexType inputIndex = m_Regions[im].GetIndex();
+      SizeType  inputSize  = m_Regions[im].GetSize();
+
+      IndexType lrIndex;
+      IndexType lrDiffIndex;
+      unsigned int lrLinearIndex;
+
+      IndexType hrIndex;
+      IndexType hrDiffIndex;
+      ContinuousIndexType hrContIndex;
+      unsigned int hrLinearIndex;
+
+      ContinuousIndexType nbIndex;
+
+      PointType lrPoint;
+      PointType nbPoint;
+      PointType transformedPoint;
+
+      for ( unsigned int i=inputIndex[2]; i < inputIndex[2] + inputSize[2]; i++ )
+      {
+
+        RegionType wholeSliceRegion;
+        wholeSliceRegion = m_Regions[im];
+
+        IndexType  wholeSliceRegionIndex = wholeSliceRegion.GetIndex();
+        SizeType   wholeSliceRegionSize  = wholeSliceRegion.GetSize();
+
+        wholeSliceRegionIndex[2]= i;
+        wholeSliceRegionSize[2] = 1;
+
+        wholeSliceRegion.SetIndex(wholeSliceRegionIndex);
+        wholeSliceRegion.SetSize(wholeSliceRegionSize);
+
+        ConstIteratorType fixedIt( m_Images[im], wholeSliceRegion);
+
+        double lrValue;
+        double hrValue;
+
+        for(fixedIt.GoToBegin(); !fixedIt.IsAtEnd(); ++fixedIt)
+        {
+          lrIndex = fixedIt.GetIndex();
+          m_Images[im] -> TransformIndexToPhysicalPoint( lrIndex, lrPoint );
+
+          if ( interpolator -> IsInsideBuffer( lrPoint ) )
+          {
+
+            lrDiffIndex[0] = lrIndex[0] - inputIndex[0];
+            lrDiffIndex[1] = lrIndex[1] - inputIndex[1];
+            lrDiffIndex[2] = lrIndex[2] - inputIndex[2];
+
+            lrLinearIndex = lrDiffIndex[0] + lrDiffIndex[1]*inputSize[0] + lrDiffIndex[2]*inputSize[0]*inputSize[1];
+
+            Y[lrLinearIndex + offset] = fixedIt.Get();
+
+            m_Images[im] -> TransformIndexToPhysicalPoint( lrIndex, lrPoint );
+            function -> SetCenter( lrPoint );
+
+            for(unsigned int k=0; k<deltaIndexes.size(); k++)
+            {
+              nbIndex[0] = deltaIndexes[k][0] + lrIndex[0];
+              nbIndex[1] = deltaIndexes[k][1] + lrIndex[1];
+              nbIndex[2] = deltaIndexes[k][2] + lrIndex[2];
+
+              m_Images[im] -> TransformContinuousIndexToPhysicalPoint( nbIndex, nbPoint );
+              lrValue = function -> Evaluate(nbPoint);
+
+              if ( lrValue > 0)
+              {
+                transformedPoint = m_Transforms[im][i] -> TransformPoint( nbPoint);
+
+                m_ReferenceImage() -> TransformPhysicalPointToContinuousIndex( transformedPoint, hrContIndex );
+
+                bool isInsideHR = true;
+
+                // FIXME This checking should be done for all points first, and discard the point
+                // if al least one point is out of the reference image
+
+                if ( (hrContIndex[0] < start_hr[0]) || (hrContIndex[0] > end_hr[0]) ||
+                     (hrContIndex[1] < start_hr[1]) || (hrContIndex[1] > end_hr[1]) ||
+                     (hrContIndex[2] < start_hr[2]) || (hrContIndex[2] > end_hr[2]) )
+                   isInsideHR = false;
+
+                if ( isInsideHR )
+                {
+                  hrValue = interpolator -> Evaluate( transformedPoint );
+
+                  for(unsigned int n=0; n<interpolator -> GetContributingNeighbors(); n++)
+                  {
+                    hrIndex = interpolator -> GetIndex(n);
+
+                    hrDiffIndex[0] = hrIndex[0] - start_hr[0];
+                    hrDiffIndex[1] = hrIndex[1] - start_hr[1];
+                    hrDiffIndex[2] = hrIndex[2] - start_hr[2];
+
+                    hrLinearIndex = hrDiffIndex[0] + hrDiffIndex[1]*size_hr[0] + hrDiffIndex[2]*size_hr[0]*size_hr[1];
+                    H(lrLinearIndex + offset, hrLinearIndex) += interpolator -> GetOverlap(n)* lrValue;
+
+
+                  }
+
+                }
+
+              }
+
+            }
+
+          }
+
+        }
+
+      }
+
+      offset += m_Regions[im].GetNumberOfPixels();
+
+    }
+
+    // Normalize H
+    for (unsigned int i = 0; i < H.rows(); i++)
+    {
+      double sum = H.sum_row(i);
+
+      VnlSparseMatrixType::row & r = H.get_row(i);
+      VnlSparseMatrixType::row::iterator col_iter = r.begin();
+
+      for ( ;col_iter != r.end(); ++col_iter)
+        (*col_iter).second = (*col_iter).second / sum;
+
+    }
+
+
+    // Calculate the transpose of H
+    Ht.set_size(ncols,nrows);
+    for( H.reset(); H.next(); )
+      Ht( H.getcolumn(), H.getrow() ) = H.value();
+
+    // Precalcule Ht * Y
+    Ht.mult(Y,HtY);
+
   }
 
   void SetLambda(float value)
