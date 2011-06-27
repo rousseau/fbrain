@@ -73,7 +73,6 @@ SuperResolutionImageFilter<TInputImage, TOutputImage,TInterpolatorPrecisionType>
   m_OutputStartIndex.Fill( 0 );
 
   m_DefaultPixelValue = 0;
-  m_SimulatedImagesUpdated = false;
 
   m_Iterations = 30;
   m_Lambda = 0.1;
@@ -118,46 +117,6 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 {
   SpacingType s(spacing);
   this->SetOutputSpacing( s );
-}
-
-template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
-void
-SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
-::UpdateSimulatedImages()
-{
-  unsigned int offset = 0;
-
-  for (unsigned int im = 0; im < m_ImageArray.size(); im++)
-  {
-    IndexType absIndex;
-
-    IndexType start = m_InputImageRegion[im].GetIndex();
-    SizeType  size  = m_InputImageRegion[im].GetSize();
-    unsigned int nvoxels = m_InputImageRegion[im].GetNumberOfPixels();
-    IndexType diffIndex;
-
-    for( unsigned int i=0; i<nvoxels; i++)
-    {
-
-      diffIndex[2] = i / (size[0]*size[1]);
-
-      diffIndex[1] = i - diffIndex[2]*size[0]*size[1];
-      diffIndex[1] = diffIndex[1] / size[0];
-
-      diffIndex[0] = i - diffIndex[2]*size[0]*size[1] - diffIndex[1]*size[0];
-
-      absIndex[0] = diffIndex[0] + start[0];
-      absIndex[1] = diffIndex[1] + start[1];
-      absIndex[2] = diffIndex[2] + start[2];
-
-      m_SimulatedImages[im]->SetPixel(absIndex,m_ysim[i + offset]);
-
-    }
-
-    offset = offset + nvoxels;
-
-  }
-
 }
 
 template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
@@ -255,9 +214,7 @@ void
 SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 ::GenerateData()
 {
-//  CreateH();
   OptimizeByLeastSquares();
-//  UpdateSimulatedImages();
 
   // Get the output pointers
   OutputImagePointer outputPtr = this->GetOutput();
@@ -284,7 +241,7 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 
   IndexType hrIndex;
   IndexType hrStart = m_OutputImageRegion.GetIndex();
-  SizeType hrSize  = m_OutputImageRegion.GetSize();
+  SizeType  hrSize  = m_OutputImageRegion.GetSize();
   IndexType hrDiffIndex;
 
 
