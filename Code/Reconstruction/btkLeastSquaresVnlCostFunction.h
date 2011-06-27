@@ -285,8 +285,6 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
 
   double f(const vnl_vector<double>& x)
   {
-    std::cout << "In f(.)" << std::endl; std::cout.flush();
-
     vnl_vector<float>  x_float;
     x_float = vnl_matops::d2f(x);
 
@@ -327,12 +325,9 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
 
     double mse = HxMinusY.squared_magnitude() / HxMinusY.size();
     double reg = lambda*(dX2dx + dX2dy + dX2dz) / x_float.size();
-
-    std::cout << "mse, reg = " << mse << " , " << reg << std::endl;
-
     double value = mse + reg;
 
-    std::cout << "error = " << value << std::endl;
+    std::cout << "error, mse, reg = " << value << " , " << mse << " , " << reg << std::endl;
 
     return value;
 
@@ -344,8 +339,6 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
     vnl_vector<float>  g_float;
 
     x_float = vnl_matops::d2f(x);
-
-    std::cout << "in gradf " << std::endl; std::cout.flush();
 
     vnl_vector<float> Hx;
     H.mult(x_float,Hx);
@@ -383,21 +376,20 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
     for (unsigned int i=0; i<g.size(); i++)
       g[i] = g[i] + g_float[i];
 
-
-    std::cout << "exiting of gradf " << std::endl; std::cout.flush();
   }
 
   void Initialize()
   {
-    std::cout << "start initialization " << std::endl;
-
-
     IndexType start_hr;
     SizeType  size_hr;
 
     m_OutputImageRegion = m_ReferenceImage -> GetLargestPossibleRegion();
     start_hr = m_OutputImageRegion.GetIndex();
     size_hr = m_OutputImageRegion.GetSize();
+
+    x_size.width  = size_hr[0];
+    x_size.height = size_hr[1];
+    x_size.depth  = size_hr[2];
 
     IndexType end_hr;
     end_hr[0] = start_hr[0] + size_hr[0] - 1 ;
@@ -442,7 +434,7 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
       SpacingType inputSpacing = m_Images[im] -> GetSpacing();
 
       // PSF definition
-
+      //TODO Give the possibility to choose the PDF
       typename FunctionType::Pointer function = FunctionType::New();
       function -> SetPSF( 1 );
       function -> SetDirection( m_Images[im] -> GetDirection() );
@@ -587,8 +579,6 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
 
     // Precalcule Ht * Y
     Ht.mult(Y,HtY);
-
-    std::cout << "end initialization " << std::endl;
 
   }
 
