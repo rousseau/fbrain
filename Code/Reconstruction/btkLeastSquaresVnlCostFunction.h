@@ -338,7 +338,6 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
   void gradf(const vnl_vector<double>& x, vnl_vector<double>& g)
   {
     vnl_vector<float>  x_float;
-    vnl_vector<float>  g_float;
 
     x_float = vnl_matops::d2f(x);
 
@@ -350,13 +349,18 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
     // the vnl_vector doesn't have a 2nd dimension. This allows us
     // to save a lot of memory because we don't need to store Ht.
 
-    VnlVectorType HtHx;
+    vnl_vector<float> HtHx;
     H.pre_mult(Hx,HtHx);
     Hx.clear();
 
-    g_float = (-HtY + HtHx)*2.0;
+    double factor = 2.0 / Y.size();
+    g = vnl_matops::f2d( (-HtY + HtHx)*factor );
+
+    HtHx.clear();
 
     // regularization term
+
+    factor = 2*lambda/x_float.size();
 
     float* kernel = new float[3];
     kernel[0] = -1; kernel[1] = 2; kernel[2] = -1;
@@ -365,23 +369,24 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
     KxX.set_size( x_float.size() );
     convol3dx(x_float, KxX, x_size, kernel, 3);
 
+    g = g + vnl_matops::f2d( KxX * factor );
+    KxX.clear();
+
     vnl_vector<float> KyX;
     KyX.set_size( x_float.size() );
     convol3dy(x_float, KyX, x_size, kernel, 3);
+
+    g = g + vnl_matops::f2d( KyX * factor );
+    KyX.clear();
 
     vnl_vector<float> KzX;
     KzX.set_size( x_float.size() );
     convol3dz(x_float, KzX, x_size, kernel, 3);
 
+    g = g + vnl_matops::f2d( KzX * factor );
+    KzX.clear();
+
     delete[] kernel;
-
-    for (unsigned int i=0; i<g.size(); i++)
-      g[i] = g_float[i] / Y.size();
-
-    g_float = 2*lambda*(KxX + KyX + KzX)/ x_float.size();
-
-    for (unsigned int i=0; i<g.size(); i++)
-      g[i] = g[i] + g_float[i];
 
   }
 
