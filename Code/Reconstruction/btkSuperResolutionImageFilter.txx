@@ -154,8 +154,6 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   m_OutputImageRegion = this -> GetReferenceImage() -> GetLargestPossibleRegion();
   unsigned int ncols = m_OutputImageRegion.GetNumberOfPixels();
 
-  std::cout << "number of columns = " << ncols << std::endl;
-
   m_x.set_size( ncols );
   OutputIteratorType hrIt( this -> GetReferenceImage(), m_OutputImageRegion );
   unsigned int linearIndex = 0;

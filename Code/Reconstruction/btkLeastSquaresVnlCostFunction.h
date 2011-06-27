@@ -74,7 +74,6 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
   typedef ImageRegionConstIteratorWithIndex< ImageType >  ConstIteratorType;
 
   vnl_sparse_matrix<float> H;
-  vnl_sparse_matrix<float> Ht;
   vnl_vector<float> HtY;
   vnl_vector<float> Y;
 
@@ -296,6 +295,10 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
 
     Hx.clear();
 
+    double mse = HxMinusY.squared_magnitude() / HxMinusY.size();
+
+    HxMinusY.clear();
+
     // Calculate the square of 1st derivatives along x, y, and z
 
     float* kernel = new float[3];
@@ -323,7 +326,6 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
 
     // Calculate the cost function by combining both terms
 
-    double mse = HxMinusY.squared_magnitude() / HxMinusY.size();
     double reg = lambda*(dX2dx + dX2dy + dX2dz) / x_float.size();
     double value = mse + reg;
 
@@ -343,8 +345,13 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
     vnl_vector<float> Hx;
     H.mult(x_float,Hx);
 
+    // Calculate Ht*Hx. Note that this is calculated as Hx*H since
+    // Ht*Hx = (Hxt*H)t and for Vnl (Hxt*H)t = Hxt*H = Hx*H because
+    // the vnl_vector doesn't have a 2nd dimension. This allows us
+    // to save a lot of memory because we don't need to store Ht.
+
     VnlVectorType HtHx;
-    Ht.mult(Hx,HtHx);
+    H.pre_mult(Hx,HtHx);
     Hx.clear();
 
     g_float = (-HtY + HtHx)*2.0;
@@ -571,14 +578,11 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
 
     }
 
-
-    // Calculate the transpose of H
-    Ht.set_size(ncols,nrows);
-    for( H.reset(); H.next(); )
-      Ht( H.getcolumn(), H.getrow() ) = H.value();
-
-    // Precalcule Ht * Y
-    Ht.mult(Y,HtY);
+    // Precalcule Ht*Y. Note that this is calculated as Y*H since
+    // Ht*Y = (Yt*H)t and for Vnl (Yt*H)t = (Yt*H) = Y*H because
+    // the vnl_vector doesn't have a 2nd dimension. This allows us
+    // to save a lot of memory because we don't need to store Ht.
+    H.pre_mult(Y,HtY);
 
   }
 
