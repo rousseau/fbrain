@@ -24,7 +24,7 @@ TARGET_LINK_LIBRARIES(btkConvertGradientTable ${ITK_LIBRARIES} )
 ADD_EXECUTABLE(btkReorientImageToStandard btkReorientImageToStandard.cxx
         ${fbrain_SOURCE_DIR}/Code/InputOutput/btkLandmarksFileReader.cxx
 )
-TARGET_LINK_LIBRARIES(btkReorientImageToStandard ${ITK_LIBRARIES}) 
+TARGET_LINK_LIBRARIES(btkReorientImageToStandard ${ITK_LIBRARIES})
 #------------------------------------------------------------------------------
 
 ADD_EXECUTABLE(btkReorientDiffusionSequenceToStandard btkReorientDiffusionSequenceToStandard.cxx
@@ -82,8 +82,8 @@ TARGET_LINK_LIBRARIES(btkResampleLabelsByInjection ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkLowResolutionImageSimulator btkLowResolutionImageSimulator.cxx)
 TARGET_LINK_LIBRARIES(btkLowResolutionImageSimulator ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkSimulateLowResolutionImage btkSimulateLowResolutionImage.cxx)
-TARGET_LINK_LIBRARIES(btkSimulateLowResolutionImage ${ITK_LIBRARIES})
+#ADD_EXECUTABLE(btkSimulateLowResolutionImage btkSimulateLowResolutionImage.cxx)
+#TARGET_LINK_LIBRARIES(btkSimulateLowResolutionImage ${ITK_LIBRARIES})
 
 #------------------------------------------------------------------------------
 
