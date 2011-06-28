@@ -114,6 +114,9 @@ public:
   typedef typename InputImageType::RegionType     InputImageRegionType;
   typedef std::vector<InputImageRegionType>       InputImageRegionVectorType;
 
+  typedef ImageMaskSpatialObject< TInputImage::ImageDimension > MaskType;
+  typedef typename MaskType::Pointer   MaskPointer;
+
   /** Method for creation through the object factory. */
   itkNewMacro(Self);
 
@@ -267,6 +270,11 @@ public:
 
   }
 
+  void AddMask(MaskType *mask)
+  {
+    m_MaskArray.push_back( mask );
+  }
+
   // Set/Get output image region
   itkSetMacro(OutputImageRegion, OutputImageRegionType);
   itkGetMacro(OutputImageRegion, OutputImageRegionType);
@@ -320,7 +328,8 @@ private:
 
   OutputImageRegionType       m_OutputImageRegion;
 
-  std::vector<InputImagePointer>     m_ImageArray;
+  std::vector<InputImagePointer>  m_ImageArray;
+  std::vector<MaskPointer>  			m_MaskArray;
 
   VnlVectorType     m_x;
 

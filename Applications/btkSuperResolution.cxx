@@ -148,6 +148,8 @@ int main( int argc, char *argv[] )
       MaskType::Pointer mask = MaskType::New();
       mask -> SetImage( maskReader -> GetOutput() );
 
+      resampler -> AddMask( mask );
+
       RegionType roi = mask -> GetAxisAlignedBoundingBoxRegion();
       roiIndex = roi.GetIndex();
       roiSize  = roi.GetSize();

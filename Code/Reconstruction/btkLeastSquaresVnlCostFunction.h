@@ -59,6 +59,9 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
   typedef typename ImageType::SpacingType SpacingType;
   typedef typename ImageType::PointType   PointType;
 
+  typedef ImageMaskSpatialObject< TImage::ImageDimension > MaskType;
+  typedef typename MaskType::Pointer   MaskPointer;
+
   typedef Euler3DTransform<double> TransformType;
   typedef typename TransformType::Pointer TransformPointerType;
 
@@ -87,6 +90,7 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
 
   std::vector<ImagePointer>  m_Images;
   std::vector<RegionType>    m_Regions;
+  std::vector<MaskPointer>   m_Masks;
   ImageConstPointer					 m_ReferenceImage;
   std::vector< std::vector<TransformPointerType> > m_Transforms;
   RegionType m_OutputImageRegion;
@@ -497,6 +501,11 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
           lrIndex = fixedIt.GetIndex();
           m_Images[im] -> TransformIndexToPhysicalPoint( lrIndex, lrPoint );
 
+          if ( m_Masks.size() > 0)
+            if ( ! m_Masks[im] -> IsInside(lrPoint) )
+              continue;
+
+
           if ( interpolator -> IsInsideBuffer( lrPoint ) )
           {
 
@@ -614,6 +623,11 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
   void AddRegion( RegionType region)
   {
     m_Regions.push_back( region );
+  }
+
+  void AddMask( MaskType *mask)
+  {
+    m_Masks.push_back( mask );
   }
 
   void SetReferenceImage( const ImageType * image )
