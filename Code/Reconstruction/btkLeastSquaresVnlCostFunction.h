@@ -445,6 +445,8 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
 
     unsigned int offset = 0;
 
+    // TODO This can be parallelized by using openmp
+
     for(unsigned int im = 0; im < m_Images.size(); im++)
     {
       SpacingType inputSpacing = m_Images[im] -> GetSpacing();
