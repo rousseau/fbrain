@@ -505,8 +505,9 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
             if ( ! m_Masks[im] -> IsInside(lrPoint) )
               continue;
 
+          transformedPoint = m_Transforms[im][i] -> TransformPoint( lrPoint );
 
-          if ( interpolator -> IsInsideBuffer( lrPoint ) )
+          if ( interpolator -> IsInsideBuffer( transformedPoint ) )
           {
 
             lrDiffIndex[0] = lrIndex[0] - inputIndex[0];
@@ -517,7 +518,6 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
 
             Y[lrLinearIndex + offset] = fixedIt.Get();
 
-            m_Images[im] -> TransformIndexToPhysicalPoint( lrIndex, lrPoint );
             function -> SetCenter( lrPoint );
 
             for(unsigned int k=0; k<deltaIndexes.size(); k++)
