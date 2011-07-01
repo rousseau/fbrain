@@ -288,6 +288,8 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
 
   double f(const vnl_vector<double>& x)
   {
+    // Calculate the error with respect to the low resolution images
+
     vnl_vector<float>  x_float;
     x_float = vnl_matops::d2f(x);
 
@@ -304,36 +306,39 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
     HxMinusY.clear();
 
     // Calculate the square of 1st derivatives along x, y, and z
+    double reg = 0.0;
 
-    float* kernel = new float[3];
-    kernel[0] = -1; kernel[1] = 2; kernel[2] = -1;
+    float* kernel = new float[2];
+    kernel[0] = -1; kernel[1] = 1;
 
-    vnl_vector<float> KxX;
-    KxX.set_size( x_float.size() );
-    convol3dx(x_float, KxX, x_size, kernel, 3);
-    float dX2dx = dot_product(x_float, KxX);
-    KxX.clear();
+    vnl_vector<float> DxX;
+    DxX.set_size( x_float.size() );
+    convol3dx(x_float, DxX, x_size, kernel, 2);
+    for(unsigned int i=0; i<x_float.size(); i++)
+      reg += DxX[i]*DxX[i] / x_float.size();
+    DxX.clear();
 
-    vnl_vector<float> KyX;
-    KyX.set_size( x_float.size() );
-    convol3dy(x_float, KyX, x_size, kernel, 3);
-    float dX2dy = dot_product(x_float, KyX);
-    KyX.clear();
+    vnl_vector<float> DyX;
+    DyX.set_size( x_float.size() );
+    convol3dy(x_float, DyX, x_size, kernel, 2);
+    for(unsigned int i=0; i<x_float.size(); i++)
+      reg += DyX[i]*DyX[i] / x_float.size();
+    DyX.clear();
 
-    vnl_vector<float> KzX;
-    KzX.set_size( x_float.size() );
-    convol3dz(x_float, KzX, x_size, kernel, 3);
-    float dX2dz = dot_product(x_float, KzX);
-    KzX.clear();
+    vnl_vector<float> DzX;
+    DzX.set_size( x_float.size() );
+    convol3dz(x_float, DzX, x_size, kernel, 2);
+    for(unsigned int i=0; i<x_float.size(); i++)
+      reg += DzX[i]*DzX[i] / x_float.size();
+    DzX.clear();
 
     delete[] kernel;
 
     // Calculate the cost function by combining both terms
 
-    double reg = lambda*(dX2dx + dX2dy + dX2dz) / x_float.size();
-    double value = mse + reg;
+    double value = mse + lambda*reg;
 
-    std::cout << "error, mse, reg = " << value << " , " << mse << " , " << reg << std::endl;
+    std::cout << "error, mse, reg = " << value << " , " << mse << " , " << lambda*reg << std::endl;
 
     return value;
 
@@ -364,33 +369,30 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
 
     // regularization term
 
-    factor = 2*lambda/x_float.size();
+/*    factor = 2*lambda/x_float.size();
 
     float* kernel = new float[3];
     kernel[0] = -1; kernel[1] = 2; kernel[2] = -1;
 
-    vnl_vector<float> KxX;
-    KxX.set_size( x_float.size() );
-    convol3dx(x_float, KxX, x_size, kernel, 3);
+    vnl_vector<float> DxX;
+    DxX.set_size( x_float.size() );
+    convol3dx(x_float, DxX, x_size, kernel, 3);
+    g = g + vnl_matops::f2d( DxX * factor );
+    DxX.clear();
 
-    g = g + vnl_matops::f2d( KxX * factor );
-    KxX.clear();
+    vnl_vector<float> DyX;
+    DyX.set_size( x_float.size() );
+    convol3dy(x_float, DyX, x_size, kernel, 3);
+    g = g + vnl_matops::f2d( DyX * factor );
+    DyX.clear();
 
-    vnl_vector<float> KyX;
-    KyX.set_size( x_float.size() );
-    convol3dy(x_float, KyX, x_size, kernel, 3);
+    vnl_vector<float> DzX;
+    DzX.set_size( x_float.size() );
+    convol3dz(x_float, DzX, x_size, kernel, 3);
+    g = g + vnl_matops::f2d( DzX * factor );
+    DzX.clear();
 
-    g = g + vnl_matops::f2d( KyX * factor );
-    KyX.clear();
-
-    vnl_vector<float> KzX;
-    KzX.set_size( x_float.size() );
-    convol3dz(x_float, KzX, x_size, kernel, 3);
-
-    g = g + vnl_matops::f2d( KzX * factor );
-    KzX.clear();
-
-    delete[] kernel;
+    delete[] kernel; */
 
   }
 

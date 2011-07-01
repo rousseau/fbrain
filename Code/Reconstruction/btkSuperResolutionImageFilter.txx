@@ -188,7 +188,7 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 
   vnl_conjugate_gradient cg(f);
   cg.set_max_function_evals(m_Iterations);
-  cg.set_g_tolerance(1e-10);
+//  cg.set_g_tolerance(1e-10);
 
   // Start minimization
 
