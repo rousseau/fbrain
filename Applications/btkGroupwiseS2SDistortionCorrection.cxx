@@ -54,7 +54,6 @@ int main( int argc, char *argv[] )
 
   try {
 
-//  const char *mgrad = NULL, *folder = NULL, *maskFile = NULL;
     std::string input, bvec, bval, output, bvec_out, bval_out, mgrad, folder, maskFile, inRadix, outRadix;
 
   TCLAP::CmdLine cmd("Correct distortions caused by eddy currents in dwi sequences", ' ', "Unversioned");
@@ -69,46 +68,21 @@ int main( int argc, char *argv[] )
   // Parse the argv array.
   cmd.parse( argc, argv );
 
-//  mgrad = mgradArg.getValue().c_str();
-//  folder = folderArg.getValue().c_str();
-//  maskFile = maskArg.getValue().c_str();
+
     input = inputArg.getValue();
     output = outputArg.getValue();
     mgrad = mgradArg.getValue();
     folder = folderArg.getValue();
     maskFile = maskArg.getValue();
 
-//  char input[255];
-//  strcpy( input, (char*)inputArg.getValue().c_str() );
-//  strcat ( input,".nii.gz" );
 
     inRadix = btk::GetRadixOf(input);
     bvec = inRadix + ".bvec";
     bval = inRadix + ".bval";
 
-//  char bvec[255];
-//  strcpy( bvec, (char*)inputArg.getValue().c_str() );
-//  strcat ( bvec,".bvec" );
-
-//  char bval[255];
-//  strcpy( bval, (char*)inputArg.getValue().c_str() );
-//  strcat ( bval,".bval" );
-
-//  char output[255];
-//  strcpy( output, (char*)outputArg.getValue().c_str() );
-//  strcat ( output,".nii.gz" );
-
     outRadix = btk::GetRadixOf(output);
     bvec_out = outRadix + ".bvec";
     bval_out = outRadix + ".bval";
-
-//  char bvec_out[255];
-//  strcpy( bvec_out, (char*)outputArg.getValue().c_str() );
-//  strcat ( bvec_out,".bvec" );
-
-//  char bval_out[255];
-//  strcpy( bval_out, (char*)outputArg.getValue().c_str() );
-//  strcat ( bval_out,".bval" );
 
 
   // Read sequence
