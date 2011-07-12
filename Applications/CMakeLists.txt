@@ -38,8 +38,8 @@ TARGET_LINK_LIBRARIES(btkRBFInterpolationS2S ${ITK_LIBRARIES} ${ANN_LIBRARY})
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Tractography)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/InputOutput)
 
-ADD_EXECUTABLE(btkTractography
-        btkTractography.cxx
+ADD_EXECUTABLE(btkODFParticleFilterTractography
+        btkODFParticleFilterTractography.cxx
         ${fbrain_SOURCE_DIR}/Code/Tractography/btkCartesianCoordinates.cxx
         ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalCoordinates.cxx
         ${fbrain_SOURCE_DIR}/Code/Tractography/btkVector.cxx
@@ -56,14 +56,14 @@ ADD_EXECUTABLE(btkTractography
         ${fbrain_SOURCE_DIR}/Code/Tractography/btkParticle.cxx
         ${fbrain_SOURCE_DIR}/Code/Tractography/btkParticleFilter.cxx
 )
-TARGET_LINK_LIBRARIES(btkTractography ${ITK_LIBRARIES} vtkHybrid)
+TARGET_LINK_LIBRARIES(btkODFParticleFilterTractography ${ITK_LIBRARIES} vtkHybrid)
 
 #------------------------------------------------------------------------------
 
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography)
 
-ADD_EXECUTABLE(btkDtiParticleFilteringTractography
-        btkDtiParticleFilteringTractography.cxx
+ADD_EXECUTABLE(btkTensorParticleFilterTractography
+        btkTensorParticleFilterTractography.cxx
         ${fbrain_SOURCE_DIR}/Code/Tractography/btkCartesianCoordinates.cxx
         ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalCoordinates.cxx
         ${fbrain_SOURCE_DIR}/Code/Tractography/btkVector.cxx
@@ -79,7 +79,7 @@ ADD_EXECUTABLE(btkDtiParticleFilteringTractography
         ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPParticleFilter.cxx
 )
 
-TARGET_LINK_LIBRARIES(btkDtiParticleFilteringTractography ${ITK_LIBRARIES} vtkHybrid)
+TARGET_LINK_LIBRARIES(btkTensorParticleFilterTractography ${ITK_LIBRARIES} vtkHybrid)
 
 #------------------------------------------------------------------------------
 
@@ -131,9 +131,9 @@ INSTALL(TARGETS btkNLMDenoising
                 btkImageReconstruction
                 btkGroupwiseS2SDistortionCorrection
                 btkRBFInterpolationS2S
-                btkTractography
+                btkODFParticleFilterTractography
                 btkLabelPropagation
-                btkDtiParticleFilteringTractography
+                btkTensorParticleFilterTractography
                 btkODFStreamlineTractography
                 btkTensorStreamlineTractography
         DESTINATION bin)
