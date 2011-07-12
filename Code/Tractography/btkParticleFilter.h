@@ -50,6 +50,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
     #include "btkLikelihoodDensity.h"
     #include "btkImportanceDensity.h"
     #include "btkSHModel.h"
+    #include "btkSignal.h"
 
 
     namespace btk
@@ -80,7 +81,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
                  * @param stepSize Size of each step (norm of vectors)
                  * @param maxLength Maximal length of particles
                  */
-                ParticleFilter(SHModel *model, APrioriDensity aPriori, LikelihoodDensity likelihood, ImportanceDensity importance,
+                ParticleFilter(Signal *signal, SHModel *model, APrioriDensity aPriori, LikelihoodDensity likelihood, ImportanceDensity importance,
                                const std::string maskFileName, Image::SizeType size, Image::PointType origin, Image::SpacingType spacing,
                                unsigned int M, Point x0, Real epsilon, Real stepSize, unsigned int maxLength);
 
@@ -99,7 +100,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
                  * @param epsilon Resampling threshold
                  * @param stepSize Size of each step (norm of vectors)
                  */
-                ParticleFilter(SHModel *model, APrioriDensity aPriori, LikelihoodDensity likelihood, ImportanceDensity importance,
+                ParticleFilter(Signal *signal, SHModel *model, APrioriDensity aPriori, LikelihoodDensity likelihood, ImportanceDensity importance,
                                Mask::Pointer mask, Image::SizeType size, Image::PointType origin, Image::SpacingType spacing,
                                unsigned int M, Point x0, Real epsilon, Real stepSize, char displaMode);
 
@@ -181,6 +182,9 @@ knowledge of the CeCILL-B license and that you accept its terms.
                  */
                  void ResampleCloud(unsigned int nbInsPart);
 
+
+                double ComputeGFA(Point p);
+
             private:
                 APrioriDensity    m_aPriori;       /**< A priori density */
                 LikelihoodDensity m_likelihood;    /**< Likelihood density */
@@ -207,6 +211,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
                 vtkSmartPointer<vtkPolyData> m_fiber;   /**< Fibers' vtk structure */
 
                 SHModel *m_model;   /**< Diffusion model */
+                Signal  *m_signal;
 
                 unsigned int m_dirNum; /**< Current direction number */
 

@@ -290,7 +290,7 @@ int main(int argc, char *argv[])
                     Display2(displayMode, std::cout << "\tSeed's world coordinates: (" << worldPoint[0] << "," << worldPoint[1] << "," << worldPoint[2] << ")" << std::endl);
                     Display2(displayMode, std::cout << "\tSeed's image coordinates: (" << maskIndex[0] << "," << maskIndex[1] << "," << maskIndex[2] << ")" << std::endl);
 
-                    ParticleFilter filter(modelFun, apriori, likelihood, importance, mask, signalFun->getSize(), signalFun->getOrigin(), signalFun->getSpacing(), nbOfParticles, begin, epsilon, stepSize, displayMode);
+                    ParticleFilter filter(signalFun, modelFun, apriori, likelihood, importance, mask, signalFun->getSize(), signalFun->getOrigin(), signalFun->getSpacing(), nbOfParticles, begin, epsilon, stepSize, displayMode);
 
                     if(lps)
                         filter.SetLPSOn();
@@ -414,7 +414,6 @@ int main(int argc, char *argv[])
                     vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
                     writer->SetInput(fibers[labels[label]]->GetOutput());
                     writer->SetFileName(filename.str().c_str());
-                    writer->SetFileTypeToBinary();
                     writer->Write();
                 }
             }
