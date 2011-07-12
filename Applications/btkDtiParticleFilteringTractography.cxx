@@ -54,6 +54,7 @@
 #include "btkDTFPAPrioriDensity.h"
 #include "btkDTFPLikelihoodDensity.h"
 #include "btkDTFPParticleFilter.h"
+#include "btkNiftiFilenameRadix.h"
 
 
 using namespace btk;
@@ -82,6 +83,8 @@ int main(int argc, char *argv[])
     Real Kappa;
     Float seedSpacing;
 
+    std::string inRadix;
+
 
     try
     {
@@ -94,7 +97,6 @@ int main(int argc, char *argv[])
 
             // Defines arguments
             TCLAP::ValueArg<std::string>   dwiArg("d", "dwi", "Dwi sequence", true, "", "string", cmd);
-            TCLAP::ValueArg<std::string>   vecArg("g", "gradient_vectors", "Gradient vectors", true, "", "string", cmd);
             TCLAP::ValueArg<unsigned int>   valArg("b", "b_values", "B-values", true, 1500, "unsigned int", cmd);
             TCLAP::ValueArg<std::string>  maskArg("m", "mask", "White matter mask", true, "", "string", cmd);
             TCLAP::ValueArg<std::string> labelArg("l", "label", "Label volume of seeds", true, "", "string", cmd);
@@ -119,7 +121,6 @@ int main(int argc, char *argv[])
 
             // Get back arguments' values
             dwiFileName    = dwiArg.getValue();
-            vecFileName    = vecArg.getValue();
             valFileName    = valArg.getValue();
             maskFileName   = maskArg.getValue();
             labelFilename  = labelArg.getValue();
@@ -137,6 +138,10 @@ int main(int argc, char *argv[])
             stepSize       = stepSizeArg.getValue();
             Kappa          = KappaArg.getValue();
             seedSpacing    = seedSpacingArg.getValue();
+
+
+            inRadix     = GetRadixOf(dwiFileName);
+            vecFileName = inRadix + ".bvec";
     }
     catch(TCLAP::ArgException &e)
     {
@@ -219,6 +224,19 @@ int main(int argc, char *argv[])
         // Apply filter on each labeled voxels
         LabelMapIterator it(labelVolume, labelVolume->GetLargestPossibleRegion());
 
+        unsigned int numOfSeeds = 0;
+
+        for(labelIt.GoToBegin(); !labelIt.IsAtEnd(); ++labelIt)
+        {
+            if(labelIt.Get() > 0)
+                numOfSeeds++;
+        }
+
+        unsigned int numOfSeedsDone = 0;
+
+        std::cout << std::fixed;
+        std::cout << std::setprecision(2);
+        Display1(displayMode, std::cout << "Running tractography..." << std::endl);
         for(it.GoToBegin(); !it.IsAtEnd(); ++it)
         {
             int label = (int)it.Get();
@@ -245,7 +263,8 @@ int main(int argc, char *argv[])
 
 
                     // Let's start filtering
-                    Display1(displayMode, std::cout << "Filtering label " << label << "..." << std::endl);
+                    Display1(displayMode, std::cout << "\tProgress: " << (Real)numOfSeedsDone / (Real)numOfSeeds * 100 << "%\r" << std::flush);
+                    Display2(displayMode, std::cout << "Filtering label " << label << "..." << std::endl);
                     Display2(displayMode, std::cout << "\tSeed's world coordinates: (" << worldPoint[0] << "," << worldPoint[1] << "," << worldPoint[2] << ")" << std::endl);
                     Display2(displayMode, std::cout << "\tSeed's image coordinates: (" << maskIndex[0] << "," << maskIndex[1] << "," << maskIndex[2] << ")" << std::endl);
 
@@ -288,10 +307,11 @@ int main(int argc, char *argv[])
                     for(in.GoToBegin(), out.GoToBegin(); !in.IsAtEnd() && !out.IsAtEnd(); ++in, ++out)
                         out.Set(out.Get() + in.Get());
 
-                    Display1(displayMode, std::cout << "done." << std::endl);
+                    Display2(displayMode, std::cout << "done." << std::endl);
                 }
             }
         } // for each labeled voxels
+        Display1(displayMode, std::cout << "\tProgress: 100.00%" << std::endl << "done." << std::endl);
 
         delete signalFun;
         delete directions;
@@ -305,62 +325,67 @@ int main(int argc, char *argv[])
         // Normalize and write connection map image
         for(unsigned int label = 0; label < labels.size(); label++)
         {
-            Real max = 0;
-            ImageIterator it(connectMaps[labels[label]], connectMaps[labels[label]]->GetLargestPossibleRegion());
-
-            for(it.GoToBegin(); !it.IsAtEnd(); ++it)
+            if(labels[label] != -1)
             {
-                if(max < it.Get())
-                    max = it.Get();
-            }
+                Real max = 0;
+                ImageIterator it(connectMaps[labels[label]], connectMaps[labels[label]]->GetLargestPossibleRegion());
 
-            if(max > 0)
-            {
                 for(it.GoToBegin(); !it.IsAtEnd(); ++it)
-                    it.Set(it.Get() / max);
-            }
+                {
+                    if(max < it.Get())
+                        max = it.Get();
+                }
 
-            try
-            {
-                std::stringstream filename;
-                filename << outMapFileName << "-" << label+1 << ".nii.gz";
+                if(max > 0)
+                {
+                    for(it.GoToBegin(); !it.IsAtEnd(); ++it)
+                        it.Set(it.Get() / max);
+                }
 
-                ImageWriter::Pointer writer = ImageWriter::New();
-                writer->SetFileName(filename.str().c_str());
-                writer->SetInput(connectMaps[labels[label]]);
-                writer->Update();
-            }
-            catch(itk::ImageFileWriterException &err)
-            {
-                std::cout << "Error: " << std::endl;
-                std::cout << err << std::endl;
+                try
+                {
+                    std::stringstream filename;
+                    filename << outMapFileName << "-" << label+1 << ".nii.gz";
+
+                    ImageWriter::Pointer writer = ImageWriter::New();
+                    writer->SetFileName(filename.str().c_str());
+                    writer->SetInput(connectMaps[labels[label]]);
+                    writer->Update();
+                }
+                catch(itk::ImageFileWriterException &err)
+                {
+                    std::cout << "Error: " << std::endl;
+                    std::cout << err << std::endl;
+                }
             }
         }
 
         // Write fiber polydata
         for(unsigned int label = 0; label < labels.size(); label++)
         {
-            unsigned int nbOfInputs = fibers[labels[label]]->GetNumberOfInputPorts();
-            bool saveFibers = true;
-            unsigned int i = 0;
-
-            do
+            if(labels[label] != -1)
             {
-                if(fibers[labels[label]]->GetNumberOfInputConnections(i++) < 1)
-                    saveFibers = false;
-            } while(saveFibers && i<nbOfInputs);
+                unsigned int nbOfInputs = fibers[labels[label]]->GetNumberOfInputPorts();
+                bool saveFibers = true;
+                unsigned int i = 0;
 
-            if(saveFibers)
-            {
-                std::stringstream filename;
-                filename << outFibersFileName << "-" << label+1 << ".vtk";
+                do
+                {
+                    if(fibers[labels[label]]->GetNumberOfInputConnections(i++) < 1)
+                        saveFibers = false;
+                } while(saveFibers && i<nbOfInputs);
 
-                fibers[label]->Update();
-                vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
-                writer->SetInput(fibers[labels[label]]->GetOutput());
-                writer->SetFileName(filename.str().c_str());
-                writer->SetFileTypeToBinary();
-                writer->Write();
+                if(saveFibers)
+                {
+                    std::stringstream filename;
+                    filename << outFibersFileName << "-" << label+1 << ".vtk";
+
+                    fibers[labels[label]]->Update();
+                    vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
+                    writer->SetInput(fibers[labels[label]]->GetOutput());
+                    writer->SetFileName(filename.str().c_str());
+                    writer->Write();
+                }
             }
         }
 
