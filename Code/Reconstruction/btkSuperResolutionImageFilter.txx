@@ -73,7 +73,6 @@ SuperResolutionImageFilter<TInputImage, TOutputImage,TInterpolatorPrecisionType>
   m_OutputStartIndex.Fill( 0 );
 
   m_DefaultPixelValue = 0;
-  m_SimulatedImagesUpdated = false;
 
   m_Iterations = 30;
   m_Lambda = 0.1;
@@ -121,46 +120,6 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 }
 
 template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
-void
-SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
-::UpdateSimulatedImages()
-{
-  unsigned int offset = 0;
-
-  for (unsigned int im = 0; im < m_ImageArray.size(); im++)
-  {
-    IndexType absIndex;
-
-    IndexType start = m_InputImageRegion[im].GetIndex();
-    SizeType  size  = m_InputImageRegion[im].GetSize();
-    unsigned int nvoxels = m_InputImageRegion[im].GetNumberOfPixels();
-    IndexType diffIndex;
-
-    for( unsigned int i=0; i<nvoxels; i++)
-    {
-
-      diffIndex[2] = i / (size[0]*size[1]);
-
-      diffIndex[1] = i - diffIndex[2]*size[0]*size[1];
-      diffIndex[1] = diffIndex[1] / size[0];
-
-      diffIndex[0] = i - diffIndex[2]*size[0]*size[1] - diffIndex[1]*size[0];
-
-      absIndex[0] = diffIndex[0] + start[0];
-      absIndex[1] = diffIndex[1] + start[1];
-      absIndex[2] = diffIndex[2] + start[2];
-
-      m_SimulatedImages[im]->SetPixel(absIndex,m_ysim[i + offset]);
-
-    }
-
-    offset = offset + nvoxels;
-
-  }
-
-}
-
-template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
 typename SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>::IndexType
 SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 ::LinearToAbsoluteIndex(
@@ -191,266 +150,52 @@ void
 SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 ::OptimizeByLeastSquares()
 {
-
-  vnl_vector<double>  x;
-  x = vnl_matops::f2d(m_x);
-
-  SizeType size = m_OutputImageRegion.GetSize();
-  vnl_vector<int>  x_size(3);
-  x_size[0] = size[0]; x_size[1] = size[1]; x_size[2] = size[2];
-
-  LeastSquaresVnlCostFunction f(x.size());
-  f.SetParameters(m_H,m_y,x_size);
-  f.SetLambda( m_Lambda );
-
-  vnl_conjugate_gradient cg(f);
-  cg.set_max_function_evals(m_Iterations);
-  cg.minimize(x);
-  cg.diagnose_outcome();
-
-  m_x = vnl_matops::d2f(x);
-
-}
-
-template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
-void
-SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
-::CreateH()
-{
-
-  // FIXME: replace the following code with an user-provided region
-  // Just for testing purposes we have set it to the region covered
-  // by the axial image mask
-
-  // Calculate m_OutputImageRegion
-
-  IndexType start_lr = m_InputImageRegion[0].GetIndex();
-  SizeType  size_lr  = m_InputImageRegion[0].GetSize();
-
-  SpacingType spacing_lr = m_ImageArray[0] -> GetSpacing();
-  SpacingType spacing_hr = this -> GetReferenceImage() -> GetSpacing();
-
-  PointType start_lr_pt;
-  m_ImageArray[0] -> TransformIndexToPhysicalPoint(start_lr,start_lr_pt);
-  start_lr_pt = start_lr_pt - (spacing_lr - spacing_hr) / 2.0;
-
-  IndexType start_hr;
-  this -> GetReferenceImage() -> TransformPhysicalPointToIndex(start_lr_pt, start_hr);
-
-  SizeType  size_hr;
-  size_hr[0] = (int)(size_lr[0] * spacing_lr[0] / spacing_hr[0]);
-  size_hr[1] = (int)(size_lr[1] * spacing_lr[1] / spacing_hr[1]);
-  size_hr[2] = (int)(size_lr[2] * spacing_lr[2] / spacing_hr[2]);
-
-  //FIXME Check the calculation of m_OutputImageRegion, there is a difference
-  // of 1 pixel in Z with respect to the saved SR image ...
-
-  m_OutputImageRegion.SetIndex( start_hr );
-  m_OutputImageRegion.SetSize(  size_hr );
-
-  m_OutputImageRegion = this -> GetReferenceImage() -> GetLargestPossibleRegion();
-  start_hr = m_OutputImageRegion.GetIndex();
-  size_hr = m_OutputImageRegion.GetSize();
-
-  IndexType end_hr;
-  end_hr[0] = start_hr[0] + size_hr[0] - 1 ;
-  end_hr[1] = start_hr[1] + size_hr[1] - 1 ;
-  end_hr[2] = start_hr[2] + size_hr[2] - 1 ;
-
   // Fill x
-
+  m_OutputImageRegion = this -> GetReferenceImage() -> GetLargestPossibleRegion();
   unsigned int ncols = m_OutputImageRegion.GetNumberOfPixels();
 
   m_x.set_size( ncols );
-
-  // Fills x vector, since it does not change during H contruction
   OutputIteratorType hrIt( this -> GetReferenceImage(), m_OutputImageRegion );
-
   unsigned int linearIndex = 0;
 
   for (hrIt.GoToBegin(); !hrIt.IsAtEnd(); ++hrIt, linearIndex++)
     m_x[linearIndex] = hrIt.Get();
 
-  // Interpolator for HR image
+  SizeType size = m_OutputImageRegion.GetSize();
+  vnl_vector<int>  x_size(3);
+  x_size[0] = size[0]; x_size[1] = size[1]; x_size[2] = size[2];
 
-  typename InterpolatorType::Pointer interpolator = InterpolatorType::New();
-  interpolator -> SetInputImage( this -> GetReferenceImage() );
+  // Setup cost function
 
-  // Differential continuous indexes to perform the neighborhood iteration
-
-  std::vector<ContinuousIndexType> deltaIndexes;
-  int npoints =  spacing_lr[2] / (2.0 * spacing_hr[2]) ;
-  ContinuousIndexType delta;
-  delta[0] = 0.0; delta[1] = 0.0;
-
-  for (int i = -npoints ; i <= npoints; i++ )
-  {
-    delta[2] = i * 0.5 / (double) npoints;
-    deltaIndexes.push_back(delta);
-  }
-
-  // Set size of matrices
-
-  unsigned int nrows = 0;
-  for(unsigned int im = 0; im < m_ImageArray.size(); im++)
-    nrows += m_InputImageRegion[im].GetNumberOfPixels();
-
-  m_H.set_size(nrows, ncols);
-  m_y.set_size(nrows);
-  m_y.fill(0.0);
-
-  // H is different for each input image
-  unsigned int offset = 0;
+  LeastSquaresVnlCostFunction<InputImageType> f(m_x.size());
 
   for(unsigned int im = 0; im < m_ImageArray.size(); im++)
   {
-    SpacingType inputSpacing = m_ImageArray[im] -> GetSpacing();
+    f.AddImage(m_ImageArray[im]);
+    f.AddRegion(m_InputImageRegion[im]);
 
-    // PSF definition
+    if ( m_MaskArray.size() > 0)
+      f.AddMask( m_MaskArray[im] );
 
-    typename FunctionType::Pointer function = FunctionType::New();
-    function -> SetPSF( m_PSF );
-    function -> SetDirection( m_ImageArray[im] -> GetDirection() );
-    function -> SetSpacing( m_ImageArray[im] -> GetSpacing() );
-
-    // Iteration over slices
-
-    IndexType inputIndex = m_InputImageRegion[im].GetIndex();
-    SizeType  inputSize  = m_InputImageRegion[im].GetSize();
-
-    IndexType lrIndex;
-    IndexType lrDiffIndex;
-    unsigned int lrLinearIndex;
-
-    IndexType hrIndex;
-    IndexType hrDiffIndex;
-    ContinuousIndexType hrContIndex;
-    unsigned int hrLinearIndex;
-
-    ContinuousIndexType nbIndex;
-
-    PointType lrPoint;
-    PointType nbPoint;
-    PointType transformedPoint;
-
-    for ( unsigned int i=inputIndex[2]; i < inputIndex[2] + inputSize[2]; i++ )
-    {
-
-      InputImageRegionType wholeSliceRegion;
-      wholeSliceRegion = m_InputImageRegion[im];
-
-      IndexType  wholeSliceRegionIndex = wholeSliceRegion.GetIndex();
-      SizeType   wholeSliceRegionSize  = wholeSliceRegion.GetSize();
-
-      wholeSliceRegionIndex[2]= i;
-      wholeSliceRegionSize[2] = 1;
-
-      wholeSliceRegion.SetIndex(wholeSliceRegionIndex);
-      wholeSliceRegion.SetSize(wholeSliceRegionSize);
-
-      ConstIteratorType fixedIt( m_ImageArray[im], wholeSliceRegion);
-
-      double lrValue;
-      double hrValue;
-
-      for(fixedIt.GoToBegin(); !fixedIt.IsAtEnd(); ++fixedIt)
-      {
-        lrIndex = fixedIt.GetIndex();
-        m_ImageArray[im] -> TransformIndexToPhysicalPoint( lrIndex, lrPoint );
-
-        if ( interpolator -> IsInsideBuffer( lrPoint ) )
-        {
-
-          lrDiffIndex[0] = lrIndex[0] - inputIndex[0];
-          lrDiffIndex[1] = lrIndex[1] - inputIndex[1];
-          lrDiffIndex[2] = lrIndex[2] - inputIndex[2];
-
-          lrLinearIndex = lrDiffIndex[0] + lrDiffIndex[1]*inputSize[0] + lrDiffIndex[2]*inputSize[0]*inputSize[1];
-
-          m_y[lrLinearIndex + offset] = fixedIt.Get();
-
-          m_ImageArray[im] -> TransformIndexToPhysicalPoint( lrIndex, lrPoint );
-          function -> SetCenter( lrPoint );
-
-          for(unsigned int k=0; k<deltaIndexes.size(); k++)
-          {
-            nbIndex[0] = deltaIndexes[k][0] + lrIndex[0];
-            nbIndex[1] = deltaIndexes[k][1] + lrIndex[1];
-            nbIndex[2] = deltaIndexes[k][2] + lrIndex[2];
-
-            m_ImageArray[im] -> TransformContinuousIndexToPhysicalPoint( nbIndex, nbPoint );
-            lrValue = function -> Evaluate(nbPoint);
-
-            if ( lrValue > 0)
-            {
-              transformedPoint = m_Transform[im][i] -> TransformPoint( nbPoint);
-
-              this->GetReferenceImage() -> TransformPhysicalPointToContinuousIndex( transformedPoint, hrContIndex );
-
-              bool isInsideHR = true;
-
-              // FIXME This checking should be done for all points first, and discard the point
-              // if al least one point is out of the reference image
-
-              if ( (hrContIndex[0] < start_hr[0]) || (hrContIndex[0] > end_hr[0]) ||
-                   (hrContIndex[1] < start_hr[1]) || (hrContIndex[1] > end_hr[1]) ||
-                   (hrContIndex[2] < start_hr[2]) || (hrContIndex[2] > end_hr[2]) )
-                 isInsideHR = false;
-
-              if ( isInsideHR )
-              {
-                hrValue = interpolator -> Evaluate( transformedPoint );
-
-                for(unsigned int n=0; n<interpolator -> GetContributingNeighbors(); n++)
-                {
-                  hrIndex = interpolator -> GetIndex(n);
-
-                  hrDiffIndex[0] = hrIndex[0] - start_hr[0];
-                  hrDiffIndex[1] = hrIndex[1] - start_hr[1];
-                  hrDiffIndex[2] = hrIndex[2] - start_hr[2];
-
-                  hrLinearIndex = hrDiffIndex[0] + hrDiffIndex[1]*size_hr[0] + hrDiffIndex[2]*size_hr[0]*size_hr[1];
-                   m_H(lrLinearIndex + offset, hrLinearIndex) += interpolator -> GetOverlap(n)* lrValue;
-
-
-                }
-
-              }
-
-            }
-
-          }
-
-        }
-
-      }
-
-    }
-
-    offset += m_InputImageRegion[im].GetNumberOfPixels();
-
+    for(unsigned int i=0; i<m_Transform[im].size(); i++)
+      f.SetTransform(im,i,m_Transform[im][i]);
   }
+  f.SetReferenceImage(this -> GetReferenceImage());
+  f.SetLambda( m_Lambda );
+  f.Initialize();
 
-  // Normalize H
+  // Setup optimizer
 
-  for (unsigned int i = 0; i < m_H.rows(); i++)
-  {
-    double sum = m_H.sum_row(i);
+  vnl_conjugate_gradient cg(f);
+  cg.set_max_function_evals(m_Iterations);
+//  cg.set_g_tolerance(1e-10);
 
-    VnlSparseMatrixType::row & r = m_H.get_row(i);
-    VnlSparseMatrixType::row::iterator col_iter = r.begin();
+  // Start minimization
 
-    for ( ;col_iter != r.end(); ++col_iter)
-      (*col_iter).second = (*col_iter).second / sum;
+  cg.minimize(m_x);
+  cg.diagnose_outcome();
 
-  }
-
-  // Create simulated images
-
-  m_H.mult(m_x,m_ysim);
-  UpdateSimulatedImages();
 }
-
 
 /**
  * Set the output image origin.
@@ -471,9 +216,7 @@ void
 SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 ::GenerateData()
 {
-  CreateH();
   OptimizeByLeastSquares();
-  UpdateSimulatedImages();
 
   // Get the output pointers
   OutputImagePointer outputPtr = this->GetOutput();
@@ -500,7 +243,7 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 
   IndexType hrIndex;
   IndexType hrStart = m_OutputImageRegion.GetIndex();
-  SizeType hrSize  = m_OutputImageRegion.GetSize();
+  SizeType  hrSize  = m_OutputImageRegion.GetSize();
   IndexType hrDiffIndex;
 
 

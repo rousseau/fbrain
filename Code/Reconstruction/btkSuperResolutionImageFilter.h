@@ -43,15 +43,12 @@
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkImageRegionConstIteratorWithIndex.h"
 #include "itkImageToImageFilter.h"
-#include "itkNeighborhoodAlgorithm.h"
 #include "itkSize.h"
 #include "btkUserMacro.h"
 #include "vnl/vnl_sparse_matrix.h"
 #include "vnl/algo/vnl_conjugate_gradient.h"
-//#include "vnl_conjugate_gradient.h"
+#include "vnl/algo/vnl_levenberg_marquardt.h"
 #include "btkLeastSquaresVnlCostFunction.h"
-#include "btkLinearInterpolateImageFunctionWithWeights.h"
-#include "btkOrientedSpatialFunction.h"
 #include "itkImageDuplicator.h"
 #include "itkContinuousIndex.h"
 
@@ -117,6 +114,9 @@ public:
   typedef typename InputImageType::RegionType     InputImageRegionType;
   typedef std::vector<InputImageRegionType>       InputImageRegionVectorType;
 
+  typedef ImageMaskSpatialObject< TInputImage::ImageDimension > MaskType;
+  typedef typename MaskType::Pointer   MaskPointer;
+
   /** Method for creation through the object factory. */
   itkNewMacro(Self);
 
@@ -142,9 +142,6 @@ public:
   /** Image index typedef. */
   typedef typename TOutputImage::IndexType IndexType;
 
-  /** Image continuous index typedef. */
-  typedef ContinuousIndex<double, ImageDimension> ContinuousIndexType;
-
   /** Image point typedef. */
   typedef typename TOutputImage::PointType    PointType;
 
@@ -164,33 +161,10 @@ public:
   typedef ImageBase<itkGetStaticConstMacro(ImageDimension)> ImageBaseType;
 
   /**Const iterator typedef. */
-  typedef ImageRegionConstIteratorWithIndex< InputImageType >  ConstIteratorType;
-
-  /**Const iterator typedef. */
   typedef ImageRegionConstIteratorWithIndex< OutputImageType >  OutputIteratorType;
 
-  /**Neighborhood iterator typedef. */
-  typedef NeighborhoodIterator< InputImageType >   NeighborhoodIteratorType;
-
-  /**Blurring function typedef. */
-  typedef OrientedSpatialFunction<double, 3, PointType> FunctionType;
-
-  /**Interpolator typedef. */
-  typedef LinearInterpolateImageFunctionWithWeights<TOutputImage, double> InterpolatorType;
-
-  /** Duplicator typedef. */
-  typedef ImageDuplicator< InputImageType > DuplicatorType;
-
-  /**Face calculator typedef. */
-  typedef NeighborhoodAlgorithm
-  ::ImageBoundaryFacesCalculator< OutputImageType > FaceCalculatorType;
-  typedef typename FaceCalculatorType::FaceListType FaceListType;
-
-  typedef vnl_matrix<float> VnlMatrixType;
-  typedef itk::Matrix<float,3,3> MatrixType;
-  typedef vnl_vector<float> VnlVectorType;
-
-  typedef vnl_sparse_matrix<float> VnlSparseMatrixType;
+  /**VnlVectorType typedef. */
+  typedef vnl_vector<double> VnlVectorType;
 
   // Overrides SetInput to resize the transform
 
@@ -209,13 +183,6 @@ public:
     for (unsigned int i=0; i<_argSize[2]; i++)
       m_Transform[m_Transform.size()-1][i] = TransformType::New();
 
-
-    typename DuplicatorType::Pointer duplicator = DuplicatorType::New();
-    duplicator -> SetInputImage (_arg);
-    duplicator -> Update();
-    m_SimulatedImages.push_back( duplicator -> GetOutput() );
-    m_SimulatedImages[m_SimulatedImages.size()-1]->FillBuffer(0);
-
   }
 
   /** Set the transform array. */
@@ -224,15 +191,7 @@ public:
     m_Transform[i][j] = transform;
   }
 
-  /** Get the simulated image */
-  InputImageType* GetSimulatedImage( int i )
-  {
-    return m_SimulatedImages[i];
-  }
-
   IndexType LinearToAbsoluteIndex( unsigned int linearIndex, InputImageRegionType region );
-
-  void UpdateSimulatedImages();
 
   /** Set the size of the output image. */
   itkSetMacro( Size, SizeType );
@@ -311,6 +270,11 @@ public:
 
   }
 
+  void AddMask(MaskType *mask)
+  {
+    m_MaskArray.push_back( mask );
+  }
+
   // Set/Get output image region
   itkSetMacro(OutputImageRegion, OutputImageRegionType);
   itkGetMacro(OutputImageRegion, OutputImageRegionType);
@@ -330,9 +294,6 @@ public:
   // Set/Get PSF
   itkSetMacro(PSF, unsigned int);
   itkGetMacro(PSF, unsigned int);
-
-  // Compute H
-  void CreateH();
 
 
 #ifdef ITK_USE_CONCEPT_CHECKING
@@ -367,35 +328,23 @@ private:
 
   OutputImageRegionType       m_OutputImageRegion;
 
-  std::vector<InputImagePointer>     m_ImageArray;
-  std::vector<InputImagePointer>     m_SimulatedImages;
-  bool    m_SimulatedImagesUpdated;
+  std::vector<InputImagePointer>  m_ImageArray;
+  std::vector<MaskPointer>  			m_MaskArray;
 
-  VnlSparseMatrixType m_H;
-  VnlSparseMatrixType m_Ht;
-  VnlSparseMatrixType m_Hbp;
-  VnlVectorType       m_y;
-  VnlVectorType       m_ysim;
-  VnlVectorType       m_x;
+  VnlVectorType     m_x;
 
   float m_Lambda;
 
-  // Precomputed values for optimization
+  unsigned int 			m_Iterations;
 
-  VnlSparseMatrixType HtH;
-  VnlVectorType HtY;
-  double YtY;
-
-  unsigned int m_Iterations;
-
-  PixelType                   m_DefaultPixelValue; // default pixel value
+  PixelType         m_DefaultPixelValue; // default pixel value
                                                // if the point is
                                                // outside the image
-  SpacingType                 m_OutputSpacing;     // output image spacing
-  OriginPointType             m_OutputOrigin;      // output image origin
-  DirectionType               m_OutputDirection;   // output image direction cosines
-  IndexType                   m_OutputStartIndex;  // output image start index
-  bool                        m_UseReferenceImage;
+  SpacingType       m_OutputSpacing;     // output image spacing
+  OriginPointType   m_OutputOrigin;      // output image origin
+  DirectionType     m_OutputDirection;   // output image direction cosines
+  IndexType         m_OutputStartIndex;  // output image start index
+  bool              m_UseReferenceImage;
 
   unsigned int m_OptimizationMethod;
   unsigned int m_PSF;

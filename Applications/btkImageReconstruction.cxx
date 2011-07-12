@@ -88,12 +88,13 @@ int main( int argc, char *argv[] )
   TCLAP::MultiArg<std::string> resampledArg("","ir","Resampled image with initial transform",false,"string",cmd);
 
   TCLAP::ValueArg<std::string> outArg("o","output","High resolution image",true,"","string",cmd);
-  TCLAP::ValueArg<unsigned int> iterArg("n","iter","Maximum number of iterations (default 30)",false, 30,"unsigned int",cmd);
-  TCLAP::ValueArg<double> epsilonArg("e","epsilon","Minimal percent change between two iterations"
-      "considered as convergence. (default 0.0001)",false, 1e-4,"double",cmd);
+  TCLAP::ValueArg<unsigned int> iterArg("n","iter","Maximum number of iterations (default 10)",false, 10,"unsigned int",cmd);
+  TCLAP::ValueArg<double> epsilonArg("e","epsilon","Minimal percent change between "
+      "two iterations considered as convergence. (default 0.0001)",false, 1e-4,"double",cmd);
 
   TCLAP::ValueArg<double> marginArg("","margin","Adds a margin to the reconstructed images"
-  "to compensate for a small FOV in the reference. The value must be provided in millimeters. (default 0)",false, 0.0,"double",cmd);
+  "to compensate for a small FOV in the reference. The value must be provided in millimeters."
+  " (default 0)",false, 0.0,"double",cmd);
 
   TCLAP::SwitchArg  boxSwitchArg("","box","Use intersections for roi calculation",false);
   TCLAP::SwitchArg  maskSwitchArg("","mask","Use masks for roi calculation",false);
@@ -120,7 +121,6 @@ int main( int argc, char *argv[] )
   itMax = iterArg.getValue();
   epsilon = epsilonArg.getValue();
   margin = marginArg.getValue();
-
 
   // typedefs
 

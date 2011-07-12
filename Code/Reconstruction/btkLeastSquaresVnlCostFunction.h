@@ -38,17 +38,45 @@
 
 #include "vnl/vnl_cost_function.h"
 #include "vnl/vnl_matops.h"
+#include "btkLinearInterpolateImageFunctionWithWeights.h"
+#include "btkOrientedSpatialFunction.h"
+#include "itkImageRegionConstIteratorWithIndex.h"
 
 namespace btk
 {
-
+template <class TImage>
 class LeastSquaresVnlCostFunction : public vnl_cost_function
 {
   private:
 
+  typedef TImage   ImageType;
+  typedef typename ImageType::Pointer ImagePointer;
+  typedef typename ImageType::ConstPointer ImageConstPointer;
+
+  typedef typename ImageType::RegionType  RegionType;
+  typedef typename ImageType::SizeType    SizeType;
+  typedef typename ImageType::IndexType   IndexType;
+  typedef typename ImageType::SpacingType SpacingType;
+  typedef typename ImageType::PointType   PointType;
+
+  typedef ImageMaskSpatialObject< TImage::ImageDimension > MaskType;
+  typedef typename MaskType::Pointer   MaskPointer;
+
+  typedef Euler3DTransform<double> TransformType;
+  typedef typename TransformType::Pointer TransformPointerType;
+
+  typedef LinearInterpolateImageFunctionWithWeights<ImageType, double> InterpolatorType;
+  typedef typename InterpolatorType::Pointer InterpolatorPointer;
+
+  typedef ContinuousIndex<double, TImage::ImageDimension> ContinuousIndexType;
+
+  /**Blurring function typedef. */
+  typedef OrientedSpatialFunction<double, 3, PointType> FunctionType;
+
+  /**Const iterator typedef. */
+  typedef ImageRegionConstIteratorWithIndex< ImageType >  ConstIteratorType;
+
   vnl_sparse_matrix<float> H;
-//  vnl_sparse_matrix<float> HtH;
-  vnl_sparse_matrix<float> Ht;
   vnl_vector<float> HtY;
   vnl_vector<float> Y;
 
@@ -59,6 +87,13 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
      unsigned int height;
      unsigned int depth;
   } x_size;
+
+  std::vector<ImagePointer>  m_Images;
+  std::vector<RegionType>    m_Regions;
+  std::vector<MaskPointer>   m_Masks;
+  ImageConstPointer					 m_ReferenceImage;
+  std::vector< std::vector<TransformPointerType> > m_Transforms;
+  RegionType m_OutputImageRegion;
 
   void set(float * array, int size, float value) {
     for (int i = 0; i < size; i++)
@@ -248,14 +283,12 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
     delete[] sspec;
   }
 
-
-
   typedef vnl_vector<float> VnlVectorType;
   typedef vnl_sparse_matrix<float> VnlSparseMatrixType;
 
   double f(const vnl_vector<double>& x)
   {
-    std::cout << "In f(.)" << std::endl; std::cout.flush();
+    // Calculate the error with respect to the low resolution images
 
     vnl_vector<float>  x_float;
     x_float = vnl_matops::d2f(x);
@@ -266,137 +299,346 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
     vnl_vector<float> HxMinusY;
     HxMinusY = Hx - Y;
 
+    Hx.clear();
+
+    double mse = HxMinusY.squared_magnitude() / HxMinusY.size();
+
+    HxMinusY.clear();
+
     // Calculate the square of 1st derivatives along x, y, and z
+    double reg = 0.0;
 
-    float* kernel = new float[3];
-    kernel[0] = -1; kernel[1] = 2; kernel[2] = -1;
+    float* kernel = new float[2];
+    kernel[0] = -1; kernel[1] = 1;
 
-    vnl_vector<float> KxX;
-    KxX.set_size( x_float.size() );
-    convol3dx(x_float, KxX, x_size, kernel, 3);
-    float dX2dx = dot_product(x_float, KxX);
-    KxX.clear();
+    vnl_vector<float> DxX;
+    DxX.set_size( x_float.size() );
+    convol3dx(x_float, DxX, x_size, kernel, 2);
+    for(unsigned int i=0; i<x_float.size(); i++)
+      reg += DxX[i]*DxX[i] / x_float.size();
+    DxX.clear();
 
-    vnl_vector<float> KyX;
-    KyX.set_size( x_float.size() );
-    convol3dy(x_float, KyX, x_size, kernel, 3);
-    float dX2dy = dot_product(x_float, KyX);
-    KyX.clear();
+    vnl_vector<float> DyX;
+    DyX.set_size( x_float.size() );
+    convol3dy(x_float, DyX, x_size, kernel, 2);
+    for(unsigned int i=0; i<x_float.size(); i++)
+      reg += DyX[i]*DyX[i] / x_float.size();
+    DyX.clear();
 
-    vnl_vector<float> KzX;
-    KzX.set_size( x_float.size() );
-    convol3dz(x_float, KzX, x_size, kernel, 3);
-    float dX2dz = dot_product(x_float, KzX);
-    KzX.clear();
+    vnl_vector<float> DzX;
+    DzX.set_size( x_float.size() );
+    convol3dz(x_float, DzX, x_size, kernel, 2);
+    for(unsigned int i=0; i<x_float.size(); i++)
+      reg += DzX[i]*DzX[i] / x_float.size();
+    DzX.clear();
 
     delete[] kernel;
 
     // Calculate the cost function by combining both terms
 
-    double mse = HxMinusY.squared_magnitude() / HxMinusY.size();
-    double reg = lambda*(dX2dx + dX2dy + dX2dz) / x_float.size();
+    double value = mse + lambda*reg;
 
-    std::cout << "mse, reg = " << mse << " , " << reg << std::endl;
-
-    double value = mse + reg;
-
-    std::cout << "error = " << value << std::endl;
+    std::cout << "error, mse, reg = " << value << " , " << mse << " , " << lambda*reg << std::endl;
 
     return value;
-
-  }
-
-  // TODO Hvec should be pass as a const argument, see how to improve this
-  // (an error is obtained with get_row function)
-  void SetParameters(VnlSparseMatrixType & Hin, VnlVectorType & Yin, const vnl_vector<int>& x_size_in)
-  {
-
-    H = Hin;
-    Y = Yin;
-
-    // FIXME Just a temporary solution to memory problems.
-    // Find another solution after experiments for miccai workshop 2011.
-    Hin.set_size(0,0);
-    Yin.set_size(0);
-
-    x_size.width 	= x_size_in[0];
-    x_size.height = x_size_in[1];
-    x_size.depth  = x_size_in[2];
-
-//    vnl_sparse_matrix<float> Ht;
-
-    unsigned int Hcols = H.cols();
-    unsigned int Hrows = H.rows();
-
-    Ht.set_size(Hcols,Hrows);
-
-    // Calculate Ht
-    std::cout << "Precomputing H, Ht, and Y" << std::endl; std::cout.flush();
-    for( H.reset(); H.next(); )
-      Ht( H.getcolumn(), H.getrow() ) = H.value();
-
-    // precalcule Ht * H
-//    std::cout << "Precomputing Ht*H" << std::endl; std::cout.flush();
-//    HtH = Ht * H;
-
-    // precalcule Ht * Y
-    std::cout << "Precomputing Ht*Y" << std::endl; std::cout.flush();
-    Ht.mult(Y,HtY);
-//    Ht.set_size(0,0);
 
   }
 
   void gradf(const vnl_vector<double>& x, vnl_vector<double>& g)
   {
     vnl_vector<float>  x_float;
-    vnl_vector<float>  g_float;
 
     x_float = vnl_matops::d2f(x);
-
-    std::cout << "in gradf " << std::endl; std::cout.flush();
 
     vnl_vector<float> Hx;
     H.mult(x_float,Hx);
 
-    VnlVectorType HtHx;
-    Ht.mult(Hx,HtHx);
-//    HtH.mult(x_float,HtHx);
+    // Calculate Ht*Hx. Note that this is calculated as Hx*H since
+    // Ht*Hx = (Hxt*H)t and for Vnl (Hxt*H)t = Hxt*H = Hx*H because
+    // the vnl_vector doesn't have a 2nd dimension. This allows us
+    // to save a lot of memory because we don't need to store Ht.
+
+    vnl_vector<float> HtHx;
+    H.pre_mult(Hx,HtHx);
     Hx.clear();
 
-    g_float = (-HtY + HtHx)*2.0;
+    double factor = 2.0 / Y.size();
+    g = vnl_matops::f2d( (-HtY + HtHx)*factor );
+
+    HtHx.clear();
 
     // regularization term
+
+/*    factor = 2*lambda/x_float.size();
 
     float* kernel = new float[3];
     kernel[0] = -1; kernel[1] = 2; kernel[2] = -1;
 
-    vnl_vector<float> KxX;
-    KxX.set_size( x_float.size() );
-    convol3dx(x_float, KxX, x_size, kernel, 3);
+    vnl_vector<float> DxX;
+    DxX.set_size( x_float.size() );
+    convol3dx(x_float, DxX, x_size, kernel, 3);
+    g = g + vnl_matops::f2d( DxX * factor );
+    DxX.clear();
 
-    vnl_vector<float> KyX;
-    KyX.set_size( x_float.size() );
-    convol3dy(x_float, KyX, x_size, kernel, 3);
+    vnl_vector<float> DyX;
+    DyX.set_size( x_float.size() );
+    convol3dy(x_float, DyX, x_size, kernel, 3);
+    g = g + vnl_matops::f2d( DyX * factor );
+    DyX.clear();
 
-    vnl_vector<float> KzX;
-    KzX.set_size( x_float.size() );
-    convol3dz(x_float, KzX, x_size, kernel, 3);
+    vnl_vector<float> DzX;
+    DzX.set_size( x_float.size() );
+    convol3dz(x_float, DzX, x_size, kernel, 3);
+    g = g + vnl_matops::f2d( DzX * factor );
+    DzX.clear();
 
-    delete[] kernel;
+    delete[] kernel; */
+
+  }
+
+  void Initialize()
+  {
+    IndexType start_hr;
+    SizeType  size_hr;
+
+    m_OutputImageRegion = m_ReferenceImage -> GetLargestPossibleRegion();
+    start_hr = m_OutputImageRegion.GetIndex();
+    size_hr = m_OutputImageRegion.GetSize();
+
+    x_size.width  = size_hr[0];
+    x_size.height = size_hr[1];
+    x_size.depth  = size_hr[2];
+
+    IndexType end_hr;
+    end_hr[0] = start_hr[0] + size_hr[0] - 1 ;
+    end_hr[1] = start_hr[1] + size_hr[1] - 1 ;
+    end_hr[2] = start_hr[2] + size_hr[2] - 1 ;
+
+    // Interpolator for HR image
+
+    InterpolatorPointer interpolator = InterpolatorType::New();
+    interpolator -> SetInputImage( m_ReferenceImage );
+
+    // Differential continuous indexes to perform the neighborhood iteration
+    SpacingType spacing_lr = m_Images[0] -> GetSpacing();
+    SpacingType spacing_hr = m_ReferenceImage -> GetSpacing();
+
+    std::vector<ContinuousIndexType> deltaIndexes;
+    int npoints =  spacing_lr[2] / (2.0 * spacing_hr[2]) ;
+    ContinuousIndexType delta;
+    delta[0] = 0.0; delta[1] = 0.0;
+
+    for (int i = -npoints ; i <= npoints; i++ )
+    {
+      delta[2] = i * 0.5 / (double) npoints;
+      deltaIndexes.push_back(delta);
+    }
+
+    // Set size of matrices
+    unsigned int ncols = m_OutputImageRegion.GetNumberOfPixels();
+
+    unsigned int nrows = 0;
+    for(unsigned int im = 0; im < m_Images.size(); im++)
+      nrows += m_Regions[im].GetNumberOfPixels();
+
+    H.set_size(nrows, ncols);
+    Y.set_size(nrows);
+    Y.fill(0.0);
+
+    unsigned int offset = 0;
+
+    // TODO This can be parallelized by using openmp
+
+    for(unsigned int im = 0; im < m_Images.size(); im++)
+    {
+      SpacingType inputSpacing = m_Images[im] -> GetSpacing();
+
+      // PSF definition
+      //TODO Give the possibility to choose the PDF
+      typename FunctionType::Pointer function = FunctionType::New();
+      function -> SetPSF( 1 );
+      function -> SetDirection( m_Images[im] -> GetDirection() );
+      function -> SetSpacing( m_Images[im] -> GetSpacing() );
+
+      // Iteration over slices
+
+      IndexType inputIndex = m_Regions[im].GetIndex();
+      SizeType  inputSize  = m_Regions[im].GetSize();
+
+      IndexType lrIndex;
+      IndexType lrDiffIndex;
+      unsigned int lrLinearIndex;
+
+      IndexType hrIndex;
+      IndexType hrDiffIndex;
+      ContinuousIndexType hrContIndex;
+      unsigned int hrLinearIndex;
+
+      ContinuousIndexType nbIndex;
+
+      PointType lrPoint;
+      PointType nbPoint;
+      PointType transformedPoint;
+
+      for ( unsigned int i=inputIndex[2]; i < inputIndex[2] + inputSize[2]; i++ )
+      {
+
+        RegionType wholeSliceRegion;
+        wholeSliceRegion = m_Regions[im];
+
+        IndexType  wholeSliceRegionIndex = wholeSliceRegion.GetIndex();
+        SizeType   wholeSliceRegionSize  = wholeSliceRegion.GetSize();
+
+        wholeSliceRegionIndex[2]= i;
+        wholeSliceRegionSize[2] = 1;
+
+        wholeSliceRegion.SetIndex(wholeSliceRegionIndex);
+        wholeSliceRegion.SetSize(wholeSliceRegionSize);
+
+        ConstIteratorType fixedIt( m_Images[im], wholeSliceRegion);
+
+        double lrValue;
+        double hrValue;
+
+        for(fixedIt.GoToBegin(); !fixedIt.IsAtEnd(); ++fixedIt)
+        {
+          lrIndex = fixedIt.GetIndex();
+          m_Images[im] -> TransformIndexToPhysicalPoint( lrIndex, lrPoint );
+
+          if ( m_Masks.size() > 0)
+            if ( ! m_Masks[im] -> IsInside(lrPoint) )
+              continue;
+
+          transformedPoint = m_Transforms[im][i] -> TransformPoint( lrPoint );
+
+          if ( ! interpolator -> IsInsideBuffer( transformedPoint ) )
+            continue;
 
 
-    for (unsigned int i=0; i<g.size(); i++)
-      g[i] = g_float[i] / Y.size();
+          lrDiffIndex[0] = lrIndex[0] - inputIndex[0];
+          lrDiffIndex[1] = lrIndex[1] - inputIndex[1];
+          lrDiffIndex[2] = lrIndex[2] - inputIndex[2];
 
-    g_float = g_float + 2*lambda*(KxX + KyX + KzX)/ x_float.size();
+          lrLinearIndex = lrDiffIndex[0] + lrDiffIndex[1]*inputSize[0] + lrDiffIndex[2]*inputSize[0]*inputSize[1];
 
+          Y[lrLinearIndex + offset] = fixedIt.Get();
 
-    std::cout << "exiting of gradf " << std::endl; std::cout.flush();
+          function -> SetCenter( lrPoint );
+
+          for(unsigned int k=0; k<deltaIndexes.size(); k++)
+          {
+            nbIndex[0] = deltaIndexes[k][0] + lrIndex[0];
+            nbIndex[1] = deltaIndexes[k][1] + lrIndex[1];
+            nbIndex[2] = deltaIndexes[k][2] + lrIndex[2];
+
+            m_Images[im] -> TransformContinuousIndexToPhysicalPoint( nbIndex, nbPoint );
+            lrValue = function -> Evaluate(nbPoint);
+
+            if ( lrValue > 0)
+            {
+              transformedPoint = m_Transforms[im][i] -> TransformPoint( nbPoint);
+
+              m_ReferenceImage -> TransformPhysicalPointToContinuousIndex( transformedPoint, hrContIndex );
+
+              bool isInsideHR = true;
+
+              // FIXME This checking should be done for all points first, and discard the point
+              // if al least one point is out of the reference image
+
+              if ( (hrContIndex[0] < start_hr[0]) || (hrContIndex[0] > end_hr[0]) ||
+                   (hrContIndex[1] < start_hr[1]) || (hrContIndex[1] > end_hr[1]) ||
+                   (hrContIndex[2] < start_hr[2]) || (hrContIndex[2] > end_hr[2]) )
+                 isInsideHR = false;
+
+              if ( isInsideHR )
+              {
+                hrValue = interpolator -> Evaluate( transformedPoint );
+
+                for(unsigned int n=0; n<interpolator -> GetContributingNeighbors(); n++)
+                {
+                  hrIndex = interpolator -> GetIndex(n);
+
+                  hrDiffIndex[0] = hrIndex[0] - start_hr[0];
+                  hrDiffIndex[1] = hrIndex[1] - start_hr[1];
+                  hrDiffIndex[2] = hrIndex[2] - start_hr[2];
+
+                  hrLinearIndex = hrDiffIndex[0] + hrDiffIndex[1]*size_hr[0] + hrDiffIndex[2]*size_hr[0]*size_hr[1];
+                  H(lrLinearIndex + offset, hrLinearIndex) += interpolator -> GetOverlap(n)* lrValue;
+                }
+
+              }
+
+            }
+
+          }
+
+        }
+
+      }
+
+      offset += m_Regions[im].GetNumberOfPixels();
+
+    }
+
+    // Normalize H
+    for (unsigned int i = 0; i < H.rows(); i++)
+    {
+      double sum = H.sum_row(i);
+
+      VnlSparseMatrixType::row & r = H.get_row(i);
+      VnlSparseMatrixType::row::iterator col_iter = r.begin();
+
+      for ( ;col_iter != r.end(); ++col_iter)
+        (*col_iter).second = (*col_iter).second / sum;
+
+    }
+
+    // Precalcule Ht*Y. Note that this is calculated as Y*H since
+    // Ht*Y = (Yt*H)t and for Vnl (Yt*H)t = (Yt*H) = Y*H because
+    // the vnl_vector doesn't have a 2nd dimension. This allows us
+    // to save a lot of memory because we don't need to store Ht.
+    H.pre_mult(Y,HtY);
+
   }
 
   void SetLambda(float value)
   {
     lambda = value;
+  }
+
+  void AddImage( ImageType* image )
+  {
+    m_Images.push_back( image );
+
+    // Add transforms for this image
+    m_Transforms.resize( m_Transforms.size() + 1 );
+    SizeType imageSize = image -> GetLargestPossibleRegion().GetSize();
+    m_Transforms[m_Transforms.size()-1].resize( imageSize[2]);
+
+    // Initialize transforms
+    for (unsigned int i=0; i<imageSize[2]; i++)
+      m_Transforms[m_Transforms.size()-1][i] = TransformType::New();
+
+  }
+
+  void AddRegion( RegionType region)
+  {
+    m_Regions.push_back( region );
+  }
+
+  void AddMask( MaskType *mask)
+  {
+    m_Masks.push_back( mask );
+  }
+
+  void SetReferenceImage( const ImageType * image )
+  {
+    m_ReferenceImage = image;
+  }
+
+  void SetTransform( int i, int j, TransformType* transform )
+  {
+    m_Transforms[i][j] = transform;
   }
 
 

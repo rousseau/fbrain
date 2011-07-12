@@ -45,14 +45,13 @@
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkImageRegionIteratorWithIndex.h"
+#include "btkNiftiFilenameRadix.h"
 
 #include <tclap/CmdLine.h>
 
 int main( int argc, char * argv[] )
 {
   try{
-
-  const char *outputFile = NULL;
 
   // Parse arguments
 
@@ -70,23 +69,24 @@ int main( int argc, char * argv[] )
 
   cmd.parse( argc, argv );
 
-  outputFile = outputArg.getValue().c_str();
+  std::string inputFileStr;
+  inputFileStr = inputArg.getValue();
+  const char* inputFile = inputFileStr.c_str();
+
+  std::string bvecFileStr;
+  bvecFileStr = btk::GetRadixOf(inputFileStr);
+  bvecFileStr = bvecFileStr + ".bvec";
+  const char* bvecFile = bvecFileStr.c_str();
+
+  std::string bvalFileStr;
+  bvalFileStr = btk::GetRadixOf(inputFileStr);
+  bvalFileStr = bvalFileStr + ".bval";
+  const char* bvalFile = bvalFileStr.c_str();
+
+  const char* outputFile = outputArg.getValue().c_str();
 
   std::string rawFile = outputArg.getValue();
   rawFile.replace(rawFile.size()-4,7,"raw.gz");
-
-  char inputFile[255];
-  strcpy( inputFile, (char*)inputArg.getValue().c_str() );
-  strcat ( inputFile,".nii" );
-
-  char bvecFile[255];
-  strcpy( bvecFile, (char*)inputArg.getValue().c_str() );
-  strcat ( bvecFile,".bvec" );
-
-  char bvalFile[255];
-  strcpy( bvalFile, (char*)inputArg.getValue().c_str() );
-  strcat ( bvalFile,".bval" );
-
 
   // Read dwi sequence
 
@@ -232,7 +232,7 @@ int main( int argc, char * argv[] )
   fprintf( fw, "NRRD0005\n" );
 
   char* pch;
-  char* rawFile_cstr = (char*)rawFile.c_str();
+  char* rawFile_cstr = (char*)rawFile.c_str();;
 
   pch = strtok(rawFile_cstr,"/");
   while (pch != NULL)

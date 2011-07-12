@@ -148,6 +148,8 @@ int main( int argc, char *argv[] )
       MaskType::Pointer mask = MaskType::New();
       mask -> SetImage( maskReader -> GetOutput() );
 
+      resampler -> AddMask( mask );
+
       RegionType roi = mask -> GetAxisAlignedBoundingBoxRegion();
       roiIndex = roi.GetIndex();
       roiSize  = roi.GetSize();
@@ -164,7 +166,8 @@ int main( int argc, char *argv[] )
     resampler -> AddRegion( imageRegion );
 
 
-    // Comment when testing with simulated images
+    if (transform.size() > 0)
+    {
 
     TransformReaderType::Pointer transformReader = TransformReaderType::New();
     transformReader -> SetFileName( transform[i] );
@@ -177,7 +180,7 @@ int main( int argc, char *argv[] )
     for(unsigned int j=0; j< trans -> GetNumberOfSlices(); j++)
       resampler -> SetTransform(i, j, trans -> GetSliceTransform(j) ) ;
 
-    // Finish comment when testing with simulated images
+    }
 
   }
 
