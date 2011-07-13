@@ -301,7 +301,7 @@ void ParticleFilter::run(int label, Direction dir)
         m_cloud[m].setWeight(w);
     }
 
-//    this->saveCloudInVTK(label, m_k, m_x0);
+    this->saveCloudInVTK(label, m_k, m_x0);
 
     m_k++;
 
@@ -422,7 +422,7 @@ void ParticleFilter::run(int label, Direction dir)
 
         }
 
-//        this->saveCloudInVTK(label, m_k, m_x0);
+        this->saveCloudInVTK(label, m_k, m_x0);
 
         m_k++;
 
@@ -431,7 +431,7 @@ void ParticleFilter::run(int label, Direction dir)
 
     delete[] weights;
 
-//    this->saveCloudInVTK(label, m_k-1, m_x0);
+    this->saveCloudInVTK(label, m_k-1, m_x0);
 
     m_dirNum++;
 }
@@ -820,7 +820,7 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
         else // ras
             pid = points->InsertNextPoint( -(wp1[0]+wp2[0]+wp3[0])/3.0, -(wp1[1]+wp2[1]+wp3[1])/3.0, (wp1[2]+wp2[2]+wp3[2])/3.0 );
 
-        valueGFA = this->ComputeGFA(p);
+        valueGFA = this->ComputeGFA(Point( (p1.x()+p2.x()+p3.x())/3.0, (p1.y()+p2.y()+p3.y())/3.0, (p1.z()+p2.z()+p3.z())/3.0 ));
         gfa->InsertNextTuple(&valueGFA);
         line->GetPointIds()->SetId(id++,pid);
     }
@@ -847,7 +847,7 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
         else // ras
             pid = points->InsertNextPoint( -(wp1[0]+wp2[0]+wp3[0])/3.0, -(wp1[1]+wp2[1]+wp3[1])/3.0, (wp1[2]+wp2[2]+wp3[2])/3.0 );
 
-        valueGFA = this->ComputeGFA(p);
+        valueGFA = this->ComputeGFA(Point( (p1.x()+p2.x()+p3.x())/3.0, (p1.y()+p2.y()+p3.y())/3.0, (p1.z()+p2.z()+p3.z())/3.0 ));
         gfa->InsertNextTuple(&valueGFA);
         line->GetPointIds()->SetId(id++,pid);
     }
@@ -875,19 +875,15 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
         else // ras
             pid = points->InsertNextPoint( -(wp1[0]+wp2[0]+wp3[0])/3.0, -(wp1[1]+wp2[1]+wp3[1])/3.0, (wp1[2]+wp2[2]+wp3[2])/3.0 );
 
-        valueGFA = this->ComputeGFA(p);
+        valueGFA = this->ComputeGFA(Point( (p1.x()+p2.x()+p3.x())/3.0, (p1.y()+p2.y()+p3.y())/3.0, (p1.z()+p2.z()+p3.z())/3.0 ));
         gfa->InsertNextTuple(&valueGFA);
         line->GetPointIds()->SetId(id++,pid);
     }
 
     lines->InsertNextCell(line);
-//std::cout << "points" << std::endl;
     m_fiber->SetPoints(points);
-//std::cout << "lignes" << std::endl;
     m_fiber->SetLines(lines);
-//std::cout << "scalaires" << std::endl;
     m_fiber->GetPointData()->SetScalars(gfa);
-//std::cout << "end of function" << std::endl;
 }
 
 void ParticleFilter::saveFiber(int label, unsigned int step, Point begin)
