@@ -292,12 +292,11 @@ void ParticleFilter::run(int label, Direction dir)
     } // for i
 
     Real w    = 1.0/(Real)m_M;
-    Real logw = std::log(w);
 
     #pragma omp parallel for
     for(unsigned int m=0; m<m_M; m++)
     {
-        weights[m] = logw;
+        weights[m] = w;
         m_cloud[m].setWeight(w);
     }
 
@@ -337,9 +336,11 @@ void ParticleFilter::run(int label, Direction dir)
                 // Compute particle's weight
                 if(mu.isNull())
                 {
+                    Real apriori    = m_aPriori.compute(uk, ukm1);
+                    Real importance = m_importance.compute(uk, ukm1, kappa);
                     m_cloud[m].addLikelihood(0);
 
-                    weights[m] = m_cloud[m].weight();
+                    weights[m] = std::exp( std::log(m_cloud[m].weight()) + apriori - importance );
                 }
                 else // mu is not null
                 {
@@ -348,7 +349,7 @@ void ParticleFilter::run(int label, Direction dir)
                     Real importance = m_importance.compute(uk, mu, kappa);
                     m_cloud[m].addLikelihood(likelihood);
 
-                    weights[m] = m_cloud[m].weight() * std::exp(likelihood + apriori - importance);
+                    weights[m] = std::exp( std::log(m_cloud[m].weight()) + likelihood + apriori - importance );
                 }
 
                 if(!std::isfinite(weights[m]) || std::isnan(weights[m]))
@@ -505,84 +506,80 @@ void ParticleFilter::saveCloudInVTK(int label, unsigned int step, Point begin)
     // Build VTK PolyData from particle's cloud
     //
 
-    vtkSmartPointer<vtkPoints>      points = vtkSmartPointer<vtkPoints>::New();
-    vtkSmartPointer<vtkCellArray>    lines = vtkSmartPointer<vtkCellArray>::New();
-    vtkSmartPointer<vtkDoubleArray> colors = vtkSmartPointer<vtkDoubleArray>::New();
+    vtkSmartPointer<vtkPoints>       points = vtkSmartPointer<vtkPoints>::New();
+    vtkSmartPointer<vtkCellArray>     lines = vtkSmartPointer<vtkCellArray>::New();
+    vtkSmartPointer<vtkDoubleArray> weights = vtkSmartPointer<vtkDoubleArray>::New();
 
-    vtkIdType pid[1];
-    colors->SetNumberOfComponents(1);
+    vtkIdType pid;
+    double valueWeight = 0;
+
+    weights->SetNumberOfComponents(1);
 
     // create all points and lines
     for(std::vector<Particle>::iterator pIt = m_cloud.begin(); pIt != m_cloud.end(); pIt++)
     {
-//        if(pIt->isActive())
-//        {
-            ImageContinuousIndex cix;
-            Image::PointType wx;
+        vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
+        ImageContinuousIndex cix;
+        Image::PointType wx;
+        unsigned int id = 0;
 
-            Point x0 = pIt->getPoint(0);
+        Point x0 = pIt->getPoint(0);
 
-            cix[0] = x0.x(); cix[1] = x0.y(); cix[2] = x0.z();
-            m_map->TransformContinuousIndexToPhysicalPoint(cix, wx);
+        cix[0] = x0.x(); cix[1] = x0.y(); cix[2] = x0.z();
+        m_map->TransformContinuousIndexToPhysicalPoint(cix, wx);
 
-            if(m_lps)
-                points->InsertNextPoint(wx[0], wx[1], wx[2]);
-            else // ras
-                points->InsertNextPoint(-wx[0], -wx[1], wx[2]);
+        if(m_lps)
+            pid = points->InsertNextPoint(wx[0], wx[1], wx[2]);
+        else // ras
+            pid = points->InsertNextPoint(-wx[0], -wx[1], wx[2]);
 
-            double color[1]; color[0] = pIt->weight();
-            colors->InsertNextTupleValue(color);
+        valueWeight = pIt->getWeight(id++);
+        weights->InsertNextTupleValue(&valueWeight);
 
-            for(unsigned int i=1; i<=pIt->length(); i++)
+        for(unsigned int i=1; i<=pIt->length(); i++)
+        {
+            Point xk = pIt->getPoint(i);
+
+            Point xkm1 = pIt->getPoint(i-1);
+            Vector vk  = pIt->getVector(i-1);
+            Point p    = xk + vk*(-1);
+
+            if(!(p == xkm1)) // points are note linked
             {
-                vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
-                Point xk = pIt->getPoint(i);
-
-                cix[0] = xk.x(); cix[1] = xk.y(); cix[2] = xk.z();
+                cix[0] = p.x(); cix[1] = p.y(); cix[2] = p.z();
                 m_map->TransformContinuousIndexToPhysicalPoint(cix, wx);
 
                 if(m_lps)
-                    pid[0] = points->InsertNextPoint(wx[0], wx[1], wx[2]);
+                    pid = points->InsertNextPoint(wx[0], wx[1], wx[2]);
                 else // ras
-                    pid[0] = points->InsertNextPoint(-wx[0], -wx[1], wx[2]);
+                    pid = points->InsertNextPoint(-wx[0], -wx[1], wx[2]);
 
-                Point xkm1 = pIt->getPoint(i-1);
-                Vector vk  = pIt->getVector(i-1);
-                Point p    = xk + vk*(-1);
+                valueWeight = 1.0/m_M;
+                weights->InsertNextTupleValue(&valueWeight);
+            }
 
-                if(!(p == xkm1)) // points are note linked
-                {
-                    cix[0] = p.x(); cix[1] = p.y(); cix[2] = p.z();
-                    m_map->TransformContinuousIndexToPhysicalPoint(cix, wx);
+            cix[0] = xk.x(); cix[1] = xk.y(); cix[2] = xk.z();
+            m_map->TransformContinuousIndexToPhysicalPoint(cix, wx);
 
-                    if(m_lps)
-                        pid[0] = points->InsertNextPoint(wx[0], wx[1], wx[2]);
-                    else // ras
-                        pid[0] = points->InsertNextPoint(-wx[0], -wx[1], wx[2]);
+            if(m_lps)
+            pid = points->InsertNextPoint(wx[0], wx[1], wx[2]);
+            else // ras
+            pid = points->InsertNextPoint(-wx[0], -wx[1], wx[2]);
 
-                    cix[0] = xk.x(); cix[1] = xk.y(); cix[2] = xk.z();
-                    m_map->TransformContinuousIndexToPhysicalPoint(cix, wx);
+            valueWeight = pIt->getWeight(id++);
+            weights->InsertNextTupleValue(&valueWeight);
 
-                    if(m_lps)
-                        pid[0] = points->InsertNextPoint(wx[0], wx[1], wx[2]);
-                    else // ras
-                        pid[0] = points->InsertNextPoint(-wx[0], -wx[1], wx[2]);
-                }
-
-                line->GetPointIds()->SetId(0, pid[0]-1);
-                line->GetPointIds()->SetId(1, pid[0]);
-                lines->InsertNextCell(line);
-
-                colors->InsertNextTupleValue(color);
-            } // for i
-//        }
+            line->GetPointIds()->SetId(0, pid-1);
+            line->GetPointIds()->SetId(1, pid);
+            lines->InsertNextCell(line);
+        } // for i
     } // for each particle
 
     // create vtk polydata object
     vtkSmartPointer<vtkPolyData> cloud = vtkSmartPointer<vtkPolyData>::New();
     cloud->SetPoints(points);
     cloud->SetLines(lines);
-    cloud->GetPointData()->SetScalars(colors);
+    cloud->GetPointData()->SetScalars(weights);
 
 
     //
@@ -595,7 +592,6 @@ void ParticleFilter::saveCloudInVTK(int label, unsigned int step, Point begin)
     vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
     writer->SetInput(cloud);
     writer->SetFileName(filename.str().c_str());
-    writer->SetFileTypeToBinary();
     writer->Write();
 }
 
