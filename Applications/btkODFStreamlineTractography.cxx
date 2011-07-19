@@ -183,6 +183,7 @@ int main(int argc, char *argv[])
     std::string vecFileName;
     std::string maskFileName;
     std::string labelFilename;
+    std::vector<int> select_labels;
 
     std::string outFibersFileName;
 
@@ -213,6 +214,7 @@ int main(int argc, char *argv[])
             TCLAP::ValueArg<std::string>   dwiArg("d", "dwi", "Dwi sequence", true, "", "string", cmd);
             TCLAP::ValueArg<std::string>  maskArg("m", "mask", "White matter mask", true, "", "string", cmd);
             TCLAP::ValueArg<std::string> labelArg("l", "label", "Label volume of seeds", true, "", "string", cmd);
+            TCLAP::MultiArg<int>        labelsArg("", "labels", "Label select for processing", false, "int", cmd);
 
             TCLAP::ValueArg<std::string> outFibersArg("", "fibers", "Output fibers filename (default \"fibers-label\")", false, "fibers", "string", cmd);
 
@@ -234,6 +236,7 @@ int main(int argc, char *argv[])
             dwiFileName    = dwiArg.getValue();
             maskFileName   = maskArg.getValue();
             labelFilename  = labelArg.getValue();
+            select_labels  = labelsArg.getValue();
 
             outFibersFileName = outFibersArg.getValue();
 
@@ -351,7 +354,9 @@ int main(int argc, char *argv[])
 
         for(labelIt.GoToBegin(); !labelIt.IsAtEnd(); ++labelIt)
         {
-            if(labelIt.Get() > 0)
+            if(labelIt.Get() > 0 &&
+               (select_labels.size() == 0 ||
+                *std::find(select_labels.begin(),select_labels.end(),labelIt.Get()) == labelIt.Get()) )
                 numOfSeeds++;
         }
 
@@ -364,7 +369,9 @@ int main(int argc, char *argv[])
         {
             int label = (int)labelIt.Get();
 
-            if(label != 0)
+            if(label > 0 &&
+               (select_labels.size() == 0 ||
+                *std::find(select_labels.begin(),select_labels.end(),label) == label) )
             {
                 LabelMap::IndexType index = labelIt.GetIndex();
 

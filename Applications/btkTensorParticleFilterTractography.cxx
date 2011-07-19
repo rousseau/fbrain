@@ -68,6 +68,7 @@ int main(int argc, char *argv[])
     unsigned int valFileName;
     std::string maskFileName;
     std::string labelFilename;
+    std::vector<int> select_labels;
 
     std::string outMapFileName;
     std::string outFibersFileName;
@@ -100,6 +101,7 @@ int main(int argc, char *argv[])
             TCLAP::ValueArg<unsigned int>   valArg("b", "b_values", "B-values", true, 1500, "unsigned int", cmd);
             TCLAP::ValueArg<std::string>  maskArg("m", "mask", "White matter mask", true, "", "string", cmd);
             TCLAP::ValueArg<std::string> labelArg("l", "label", "Label volume of seeds", true, "", "string", cmd);
+            TCLAP::MultiArg<int>        labelsArg("", "labels", "Label select for processing", false, "int", cmd);
 
             TCLAP::ValueArg<std::string>    outMapArg("", "map", "Output connection map file", false, "map", "string", cmd);
             TCLAP::ValueArg<std::string> outFibersArg("", "fibers", "Output fibers file", false, "fibers", "string", cmd);
@@ -124,6 +126,7 @@ int main(int argc, char *argv[])
             valFileName    = valArg.getValue();
             maskFileName   = maskArg.getValue();
             labelFilename  = labelArg.getValue();
+            select_labels  = labelsArg.getValue();
 
             outMapFileName    = outMapArg.getValue();
             outFibersFileName = outFibersArg.getValue();
@@ -228,7 +231,9 @@ int main(int argc, char *argv[])
 
         for(labelIt.GoToBegin(); !labelIt.IsAtEnd(); ++labelIt)
         {
-            if(labelIt.Get() > 0)
+            if(labelIt.Get() > 0 &&
+               (select_labels.size() == 0 ||
+                *std::find(select_labels.begin(),select_labels.end(),labelIt.Get()) == labelIt.Get()) )
                 numOfSeeds++;
         }
 
@@ -241,7 +246,9 @@ int main(int argc, char *argv[])
         {
             int label = (int)it.Get();
 
-            if(label != 0)
+            if(label > 0 &&
+               (select_labels.size() == 0 ||
+                *std::find(select_labels.begin(),select_labels.end(),label) == label) )
             {
                 Image::IndexType index = it.GetIndex();
 
