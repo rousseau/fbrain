@@ -300,7 +300,7 @@ void ParticleFilter::run(int label, Direction dir)
         m_cloud[m].setWeight(w);
     }
 
-    this->saveCloudInVTK(label, m_k, m_x0);
+//    this->saveCloudInVTK(label, m_k, m_x0);
 
     m_k++;
 
@@ -423,7 +423,7 @@ void ParticleFilter::run(int label, Direction dir)
 
         }
 
-        this->saveCloudInVTK(label, m_k, m_x0);
+//        this->saveCloudInVTK(label, m_k, m_x0);
 
         m_k++;
 
@@ -432,7 +432,7 @@ void ParticleFilter::run(int label, Direction dir)
 
     delete[] weights;
 
-    this->saveCloudInVTK(label, m_k-1, m_x0);
+//    this->saveCloudInVTK(label, m_k-1, m_x0);
 
     m_dirNum++;
 }
@@ -611,9 +611,10 @@ Particle ParticleFilter::GetMAP()
         #pragma omp parallel for
         for(unsigned int m=0; m<m_M; m++)
         {
-            if(m_cloud[m].length() > 1)
+//            if(m_cloud[m].length() > 1)
+            if(m_cloud[m].length() >= 1)
             {
-                assert(m_cloud[m].length() > 1);
+                assert(m_cloud[m].length() >= 1);
                 delta[Ind(0,m)] = m_aPriori.compute(m_cloud[m].getVector(1).toDirection(), m_cloud[m].getVector(0).toDirection()) + m_cloud[m].getLikelihood(0);
             }
             else
@@ -631,19 +632,21 @@ Particle ParticleFilter::GetMAP()
                     Real max          = MIN_REAL;
                     unsigned int imax = 0;
 
+                    assert(k+1 <= m_cloud[m].length());
                     Point xkp1m = m_cloud[m].getPoint(k+1);
 
                     for(unsigned int i=0; i<m_M; i++)
                     {
                         if(k < m_cloud[i].length())
                         {
-                            Point xkp1i     = m_cloud[i].getPoint(k+1);
+                            assert(k+1 <= m_cloud[i].length());
+                            Point xkp1i   = m_cloud[i].getPoint(k+1);
                             Real distance = std::sqrt( (xkp1i.x()-xkp1m.x())*(xkp1i.x()-xkp1m.x()) + (xkp1i.y()-xkp1m.y())*(xkp1i.y()-xkp1m.y()) + (xkp1i.z()-xkp1m.z())*(xkp1i.z()-xkp1m.z()));
 
                             if(distance <= 0.01)
                             {
-                                assert(m_cloud[m].length() > k+1);
-                                assert(m_cloud[i].length() > k);
+                                assert(k+1 < m_cloud[m].length());
+                                assert(k < m_cloud[i].length());
                                 Real tmp = delta[Ind(k-1,i)] + m_aPriori.compute(m_cloud[m].getVector(k+1).toDirection(), m_cloud[i].getVector(k).toDirection());
 
                                 if(tmp > max)
@@ -778,10 +781,11 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
 
     // Build fiber with the MAP estimate in world coordinates
     gfa->SetNumberOfComponents(1);
-    line->GetPointIds()->SetNumberOfIds(map1.length() + map2.length() - 2);
+    line->GetPointIds()->SetNumberOfIds(map1.length() + map2.length()/* - 2*/);
 
     // First point
-    Point p = map1.getPoint(map1.length()-1);
+//    Point p = map1.getPoint(map1.length()-1);
+    Point p = map1.getPoint(map1.length());
     ci[0] = p.x(); ci[1] = p.y(); ci[2] = p.z();
     m_map->TransformContinuousIndexToPhysicalPoint(ci,wp);
 
@@ -795,8 +799,13 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
     line->GetPointIds()->SetId(id++,pid);
 
     // First part
-    for(int k=map1.length()-3; k>=0; k--)
+//    for(int k=map1.length()-3; k>=0; k--)
+    for(int k=map1.length()-2; k>=0; k--)
     {
+        assert(k+2 <= map1.length());
+        assert(k+1 <= map1.length());
+        assert(k   <= map1.length());
+
         Point p1 = map1.getPoint(k+2);
         Point p2 = map1.getPoint(k+1);
         Point p3 = map1.getPoint(k);
@@ -822,8 +831,11 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
     }
 
     // Middle point
-    if(map1.length() > 1 && map2.length() > 1)
+    if(map1.length() >= 1 && map2.length() >= 1)
     {
+        assert(1 <= map1.length());
+        assert(1 <= map2.length());
+
         Point p1 = map1.getPoint(1);
         Point p2 = map2.getPoint(0);
         Point p3 = map2.getPoint(1);
@@ -850,8 +862,13 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
 
 
     // Last part
-    for(unsigned int k=2; k<map2.length(); k++)
+//    for(unsigned int k=2; k<map2.length(); k++)
+    for(unsigned int k=2; k<=map2.length(); k++)
     {
+        assert(k-2 <= map2.length());
+        assert(k-1 <= map2.length());
+        assert(k   <= map2.length());
+
         Point p1 = map2.getPoint(k-2);
         Point p2 = map2.getPoint(k-1);
         Point p3 = map2.getPoint(k);
@@ -908,6 +925,7 @@ void ParticleFilter::ComputeMap()
         for(unsigned int k=0; k<=particle->length(); k++)
         {
             // Get data
+            assert(k <= particle->length());
             Point p = particle->getPoint(k);
 //            Real  w = (k == 0) ? 1.0/(Real)m_M : particle->getWeight(k-1);
             Real w  = 1;
