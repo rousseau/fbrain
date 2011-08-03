@@ -385,14 +385,7 @@ int main( int argc, char *argv[] )
     NCMetricType::Pointer nc = NCMetricType::New();
     nc -> SetFixedImage(  imageA );
     nc -> SetMovingImage( imageB );
-    if ( maskSwitchArg.isSet() )
-    {
-      nc -> SetFixedImageRegion( rois[0] );
-      nc -> SetFixedImageMask( masks[0] );
-    }
-    else
-      nc -> SetFixedImageRegion( imageA -> GetLargestPossibleRegion() );
-
+    nc -> SetFixedImageRegion( imageA -> GetLargestPossibleRegion() );
     nc -> SetTransform( identity );
     nc -> SetInterpolator( interpolator );
     nc -> Initialize();
