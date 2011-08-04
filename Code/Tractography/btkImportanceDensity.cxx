@@ -77,7 +77,6 @@ Direction ImportanceDensity::computeMeanDirection(Point xk, Direction ukm1)
 
             if(alpha <= m_angleThreshold)
             {
-                // TODO : proportions en fonction de l'état précédent (angles) et plus amplitude
                 mus.push_back(*it);
                 values.push_back(m_model->odfAt(*it, xk));
                 sum += values.back();

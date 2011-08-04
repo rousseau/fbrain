@@ -48,14 +48,12 @@
 #include "btkTypes.h"
 #include "btkPoint.h"
 #include "btkDirection.h"
-#include "btkSignal.h"
-#include "btkSignalExtractor.h"
-#include "btkSHModel.h"
-#include "btkSHModelEstimator.h"
-#include "btkImportanceDensity.h"
-#include "btkAPrioriDensity.h"
-#include "btkLikelihoodDensity.h"
-#include "btkParticleFilter.h"
+#include "btkDTFPSignal.h"
+#include "btkDTFPSignalExtractor.h"
+#include "btkDTFPImportanceDensity.h"
+#include "btkDTFPAPrioriDensity.h"
+#include "btkDTFPLikelihoodDensity.h"
+#include "btkDTFPParticleFilter.h"
 #include "btkNiftiFilenameRadix.h"
 
 
@@ -67,8 +65,10 @@ int main(int argc, char *argv[])
     // Command line variables
     std::string dwiFileName;
     std::string vecFileName;
+    unsigned int valFileName;
     std::string maskFileName;
     std::string labelFilename;
+    std::vector<int> select_labels;
 
     std::string outMapFileName;
     std::string outFibersFileName;
@@ -78,13 +78,10 @@ int main(int argc, char *argv[])
     bool saveTmpFiles;
     bool lps;
 
-    unsigned int modelOrder;
-    Real lambda;
     unsigned int nbOfParticles;
     Real stepSize;
     Real epsilon;
     Real Kappa;
-    Real angleThreshold;
     Float seedSpacing;
 
     std::string inRadix;
@@ -101,33 +98,35 @@ int main(int argc, char *argv[])
 
             // Defines arguments
             TCLAP::ValueArg<std::string>   dwiArg("d", "dwi", "Dwi sequence", true, "", "string", cmd);
+            TCLAP::ValueArg<unsigned int>   valArg("b", "b_values", "B-values", true, 1500, "unsigned int", cmd);
             TCLAP::ValueArg<std::string>  maskArg("m", "mask", "White matter mask", true, "", "string", cmd);
             TCLAP::ValueArg<std::string> labelArg("l", "label", "Label volume of seeds", true, "", "string", cmd);
+            TCLAP::MultiArg<int>        labelsArg("", "labels", "Label select for processing", false, "int", cmd);
 
-            TCLAP::ValueArg<std::string>    outMapArg("", "map", "Output connection map filename (default \"map-label\")", false, "map", "string", cmd);
-            TCLAP::ValueArg<std::string> outFibersArg("", "fibers", "Output fibers filename (default \"fibers-label\")", false, "fibers", "string", cmd);
+            TCLAP::ValueArg<std::string>    outMapArg("", "map", "Output connection map file", false, "map", "string", cmd);
+            TCLAP::ValueArg<std::string> outFibersArg("", "fibers", "Output fibers file", false, "fibers", "string", cmd);
+            TCLAP::SwitchArg lpsSwitchArg("", "lps", "Word coordinates expressed in LPS (Left-Posterior-Superior). By default RAS (Right-Anterior-Superior) is used.", cmd, false);
 
             TCLAP::SwitchArg verboseSwitchArg("", "verbose", "Display more informations on standard output", cmd, false);
             TCLAP::SwitchArg quietSwitchArg("", "quiet", "Display no information on either standard and error outputs", cmd, false);
             TCLAP::SwitchArg saveTmpSwitchArg("", "save_temporary_files", "Save diffusion signal, model coefficients, variance and spherical coordinates of gradient directions in files", cmd, false);
-            TCLAP::SwitchArg lpsSwitchArg("", "lps", "Word coordinates expressed in LPS (Left-Posterior-Superior). By default RAS (Right-Anterior-Superior) is used.", cmd, false);
 
-            TCLAP::ValueArg<unsigned int> orderArg("", "model_order", "Order of the model (i.e. of spherical harmonics) (default 4)", false, 4, "unsigned int", cmd);
-            TCLAP::ValueArg<Real>    lambdArg("", "model_regularization", "Regularization coefficient of the model (default 0.006)", false, 0.006, "Real", cmd);
-            TCLAP::ValueArg<unsigned int> particlesArg("", "number_of_particles", "Number of particles (default 1000)", false, 1000, "unsigned int", cmd);
-            TCLAP::ValueArg<Real>    epsilonArg("", "resampling_threshold", "Resampling treshold (default 0.01)", false, 0.01, "Real", cmd);
-            TCLAP::ValueArg<Real>    stepSizeArg("", "step_size", "Step size of particles displacement (default 0.5)", false, 0.5, "Real", cmd);
-            TCLAP::ValueArg<Real>    KappaArg("", "curve_constraint", "Curve constraint of a particle's trajectory (default 30)", false, 30.0, "Real", cmd);
-            TCLAP::ValueArg<Real>    angleThreshArg("", "angular_threshold", "Angular threshold between successive displacement vector of a particle's trajectory (default PI/3)", false, M_PI/3., "Real", cmd);
-            TCLAP::ValueArg<Real>    seedSpacingArg("", "seed_spacing", "Spacing in mm between seeds (default 1)", false, 1.0, "float", cmd);
+
+            TCLAP::ValueArg<unsigned int> particlesArg("", "number_of_particles", "Number of particles", false, 1000, "unsigned int", cmd);
+            TCLAP::ValueArg<Real>    epsilonArg("", "resampling_threshold", "Resampling treshold", false, 0.01, "Real", cmd);
+            TCLAP::ValueArg<Real>    stepSizeArg("", "step_size", "Step size of particles displacement", false, 0.5, "Real", cmd);
+            TCLAP::ValueArg<Real>    KappaArg("", "curve_constraint", "Curve constraint of a particle's trajectory", false, 30.0, "Real", cmd);
+            TCLAP::ValueArg<Real>    seedSpacingArg("", "seed_spacing", "Spacing in mm between seeds", false, 1.0, "float", cmd);
 
             // Parsing arguments
             cmd.parse(argc, argv);
 
             // Get back arguments' values
             dwiFileName    = dwiArg.getValue();
+            valFileName    = valArg.getValue();
             maskFileName   = maskArg.getValue();
             labelFilename  = labelArg.getValue();
+            select_labels  = labelsArg.getValue();
 
             outMapFileName    = outMapArg.getValue();
             outFibersFileName = outFibersArg.getValue();
@@ -137,13 +136,10 @@ int main(int argc, char *argv[])
             saveTmpFiles = saveTmpSwitchArg.getValue();
             lps          = lpsSwitchArg.getValue();
 
-            modelOrder     = orderArg.getValue();
-            lambda         = lambdArg.getValue();
             nbOfParticles  = particlesArg.getValue();
             epsilon        = epsilonArg.getValue();
             stepSize       = stepSizeArg.getValue();
             Kappa          = KappaArg.getValue();
-            angleThreshold = angleThreshArg.getValue();
             seedSpacing    = seedSpacingArg.getValue();
 
 
@@ -164,13 +160,14 @@ int main(int argc, char *argv[])
     // Diffusion signal extraction
     //
 
-        SignalExtractor *extractor = new SignalExtractor(vecFileName, dwiFileName, maskFileName, displayMode);
+        DTFPSignalExtractor *extractor = new DTFPSignalExtractor(vecFileName, dwiFileName, maskFileName, displayMode);
         extractor->extract();
 
-        std::vector<Direction> *directions = extractor->GetDirections();
-        Sequence::Pointer       signal     = extractor->GetSignal();
-        std::vector<Real>      *sigmas     = extractor->GetSigmas();
-        Mask::Pointer           mask       = extractor->GetMask();
+        std::vector<Vector> *directions  = extractor->GetDirections();
+        Sequence::Pointer       signal   = extractor->GetSignal();
+        std::vector<Real>      *sigmas   = extractor->GetSigmas();
+        Mask::Pointer           mask     = extractor->GetMask();
+        Image::Pointer          baseline = extractor->GetBaseline();
 
         if(saveTmpFiles)
             extractor->save();
@@ -178,33 +175,13 @@ int main(int argc, char *argv[])
         delete extractor;
 
 
-    //
-    // Model estimation
-    //
-
-        SHModelEstimator *estimator = new SHModelEstimator(signal, directions, mask, modelOrder, lambda, displayMode);
-        estimator->estimate();
-
-        Sequence::Pointer model = estimator->GetModel();
-
-        if(saveTmpFiles)
-            estimator->save();
-
-        delete estimator;
-
-
-
 
     //
     // Tractography (using particles filter)
     //
 
-
-        // Get spherical harmonics model
-        SHModel *modelFun = new SHModel(model, directions, displayMode);
-
-        // Get signal
-        Signal *signalFun = new Signal(signal, sigmas, directions, displayMode);
+        // Get signal function
+        DTFPSignal *signalFun = new DTFPSignal(signal, sigmas, directions, valFileName, baseline, displayMode);
 
         // Read label image if any and verify sizes
         LabelMapReader::Pointer labelReader = LabelMapReader::New();
@@ -246,11 +223,17 @@ int main(int argc, char *argv[])
         // Apply filter on each labeled voxels
         LabelMapIterator labelIt(resampledLabelVolume, resampledLabelVolume->GetLargestPossibleRegion());
 
+
+        // Apply filter on each labeled voxels
+        LabelMapIterator it(labelVolume, labelVolume->GetLargestPossibleRegion());
+
         unsigned int numOfSeeds = 0;
 
         for(labelIt.GoToBegin(); !labelIt.IsAtEnd(); ++labelIt)
         {
-            if(labelIt.Get() > 0)
+            if(labelIt.Get() > 0 &&
+               (select_labels.size() == 0 ||
+                *std::find(select_labels.begin(),select_labels.end(),labelIt.Get()) == labelIt.Get()) )
                 numOfSeeds++;
         }
 
@@ -259,16 +242,18 @@ int main(int argc, char *argv[])
         std::cout << std::fixed;
         std::cout << std::setprecision(2);
         Display1(displayMode, std::cout << "Running tractography..." << std::endl);
-        for(labelIt.GoToBegin(); !labelIt.IsAtEnd(); ++labelIt)
+        for(it.GoToBegin(); !it.IsAtEnd(); ++it)
         {
-            int label = (int)labelIt.Get();
+            int label = (int)it.Get();
 
-            if(label != 0)
+            if(label > 0 &&
+               (select_labels.size() == 0 ||
+                *std::find(select_labels.begin(),select_labels.end(),label) == label) )
             {
-                LabelMap::IndexType index = labelIt.GetIndex();
+                Image::IndexType index = it.GetIndex();
 
                 itk::Point<Real,3> worldPoint;
-                resampledLabelVolume->TransformIndexToPhysicalPoint(index, worldPoint);
+                labelVolume->TransformIndexToPhysicalPoint(index, worldPoint);
 
                 Mask::IndexType maskIndex;
                 mask->TransformPhysicalPointToIndex(worldPoint, maskIndex);
@@ -279,9 +264,9 @@ int main(int argc, char *argv[])
                     Point begin(worldPoint[0], worldPoint[1], worldPoint[2]);
 
                     // Set up filter's densities
-                    ImportanceDensity importance(signalFun, modelFun, angleThreshold);
-                    APrioriDensity    apriori(Kappa);
-                    LikelihoodDensity likelihood(signalFun, modelFun);
+                    DTFPImportanceDensity importance(signalFun);
+                    DTFPAPrioriDensity    apriori(Kappa);
+                    DTFPLikelihoodDensity likelihood(signalFun);
 
 
                     // Let's start filtering
@@ -290,7 +275,7 @@ int main(int argc, char *argv[])
                     Display2(displayMode, std::cout << "\tSeed's world coordinates: (" << worldPoint[0] << "," << worldPoint[1] << "," << worldPoint[2] << ")" << std::endl);
                     Display2(displayMode, std::cout << "\tSeed's image coordinates: (" << maskIndex[0] << "," << maskIndex[1] << "," << maskIndex[2] << ")" << std::endl);
 
-                    ParticleFilter filter(modelFun, apriori, likelihood, importance, mask, signalFun->getSize(), signalFun->getOrigin(), signalFun->getSpacing(), nbOfParticles, begin, epsilon, stepSize, displayMode);
+                    DTFPParticleFilter filter(signalFun, apriori, likelihood, importance, mask, signalFun->getSize(), signalFun->getOrigin(), signalFun->getSpacing(), nbOfParticles, begin, epsilon, stepSize, displayMode);
 
                     if(lps)
                         filter.SetLPSOn();
@@ -302,7 +287,7 @@ int main(int argc, char *argv[])
 
                     assert(fibers.size() == connectMaps.size());
 
-                    for(int l=labels.size(); l<label; l++)
+                    for(int l=fibers.size(); l<label; l++)
                         labels.push_back(-1);
 
                     if(labels[label-1] == -1)
@@ -313,7 +298,7 @@ int main(int argc, char *argv[])
                         connectMaps.back()->SetOrigin(signalFun->getOrigin());
                         connectMaps.back()->SetSpacing(signalFun->getSpacing());
                         connectMaps.back()->SetRegions(signalFun->getSize());
-                        connectMaps.back()->SetDirection(modelFun->GetDirection());
+                        connectMaps.back()->SetDirection(signalFun->GetDirection());
                         connectMaps.back()->Allocate();
                         connectMaps.back()->FillBuffer(0);
 
@@ -330,15 +315,12 @@ int main(int argc, char *argv[])
                         out.Set(out.Get() + in.Get());
 
                     Display2(displayMode, std::cout << "done." << std::endl);
-
-                    numOfSeedsDone++;
                 }
             }
         } // for each labeled voxels
         Display1(displayMode, std::cout << "\tProgress: 100.00%" << std::endl << "done." << std::endl);
 
         delete signalFun;
-        delete modelFun;
         delete directions;
         delete sigmas;
 
@@ -347,10 +329,7 @@ int main(int argc, char *argv[])
     // Writing files
     //
 
-        Display1(displayMode, std::cout << "Writing results..." << std::endl);
-
         // Normalize and write connection map image
-        Display2(displayMode, std::cout << "\tWriting connectivity maps..." << std::flush);
         for(unsigned int label = 0; label < labels.size(); label++)
         {
             if(labels[label] != -1)
@@ -387,10 +366,8 @@ int main(int argc, char *argv[])
                 }
             }
         }
-        Display2(displayMode, std::cout << "done." << std::endl);
 
         // Write fiber polydata
-        Display2(displayMode, std::cout << "\tWriting fibers..." << std::flush);
         for(unsigned int label = 0; label < labels.size(); label++)
         {
             if(labels[label] != -1)
@@ -414,14 +391,10 @@ int main(int argc, char *argv[])
                     vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
                     writer->SetInput(fibers[labels[label]]->GetOutput());
                     writer->SetFileName(filename.str().c_str());
-                    writer->SetFileTypeToBinary();
                     writer->Write();
                 }
             }
         }
-        Display2(displayMode, std::cout << "done." << std::endl);
-
-    Display1(displayMode, std::cout << "done." << std::endl);
 
 
     return EXIT_SUCCESS;

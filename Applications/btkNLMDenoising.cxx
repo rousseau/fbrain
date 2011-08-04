@@ -76,6 +76,7 @@ int main(int argc, char** argv)
     cmd.add( lowerVarianceThresholdArg );
     TCLAP::ValueArg<std::string> outputDifferenceImageArg("d","difference_file","filename of the difference image",false,"","string");
     cmd.add( outputDifferenceImageArg );
+ 
     // Parse the args.
     cmd.parse( argc, argv );
 
@@ -95,7 +96,6 @@ int main(int argc, char** argv)
     float lowerMeanThreshold     = lowerMeanThresholdArg.getValue();
     float lowerVarianceThreshold = lowerVarianceThresholdArg.getValue();
     std::string difference_file  = outputDifferenceImageArg.getValue();
-
 
     //ITK declaration
     typedef short PixelType;
@@ -137,6 +137,7 @@ int main(int argc, char** argv)
     myTool.SetBlockwiseStrategy(block);
     myTool.SetOptimizationStrategy(optimized);
     myTool.SetLowerThresholds(lowerMeanThreshold, lowerVarianceThreshold);
+
 
     myTool.ComputeOutput();
 

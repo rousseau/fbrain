@@ -213,11 +213,6 @@ void DTFPParticleFilter::run(int label)
     itk::FixedArray<Real,3> eigenValues;
     itk::Matrix<Real,3,3> eigenVectors;
     tensor.ComputeEigenAnalysis(eigenValues,eigenVectors);
-//    Pr(eigenValues[0]); Pr(eigenValues[1]); Pr(eigenValues[2]);
-//    Pr(eigenVectors(0,0)); Pr(eigenVectors(0,1)); Pr(eigenVectors(0,2));
-//    Pr(eigenVectors(1,0)); Pr(eigenVectors(1,1)); Pr(eigenVectors(1,2));
-//    Pr(eigenVectors(2,0)); Pr(eigenVectors(2,1)); Pr(eigenVectors(2,2));
-//    Pr(tensor.GetFractionalAnisotropy());
 
     Direction maxDir = Vector(eigenVectors(2,0),eigenVectors(2,1),eigenVectors(2,2)).toDirection();
 
@@ -239,8 +234,9 @@ void DTFPParticleFilter::run(int label)
     this->ComputeMap();
     DTFPParticle map2 = this->GetMAP();
 
-    this->ComputeFiber(map1,map2);
-    this->saveFiber(label,m_k,m_x0);
+    if(map1.length() + map2.length() > 2)
+        this->ComputeFiber(map1,map2);
+//    this->saveFiber(label,m_k,m_x0);
 }
 
 
@@ -322,18 +318,13 @@ void DTFPParticleFilter::run(int label, Direction dir)
 
                 // Move particle
                 char isInside = m_cloud[m].addToPath(uk.toVector()*m_stepSize, m_mask);
-//if(isInside != 0)
-//{
+
                 // Compute particle's weight
                 Real likelihood = m_likelihood.compute(uk, xk, mu);
                 Real apriori    = m_aPriori.compute(uk, ukm1);
                 Real importance = m_importance.compute(uk, mu, kappa);
 
                 weights[m] = m_cloud[m].weight() * std::exp(likelihood + apriori - importance);
-//}
-//else
-//    weights[m] = 0;
-
                 assert(weights[m] >= 0.0);
             }
         } // for i particles
@@ -401,12 +392,6 @@ void DTFPParticleFilter::run(int label, Direction dir)
                 }
             }
         }
-//Pr("ok");
-//        this->saveCloudInVTK(label, m_k, m_x0);
-//        this->ComputeFiber(this->GetMAP(),this->GetMAP());
-//        this->ComputeMap();
-//        this->saveFiber(label, m_k-1, m_x0);
-//        this->saveConnectionMap(label,m_x0);
 
         m_k++;
 
@@ -601,8 +586,7 @@ DTFPParticle DTFPParticleFilter::GetMAP()
             map = *it;
         }
     }
-//Pr(max);
-//Pr(map.length());
+
     return map;
 }
 

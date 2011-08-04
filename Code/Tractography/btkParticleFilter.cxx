@@ -48,6 +48,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "vtkSmartPointer.h"
 #include "vtkPoints.h"
 #include "vtkLine.h"
+#include "vtkPolyLine.h"
 #include "vtkCellArray.h"
 #include "vtkPolyData.h"
 #include "vtkPolyDataWriter.h"
@@ -74,7 +75,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 namespace btk
 {
 
-ParticleFilter::ParticleFilter(SHModel *model, APrioriDensity aPriori, LikelihoodDensity likelihood, ImportanceDensity importance,
+ParticleFilter::ParticleFilter(Signal *signal, SHModel *model, APrioriDensity aPriori, LikelihoodDensity likelihood, ImportanceDensity importance,
                                const std::string maskFileName, Image::SizeType size, Image::PointType origin, Image::SpacingType spacing,
                                unsigned int M, Point x0, Real epsilon, Real stepSize, unsigned int maxLength) :
         m_aPriori(aPriori), m_likelihood(likelihood), m_importance(importance)
@@ -89,6 +90,7 @@ ParticleFilter::ParticleFilter(SHModel *model, APrioriDensity aPriori, Likelihoo
     m_origin    = origin;
     m_spacing   = spacing;
     m_model     = model;
+    m_signal    = signal;
     m_dirNum    = 1;
     m_kx        = m_stepSize/m_spacing[0];
     m_ky        = m_stepSize/m_spacing[1];
@@ -142,7 +144,7 @@ ParticleFilter::ParticleFilter(SHModel *model, APrioriDensity aPriori, Likelihoo
     std::cout << "\tdone." << std::endl;
 }
 
-ParticleFilter::ParticleFilter(SHModel *model, APrioriDensity aPriori, LikelihoodDensity likelihood, ImportanceDensity importance,
+ParticleFilter::ParticleFilter(Signal *signal, SHModel *model, APrioriDensity aPriori, LikelihoodDensity likelihood, ImportanceDensity importance,
                                Mask::Pointer mask, Image::SizeType size, Image::PointType origin, Image::SpacingType spacing,
                                unsigned int M, Point x0, Real epsilon, Real stepSize, char displaMode) :
         m_aPriori(aPriori), m_likelihood(likelihood), m_importance(importance)
@@ -159,6 +161,7 @@ ParticleFilter::ParticleFilter(SHModel *model, APrioriDensity aPriori, Likelihoo
     m_origin    = origin;
     m_spacing   = spacing;
     m_model     = model;
+    m_signal    = signal;
     m_dirNum    = 1;
     m_kx        = m_stepSize/m_spacing[0];
     m_ky        = m_stepSize/m_spacing[1];
@@ -250,7 +253,8 @@ void ParticleFilter::run(int label)
     this->ComputeMap();
     Particle map2 = this->GetMAP();
 
-    this->ComputeFiber(map1,map2);
+    if(map1.length() + map2.length() > 2)
+        this->ComputeFiber(map1,map2);
 }
 
 void ParticleFilter::run(int label, Direction dir)
@@ -288,12 +292,11 @@ void ParticleFilter::run(int label, Direction dir)
     } // for i
 
     Real w    = 1.0/(Real)m_M;
-    Real logw = std::log(w);
 
     #pragma omp parallel for
     for(unsigned int m=0; m<m_M; m++)
     {
-        weights[m] = logw;
+        weights[m] = w;
         m_cloud[m].setWeight(w);
     }
 
@@ -333,9 +336,11 @@ void ParticleFilter::run(int label, Direction dir)
                 // Compute particle's weight
                 if(mu.isNull())
                 {
+                    Real apriori    = m_aPriori.compute(uk, ukm1);
+                    Real importance = m_importance.compute(uk, ukm1, kappa);
                     m_cloud[m].addLikelihood(0);
 
-                    weights[m] = m_cloud[m].weight();
+                    weights[m] = std::exp( std::log(m_cloud[m].weight()) + apriori - importance );
                 }
                 else // mu is not null
                 {
@@ -344,7 +349,7 @@ void ParticleFilter::run(int label, Direction dir)
                     Real importance = m_importance.compute(uk, mu, kappa);
                     m_cloud[m].addLikelihood(likelihood);
 
-                    weights[m] = m_cloud[m].weight() * std::exp(likelihood + apriori - importance);
+                    weights[m] = std::exp( std::log(m_cloud[m].weight()) + likelihood + apriori - importance );
                 }
 
                 if(!std::isfinite(weights[m]) || std::isnan(weights[m]))
@@ -501,84 +506,80 @@ void ParticleFilter::saveCloudInVTK(int label, unsigned int step, Point begin)
     // Build VTK PolyData from particle's cloud
     //
 
-    vtkSmartPointer<vtkPoints>      points = vtkSmartPointer<vtkPoints>::New();
-    vtkSmartPointer<vtkCellArray>    lines = vtkSmartPointer<vtkCellArray>::New();
-    vtkSmartPointer<vtkDoubleArray> colors = vtkSmartPointer<vtkDoubleArray>::New();
+    vtkSmartPointer<vtkPoints>       points = vtkSmartPointer<vtkPoints>::New();
+    vtkSmartPointer<vtkCellArray>     lines = vtkSmartPointer<vtkCellArray>::New();
+    vtkSmartPointer<vtkDoubleArray> weights = vtkSmartPointer<vtkDoubleArray>::New();
 
-    vtkIdType pid[1];
-    colors->SetNumberOfComponents(1);
+    vtkIdType pid;
+    double valueWeight = 0;
+
+    weights->SetNumberOfComponents(1);
 
     // create all points and lines
     for(std::vector<Particle>::iterator pIt = m_cloud.begin(); pIt != m_cloud.end(); pIt++)
     {
-//        if(pIt->isActive())
-//        {
-            ImageContinuousIndex cix;
-            Image::PointType wx;
+        vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
+        ImageContinuousIndex cix;
+        Image::PointType wx;
+        unsigned int id = 0;
 
-            Point x0 = pIt->getPoint(0);
+        Point x0 = pIt->getPoint(0);
 
-            cix[0] = x0.x(); cix[1] = x0.y(); cix[2] = x0.z();
-            m_map->TransformContinuousIndexToPhysicalPoint(cix, wx);
+        cix[0] = x0.x(); cix[1] = x0.y(); cix[2] = x0.z();
+        m_map->TransformContinuousIndexToPhysicalPoint(cix, wx);
 
-            if(m_lps)
-                points->InsertNextPoint(wx[0], wx[1], wx[2]);
-            else // ras
-                points->InsertNextPoint(-wx[0], -wx[1], wx[2]);
+        if(m_lps)
+            pid = points->InsertNextPoint(wx[0], wx[1], wx[2]);
+        else // ras
+            pid = points->InsertNextPoint(-wx[0], -wx[1], wx[2]);
 
-            double color[1]; color[0] = pIt->weight();
-            colors->InsertNextTupleValue(color);
+        valueWeight = pIt->getWeight(id++);
+        weights->InsertNextTupleValue(&valueWeight);
 
-            for(unsigned int i=1; i<=pIt->length(); i++)
+        for(unsigned int i=1; i<=pIt->length(); i++)
+        {
+            Point xk = pIt->getPoint(i);
+
+            Point xkm1 = pIt->getPoint(i-1);
+            Vector vk  = pIt->getVector(i-1);
+            Point p    = xk + vk*(-1);
+
+            if(!(p == xkm1)) // points are note linked
             {
-                vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
-                Point xk = pIt->getPoint(i);
-
-                cix[0] = xk.x(); cix[1] = xk.y(); cix[2] = xk.z();
+                cix[0] = p.x(); cix[1] = p.y(); cix[2] = p.z();
                 m_map->TransformContinuousIndexToPhysicalPoint(cix, wx);
 
                 if(m_lps)
-                    pid[0] = points->InsertNextPoint(wx[0], wx[1], wx[2]);
+                    pid = points->InsertNextPoint(wx[0], wx[1], wx[2]);
                 else // ras
-                    pid[0] = points->InsertNextPoint(-wx[0], -wx[1], wx[2]);
+                    pid = points->InsertNextPoint(-wx[0], -wx[1], wx[2]);
 
-                Point xkm1 = pIt->getPoint(i-1);
-                Vector vk  = pIt->getVector(i-1);
-                Point p    = xk + vk*(-1);
+                valueWeight = 1.0/m_M;
+                weights->InsertNextTupleValue(&valueWeight);
+            }
 
-                if(!(p == xkm1)) // points are note linked
-                {
-                    cix[0] = p.x(); cix[1] = p.y(); cix[2] = p.z();
-                    m_map->TransformContinuousIndexToPhysicalPoint(cix, wx);
+            cix[0] = xk.x(); cix[1] = xk.y(); cix[2] = xk.z();
+            m_map->TransformContinuousIndexToPhysicalPoint(cix, wx);
 
-                    if(m_lps)
-                        pid[0] = points->InsertNextPoint(wx[0], wx[1], wx[2]);
-                    else // ras
-                        pid[0] = points->InsertNextPoint(-wx[0], -wx[1], wx[2]);
+            if(m_lps)
+            pid = points->InsertNextPoint(wx[0], wx[1], wx[2]);
+            else // ras
+            pid = points->InsertNextPoint(-wx[0], -wx[1], wx[2]);
 
-                    cix[0] = xk.x(); cix[1] = xk.y(); cix[2] = xk.z();
-                    m_map->TransformContinuousIndexToPhysicalPoint(cix, wx);
+            valueWeight = pIt->getWeight(id++);
+            weights->InsertNextTupleValue(&valueWeight);
 
-                    if(m_lps)
-                        pid[0] = points->InsertNextPoint(wx[0], wx[1], wx[2]);
-                    else // ras
-                        pid[0] = points->InsertNextPoint(-wx[0], -wx[1], wx[2]);
-                }
-
-                line->GetPointIds()->SetId(0, pid[0]-1);
-                line->GetPointIds()->SetId(1, pid[0]);
-                lines->InsertNextCell(line);
-
-                colors->InsertNextTupleValue(color);
-            } // for i
-//        }
+            line->GetPointIds()->SetId(0, pid-1);
+            line->GetPointIds()->SetId(1, pid);
+            lines->InsertNextCell(line);
+        } // for i
     } // for each particle
 
     // create vtk polydata object
     vtkSmartPointer<vtkPolyData> cloud = vtkSmartPointer<vtkPolyData>::New();
     cloud->SetPoints(points);
     cloud->SetLines(lines);
-    cloud->GetPointData()->SetScalars(colors);
+    cloud->GetPointData()->SetScalars(weights);
 
 
     //
@@ -591,7 +592,6 @@ void ParticleFilter::saveCloudInVTK(int label, unsigned int step, Point begin)
     vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
     writer->SetInput(cloud);
     writer->SetFileName(filename.str().c_str());
-    writer->SetFileTypeToBinary();
     writer->Write();
 }
 
@@ -611,9 +611,10 @@ Particle ParticleFilter::GetMAP()
         #pragma omp parallel for
         for(unsigned int m=0; m<m_M; m++)
         {
-            if(m_cloud[m].length() > 1)
+//            if(m_cloud[m].length() > 1)
+            if(m_cloud[m].length() >= 1)
             {
-                assert(m_cloud[m].length() > 1);
+                assert(m_cloud[m].length() >= 1);
                 delta[Ind(0,m)] = m_aPriori.compute(m_cloud[m].getVector(1).toDirection(), m_cloud[m].getVector(0).toDirection()) + m_cloud[m].getLikelihood(0);
             }
             else
@@ -631,19 +632,21 @@ Particle ParticleFilter::GetMAP()
                     Real max          = MIN_REAL;
                     unsigned int imax = 0;
 
+                    assert(k+1 <= m_cloud[m].length());
                     Point xkp1m = m_cloud[m].getPoint(k+1);
 
                     for(unsigned int i=0; i<m_M; i++)
                     {
                         if(k < m_cloud[i].length())
                         {
-                            Point xkp1i     = m_cloud[i].getPoint(k+1);
+                            assert(k+1 <= m_cloud[i].length());
+                            Point xkp1i   = m_cloud[i].getPoint(k+1);
                             Real distance = std::sqrt( (xkp1i.x()-xkp1m.x())*(xkp1i.x()-xkp1m.x()) + (xkp1i.y()-xkp1m.y())*(xkp1i.y()-xkp1m.y()) + (xkp1i.z()-xkp1m.z())*(xkp1i.z()-xkp1m.z()));
 
                             if(distance <= 0.01)
                             {
-                                assert(m_cloud[m].length() > k+1);
-                                assert(m_cloud[i].length() > k);
+                                assert(k+1 < m_cloud[m].length());
+                                assert(k < m_cloud[i].length());
                                 Real tmp = delta[Ind(k-1,i)] + m_aPriori.compute(m_cloud[m].getVector(k+1).toDirection(), m_cloud[i].getVector(k).toDirection());
 
                                 if(tmp > max)
@@ -733,45 +736,83 @@ Particle ParticleFilter::GetMAP()
     return map;
 }
 
+double ParticleFilter::ComputeGFA(Point p)
+{
+    Matrix S = m_signal->signalAt(p);
+
+    double average = 0;
+    for(unsigned int i=0; i<S.Rows(); i++)
+        average += S(i,0);
+    average /= S.Rows();
+
+    double std = 0;
+    for(unsigned int i=0; i<S.Rows(); i++)
+        std += (S(i,0)-average) * (S(i,0)-average);
+    std /= S.Rows();
+    std = std::sqrt(std);
+
+    double rms = 0;
+    for(unsigned int i=0; i<S.Rows(); i++)
+        rms += S(i,0) * S(i,0);
+    rms /= S.Rows();
+    rms = std::sqrt(rms);
+
+    return std / rms;
+}
+
 void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
 {
     // VTK structures
-    vtkSmartPointer<vtkAppendPolyData> append = vtkSmartPointer<vtkAppendPolyData>::New();
+    m_fiber = vtkSmartPointer<vtkPolyData>::New();
 
-    vtkSmartPointer<vtkPolyData> fiber1       = vtkSmartPointer<vtkPolyData>::New();
-    vtkSmartPointer<vtkPoints> points1        = vtkSmartPointer<vtkPoints>::New();
-    vtkSmartPointer<vtkCellArray> lines1      = vtkSmartPointer<vtkCellArray>::New();
+    vtkSmartPointer<vtkPoints>   points = vtkSmartPointer<vtkPoints>::New();
+    vtkSmartPointer<vtkCellArray> lines = vtkSmartPointer<vtkCellArray>::New();
+    vtkSmartPointer<vtkPolyLine>   line = vtkSmartPointer<vtkPolyLine>::New();
+    vtkSmartPointer<vtkDoubleArray> gfa = vtkSmartPointer<vtkDoubleArray>::New();
 
-    vtkSmartPointer<vtkPolyData> fiber2       = vtkSmartPointer<vtkPolyData>::New();
-    vtkSmartPointer<vtkPoints> points2        = vtkSmartPointer<vtkPoints>::New();
-    vtkSmartPointer<vtkCellArray> lines2      = vtkSmartPointer<vtkCellArray>::New();
+    // Data
+    vtkIdType pid;
+    unsigned int id = 0;
+    double valueGFA = 0;
 
-    vtkIdType pid[1];
+    ImageContinuousIndex ci;
+    Image::PointType wp;
 
 
     // Build fiber with the MAP estimate in world coordinates
+    gfa->SetNumberOfComponents(1);
+    line->GetPointIds()->SetNumberOfIds(map1.length() + map2.length()/* - 2*/);
 
-    Point x0 = map1.getPoint(0);
-    ImageContinuousIndex cix0;
-    cix0[0] = x0.x(); cix0[1] = x0.y(); cix0[2] = x0.z();
-    Image::PointType wx0;
-    m_map->TransformContinuousIndexToPhysicalPoint(cix0, wx0);
+    // First point
+//    Point p = map1.getPoint(map1.length()-1);
+    Point p = map1.getPoint(map1.length());
+    ci[0] = p.x(); ci[1] = p.y(); ci[2] = p.z();
+    m_map->TransformContinuousIndexToPhysicalPoint(ci,wp);
 
     if(m_lps)
-        points1->InsertNextPoint(wx0[0], wx0[1], wx0[2]);
+        pid = points->InsertNextPoint(wp[0], wp[1], wp[2]);
     else // ras
-        points1->InsertNextPoint(-wx0[0], -wx0[1], wx0[2]);
+        pid = points->InsertNextPoint(-wp[0], -wp[1], wp[2]);
 
+    valueGFA = this->ComputeGFA(p);
+    gfa->InsertNextTuple(&valueGFA);
+    line->GetPointIds()->SetId(id++,pid);
 
-    for(unsigned int k=2; k<map1.length(); k++)
+    // First part
+//    for(int k=map1.length()-3; k>=0; k--)
+    for(int k=map1.length()-2; k>=0; k--)
     {
-        Point p1 = map1.getPoint(k-2);
-        Point p2 = map1.getPoint(k-1);
+        assert(k+2 <= map1.length());
+        assert(k+1 <= map1.length());
+        assert(k   <= map1.length());
+
+        Point p1 = map1.getPoint(k+2);
+        Point p2 = map1.getPoint(k+1);
         Point p3 = map1.getPoint(k);
 
         Image::PointType wp1, wp2, wp3;
-
         ImageContinuousIndex cip;
+
         cip[0] = p1.x(); cip[1] = p1.y(); cip[2] = p1.z();
         m_map->TransformContinuousIndexToPhysicalPoint(cip, wp1);
         cip[0] = p2.x(); cip[1] = p2.y(); cip[2] = p2.z();
@@ -780,39 +821,61 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
         m_map->TransformContinuousIndexToPhysicalPoint(cip, wp3);
 
         if(m_lps)
-            pid[0] = points1->InsertNextPoint( (wp1[0]+wp2[0]+wp3[0])/3.0, (wp1[1]+wp2[1]+wp3[1])/3.0, (wp1[2]+wp2[2]+wp3[2])/3.0 );
+            pid = points->InsertNextPoint( (wp1[0]+wp2[0]+wp3[0])/3.0, (wp1[1]+wp2[1]+wp3[1])/3.0, (wp1[2]+wp2[2]+wp3[2])/3.0 );
         else // ras
-            pid[0] = points1->InsertNextPoint( -(wp1[0]+wp2[0]+wp3[0])/3.0, -(wp1[1]+wp2[1]+wp3[1])/3.0, (wp1[2]+wp2[2]+wp3[2])/3.0 );
+            pid = points->InsertNextPoint( -(wp1[0]+wp2[0]+wp3[0])/3.0, -(wp1[1]+wp2[1]+wp3[1])/3.0, (wp1[2]+wp2[2]+wp3[2])/3.0 );
 
-        vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
-        line->GetPointIds()->SetId(0, pid[0]-1);
-        line->GetPointIds()->SetId(1, pid[0]);
-        lines1->InsertNextCell(line);
+        valueGFA = this->ComputeGFA(Point( (p1.x()+p2.x()+p3.x())/3.0, (p1.y()+p2.y()+p3.y())/3.0, (p1.z()+p2.z()+p3.z())/3.0 ));
+        gfa->InsertNextTuple(&valueGFA);
+        line->GetPointIds()->SetId(id++,pid);
     }
 
-    fiber1->SetPoints(points1);
-    fiber1->SetLines(lines1);
-
-
-    x0 = map2.getPoint(0);
-    cix0[0] = x0.x(); cix0[1] = x0.y(); cix0[2] = x0.z();
-    m_map->TransformContinuousIndexToPhysicalPoint(cix0, wx0);
-
-    if(m_lps)
-        points2->InsertNextPoint(wx0[0], wx0[1], wx0[2]);
-    else // ras
-        points2->InsertNextPoint(-wx0[0], -wx0[1], wx0[2]);
-
-
-    for(unsigned int k=2; k<map2.length(); k++)
+    // Middle point
+    if(map1.length() >= 1 && map2.length() >= 1)
     {
+        assert(1 <= map1.length());
+        assert(1 <= map2.length());
+
+        Point p1 = map1.getPoint(1);
+        Point p2 = map2.getPoint(0);
+        Point p3 = map2.getPoint(1);
+
+        Image::PointType wp1, wp2, wp3;
+        ImageContinuousIndex cip;
+
+        cip[0] = p1.x(); cip[1] = p1.y(); cip[2] = p1.z();
+        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp1);
+        cip[0] = p2.x(); cip[1] = p2.y(); cip[2] = p2.z();
+        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp2);
+        cip[0] = p3.x(); cip[1] = p3.y(); cip[2] = p3.z();
+        m_map->TransformContinuousIndexToPhysicalPoint(cip, wp3);
+
+        if(m_lps)
+            pid = points->InsertNextPoint( (wp1[0]+wp2[0]+wp3[0])/3.0, (wp1[1]+wp2[1]+wp3[1])/3.0, (wp1[2]+wp2[2]+wp3[2])/3.0 );
+        else // ras
+            pid = points->InsertNextPoint( -(wp1[0]+wp2[0]+wp3[0])/3.0, -(wp1[1]+wp2[1]+wp3[1])/3.0, (wp1[2]+wp2[2]+wp3[2])/3.0 );
+
+        valueGFA = this->ComputeGFA(Point( (p1.x()+p2.x()+p3.x())/3.0, (p1.y()+p2.y()+p3.y())/3.0, (p1.z()+p2.z()+p3.z())/3.0 ));
+        gfa->InsertNextTuple(&valueGFA);
+        line->GetPointIds()->SetId(id++,pid);
+    }
+
+
+    // Last part
+//    for(unsigned int k=2; k<map2.length(); k++)
+    for(unsigned int k=2; k<=map2.length(); k++)
+    {
+        assert(k-2 <= map2.length());
+        assert(k-1 <= map2.length());
+        assert(k   <= map2.length());
+
         Point p1 = map2.getPoint(k-2);
         Point p2 = map2.getPoint(k-1);
         Point p3 = map2.getPoint(k);
 
         Image::PointType wp1, wp2, wp3;
-
         ImageContinuousIndex cip;
+
         cip[0] = p1.x(); cip[1] = p1.y(); cip[2] = p1.z();
         m_map->TransformContinuousIndexToPhysicalPoint(cip, wp1);
         cip[0] = p2.x(); cip[1] = p2.y(); cip[2] = p2.z();
@@ -821,25 +884,19 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
         m_map->TransformContinuousIndexToPhysicalPoint(cip, wp3);
 
         if(m_lps)
-            pid[0] = points2->InsertNextPoint( (wp1[0]+wp2[0]+wp3[0])/3.0, (wp1[1]+wp2[1]+wp3[1])/3.0, (wp1[2]+wp2[2]+wp3[2])/3.0 );
+            pid = points->InsertNextPoint( (wp1[0]+wp2[0]+wp3[0])/3.0, (wp1[1]+wp2[1]+wp3[1])/3.0, (wp1[2]+wp2[2]+wp3[2])/3.0 );
         else // ras
-            pid[0] = points2->InsertNextPoint( -(wp1[0]+wp2[0]+wp3[0])/3.0, -(wp1[1]+wp2[1]+wp3[1])/3.0, (wp1[2]+wp2[2]+wp3[2])/3.0 );
+            pid = points->InsertNextPoint( -(wp1[0]+wp2[0]+wp3[0])/3.0, -(wp1[1]+wp2[1]+wp3[1])/3.0, (wp1[2]+wp2[2]+wp3[2])/3.0 );
 
-        vtkSmartPointer<vtkLine> line = vtkSmartPointer<vtkLine>::New();
-        line->GetPointIds()->SetId(0, pid[0]-1);
-        line->GetPointIds()->SetId(1, pid[0]);
-        lines2->InsertNextCell(line);
+        valueGFA = this->ComputeGFA(Point( (p1.x()+p2.x()+p3.x())/3.0, (p1.y()+p2.y()+p3.y())/3.0, (p1.z()+p2.z()+p3.z())/3.0 ));
+        gfa->InsertNextTuple(&valueGFA);
+        line->GetPointIds()->SetId(id++,pid);
     }
 
-    fiber2->SetPoints(points2);
-    fiber2->SetLines(lines2);
-
-
-    // create vtk polydata object
-    append->AddInput(fiber1);
-    append->AddInput(fiber2);
-    append->Update();
-    m_fiber = append->GetOutput();
+    lines->InsertNextCell(line);
+    m_fiber->SetPoints(points);
+    m_fiber->SetLines(lines);
+    m_fiber->GetPointData()->SetScalars(gfa);
 }
 
 void ParticleFilter::saveFiber(int label, unsigned int step, Point begin)
@@ -868,6 +925,7 @@ void ParticleFilter::ComputeMap()
         for(unsigned int k=0; k<=particle->length(); k++)
         {
             // Get data
+            assert(k <= particle->length());
             Point p = particle->getPoint(k);
 //            Real  w = (k == 0) ? 1.0/(Real)m_M : particle->getWeight(k-1);
             Real w  = 1;
