@@ -92,6 +92,9 @@ TARGET_LINK_LIBRARIES(btkAverageImagesWithReference ${ITK_LIBRARIES})
 
 #------------------------------------------------------------------------------
 
+ADD_EXECUTABLE(btkImageInjection btkImageInjection.cxx )
+TARGET_LINK_LIBRARIES(btkImageInjection ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkReorientImageToStandard
                 btkReorientDiffusionSequenceToStandard

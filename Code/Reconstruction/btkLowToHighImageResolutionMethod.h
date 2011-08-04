@@ -203,18 +203,15 @@ public:
   /** Set the number of images */
   void SetNumberOfImages(int N);
 
-  /** write output images and extract their slices after each resolution */
+  /** Initialize by setting the interconnects between the components.
+   */
+  void Initialize() throw (ExceptionObject);
 
 
 protected:
   LowToHighImageResolutionMethod();
   virtual ~LowToHighImageResolutionMethod() {};
   void PrintSelf(std::ostream& os, Indent indent) const;
-
-  /** Initialize by setting the interconnects between the components.
-   */
-  void Initialize() throw (ExceptionObject);
-
 
 
 private:
