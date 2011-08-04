@@ -39,11 +39,8 @@
 
 #include "btkLowToHighImageResolutionMethod.h"
 #include "btkResampleImageByInjectionFilter.h"
-#include "itkLinearInterpolateImageFunction.h"
 
-#include "itkEuler3DTransform.h"
 #include "btkSliceBySliceTransform.h"
-#include "itkTransformFileWriter.h"
 #include "itkTransformFileReader.h"
 
 #include "itkImage.h"
@@ -66,7 +63,6 @@ int main( int argc, char *argv[] )
   std::vector< std::string > mask;
   std::vector< std::string > transform;
   std::vector< std::string > roi;
-  std::vector< std::string > resampled;
 
   double margin;
 
@@ -79,9 +75,6 @@ int main( int argc, char *argv[] )
   TCLAP::MultiArg<std::string> inputArg("i","input","Image file",true,"string",cmd);
   TCLAP::MultiArg<std::string> maskArg("m","","Mask file",false,"string",cmd);
   TCLAP::MultiArg<std::string> transformArg("t","transform","Transform input file",true,"string",cmd);
-  TCLAP::MultiArg<std::string> roiArg("","roi","roi file (written as mask)",false,"string",cmd);
-  TCLAP::MultiArg<std::string> resampledArg("","ir","Resampled image with initial transform",false,"string",cmd);
-
   TCLAP::ValueArg<std::string> outArg("o","output","High resolution image",true,"","string",cmd);
 
   TCLAP::ValueArg<double> marginArg("","margin","Adds a margin to the reconstructed images"
@@ -108,8 +101,6 @@ int main( int argc, char *argv[] )
   mask = maskArg.getValue();
   outImage = outArg.getValue().c_str();
   transform = transformArg.getValue();
-  roi = roiArg.getValue();
-  resampled = resampledArg.getValue();
   margin = marginArg.getValue();
 
   // typedefs
