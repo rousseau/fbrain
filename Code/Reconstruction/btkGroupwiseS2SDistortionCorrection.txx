@@ -197,6 +197,7 @@ GroupwiseS2SDistortionCorrection<TSequence>
       ImageExtractorPointer movingExtractor = ImageExtractorType::New();
       movingExtractor -> SetExtractionRegion( movingRegion );
       movingExtractor -> SetInput( m_Input );
+      movingExtractor -> SetDirectionCollapseToSubmatrix();
       movingExtractor -> Update();
 
       ImagePointer movingImage = movingExtractor -> GetOutput();
@@ -299,6 +300,7 @@ GroupwiseS2SDistortionCorrection<TSequence>
   ImageExtractorPointer T2epiExtractor  = ImageExtractorType::New();
   T2epiExtractor -> SetExtractionRegion( extractorRegion );
   T2epiExtractor -> SetInput( m_Input );
+  T2epiExtractor -> SetDirectionCollapseToSubmatrix();
   T2epiExtractor -> Update();
 
   m_T2epi = T2epiExtractor -> GetOutput();
@@ -310,6 +312,7 @@ GroupwiseS2SDistortionCorrection<TSequence>
 
   ImageExtractorPointer G1Extractor  = ImageExtractorType::New();
   G1Extractor -> SetExtractionRegion( extractorRegion );
+  G1Extractor -> SetDirectionCollapseToSubmatrix();
   G1Extractor -> SetInput( m_Input );
 
   GaussianFilterPointer fixedSmoother  = GaussianFilterType::New();
@@ -459,6 +462,7 @@ GroupwiseS2SDistortionCorrection<TSequence>
       ImageExtractorPointer movingExtractor = ImageExtractorType::New();
       movingExtractor -> SetExtractionRegion( movingRegion );
       movingExtractor -> SetInput( m_Input );
+      movingExtractor -> SetDirectionCollapseToSubmatrix();
 
       GaussianFilterPointer movingSmoother  = GaussianFilterType::New();
       movingSmoother -> SetUseImageSpacingOn();

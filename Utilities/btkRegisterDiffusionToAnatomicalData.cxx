@@ -290,6 +290,7 @@ int main( int argc, char *argv[] )
   region.SetSize(size);
 
   extractor -> SetExtractionRegion( region );
+  extractor -> SetDirectionCollapseToSubmatrix();
   extractor -> Update();
 
   ImageType::Pointer b0 = extractor -> GetOutput();

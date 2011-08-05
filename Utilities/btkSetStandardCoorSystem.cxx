@@ -146,6 +146,7 @@ int main( int argc, char *argv[] )
       desiredRegion.SetIndex( start );
 
       extractor -> SetExtractionRegion( desiredRegion );
+      extractor -> SetDirectionCollapseToSubmatrix();
 
       FilterType::Pointer filter = FilterType::New();
       filter -> SetInput( extractor -> GetOutput()  );

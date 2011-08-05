@@ -48,7 +48,6 @@
 #include "vnl/vnl_cross.h"
 
 #include "itkEuler3DTransform.h"
-#include "itkExtractImageFilter.h"
 #include "itkResampleImageFilter.h"
 #include "itkNearestNeighborInterpolateImageFunction.h"
 #include "itkOrientImageFilter.h"

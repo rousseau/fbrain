@@ -177,6 +177,7 @@ int main( int argc, char *argv[] )
   region.SetSize(size);
 
   extractor -> SetExtractionRegion( region );
+  extractor -> SetDirectionCollapseToSubmatrix();
   extractor -> Update();
 
   Image3DType::Pointer b0_ori = extractor -> GetOutput();
@@ -247,6 +248,7 @@ int main( int argc, char *argv[] )
 
   extractor_reo -> SetInput( image_reo );
   extractor_reo -> SetExtractionRegion( region_reo );
+  extractor_reo -> SetDirectionCollapseToSubmatrix();
   extractor_reo -> Update();
 
   Image3DType::Pointer b0_reo = extractor_reo -> GetOutput();
@@ -365,6 +367,7 @@ int main( int argc, char *argv[] )
   stdRegion.SetSize(stdSize);
 
   stdExtractor -> SetExtractionRegion( stdRegion );
+  stdExtractor -> SetDirectionCollapseToSubmatrix();
   stdExtractor -> Update();
 
   Image3DType::Pointer stdB0 = stdExtractor -> GetOutput();

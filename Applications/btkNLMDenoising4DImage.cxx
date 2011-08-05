@@ -149,6 +149,7 @@ int main(int argc, char** argv)
       std::cout<<"3D region : "<<desired3DSize[0]<<" "<<desired3DSize[1]<<" "<<desired3DSize[2]<<" "<<desired3DSize[3]<<"\n";
 
       extractor->SetExtractionRegion( desiredRegion );
+      extractor->SetDirectionCollapseToSubmatrix();
       extractor->Update();
       Image3DPointer input3DImage = extractor->GetOutput();
 
@@ -164,14 +165,14 @@ int main(int argc, char** argv)
       myTool.SetInput(input3DImage);
 
       if (mask_file!=""){               //reading the mask image
-	Reader3DType::Pointer maskReader = Reader3DType::New();
-	maskReader->SetFileName( mask_file );
-	maskReader->Update();
-	maskImage = maskReader->GetOutput();
-	myTool.SetMaskImage(maskImage);
+  Reader3DType::Pointer maskReader = Reader3DType::New();
+  maskReader->SetFileName( mask_file );
+  maskReader->Update();
+  maskImage = maskReader->GetOutput();
+  myTool.SetMaskImage(maskImage);
       }
       else                                 //creating a mask image using the padding value
-	myTool.SetPaddingValue(padding);
+  myTool.SetPaddingValue(padding);
 
       myTool.SetPatchSize(hwn);
       myTool.SetSpatialBandwidth(hwvs);
