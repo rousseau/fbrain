@@ -33,21 +33,6 @@
 
 ==========================================================================*/
 
-
-/*=========================================================================
-
-  Purpose: class for obtaining a high resolution image from different views
-  by applying affine registration and averaging. First step of the method
-  described in:
-
-  Rousseau, F., Glenn, O.A., Iordanova, B., Rodriguez-Carranza, C.,
-  Vigneron, D.B., Barkovich, J.A., Studholme, C.: Registration-based approach
-  for reconstruction of high-resolution in utero fetal MR brain images. Acad
-  Radiol 13(9) (Sep 2006) 1072–1081
-
-=========================================================================*/
-
-
 #ifndef __btkLowToHighImageResolutionMethod_h
 #define __btkLowToHighImageResolutionMethod_h
 
@@ -70,11 +55,16 @@ namespace btk
 using namespace itk;
 
 /** \class LowToHighImageResolutionMethod
- * \brief Describe the class briefly here.
+ * \brief Class for obtaining an isovoxel image from low resolution images.
  *
- * Full class description
- * Full class description
- * Full class description
+ * Class for obtaining an isovoxel image from different low resolution images
+ * by applying affine registration and averaging. First step of the method
+ * described in:
+ *
+ * Rousseau, F., Glenn, O.A., Iordanova, B., Rodriguez-Carranza, C.,
+ * Vigneron, D.B., Barkovich, J.A., Studholme, C.: Registration-based approach
+ * for reconstruction of high-resolution in utero fetal MR brain images. Acad
+ * Radiol 13(9) (Sep 2006) 1072–1081
 
  * \sa ImageRegistrationMethod
  * \ingroup RegistrationFilters
@@ -222,8 +212,6 @@ private:
   ImageArrayPointer 			         m_ImageArray;
   RegionArray                      m_RegionArray;
   ImageMaskArray                   m_ImageMaskArray;
-//  RegistrationPointer							 m_Registration;
-//  ParametersArrayType              m_InitialRigidParameters;
 
   SpacingType											 m_ResampleSpacing;
   SizeType											   m_ResampleSize;

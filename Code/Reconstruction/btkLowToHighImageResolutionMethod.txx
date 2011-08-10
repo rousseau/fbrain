@@ -52,62 +52,6 @@ LowToHighImageResolutionMethod<ImageType>
 ::Initialize() throw (ExceptionObject)
 {
 
-/*  m_Registration = RegistrationType::New();
-  m_Registration -> SetFixedImage(  m_ImageArray[m_TargetImage]  );
-  m_Registration -> SetFixedImageRegion( m_RegionArray[m_TargetImage] );
-
-  // FIXME The following lines should be executed only if masks are set
-
-  m_Registration -> SetFixedImageMask( m_ImageMaskArray[m_TargetImage] );
-  m_Registration -> InitializeWithMask();
-  m_Registration -> SetEnableObserver( false ); */
-
-  // Initial rigid parameters computed from the center of ROIs
-/*  PointType centerPointTarget = m_Registration -> GetRotationCenter();
-
-  m_InitialRigidParameters.resize(m_NumberOfImages);
-
-  for (unsigned int i=0; i<m_NumberOfImages; i++)
-  {
-    // if the user doesn't provide masks, we initialize the transformation with
-    // rois, if not we use the masks
-    if (m_InitializeWithMask)
-    {
-      m_InitialRigidParameters[i].SetSize(6);
-      m_InitialRigidParameters[i].Fill(0.0);
-
-      IndexType regionStart = m_RegionArray[i].GetIndex();
-      SizeType  regionSize  = m_RegionArray[i].GetSize();
-
-      IndexType centerIndex;
-      centerIndex[0] = regionStart[0] + regionSize[0]/2;
-      centerIndex[1] = regionStart[1] + regionSize[1]/2;
-      centerIndex[2] = regionStart[2] + regionSize[2]/2;
-
-      PointType centerPoint;
-      m_ImageArray[i] -> TransformIndexToPhysicalPoint(centerIndex,centerPoint);
-
-      m_InitialRigidParameters[i][3] = centerPoint[0] - centerPointTarget[0];
-      m_InitialRigidParameters[i][4] = centerPoint[1] - centerPointTarget[1];
-      m_InitialRigidParameters[i][5] = centerPoint[2] - centerPointTarget[2];
-    } else
-    {
-
-      TransformInitializerType::Pointer initializer = TransformInitializerType::New();
-      EulerTransformType::Pointer transform = EulerTransformType::New();
-
-      initializer->SetTransform( transform );
-      initializer->SetFixedImage(  m_ImageMaskArray[m_TargetImage] );
-      initializer->SetMovingImage( m_ImageMaskArray[i] );
-      initializer->MomentsOn();
-      initializer->InitializeTransform();
-      m_InitialRigidParameters[i] = transform -> GetParameters();
-
-    }
-  }
-
-*/
-
    /* Create interpolator */
    m_Interpolator = InterpolatorType::New();
 
@@ -123,7 +67,6 @@ LowToHighImageResolutionMethod<ImageType>
   IndexType index;
   IndexType targetIndex;
   PointType point;
-//  SizeType  newSize();
 
   indexMin = m_ImageArray[m_TargetImage] -> GetLargestPossibleRegion().GetIndex();
 
@@ -153,13 +96,6 @@ LowToHighImageResolutionMethod<ImageType>
       }
     }
   }
-
-/*  std::cout << "index min = " << indexMin << std::endl;
-  std::cout << "index = " << m_ImageArray[m_TargetImage] -> GetLargestPossibleRegion().GetIndex() << std::endl;
-
-  std::cout << "index max = " << indexMax << std::endl;
-  std::cout << "size = " << m_ImageArray[m_TargetImage] -> GetLargestPossibleRegion().GetSize()  << std::endl; */
-
 
   m_ResampleSpacing[0] = fixedSpacing[0];
   m_ResampleSpacing[1] = fixedSpacing[0];
@@ -280,7 +216,7 @@ LowToHighImageResolutionMethod<ImageType>
     int value;
     unsigned int counter;
 
-//    std::cout << "Creating initial HR image ... " ; std::cout.flush();
+    // Average registered images
 
     for (imageIt.GoToBegin(); !imageIt.IsAtEnd(); ++imageIt )
     {
@@ -301,7 +237,6 @@ LowToHighImageResolutionMethod<ImageType>
       }
       if ( counter>0 ) imageIt.Set(value/counter);
      }
-//     std::cout << "done." << std::endl; std::cout.flush();
 
 }
 
