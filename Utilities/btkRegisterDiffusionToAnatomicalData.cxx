@@ -118,9 +118,11 @@ int main( int argc, char *argv[] )
   TCLAP::ValueArg<std::string> inputArg("i","input","Diffusion sequence",true,"","string",cmd);
   TCLAP::ValueArg<std::string> referenceArg("r","reference","Anatomical image",true,"","string",cmd);
   TCLAP::ValueArg<std::string> outputArg("o","output","Registered diffusion sequence",true,"","string",cmd);
-  TCLAP::ValueArg<std::string> maskArg("m","mask","Mask for the reference image",false,"","string",cmd);
+  TCLAP::ValueArg<std::string> maskArg("m","mask","Mask for the b0 image",false,"","string",cmd);
   TCLAP::ValueArg<std::string> mgradArg("","mean-gradient","Mean gradient",false,"","string",cmd);
   TCLAP::ValueArg<std::string> mgradResampledArg("","mean-gradient-resampled","Mean gradient resampled",false,"","string",cmd);
+
+  // TODO: is this way of passing rois useful? If not, consider removing it ...
 
   TCLAP::ValueArg<unsigned int> x1Arg("","x1","x min of ROI in diffusion (default is 0)",false,0,"int",cmd);
   TCLAP::ValueArg<unsigned int> x2Arg("","x2","x max of ROI in diffusion (default is 0)",false,0,"int",cmd);
@@ -131,8 +133,10 @@ int main( int argc, char *argv[] )
   TCLAP::ValueArg<unsigned int> z1Arg("","z1","z min of ROI in diffusion (default is 0)",false,0,"int",cmd);
   TCLAP::ValueArg<unsigned int> z2Arg("","z2","z max of ROI in diffusion (default is 0)",false,0,"int",cmd);
 
-  TCLAP::ValueArg<std::string> toutArg("","transformation","Estimated transformation",false,"","string",cmd);
-  TCLAP::ValueArg<std::string> invToutArg("","inverse-transformation","Inverse of estimated transformation",false,"","string",cmd);
+  TCLAP::ValueArg<std::string> toutArg("","transformation","Estimated transformation"
+      " (from b0 to the reconstructed image).",false,"","string",cmd);
+  TCLAP::ValueArg<std::string> invToutArg("","inverse-transformation","Inverse of the"
+      " estimated transformation (from reconstructed image to b0 )",false,"","string",cmd);
 
   TCLAP::SwitchArg nnSwitch("","nn","Nearest neighbor interpolation", cmd, false);
   TCLAP::SwitchArg bsplineSwitch("","bspline","BSpline interpolation", cmd, false);
