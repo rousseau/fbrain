@@ -225,10 +225,12 @@ LowToHighImageResolutionMethod<ImageType>
   m_Registration -> SetFixedImage(  m_ImageArray[m_TargetImage]  );
   m_Registration -> SetFixedImageRegion( m_RegionArray[m_TargetImage] );
 
-  // FIXME The following lines should be executed only if masks are set
+  if (m_ImageMaskArray.size()>0)
+  {
+    m_Registration -> SetFixedImageMask( m_ImageMaskArray[m_TargetImage] );
+    m_Registration -> InitializeWithMask();
+  }
 
-  m_Registration -> SetFixedImageMask( m_ImageMaskArray[m_TargetImage] );
-  m_Registration -> InitializeWithMask();
   m_Registration -> SetEnableObserver( false );
 
   m_ResamplingStatus.resize( m_NumberOfImages );
