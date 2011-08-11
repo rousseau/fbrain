@@ -104,11 +104,17 @@ public:
   typedef  std::vector<RegionType>                      RegionArray;
 
   typedef itk::Image< unsigned char, 3 >                ImageMaskType;
+  typedef typename ImageMaskType::Pointer								ImageMaskPointer;
   typedef std::vector<ImageMaskType::Pointer>           ImageMaskArray;
 
+  /**  Type of the image writer. */
   typedef ImageFileWriter< ImageType >  ImageWriterType;
 
+  /**  Type of the image iterator. */
   typedef ImageRegionIteratorWithIndex< ImageType >  IteratorType;
+
+  /**  Type of the image mask iterator. */
+  typedef ImageRegionIteratorWithIndex< ImageMaskType >  ImageMaskIteratorType;
 
   /**  Type of the Transform . */
   typedef Euler3DTransform< double >             				TransformType;
@@ -121,8 +127,14 @@ public:
                                     double>             InterpolatorType;
   typedef typename InterpolatorType::Pointer            InterpolatorPointer;
 
+  /**  Type of the image mask interpolator. */
+  typedef LinearInterpolateImageFunction<
+                                    ImageMaskType,
+                                    double>             ImageMaskInterpolatorType;
+  typedef typename ImageMaskInterpolatorType::Pointer   ImageMaskInterpolatorPointer;
+
    /**  Type of the registration method. */
-  typedef RigidRegistration<ImageType>  RegistrationType;
+  typedef RigidRegistration<ImageType>  				 RegistrationType;
   typedef typename RegistrationType::Pointer     RegistrationPointer;
 
   typedef ResampleImageFilter< ImageType, ImageType >    ResampleType;
@@ -190,11 +202,13 @@ public:
   UserSetMacro( RegionArray, RegionType );
 //  UserGetMacro( RegionArray, RegionType );
 
+  /** Get the image mask combination. */
+  itkGetObjectMacro( ImageMaskCombination, ImageMaskType );
+
   /** Set the number of images */
   void SetNumberOfImages(int N);
 
-  /** Initialize by setting the interconnects between the components.
-   */
+  /** Initialize by setting the interconnects between the components.*/
   void Initialize() throw (ExceptionObject);
 
 
@@ -223,6 +237,7 @@ private:
   InterpolatorPointer              m_Interpolator;
 
   ImagePointer										 m_HighResolutionImage;
+  ImageMaskPointer					 			 m_ImageMaskCombination;
 
   ParametersType                   m_InitialTransformParameters;
   ParametersType                   m_LastTransformParameters;

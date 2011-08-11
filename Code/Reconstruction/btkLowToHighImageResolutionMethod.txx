@@ -51,9 +51,8 @@ void
 LowToHighImageResolutionMethod<ImageType>
 ::Initialize() throw (ExceptionObject)
 {
-
-   /* Create interpolator */
-   m_Interpolator = InterpolatorType::New();
+  /* Create interpolator */
+  m_Interpolator = InterpolatorType::New();
 
   /* Resampling matrix */
   SpacingType  fixedSpacing   = m_ImageArray[m_TargetImage] -> GetSpacing();
@@ -134,6 +133,40 @@ LowToHighImageResolutionMethod<ImageType>
 
   m_HighResolutionImage -> TransformIndexToPhysicalPoint(newOriginIndex, newOrigin);
   m_HighResolutionImage -> SetOrigin( newOrigin );
+
+  // Create combination of masks
+
+  m_ImageMaskCombination = ImageMaskType::New();
+  m_ImageMaskCombination -> SetRegions( region );
+  m_ImageMaskCombination -> Allocate();
+  m_ImageMaskCombination -> SetSpacing(   m_HighResolutionImage -> GetSpacing() );
+  m_ImageMaskCombination -> SetDirection( m_HighResolutionImage -> GetDirection() );
+  m_ImageMaskCombination -> SetOrigin(    m_HighResolutionImage -> GetOrigin() );
+  m_ImageMaskCombination -> FillBuffer( 0 );
+
+  IteratorType imageIt( m_HighResolutionImage, m_HighResolutionImage -> GetLargestPossibleRegion() );
+  ImageMaskIteratorType maskIt( m_ImageMaskCombination, m_ImageMaskCombination -> GetLargestPossibleRegion() );
+
+  /* Create interpolator */
+  ImageMaskInterpolatorPointer imageMaskInterpolator = ImageMaskInterpolatorType::New();
+
+  for(imageIt.GoToBegin(),maskIt.GoToBegin(); !imageIt.IsAtEnd(); ++imageIt, ++maskIt )
+  {
+    index = imageIt.GetIndex();
+    m_ImageMaskCombination -> TransformIndexToPhysicalPoint( index, point );
+
+    for (unsigned int i=0; i < m_NumberOfImages; i++)
+    {
+      imageMaskInterpolator -> SetInputImage( m_ImageMaskArray[i] );
+
+      if ( imageMaskInterpolator -> Evaluate(point) > 0 )
+      {
+        maskIt.Set(1);
+        continue;
+      }
+    }
+  }
+
 
 }
 
