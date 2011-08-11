@@ -74,6 +74,7 @@ int main( int argc, char *argv[] )
   double margin;
 
   const char *outImage = NULL;
+  const char *combinedMask = NULL;
 
   std::vector< int > x1, y1, z1, x2, y2, z2;
 
@@ -88,6 +89,7 @@ int main( int argc, char *argv[] )
   TCLAP::MultiArg<std::string> resampledArg("","ir","Resampled image with initial transform",false,"string",cmd);
 
   TCLAP::ValueArg<std::string> outArg("o","output","High resolution image",true,"","string",cmd);
+  TCLAP::ValueArg<std::string> combinedMaskArg("","combined-masks","All image masks combined in a single one",false,"","string",cmd);
   TCLAP::ValueArg<unsigned int> iterArg("n","iter","Maximum number of iterations (default 10)",false, 10,"unsigned int",cmd);
   TCLAP::ValueArg<double> epsilonArg("e","epsilon","Minimal percent change between "
       "two iterations considered as convergence. (default 0.0001)",false, 1e-4,"double",cmd);
@@ -115,6 +117,7 @@ int main( int argc, char *argv[] )
   input = inputArg.getValue();
   mask = maskArg.getValue();
   outImage = outArg.getValue().c_str();
+  combinedMask = combinedMaskArg.getValue().c_str();
   transform = transformArg.getValue();
   roi = roiArg.getValue();
   resampled = resampledArg.getValue();
@@ -247,6 +250,18 @@ int main( int argc, char *argv[] )
     std::cerr << err << std::endl;
     return EXIT_FAILURE;
     }
+
+  // Write combined image mask
+
+  typedef itk::ImageFileWriter< ImageMaskType >  MaskWriterType;
+
+  if ( strcmp(combinedMask,"") != 0 )
+  {
+    MaskWriterType::Pointer maskWriter =  MaskWriterType::New();
+    maskWriter -> SetFileName( combinedMask );
+    maskWriter -> SetInput( lowToHighResFilter -> GetImageMaskCombination() );
+    maskWriter -> Update();
+  }
 
 //  typedef itk::ImageFileWriter< ImageType >  WriterType;
 //
@@ -413,6 +428,7 @@ int main( int argc, char *argv[] )
   writer-> SetFileName( outImage );
   writer-> SetInput( hrImage );
   writer-> Update();
+
 
   // Write transforms
 

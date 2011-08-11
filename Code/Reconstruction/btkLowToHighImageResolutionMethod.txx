@@ -159,10 +159,13 @@ LowToHighImageResolutionMethod<ImageType>
     {
       imageMaskInterpolator -> SetInputImage( m_ImageMaskArray[i] );
 
-      if ( imageMaskInterpolator -> Evaluate(point) > 0 )
+      if ( imageMaskInterpolator -> IsInsideBuffer(point) )
       {
-        maskIt.Set(1);
-        continue;
+        if ( imageMaskInterpolator -> Evaluate(point) > 0 )
+        {
+          maskIt.Set(1);
+          continue;
+        }
       }
     }
   }
@@ -254,22 +257,27 @@ LowToHighImageResolutionMethod<ImageType>
     for (imageIt.GoToBegin(); !imageIt.IsAtEnd(); ++imageIt )
     {
       index = imageIt.GetIndex();
-      m_HighResolutionImage -> TransformIndexToPhysicalPoint( index, physicalPoint);
 
-      value = 0;
-      counter = 0;
-      for (unsigned int i=0; i < m_NumberOfImages; i++)
+      if ( m_ImageMaskCombination -> GetPixel(index) > 0 )
       {
-        m_Interpolator -> SetInputImage( m_ImageArray[i] );
-        transformedPoint = m_TransformArray[i]->TransformPoint(physicalPoint);
-        if ( m_Interpolator -> IsInsideBuffer (transformedPoint) )
+        m_HighResolutionImage -> TransformIndexToPhysicalPoint( index, physicalPoint);
+
+        value = 0;
+        counter = 0;
+
+        for (unsigned int i=0; i < m_NumberOfImages; i++)
         {
-          value+= m_Interpolator->Evaluate(transformedPoint);
-          counter++;
+          m_Interpolator -> SetInputImage( m_ImageArray[i] );
+          transformedPoint = m_TransformArray[i]->TransformPoint(physicalPoint);
+          if ( m_Interpolator -> IsInsideBuffer (transformedPoint) )
+          {
+            value+= m_Interpolator->Evaluate(transformedPoint);
+            counter++;
+          }
         }
+        if ( counter>0 ) imageIt.Set(value/counter);
       }
-      if ( counter>0 ) imageIt.Set(value/counter);
-     }
+    }
 
 }
 
