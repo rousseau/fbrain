@@ -292,23 +292,22 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
         fixedIndex = fixedIt.GetIndex();
         m_ImageArray[im] -> TransformIndexToPhysicalPoint( fixedIndex, physicalPoint );
 
-        if ( mask -> IsInside(physicalPoint))
+        transformedPoint = m_Transform[im][i] -> TransformPoint( physicalPoint);
+        sumImage -> TransformPhysicalPointToIndex( transformedPoint, outputIndex);
+
+        nbIt.SetLocation(outputIndex);
+        nbWtIt.SetLocation(outputIndex);
+
+        if ( (*fit).IsInside(outputIndex) )
         {
-
-          transformedPoint = m_Transform[im][i] -> TransformPoint( physicalPoint);
-          sumImage -> TransformPhysicalPointToIndex( transformedPoint, outputIndex);
-
-          nbIt.SetLocation(outputIndex);
-          nbWtIt.SetLocation(outputIndex);
-
-          if ( (*fit).IsInside(outputIndex) )
+          for(unsigned int i=0; i<nbIt.Size(); i++)
           {
-            for(unsigned int i=0; i<nbIt.Size(); i++)
+            nbIndex = nbIt.GetIndex(i);
+
+            sumImage -> TransformIndexToPhysicalPoint( nbIndex, nbPoint );
+
+            if ( mask -> IsInside(nbPoint))
             {
-              nbIndex = nbIt.GetIndex(i);
-
-              sumImage -> TransformIndexToPhysicalPoint( nbIndex, nbPoint );
-
               VnlVectorType diffPoint = nbPoint.Get_vnl_vector() - transformedPoint.Get_vnl_vector();
               rotPoint[0] = dot_product(diffPoint,idirTransformed);
               rotPoint[1] = dot_product(diffPoint,jdirTransformed);
@@ -320,17 +319,20 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
               nbWtIt.SetPixel(i, value + nbWtIt.GetPixel(i) );
             }
           }
-          else
+        }
+        else
+        {
+          for(unsigned int i=0; i<nbIt.Size(); i++)
           {
-            for(unsigned int i=0; i<nbIt.Size(); i++)
+            nbIndex = nbIt.GetIndex(i);
+
+            if ( outputRegion.IsInside(nbIndex) )
             {
-              nbIndex = nbIt.GetIndex(i);
 
-              if ( outputRegion.IsInside(nbIndex) )
+              sumImage -> TransformIndexToPhysicalPoint( nbIndex, nbPoint );
+
+              if ( mask -> IsInside(nbPoint))
               {
-
-                sumImage -> TransformIndexToPhysicalPoint( nbIndex, nbPoint );
-
                 VnlVectorType diffPoint = nbPoint.Get_vnl_vector() - transformedPoint.Get_vnl_vector();
                 rotPoint[0] = dot_product(diffPoint,idirTransformed);
                 rotPoint[1] = dot_product(diffPoint,jdirTransformed);
@@ -340,7 +342,6 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
 
                 nbIt.SetPixel(i, fixedIt.Get() *value + nbIt.GetPixel(i) );
                 nbWtIt.SetPixel(i, value + nbWtIt.GetPixel(i) );
-
               }
 
             }
