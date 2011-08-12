@@ -191,6 +191,11 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
   ArrayType sigma;
   double cst = 2*sqrt(2*log(2.0));
 
+  // Create spatial object for injecting in the mask only
+
+  typename MaskType::Pointer mask = MaskType::New();
+  mask -> SetImage (m_ImageMask);
+
   unsigned int im;
   #pragma omp parallel for private(im) schedule(dynamic)
 
@@ -287,39 +292,20 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
         fixedIndex = fixedIt.GetIndex();
         m_ImageArray[im] -> TransformIndexToPhysicalPoint( fixedIndex, physicalPoint );
 
-        transformedPoint = m_Transform[im][i] -> TransformPoint( physicalPoint);
-        sumImage -> TransformPhysicalPointToIndex( transformedPoint, outputIndex);
-
-        nbIt.SetLocation(outputIndex);
-        nbWtIt.SetLocation(outputIndex);
-
-        if ( (*fit).IsInside(outputIndex) )
+        if ( mask -> IsInside(physicalPoint))
         {
-          for(unsigned int i=0; i<nbIt.Size(); i++)
+
+          transformedPoint = m_Transform[im][i] -> TransformPoint( physicalPoint);
+          sumImage -> TransformPhysicalPointToIndex( transformedPoint, outputIndex);
+
+          nbIt.SetLocation(outputIndex);
+          nbWtIt.SetLocation(outputIndex);
+
+          if ( (*fit).IsInside(outputIndex) )
           {
-            nbIndex = nbIt.GetIndex(i);
-
-            sumImage -> TransformIndexToPhysicalPoint( nbIndex, nbPoint );
-
-            VnlVectorType diffPoint = nbPoint.Get_vnl_vector() - transformedPoint.Get_vnl_vector();
-            rotPoint[0] = dot_product(diffPoint,idirTransformed);
-            rotPoint[1] = dot_product(diffPoint,jdirTransformed);
-            rotPoint[2] = dot_product(diffPoint,kdirTransformed);
-
-            value = gaussian->Evaluate( rotPoint );
-
-            nbIt.SetPixel(i, fixedIt.Get() *value + nbIt.GetPixel(i) );
-            nbWtIt.SetPixel(i, value + nbWtIt.GetPixel(i) );
-          }
-        }
-        else
-        {
-          for(unsigned int i=0; i<nbIt.Size(); i++)
-          {
-            nbIndex = nbIt.GetIndex(i);
-
-            if ( outputRegion.IsInside(nbIndex) )
+            for(unsigned int i=0; i<nbIt.Size(); i++)
             {
+              nbIndex = nbIt.GetIndex(i);
 
               sumImage -> TransformIndexToPhysicalPoint( nbIndex, nbPoint );
 
@@ -332,13 +318,36 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
 
               nbIt.SetPixel(i, fixedIt.Get() *value + nbIt.GetPixel(i) );
               nbWtIt.SetPixel(i, value + nbWtIt.GetPixel(i) );
+            }
+          }
+          else
+          {
+            for(unsigned int i=0; i<nbIt.Size(); i++)
+            {
+              nbIndex = nbIt.GetIndex(i);
+
+              if ( outputRegion.IsInside(nbIndex) )
+              {
+
+                sumImage -> TransformIndexToPhysicalPoint( nbIndex, nbPoint );
+
+                VnlVectorType diffPoint = nbPoint.Get_vnl_vector() - transformedPoint.Get_vnl_vector();
+                rotPoint[0] = dot_product(diffPoint,idirTransformed);
+                rotPoint[1] = dot_product(diffPoint,jdirTransformed);
+                rotPoint[2] = dot_product(diffPoint,kdirTransformed);
+
+                value = gaussian->Evaluate( rotPoint );
+
+                nbIt.SetPixel(i, fixedIt.Get() *value + nbIt.GetPixel(i) );
+                nbWtIt.SetPixel(i, value + nbWtIt.GetPixel(i) );
+
+              }
 
             }
 
           }
 
         }
-
 
       }
 

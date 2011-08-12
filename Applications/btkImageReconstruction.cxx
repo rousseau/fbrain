@@ -354,6 +354,7 @@ int main( int argc, char *argv[] )
 
     resampler -> UseReferenceImageOn();
     resampler -> SetReferenceImage( hrImageIni );
+    resampler -> SetImageMask(lowToHighResFilter -> GetImageMaskCombination());
     resampler -> Update();
 
     if (it == 1)

@@ -47,6 +47,7 @@
 #include "itkNeighborhoodAlgorithm.h"
 #include "itkSize.h"
 #include "btkUserMacro.h"
+#include "itkImageMaskSpatialObject.h"
 
 namespace btk
 {
@@ -102,6 +103,13 @@ public:
   typedef Image<float,ImageDimension>    FloatImageType;
   typedef typename FloatImageType::Pointer FloatImagePointer;
 
+  /** Type of the image mask. */
+  typedef Image< unsigned char, ImageDimension >    ImageMaskType;
+  typedef typename ImageMaskType::Pointer ImageMaskPointer;
+
+  /** Type of the mask. */
+  typedef ImageMaskSpatialObject< ImageDimension >  MaskType;
+
   typedef typename InputImageType::RegionType     InputImageRegionType;
   typedef std::vector<InputImageRegionType>       InputImageRegionVectorType;
 
@@ -149,7 +157,6 @@ public:
 
   /**Const float iterator typedef. */
   typedef ImageRegionConstIteratorWithIndex< FloatImageType >  ConstFloatIteratorType;
-
 
   /**Neighborhood iterator typedef. */
   typedef NeighborhoodIterator< OutputImageType >  NeighborhoodIteratorType;
@@ -270,6 +277,10 @@ public:
     m_InputImageRegion.push_back(_arg);
   }
 
+  /** Sets the mask where to perform the injection. */
+  itkSetObjectMacro(ImageMask, ImageMaskType);
+
+
 #ifdef ITK_USE_CONCEPT_CHECKING
   /** Begin concept checking */
   itkConceptMacro(OutputHasNumericTraitsCheck,
@@ -298,10 +309,11 @@ private:
   InputImageRegionVectorType  m_InputImageRegion;
 
   std::vector<InputImagePointer> m_ImageArray;
+  ImageMaskPointer 							 m_ImageMask;
 
   PixelType                   m_DefaultPixelValue; // default pixel value
-                                               // if the point is
-                                               // outside the image
+                                                     // if the point is
+                                                     // outside the image
   SpacingType                 m_OutputSpacing;     // output image spacing
   OriginPointType             m_OutputOrigin;      // output image origin
   DirectionType               m_OutputDirection;   // output image direction cosines
