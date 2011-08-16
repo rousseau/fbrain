@@ -103,21 +103,41 @@ public:
   /** Compute Jacobian (product of component Jacobians). Not thread safe!! */
   virtual const JacobianType & GetJacobian(const InputPointType &p ) const
   {
-    OutputPointType Tp( p );
 
-    this->m_Jacobian.Fill( 0.0 );
-    for(unsigned int dim=0; dim < NDimensions; dim++ )
+    this->m_Jacobian.SetSize( NDimensions, this->GetNumberOfParameters() );
+    this->m_Jacobian.Fill(0.0);
+
+    typename ImageType::IndexType index;
+    m_Image -> TransformPhysicalPointToIndex( p , index);
+    JacobianType jacobian = m_TransformList[ index[2] ] -> GetJacobian(p);
+
+    unsigned int offset = index[2]*m_TransformList[0]->GetNumberOfParameters();
+
+    for(unsigned int i = 0; i < NDimensions; i++)
+      for(unsigned int j = 0; j < m_TransformList[0]->GetNumberOfParameters(); j++)
       {
-      this->m_Jacobian( dim , dim ) = 1.0;
+        this->m_Jacobian[i][j] = jacobian[i][j+offset];
       }
 
-    for ( TransformPointerListConstIterator it = this->m_TransformList.begin(); it != this->m_TransformList.end(); ++it )
-      {
-      // Q: is this the correct multiplication order?
-      this->m_Jacobian *= (*it)->GetJacobian( Tp );
-      Tp = (*it)->TransformPoint( Tp );
-      }
     return this->m_Jacobian;
+
+  }
+
+  /** NOT IMPLEMENTED: */
+  virtual void GetJacobianWithRespectToParameters( const InputPointType  &p,
+                                 JacobianType & jacobian) const
+  {
+    itkExceptionMacro("GetJacobianWithRespectToParameters "
+                        "not yet implemented.");
+  }
+
+  /** NOT IMPLEMENTED: */
+  virtual void GetJacobianWithRespectToPosition(
+                                       const InputPointType & p,
+                                       JacobianType &j ) const
+  {
+    itkExceptionMacro("GetJacobianWithRespectToPosition "
+                        "not yet implemented.");
   }
 
   void SetImage( ImageType * image)
