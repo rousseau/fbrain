@@ -1,3 +1,38 @@
+/*==========================================================================
+
+  © Université de Strasbourg - Centre National de la Recherche Scientifique
+
+  Date: 16/08/2011
+  Author(s): Estanislao Oubel (oubel@unistra.fr)
+
+  This software is governed by the CeCILL-B license under French law and
+  abiding by the rules of distribution of free software.  You can  use,
+  modify and/ or redistribute the software under the terms of the CeCILL-B
+  license as circulated by CEA, CNRS and INRIA at the following URL
+  "http://www.cecill.info".
+
+  As a counterpart to the access to the source code and  rights to copy,
+  modify and redistribute granted by the license, users are provided only
+  with a limited warranty  and the software's author,  the holder of the
+  economic rights,  and the successive licensors  have only  limited
+  liability.
+
+  In this respect, the user's attention is drawn to the risks associated
+  with loading,  using,  modifying and/or developing or reproducing the
+  software by the user in light of its specific status of free software,
+  that may mean  that it is complicated to manipulate,  and  that  also
+  therefore means  that it is reserved for developers  and  experienced
+  professionals having in-depth computer knowledge. Users are therefore
+  encouraged to load and test the software's suitability as regards their
+  requirements in conditions enabling the security of their systems and/or
+  data to be ensured and,  more generally, to use and operate it in the
+  same conditions as regards security.
+
+  The fact that you are presently reading this means that you have had
+  knowledge of the CeCILL-B license and that you accept its terms.
+
+==========================================================================*/
+
 #ifndef __SliceBySliceTransform_txx
 #define __SliceBySliceTransform_txx
 
@@ -6,310 +41,235 @@
 #include "vnl/algo/vnl_matrix_inverse.h"
 
 
-namespace itk
+namespace btk
 {
 
-/** Constructor with default arguments */
-template<class TScalarType, unsigned int NDimensions>
-SliceBySliceTransform<TScalarType, NDimensions>::
-SliceBySliceTransform(): Superclass(SpaceDimension,ParametersDimension)
+template <class TScalarType,unsigned int NDimensions>
+typename SliceBySliceTransform<TScalarType,NDimensions>::OutputPointType
+SliceBySliceTransform<TScalarType,NDimensions>
+::TransformPoint(const InputPointType& p ) const
 {
+  OutputPointType Tp( p );
+  typename ImageType::IndexType index;
+  m_Image -> TransformPhysicalPointToIndex( Tp , index);
+
+  Tp = m_TransformList[ index[2] ] -> TransformPoint( Tp );
+
+  return Tp;
 }
 
-
-/** Constructor with default arguments */
-template<class TScalarType, unsigned int NDimensions>
-SliceBySliceTransform<TScalarType, NDimensions>::
-SliceBySliceTransform( unsigned int outputSpaceDimension,
-                 unsigned int parametersDimension   ):
-  Superclass(outputSpaceDimension,parametersDimension)
+template <class TScalarType,unsigned int NDimensions>
+typename SliceBySliceTransform<TScalarType,NDimensions>::OutputVectorType
+SliceBySliceTransform<TScalarType,NDimensions>::
+TransformVector(const InputVectorType& p) const
 {
-}
-
-
-/** Constructor with explicit arguments */
-template<class TScalarType, unsigned int NDimensions>
-SliceBySliceTransform<TScalarType, NDimensions>::
-SliceBySliceTransform(const MatrixType & matrix,
-               const OutputVectorType & offset):
-  Superclass(matrix, offset)
-{
-}
-
-
-/**  Destructor */
-template<class TScalarType, unsigned int NDimensions>
-SliceBySliceTransform<TScalarType, NDimensions>::
-~SliceBySliceTransform()
-{
-  return;
-}
-
-
-/** Print self */
-template<class TScalarType, unsigned int NDimensions>
-void
-SliceBySliceTransform<TScalarType, NDimensions>::
-PrintSelf(std::ostream &os, Indent indent) const
-{
-  Superclass::PrintSelf(os,indent);
-}
-
-
-/** Compose with a translation */
-template<class TScalarType, unsigned int NDimensions>
-void
-SliceBySliceTransform<TScalarType, NDimensions>::
-Translate(const OutputVectorType &trans, bool pre)
-{
-  OutputVectorType newTranslation = this->GetTranslation();
-  if (pre)
+  OutputVectorType Tp( p );
+  for ( TransformPointerListConstIterator it = this->m_TransformList.begin(); it != this->m_TransformList.end(); ++it )
     {
-    newTranslation += this->GetMatrix() * trans;
+    Tp = (*it)->TransformVector( Tp );
     }
-  else
-    {
-    newTranslation += trans;
-    }
-  this->SetVarTranslation(newTranslation);
-  this->ComputeOffset();
-  this->Modified();
-  return;
+  return Tp;
 }
 
-
-/** Compose with isotropic scaling */
-template<class TScalarType, unsigned int NDimensions>
-void
-SliceBySliceTransform<TScalarType, NDimensions>
-::Scale(const TScalarType &factor, bool pre)
+template <class TScalarType,unsigned int NDimensions>
+typename SliceBySliceTransform<TScalarType,NDimensions>::OutputVnlVectorType
+SliceBySliceTransform<TScalarType,NDimensions>::
+TransformVector(const InputVnlVectorType &p ) const
 {
-  if (pre)
+  OutputVnlVectorType Tp( p );
+  for ( TransformPointerListConstIterator it = this->m_TransformList.begin(); it != this->m_TransformList.end(); ++it )
     {
-    MatrixType newMatrix = this->GetMatrix();
-    newMatrix *= factor;
-    this->SetVarMatrix(newMatrix);
+    Tp = (*it)->TransformVector( Tp );
     }
-  else
-    {
-    MatrixType newMatrix = this->GetMatrix();
-    newMatrix *= factor;
-    this->SetVarMatrix(newMatrix);
-
-    OutputVectorType newTranslation = this->GetTranslation();
-    newTranslation *= factor;
-    this->SetVarTranslation(newTranslation);
-    }
-  this->ComputeMatrixParameters();
-  this->ComputeOffset();
-  this->Modified();
-  return;
+  return Tp;
 }
 
-
-/** Compose with anisotropic scaling */
-template<class TScalarType, unsigned int NDimensions>
-void
-SliceBySliceTransform<TScalarType, NDimensions>
-::Scale(const OutputVectorType &factor, bool pre)
+template <class TScalarType,unsigned int NDimensions>
+typename SliceBySliceTransform<TScalarType,NDimensions>::OutputCovariantVectorType
+SliceBySliceTransform<TScalarType,NDimensions>::
+TransformCovariantVector( const InputCovariantVectorType &p ) const
 {
-  MatrixType trans;
-  unsigned int i, j;
-
-  for (i = 0; i < NDimensions; i++)
+  OutputCovariantVectorType Tp( p );
+  for ( TransformPointerListConstIterator it = this->m_TransformList.begin(); it != this->m_TransformList.end(); ++it )
     {
-    for (j = 0; j < NDimensions; j++)
+    Tp = (*it)->TransformCovariantVector( Tp );
+    }
+  return Tp;
+}
+
+template <class TScalarType,unsigned int NDimensions>
+const typename SliceBySliceTransform<TScalarType,NDimensions>::JacobianType&
+SliceBySliceTransform<TScalarType,NDimensions>::
+GetJacobian(const InputPointType &p ) const
+{
+
+  this->m_Jacobian.SetSize( NDimensions, this->GetNumberOfParameters() );
+  this->m_Jacobian.Fill(0.0);
+
+  typename ImageType::IndexType index;
+  m_Image -> TransformPhysicalPointToIndex( p , index);
+  JacobianType jacobian = m_TransformList[ index[2] ] -> GetJacobian(p);
+
+  unsigned int offset = index[2]*m_TransformList[0]->GetNumberOfParameters();
+
+  for(unsigned int i = 0; i < NDimensions; i++)
+    for(unsigned int j = 0; j < m_TransformList[0]->GetNumberOfParameters(); j++)
+    {
+      this->m_Jacobian[i][j] = jacobian[i][j+offset];
+    }
+
+  return this->m_Jacobian;
+
+}
+
+template <class TScalarType,unsigned int NDimensions>
+void
+SliceBySliceTransform<TScalarType,NDimensions>::
+SetImage( ImageType * image)
+{
+  m_Image = image;
+  typename ImageType::SizeType size = m_Image -> GetLargestPossibleRegion().GetSize();
+
+  m_NumberOfSlices = size[2];
+  m_TransformList.resize(m_NumberOfSlices);
+
+  TransformPointer tmpTransform = TransformType::New();
+  m_ParametersPerSlice = tmpTransform -> GetNumberOfParameters();
+  this -> m_Parameters.SetSize( m_NumberOfSlices * m_ParametersPerSlice );
+
+  InputPointType centerPoint;
+  ContinuousIndexType centerIndex;
+
+  centerIndex[0] = (size[0]-1)/2.0;
+  centerIndex[1] = (size[1]-1)/2.0;
+
+  for(unsigned int i=0; i<m_NumberOfSlices; i++)
+  {
+    centerIndex[2] =  i;
+    m_Image -> TransformContinuousIndexToPhysicalPoint(centerIndex,centerPoint);
+
+    m_TransformList[i] = TransformType::New();
+    m_TransformList[i] -> SetIdentity();
+    m_TransformList[i] -> SetCenter(centerPoint);
+  }
+
+}
+
+template <class TScalarType,unsigned int NDimensions>
+const typename SliceBySliceTransform<TScalarType,NDimensions>::ParametersType&
+SliceBySliceTransform<TScalarType,NDimensions>::GetParameters(void) const
+{
+  for(unsigned int i=0; i<m_NumberOfSlices; i++)
+  {
+    ParametersType param = m_TransformList[i] -> GetParameters();
+
+    for (unsigned int p=0; p<m_ParametersPerSlice; p++)
+    {
+      this->m_Parameters[p + i*m_ParametersPerSlice] = param[p];
+    }
+
+  }
+  return this->m_Parameters;
+
+}
+
+template <class TScalarType,unsigned int NDimensions>
+void
+SliceBySliceTransform<TScalarType,NDimensions>::
+SetParameters( const ParametersType & parameters )
+{
+
+  this -> m_Parameters = parameters;
+
+  for(unsigned int i=0; i<m_NumberOfSlices; i++)
+  {
+    ParametersType param(m_ParametersPerSlice);
+
+    for (unsigned int p=0; p<m_ParametersPerSlice; p++)
+      param[p] = this->m_Parameters[p + i*m_ParametersPerSlice];
+
+    m_TransformList[i] -> SetParameters( param );
+
+  }
+}
+
+template <class TScalarType,unsigned int NDimensions>
+void
+SliceBySliceTransform<TScalarType,NDimensions>::
+Initialize( TransformType * t )
+{
+  for(unsigned int i=0; i<m_NumberOfSlices; i++)
+  {
+
+    typename TransformType::Pointer inverseRigidTransform = TransformType::New();
+    inverseRigidTransform -> SetIdentity();
+    inverseRigidTransform -> SetCenter( t -> GetCenter() );
+    inverseRigidTransform -> SetParameters( t -> GetParameters() );
+    inverseRigidTransform -> GetInverse( inverseRigidTransform );
+    inverseRigidTransform -> SetCenter( m_TransformList[i] -> GetCenter() );
+
+    m_TransformList[i] -> SetParameters( inverseRigidTransform -> GetParameters() );
+    m_TransformList[i] -> SetCenter( m_TransformList[i] -> GetCenter() );
+  }
+}
+
+template <class TScalarType,unsigned int NDimensions>
+void
+SliceBySliceTransform<TScalarType,NDimensions>::
+SetFixedParameters( const ParametersType & fp )
+{
+  this -> m_FixedParameters = fp;
+
+  m_NumberOfSlices = this -> m_FixedParameters[0];
+
+  if (m_TransformList.size() == 0 )
+  {
+
+    m_TransformList.resize(m_NumberOfSlices);
+
+    TransformPointer tmpTransform = TransformType::New();
+    m_ParametersPerSlice = tmpTransform -> GetNumberOfParameters();
+    this -> m_Parameters.SetSize( m_NumberOfSlices * m_ParametersPerSlice );
+
+    for(unsigned int i=0; i<m_NumberOfSlices; i++)
+    {
+      m_TransformList[i] = TransformType::New();
+      m_TransformList[i] -> SetIdentity();
+    }
+
+  }
+
+  InputPointType c;
+  typedef typename ParametersType::ValueType ParameterValueType;
+
+  for ( unsigned int j = 0; j<m_NumberOfSlices; j++)
+  {
+    for ( unsigned int i = 0; i < NDimensions; i++ )
+      c[i] = this -> m_FixedParameters[j*NDimensions + i + 1];
+
+    m_TransformList[j] -> SetCenter ( c );
+  }
+
+}
+
+template <class TScalarType,unsigned int NDimensions>
+const typename SliceBySliceTransform<TScalarType,NDimensions>::ParametersType&
+SliceBySliceTransform<TScalarType,NDimensions>::
+GetFixedParameters(void) const
+{
+  this->m_FixedParameters.SetSize ( NDimensions * m_NumberOfSlices + 1 );
+
+  this->m_FixedParameters[0] = m_NumberOfSlices;
+
+  for ( unsigned int j = 0; j < m_NumberOfSlices; j++ )
+  {
+    for ( unsigned int i = 0; i < NDimensions; i++ )
       {
-      trans[i][j] = 0.0;
+      this->m_FixedParameters[j*NDimensions + i + 1] = m_TransformList[j]-> GetCenter()[i];
       }
-    trans[i][i] = factor[i];
-    }
-  if (pre)
-    {
-    this->SetVarMatrix( this->GetMatrix() * trans );
-    }
-  else
-    {
-    this->SetVarMatrix( trans * this->GetMatrix() );
-    this->SetVarTranslation( trans * this->GetTranslation() );
-    }
-  this->ComputeMatrixParameters();
-  this->ComputeOffset();
-  this->Modified();
-  return;
+  }
+  return this->m_FixedParameters;
 }
-
-
-/** Compose with elementary rotation */
-template<class TScalarType, unsigned int NDimensions>
-void
-SliceBySliceTransform<TScalarType, NDimensions>
-::Rotate(int axis1, int axis2, TScalarType angle, bool pre)
-{
-  MatrixType trans;
-  unsigned int i, j;
-
-  for (i = 0; i < NDimensions; i++)
-    {
-    for (j = 0; j < NDimensions; j++)
-      {
-      trans[i][j] = 0.0;
-      }
-    trans[i][i] = 1.0;
-    }
-  trans[axis1][axis1] =  vcl_cos(angle);
-  trans[axis1][axis2] =  vcl_sin(angle);
-  trans[axis2][axis1] = -vcl_sin(angle);
-  trans[axis2][axis2] =  vcl_cos(angle);
-  if (pre)
-    {
-    this->SetVarMatrix( this->GetMatrix() * trans );
-    }
-  else
-    {
-    this->SetVarMatrix( trans * this->GetMatrix() );
-    this->SetVarTranslation( trans * this->GetTranslation() );
-    }
-  this->ComputeMatrixParameters();
-  this->ComputeOffset();
-  this->Modified();
-  return;
-}
-
-
-/** Compose with 2D rotation
- * \todo Find a way to generate a compile-time error
- * is this is used with NDimensions != 2. */
-template<class TScalarType, unsigned int NDimensions>
-void
-SliceBySliceTransform<TScalarType, NDimensions>
-::Rotate2D(TScalarType angle, bool pre)
-{
-  MatrixType trans;
-
-  trans[0][0] =  vcl_cos(angle);
-  trans[0][1] = -vcl_sin(angle);
-  trans[1][0] =  vcl_sin(angle);
-  trans[1][1] =  vcl_cos(angle);
-  if (pre)
-    {
-    this->SetVarMatrix( this->GetMatrix() * trans );
-    }
-  else
-    {
-    this->SetVarMatrix( trans * this->GetMatrix() );
-    this->SetVarTranslation( trans * this->GetTranslation() );
-    }
-  this->ComputeMatrixParameters();
-  this->ComputeOffset();
-  this->Modified();
-  return;
-}
-
-
-/** Compose with 3D rotation
- *  \todo Find a way to generate a compile-time error
- *  is this is used with NDimensions != 3. */
-template<class TScalarType, unsigned int NDimensions>
-void
-SliceBySliceTransform<TScalarType, NDimensions>
-::Rotate3D(const OutputVectorType &axis, TScalarType angle, bool pre)
-{
-  MatrixType trans;
-  ScalarType r, x1, x2, x3;
-  ScalarType q0, q1, q2, q3;
-
-  // Convert the axis to a unit vector
-  r = vcl_sqrt(axis[0]*axis[0] + axis[1]*axis[1] + axis[2]*axis[2]);
-  x1 = axis[0] / r;
-  x2 = axis[1] / r;
-  x3 = axis[2] / r;
-
-  // Compute quaternion elements
-  q0 = vcl_cos(angle/2.0);
-  q1 = x1 * vcl_sin(angle/2.0);
-  q2 = x2 * vcl_sin(angle/2.0);
-  q3 = x3 * vcl_sin(angle/2.0);
-
-  // Compute elements of the rotation matrix
-  trans[0][0] = q0*q0 + q1*q1 - q2*q2 - q3*q3;
-  trans[0][1] = 2.0*(q1*q2 - q0*q3);
-  trans[0][2] = 2.0*(q1*q3 + q0*q2);
-  trans[1][0] = 2.0*(q1*q2 + q0*q3);
-  trans[1][1] = q0*q0 + q2*q2 - q1*q1 - q3*q3;
-  trans[1][2] = 2.0*(q2*q3 - q0*q1);
-  trans[2][0] = 2.0*(q1*q3 - q0*q2);
-  trans[2][1] = 2.0*(q2*q3 + q0*q1);
-  trans[2][2] = q0*q0 + q3*q3 - q1*q1 - q2*q2;
-
-  // Compose rotation matrix with the existing matrix
-  if (pre)
-    {
-    this->SetVarMatrix( this->GetMatrix() * trans );
-    }
-  else
-    {
-    this->SetVarMatrix( trans * this->GetMatrix() );
-    this->SetVarTranslation( trans * this->GetTranslation() );
-    }
-  this->ComputeMatrixParameters();
-  this->ComputeOffset();
-  this->Modified();
-  return;
-}
-
-
-/** Compose with elementary rotation */
-template<class TScalarType, unsigned int NDimensions>
-void
-SliceBySliceTransform<TScalarType, NDimensions>
-::Shear(int axis1, int axis2, TScalarType coef, bool pre)
-{
-  MatrixType trans;
-  unsigned int i, j;
-
-  for (i = 0; i < NDimensions; i++)
-    {
-    for (j = 0; j < NDimensions; j++)
-      {
-      trans[i][j] = 0.0;
-      }
-    trans[i][i] = 1.0;
-    }
-  trans[axis1][axis2] =  coef;
-  if (pre)
-    {
-    this->SetVarMatrix( this->GetMatrix() * trans );
-    }
-  else
-    {
-    this->SetVarMatrix( trans * this->GetMatrix() );
-    this->SetVarTranslation( trans * this->GetTranslation() );
-    }
-  this->ComputeMatrixParameters();
-  this->ComputeOffset();
-  this->Modified();
-  return;
-}
-
-/** Get an inverse of this transform. */
-template<class TScalarType, unsigned int NDimensions>
-bool
-SliceBySliceTransform<TScalarType, NDimensions>
-::GetInverse(Self* inverse) const
-{
-  return this->Superclass::GetInverse(inverse);
-}
-
-/** Return an inverse of this transform. */
-template<class TScalarType, unsigned int NDimensions>
-typename SliceBySliceTransform<TScalarType, NDimensions>::InverseTransformBasePointer
-SliceBySliceTransform<TScalarType, NDimensions>
-::GetInverseTransform() const
-{
-  std::cout << "Method still not implemented" << std::endl;
-}
-
 
 
 } // namespace
