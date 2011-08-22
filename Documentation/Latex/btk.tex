@@ -85,7 +85,16 @@ CMAKE_BUILD_TYPE = Release
 ITK_USE_REVIEW = ON
 ITK_BUILD_ALL_MODULES = ON
 \end{verbatim}
-Then press \texttt{[c]} to configure and \texttt{[g]} to generate the make file. Finally, type \texttt{make} at the prompt to obtain the final build of ITK.
+Then press \texttt{[c]} to configure and \texttt{[g]} to generate the make file.
+Finally, type \texttt{make} at the prompt to obtain the final build of ITK.\\\\
+NOTE: as there is still not a stable version for ITK4, there are potential
+compilation problems when using the HEAD version. We have tested BTK with the
+version of ITK corresponding to the tag v4.0a08. You can get this version by
+using the following command line after cloning the repository ITK:
+\begin{verbatim}
+git checkout v4.0a08
+\end{verbatim}
+
 
 \end{itemize}
 
