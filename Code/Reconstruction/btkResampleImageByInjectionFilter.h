@@ -100,6 +100,10 @@ public:
   typedef typename InputImageType::ConstPointer   InputImageConstPointer;
   typedef typename OutputImageType::Pointer       OutputImagePointer;
 
+  /** Type of the slice by slice transform. */
+  typedef SliceBySliceTransform< double, ImageDimension > TransformType;
+  typedef typename TransformType::Pointer TransformPointer;
+
   typedef Image<float,ImageDimension>    FloatImageType;
   typedef typename FloatImageType::Pointer FloatImagePointer;
 
@@ -119,11 +123,7 @@ public:
   /** Run-time type information (and related methods). */
   itkTypeMacro(ResampleImageByInjectionFilter, ImageToImageFilter);
 
-  /** Transform typedef. */
-  typedef Euler3DTransform<TInterpolatorPrecisionType> TransformType;
-  typedef typename TransformType::Pointer TransformPointerType;
-
-  typedef std::vector< std::vector<TransformPointerType> > TransformPointerArrayType;
+  typedef std::vector< TransformPointer > TransformPointerArrayType;
 
   /** Image size typedef. */
   typedef Size<itkGetStaticConstMacro(ImageDimension)> SizeType;
@@ -183,23 +183,19 @@ public:
 
     m_Transform.resize( m_Transform.size() + 1 );
     SizeType _argSize = _arg -> GetLargestPossibleRegion().GetSize();
-    m_Transform[m_Transform.size()-1].resize(_argSize[2]);
   }
 
-  /** Set the transform array. */
-  void SetTransform( int i, int j, TransformType* transform )
+  /** Set a the transform for the image i. */
+  void SetTransform( int i, TransformType* transform )
   {
-    m_Transform[i][j] = transform;
+    m_Transform[i] = transform;
   }
 
-  /** Get the transform array. */
-//  TransformType* GetTransform( int i)
-//  {
-//    return this -> m_Transform[i].GetPointer();
-//  }
-
-  /** Get the transform array. */
-//  itkGetMacroNoDeb( Transform, TransformPointerArrayType );
+  /** Get a the transform for the image i. */
+  TransformType* GetTransform( int i)
+  {
+    return this -> m_Transform[i].GetPointer();
+  }
 
   /** Set the size of the output image. */
   itkSetMacro( Size, SizeType );
