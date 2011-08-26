@@ -146,6 +146,7 @@ public:
   void SetSliceParameters( unsigned int i, const ParametersType & parameters )
   {
     m_TransformList[i] -> SetParameters( parameters );
+    this -> Modified();
   }
 
   /** Initialize with transformation. */

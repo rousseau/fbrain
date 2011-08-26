@@ -64,7 +64,8 @@ SliceBySliceTransform<TScalarType,NDimensions>::
 TransformVector(const InputVectorType& p) const
 {
   OutputVectorType Tp( p );
-  for ( TransformPointerListConstIterator it = this->m_TransformList.begin(); it != this->m_TransformList.end(); ++it )
+  for ( TransformPointerListConstIterator it = this->m_TransformList.begin();
+      it != this->m_TransformList.end(); ++it )
     {
     Tp = (*it)->TransformVector( Tp );
     }
@@ -77,7 +78,8 @@ SliceBySliceTransform<TScalarType,NDimensions>::
 TransformVector(const InputVnlVectorType &p ) const
 {
   OutputVnlVectorType Tp( p );
-  for ( TransformPointerListConstIterator it = this->m_TransformList.begin(); it != this->m_TransformList.end(); ++it )
+  for ( TransformPointerListConstIterator it = this->m_TransformList.begin();
+      it != this->m_TransformList.end(); ++it )
     {
     Tp = (*it)->TransformVector( Tp );
     }
@@ -90,7 +92,8 @@ SliceBySliceTransform<TScalarType,NDimensions>::
 TransformCovariantVector( const InputCovariantVectorType &p ) const
 {
   OutputCovariantVectorType Tp( p );
-  for ( TransformPointerListConstIterator it = this->m_TransformList.begin(); it != this->m_TransformList.end(); ++it )
+  for ( TransformPointerListConstIterator it = this->m_TransformList.begin();
+      it != this->m_TransformList.end(); ++it )
     {
     Tp = (*it)->TransformCovariantVector( Tp );
     }
@@ -153,6 +156,8 @@ SetImage( ImageType * image)
     m_TransformList[i] -> SetCenter(centerPoint);
   }
 
+  this -> Modified();
+
 }
 
 template <class TScalarType,unsigned int NDimensions>
@@ -191,6 +196,8 @@ SetParameters( const ParametersType & parameters )
     m_TransformList[i] -> SetParameters( param );
 
   }
+
+  this -> Modified();
 }
 
 template <class TScalarType,unsigned int NDimensions>
@@ -200,17 +207,10 @@ Initialize( TransformType * t )
 {
   for(unsigned int i=0; i<m_NumberOfSlices; i++)
   {
-
-    typename TransformType::Pointer inverseRigidTransform = TransformType::New();
-    inverseRigidTransform -> SetIdentity();
-    inverseRigidTransform -> SetCenter( t -> GetCenter() );
-    inverseRigidTransform -> SetParameters( t -> GetParameters() );
-    inverseRigidTransform -> GetInverse( inverseRigidTransform );
-    inverseRigidTransform -> SetCenter( m_TransformList[i] -> GetCenter() );
-
-    m_TransformList[i] -> SetParameters( inverseRigidTransform -> GetParameters() );
-    m_TransformList[i] -> SetCenter( m_TransformList[i] -> GetCenter() );
+    t -> SetCenter( m_TransformList[i] -> GetCenter() );
+    m_TransformList[i] -> SetParameters( t -> GetParameters() );
   }
+  this -> Modified();
 }
 
 template <class TScalarType,unsigned int NDimensions>
@@ -249,6 +249,8 @@ SetFixedParameters( const ParametersType & fp )
 
     m_TransformList[j] -> SetCenter ( c );
   }
+
+  this -> Modified();
 
 }
 
