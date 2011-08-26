@@ -80,27 +80,37 @@ int main( int argc, char *argv[] )
 
   // Parse arguments
 
-  TCLAP::CmdLine cmd("Creates a high resolution image from a set of low resolution images", ' ', "Unversioned");
+  TCLAP::CmdLine cmd("Creates a high resolution image from a set of low "
+      "resolution images", ' ', "Unversioned");
 
   TCLAP::MultiArg<std::string> inputArg("i","input","Image file",true,"string",cmd);
   TCLAP::MultiArg<std::string> maskArg("m","","Mask file",false,"string",cmd);
-  TCLAP::MultiArg<std::string> transformArg("t","transform","Transform output file",false,"string",cmd);
-  TCLAP::MultiArg<std::string> roiArg("","roi","roi file (written as mask)",false,"string",cmd);
-  TCLAP::MultiArg<std::string> resampledArg("","ir","Resampled image with initial transform",false,"string",cmd);
-
-  TCLAP::ValueArg<std::string> outArg("o","output","High resolution image",true,"","string",cmd);
-  TCLAP::ValueArg<std::string> combinedMaskArg("","combined-masks","All image masks combined in a single one",false,"","string",cmd);
-  TCLAP::ValueArg<unsigned int> iterArg("n","iter","Maximum number of iterations (default 10)",false, 10,"unsigned int",cmd);
+  TCLAP::MultiArg<std::string> transformArg("t","transform","Transform output "
+      "file",false,"string",cmd);
+  TCLAP::MultiArg<std::string> roiArg("","roi","roi file (written as mask)",false,
+      "string",cmd);
+  TCLAP::MultiArg<std::string> resampledArg("","ir","Resampled image with initial "
+      "transform",false,"string",cmd);
+  TCLAP::ValueArg<std::string> outArg("o","output","High resolution image",true,
+      "","string",cmd);
+  TCLAP::ValueArg<std::string> combinedMaskArg("","combined-masks","All image "
+      "masks combined in a single one",false,"","string",cmd);
+  TCLAP::ValueArg<unsigned int> iterArg("n","iter","Maximum number of iterations"
+      " (default 10)",false, 10,"unsigned int",cmd);
   TCLAP::ValueArg<double> epsilonArg("e","epsilon","Minimal percent change between "
-      "two iterations considered as convergence. (default 0.0001)",false, 1e-4,"double",cmd);
+      "two iterations considered as convergence. (default 0.0001)",false, 1e-4,
+      "double",cmd);
 
-  TCLAP::ValueArg<double> marginArg("","margin","Adds a margin to the reconstructed images"
-  "to compensate for a small FOV in the reference. The value must be provided in millimeters."
-  " (default 0)",false, 0.0,"double",cmd);
+  TCLAP::ValueArg<double> marginArg("","margin","Adds a margin to the reconstructed "
+      "images to compensate for a small FOV in the reference. The value must be "
+      "provided in millimeters (default 0).",false, 0.0,"double",cmd);
 
   TCLAP::SwitchArg  boxSwitchArg("","box","Use intersections for roi calculation",false);
   TCLAP::SwitchArg  maskSwitchArg("","mask","Use masks for roi calculation",false);
   TCLAP::SwitchArg  allSwitchArg("","all","Use the whole image FOV",false);
+
+  TCLAP::SwitchArg  rigid3DSwitchArg("","3D","Use of 3D rigid transforms."
+      " Recommended for adult subjects.", cmd, false);
 
   // xor arguments for roi assessment
 
@@ -125,6 +135,8 @@ int main( int argc, char *argv[] )
   epsilon = epsilonArg.getValue();
   margin = marginArg.getValue();
 
+  bool rigid3D = rigid3DSwitchArg.getValue();
+
   // typedefs
 
   const    unsigned int    Dimension = 3;
@@ -148,13 +160,28 @@ int main( int argc, char *argv[] )
   typedef btk::LowToHighImageResolutionMethod<ImageType> LowToHighResFilterType;
   LowToHighResFilterType::Pointer lowToHighResFilter = LowToHighResFilterType::New();
 
-  typedef btk::SliceBySliceRigidRegistration<ImageType> SliceBySliceRegistrationType;
-  typedef SliceBySliceRegistrationType::Pointer RegistrationPointer;
+  /* Registration type required in case of slice by slice transformations
+  A rigid transformation is employed because there is not distortions like
+  in diffusion imaging. We have performed a comparison of accuracy between
+  both types of transformations. */
+  typedef btk::SliceBySliceRigidRegistration<ImageType> RegistrationType;
+  typedef RegistrationType::Pointer RegistrationPointer;
 
-  typedef btk::ResampleImageByInjectionFilter< ImageType, ImageType >  ResamplerType;
+  // Registration type required in case of 3D affine trasforms
+  typedef btk::RigidRegistration<ImageType> Rigid3DRegistrationType;
+  typedef Rigid3DRegistrationType::Pointer Rigid3DRegistrationPointer;
 
+  // Slice by slice transform definition (typically for in utero reconstructions)
   typedef btk::SliceBySliceTransform< double, Dimension > TransformType;
   typedef TransformType::Pointer                          TransformPointer;
+
+  // Rigid 3D transform definition (typically for reconstructions in adults)
+  typedef btk::Euler3DTransform< double > Rigid3DTransformType;
+  typedef Rigid3DTransformType::Pointer   Rigid3DTransformPointer;
+
+  // Resampler type required in case of a slice by slice transform
+  typedef btk::ResampleImageByInjectionFilter< ImageType, ImageType
+                                               >  ResamplerType;
 
   typedef itk::NormalizedCorrelationImageToImageMetric< ImageType,
                                                         ImageType > NCMetricType;
@@ -166,8 +193,13 @@ int main( int argc, char *argv[] )
   unsigned int numberOfImages = input.size();
   std::vector< ImagePointer >         images(numberOfImages);
   std::vector< ImageMaskPointer >     imageMasks(numberOfImages);
+
   std::vector< TransformPointer >     transforms(numberOfImages);
+  std::vector< Rigid3DTransformPointer >     rigid3DTransforms(numberOfImages);
+
   std::vector< RegistrationPointer >  registration(numberOfImages);
+  std::vector< Rigid3DRegistrationPointer >  rigid3DRegistration(numberOfImages);
+
   std::vector< MaskPointer >          masks(numberOfImages);
   std::vector< RegionType >           rois(numberOfImages);
 
@@ -263,15 +295,6 @@ int main( int argc, char *argv[] )
     maskWriter -> Update();
   }
 
-//  typedef itk::ImageFileWriter< ImageType >  WriterType;
-//
-//  WriterType::Pointer writer =  WriterType::New();
-//  writer-> SetFileName( outImage );
-//  writer-> SetInput( lowToHighResFilter->GetHighResolutionImage() );
-//  writer-> Update();
-//
-//  return EXIT_SUCCESS;
-
   // Write resampled images
   if ( resampled.size() > 0 )
   {
@@ -281,15 +304,22 @@ int main( int argc, char *argv[] )
     }
   }
 
-  // Register slice by slice
+  // Image registration performed slice by slice or affine 3D according to
+  // the user selection
 
   hrImageIni = lowToHighResFilter->GetHighResolutionImage();
 
   for (unsigned int i=0; i<numberOfImages; i++)
   {
-    transforms[i] = TransformType::New();
-    transforms[i] -> SetImage( images[i] );
-    transforms[i] -> Initialize( lowToHighResFilter -> GetTransformArray(i) );
+    if (rigid3D)
+    {
+      rigid3DTransforms[i] = lowToHighResFilter -> GetTransformArray(i);
+    }else
+    {
+      transforms[i] = TransformType::New();
+      transforms[i] -> SetImage( images[i] );
+      transforms[i] -> Initialize( lowToHighResFilter -> GetInverseTransformArray(i) );
+    }
   }
 
   unsigned int im = numberOfImages;
@@ -308,24 +338,47 @@ int main( int argc, char *argv[] )
     {
       std::cout << "Registering image " << im << " ... "; std::cout.flush();
 
-      registration[im] = SliceBySliceRegistrationType::New();
-      registration[im] -> SetFixedImage( images[im] );
-      registration[im] -> SetMovingImage( hrImageIni );
-      registration[im] -> SetImageMask( imageMasks[im] );
-      registration[im] -> SetTransform( transforms[im] );
+      if (rigid3D)
+      {
+        rigid3DRegistration[im] = Rigid3DRegistrationType::New();
+        rigid3DRegistration[im] -> SetFixedImage( images[im] );
+        rigid3DRegistration[im] -> SetMovingImage( hrImageIni );
+        rigid3DRegistration[im] -> SetFixedImageMask( imageMasks[im] );
+        rigid3DRegistration[im] -> SetTransform( rigid3DTransforms[im] );
 
-      try
-        {
-        registration[im] -> StartRegistration();
-        }
-      catch( itk::ExceptionObject & err )
-        {
-        std::cerr << "ExceptionObject caught !" << std::endl;
-        std::cerr << err << std::endl;
-//        return EXIT_FAILURE;
-        }
+        try
+          {
+          rigid3DRegistration[im] -> StartRegistration();
+          }
+        catch( itk::ExceptionObject & err )
+          {
+          std::cerr << "ExceptionObject caught !" << std::endl;
+          std::cerr << err << std::endl;
+  //        return EXIT_FAILURE;
+          }
 
-      transforms[im] = registration[im] -> GetTransform();
+        rigid3DTransforms[im] = rigid3DRegistration[im] -> GetTransform();
+      } else
+        {
+          registration[im] = RegistrationType::New();
+          registration[im] -> SetFixedImage( images[im] );
+          registration[im] -> SetMovingImage( hrImageIni );
+          registration[im] -> SetImageMask( imageMasks[im] );
+          registration[im] -> SetTransform( transforms[im] );
+
+          try
+            {
+            registration[im] -> StartRegistration();
+            }
+          catch( itk::ExceptionObject & err )
+            {
+            std::cerr << "ExceptionObject caught !" << std::endl;
+            std::cerr << err << std::endl;
+    //        return EXIT_FAILURE;
+            }
+
+          transforms[im] = registration[im] -> GetTransform();
+        }
 
       std::cout << "done. "; std::cout.flush();
 
@@ -337,6 +390,7 @@ int main( int argc, char *argv[] )
 
     std::cout << "Injecting images ... "; std::cout.flush();
 
+
     ResamplerType::Pointer resampler = ResamplerType::New();
 
     for (unsigned int i=0; i<numberOfImages; i++)
@@ -344,12 +398,14 @@ int main( int argc, char *argv[] )
       resampler -> AddInput( images[i] );
       resampler -> AddRegion( rois[i] );
 
-      unsigned int nslices = transforms[i] -> GetNumberOfSlices();
-
-      for(unsigned int j=0; j< nslices; j++)
+      if (rigid3D)
       {
-        resampler -> SetTransform(i, j, transforms[i] -> GetSliceTransform(j) ) ;
+        transforms[i] = TransformType::New();
+        transforms[i] -> SetImage( images[i] );
+        transforms[i] -> Initialize( lowToHighResFilter -> GetInverseTransformArray(i) );
       }
+
+      resampler -> SetTransform(i, transforms[i]) ;
     }
 
     resampler -> UseReferenceImageOn();
@@ -362,7 +418,8 @@ int main( int argc, char *argv[] )
     else
       hrImageOld = hrImage;
 
-    hrImage = resampler -> GetOutput() ;
+    hrImage = resampler -> GetOutput();
+
 
     std::cout << "done. " << std::endl; std::cout.flush();
 
