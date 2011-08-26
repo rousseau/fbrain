@@ -15,6 +15,7 @@ LowToHighImageResolutionMethod<ImageType>
 {
 
   m_TransformArray.resize(0);
+  m_InverseTransformArray.resize(0);
   m_Interpolator = 0;
   m_NumberOfImages = 0;
   m_TargetImage = 0;
@@ -29,6 +30,7 @@ void LowToHighImageResolutionMethod<ImageType>
 {
 
   m_TransformArray.resize(N);
+  m_InverseTransformArray.resize(N);
   m_ImageArray.resize(N);
   m_ResampledImageArray.resize(N);
   m_RegionArray.resize(N);
@@ -204,6 +206,16 @@ LowToHighImageResolutionMethod<ImageType>
 
       }
 
+    }
+
+    // Calculate inverse transform array
+    for (unsigned int i=0; i < m_NumberOfImages; i++)
+    {
+      m_InverseTransformArray[i] = TransformType::New();
+      m_InverseTransformArray[i] -> SetIdentity();
+      m_InverseTransformArray[i] -> SetCenter( m_TransformArray[i] -> GetCenter() );
+      m_InverseTransformArray[i] -> SetParameters( m_TransformArray[i] -> GetParameters() );
+      m_InverseTransformArray[i] -> GetInverse( m_InverseTransformArray[i] );
     }
 
     // Create combination of masks

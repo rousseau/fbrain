@@ -164,9 +164,6 @@ public:
   /** Get the resampled image array. */
   UserGetObjectMacro( ResampledImageArray, ImageType );
 
-  /** Method to stop the registration. */
-//  void StopRegistration();
-
   /** Get the high resolution Image. */
   itkGetObjectMacro( HighResolutionImage, ImageType );
 
@@ -186,9 +183,13 @@ public:
   itkSetMacro( Margin, double );
   itkGetMacro( Margin, double );
 
-  /** Set/Get the Transfrom. */
+  /** Set/Get the transform. */
   UserSetObjectMacro( TransformArray, TransformType );
   UserGetObjectMacro( TransformArray, TransformType );
+
+  /** Set/Get the inverse transform. */
+  UserSetObjectMacro( InverseTransformArray, TransformType );
+  UserGetObjectMacro( InverseTransformArray, TransformType );
 
   /** Set/Get the image array. */
   UserSetObjectMacro( ImageArray, ImageType );
@@ -223,6 +224,7 @@ private:
   void operator=(const Self&); //purposely not implemented
 
   TransformPointerArray            m_TransformArray;
+  TransformPointerArray            m_InverseTransformArray;
   ImageArrayPointer 			         m_ImageArray;
   RegionArray                      m_RegionArray;
   ImageMaskArray                   m_ImageMaskArray;
