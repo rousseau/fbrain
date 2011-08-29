@@ -149,7 +149,10 @@ public:
     this -> Modified();
   }
 
-  /** Initialize with transformation. */
+  /** Initialize with the identity. */
+  void Initialize();
+
+  /** Initialize with a transformation. */
   void Initialize( TransformType * t );
 
   /** Set the Fixed Parameters. */

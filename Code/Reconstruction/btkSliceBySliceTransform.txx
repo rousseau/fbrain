@@ -131,6 +131,13 @@ SliceBySliceTransform<TScalarType,NDimensions>::
 SetImage( ImageType * image)
 {
   m_Image = image;
+}
+
+template <class TScalarType,unsigned int NDimensions>
+void
+SliceBySliceTransform<TScalarType,NDimensions>::
+Initialize()
+{
   typename ImageType::SizeType size = m_Image -> GetLargestPossibleRegion().GetSize();
 
   m_NumberOfSlices = size[2];
@@ -157,7 +164,42 @@ SetImage( ImageType * image)
   }
 
   this -> Modified();
+}
 
+template <class TScalarType,unsigned int NDimensions>
+void
+SliceBySliceTransform<TScalarType,NDimensions>::
+Initialize( TransformType * t )
+{
+  typename ImageType::SizeType size = m_Image -> GetLargestPossibleRegion().GetSize();
+
+  m_NumberOfSlices = size[2];
+  m_TransformList.resize(m_NumberOfSlices);
+
+  TransformPointer tmpTransform = TransformType::New();
+  m_ParametersPerSlice = tmpTransform -> GetNumberOfParameters();
+  this -> m_Parameters.SetSize( m_NumberOfSlices * m_ParametersPerSlice );
+
+  InputPointType centerPoint;
+  ContinuousIndexType centerIndex;
+
+  centerIndex[0] = (size[0]-1)/2.0;
+  centerIndex[1] = (size[1]-1)/2.0;
+
+  for(unsigned int i=0; i<m_NumberOfSlices; i++)
+  {
+    centerIndex[2] =  i;
+    m_Image -> TransformContinuousIndexToPhysicalPoint(centerIndex,centerPoint);
+
+    m_TransformList[i] = TransformType::New();
+    m_TransformList[i] -> SetIdentity();
+    m_TransformList[i] -> SetCenter(centerPoint);
+    t -> SetCenter( m_TransformList[i] -> GetCenter() );
+
+    m_TransformList[i] -> SetParameters( t -> GetParameters() );
+  }
+
+  this -> Modified();
 }
 
 template <class TScalarType,unsigned int NDimensions>
@@ -197,19 +239,6 @@ SetParameters( const ParametersType & parameters )
 
   }
 
-  this -> Modified();
-}
-
-template <class TScalarType,unsigned int NDimensions>
-void
-SliceBySliceTransform<TScalarType,NDimensions>::
-Initialize( TransformType * t )
-{
-  for(unsigned int i=0; i<m_NumberOfSlices; i++)
-  {
-    t -> SetCenter( m_TransformList[i] -> GetCenter() );
-    m_TransformList[i] -> SetParameters( t -> GetParameters() );
-  }
   this -> Modified();
 }
 
