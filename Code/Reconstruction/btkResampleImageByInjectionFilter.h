@@ -39,6 +39,7 @@
 #include "itkFixedArray.h"
 #include "itkTransform.h"
 #include "itkEuler3DTransform.h"
+#include "btkSliceBySliceTransform.h"
 #include "itkImageFunction.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkImageRegionConstIteratorWithIndex.h"
