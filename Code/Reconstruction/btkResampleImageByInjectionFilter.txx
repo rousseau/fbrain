@@ -193,7 +193,6 @@ ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecision
   double cst = 2*sqrt(2*log(2.0));
 
   // Create spatial object for injecting in the mask only
-
   typename MaskType::Pointer mask = MaskType::New();
   mask -> SetImage (m_ImageMask);
 
@@ -202,7 +201,6 @@ ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecision
 
   for(im = 0; im < m_ImageArray.size(); im++)
   {
-
     // ijk directions for gaussian orientation
 
     DirectionType inputDirection = m_ImageArray[im] -> GetDirection();

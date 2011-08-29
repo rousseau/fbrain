@@ -56,6 +56,7 @@ SliceBySliceRigidRegistration<ImageType>
   {
     m_Transform = SliceBySliceTransformType::New();
     m_Transform -> SetImage( m_FixedImage );
+    m_Transform -> Initialize();
   }
 
 }
