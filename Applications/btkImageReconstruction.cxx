@@ -497,8 +497,17 @@ int main( int argc, char *argv[] )
     for (unsigned int i=0; i<numberOfImages; i++)
     {
       TransformWriterType::Pointer transformWriter = TransformWriterType::New();
-      transformWriter -> SetInput( transforms[i] );
+
+      if (rigid3D)
+      {
+        transformWriter -> SetInput( rigid3DTransforms[i] );
+      } else
+        {
+          transformWriter -> SetInput( transforms[i] );
+        }
+
       transformWriter -> SetFileName ( transform[i].c_str() );
+
 
       try
       {
