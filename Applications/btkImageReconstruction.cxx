@@ -402,7 +402,7 @@ int main( int argc, char *argv[] )
       {
         transforms[i] = TransformType::New();
         transforms[i] -> SetImage( images[i] );
-        transforms[i] -> Initialize( lowToHighResFilter -> GetInverseTransformArray(i) );
+        transforms[i] -> Initialize( rigid3DTransforms[i] );
       }
 
       resampler -> SetTransform(i, transforms[i]) ;
