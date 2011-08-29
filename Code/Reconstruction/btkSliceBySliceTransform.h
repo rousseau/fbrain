@@ -33,6 +33,10 @@
 
 ==========================================================================*/
 
+// TODO We could improve this class by including the coordinate system of the
+// image (origin, direction, and spacing) in the fixed parameters. This would
+// allow to load a specific transformation needless to set the image.
+
 #ifndef __btkSliceBySliceTransform_h
 #define __btkSliceBySliceTransform_h
 
