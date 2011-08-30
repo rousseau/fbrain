@@ -182,8 +182,6 @@ LowToHighImageResolutionMethod<ImageType>
 
     if (i != m_TargetImage )
     {
-      std::cout << "Registering image " << i << " to " << m_TargetImage << " ... "; std::cout.flush();
-
       try
       {
         m_Registration->StartRegistration();
@@ -194,8 +192,6 @@ LowToHighImageResolutionMethod<ImageType>
         std::cerr << err << std::endl;
         throw err;
       }
-
-      std::cout << "done." << std::endl; std::cout.flush();
       m_TransformArray[i] = m_Registration->GetTransform();
       }
       else
