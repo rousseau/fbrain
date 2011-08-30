@@ -41,6 +41,7 @@
 #include "btkResampleImageByInjectionFilter.h"
 
 #include "btkSliceBySliceTransform.h"
+#include "itkEuler3DTransform.h"
 #include "itkTransformFileReader.h"
 
 #include "itkImage.h"
@@ -131,6 +132,9 @@ int main( int argc, char *argv[] )
   typedef btk::SliceBySliceTransform< double, Dimension > TransformType;
   typedef TransformType::Pointer                          TransformPointer;
 
+  typedef btk::Euler3DTransform< double > Euler3DTransformType;
+  typedef Euler3DTransformType::Pointer   Euler3DTransformPointer;
+
   typedef itk::TransformFileReader     TransformReaderType;
   typedef TransformReaderType::TransformListType * TransformListType;
 
@@ -139,11 +143,12 @@ int main( int argc, char *argv[] )
 
   // Filter setup
   unsigned int numberOfImages = input.size();
-  std::vector< ImagePointer >         images(numberOfImages);
-  std::vector< ImageMaskPointer >     imageMasks(numberOfImages);
-  std::vector< TransformPointer >     transforms(numberOfImages);
-  std::vector< MaskPointer >          masks(numberOfImages);
-  std::vector< RegionType >           rois(numberOfImages);
+  std::vector< ImagePointer >         		images(numberOfImages);
+  std::vector< ImageMaskPointer >     		imageMasks(numberOfImages);
+  std::vector< TransformPointer >     		transforms(numberOfImages);
+  std::vector< Euler3DTransformPointer >  euler3DTransforms(numberOfImages);
+  std::vector< MaskPointer >          		masks(numberOfImages);
+  std::vector< RegionType >           		rois(numberOfImages);
 
   ImagePointer refImage;
   ImagePointer recImage;
@@ -214,11 +219,28 @@ int main( int argc, char *argv[] )
         }
   }
 
+  std::cout << "Creating isotropic image ... ";
+
+  // Start registration
+  try
+    {
+    lowToHighResFilter->StartRegistration();
+    }
+  catch( itk::ExceptionObject & err )
+    {
+    std::cerr << "ExceptionObject caught !" << std::endl;
+    std::cerr << err << std::endl;
+    return EXIT_FAILURE;
+    }
+
+  std::cout << "done. " << std::endl;
+
   lowToHighResFilter -> Initialize();
   refImage = lowToHighResFilter->GetHighResolutionImage();
 
   // Read transforms
   itk::TransformFactory<TransformType>::RegisterTransform();
+  itk::TransformFactory<Euler3DTransformType>::RegisterTransform();
 
   for (unsigned int i=0; i<numberOfImages; i++)
   {
@@ -231,7 +253,25 @@ int main( int argc, char *argv[] )
       TransformListType transformList = transformReader->GetTransformList();
       TransformReaderType::TransformListType::const_iterator titr = transformList->begin();
 
-      transforms[i] = dynamic_cast< TransformType * >( titr->GetPointer() );
+      const char * className = titr -> GetPointer() -> GetNameOfClass();
+
+      if (strcmp(className,"Euler3DTransform") == 0)
+      {
+        euler3DTransforms[i] = dynamic_cast< Euler3DTransformType * >( titr->GetPointer() );
+
+        transforms[i] = TransformType::New();
+        transforms[i] -> SetImage( images[i] );
+        transforms[i] -> Initialize( euler3DTransforms[i] );
+      } else if (strcmp(className,"SliceBySliceTransform") == 0)
+        {
+          transforms[i] = dynamic_cast< TransformType * >( titr->GetPointer() );
+          transforms[i] -> SetImage( images[i]);
+        } else
+          {
+            std::cout << className << " is not a valid transform. Exiting ..."
+                << std::endl;
+            return EXIT_FAILURE;
+          }
     }
   }
 
@@ -245,17 +285,12 @@ int main( int argc, char *argv[] )
   {
     resampler -> AddInput( images[i] );
     resampler -> AddRegion( rois[i] );
-
-    unsigned int nslices = transforms[i] -> GetNumberOfSlices();
-
-    for(unsigned int j=0; j< nslices; j++)
-    {
-      resampler -> SetTransform(i, j, transforms[i] -> GetSliceTransform(j) ) ;
-    }
+    resampler -> SetTransform(i, transforms[i] ) ;
   }
 
   resampler -> UseReferenceImageOn();
   resampler -> SetReferenceImage( refImage );
+  resampler -> SetImageMask(lowToHighResFilter -> GetImageMaskCombination());
   resampler -> Update();
 
   std::cout << "done." << std::endl;
