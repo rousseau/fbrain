@@ -39,17 +39,13 @@
 #include "itkFixedArray.h"
 #include "itkTransform.h"
 #include "itkEuler3DTransform.h"
-#include "itkImageFunction.h"
-#include "itkImageRegionIteratorWithIndex.h"
-#include "itkImageRegionConstIteratorWithIndex.h"
 #include "itkImageToImageFilter.h"
 #include "itkSize.h"
 #include "btkUserMacro.h"
 #include "vnl/vnl_sparse_matrix.h"
 #include "vnl/algo/vnl_conjugate_gradient.h"
 #include "btkLeastSquaresVnlCostFunction.h"
-#include "itkImageDuplicator.h"
-#include "itkContinuousIndex.h"
+
 
 namespace btk
 {

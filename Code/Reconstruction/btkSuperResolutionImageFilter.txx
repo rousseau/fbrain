@@ -36,22 +36,7 @@
 #ifndef __SuperResolutionImageFilter_txx
 #define __SuperResolutionImageFilter_txx
 
-// First make sure that the configuration is available.
-// This line can be removed once the optimized versions
-// gets integrated into the main directories.
-#include "itkConfigure.h"
-
 #include "btkSuperResolutionImageFilter.h"
-#include "itkObjectFactory.h"
-#include "itkIdentityTransform.h"
-#include "itkProgressReporter.h"
-#include "itkNeighborhoodIterator.h"
-#include "itkNeighborhoodAlgorithm.h"
-#include "itkSpecialCoordinatesImage.h"
-#include "btkOrientedSpatialFunction.h"
-
-#include "vnl/vnl_inverse.h"
-#include "vnl/vnl_matops.h"
 
 namespace btk
 {
