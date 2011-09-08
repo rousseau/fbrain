@@ -58,28 +58,21 @@ namespace btk
 using namespace itk;
 
 /** \class SuperResolutionImageFilter
- * \brief Resample an image via a coordinate transform
+ * \brief Super-resolution by using a set of low resolution images.and the
+ * reconstructed image.
  *
- * SuperResolutionImageFilter resamples an existing image through some coordinate
- * transform, interpolating via some image function.  The class is templated
+ * SuperResolutionImageFilter allows to obtain a super-resolution image from a
+ * set of low-resolution images and the reconstructed image. The class is templated
  * over the types of the input and output images.
  *
- * Output information (spacing, size and direction) for the output
- * image should be set. This information has the normal defaults of
- * unit spacing, zero origin and identity direction. Optionally, the
- * output information can be obtained from a reference image. If the
- * reference image is provided and UseReferenceImage is On, then the
- * spacing, origin and direction of the reference image will be used.
+ * The implemented method is similar to the one described in:
  *
- * Since this filter produces an image which is a different size than
- * its input, it needs to override several of the methods defined
- * in ProcessObject in order to properly manage the pipeline execution model.
- * In particular, this filter overrides
- * ProcessObject::GenerateInputRequestedRegion() and
- * ProcessObject::GenerateOutputInformation().
- *: 105
+ * F. Rousseau,  K. Kim,  C. Studholme,  M. Koob,  J.-L. Dietemann
+ * On Super-Resolution for Fetal Brain MRI, Medical Image Computing and Computer
+ * Assisted Intervention Pékin, Chine, pp. 355--362, Springer-Verlag, Lecture
+ * Notes in Computer Science, Vol. 6362, doi:10.1007/978-3-642-15745-5, 2010
  *
- * \ingroup GeometricTransforms
+ * \ingroup Reconstruction
  */
 
 template <class TInputImage, class TOutputImage,
@@ -88,7 +81,6 @@ class SuperResolutionImageFilter:
     public ImageToImageFilter<TInputImage, TOutputImage>
 {
 public:
-
   typedef enum {
     MSE=0,
     BACKPROJECTION=1,
