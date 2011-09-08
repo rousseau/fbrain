@@ -155,24 +155,8 @@ public:
   /**VnlVectorType typedef. */
   typedef vnl_vector<double> VnlVectorType;
 
-  // Overrides SetInput to resize the transform
-
-  void AddInput(InputImageType* _arg)
-  {
-    m_ImageArray.push_back(_arg);
-
-    this -> SetInput(_arg);
-
-    // Add transforms for this image
-    m_Transform.resize( m_Transform.size() + 1 );
-    SizeType _argSize = _arg -> GetLargestPossibleRegion().GetSize();
-    m_Transform[m_Transform.size()-1].resize(_argSize[2]);
-
-    // Initialize transforms
-    for (unsigned int i=0; i<_argSize[2]; i++)
-      m_Transform[m_Transform.size()-1][i] = TransformType::New();
-
-  }
+  /** Overrides SetInput to resize the transform. */
+  void AddInput(InputImageType* _arg);
 
   /** Set the transform array. */
   void SetTransform( int i, int j, TransformType* transform )
@@ -180,6 +164,8 @@ public:
     m_Transform[i][j] = transform;
   }
 
+  /** Converts from a linear index (li = i+i*x_size+k*x_size*y_size) to an absolute
+   * index (ai = [i j k]). */
   IndexType LinearToAbsoluteIndex( unsigned int linearIndex, InputImageRegionType region );
 
   /** Set the size of the output image. */
@@ -197,6 +183,8 @@ public:
 
   /** Set the output image spacing. */
   itkSetMacro( OutputSpacing, SpacingType );
+
+  /** Set the output image spacing as a const array of values. */
   virtual void SetOutputSpacing( const double* values );
 
   /** Get the output image spacing. */

@@ -103,9 +103,6 @@ SuperResolutionImageFilter<TInputImage, TOutputImage,TInterpolatorPrecisionType>
   return;
 }
 
-/**
- * Set the output image spacing.
- */
 template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
 void
 SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
@@ -114,6 +111,25 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 {
   SpacingType s(spacing);
   this->SetOutputSpacing( s );
+}
+
+template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
+void
+SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
+::AddInput(InputImageType* _arg)
+{
+  m_ImageArray.push_back(_arg);
+
+  this -> SetInput(_arg);
+
+  // Add transforms for this image
+  m_Transform.resize( m_Transform.size() + 1 );
+  SizeType _argSize = _arg -> GetLargestPossibleRegion().GetSize();
+  m_Transform[m_Transform.size()-1].resize(_argSize[2]);
+
+  // Initialize transforms
+  for (unsigned int i=0; i<_argSize[2]; i++)
+    m_Transform[m_Transform.size()-1][i] = TransformType::New();
 }
 
 template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
@@ -185,7 +201,6 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 
   vnl_conjugate_gradient cg(f);
   cg.set_max_function_evals(m_Iterations);
-//  cg.set_g_tolerance(1e-10);
 
   // Start minimization
 
@@ -194,9 +209,6 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 
 }
 
-/**
- * Set the output image origin.
- */
 template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
 void
 SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
@@ -304,9 +316,8 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   return;
 }
 
-
 /**
- * Set the smart pointer to the reference image that will provide
+ * Get the smart pointer to the reference image that will provide
  * the grid parameters for the output image.
  */
 template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
@@ -319,7 +330,6 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
     static_cast<const OutputImageType *>(surrogate->ProcessObject::GetInput(1));
   return referenceImage;
 }
-
 
 /**
  * Set the smart pointer to the reference image that will provide
@@ -427,6 +437,6 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   return latestTime;
 }
 
-} // end namespace itk
+} // end namespace btk
 
 #endif
