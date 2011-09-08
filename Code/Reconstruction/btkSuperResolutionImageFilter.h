@@ -275,10 +275,6 @@ public:
   itkSetMacro(Iterations, unsigned int);
   itkGetMacro(Iterations, unsigned int);
 
-  // Set/Get the optimization method
-  itkSetMacro(OptimizationMethod, unsigned int);
-  itkGetMacro(OptimizationMethod, unsigned int);
-
   // Set/Get lambda
   itkSetMacro(Lambda, float);
   itkGetMacro(Lambda, float);
@@ -330,15 +326,14 @@ private:
   unsigned int 			m_Iterations;
 
   PixelType         m_DefaultPixelValue; // default pixel value
-                                               // if the point is
-                                               // outside the image
+                                         // if the point is
+                                         // outside the image
   SpacingType       m_OutputSpacing;     // output image spacing
   OriginPointType   m_OutputOrigin;      // output image origin
   DirectionType     m_OutputDirection;   // output image direction cosines
   IndexType         m_OutputStartIndex;  // output image start index
   bool              m_UseReferenceImage;
 
-  unsigned int m_OptimizationMethod;
   unsigned int m_PSF;
 
 };

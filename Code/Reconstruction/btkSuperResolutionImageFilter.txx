@@ -76,10 +76,8 @@ SuperResolutionImageFilter<TInputImage, TOutputImage,TInterpolatorPrecisionType>
 
   m_Iterations = 30;
   m_Lambda = 0.1;
-  m_OptimizationMethod = MSE;
   m_PSF = GAUSSIAN;
 }
-
 
 /**
  * Print out a description of self
@@ -101,7 +99,6 @@ SuperResolutionImageFilter<TInputImage, TOutputImage,TInterpolatorPrecisionType>
   os << indent << "OutputOrigin: " << m_OutputOrigin << std::endl;
   os << indent << "OutputSpacing: " << m_OutputSpacing << std::endl;
   os << indent << "OutputDirection: " << m_OutputDirection << std::endl;
-//  os << indent << "Transform: " << m_Transform.GetPointer() << std::endl;
   os << indent << "UseReferenceImage: " << (m_UseReferenceImage ? "On" : "Off") << std::endl;
   return;
 }
