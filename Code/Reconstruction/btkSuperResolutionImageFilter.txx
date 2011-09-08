@@ -203,7 +203,7 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 ::SetOutputOrigin(
   const double* origin)
 {
-  OriginPointType p(origin);
+  PointType p(origin);
   this->SetOutputOrigin( p );
 }
 

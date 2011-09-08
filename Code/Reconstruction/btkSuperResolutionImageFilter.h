@@ -47,7 +47,6 @@
 #include "btkUserMacro.h"
 #include "vnl/vnl_sparse_matrix.h"
 #include "vnl/algo/vnl_conjugate_gradient.h"
-#include "vnl/algo/vnl_levenberg_marquardt.h"
 #include "btkLeastSquaresVnlCostFunction.h"
 #include "itkImageDuplicator.h"
 #include "itkContinuousIndex.h"
@@ -81,10 +80,6 @@ class SuperResolutionImageFilter:
     public ImageToImageFilter<TInputImage, TOutputImage>
 {
 public:
-  typedef enum {
-    MSE=0,
-    BACKPROJECTION=1,
-  } OptimizationMethods;
 
   typedef enum {
     BOXCAR=0,
@@ -117,36 +112,38 @@ public:
 
   /** Number of dimensions. */
   itkStaticConstMacro(ImageDimension, unsigned int,
-                      TOutputImage::ImageDimension);
-  itkStaticConstMacro(InputImageDimension, unsigned int,
                       TInputImage::ImageDimension);
-
 
   /** Transform typedef. */
   typedef Euler3DTransform<TInterpolatorPrecisionType> TransformType;
   typedef typename TransformType::Pointer TransformPointerType;
 
+  //TODO This should be replaced by a std::vector of btkSliceBySliceTransform.
+  /** Type of the transform list. */
   typedef std::vector< std::vector<TransformPointerType> > TransformPointerArrayType;
 
   /** Image size typedef. */
   typedef Size<itkGetStaticConstMacro(ImageDimension)> SizeType;
 
-  /** Image index typedef. */
+  /** Image index typedef support. */
   typedef typename TOutputImage::IndexType IndexType;
 
-  /** Image point typedef. */
+  /** Image point typedef support. */
   typedef typename TOutputImage::PointType    PointType;
 
-  /** Image pixel value typedef. */
+  /** Image pixel typedef support. */
   typedef typename TOutputImage::PixelType   PixelType;
+
+  /** Input image pixel typedef support. */
   typedef typename TInputImage::PixelType    InputPixelType;
 
   /** Typedef to describe the output image region type. */
   typedef typename TOutputImage::RegionType OutputImageRegionType;
 
-  /** Image spacing, origin and direction typedef */
+  /** Image spacing typedef support. */
   typedef typename TOutputImage::SpacingType   SpacingType;
-  typedef typename TOutputImage::PointType     OriginPointType;
+
+  /** Image direction typedef support. */
   typedef typename TOutputImage::DirectionType DirectionType;
 
   /** base type for images of the current ImageDimension */
@@ -206,11 +203,13 @@ public:
   itkGetConstReferenceMacro( OutputSpacing, SpacingType );
 
   /** Set the output image origin. */
-  itkSetMacro( OutputOrigin, OriginPointType );
+  itkSetMacro( OutputOrigin, PointType );
+
+  /** Set the output image origin as a const array of values. */
   virtual void SetOutputOrigin( const double* values);
 
   /** Get the output image origin. */
-  itkGetConstReferenceMacro( OutputOrigin, OriginPointType );
+  itkGetConstReferenceMacro( OutputOrigin, PointType );
 
   /** Set the output direciton cosine matrix. */
   itkSetMacro( OutputDirection, DirectionType );
@@ -229,14 +228,21 @@ public:
   /** Copy the output information from another Image.  By default,
    *  the information is specified with the SetOutputSpacing, Origin,
    *  and Direction methods. UseReferenceImage must be On and a
-   *  Reference image must be present to override the defaul behavior.
+   *  Reference image must be present to override the default behavior.
    *  NOTE: This function seems redundant with the
    *  SetOutputParametersFromImage( image ) function */
   void SetReferenceImage ( const TOutputImage *image );
+
+  /** Gets the reference image. */
   const TOutputImage * GetReferenceImage( void ) const;
 
+  /** Sets the use of a reference image to true/false. */
   itkSetMacro( UseReferenceImage, bool );
+
+  /** Adds UseReferenceImageOff/On. */
   itkBooleanMacro( UseReferenceImage );
+
+  /** Gets the status of the UseReferenceImage variable. */
   itkGetConstMacro( UseReferenceImage, bool );
 
   /** SuperResolutionImageFilter produces an image which is a different size
@@ -256,31 +262,42 @@ public:
   /** Method Compute the Modified Time based on changed to the components. */
   unsigned long GetMTime( void ) const;
 
+  /** Adds an image region. The regions must be added in the same order than the
+   * input images.*/
   void AddRegion(InputImageRegionType _arg)
   {
     m_InputImageRegion.push_back(_arg);
-
   }
 
+  /** Adds an image mask. Masks must be added in the same order than the
+   * input images.*/
   void AddMask(MaskType *mask)
   {
     m_MaskArray.push_back( mask );
   }
 
-  // Set/Get output image region
+  /** Sets the output image region.*/
   itkSetMacro(OutputImageRegion, OutputImageRegionType);
+
+  /** Gets the output image region.*/
   itkGetMacro(OutputImageRegion, OutputImageRegionType);
 
-  // Set/Get number of iterations
+  /** Sets the number of iterations.*/
   itkSetMacro(Iterations, unsigned int);
+
+  /** Gets the number of iterations.*/
   itkGetMacro(Iterations, unsigned int);
 
-  // Set/Get lambda
+  /** Sets the lambda value for regularization.*/
   itkSetMacro(Lambda, float);
+
+  /** Gets the lambda value for regularization.*/
   itkGetMacro(Lambda, float);
 
-  // Set/Get PSF
+  /** Sets the type of PSF (Boxcar/Gaussian).*/
   itkSetMacro(PSF, unsigned int);
+
+  /** Gets the type of PSF (Boxcar/Gaussian).*/
   itkGetMacro(PSF, unsigned int);
 
 
@@ -310,8 +327,8 @@ private:
 
   void OptimizeByLeastSquares();
 
-  SizeType                    m_Size;              // Size of the output image
-  TransformPointerArrayType   m_Transform;         // Coordinate transform to use
+  SizeType                    m_Size;         /**< Size of the output image. */
+  TransformPointerArrayType   m_Transform;
   InputImageRegionVectorType  m_InputImageRegion;
 
   OutputImageRegionType       m_OutputImageRegion;
@@ -325,13 +342,12 @@ private:
 
   unsigned int 			m_Iterations;
 
-  PixelType         m_DefaultPixelValue; // default pixel value
-                                         // if the point is
-                                         // outside the image
-  SpacingType       m_OutputSpacing;     // output image spacing
-  OriginPointType   m_OutputOrigin;      // output image origin
-  DirectionType     m_OutputDirection;   // output image direction cosines
-  IndexType         m_OutputStartIndex;  // output image start index
+  PixelType         m_DefaultPixelValue; /**< Default pixel value if the point
+                                              falls outside the image. */
+  SpacingType       m_OutputSpacing;     /**< Spacing of the output image. */
+  PointType   			m_OutputOrigin;      /**< Origin of the output image. */
+  DirectionType     m_OutputDirection;   /**< Direction of the output image. */
+  IndexType         m_OutputStartIndex;  /**< Start index of the output image.*/
   bool              m_UseReferenceImage;
 
   unsigned int m_PSF;
