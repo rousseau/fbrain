@@ -103,7 +103,7 @@ using namespace itk;
  * of the library (metric, optimizer, transform, interpolator). The used components
  * provided good results in fetal brain imaging, and therefore were kept fixed.
  *
- * \ingroup RegistrationFilters
+ * \ingroup Reconstruction
  */
 template <typename TImage>
 class RigidRegistration :
