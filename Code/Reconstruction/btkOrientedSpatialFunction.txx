@@ -64,9 +64,9 @@ OrientedSpatialFunction<TOutput, VImageDimension, TInput>
 
   ArrayType sigma;
 
-  sigma[0] = 0.5*m_Spacing[0];
-  sigma[1] = 0.5*m_Spacing[1];
-  sigma[2] = 0.5*m_Spacing[2];
+  sigma[0] = sqrt(m_Spacing[0]*m_Spacing[0]/(8*log(2)));
+  sigma[1] = sqrt(m_Spacing[1]*m_Spacing[1]/(8*log(2)));
+  sigma[2] = sqrt(m_Spacing[2]*m_Spacing[2]/(8*log(2)));
 
   m_Gaussian -> SetSigma( sigma );
 
@@ -102,10 +102,6 @@ OrientedSpatialFunction<TOutput, VImageDimension, TInput>
 
   double value = 0.0;
 
-  // FIXME ? Is it correct to use 1.5 voxels for the length of the PSF
-  // perpendicular to the slice? Why a difference with other dimensions?
-  // Perhaps I should use 0.5? Or is it too small?
-
   switch (m_PSF)
   {
   case BOXCAR:
@@ -118,7 +114,6 @@ OrientedSpatialFunction<TOutput, VImageDimension, TInput>
     value = m_Gaussian -> Evaluate( diffPoint );
     break;
   default:
-    std::cout << "in default " << std::endl;
     std::cout << "Unknown function" << std::endl;
     break;
   }
@@ -139,6 +134,6 @@ OrientedSpatialFunction<TOutput, VImageDimension, TInput>
 }
 
 
-} // end namespace itk
+} // end namespace btk
 
 #endif
