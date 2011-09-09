@@ -53,8 +53,8 @@ using namespace itk;
 /** \class OrientedSpatialFunction
  * \brief N-dimensional oriented spatial function class
  *
- * This class implements a function oriented in a specific direction.
- *
+ * This class implements a function oriented in a specific direction. This is
+ * used to have the PSF in the correct orientation in world coordinates.
  *
  * \ingroup SpatialFunctions
  */
@@ -110,9 +110,8 @@ public:
   /** Function value */
   OutputType Evaluate(const TInput& position) const;
 
-  /** Prints class information */
-
-  /** Set spacing */
+  /** Sets spacing. This method changes the standard deviations of the Gaussian
+   * function accordingly. */
   void SetSpacing(SpacingType spacing)
   {
     m_Spacing = spacing.GetVnlVector();
@@ -127,7 +126,7 @@ public:
 
   }
 
-  /** Set direction */
+  /** Sets direction of the PSF. */
   void SetDirection(DirectionType direction)
   {
     m_Direction = direction.GetVnlMatrix();
@@ -136,14 +135,16 @@ public:
     m_kdir = m_Direction.get_column(2);
   }
 
-  /** Set center */
+  /** Sets the position of the PSF. */
   void SetCenter(PointType center)
   {
     m_Center = center.GetVnlVector();
   }
 
-  /** Set/Get PSF */
+  /** Sets the type of PSF (Boxcar, Gaussian). */
   itkSetMacro(PSF, unsigned int);
+
+  /** Gets the type of PSF (Boxcar, Gaussian). */
   itkGetMacro(PSF, unsigned int);
 
 
