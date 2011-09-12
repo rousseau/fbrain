@@ -421,11 +421,6 @@ LeastSquaresVnlCostFunction<TImage>::Initialize()
   end_hr[1] = start_hr[1] + size_hr[1] - 1 ;
   end_hr[2] = start_hr[2] + size_hr[2] - 1 ;
 
-  // Interpolator for HR image
-
-  InterpolatorPointer interpolator = InterpolatorType::New();
-  interpolator -> SetInputImage( m_ReferenceImage );
-
   // Differential continuous indexes to perform the neighborhood iteration
   SpacingType spacing_lr = m_Images[0] -> GetSpacing();
   SpacingType spacing_hr = m_ReferenceImage -> GetSpacing();
@@ -453,9 +448,17 @@ LeastSquaresVnlCostFunction<TImage>::Initialize()
   Y.fill(0.0);
 
   // TODO This can be parallelized by using openmp
+  unsigned int im;
+  #pragma omp parallel for private(im) schedule(dynamic)
 
-  for(unsigned int im = 0; im < m_Images.size(); im++)
+  for(im = 0; im < m_Images.size(); im++)
   {
+
+    // Interpolator for HR image
+
+    InterpolatorPointer interpolator = InterpolatorType::New();
+    interpolator -> SetInputImage( m_ReferenceImage );
+
     SpacingType inputSpacing = m_Images[im] -> GetSpacing();
 
     // PSF definition
@@ -534,7 +537,7 @@ LeastSquaresVnlCostFunction<TImage>::Initialize()
 
         function -> SetCenter( lrPoint );
 
-        for(unsigned int k=0; k<deltaIndexes.size(); k++)
+       for(unsigned int k=0; k<deltaIndexes.size(); k++)
         {
           nbIndex[0] = deltaIndexes[k][0] + lrIndex[0];
           nbIndex[1] = deltaIndexes[k][1] + lrIndex[1];
@@ -580,6 +583,7 @@ LeastSquaresVnlCostFunction<TImage>::Initialize()
           }
 
         }
+
 
       }
 
