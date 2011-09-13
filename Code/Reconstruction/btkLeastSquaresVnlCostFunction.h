@@ -44,6 +44,15 @@
 
 namespace btk
 {
+/** \class LeastSquaresVnlCostFunction
+ * \brief Mean squared error function class to be used with vnl_conjugate_gradient
+ *
+ * LeastSquaresVnlCostFunction implements the mse cost function and its gradient
+ * as required to be used with vnl_conjugate_gradient. H, Y, and HtY are stored
+ * in this class to save memory.
+ *
+ * \ingroup Reconstruction
+ */
 template <class TImage>
 class LeastSquaresVnlCostFunction : public vnl_cost_function
 {
@@ -70,11 +79,14 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
 
   typedef ContinuousIndex<double, TImage::ImageDimension> ContinuousIndexType;
 
-  /**Blurring function typedef. */
+  /**Oriented spatial function typedef. */
   typedef OrientedSpatialFunction<double, 3, PointType> FunctionType;
 
   /**Const iterator typedef. */
   typedef ImageRegionConstIteratorWithIndex< ImageType >  ConstIteratorType;
+
+  typedef vnl_vector<float> VnlVectorType;
+  typedef vnl_sparse_matrix<float> VnlSparseMatrixType;
 
   struct img_size {
      unsigned int width;
@@ -84,26 +96,69 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
 
   LeastSquaresVnlCostFunction(unsigned int dim);
 
+  /**Cost function (MSE). */
+  double f(const vnl_vector<double>& x);
+
+  /**Gradient of the cost function, required for optimization with
+    vnl_conjugate_gradient . */
+  void gradf(const vnl_vector<double>& x, vnl_vector<double>& g);
+
+  /**Construction of vector Y and matrix H of the observation model Y=H*X. */
+  void Initialize();
+
+  /**Sets the weight of the regularization term.*/
+  void SetLambda(float value);
+
+  /**Adds a low-resolution image.*/
+  void AddImage( ImageType* image );
+
+  /**Adds the image region of the corresponding low-resolution image.*/
+  void AddRegion( RegionType region);
+
+  /**Adds the image mask of the corresponding low-resolution image.*/
+  void AddMask( MaskType *mask);
+
+  /**Sets the reference image, i.e. an image providing the spatial positions
+  where to compute the intensity values (each X value). This image is expected
+  to have isotropic voxels, with a size equal to the in-plane voxel size of the
+  low resolution images. However, any image can be provided to this end, the
+  code has been written generically. */
+  void SetReferenceImage( const ImageType * image );
+
+  // TODO This function must be modified after modifying this class to use slice
+  // by slice transforms.
+  /**Sets the transforms obtained with the reconstruction method. These
+  transformations correct the movements of the fetus during image acquisition.*/
+  void SetTransform( int i, int j, TransformType* transform );
+
+  private:
+
   void set(float * array, int size, float value);
 
-  // Mirror of the position pos. abs(pos) must not be > 2*(size-1)
+  /** Mirror of the position pos. abs(pos) must not be > 2*(size-1) */
   int mirror(int pos, int size);
 
+  /** Gets an image row as a vector. */
   void get_row(const vnl_vector<float>& image, img_size & size, int row,
       int frame, float * output);
 
+  /** Sets an image row from a vector. */
   void set_row(vnl_vector<float>& image, img_size & size, int row, int frame,
       float * input);
 
+  /** Gets an image column as a vector. */
   void get_col(const vnl_vector<float>& image, img_size & size, int col,
       int frame, float * output);
 
+  /** Sets an image column from a vector. */
   void set_col(vnl_vector<float>& image, img_size & size, int col, int frame,
       float * input);
 
+  /** Gets an image z-axis as a vector. */
   void get_spec(const vnl_vector<float>& image, img_size & size, int row,
       int col, float * output);
 
+  /** Sets an image z-axis from a vector. */
   void set_spec(vnl_vector<float>& image, img_size & size, int row, int col,
       float * input);
 
@@ -121,37 +176,14 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
   void convol3dz(const vnl_vector<float>& image, vnl_vector<float>& image_conv,
       img_size & size, float * kernel, int ksize);
 
-  // 3D convolution : over the spectra
+  // Gets the first derivative of an image along the x axis.
   void get_derivative_x(const vnl_vector<double>& x, vnl_vector<float>& deriv_x);
 
-  // 3D convolution : over the spectra
+  // Gets the first derivative of an image along the y axis.
   void get_derivative_y(const vnl_vector<double>& x, vnl_vector<float>& deriv_y);
 
-  // 3D convolution : over the spectra
+  // Gets the first derivative of an image along the z axis.
   void get_derivative_z(const vnl_vector<double>& x, vnl_vector<float>& deriv_z);
-
-  typedef vnl_vector<float> VnlVectorType;
-  typedef vnl_sparse_matrix<float> VnlSparseMatrixType;
-
-  double f(const vnl_vector<double>& x);
-
-  void gradf(const vnl_vector<double>& x, vnl_vector<double>& g);
-
-  void Initialize();
-
-  void SetLambda(float value);
-
-  void AddImage( ImageType* image );
-
-  void AddRegion( RegionType region);
-
-  void AddMask( MaskType *mask);
-
-  void SetReferenceImage( const ImageType * image );
-
-  void SetTransform( int i, int j, TransformType* transform );
-
-  private:
 
   vnl_sparse_matrix<float> H;
   vnl_vector<float> HtY;
@@ -165,7 +197,6 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
   ImageConstPointer					 m_ReferenceImage;
   std::vector< std::vector<TransformPointerType> > m_Transforms;
   RegionType m_OutputImageRegion;
-
 
 };
 

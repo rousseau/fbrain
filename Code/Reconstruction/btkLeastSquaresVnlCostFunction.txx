@@ -87,8 +87,8 @@ LeastSquaresVnlCostFunction<TImage>::set_row(vnl_vector<float>& image,
 
 template <class TImage>
 void
-LeastSquaresVnlCostFunction<TImage>::get_col(const vnl_vector<float>& image, img_size & size,
-    int col, int frame, float * output)
+LeastSquaresVnlCostFunction<TImage>::get_col(const vnl_vector<float>& image,
+    img_size & size, int col, int frame, float * output)
 {
   for (unsigned int i = 0; i < size.height; i++)
     output[i] = image[col + i * size.width + frame * size.width * size.height];
@@ -340,7 +340,8 @@ LeastSquaresVnlCostFunction<TImage>::f(const vnl_vector<double>& x)
 
   double value = mse + lambda*reg;
 
-  std::cout << "error, mse, reg = " << value << " , " << mse << " , " << lambda*reg << std::endl;
+  std::cout << "error, mse, reg = " << value << " , " << mse << " , "
+      << lambda*reg << std::endl;
 
   return value;
 
@@ -447,7 +448,6 @@ LeastSquaresVnlCostFunction<TImage>::Initialize()
   Y.set_size(nrows);
   Y.fill(0.0);
 
-  // TODO This can be parallelized by using openmp
   unsigned int im;
   #pragma omp parallel for private(im) schedule(dynamic)
 
@@ -531,7 +531,8 @@ LeastSquaresVnlCostFunction<TImage>::Initialize()
         lrDiffIndex[1] = lrIndex[1] - inputIndex[1];
         lrDiffIndex[2] = lrIndex[2] - inputIndex[2];
 
-        lrLinearIndex = lrDiffIndex[0] + lrDiffIndex[1]*inputSize[0] + lrDiffIndex[2]*inputSize[0]*inputSize[1];
+        lrLinearIndex = lrDiffIndex[0] + lrDiffIndex[1]*inputSize[0] +
+                        lrDiffIndex[2]*inputSize[0]*inputSize[1];
 
         Y[lrLinearIndex + offset] = fixedIt.Get();
 
@@ -550,12 +551,14 @@ LeastSquaresVnlCostFunction<TImage>::Initialize()
           {
             transformedPoint = m_Transforms[im][i] -> TransformPoint( nbPoint);
 
-            m_ReferenceImage -> TransformPhysicalPointToContinuousIndex( transformedPoint, hrContIndex );
+            m_ReferenceImage -> TransformPhysicalPointToContinuousIndex(
+                                transformedPoint, hrContIndex );
 
             bool isInsideHR = true;
 
-            // FIXME This checking should be done for all points first, and discard the point
-            // if al least one point is out of the reference image
+            // FIXME This checking should be done for all points first, and
+            // discard the point if al least one point is out of the reference
+            // image
 
             if ( (hrContIndex[0] < start_hr[0]) || (hrContIndex[0] > end_hr[0]) ||
                  (hrContIndex[1] < start_hr[1]) || (hrContIndex[1] > end_hr[1]) ||
@@ -566,7 +569,8 @@ LeastSquaresVnlCostFunction<TImage>::Initialize()
             {
               hrValue = interpolator -> Evaluate( transformedPoint );
 
-              for(unsigned int n=0; n<interpolator -> GetContributingNeighbors(); n++)
+              for(unsigned int n=0; n<interpolator -> GetContributingNeighbors();
+                  n++)
               {
                 hrIndex = interpolator -> GetIndex(n);
 
@@ -574,8 +578,10 @@ LeastSquaresVnlCostFunction<TImage>::Initialize()
                 hrDiffIndex[1] = hrIndex[1] - start_hr[1];
                 hrDiffIndex[2] = hrIndex[2] - start_hr[2];
 
-                hrLinearIndex = hrDiffIndex[0] + hrDiffIndex[1]*size_hr[0] + hrDiffIndex[2]*size_hr[0]*size_hr[1];
-                H(lrLinearIndex + offset, hrLinearIndex) += interpolator -> GetOverlap(n)* lrValue;
+                hrLinearIndex = hrDiffIndex[0] + hrDiffIndex[1]*size_hr[0] +
+                                hrDiffIndex[2]*size_hr[0]*size_hr[1];
+                H(lrLinearIndex + offset, hrLinearIndex) +=
+                    interpolator -> GetOverlap(n)* lrValue;
               }
 
             }
