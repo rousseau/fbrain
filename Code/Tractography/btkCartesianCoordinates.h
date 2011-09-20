@@ -52,6 +52,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
      * @class CartesianCoordinates
      * @brief Cartesian coordinates
      * @author Julien Pontabry
+     * @ingroup Tractography
      * Cartesian coordinates in a 3D space
      */
     class CartesianCoordinates

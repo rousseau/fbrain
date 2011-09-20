@@ -41,6 +41,10 @@ knowledge of the CeCILL-B license and that you accept its terms.
 namespace btk
 {
 
+    /**
+     * @class btkNrrdField
+     * @ingroup InputOutput
+     */
     class btkNrrdField
     {
         public:

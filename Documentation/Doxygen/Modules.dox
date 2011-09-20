@@ -1,0 +1,52 @@
+/**
+ * @defgroup Tractography Tractography
+ */
+
+/**
+ * @defgroup Reconstruction Reconstruction
+ */
+
+/**
+ * @defgroup Segmentation Segmentation
+ */
+
+/**
+ * @defgroup Operators Operators
+ */
+
+/**
+ * @defgroup Denoising Denoising
+ */
+
+/**
+ * @defgroup InputOutput Input and output
+ */
+
+
+
+
+/**
+ * @defgroup RegistrationFilters Registration
+ * @ingroup Reconstruction
+ */
+
+/**
+ * @defgroup ImageFunctions Image functions
+ * @ingroup Reconstruction
+ */
+
+/**
+ * @defgroup ImageInterpolators Image interpolators
+ * @ingroup Reconstruction
+ */
+
+/**
+ * @defgroup SpatialFunctions Spatial functions
+ * @ingroup Reconstruction
+ */
+
+/**
+ * @defgroup GeometricTransforms Geometric transforms
+ * @ingroup Reconstruction
+ */
+

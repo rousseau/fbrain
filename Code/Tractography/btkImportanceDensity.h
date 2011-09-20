@@ -50,6 +50,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
      * @class ImportanceDensity
      * @brief Importance density
      * @author Julien Pontabry
+     * @ingroup Tractography
      */
     class ImportanceDensity
     {

@@ -51,6 +51,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
      * @class SHModel
      * @brief Continuous model of diffusion
      * @author Julien Pontabry
+     * @ingroup Tractography
      */
     class SHModel
     {

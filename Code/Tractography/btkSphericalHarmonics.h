@@ -47,6 +47,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
      * @class SphericalHarmonics
      * @brief Spherical harmonics mathematics implementation
      * @author Julien Pontabry
+     * @ingroup Tractography
      */
     class SphericalHarmonics
     {
