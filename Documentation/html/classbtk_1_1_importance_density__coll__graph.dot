@@ -1,0 +1,10 @@
+digraph G
+{
+  edge [fontname="FreeSans.ttf",fontsize="10",labelfontname="FreeSans.ttf",labelfontsize="10"];
+  node [fontname="FreeSans.ttf",fontsize="10",shape=record];
+  Node1 [label="btk::ImportanceDensity",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled" fontcolor="black"];
+  Node2 -> Node1 [dir=back,color="darkorchid3",fontsize="10",style="dashed",label="m_model",fontname="FreeSans.ttf"];
+  Node2 [label="btk::SHModel",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classbtk_1_1_s_h_model.html",tooltip="Continuous model of diffusion."];
+  Node3 -> Node1 [dir=back,color="darkorchid3",fontsize="10",style="dashed",label="m_signal",fontname="FreeSans.ttf"];
+  Node3 [label="btk::Signal",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classbtk_1_1_signal.html",tooltip="Continuous image representing the diffusion signal."];
+}
