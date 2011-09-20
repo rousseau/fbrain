@@ -1,0 +1,20 @@
+digraph G
+{
+  edge [fontname="FreeSans.ttf",fontsize="10",labelfontname="FreeSans.ttf",labelfontsize="10"];
+  node [fontname="FreeSans.ttf",fontsize="10",shape=record];
+  Node1 [label="Code/InputOutput/btkNiftiFilenameRadix.h",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled" fontcolor="black"];
+  Node1 -> Node2 [dir=back,color="midnightblue",fontsize="10",style="solid",fontname="FreeSans.ttf"];
+  Node2 [label="Applications/btkGroupwiseS2SDistortionCorrection.cxx",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$btk_groupwise_s2_s_distortion_correction_8cxx.html"];
+  Node1 -> Node3 [dir=back,color="midnightblue",fontsize="10",style="solid",fontname="FreeSans.ttf"];
+  Node3 [label="Applications/btkODFParticleFilterTractography.cxx",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$btk_o_d_f_particle_filter_tractography_8cxx.html"];
+  Node1 -> Node4 [dir=back,color="midnightblue",fontsize="10",style="solid",fontname="FreeSans.ttf"];
+  Node4 [label="Applications/btkODFStreamlineTractography.cxx",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$btk_o_d_f_streamline_tractography_8cxx.html"];
+  Node1 -> Node5 [dir=back,color="midnightblue",fontsize="10",style="solid",fontname="FreeSans.ttf"];
+  Node5 [label="Applications/btkTensorParticleFilterTractography.cxx",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$btk_tensor_particle_filter_tractography_8cxx.html"];
+  Node1 -> Node6 [dir=back,color="midnightblue",fontsize="10",style="solid",fontname="FreeSans.ttf"];
+  Node6 [label="Applications/btkTensorStreamlineTractography.cxx",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$btk_tensor_streamline_tractography_8cxx.html"];
+  Node1 -> Node7 [dir=back,color="midnightblue",fontsize="10",style="solid",fontname="FreeSans.ttf"];
+  Node7 [label="Utilities/btkNiftiToNrrd.cxx",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$btk_nifti_to_nrrd_8cxx.html"];
+  Node1 -> Node8 [dir=back,color="midnightblue",fontsize="10",style="solid",fontname="FreeSans.ttf"];
+  Node8 [label="Utilities/btkNrrdToNifti.cxx",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$btk_nrrd_to_nifti_8cxx.html"];
+}
