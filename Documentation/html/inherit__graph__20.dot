@@ -1,7 +1,0 @@
-digraph G
-{
-  edge [fontname="FreeSans.ttf",fontsize="10",labelfontname="FreeSans.ttf",labelfontsize="10"];
-  node [fontname="FreeSans.ttf",fontsize="10",shape=record];
-  rankdir=LR;
-  Node1 [label="btk::LowToHighImageResolutionMethod\< TImage \>",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$classbtk_1_1_low_to_high_image_resolution_method.html",tooltip="Class for obtaining an isovoxel image from low resolution images."];
-}
