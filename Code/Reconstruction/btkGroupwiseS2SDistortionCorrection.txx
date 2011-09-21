@@ -57,12 +57,9 @@ GroupwiseS2SDistortionCorrection<TSequence>
   m_Interpolator = 0;
   m_FixedImage = 0;
   m_T2epi = 0;
-  m_Resample = 0;
 
   m_FixedImageRegionDefined = false;
-
   m_Iterations = 2;
-
 }
 
 template < typename TSequence >
@@ -254,6 +251,8 @@ GroupwiseS2SDistortionCorrection<TSequence>
 
   }
 
+    std::cout << "get output begining" << std::endl;
+
   return this->m_Output;
 }
 
@@ -334,16 +333,6 @@ GroupwiseS2SDistortionCorrection<TSequence>
 
   m_Registration -> SetMovingImage( m_FixedImage );
   m_Registration -> SetFixedImageRegion( m_FixedImageRegion );
-
-  // Create resampler
-
-  m_Resample = ResampleType::New();
-
-  m_Resample -> SetSize( m_FixedImage->GetLargestPossibleRegion().GetSize() );
-  m_Resample -> SetOutputOrigin(  m_FixedImage->GetOrigin() );
-  m_Resample -> SetOutputSpacing( m_FixedImage->GetSpacing() );
-  m_Resample -> SetOutputDirection( m_FixedImage->GetDirection() );
-  m_Resample -> SetDefaultPixelValue( 100 );
 
   // Create empty mean gradient image
 

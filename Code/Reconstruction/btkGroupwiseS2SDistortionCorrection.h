@@ -248,7 +248,7 @@ public:
    /** Gets the mean dw-image. */
   virtual ImageType * GetMeanGradient()
   {
-    return this -> m_Resample -> GetOutput();
+    return m_MeanGradient;
   }
 
   /** Write transforms ( DW -> T2) to the specified location. */
@@ -288,7 +288,6 @@ private:
   InterpolatorPointer			         m_Interpolator;
   ImageArrayPointer 			         m_ImageArray;
   RegistrationPointer							 m_Registration;
-  ResamplePointer                  m_Resample;
 
   RegionType 											 m_FixedImageRegion;
   bool                             m_FixedImageRegionDefined;
