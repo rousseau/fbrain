@@ -278,12 +278,10 @@ GroupwiseS2SDistortionCorrection<TSequence>
 
   // Sequence region information
 
-  m_SequenceRegion = m_Input -> GetLargestPossibleRegion();
-  m_SequenceIndex = m_SequenceRegion.GetIndex();
-  m_SequenceSize = m_SequenceRegion.GetSize();
+  m_SequenceRegion 		 = m_Input -> GetLargestPossibleRegion();
+  m_SequenceIndex 		 = m_SequenceRegion.GetIndex();
+  m_SequenceSize 			 = m_SequenceRegion.GetSize();
   m_GradientDirections = m_SequenceSize[3] - 1;
-
-//  m_GradientDirections =2;
 
   // Extract T2 epi to be used as final reference
 
@@ -315,6 +313,8 @@ GroupwiseS2SDistortionCorrection<TSequence>
   G1Extractor -> SetDirectionCollapseToSubmatrix();
   G1Extractor -> SetInput( m_Input );
 
+  // Smooth image to get a smoother cost function
+
   GaussianFilterPointer fixedSmoother  = GaussianFilterType::New();
   fixedSmoother -> SetUseImageSpacingOn();
   fixedSmoother -> SetVariance( 2.0 );
@@ -323,13 +323,14 @@ GroupwiseS2SDistortionCorrection<TSequence>
 
   m_FixedImage = fixedSmoother -> GetOutput();
 
-  // Registration object
+  // Create registration object
 
   m_Registration = RegistrationType::New();
 
   // Set fixed image region
-  // Here we swap fixed and moving images to perform registration slice by slice
-  // and the we compute the transform inverse. Perhaps it is better to change the names.
+  // Here we swap fixed and moving images to perform slice by slice registration
+  // and then we compute the transform inverse. Perhaps it is better to change
+  // the names.
 
   m_Registration -> SetMovingImage( m_FixedImage );
   m_Registration -> SetFixedImageRegion( m_FixedImageRegion );
@@ -364,7 +365,6 @@ GroupwiseS2SDistortionCorrection<TSequence>
   m_Output -> SetDirection( m_Input -> GetDirection() );
   m_Output -> SetSpacing( m_Input -> GetSpacing() );
 
-
    // Setup transforms
 
   PointType centerPoint;
@@ -380,19 +380,6 @@ GroupwiseS2SDistortionCorrection<TSequence>
   m_FixedImage -> TransformIndexToPhysicalPoint(centerIndex, centerPoint);
 
   m_TransformArray.resize(m_GradientDirections);
-//  m_NormalizedTransformArray.resize(m_GradientDirections);
-
-//  for (unsigned int i=0; i<m_GradientDirections; i++)
-//  {
-//    m_TransformArray[i] = TransformType::New();
-//    m_TransformArray[i] -> SetIdentity();
-//    m_TransformArray[i] -> SetCenter( centerPoint );
-//
-//    m_NormalizedTransformArray[i] = TransformType::New();
-//    m_NormalizedTransformArray[i] -> SetIdentity();
-//
-//  }
-
 
 }
 
@@ -449,8 +436,6 @@ GroupwiseS2SDistortionCorrection<TSequence>
 
   do
   {
-
- //   meanAffine.Fill(0.0);
     m_MeanGradient -> FillBuffer(0.0);
 
     for (unsigned int i = 1; i <= m_GradientDirections; i++)
@@ -473,32 +458,27 @@ GroupwiseS2SDistortionCorrection<TSequence>
       ImagePointer movingImage = movingSmoother -> GetOutput();
 
       m_Registration -> SetFixedImage( movingImage );
-//      m_Registration -> SetTransform( m_TransformArray[i-1] );
-//      m_Registration -> SetInitialTransformParameters( m_TransformArray[i-1] -> GetParameters() );
 
       if (nrep>0)
       {
         m_Registration -> SetTransformArray( m_TransformArray[i-1] );
       }
-      std::cout << "Registering image " << i << " (" << nrep << ") ... "; std::cout.flush();
+      std::cout << "Registering diffusion image " << i << " (iter " << nrep
+          << ") ... "; std::cout.flush();
 
       try
-        {
+      {
         m_Registration->StartRegistration();
-        }
+      }
       catch( itk::ExceptionObject & err )
-        {
+      {
         std::cerr << "ExceptionObject caught !" << std::endl;
         std::cerr << err << std::endl;
         throw err;
-        }
+      }
 
       std::cout << "done." << std::endl; std::cout.flush();
 
-//      ParametersType finalTransformParameters = m_Registration->GetLastTransformParameters();
-//      m_TransformArray[i-1] -> SetParameters( finalTransformParameters );
-
-//      meanAffine = meanAffine + m_TransformArray[i-1] -> GetMatrix();
       m_TransformArray[i-1] = m_Registration -> GetTransformArray();
 
       IndexType index;
@@ -523,20 +503,6 @@ GroupwiseS2SDistortionCorrection<TSequence>
       {
         meanGradientIt.Set( meanGradientIt.Get() / m_GradientDirections );
       }
-
-//    meanAffine/=(double)m_GradientDirections;
-//    invMeanAffine = meanAffine.GetInverse();
-
-    // Remove bias towards fixed image
-
-    TransformPointer naturalToFixedTransform  = TransformType::New();
-    naturalToFixedTransform -> SetIdentity();
-//    naturalToFixedTransform -> SetCenter( m_TransformArray[0] -> GetCenter() );
-//    naturalToFixedTransform -> SetMatrix(invMeanAffine);
-
-    m_Resample -> SetTransform( naturalToFixedTransform );
-    m_Resample -> SetInput( m_MeanGradient );
-    m_Resample -> Update();
 
     // Update transforms for initialization and compute difference in transforms
 
@@ -566,11 +532,14 @@ GroupwiseS2SDistortionCorrection<TSequence>
 
     // Normalized becomes the new fixed
 
-    IteratorType resampleIt( m_Resample -> GetOutput(), m_Resample -> GetOutput() -> GetLargestPossibleRegion() );
-    for( resampleIt.GoToBegin(), fixedIt.GoToBegin(); !resampleIt.IsAtEnd(); ++resampleIt, ++fixedIt)
-      {
-        fixedIt.Set( resampleIt.Get() );
-      }
+    IteratorType meanGradientIt( m_MeanGradient,
+                                 m_MeanGradient -> GetLargestPossibleRegion() );
+    for( meanGradientIt.GoToBegin(), fixedIt.GoToBegin();
+        !meanGradientIt.IsAtEnd();
+        ++meanGradientIt, ++fixedIt)
+    {
+        fixedIt.Set( meanGradientIt.Get() );
+    }
 
     // Compute errors in parameters
 
@@ -581,11 +550,11 @@ GroupwiseS2SDistortionCorrection<TSequence>
 
   // Registration with T2 epi
 
-  std::cout << "Registering mean to T2epi (T:mean -> T2) ... "; std::cout.flush();
+  std::cout << "Registering mean gradient to B0 (T:mean -> B0) ... "; std::cout.flush();
 //
   m_AffineRegistration = AffineRegistrationType::New();
   m_AffineRegistration -> SetFixedImage( m_T2epi );
-  m_AffineRegistration -> SetMovingImage( m_Resample -> GetOutput() );
+  m_AffineRegistration -> SetMovingImage( m_MeanGradient );
   m_AffineRegistration -> SetFixedImageRegion( m_FixedImageRegion );
   m_AffineRegistration -> SetIterations( 0 );
 
@@ -621,7 +590,7 @@ GroupwiseS2SDistortionCorrection<TSequence>
   resampler -> SetReferenceImage(  m_T2epi );
   resampler -> SetDefaultPixelValue( 100 );
   resampler  -> SetTransform( m_AffineRegistration -> GetTransform() );
-  resampler  -> SetInput( m_Resample -> GetOutput() );
+  resampler  -> SetInput( m_MeanGradient );
   resampler  -> Update();
 
   typename ImageWriterType::Pointer imageWriter =  ImageWriterType::New();
