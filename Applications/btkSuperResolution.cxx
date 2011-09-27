@@ -51,6 +51,10 @@
 
 #include "btkSuperResolutionImageFilter.h"
 
+#include "../Code/Denoising/btkNLMTool.h"
+#include "itkCastImageFilter.h"
+
+
 #include <tclap/CmdLine.h>
 
 int main( int argc, char *argv[] )
@@ -72,7 +76,7 @@ int main( int argc, char *argv[] )
 
   // Parse arguments
 
-  TCLAP::CmdLine cmd("Resample a set of images using the injection method", ' ', "Unversioned");
+  TCLAP::CmdLine cmd("Apply super-resolution algorithm using one or multiple input images.", ' ', "Unversioned");
 
   TCLAP::MultiArg<std::string> inputArg("i","input","Low-resolution image file",true,"string",cmd);
   TCLAP::MultiArg<std::string> maskArg("m","mask","low-resolution image mask file",false,"string",cmd);
@@ -84,6 +88,8 @@ int main( int argc, char *argv[] )
   TCLAP::ValueArg<float> lambdaArg  ("","lambda","Regularization factor (default = 0.1)",false, 0.1,"float",cmd);
   TCLAP::SwitchArg  boxcarSwitchArg("","boxcar","A boxcar-shaped PSF is assumed as imaging model"
       " (by default a Gaussian-shaped PSF is employed.).",cmd,false);
+  TCLAP::ValueArg<int> loopArg  ("","loop","Number of loops (SR/denoising) (default = 5)",false, 5,"int",cmd);
+    
 
   // Parse the argv array.
   cmd.parse( argc, argv );
@@ -197,6 +203,58 @@ int main( int argc, char *argv[] )
   if ( boxcarSwitchArg.isSet() )
     resampler -> SetPSF( ResamplerType::BOXCAR );
   resampler -> Update();
+	  
+  int numberOfLoops = loopArg.getValue();
+    
+    
+  for (int i=0; i<numberOfLoops; i++){
+    typedef itk::Image< short, Dimension> itkShortImage;
+    typedef itkShortImage::Pointer        itkShortPointer;
+    
+    //There is an issue with the denoising algorithm. It works with short by default. 
+    //There is a conflict (overload) if the input type is float! 
+    itk::CastImageFilter< ImageType, itkShortImage >::Pointer float2ShortFilter = itk::CastImageFilter< ImageType, itkShortImage >::New();
+    float2ShortFilter->SetInput(resampler -> GetOutput());
+    float2ShortFilter->Update();    
+    
+    btkNLMTool<short> myTool;
+    myTool.SetInput(float2ShortFilter->GetOutput());
+    myTool.SetDefaultParameters();
+    myTool.ComputeOutput();
+    
+    itkShortPointer outputImage = itkShortImage::New();
+    myTool.GetOutput(outputImage);
+    
+    itk::CastImageFilter< itkShortImage, ImageType >::Pointer short2FloatFilter = itk::CastImageFilter< itkShortImage, ImageType >::New();
+    short2FloatFilter->SetInput(outputImage);
+    short2FloatFilter->Update();    
+
+    resampler -> SetReferenceImage( short2FloatFilter->GetOutput() );
+    resampler -> Update();
+  }
+  //NL denoising desired at the last step if number of loops > 0
+  if(numberOfLoops>0){
+    typedef itk::Image< short, Dimension> itkShortImage;
+    typedef itkShortImage::Pointer        itkShortPointer;
+    
+    itk::CastImageFilter< ImageType, itkShortImage >::Pointer float2ShortFilter = itk::CastImageFilter< ImageType, itkShortImage >::New();
+    float2ShortFilter->SetInput(resampler -> GetOutput());
+    float2ShortFilter->Update();    
+    
+    btkNLMTool<short> myTool;
+    myTool.SetInput(float2ShortFilter->GetOutput());
+    myTool.SetDefaultParameters();
+    myTool.ComputeOutput();
+    
+    itkShortPointer outputImage = itkShortImage::New();
+    myTool.GetOutput(outputImage);
+    
+    itk::CastImageFilter< itkShortImage, ImageType >::Pointer short2FloatFilter = itk::CastImageFilter< itkShortImage, ImageType >::New();
+    short2FloatFilter->SetInput(outputImage);
+    short2FloatFilter->Update();    
+    
+    resampler -> SetReferenceImage( short2FloatFilter->GetOutput() );    
+  }
 
   // Write image
 

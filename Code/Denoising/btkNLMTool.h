@@ -90,6 +90,7 @@ class btkNLMTool
   float m_lowerVarianceThreshold;
 
   void SetInput(itkTPointer inputImage);
+  void SetDefaultParameters();
   void SetPatchSize(int h);
   void SetSpatialBandwidth(int s);
   void SetPaddingValue(float padding);
@@ -129,6 +130,19 @@ void btkNLMTool<T>::SetInput(itkTPointer inputImage)
   duplicator->SetInputImage( inputImage );
   duplicator->Update();
   m_outputImage = duplicator->GetOutput();
+}
+
+template <typename T>
+void btkNLMTool<T>::SetDefaultParameters()
+{
+  SetPaddingValue(0);
+  SetPatchSize(1);
+  SetSpatialBandwidth(5);
+  SetSmoothing(1);
+  SetCentralPointStrategy(-1);
+  SetBlockwiseStrategy(2);
+  SetOptimizationStrategy(1);
+  SetLowerThresholds(0.95, 0.5);  
 }
 
 template <typename T>
