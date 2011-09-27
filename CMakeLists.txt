@@ -2,14 +2,10 @@ PROJECT(fbrain)
 
 cmake_minimum_required(VERSION 2.6)
 
-#------------------------------------------------------------------------------
-
 OPTION(USE_OMP "Use OpenMP" ON)
 IF(USE_OMP)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp  ")
 ENDIF(USE_OMP)
-
-#------------------------------------------------------------------------------
 
 # Find ITK
 MESSAGE(STATUS "Check for ITK package")
@@ -40,7 +36,19 @@ IF(TCLAP_DIRECTORY-NOTFOUND)
   MESSAGE(FATAL_ERROR "TCLAP not found !")
 ENDIF(TCLAP_DIRECTORY-NOTFOUND)
 
-#------------------------------------------------------------------------------
+# Build documentation
+include (${CMAKE_ROOT}/Modules/Documentation.cmake)
+mark_as_advanced(CLEAR BUILD_DOCUMENTATION)
+
+if(BUILD_DOCUMENTATION)
+  find_package(Doxygen)
+  if(DOXYGEN_FOUND)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+    add_custom_target(doc ALL ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} COMMENT
+    "Generating API documentation with Doxygen" VERBATIM)
+  endif(DOXYGEN_FOUND)
+endif(BUILD_DOCUMENTATION)
 
 SUBDIRS(
   Utilities

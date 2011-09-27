@@ -60,6 +60,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
          * @class ParticleFilter
          * @brief Particle filter
          * @author Julien Pontabry
+         * @ingroup Tractography
          * Particle filter to approach the probability density presence of fibers in image
          */
         class ParticleFilter

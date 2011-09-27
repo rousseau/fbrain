@@ -51,6 +51,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
          * @class Particle
          * @brief Particle of particle filter
          * @author Julien Pontabry
+         * @ingroup Tractography
          */
         class Particle
         {

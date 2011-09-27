@@ -1,0 +1,35 @@
+/**
+ *
+ * \mainpage  The Baby Brain Toolkit
+ *
+ * \section intro Introduction
+ *
+ * Fbrain is a ERC funded project. The purpose of this project is to develop
+ * image processing tools for a better understanding of the fetal brain
+ * development. Studies about brain maturation aim at providing a better
+ * understanding of brain development and links between brain changes and
+ * cognitive development. Such studies are of great interest for diagnosis help
+ * and clinical course of development and treatment of illnesses. Several teams
+ * have begun to make 3D maps of developing brain structures from children to
+ * young adults. However, working out the development of fetal and neonatal
+ * brain remains an open issue. This project aims at jumping over several
+ * theoretical and practical barriers and at going beyond the formal description
+ * of the brain maturation thanks to the development of a realistic numerical
+ * model of brain aging. BTK (baby brain toolkit), which is the toolkit developed
+ * for the fbrain project, consists of several image processing tools: image
+ * reconstruction, image denoising, image segmentation, tractography etc.
+ *
+ * \section Dependencies
+ *
+ * Baby Brain Toolkit (BTK) depends on CMake, ITK, VTK, Tclap library and OpenMP.
+ *
+ * \section authors Authors
+ *
+ * Estanislao Oubel (oubel@unistra.fr), Julien Pontabry (pontabry@unistra.fr), and
+ * François Rousseau (rousseau@unistra.fr)
+ *
+ * \section contact Contact
+ *
+ * (rousseau@unistra.fr)
+ */
+

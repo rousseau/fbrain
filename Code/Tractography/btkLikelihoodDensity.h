@@ -54,6 +54,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
      * @class LikelihoodDensity
      * @brief Likelihood density
      * @author Julien Pontabry
+     * @ingroup Tractography
      * Likelihood density for particle filter (using MRI data and associated Q-ball HS model)
      */
     class LikelihoodDensity
