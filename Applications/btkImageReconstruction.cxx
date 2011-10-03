@@ -425,27 +425,6 @@ int main( int argc, char *argv[] )
 
     // compute error
 
-    typedef itk::MinimumMaximumImageCalculator<ImageType> CalculatorType;
-
-    CalculatorType::Pointer calculatorA = CalculatorType::New();
-    calculatorA -> SetImage( hrImageOld );
-    calculatorA -> ComputeMaximum();
-
-    typedef itk::DivideByConstantImageFilter<ImageType, float, ImageType> NormalizerType;
-
-    NormalizerType::Pointer normalizerA = NormalizerType::New();
-    normalizerA -> SetInput( hrImageOld );
-    normalizerA -> SetConstant( calculatorA -> GetMaximum() );
-    normalizerA -> Update();
-
-    NormalizerType::Pointer normalizerB = NormalizerType::New();
-    normalizerB -> SetInput( hrImage );
-    normalizerB -> SetConstant( calculatorA -> GetMaximum() );
-    normalizerB -> Update();
-
-    ImagePointer imageA = normalizerA -> GetOutput();
-    ImagePointer imageB = normalizerB -> GetOutput();
-
     typedef itk::Euler3DTransform< double > EulerTransformType;
     EulerTransformType::Pointer identity = EulerTransformType::New();
     identity -> SetIdentity();
@@ -456,9 +435,9 @@ int main( int argc, char *argv[] )
     InterpolatorType::Pointer interpolator = InterpolatorType::New();
 
     NCMetricType::Pointer nc = NCMetricType::New();
-    nc -> SetFixedImage(  imageA );
-    nc -> SetMovingImage( imageB );
-    nc -> SetFixedImageRegion( imageA -> GetLargestPossibleRegion() );
+    nc -> SetFixedImage(  hrImageOld );
+    nc -> SetMovingImage( hrImage );
+    nc -> SetFixedImageRegion( hrImageOld -> GetLargestPossibleRegion() );
     nc -> SetTransform( identity );
     nc -> SetInterpolator( interpolator );
     nc -> Initialize();
