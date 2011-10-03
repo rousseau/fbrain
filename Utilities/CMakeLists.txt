@@ -61,6 +61,9 @@ TARGET_LINK_LIBRARIES(btkAverageImagesWithReference ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkImageInjection btkImageInjection.cxx )
 TARGET_LINK_LIBRARIES(btkImageInjection ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkImageSimilarity btkImageSimilarity.cxx )
+TARGET_LINK_LIBRARIES(btkImageSimilarity ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -77,4 +80,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkLowResolutionImageSimulator
                 btkAverageImagesWithReference
                 btkImageInjection
+                btkImageSimilarity
         DESTINATION bin)
