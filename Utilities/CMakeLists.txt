@@ -5,7 +5,6 @@ INCLUDE_DIRECTORIES(${TCLAP_DIRECTORY})
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Reconstruction)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/DTI)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/InputOutput)
-INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Reconstruction)
 
 ADD_EXECUTABLE(btkModifyImageUsingLookUpTable btkModifyImageUsingLookUpTable.cxx )
 TARGET_LINK_LIBRARIES(btkModifyImageUsingLookUpTable ${ITK_LIBRARIES} )
@@ -64,6 +63,9 @@ TARGET_LINK_LIBRARIES(btkImageInjection ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkImageSimilarity btkImageSimilarity.cxx )
 TARGET_LINK_LIBRARIES(btkImageSimilarity ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkPSNR btkPSNR.cxx )
+TARGET_LINK_LIBRARIES(btkPSNR ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -81,4 +83,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkAverageImagesWithReference
                 btkImageInjection
                 btkImageSimilarity
+                btkPSNR
         DESTINATION bin)
