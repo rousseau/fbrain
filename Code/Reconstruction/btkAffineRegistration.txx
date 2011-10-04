@@ -128,8 +128,8 @@ AffineRegistration<ImageType>
   SetOptimizer( this -> m_Optimizer );
   SetInterpolator( this -> m_Interpolator );
 
-//  m_InitialTransformParameters = m_Transform -> GetParameters();
-//  m_Registration->SetInitialTransformParameters( m_InitialTransformParameters );
+  if (this -> GetInitialTransformParameters().GetSize() == 1)
+    this -> SetInitialTransformParameters( m_Transform -> GetParameters() );
 
   Superclass::Initialize();
 
