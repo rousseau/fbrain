@@ -57,6 +57,8 @@ int main(int argc, char** argv)
     cmd.add( outputImageArg );
     TCLAP::ValueArg<std::string> inputMaskArg("m","mask_file","filename of the mask image",false,"","string");
     cmd.add( inputMaskArg );
+    TCLAP::ValueArg<std::string> inputReferenceArg("r","ref_file","filename of the reference image",false,"","string");
+    cmd.add( inputReferenceArg );
     TCLAP::ValueArg< float > paddingArg("p","pad","padding value (used if no mask image is provided, default is -1)",false,-1,"float");
     cmd.add( paddingArg );
     TCLAP::ValueArg< int > hwnArg("","hwn","patch half size (default is 1)",false,1,"int");
@@ -85,6 +87,7 @@ int main(int argc, char** argv)
     std::string output_file      = outputImageArg.getValue();
 
     std::string mask_file        = inputMaskArg.getValue();
+    std::string ref_file         = inputReferenceArg.getValue();
     float padding                = paddingArg.getValue();
     int hwn                      = hwnArg.getValue();
     int hwvs                     = hwvsArg.getValue();
@@ -159,20 +162,21 @@ int main(int argc, char** argv)
 
       Image3DPointer output3DImage = Image3DType::New();
       Image3DPointer maskImage = Image3DType::New();
+      Image3DPointer refImage = Image3DType::New();
 
       btkNLMTool<PixelType> myTool;
 
       myTool.SetInput(input3DImage);
 
       if (mask_file!=""){               //reading the mask image
-  Reader3DType::Pointer maskReader = Reader3DType::New();
-  maskReader->SetFileName( mask_file );
-  maskReader->Update();
-  maskImage = maskReader->GetOutput();
-  myTool.SetMaskImage(maskImage);
+        Reader3DType::Pointer maskReader = Reader3DType::New();
+        maskReader->SetFileName( mask_file );
+        maskReader->Update();
+        maskImage = maskReader->GetOutput();
+        myTool.SetMaskImage(maskImage);
       }
       else                                 //creating a mask image using the padding value
-  myTool.SetPaddingValue(padding);
+        myTool.SetPaddingValue(padding);
 
       myTool.SetPatchSize(hwn);
       myTool.SetSpatialBandwidth(hwvs);
@@ -182,6 +186,15 @@ int main(int argc, char** argv)
       myTool.SetOptimizationStrategy(optimized);
       myTool.SetLowerThresholds(lowerMeanThreshold, lowerVarianceThreshold);
 
+      if (ref_file != ""){
+        Reader3DType::Pointer refReader = Reader3DType::New();
+        refReader->SetFileName( ref_file );
+        refReader->Update();
+        refImage = refReader->GetOutput();
+        myTool.SetReferenceImage(refImage);    
+        myTool.SetSmoothingUsingReferenceImage(beta);
+      }
+      
       myTool.ComputeOutput();
       myTool.GetOutput(output3DImage);
 
