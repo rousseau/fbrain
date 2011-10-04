@@ -56,6 +56,8 @@ int main(int argc, char** argv)
     cmd.add( outputImageArg );
     TCLAP::ValueArg<std::string> inputMaskArg("m","mask_file","filename of the mask image",false,"","string");
     cmd.add( inputMaskArg );
+    TCLAP::ValueArg<std::string> inputReferenceArg("r","ref_file","filename of the reference image",false,"","string");
+    cmd.add( inputReferenceArg );
     TCLAP::ValueArg< float > paddingArg("p","pad","padding value (used if no mask image is provided, default is -1)",false,-1,"float");
     cmd.add( paddingArg );
     TCLAP::ValueArg< int > hwnArg("","hwn","patch half size (default is 1)",false,1,"int");
@@ -86,6 +88,7 @@ int main(int argc, char** argv)
     std::string output_file      = outputImageArg.getValue();
 
     std::string mask_file        = inputMaskArg.getValue();
+    std::string ref_file         = inputReferenceArg.getValue();
     float padding                = paddingArg.getValue();
     int hwn                      = hwnArg.getValue();
     int hwvs                     = hwvsArg.getValue();
@@ -115,6 +118,7 @@ int main(int argc, char** argv)
     ImagePointer outputImage = ImageType::New();
 
     ImagePointer maskImage;
+    ImagePointer refImage;
 
     btkNLMTool<PixelType> myTool;
 
@@ -139,6 +143,15 @@ int main(int argc, char** argv)
     myTool.SetLowerThresholds(lowerMeanThreshold, lowerVarianceThreshold);
 
 
+    if (ref_file != ""){
+      ReaderType::Pointer refReader = ReaderType::New();
+      refReader->SetFileName( ref_file );
+      refReader->Update();
+      refImage = refReader->GetOutput();
+      myTool.SetReferenceImage(refImage);    
+      myTool.SetSmoothingUsingReferenceImage(beta);
+    }
+    
     myTool.ComputeOutput();
 
     myTool.GetOutput(outputImage);
