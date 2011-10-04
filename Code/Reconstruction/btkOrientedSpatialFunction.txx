@@ -53,8 +53,7 @@ OrientedSpatialFunction<TOutput, VImageDimension, TInput>
   m_Spacing.set_size(3);
   m_Spacing.fill(1.0);
 
-  // Gaussian setup
-
+  // Gaussian setup (ITK object)
   m_Gaussian = GaussianFunctionType::New();
   m_Gaussian -> SetNormalized(false);
 
@@ -64,6 +63,7 @@ OrientedSpatialFunction<TOutput, VImageDimension, TInput>
 
   ArrayType sigma;
 
+  //Compute sigma of the Gaussian PSF 
   sigma[0] = sqrt(m_Spacing[0]*m_Spacing[0]/(8*log(2)));
   sigma[1] = sqrt(m_Spacing[1]*m_Spacing[1]/(8*log(2)));
   sigma[2] = sqrt(m_Spacing[2]*m_Spacing[2]/(8*log(2)));
@@ -92,6 +92,7 @@ OrientedSpatialFunction<TOutput, VImageDimension, TInput>
   vnl_vector<double> diff = position.GetVnlVector() - m_Center;
   PointType diffPoint;
 
+  //Dot product between image direction and point vector (in PSF space)
   double icoor = dot_product(diff,m_idir);
   double jcoor = dot_product(diff,m_jdir);
   double kcoor = dot_product(diff,m_kdir);
