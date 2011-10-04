@@ -50,6 +50,7 @@ AffineRegistration<ImageType>
 {
   m_Iterations = 300;
   m_EnableObserver = false;
+  m_FixedImageMask = 0;
 }
 
 /*
@@ -68,7 +69,10 @@ AffineRegistration<ImageType>
 
   // Configure metric
 
-//  m_Metric->SetMovingImageMask(m_MovingImageMask);
+  if (!m_FixedImageMask)
+  {
+    m_Metric->SetFixedImageMask(m_FixedImageMask);
+  }
   m_Metric->SetNumberOfHistogramBins( 24 );
   m_Metric->UseAllPixelsOn();
 

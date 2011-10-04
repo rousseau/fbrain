@@ -135,8 +135,8 @@ public:
                                           ImageType >   MetricType;
   typedef typename MetricType::Pointer                  MetricPointer;
 
-  typedef typename MetricType::MovingImageMaskType   MovingImageMaskType;
-  typedef typename MovingImageMaskType::Pointer   MovingImageMaskPointer;
+  typedef typename MetricType::FixedImageMaskType   FixedImageMaskType;
+  typedef typename FixedImageMaskType::Pointer     FixedImageMaskPointer;
 
   /**  Type of the Transform . */
   typedef AffineTransform<
@@ -161,7 +161,7 @@ public:
     { return m_Transform -> GetCenter(); }
 
   itkGetObjectMacro(Transform, TransformType);
-  itkSetObjectMacro(MovingImageMask, MovingImageMaskType);
+  itkSetObjectMacro(FixedImageMask, FixedImageMaskType);
 
   /** Set/Get iterations. */
   itkSetMacro(Iterations, unsigned int);
@@ -192,9 +192,7 @@ private:
   unsigned int m_Iterations;
   bool m_EnableObserver;
 
-  RegionType m_MovingImageRegion;
-
-  MovingImageMaskPointer m_MovingImageMask;
+  FixedImageMaskPointer m_FixedImageMask;
 
   CommandIterationUpdate::Pointer  m_Observer;
 };
