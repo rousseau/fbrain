@@ -66,9 +66,9 @@ try {
   TCLAP::ValueArg<std::string> outputArg("o","output","Corrected sequence",true,"",
       "string",cmd);
   TCLAP::ValueArg<std::string> folderArg("f","transformation_folder","Folder for"
-      " transformations",true,"","string",cmd);
+      " transformations (output of the algorithm)",true,"","string",cmd);
 
-  TCLAP::ValueArg<std::string> mgradArg("","mean-gradient","Mean gradient",false,
+  TCLAP::ValueArg<std::string> mgradArg("","mean-gradient","Mean gradient (output of the algorithm)",false,
       "","string",cmd);
 
   // Parse the argv array.
