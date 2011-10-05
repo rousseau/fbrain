@@ -73,6 +73,7 @@ ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecision
   m_OutputStartIndex.Fill( 0 );
 
   m_DefaultPixelValue = 0;
+  m_ImageMask = 0;
 
 }
 

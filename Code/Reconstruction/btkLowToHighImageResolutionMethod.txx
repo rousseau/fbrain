@@ -162,7 +162,7 @@ LowToHighImageResolutionMethod<ImageType>
   m_Registration -> SetFixedImage(  m_ImageArray[m_TargetImage]  );
   m_Registration -> SetFixedImageRegion( m_RegionArray[m_TargetImage] );
 
-  if (m_ImageMaskArray.size()>0)
+  if ( m_InitializeWithMask )
   {
     m_Registration -> SetFixedImageMask( m_ImageMaskArray[m_TargetImage] );
     m_Registration -> InitializeWithMask();
@@ -193,33 +193,33 @@ LowToHighImageResolutionMethod<ImageType>
         throw err;
       }
       m_TransformArray[i] = m_Registration->GetTransform();
-      }
+    }
       else
       {
         m_TransformArray[i] = TransformType::New();
         m_TransformArray[i] -> SetIdentity();
 //        m_TransformArray[i] -> SetCenter( m_Registration -> GetTransformCenter() );
-
       }
 
-    }
+  }
 
-    // Calculate inverse transform array
-    for (unsigned int i=0; i < m_NumberOfImages; i++)
-    {
-      m_InverseTransformArray[i] = TransformType::New();
-      m_InverseTransformArray[i] -> SetIdentity();
-      m_InverseTransformArray[i] -> SetCenter( m_TransformArray[i] -> GetCenter() );
-      m_InverseTransformArray[i] -> SetParameters( m_TransformArray[i] -> GetParameters() );
-      m_InverseTransformArray[i] -> GetInverse( m_InverseTransformArray[i] );
-    }
+  // Calculate inverse transform array
+  for (unsigned int i=0; i < m_NumberOfImages; i++)
+  {
+    m_InverseTransformArray[i] = TransformType::New();
+    m_InverseTransformArray[i] -> SetIdentity();
+    m_InverseTransformArray[i] -> SetCenter( m_TransformArray[i] -> GetCenter() );
+    m_InverseTransformArray[i] -> SetParameters( m_TransformArray[i] -> GetParameters() );
+    m_InverseTransformArray[i] -> GetInverse( m_InverseTransformArray[i] );
+  }
 
-    // Create combination of masks
+  // Create combination of masks
+  PointType physicalPoint;
+  PointType transformedPoint;
+  IndexType index;
 
-    PointType physicalPoint;
-    PointType transformedPoint;
-    IndexType index;
-
+  if ( m_InitializeWithMask )
+  {
     m_ImageMaskCombination = ImageMaskType::New();
     m_ImageMaskCombination -> SetRegions( m_HighResolutionImage -> GetLargestPossibleRegion() );
     m_ImageMaskCombination -> Allocate();
@@ -254,35 +254,42 @@ LowToHighImageResolutionMethod<ImageType>
       }
     }
 
-    // Average registered images
+  }
 
-    int value;
-    unsigned int counter;
+  // Average registered images
 
-    for (imageIt.GoToBegin(); !imageIt.IsAtEnd(); ++imageIt )
+  int value;
+  unsigned int counter;
+
+  IteratorType imageIt( m_HighResolutionImage, m_HighResolutionImage -> GetLargestPossibleRegion() );
+
+  for (imageIt.GoToBegin(); !imageIt.IsAtEnd(); ++imageIt )
+  {
+    index = imageIt.GetIndex();
+
+    m_HighResolutionImage -> TransformIndexToPhysicalPoint( index, physicalPoint);
+
+    value = 0;
+    counter = 0;
+
+    for (unsigned int i=0; i < m_NumberOfImages; i++)
     {
-      index = imageIt.GetIndex();
-
-      if ( m_ImageMaskCombination -> GetPixel(index) > 0 )
+      m_Interpolator -> SetInputImage( m_ImageArray[i] );
+      transformedPoint = m_TransformArray[i]->TransformPoint(physicalPoint);
+      if ( m_Interpolator -> IsInsideBuffer (transformedPoint) )
       {
-        m_HighResolutionImage -> TransformIndexToPhysicalPoint( index, physicalPoint);
-
-        value = 0;
-        counter = 0;
-
-        for (unsigned int i=0; i < m_NumberOfImages; i++)
-        {
-          m_Interpolator -> SetInputImage( m_ImageArray[i] );
-          transformedPoint = m_TransformArray[i]->TransformPoint(physicalPoint);
-          if ( m_Interpolator -> IsInsideBuffer (transformedPoint) )
-          {
-            value+= m_Interpolator->Evaluate(transformedPoint);
-            counter++;
-          }
-        }
-        if ( counter>0 ) imageIt.Set(value/counter);
+        value+= m_Interpolator->Evaluate(transformedPoint);
+        counter++;
       }
     }
+    if ( counter>0 ) imageIt.Set(value/counter);
+
+    if ( m_InitializeWithMask && ( m_ImageMaskCombination -> GetPixel(index) == 0 ) )
+    {
+      imageIt.Set(0);
+    }
+
+  }
 
 }
 

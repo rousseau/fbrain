@@ -131,6 +131,16 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
   transformations correct the movements of the fetus during image acquisition.*/
   void SetTransform( int i, int j, TransformType* transform );
 
+  /** Sets the type of PSF (Boxcar, Gaussian). */
+  void SetPSF(unsigned int psf)
+  {
+    m_PSF = psf;
+  }
+
+  /** Gets the type of PSF (Boxcar, Gaussian). */
+  itkGetMacro(PSF, unsigned int);
+
+
   private:
 
   void set(float * array, int size, float value);
@@ -197,6 +207,7 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
   ImageConstPointer					 m_ReferenceImage;
   std::vector< std::vector<TransformPointerType> > m_Transforms;
   RegionType m_OutputImageRegion;
+  unsigned int m_PSF;
 
 };
 

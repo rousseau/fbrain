@@ -44,6 +44,7 @@ LeastSquaresVnlCostFunction<TImage>::LeastSquaresVnlCostFunction(unsigned int di
 vnl_cost_function(dim)
 {
   lambda = 0.1;
+  m_PSF = FunctionType::GAUSSIAN;
 }
 
 template <class TImage>
@@ -424,7 +425,7 @@ LeastSquaresVnlCostFunction<TImage>::Initialize()
   SpacingType spacing_lr = m_Images[0] -> GetSpacing();
   SpacingType spacing_hr = m_ReferenceImage -> GetSpacing();
 
-  //spacing_lr[2] is assumed to be the lowest resolution 
+  //spacing_lr[2] is assumed to be the lowest resolution
   //compute the index of the PSF in the LR image resolution
   std::vector<ContinuousIndexType> deltaIndexes;
   int npoints =  spacing_lr[2] / (2.0 * spacing_hr[2]) ;
@@ -461,9 +462,8 @@ LeastSquaresVnlCostFunction<TImage>::Initialize()
     SpacingType inputSpacing = m_Images[im] -> GetSpacing();
 
     // PSF definition
-    //TODO Give the possibility to choose the PDF
     typename FunctionType::Pointer function = FunctionType::New();
-    function -> SetPSF( 1 );
+    function -> SetPSF( m_PSF );
     function -> SetDirection( m_Images[im] -> GetDirection() );
     function -> SetSpacing( m_Images[im] -> GetSpacing() );
 
@@ -474,7 +474,7 @@ LeastSquaresVnlCostFunction<TImage>::Initialize()
     //Define all indexes needed for iteration over the slices
     IndexType lrIndex;              //index of a point in the LR image im
     IndexType lrDiffIndex;          //index of this point in the current ROI of the LR image im
-    unsigned int lrLinearIndex;     //index lineaire de ce point dans le vecteur 
+    unsigned int lrLinearIndex;     //index lineaire de ce point dans le vecteur
 
     IndexType hrIndex;
     IndexType hrDiffIndex;
@@ -516,7 +516,7 @@ LeastSquaresVnlCostFunction<TImage>::Initialize()
       {
         //Current index in the LR image
         lrIndex = fixedIt.GetIndex();
-        
+
         //World coordinates of lrIndex using the image header
         m_Images[im] -> TransformIndexToPhysicalPoint( lrIndex, lrPoint );
 
@@ -535,7 +535,7 @@ LeastSquaresVnlCostFunction<TImage>::Initialize()
         lrDiffIndex[0] = lrIndex[0] - inputIndex[0];
         lrDiffIndex[1] = lrIndex[1] - inputIndex[1];
         lrDiffIndex[2] = lrIndex[2] - inputIndex[2];
-        
+
         //Compute the corresponding linear index of lrDiffIndex
         lrLinearIndex = lrDiffIndex[0] + lrDiffIndex[1]*inputSize[0] +
                         lrDiffIndex[2]*inputSize[0]*inputSize[1];
@@ -554,9 +554,9 @@ LeastSquaresVnlCostFunction<TImage>::Initialize()
           nbIndex[1] = deltaIndexes[k][1] + lrIndex[1];
           nbIndex[2] = deltaIndexes[k][2] + lrIndex[2];
 
-          //World coordinates using LR image header 
+          //World coordinates using LR image header
           m_Images[im] -> TransformContinuousIndexToPhysicalPoint( nbIndex, nbPoint );
-          
+
           //Compute the PSF value at this point
           lrValue = function -> Evaluate(nbPoint);
 
@@ -601,8 +601,8 @@ LeastSquaresVnlCostFunction<TImage>::Initialize()
                 //Compute the corresponding linear index
                 hrLinearIndex = hrDiffIndex[0] + hrDiffIndex[1]*size_hr[0] +
                                 hrDiffIndex[2]*size_hr[0]*size_hr[1];
-                                
-                //Add the correct value in H !                
+
+                //Add the correct value in H !
                 H(lrLinearIndex + offset, hrLinearIndex) +=
                     interpolator -> GetOverlap(n)* lrValue;
               }
