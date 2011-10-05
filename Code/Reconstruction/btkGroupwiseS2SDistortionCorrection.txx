@@ -162,96 +162,64 @@ TSequence *
 GroupwiseS2SDistortionCorrection<TSequence>
 ::GetOutput( )
 {
-    // Copy T2 epi into output
+  // Copy B0 into output
 
-    SequenceIteratorType outputIt( m_Output, m_Output->GetLargestPossibleRegion() );
-    outputIt.GoToBegin();
+  SequenceIteratorType outputIt( m_Output, m_Output->GetLargestPossibleRegion() );
+  outputIt.GoToBegin();
 
-    IteratorType t2epiIt( m_T2epi, m_T2epi -> GetLargestPossibleRegion() );
+  IteratorType t2epiIt( m_T2epi, m_T2epi -> GetLargestPossibleRegion() );
 
-    for( t2epiIt.GoToBegin(); !t2epiIt.IsAtEnd(); ++t2epiIt, ++outputIt)
-    {
-      outputIt.Set( t2epiIt.Get() );
-    }
-
-    // Copy resampled gradient images to output
-
-    SequenceRegionType movingRegion;
-
-    SequenceSizeType movingSize = m_SequenceSize;
-    movingSize[3] = 0;
-    movingRegion.SetSize( movingSize );
-
-    SequenceIndexType movingIndex = m_SequenceIndex;
-
-
-    for (unsigned int i = 1; i <= m_GradientDirections; i++)
-    {
-
-      movingIndex[3] = i;
-      movingRegion.SetIndex( movingIndex );
-
-      ImageExtractorPointer movingExtractor = ImageExtractorType::New();
-      movingExtractor -> SetExtractionRegion( movingRegion );
-      movingExtractor -> SetInput( m_Input );
-      movingExtractor -> SetDirectionCollapseToSubmatrix();
-      movingExtractor -> Update();
-
-      ImagePointer movingImage = movingExtractor -> GetOutput();
-
-      RBFInterpolatorPointer interpolator = RBFInterpolatorType::New();
-      interpolator -> SetInputImage( movingImage );
-      interpolator -> SetTransformArray( m_TransformArray[i-1] );
-      interpolator -> SetRspa( 1.0 );
-      interpolator -> Initialize( m_FixedImageRegion );
-
-
-//      std::cout << "transform parametes for image " << i << std::endl;
-//      for (unsigned t=0; t<m_TransformArray[i-1].size(); t++)
-//      {
-//        std::cout << m_TransformArray[i-1][t] -> GetParameters() << std::endl;
-//      }
-
-//      for( meanGradientIt.GoToBegin(); !meanGradientIt.IsAtEnd(); ++meanGradientIt)
-//        {
-//          index = meanGradientIt.GetIndex();
-//          m_MeanGradient -> TransformIndexToPhysicalPoint( index, point );
-//          meanGradientIt.Set( meanGradientIt.Get() + interpolator -> Evaluate(point) );
-//        }
-//
-//
-//      ResamplePointer resample = ResampleType::New();
-//      resample->SetTransform( m_TransformArray[i-1] );
-//
-//      resample->SetInput( movingImage );
-//      resample->SetInterpolator(m_Interpolator);
-//
-//      resample->SetSize( m_FixedImage -> GetLargestPossibleRegion().GetSize() );
-//      resample->SetOutputOrigin(  m_FixedImage -> GetOrigin() );
-//      resample->SetOutputSpacing( m_FixedImage -> GetSpacing() );
-//      resample->SetOutputDirection( m_FixedImage -> GetDirection() );
-//      resample->SetDefaultPixelValue( 100 );
-//      resample->Update();
-//
-      IteratorType movingIt( movingImage, movingImage -> GetLargestPossibleRegion() );
-      PointType point;
-      IndexType index;
-
-      for( movingIt.GoToBegin(); !movingIt.IsAtEnd(); ++movingIt, ++outputIt)
-      {
-        index = movingIt.GetIndex();
-        if (m_FixedImageRegion.IsInside(index))
-        {
-          movingImage -> TransformIndexToPhysicalPoint( index, point );
-          outputIt.Set( interpolator -> Evaluate(point) );
-        }
-
-
-      }
-
+  for( t2epiIt.GoToBegin(); !t2epiIt.IsAtEnd(); ++t2epiIt, ++outputIt)
+  {
+    outputIt.Set( t2epiIt.Get() );
   }
 
-    std::cout << "get output begining" << std::endl;
+  // Copy resampled gradient images to output
+
+  SequenceRegionType movingRegion;
+
+  SequenceSizeType movingSize = m_SequenceSize;
+  movingSize[3] = 0;
+  movingRegion.SetSize( movingSize );
+
+  SequenceIndexType movingIndex = m_SequenceIndex;
+
+
+  for (unsigned int i = 1; i <= m_GradientDirections; i++)
+  {
+
+    movingIndex[3] = i;
+    movingRegion.SetIndex( movingIndex );
+
+    ImageExtractorPointer movingExtractor = ImageExtractorType::New();
+    movingExtractor -> SetExtractionRegion( movingRegion );
+    movingExtractor -> SetInput( m_Input );
+    movingExtractor -> SetDirectionCollapseToSubmatrix();
+    movingExtractor -> Update();
+
+    ImagePointer movingImage = movingExtractor -> GetOutput();
+
+    RBFInterpolatorPointer interpolator = RBFInterpolatorType::New();
+    interpolator -> SetInputImage( movingImage );
+    interpolator -> SetTransformArray( m_TransformArray[i-1] );
+    interpolator -> SetRspa( 1.0 );
+    interpolator -> Initialize( m_FixedImageRegion );
+
+    IteratorType movingIt( movingImage, movingImage -> GetLargestPossibleRegion() );
+    PointType point;
+    IndexType index;
+
+    for( movingIt.GoToBegin(); !movingIt.IsAtEnd(); ++movingIt, ++outputIt)
+    {
+      index = movingIt.GetIndex();
+      if (m_FixedImageRegion.IsInside(index))
+      {
+        movingImage -> TransformIndexToPhysicalPoint( index, point );
+        outputIt.Set( interpolator -> Evaluate(point) );
+      }
+    }
+
+  }
 
   return this->m_Output;
 }
