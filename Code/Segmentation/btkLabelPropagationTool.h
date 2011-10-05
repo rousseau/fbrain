@@ -73,10 +73,10 @@ class LabelFusionTool
   typedef typename itkMapImage::Pointer itkMapPointer;
   typedef typename itk::ImageRegionIterator< itkMapImage > itkMapIterator;
 
-  itkTPointer m_inputImage;
-  itkTPointer m_outputImage;
-  itkMapPointer m_labelFusionImage;
-  itkTPointer m_maskImage;
+  itkTPointer     m_inputImage;
+  itkTPointer     m_outputImage;
+  itkMapPointer   m_labelFusionImage;
+  itkTPointer     m_maskImage;
   itkFloatPointer m_meanImage;
   itkFloatPointer m_varianceImage;  
   itkFloatPointer m_weightImage;
@@ -141,7 +141,9 @@ class LabelFusionTool
   void ComputeOutput();
   void ComputeOutput_groupwise();
   void ComputeDenoisedOutput();
+  void ComputeHROutput();
   double GetDenoisedPatch(typename itkTImage::IndexType p, itkFloatPointer & patch);
+  double GetHRPatch(typename itkTImage::IndexType p, itkFloatPointer & patch);
   void AddPatchToImage(typename itkTImage::IndexType p, itkFloatPointer & patch, itkFloatPointer & image, itkFloatPointer & weightImage, double weight);
   double GetLabelPatch(typename itkTImage::IndexType p, itkTPointer & patch);
   void GetFuzzyLabelPatch(typename itkTImage::IndexType p, itkTPointer & patch, std::vector< std::map<T, float> > & vectorMap);
@@ -784,13 +786,13 @@ void LabelFusionTool<T>::ComputeOutput()
     for(z=0; z < (int)m_size[2]; z++)
       for(y=0; y < (int)m_size[1]; y++)
         for(x=0; x < (int)m_size[0]; x++){
-	  typename itkTImage::IndexType p;
-	  p[0] = x;
-	  p[1] = y;
-	  p[2] = z;
+          typename itkTImage::IndexType p;
+          p[0] = x;
+          p[1] = y;
+          p[2] = z;
 
-  	  if( m_maskImage->GetPixel(p) > 0 ){	  
-	    itkTPointer patch = itkTImage::New();
+          if( m_maskImage->GetPixel(p) > 0 ){	  
+            itkTPointer patch = itkTImage::New();
             double wmax;
             if(m_normalization == 0) wmax = GetLabelPatch(p, patch);
             else wmax = GetLabelPatchUsingNormalization(p, patch);
@@ -802,7 +804,7 @@ void LabelFusionTool<T>::ComputeOutput()
 
             m_outputImage->SetPixel( p, label );	  	  
             m_weightImage->SetPixel( p, weight );	  	  
-	  }
+          }
       }
   }
   if(m_blockwise >= 1){
@@ -920,13 +922,13 @@ void LabelFusionTool<T>::ComputeOutput_groupwise()
     for(z=0; z < (int)m_size[2]; z++)
       for(y=0; y < (int)m_size[1]; y++)
         for(x=0; x < (int)m_size[0]; x++){
-	  typename itkTImage::IndexType p;
-	  p[0] = x;
-	  p[1] = y;
-	  p[2] = z;
+          typename itkTImage::IndexType p;
+          p[0] = x;
+          p[1] = y;
+          p[2] = z;
 
-  	  if( m_maskImage->GetPixel(p) > 0 ){	  
-	    itkTPointer patch = itkTImage::New();
+          if( m_maskImage->GetPixel(p) > 0 ){	  
+            itkTPointer patch = itkTImage::New();
             double wmax;
             if(m_normalization == 0) wmax = GetLabelPatch(p, patch);
             else wmax = GetLabelPatchUsingNormalization(p, patch);
@@ -948,13 +950,13 @@ void LabelFusionTool<T>::ComputeOutput_groupwise()
       for(z=0; z < (int)m_size[2]; z++)
         for(y=0; y < (int)m_size[1]; y++)
           for(x=0; x < (int)m_size[0]; x++){
-	    typename itkTImage::IndexType p;
-	    p[0] = x;
-	    p[1] = y;
-	    p[2] = z;
+            typename itkTImage::IndexType p;
+            p[0] = x;
+            p[1] = y;
+            p[2] = z;
 
-	    if( m_maskImage->GetPixel(p) > 0 ){	  
-	      itkTPointer patch = itkTImage::New();
+            if( m_maskImage->GetPixel(p) > 0 ){	  
+              itkTPointer patch = itkTImage::New();
 
               //vector (1D patch) to store the cumulative weight for each label
               std::vector< std::map<T, float> > vectorMap;
@@ -963,7 +965,7 @@ void LabelFusionTool<T>::ComputeOutput_groupwise()
               #pragma omp critical
               AddFuzzyLabelPatchToLabelImage(p, patch, vectorMap);
 
-	    }
+            }
           }
     }
     if(m_blockwise == 2){
@@ -975,13 +977,13 @@ void LabelFusionTool<T>::ComputeOutput_groupwise()
           if( y%(m_halfPatchSize[1]+1) == 0){
           for(x=0; x < (int)m_size[0]; x++)
             if( x%(m_halfPatchSize[0]+1) == 0 ){
-	      typename itkTImage::IndexType p;
-	      p[0] = x;
-	      p[1] = y;
-	      p[2] = z;
+              typename itkTImage::IndexType p;
+              p[0] = x;
+              p[1] = y;
+              p[2] = z;
 
-	      if( m_maskImage->GetPixel(p) > 0 ){	  
-  	        itkTPointer patch = itkTImage::New();
+              if( m_maskImage->GetPixel(p) > 0 ){	  
+                itkTPointer patch = itkTImage::New();
 
                 //vector (1D patch) to store the cumulative weight for each label
                 std::vector< std::map<T, float> > vectorMap;
@@ -990,7 +992,7 @@ void LabelFusionTool<T>::ComputeOutput_groupwise()
                 #pragma omp critical
                 AddFuzzyLabelPatchToLabelImage(p, patch, vectorMap);
 
-	      }
+              }
             }
           }
         }
@@ -1060,17 +1062,17 @@ void LabelFusionTool<T>::ComputeDenoisedOutput()
     for(z=0; z < (int)m_size[2]; z++)
       for(y=0; y < (int)m_size[1]; y++)
         for(x=0; x < (int)m_size[0]; x++){
-	  typename itkTImage::IndexType p;
-	  p[0] = x;
-	  p[1] = y;
-	  p[2] = z;
+          typename itkTImage::IndexType p;
+          p[0] = x;
+          p[1] = y;
+          p[2] = z;
 
-  	  if( m_maskImage->GetPixel(p) > 0 ){	  
-	    itkFloatPointer patch = itkFloatImage::New();
+          if( m_maskImage->GetPixel(p) > 0 ){	  
+            itkFloatPointer patch = itkFloatImage::New();
             double sum = GetDenoisedPatch(p, patch);
             denoisedImage->SetPixel( p, patch->GetPixel(q) );
             m_weightImage->SetPixel( p, sum );	  	  	  	  
-	  }
+          }
       }
   }
   if(m_blockwise >= 1){
@@ -1081,19 +1083,19 @@ void LabelFusionTool<T>::ComputeDenoisedOutput()
       for(z=0; z < (int)m_size[2]; z++)
         for(y=0; y < (int)m_size[1]; y++)
           for(x=0; x < (int)m_size[0]; x++){
-	    typename itkTImage::IndexType p;
-	    p[0] = x;
-	    p[1] = y;
-	    p[2] = z;
+            typename itkTImage::IndexType p;
+            p[0] = x;
+            p[1] = y;
+            p[2] = z;
 
-	    if( m_maskImage->GetPixel(p) > 0 ){	  
-	      itkFloatPointer patch = itkFloatImage::New();
+            if( m_maskImage->GetPixel(p) > 0 ){	  
+              itkFloatPointer patch = itkFloatImage::New();
               double sum = GetDenoisedPatch(p, patch);             
               double weight = 1.0;
               if(m_aggregation == 0) weight = sum;
               #pragma omp critical
               AddPatchToImage(p, patch, denoisedImage, m_weightImage, weight);
-	    }
+            }
           }
     }
     if(m_blockwise == 2){
@@ -1105,19 +1107,19 @@ void LabelFusionTool<T>::ComputeDenoisedOutput()
           if( y%(m_halfPatchSize[1]+1) == 0){
           for(x=0; x < (int)m_size[0]; x++)
             if( x%(m_halfPatchSize[0]+1) == 0 ){
-	      typename itkTImage::IndexType p;
-	      p[0] = x;
-	      p[1] = y;
-	      p[2] = z;
+              typename itkTImage::IndexType p;
+              p[0] = x;
+              p[1] = y;
+              p[2] = z;
 
-	      if( m_maskImage->GetPixel(p) > 0 ){	  
-	        itkFloatPointer patch = itkFloatImage::New();
+              if( m_maskImage->GetPixel(p) > 0 ){	  
+                itkFloatPointer patch = itkFloatImage::New();
                 double sum = GetDenoisedPatch(p, patch);
                 double weight = 1.0;
                 if(m_aggregation == 0) weight = sum;
                 #pragma omp critical
                 AddPatchToImage(p, patch, denoisedImage, m_weightImage, weight);
-	      }
+              }
             }
           }
         }
@@ -1143,6 +1145,117 @@ void LabelFusionTool<T>::ComputeDenoisedOutput()
   for ( denoisedIt.GoToBegin(), outputIt.GoToBegin(); !denoisedIt.IsAtEnd(); ++denoisedIt, ++outputIt)
     outputIt.Set( (T)(denoisedIt.Get()) );
 
+}
+
+template <typename T>
+void LabelFusionTool<T>::ComputeHROutput()
+{
+  std::cout<<"Compute an HR image using label propagation approach\n";
+  
+  itkFloatPointer HRImage = itkFloatImage::New();
+  HRImage->SetRegions(m_inputImage->GetLargestPossibleRegion());
+  HRImage->SetSpacing( m_inputImage->GetSpacing() );
+  HRImage->SetOrigin( m_inputImage->GetOrigin() );
+  HRImage->SetDirection( m_inputImage->GetDirection() );
+  HRImage->Allocate();
+  HRImage->FillBuffer(0); 
+  
+  itkFloatIterator HRIt( HRImage, HRImage->GetLargestPossibleRegion() );
+  itkTIterator outputIt( m_outputImage, m_outputImage->GetLargestPossibleRegion());
+  
+  int x,y,z;
+  
+  if(m_blockwise == 0){
+    std::cout<<"pointwise HR estimation\n";
+    typename itkTImage::IndexType q;
+    for(unsigned int i=0; i!= q.GetIndexDimension(); i++)
+      q[i] = m_halfPatchSize[i];
+    #pragma omp parallel for private(x,y,z) schedule(dynamic)
+    for(z=0; z < (int)m_size[2]; z++)
+      for(y=0; y < (int)m_size[1]; y++)
+        for(x=0; x < (int)m_size[0]; x++){
+          typename itkTImage::IndexType p;
+          p[0] = x;
+          p[1] = y;
+          p[2] = z;
+          
+          if( m_maskImage->GetPixel(p) > 0 ){	  
+            itkFloatPointer patch = itkFloatImage::New();
+            double sum = GetHRPatch(p, patch);
+            HRImage->SetPixel( p, patch->GetPixel(q) );
+            m_weightImage->SetPixel( p, sum );	  	  	  	  
+          }
+        }
+  }
+  if(m_blockwise >= 1){
+    
+    if(m_blockwise == 1){
+      std::cout<<"blockwise HR estimation\n";
+      #pragma omp parallel for private(x,y,z) schedule(dynamic)
+      for(z=0; z < (int)m_size[2]; z++)
+        for(y=0; y < (int)m_size[1]; y++)
+          for(x=0; x < (int)m_size[0]; x++){
+            typename itkTImage::IndexType p;
+            p[0] = x;
+            p[1] = y;
+            p[2] = z;
+            
+            if( m_maskImage->GetPixel(p) > 0 ){	  
+              itkFloatPointer patch = itkFloatImage::New();
+              double sum = GetHRPatch(p, patch);             
+              double weight = 1.0;
+              if(m_aggregation == 0) weight = sum;
+              #pragma omp critical
+              AddPatchToImage(p, patch, HRImage, m_weightImage, weight);
+            }
+          }
+    }
+    if(m_blockwise == 2){
+      std::cout<<"fast blockwise HR estimation\n";
+      #pragma omp parallel for private(x,y,z) schedule(dynamic)
+      for(z=0; z < (int)m_size[2]; z++)
+        if( z%(m_halfPatchSize[2]+1) == 0){
+          for(y=0; y < (int)m_size[1]; y++)
+            if( y%(m_halfPatchSize[1]+1) == 0){
+              for(x=0; x < (int)m_size[0]; x++)
+                if( x%(m_halfPatchSize[0]+1) == 0 ){
+                  typename itkTImage::IndexType p;
+                  p[0] = x;
+                  p[1] = y;
+                  p[2] = z;
+                  
+                  if( m_maskImage->GetPixel(p) > 0 ){	  
+                    itkFloatPointer patch = itkFloatImage::New();
+                    double sum = GetHRPatch(p, patch);
+                    double weight = 1.0;
+                    if(m_aggregation == 0) weight = sum;
+                    #pragma omp critical
+                    AddPatchToImage(p, patch, HRImage, m_weightImage, weight);
+                  }
+                }
+            }
+        }
+    }
+    
+    itkTIterator maskImageIt( m_maskImage, m_maskImage->GetLargestPossibleRegion() );
+    itkFloatIterator weightIt( m_weightImage, m_weightImage->GetLargestPossibleRegion() );
+    itkTIterator inputIt( m_inputImage, m_inputImage->GetLargestPossibleRegion() );
+    //weight normalization
+    for ( HRIt.GoToBegin(), weightIt.GoToBegin(), inputIt.GoToBegin(); !HRIt.IsAtEnd(); ++HRIt, ++weightIt, ++inputIt)
+      if( weightIt.Get() > 0 )
+        HRIt.Set( HRIt.Get() / weightIt.Get() );
+      else
+        HRIt.Set( inputIt.Get() );
+    
+    for(maskImageIt.GoToBegin(), HRIt.GoToBegin(); !HRIt.IsAtEnd(); ++maskImageIt, ++HRIt)
+      if( (maskImageIt.Get() == 0) )
+        HRIt.Set( 0 );
+    
+  }
+  
+  //Convert float data from denoisedImage to T data for m_outputImage
+  for ( HRIt.GoToBegin(), outputIt.GoToBegin(); !HRIt.IsAtEnd(); ++HRIt, ++outputIt)
+    outputIt.Set( (T)(HRIt.Get()) );
   
 }
 
@@ -1251,6 +1364,103 @@ double LabelFusionTool<T>::GetDenoisedPatch(typename itkTImage::IndexType p, itk
     
   return sum;
 }
+
+template <typename T>
+double LabelFusionTool<T>::GetHRPatch(typename itkTImage::IndexType p, itkFloatPointer & patch)
+{
+  double wmax = 0; //maximum weight of patches
+  double sum  = 0; //sum of weights (used for normalization purpose)
+  
+  //create the patch and set the estimate to 0
+  CreatePatch(patch);
+  itkFloatIterator patchIt(patch, patch->GetRequestedRegion());
+  
+  //get the value of the patch around the current pixel
+  itkTPointer centralPatch = itkTImage::New();
+  CreatePatch(centralPatch);
+  GetPatch(p, centralPatch, m_inputImage);
+  itkTIterator centralPatchIt(centralPatch, centralPatch->GetRequestedRegion());  
+  
+  //set the search region around the current pixel
+  typename itkTImage::RegionType searchRegion;
+  ComputeSearchRegion(p,searchRegion);
+  
+  //create the patch for pixels in the neighbourhood of the current pixel in the anatomical images
+  itkTPointer neighbourPatch = itkTImage::New();
+  CreatePatch(neighbourPatch);
+  
+  //create the patch for pixels in the neighbourhood of the current pixel in the HR images
+  itkTPointer neighbourHRPatch = itkTImage::New();
+  CreatePatch(neighbourHRPatch);
+  itkTIterator neighbourHRPatchIt(neighbourHRPatch, neighbourHRPatch->GetRequestedRegion());
+    
+  //go through the neighbourhood with a region iterator
+  itkTIteratorWithIndex it( m_inputImage, searchRegion);
+  typename itkTImage::IndexType neighbourPixelIndex;	
+  
+  for(it.GoToBegin(); !it.IsAtEnd(); ++it){
+    neighbourPixelIndex = it.GetIndex();
+    
+    for(unsigned int i=0; i < m_anatomicalImages.size(); i++){
+      
+      bool goForIt = true;
+      if(m_optimized == 1)
+        goForIt = CheckSpeed(p, neighbourPixelIndex, i);
+      
+      if(goForIt == true){
+        
+        GetPatch(neighbourPixelIndex, neighbourPatch, m_anatomicalImages[i]);
+        GetPatch(neighbourPixelIndex, neighbourHRPatch, m_labelImages[i]);
+        
+        double weight = exp( - PatchDistance(centralPatch, neighbourPatch) / m_rangeBandwidth);
+        
+        if(weight>wmax)
+          if( (p[0] != neighbourPixelIndex[0]) && (p[1] != neighbourPixelIndex[1]) && (p[2] != neighbourPixelIndex[2]) ) //has to be modify (not appropriate if the input image is in the anatomical input images.
+            wmax = weight;
+        
+        sum += weight;
+        
+        //Add this patch to the current estimate using the computed weight
+        for(patchIt.GoToBegin(), neighbourHRPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++neighbourHRPatchIt){
+          patchIt.Set( patchIt.Get() + neighbourHRPatchIt.Get() * weight );
+        }
+      }
+    }
+  }
+  
+  
+  //consider now the special case of the central patch
+  switch(m_centralPointStrategy){
+    case 0:                                        //remove the central patch to the estimated patch
+      for(patchIt.GoToBegin(), centralPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++centralPatchIt)
+        patchIt.Set( patchIt.Get() -1.0 * centralPatchIt.Get() );
+      sum -= 1.0;
+      break;
+    case 1: break;                                 //nothing to do
+    case -1:
+      for(patchIt.GoToBegin(), centralPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++centralPatchIt)
+        patchIt.Set( patchIt.Get()  + (wmax -1.0) * centralPatchIt.Get() );
+      sum += (wmax - 1.0);
+      break;
+    default:                                       //as in case -1
+      for(patchIt.GoToBegin(), centralPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++centralPatchIt)
+        patchIt.Set( patchIt.Get()  + (wmax -1.0) * centralPatchIt.Get() );
+      sum += (wmax - 1.0);
+      break;
+  }  
+  
+  if(sum>0.0001)
+    //Normalization of the denoised patch 
+    for(patchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt)
+      patchIt.Set( patchIt.Get() / sum );
+  else
+    //copy the central patch to the denoised patch
+    for(patchIt.GoToBegin(), centralPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++centralPatchIt)
+      patchIt.Set( centralPatchIt.Get() );  
+  
+  return sum;
+}
+
 
 template <typename T>
 void LabelFusionTool<T>::AddPatchToImage(typename itkTImage::IndexType p, itkFloatPointer & patch, itkFloatPointer & image, itkFloatPointer & weightImage, double weight)

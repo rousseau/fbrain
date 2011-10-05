@@ -92,7 +92,7 @@ int main(int argc, char** argv)
   cmd.add( lowerVarianceThresholdArg );
   TCLAP::ValueArg< int > aggregationArg("","aggregation","aggregation strategy (0: max weight, 1: fixed weight (=1))",false,1,"int");
   cmd.add( aggregationArg );
-  TCLAP::ValueArg< int > modeArg("","mode","mode (0: pair-wise, 1: groupwise, -1: groupwise denoising)",false,0,"int");
+  TCLAP::ValueArg< int > modeArg("","mode","mode (0: pair-wise, 1: groupwise, -1: groupwise denoising, -2: HR simulation)",false,0,"int");
   cmd.add( modeArg );
   TCLAP::ValueArg< int > normalizationArg("","normalization","intensity normalization -- makes the patches invariant to intensity changes (0: no, 1: yes)",false,0,"int");
   cmd.add( normalizationArg );
@@ -187,11 +187,13 @@ int main(int argc, char** argv)
   myTool.SetMinLabel(minLabel);
 
   if(mode==0)
-    myTool.ComputeOutput();
+    myTool.ComputeOutput();            //pair-wise label propagation
   if(mode==1)
-    myTool.ComputeOutput_groupwise();  //groupwise
+    myTool.ComputeOutput_groupwise();  //groupwise label propagation
   if(mode==-1)
-    myTool.ComputeDenoisedOutput();
+    myTool.ComputeDenoisedOutput();    //denoising using the other anatomical images
+    if(mode==-2)
+      myTool.ComputeHROutput();        //HR estimation using the HR anatomical images
 
   //Write the result 
   ImagePointer outputImage = ImageType::New();
