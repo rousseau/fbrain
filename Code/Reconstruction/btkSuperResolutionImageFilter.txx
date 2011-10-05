@@ -180,6 +180,7 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   }
   f.SetReferenceImage(this -> GetReferenceImage());
   f.SetLambda( m_Lambda );
+  f.SetPSF( m_PSF );
   f.Initialize();
 
   // Setup optimizer
