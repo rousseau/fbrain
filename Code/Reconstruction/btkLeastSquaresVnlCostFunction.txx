@@ -462,7 +462,6 @@ LeastSquaresVnlCostFunction<TImage>::Initialize()
     SpacingType inputSpacing = m_Images[im] -> GetSpacing();
 
     // PSF definition
-    //TODO Give the possibility to choose the PDF
     typename FunctionType::Pointer function = FunctionType::New();
     function -> SetPSF( m_PSF );
     function -> SetDirection( m_Images[im] -> GetDirection() );
