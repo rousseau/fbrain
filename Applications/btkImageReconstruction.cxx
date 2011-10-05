@@ -53,6 +53,8 @@
 
 #include "itkImageMaskSpatialObject.h"
 #include "btkImageIntersectionCalculator.h"
+#include "itkCastImageFilter.h"
+#include "itkImageDuplicator.h"
 
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
@@ -189,7 +191,10 @@ int main( int argc, char *argv[] )
   typedef btk::ImageIntersectionCalculator<ImageType> IntersectionCalculatorType;
   IntersectionCalculatorType::Pointer intersectionCalculator = IntersectionCalculatorType::New();
 
-  // Filter setup
+  typedef itk::CastImageFilter<ImageType,ImageMaskType> CasterType;
+  typedef itk::ImageDuplicator<ImageType> DuplicatorType;
+
+    // Filter setup
   unsigned int numberOfImages = input.size();
   std::vector< ImagePointer >         images(numberOfImages);
   std::vector< ImageMaskPointer >     imageMasks(numberOfImages);
@@ -252,6 +257,7 @@ int main( int argc, char *argv[] )
       rois[i] = masks[i] -> GetAxisAlignedBoundingBoxRegion();
 
       lowToHighResFilter -> SetRegionArray( i, rois[i] );
+      lowToHighResFilter -> SetInitializeWithMask(true);
 
     } else if ( boxSwitchArg.isSet() )
       {
@@ -262,12 +268,27 @@ int main( int argc, char *argv[] )
         masks[i] -> SetImage( imageMasks[i] );
         rois[i] = masks[i] -> GetAxisAlignedBoundingBoxRegion();
         lowToHighResFilter -> SetRegionArray( i, rois[i] );
+        lowToHighResFilter -> SetInitializeWithMask(true);
 
       } else if ( allSwitchArg.isSet() )
         {
-          rois[i] = images[i] -> GetLargestPossibleRegion();
+          DuplicatorType::Pointer duplicator = DuplicatorType::New();
+          duplicator -> SetInputImage( images[i] );
+          duplicator -> Update();
 
+          CasterType::Pointer caster = CasterType::New();
+          caster -> SetInput( duplicator -> GetOutput() );
+          caster -> Update();
+
+          imageMasks[i] = caster -> GetOutput();
+          imageMasks[i] -> FillBuffer(1);
+          lowToHighResFilter -> SetImageMaskArray( i, imageMasks[i] );
+
+          masks[i] = MaskType::New();
+          masks[i] -> SetImage( imageMasks[i] );
+          rois[i] = masks[i] -> GetAxisAlignedBoundingBoxRegion();
           lowToHighResFilter -> SetRegionArray( i, rois[i] );
+          lowToHighResFilter -> SetInitializeWithMask(true);
         }
   }
 
