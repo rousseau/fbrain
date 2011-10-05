@@ -251,6 +251,9 @@ public:
     return m_MeanGradient;
   }
 
+  /** Gets the mean gradient registered to B0. */
+  itkGetObjectMacro( RegisteredMeanGradient, ImageType);
+
   /** Write transforms ( DW -> T2) to the specified location. */
   void WriteTransforms( const char* folder );
 
@@ -280,6 +283,7 @@ private:
   ImagePointer										 m_FixedImage;
   ImagePointer                     m_T2epi;
   ImagePointer										 m_MeanGradient;
+  ImagePointer										 m_RegisteredMeanGradient;
 
   float  *m_OriginalGradients;
   double *m_CorrectedGradients;

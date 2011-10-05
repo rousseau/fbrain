@@ -513,7 +513,7 @@ GroupwiseS2SDistortionCorrection<TSequence>
   m_AffineRegistration -> SetFixedImage( m_T2epi );
   m_AffineRegistration -> SetMovingImage( m_MeanGradient );
   m_AffineRegistration -> SetFixedImageRegion( m_FixedImageRegion );
-  m_AffineRegistration -> SetIterations( 0 );
+  m_AffineRegistration -> SetIterations( 100 );
 
   ParametersType initialParameters( 12 );
   initialParameters.Fill(0.0);
@@ -549,13 +549,7 @@ GroupwiseS2SDistortionCorrection<TSequence>
   resampler  -> SetTransform( m_AffineRegistration -> GetTransform() );
   resampler  -> SetInput( m_MeanGradient );
   resampler  -> Update();
-
-  typename ImageWriterType::Pointer imageWriter =  ImageWriterType::New();
-
-  imageWriter->SetFileName( "/home/miv/oubel/devel/RBFInterpolation/TAB_Ar/meanGradient2dti.nii.gz" );
-  imageWriter->SetInput( resampler -> GetOutput() );
-  imageWriter->Update();
-
+  m_RegisteredMeanGradient = resampler -> GetOutput();
 
   // Invert affine tranform and composition with transformations with slices
 
