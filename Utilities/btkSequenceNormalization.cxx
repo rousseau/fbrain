@@ -208,7 +208,7 @@ int main( int argc, const char * argv[] )
   for(unsigned int i=1; i<b0_idx.size(); i++ )
   {
     std::cout << "Registering image " << b0_idx[i] << " to " << b0_idx[0]
-              << " ... " << std::endl;
+              << " ... ";
 
     RegistrationType::Pointer registration = RegistrationType::New();
     registration -> SetFixedImage(  b0[0] );
@@ -223,7 +223,6 @@ int main( int argc, const char * argv[] )
         registration -> SetFixedImageRegion( b0[0] -> GetLargestPossibleRegion() );
       }
 
-    registration -> SetEnableObserver(true);
     registration -> StartRegistration();
 
     ResamplerType::Pointer resampler = ResamplerType::New();
@@ -234,6 +233,8 @@ int main( int argc, const char * argv[] )
 
     resampler -> Update();
     b0_resampled.push_back( resampler -> GetOutput() );
+
+    std::cout << "done." << std::endl;
 
   }
 
@@ -272,7 +273,7 @@ int main( int argc, const char * argv[] )
 
   // Join images
 
-  std::cout << "Joining images ... " << std::endl;
+  std::cout << "Joining images ... ";
 
   SequenceType::SpacingType  spacing  = sequence -> GetSpacing();
 
@@ -305,11 +306,13 @@ int main( int argc, const char * argv[] )
     }
   }
 
+  std::cout << "done." << std::endl;
+
   joiner -> Update();
 
   // Write modified sequence
 
-  std::cout << "Writing sequence ... " << std::endl;
+  std::cout << "Writing sequence ... ";
 
   typedef itk::ImageFileWriter< SequenceType >  WriterType;
 
@@ -319,9 +322,11 @@ int main( int argc, const char * argv[] )
   writer->SetInput( joiner -> GetOutput() );
   writer->Update();
 
+  std::cout << "done." << std::endl;
+
   // Write new b-values with removed zero entries
 
-  std::cout << "Writing b-values ... " << std::endl;
+  std::cout << "Writing b-values ... ";
 
   f = fopen( bvalOutputFile, "w" );
   fprintf( f, "%d ", 0);
@@ -333,6 +338,10 @@ int main( int argc, const char * argv[] )
   }
   fclose (f);
 
+  std::cout << "done." << std::endl;
+
+  std::cout << "Writing gradient table ... ";
+
   typedef btk::DiffusionGradientTable< SequenceType > GradientTableType;
   GradientTableType::Pointer gradientTable = GradientTableType::New();
 
@@ -340,6 +349,8 @@ int main( int argc, const char * argv[] )
   gradientTable -> LoadFromFile( bvecFile);
   gradientTable -> RemoveRepeatedZeroEntries();
   gradientTable -> SaveToFile( bvecOutputFile );
+
+  std::cout << "done." << std::endl;
 
 
   } catch (TCLAP::ArgException &e)  // catch any exceptions
