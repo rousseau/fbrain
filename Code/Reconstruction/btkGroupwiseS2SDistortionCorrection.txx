@@ -184,6 +184,8 @@ GroupwiseS2SDistortionCorrection<TSequence>
 
   SequenceIndexType movingIndex = m_SequenceIndex;
 
+  std::cout << "gradient directions = " << m_GradientDirections << std::endl;
+
 
   for (unsigned int i = 1; i <= m_GradientDirections; i++)
   {
@@ -202,6 +204,7 @@ GroupwiseS2SDistortionCorrection<TSequence>
     RBFInterpolatorPointer interpolator = RBFInterpolatorType::New();
     interpolator -> SetInputImage( movingImage );
     interpolator -> SetTransformArray( m_TransformArray[i-1] );
+
     interpolator -> SetRspa( 1.0 );
     interpolator -> Initialize( m_FixedImageRegion );
 
@@ -361,24 +364,14 @@ GroupwiseS2SDistortionCorrection<TSequence>
 
   }
 
-//  TransformType::MatrixType meanAffine;
-//  TransformType::MatrixType invMeanAffine;
-//
-//  // previousTransforms is used for assessing convergence
-//
-//  TransformPointerArray previousTransforms( m_GradientDirections );
-//
-//  for (unsigned int i=0; i<m_GradientDirections; i++)
-//  {
-//    previousTransforms[i] = TransformType::New();
-//    previousTransforms[i] -> SetIdentity();
-//    previousTransforms[i] -> SetCenter( m_TransformArray[i] -> GetCenter() );
-//  }
+  // previousTransforms is used for assessing convergence
+  S2STransformArray previousTransforms;
+  previousTransforms.resize( m_GradientDirections );
 
-
-  unsigned short nrep = 0;
-  double transformError = 0.0;
-//    double currentError  = 1e+10;
+  unsigned short nrep  = 0;
+  double currentError  = 0.0;
+  double previousError = 0.0;
+  double epsilon = 0.0;
 
   SequenceRegionType movingRegion;
 
@@ -397,7 +390,6 @@ GroupwiseS2SDistortionCorrection<TSequence>
 
     for (unsigned int i = 1; i <= m_GradientDirections; i++)
     {
-
       movingIndex[3] = i;
       movingRegion.SetIndex( movingIndex );
 
@@ -454,38 +446,58 @@ GroupwiseS2SDistortionCorrection<TSequence>
           m_MeanGradient -> TransformIndexToPhysicalPoint( index, point );
           meanGradientIt.Set( meanGradientIt.Get() + interpolator -> Evaluate(point) );
         }
-    }
 
-    for( meanGradientIt.GoToBegin(); !meanGradientIt.IsAtEnd(); ++meanGradientIt)
+      // Compute transform error
+
+      if (nrep ==0)
       {
-        meanGradientIt.Set( meanGradientIt.Get() / m_GradientDirections );
+        previousTransforms[i-1].resize( m_TransformArray[i-1].size() );
+
+        for (unsigned int j=0; j < m_TransformArray[i-1].size(); j++)
+        {
+          previousTransforms[i-1][j] = TransformType::New();
+          previousTransforms[i-1][j] -> SetIdentity();
+          previousTransforms[i-1][j] -> SetCenter( m_TransformArray[i-1][j] -> GetCenter() );
+        }
       }
 
-    // Update transforms for initialization and compute difference in transforms
+      for (unsigned int j = 0; j < m_TransformArray[i-1].size(); j++)
+      {
+        ParametersType previousParameters = previousTransforms[i-1][j] -> GetParameters();
+        ParametersType currentParameters  = m_TransformArray[i-1][j] -> GetParameters();
 
-    transformError = 0.0;
+        for (unsigned p = 0; p < currentParameters.Size(); p++)
+        {
+          currentError += ( currentParameters[p] - previousParameters[p]) *
+                            ( currentParameters[p] - previousParameters[p]) *
+                            m_Registration -> GetOptimizerScales()[p];
+        }
 
-//    for (unsigned int i = 1; i <= m_GradientDirections; i++)
-//    {
-//
-//      ParametersType previousParameters = previousTransforms[i-1] -> GetParameters();
-//      ParametersType currentParameters  = m_TransformArray[i-1] -> GetParameters();
-//
-//      for (unsigned p = 0; p < m_TransformArray[i-1] -> GetNumberOfParameters(); p++)
-//      {
-//        transformError += std::abs( currentParameters[p] - previousParameters[p]) * m_Optimizer -> GetScales()[p];
-//      }
-//
-//
-//      previousTransforms[i-1] -> SetParameters( m_TransformArray[i-1] -> GetParameters() );
-//
-//      m_TransformArray[i-1] -> SetMatrix( m_TransformArray[i-1] -> GetMatrix() * invMeanAffine );
-//      m_TransformArray[i-1] -> SetOffset( m_TransformArray[i-1] -> GetOffset() );
-//    }
-//
-//    transformError /= ( (double)m_GradientDirections*(double)m_TransformArray[0] -> GetNumberOfParameters() );
-//
-//    std::cout << "transformError = " << transformError << std::endl;
+        previousTransforms[i-1][j] -> SetParameters( m_TransformArray[i-1][j]-> GetParameters() );
+      }
+
+    }
+
+    // Normalization of mean gradient
+    for( meanGradientIt.GoToBegin(); !meanGradientIt.IsAtEnd(); ++meanGradientIt)
+    {
+      meanGradientIt.Set( meanGradientIt.Get() / m_GradientDirections );
+    }
+
+    previousError = currentError;
+    currentError /= ( (double)m_GradientDirections*
+                        (double)m_TransformArray[0][0]->GetNumberOfParameters() );
+
+    if (nrep ==0)
+    {
+      epsilon = 1;
+    } else
+      {
+        epsilon = fabs( (currentError - previousError) / previousError );
+      }
+
+
+    std::cout << "epsilon = " << epsilon << std::endl;
 
     // Normalized becomes the new fixed
 
@@ -503,7 +515,7 @@ GroupwiseS2SDistortionCorrection<TSequence>
     nrep++;
 
 
-  } while ( (nrep < m_Iterations) ); //&& ( transformError > 0.005 ) );
+  } while ( (nrep < m_Iterations)  && ( epsilon > 0.01 ) );
 
   // Registration with T2 epi
 
