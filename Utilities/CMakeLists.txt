@@ -66,6 +66,9 @@ TARGET_LINK_LIBRARIES(btkImageSimilarity ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkPSNR btkPSNR.cxx )
 TARGET_LINK_LIBRARIES(btkPSNR ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkWeightedMean btkWeightedMean.cxx )
+TARGET_LINK_LIBRARIES(btkWeightedMean ${ITK_LIBRARIES})
+
 ADD_EXECUTABLE(btkSequenceNormalization btkSequenceNormalization.cxx )
 TARGET_LINK_LIBRARIES(btkSequenceNormalization ${ITK_LIBRARIES})
 
@@ -87,5 +90,6 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkImageInjection
                 btkImageSimilarity
                 btkPSNR
+                btkWeightedMean
                 btkSequenceNormalization
         DESTINATION bin)
