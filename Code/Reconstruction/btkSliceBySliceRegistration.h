@@ -108,6 +108,8 @@ public:
   typedef itk::Matrix<double,3,3> MatrixType;
   typedef vnl_vector<double> VnlVectorType;
 
+  typedef itk::Array<double> ScalesType;
+
   void StartRegistration();
 
 
@@ -121,6 +123,11 @@ public:
     m_TransformArray = TransformArray;
     m_TransformArrayIsSet = true;
   };
+
+  ScalesType GetOptimizerScales()
+  {
+    return affineRegistration -> GetOptimizer() -> GetScales();
+  }
 
 protected:
   SliceBySliceRegistration();
