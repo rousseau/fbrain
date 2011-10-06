@@ -171,6 +171,8 @@ public:
   itkSetMacro(EnableObserver, bool);
   itkGetMacro(EnableObserver, bool);
 
+  itkGetObjectMacro(Optimizer, OptimizerType);
+
 protected:
   AffineRegistration();
   virtual ~AffineRegistration() {};
