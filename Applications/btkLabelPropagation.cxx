@@ -43,9 +43,6 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include <vector>
 #include <sstream>
 
-//#include <boost/program_options.hpp>
-//namespace po = boost::program_options;
-
 int main(int argc, char** argv)
 {
   try {  

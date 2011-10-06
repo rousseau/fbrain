@@ -1183,7 +1183,8 @@ void LabelFusionTool<T>::ComputeHROutput()
             itkFloatPointer patch = itkFloatImage::New();
             double sum = GetHRPatch(p, patch);
             HRImage->SetPixel( p, patch->GetPixel(q) );
-            m_weightImage->SetPixel( p, sum );	  	  	  	  
+            m_weightImage->SetPixel( p, sum );	  	  
+            
           }
         }
   }
@@ -1240,13 +1241,13 @@ void LabelFusionTool<T>::ComputeHROutput()
     itkTIterator maskImageIt( m_maskImage, m_maskImage->GetLargestPossibleRegion() );
     itkFloatIterator weightIt( m_weightImage, m_weightImage->GetLargestPossibleRegion() );
     itkTIterator inputIt( m_inputImage, m_inputImage->GetLargestPossibleRegion() );
-    //weight normalization
+    //weight normalization    
     for ( HRIt.GoToBegin(), weightIt.GoToBegin(), inputIt.GoToBegin(); !HRIt.IsAtEnd(); ++HRIt, ++weightIt, ++inputIt)
       if( weightIt.Get() > 0 )
         HRIt.Set( HRIt.Get() / weightIt.Get() );
       else
         HRIt.Set( inputIt.Get() );
-    
+        
     for(maskImageIt.GoToBegin(), HRIt.GoToBegin(); !HRIt.IsAtEnd(); ++maskImageIt, ++HRIt)
       if( (maskImageIt.Get() == 0) )
         HRIt.Set( 0 );
@@ -1275,12 +1276,12 @@ double LabelFusionTool<T>::GetDenoisedPatch(typename itkTImage::IndexType p, itk
   GetPatch(p, centralPatch, m_inputImage);
   itkTIterator centralPatchIt(centralPatch, centralPatch->GetRequestedRegion());
 
-  itkFloatPointer normalizedCentralPatch = itkFloatImage::New();
-  CreatePatch(normalizedCentralPatch);
-  float mean = m_meanImage->GetPixel(p);
-  float stddev = sqrt( m_varianceImage->GetPixel(p) );
-  GetNormalizedPatch(p, normalizedCentralPatch, m_inputImage, mean, stddev);
-  itkFloatIterator normalizedCentralPatchIt(normalizedCentralPatch, normalizedCentralPatch->GetRequestedRegion());
+  //itkFloatPointer normalizedCentralPatch = itkFloatImage::New();
+  //CreatePatch(normalizedCentralPatch);
+  //float mean = m_meanImage->GetPixel(p);
+  //float stddev = sqrt( m_varianceImage->GetPixel(p) );
+  //GetNormalizedPatch(p, normalizedCentralPatch, m_inputImage, mean, stddev);
+  //itkFloatIterator normalizedCentralPatchIt(normalizedCentralPatch, normalizedCentralPatch->GetRequestedRegion());
 
 
   //set the search region around the current pixel
@@ -1288,10 +1289,11 @@ double LabelFusionTool<T>::GetDenoisedPatch(typename itkTImage::IndexType p, itk
   ComputeSearchRegion(p,searchRegion);
   
   //create the patch for pixels in the neighbourhood of the current pixel
-  //itkTPointer neighbourPatch = itkTImage::New();
-  itkFloatPointer neighbourPatch = itkFloatImage::New();
+  itkTPointer neighbourPatch = itkTImage::New();
+  //itkFloatPointer neighbourPatch = itkFloatImage::New();
   CreatePatch(neighbourPatch);
-  itkFloatIterator neighbourPatchIt(neighbourPatch, neighbourPatch->GetRequestedRegion());
+  //itkFloatIterator neighbourPatchIt(neighbourPatch, neighbourPatch->GetRequestedRegion());
+  itkTIterator neighbourPatchIt(neighbourPatch, neighbourPatch->GetRequestedRegion());
   
   //go through the neighbourhood with a region iterator
   itkTIteratorWithIndex it( m_inputImage, searchRegion);
@@ -1308,14 +1310,14 @@ double LabelFusionTool<T>::GetDenoisedPatch(typename itkTImage::IndexType p, itk
 
       if(goForIt == true){
       
-        float meanNeighbour = m_meanAnatomicalImages[i]->GetPixel(neighbourPixelIndex);
-        float stddevNeighbour = sqrt( m_varianceAnatomicalImages[i]->GetPixel(neighbourPixelIndex) );
+        //float meanNeighbour = m_meanAnatomicalImages[i]->GetPixel(neighbourPixelIndex);
+        //float stddevNeighbour = sqrt( m_varianceAnatomicalImages[i]->GetPixel(neighbourPixelIndex) );
 
-        //GetPatch(neighbourPixelIndex, neighbourPatch, m_anatomicalImages[i]);
-        GetNormalizedPatch(neighbourPixelIndex, neighbourPatch, m_anatomicalImages[i], meanNeighbour, stddevNeighbour);
+        GetPatch(neighbourPixelIndex, neighbourPatch, m_anatomicalImages[i]);
+        //GetNormalizedPatch(neighbourPixelIndex, neighbourPatch, m_anatomicalImages[i], meanNeighbour, stddevNeighbour);
 
-        //double weight = exp( - PatchDistance(centralPatch, neighbourPatch) / m_rangeBandwidth);
-        double weight = exp( - PatchDistance(normalizedCentralPatch, neighbourPatch) / m_rangeBandwidth);
+        double weight = exp( - PatchDistance(centralPatch, neighbourPatch) / m_rangeBandwidth);
+        //double weight = exp( - PatchDistance(normalizedCentralPatch, neighbourPatch) / m_rangeBandwidth);
 
         if(weight>wmax)
           if( (p[0] != neighbourPixelIndex[0]) && (p[1] != neighbourPixelIndex[1]) && (p[2] != neighbourPixelIndex[2]) ) //has to be modify (not appropriate if the input image is in the anatomical input images.
@@ -1325,8 +1327,8 @@ double LabelFusionTool<T>::GetDenoisedPatch(typename itkTImage::IndexType p, itk
     
         //Add this patch to the current estimate using the computed weight
         for(patchIt.GoToBegin(), neighbourPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++neighbourPatchIt){
-          //patchIt.Set( patchIt.Get() + neighbourPatchIt.Get() * weight );
-          patchIt.Set( patchIt.Get() + (neighbourPatchIt.Get() * stddev + mean ) * weight );
+          patchIt.Set( patchIt.Get() + neighbourPatchIt.Get() * weight );
+          //patchIt.Set( patchIt.Get() + (neighbourPatchIt.Get() * stddev + mean ) * weight );
         }
       }
     }
@@ -1374,7 +1376,7 @@ double LabelFusionTool<T>::GetHRPatch(typename itkTImage::IndexType p, itkFloatP
   //create the patch and set the estimate to 0
   CreatePatch(patch);
   itkFloatIterator patchIt(patch, patch->GetRequestedRegion());
-  
+
   //get the value of the patch around the current pixel
   itkTPointer centralPatch = itkTImage::New();
   CreatePatch(centralPatch);
@@ -1388,7 +1390,8 @@ double LabelFusionTool<T>::GetHRPatch(typename itkTImage::IndexType p, itkFloatP
   //create the patch for pixels in the neighbourhood of the current pixel in the anatomical images
   itkTPointer neighbourPatch = itkTImage::New();
   CreatePatch(neighbourPatch);
-  
+  itkTIterator neighbourPatchIt(neighbourPatch, neighbourPatch->GetRequestedRegion());
+
   //create the patch for pixels in the neighbourhood of the current pixel in the HR images
   itkTPointer neighbourHRPatch = itkTImage::New();
   CreatePatch(neighbourHRPatch);
@@ -1429,34 +1432,18 @@ double LabelFusionTool<T>::GetHRPatch(typename itkTImage::IndexType p, itkFloatP
   }
   
   
-  //consider now the special case of the central patch
-  switch(m_centralPointStrategy){
-    case 0:                                        //remove the central patch to the estimated patch
-      for(patchIt.GoToBegin(), centralPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++centralPatchIt)
-        patchIt.Set( patchIt.Get() -1.0 * centralPatchIt.Get() );
-      sum -= 1.0;
-      break;
-    case 1: break;                                 //nothing to do
-    case -1:
-      for(patchIt.GoToBegin(), centralPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++centralPatchIt)
-        patchIt.Set( patchIt.Get()  + (wmax -1.0) * centralPatchIt.Get() );
-      sum += (wmax - 1.0);
-      break;
-    default:                                       //as in case -1
-      for(patchIt.GoToBegin(), centralPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++centralPatchIt)
-        patchIt.Set( patchIt.Get()  + (wmax -1.0) * centralPatchIt.Get() );
-      sum += (wmax - 1.0);
-      break;
-  }  
+  //In this case, no consideration of the central patch
   
   if(sum>0.0001)
     //Normalization of the denoised patch 
-    for(patchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt)
+    for(patchIt.GoToBegin(), centralPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++centralPatchIt){
       patchIt.Set( patchIt.Get() / sum );
+    }
   else
     //copy the central patch to the denoised patch
     for(patchIt.GoToBegin(), centralPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++centralPatchIt)
       patchIt.Set( centralPatchIt.Get() );  
+  
   
   return sum;
 }
@@ -1475,6 +1462,15 @@ void LabelFusionTool<T>::AddPatchToImage(typename itkTImage::IndexType p, itkFlo
   itkFloatIterator patchIt( patch, patchRegion);
 
   for ( imageIt.GoToBegin(), patchIt.GoToBegin(), weightIt.GoToBegin(); !imageIt.IsAtEnd(); ++imageIt, ++patchIt, ++weightIt){
+    double previous_weight = weightIt.Get();
+    double new_weight = previous_weight + weight;
+    //trick to avoid limits overflow
+    float new_value = imageIt.Get();
+    if(new_weight > 0)
+      new_value = imageIt.Get() * (previous_weight / new_weight) + patchIt.Get() * (weight / new_weight);
+    
+    //imageIt.Set(new_value);
+    //weightIt.Set(new_weight);
     imageIt.Set( imageIt.Get() + weight * patchIt.Get() );
     weightIt.Set( weightIt.Get() + weight );
   }
