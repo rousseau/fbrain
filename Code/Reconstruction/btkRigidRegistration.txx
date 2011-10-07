@@ -86,7 +86,24 @@ RigidRegistration<ImageType>
     {
       m_Transform -> SetParameters( this -> GetInitialTransformParameters() );
       m_Transform -> SetCenter( this -> GetTransformCenter() );
-    }
+    } else
+      {
+        PointType rotationCenter;
+        IndexType centerIndex;
+
+        IndexType  fixedImageRegionIndex = this -> GetFixedImageRegion().GetIndex();
+        SizeType   fixedImageRegionSize  = this -> GetFixedImageRegion().GetSize();
+
+        centerIndex[0] = fixedImageRegionIndex[0] + fixedImageRegionSize[0] / 2.0;
+        centerIndex[1] = fixedImageRegionIndex[1] + fixedImageRegionSize[1] / 2.0;
+        centerIndex[2] = fixedImageRegionIndex[2] + fixedImageRegionSize[2] / 2.0;
+
+        this -> GetFixedImage() -> TransformIndexToPhysicalPoint(centerIndex, rotationCenter);
+
+        m_Transform -> SetIdentity();
+        m_Transform -> SetCenter( rotationCenter );
+
+      }
 
   this -> SetInitialTransformParameters( m_Transform -> GetParameters() );
 
