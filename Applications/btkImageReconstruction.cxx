@@ -78,8 +78,6 @@ int main( int argc, char *argv[] )
   const char *outImage = NULL;
   const char *combinedMask = NULL;
 
-  std::vector< int > x1, y1, z1, x2, y2, z2;
-
   // Parse arguments
 
   TCLAP::CmdLine cmd("Creates a high resolution image from a set of low "
@@ -114,6 +112,10 @@ int main( int argc, char *argv[] )
   TCLAP::SwitchArg  rigid3DSwitchArg("","3D","Use of 3D rigid transforms."
       " Recommended for adult subjects.", cmd, false);
 
+  TCLAP::SwitchArg  noregSwitchArg("","noreg","No registration is performed, the "
+      "image is reconstructed with the identity transform. This option is important "
+      "to have a reference for performance assessment. ", cmd, false);
+
   // xor arguments for roi assessment
 
   std::vector<TCLAP::Arg*>  xorlist;
@@ -138,6 +140,7 @@ int main( int argc, char *argv[] )
   margin = marginArg.getValue();
 
   bool rigid3D = rigid3DSwitchArg.getValue();
+  bool noreg   = noregSwitchArg.getValue();
 
   // typedefs
 
@@ -215,6 +218,12 @@ int main( int argc, char *argv[] )
   lowToHighResFilter -> SetNumberOfImages(numberOfImages);
   lowToHighResFilter -> SetTargetImage( 0 );
   lowToHighResFilter -> SetMargin( margin );
+
+  if (noreg)
+  {
+    lowToHighResFilter -> SetIterations( 0 );
+    itMax = 1;
+  }
 
   for (unsigned int i=0; i<numberOfImages; i++)
   {
@@ -367,6 +376,9 @@ int main( int argc, char *argv[] )
         rigid3DRegistration[im] -> SetFixedImageMask( imageMasks[im] );
         rigid3DRegistration[im] -> SetTransform( rigid3DTransforms[im] );
 
+        if (noreg)
+          rigid3DRegistration[im] -> SetIterations( 0 );
+
         try
           {
           rigid3DRegistration[im] -> StartRegistration();
@@ -386,6 +398,9 @@ int main( int argc, char *argv[] )
           registration[im] -> SetMovingImage( hrImageIni );
           registration[im] -> SetImageMask( imageMasks[im] );
           registration[im] -> SetTransform( transforms[im] );
+
+          if (noreg)
+            registration[im] -> SetIterations( 0 );
 
           try
             {
@@ -476,7 +491,6 @@ int main( int argc, char *argv[] )
     if (delta < epsilon) break;
 
   }
-
 
   // Write HR image
 
