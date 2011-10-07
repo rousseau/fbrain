@@ -164,6 +164,10 @@ public:
   itkSetObjectMacro( Transform, SliceBySliceTransformType );
   itkGetObjectMacro( Transform, SliceBySliceTransformType );
 
+  /** Set/Get the number of iterations. */
+  itkSetMacro( Iterations, unsigned int );
+  itkGetMacro( Iterations, unsigned int );
+
 
 protected:
   SliceBySliceRigidRegistration();
@@ -194,6 +198,8 @@ private:
   ParametersType                   m_InitialTransformParameters;
   ParametersType                   m_LastTransformParameters;
   ImageRegionType                  m_FixedImageRegion;
+
+  unsigned int 										 m_Iterations;
 
 };
 
