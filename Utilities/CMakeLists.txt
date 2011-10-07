@@ -48,8 +48,8 @@ TARGET_LINK_LIBRARIES(btkBinarizeLabels ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkResampleLabelsByInjection btkResampleLabelsByInjection.cxx )
 TARGET_LINK_LIBRARIES(btkResampleLabelsByInjection ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkLowResolutionImageSimulator btkLowResolutionImageSimulator.cxx)
-TARGET_LINK_LIBRARIES(btkLowResolutionImageSimulator ${ITK_LIBRARIES})
+ADD_EXECUTABLE(btkSimulateStandardViewFromIsotropicImage btkSimulateStandardViewFromIsotropicImage.cxx)
+TARGET_LINK_LIBRARIES(btkSimulateStandardViewFromIsotropicImage ${ITK_LIBRARIES})
 
 #ADD_EXECUTABLE(btkSimulateLowResolutionImage btkSimulateLowResolutionImage.cxx)
 #TARGET_LINK_LIBRARIES(btkSimulateLowResolutionImage ${ITK_LIBRARIES})
@@ -85,7 +85,7 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkCropImageUsingMask
                 btkBinarizeLabels
                 btkResampleLabelsByInjection
-                btkLowResolutionImageSimulator
+                btkSimulateStandardViewFromIsotropicImage
                 btkAverageImagesWithReference
                 btkImageInjection
                 btkImageSimilarity
