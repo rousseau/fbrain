@@ -68,7 +68,9 @@ int main( int argc, char *argv[] )
       "from an isovoxel by using an observational model. This is useful for example "
       "to assess the performance of reconstruction algorithms according to the "
       "subsampling factor (the reconstructed image from the simulated images is "
-      "then compared to the isovoxel image).", ' ', "Unversioned");
+      "then compared to the isovoxel image). Differently from btkSimulateLowResolutionImage, "
+      "the low resolution image is not provided, it's created automatically.",
+      ' ', "Unversioned");
 
   TCLAP::ValueArg<std::string> inputArg("i","input","High resolution image",true,
       "","string",cmd);
