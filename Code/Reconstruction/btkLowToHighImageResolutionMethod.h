@@ -206,6 +206,10 @@ public:
   /** Get the image mask combination. */
   itkGetObjectMacro( ImageMaskCombination, ImageMaskType );
 
+  /** Set/Get the number of iterations. */
+  itkSetMacro( Iterations, unsigned int );
+  itkGetMacro( Iterations, unsigned int );
+
   /** Set the number of images */
   void SetNumberOfImages(int N);
 
@@ -249,6 +253,7 @@ private:
   unsigned int                     m_TargetImage;
 
   bool                             m_InitializeWithMask;
+  unsigned int                     m_Iterations;
 
 };
 

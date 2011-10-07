@@ -13,7 +13,6 @@ template < typename ImageType >
 LowToHighImageResolutionMethod<ImageType>
 ::LowToHighImageResolutionMethod()
 {
-
   m_TransformArray.resize(0);
   m_InverseTransformArray.resize(0);
   m_Interpolator = 0;
@@ -21,7 +20,7 @@ LowToHighImageResolutionMethod<ImageType>
   m_TargetImage = 0;
   m_InitializeWithMask= false;
   m_Margin = 0.0;
-
+  m_Iterations = 200;
 }
 
 template < typename ImageType >
@@ -169,6 +168,7 @@ LowToHighImageResolutionMethod<ImageType>
   }
 
   m_Registration -> SetEnableObserver( false );
+  m_Registration -> SetIterations( m_Iterations );
 
   m_ResamplingStatus.resize( m_NumberOfImages );
   for (unsigned int i=0; i < m_ResamplingStatus.size(); i++)
