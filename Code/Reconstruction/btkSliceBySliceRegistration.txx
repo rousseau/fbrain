@@ -99,9 +99,6 @@ SliceBySliceRegistration<ImageType>
   rigidRegistration   = RigidRegistrationType::New();
   affineRegistration  = AffineRegistrationType::New();
 
-//  rigidRegistration  -> SetIterations(0);
-//  affineRegistration -> SetIterations(0);
-
   rigidRegistration->SetMovingImage(  this -> GetMovingImage() );
   rigidRegistration->SetFixedImage(   this -> GetFixedImage()  );
 
@@ -109,7 +106,6 @@ SliceBySliceRegistration<ImageType>
   affineRegistration->SetFixedImage(  this -> GetFixedImage() );
 
   RigidTransformType::Pointer transform = RigidTransformType::New();
-
 
   IndexType start = this -> GetFixedImageRegion().GetIndex();
   SizeType  size  = this -> GetFixedImageRegion().GetSize();
@@ -122,11 +118,8 @@ SliceBySliceRegistration<ImageType>
   unsigned int y2 = y1 + size[1] -1;
   unsigned int z2 = z1 + size[2] -1;
 
-
-
   for ( unsigned int i=z1; i<=z2; i++ )
   {
-
     // Fixed region for slice i
 
     RegionType fixedImageRegion;
@@ -146,27 +139,19 @@ SliceBySliceRegistration<ImageType>
 
       rigidRegistration->SetFixedImageRegion( fixedImageRegion );
 
-      // Initialize rigid
-
-      ParametersType initialParameters( 6 );
-      initialParameters.Fill(0.0);
-
-      rigidRegistration->SetInitialTransformParameters( initialParameters );
-
-//      std::cout << "Initial rigid parameters = " << initialParameters << std::endl;
-
-       try
-        {
+      try
+      {
         rigidRegistration -> StartRegistration();
-        }
+      }
       catch( itk::ExceptionObject & err )
-        {
+      {
         throw err;
-        }
+      }
 
-      ParametersType finalParameters = rigidRegistration->GetLastTransformParameters();
+      ParametersType finalParameters = rigidRegistration -> GetLastTransformParameters();
+      PointType      transformCenter = rigidRegistration -> GetTransformCenter();
 
-      PointType transformCenter = rigidRegistration -> GetTransformCenter();
+      std::cout << "transform center after rigid registration " << transformCenter << std::endl;
 
       // Initialize affine
       transform -> SetCenter( transformCenter);
@@ -213,6 +198,9 @@ SliceBySliceRegistration<ImageType>
 
     m_TransformArray[i] -> SetIdentity();
     m_TransformArray[i] -> SetCenter( affineRegistration->GetTransformCenter() );
+
+    std::cout << "transform center after affine registration " << affineRegistration->GetTransformCenter() << std::endl;
+
     m_TransformArray[i] -> SetParameters( affineRegistration->GetLastTransformParameters() );
 
   } // end for in z
