@@ -66,18 +66,23 @@ int main( int argc, char *argv[] )
 
   // Parse arguments
 
-  TCLAP::CmdLine cmd("Resample a set of images using the injection method", ' ', "Unversioned");
+  TCLAP::CmdLine cmd("Simulates a low resolution image from a high resolution "
+      "image (reconstructed, super-resolution, or acquired) and a known "
+      "transformation between both images. The use of either a boxcar or a Gaussian "
+      "kernel (default) is possible.", ' ', "Unversioned");
 
-  TCLAP::ValueArg<std::string> inputArg("i","input","Low-resolution image file.",true,"","string",cmd);
-  TCLAP::ValueArg<std::string> maskArg("m","mask","Low-resolution image mask file.",false,"","string",cmd);
+  TCLAP::ValueArg<std::string> inputArg("i","input","Low-resolution image file.",
+      true,"","string",cmd);
+  TCLAP::ValueArg<std::string> maskArg("m","mask","Low-resolution image mask file.",
+      false,"","string",cmd);
   TCLAP::ValueArg<std::string> refArg  ("r","reconstructed","Reconstructed image. "
       "Typically the output of btkImageReconstruction is used." ,true,"","string",cmd);
-  TCLAP::ValueArg<std::string> outArg  ("o","output","Super resolution output image",true,"","string",cmd);
-  TCLAP::SwitchArg  boxcarSwitchArg("","boxcar","A boxcar-shaped PSF is assumed as imaging model"
-      " (by default a Gaussian-shaped PSF is employed.).",false);
-
-  TCLAP::ValueArg<std::string> transArg("t","transform","transform file",false,"","string",cmd);
-
+  TCLAP::ValueArg<std::string> outArg  ("o","output","Super resolution output image",
+      true,"","string",cmd);
+  TCLAP::SwitchArg  boxcarSwitchArg("","boxcar","A boxcar-shaped PSF is assumed "
+      "as imaging model (by default a Gaussian-shaped PSF is employed.).",false);
+  TCLAP::ValueArg<std::string> transArg("t","transform","transform file",false,
+      "","string",cmd);
 
   // Parse the argv array.
   cmd.parse( argc, argv );
@@ -165,7 +170,6 @@ int main( int argc, char *argv[] )
     for(unsigned int j=0; j< trans -> GetNumberOfSlices(); j++)
       resampler -> SetTransform(0, j, trans -> GetSliceTransform(j) ) ;
   }
-
 
   // Set reference image
 
