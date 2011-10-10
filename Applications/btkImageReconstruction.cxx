@@ -162,6 +162,7 @@ int main( int argc, char *argv[] )
   typedef itk::ImageMaskSpatialObject< Dimension >  MaskType;
   typedef MaskType::Pointer  MaskPointer;
 
+  // This filter does a rigid registration over all the LR images and compute the average image in HR space
   typedef btk::LowToHighImageResolutionMethod<ImageType> LowToHighResFilterType;
   LowToHighResFilterType::Pointer lowToHighResFilter = LowToHighResFilterType::New();
 
@@ -252,7 +253,7 @@ int main( int argc, char *argv[] )
 
   for (unsigned int i=0; i<numberOfImages; i++)
   {
-
+    // if a mask of the LR image is provided ...
     if ( maskSwitchArg.isSet() )
     {
       MaskReaderType::Pointer maskReader = MaskReaderType::New();
@@ -268,7 +269,9 @@ int main( int argc, char *argv[] )
       lowToHighResFilter -> SetRegionArray( i, rois[i] );
       lowToHighResFilter -> SetInitializeWithMask(true);
 
-    } else if ( boxSwitchArg.isSet() )
+    }
+    // estimate the intersection of the ROIs (-> brain can be cropped !)
+    else if ( boxSwitchArg.isSet() )
       {
         imageMasks[i] = intersectionCalculator -> GetImageMask(i);
         lowToHighResFilter -> SetImageMaskArray( i, imageMasks[i] );
@@ -279,7 +282,9 @@ int main( int argc, char *argv[] )
         lowToHighResFilter -> SetRegionArray( i, rois[i] );
         lowToHighResFilter -> SetInitializeWithMask(true);
 
-      } else if ( allSwitchArg.isSet() )
+      } 
+      // use the entire image (longer computation)
+      else if ( allSwitchArg.isSet() )
         {
           DuplicatorType::Pointer duplicator = DuplicatorType::New();
           duplicator -> SetInputImage( images[i] );
@@ -301,7 +306,7 @@ int main( int argc, char *argv[] )
         }
   }
 
-  // Start registration
+  // Start rigid registration on the desired target image (#0 by default)
   try
     {
     lowToHighResFilter->StartRegistration();
@@ -325,7 +330,7 @@ int main( int argc, char *argv[] )
     maskWriter -> Update();
   }
 
-  // Write resampled images
+  // Write resampled LR images in HR space
   if ( resampled.size() > 0 )
   {
     for (unsigned int i=0; i<numberOfImages; i++)

@@ -227,9 +227,7 @@ ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecision
 
     SpacingType inputSpacing = m_ImageArray[im] -> GetSpacing();
 
-    // TODO: it needs some checking : is it normal to have an isotropic
-    // neighborhood for anisotropic images? (the PSF has the same width in x, y, z?)
-
+    //radius = maximum size of the bounding box in the HR space
     radius[0] = ceil(inputSpacing[2] / m_OutputSpacing[0]);
     radius[1] = ceil(inputSpacing[2] / m_OutputSpacing[1]);
     radius[2] = ceil(inputSpacing[2] / m_OutputSpacing[2]);
@@ -261,9 +259,10 @@ ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecision
     IndexType inputIndex = m_InputImageRegion[im].GetIndex();
     SizeType  inputSize  = m_InputImageRegion[im].GetSize();
 
+    //Iteration over the slices of the LR images
     for ( unsigned int i=inputIndex[2]; i < inputIndex[2] + inputSize[2]; i++ )
     {
-      // Extract rotation from affine metric to orient the PDF
+      // Get the rotation of the rigid transform for the rotation of the Gaussian PSF
       VnlMatrixType NQd;
       NQd = m_Transform[im] -> GetSliceTransform(i) -> GetMatrix().GetVnlMatrix();
 
@@ -295,12 +294,14 @@ ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecision
       PointType transformedPoint;
 
       double value;
-
+      //Loop over pixels of the current slice
       for(fixedIt.GoToBegin(); !fixedIt.IsAtEnd(); ++fixedIt)
       {
+        //Put in the world coordinates
         fixedIndex = fixedIt.GetIndex();
         m_ImageArray[im] -> TransformIndexToPhysicalPoint( fixedIndex, physicalPoint );
 
+        //Put in the HR image space
         transformedPoint = m_Transform[im]-> TransformPoint( physicalPoint );
         sumImage -> TransformPhysicalPointToIndex( transformedPoint, outputIndex);
 
@@ -309,6 +310,7 @@ ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecision
 
         if ( (*fit).IsInside(outputIndex) )
         {
+          //Loop over the Gaussian PSF
           for(unsigned int i=0; i<nbIt.Size(); i++)
           {
             nbIndex = nbIt.GetIndex(i);
