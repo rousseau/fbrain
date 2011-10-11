@@ -274,7 +274,7 @@ GroupwiseS2SDistortionCorrection<TSequence>
   m_T2epi = T2epiExtractor -> GetOutput();
 
   // Extract G1 to be used as initial reference
-
+  //Possible improvement : set the fixed image for mean gradient computation as an option
   extractorIndex[3] = 1;
   extractorRegion.SetIndex( extractorIndex );
 
@@ -398,6 +398,7 @@ GroupwiseS2SDistortionCorrection<TSequence>
       movingExtractor -> SetInput( m_Input );
       movingExtractor -> SetDirectionCollapseToSubmatrix();
 
+      // Smoothing of the data for improve robustness of the registration process
       GaussianFilterPointer movingSmoother  = GaussianFilterType::New();
       movingSmoother -> SetUseImageSpacingOn();
       movingSmoother -> SetVariance( 2.0 );
@@ -415,6 +416,7 @@ GroupwiseS2SDistortionCorrection<TSequence>
       std::cout << "Registering diffusion image " << i << " (iter " << nrep
           << ") ... "; std::cout.flush();
 
+      // Perform the registration ---------------------
       try
       {
         m_Registration->StartRegistration();
@@ -428,12 +430,14 @@ GroupwiseS2SDistortionCorrection<TSequence>
 
       std::cout << "done." << std::endl; std::cout.flush();
 
+      // Copy the new estimated transform
       m_TransformArray[i-1] = m_Registration -> GetTransformArray();
 
       IndexType index;
       PointType point;
       PointType transformedPoint;
 
+      // Recompute the mean gradient image using RBF interpolation (spatial domain)
       RBFInterpolatorPointer interpolator = RBFInterpolatorType::New();
       interpolator -> SetInputImage( movingImage );
       interpolator -> SetTransformArray( m_Registration -> GetTransformArray() );
@@ -447,7 +451,7 @@ GroupwiseS2SDistortionCorrection<TSequence>
           meanGradientIt.Set( meanGradientIt.Get() + interpolator -> Evaluate(point) );
         }
 
-      // Compute transform error
+      // Compute transform difference between two iterations
 
       if (nrep ==0)
       {
@@ -484,6 +488,8 @@ GroupwiseS2SDistortionCorrection<TSequence>
       meanGradientIt.Set( meanGradientIt.Get() / m_GradientDirections );
     }
 
+    // Normalization of the transform differences (the stopping criterion is based on the mean of all the differences (all images and all slices))
+    //It's possibly better to use another stopping criterion (max difference for instance) 
     previousError = currentError;
     currentError /= ( (double)m_GradientDirections*
                         (double)m_TransformArray[0][0]->GetNumberOfParameters() );
@@ -517,10 +523,10 @@ GroupwiseS2SDistortionCorrection<TSequence>
 
   } while ( (nrep < m_Iterations)  && ( epsilon > 0.01 ) );
 
-  // Registration with T2 epi
+  // Registration on the T2 epi (B0)
 
   std::cout << "Registering mean gradient to B0 (T:mean -> B0) ... "; std::cout.flush();
-//
+
   m_AffineRegistration = AffineRegistrationType::New();
   m_AffineRegistration -> SetFixedImage( m_T2epi );
   m_AffineRegistration -> SetMovingImage( m_MeanGradient );
@@ -576,13 +582,20 @@ GroupwiseS2SDistortionCorrection<TSequence>
 
   // Final combination of transform to map everything into T2 epi
 
+  // M2 : rotation * scaling (between mean gradient and B0)
+  // O2 : offset (page 107, itk software guide 2.4.0)
   MatrixType M2 = inverseTransform -> GetMatrix();
   OffsetType O2 = inverseTransform -> GetOffset();
 
+  //loop over DW images
+  //First DW image is the fixed image for the mean gradient image by default
   for (unsigned int i = 0; i < m_TransformArray.size(); i++)
   {
+    //loop over slices
     for (unsigned int j = 0; j < m_TransformArray[i].size(); j++)
     {
+      //M1 : rotation * scaling
+      //O1 : offset T = C + V - R*C (C:centre, V: translation, R: rotation)
       MatrixType M1 = m_TransformArray[i][j] -> GetMatrix();
       OffsetType O1 = m_TransformArray[i][j] -> GetOffset();
 

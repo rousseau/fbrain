@@ -153,7 +153,7 @@ int main( int argc, char *argv[] )
   MaskType::Pointer mask = MaskType::New();
   mask -> SetImage( imageMaskReader -> GetOutput() );
 
-  // Calcule 4D diffusion ROI for input sequence from mask
+  // Compute 4D diffusion ROI for input sequence from mask
 
   SequenceType::RegionType seqROI = sequence -> GetLargestPossibleRegion();
   SequenceType::IndexType  seqROIIndex = seqROI.GetIndex();
@@ -179,7 +179,7 @@ int main( int argc, char *argv[] )
 
   SequenceType::RegionType recROI = seqROI; // By default we reconstruct on the original grid
 
-   // Create reconstructed sequence
+   // Create reconstructed sequence (= 4D image)
 
   SequenceType::Pointer recSequence = SequenceType::New();
 
@@ -328,6 +328,7 @@ int main( int argc, char *argv[] )
 
   for (; !recIt.IsAtEnd(); ++recIt)
   {
+    //index[3]: number of the current image
     index = recIt.GetIndex();
 
     if (index[3]!=image)
@@ -363,7 +364,7 @@ int main( int argc, char *argv[] )
   }
   finish = clock();
 
-  std::cout << "duracion (seg) = " << (finish - start) / CLOCKS_PER_SEC << std::endl;
+  std::cout << "time (seg) = " << (finish - start) / CLOCKS_PER_SEC << std::endl;
 
   // Write interpolated sequence
 
@@ -376,6 +377,7 @@ int main( int argc, char *argv[] )
   // Correct gradient table
 
   vnl_matrix<double> R(3,3);
+  // tref : matrix from reference image to sequence
   R = tref -> GetMatrix().GetVnlMatrix();
 
   vnl_matrix<double> PQ = R;

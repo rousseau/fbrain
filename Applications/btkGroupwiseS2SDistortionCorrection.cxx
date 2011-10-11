@@ -63,10 +63,10 @@ try {
       "string",cmd);
   TCLAP::ValueArg<std::string> maskArg("m","mask","Mask in the B0 image",true,"",
       "string",cmd);
-  TCLAP::ValueArg<std::string> outputArg("o","output","Corrected sequence",true,"",
+  TCLAP::ValueArg<std::string> outputArg("o","output","Corrected sequence (spatial resampling, not in the Q-space)",true,"",
       "string",cmd);
   TCLAP::ValueArg<std::string> folderArg("f","transformation_folder","Folder for"
-      " transformations (output of the algorithm)",true,"","string",cmd);
+      " transformations (main output of the algorithm)",true,"","string",cmd);
 
   TCLAP::ValueArg<std::string> mgradArg("","mean-gradient","Mean gradient (output of the algorithm)",false,
       "","string",cmd);
@@ -120,7 +120,7 @@ try {
 
   mask -> SetImage( imageMask );
 
-  // Distortion correction
+  // Distortion correction -- (main part of the program)
 
   typedef btk::GroupwiseS2SDistortionCorrection< SequenceType >  FilterType;
   FilterType::Pointer filter = FilterType::New();

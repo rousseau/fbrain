@@ -1,12 +1,12 @@
 \section{Applications}
 
-\subsection{Denoising}
+\subsection{Denoising \cite{coupe_2008}}
 
 \begin{description}
  \item[btkNLMDenoising] This program applies a non-local mean filter to a 3D
 image  for denoising purpose. Usage: \texttt{-i input\_image\_filename -o
 output\_image\_filename}. The best results are usually obtained by using a mask
-(or a padding value).
+(or a padding value). This is an implementation of the method proposed by Coup\'e \textit{et al.} in \cite{coupe_2008}.
 \end{description}
 
 \begin{description}
@@ -36,7 +36,7 @@ The full list of optional parameters of the method can be obtained by
 
 \end{description}
 
-\subsection{Reconstruction of DW sequences}
+\subsection{Reconstruction of DW sequences \cite{oubel_reconstruction_2010}}
 \label{subsec:diff_rec}
 The reconstruction of diffusion-weighted (DW) sequences aims at
 obtaining a sequence corrected for fetal moving and eddy-current distortions.
@@ -81,7 +81,7 @@ Minimal usage: \texttt{btkRBFInterpolationS2S -i input -m mask.nii -o output
 \end{description}
 
 
-\subsection{Tractography}
+\subsection{Tractography \cite{pontabry_probabilistic_2011}}
 \label{subsec:tracto}
     \subsubsection*{Standard usage}
         Suppose you want to perform a tractography on a diffusion weighted MRI 
