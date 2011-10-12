@@ -183,7 +183,6 @@ public:
     this -> SetInput(_arg);
 
     m_Transform.resize( m_Transform.size() + 1 );
-    SizeType _argSize = _arg -> GetLargestPossibleRegion().GetSize();
   }
 
   /** Set a the transform for the image i. */
