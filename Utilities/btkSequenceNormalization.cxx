@@ -225,6 +225,10 @@ int main( int argc, const char * argv[] )
 
     registration -> StartRegistration();
 
+    std::cout << "done." << std::endl;
+
+    std::cout << registration -> GetLastTransformParameters() << std::endl;
+
     ResamplerType::Pointer resampler = ResamplerType::New();
     resampler -> UseReferenceImageOn();
     resampler -> SetReferenceImage(b0[0]);
@@ -233,9 +237,6 @@ int main( int argc, const char * argv[] )
 
     resampler -> Update();
     b0_resampled.push_back( resampler -> GetOutput() );
-
-    std::cout << "done." << std::endl;
-
   }
 
   // Calculates the mean image
@@ -312,7 +313,7 @@ int main( int argc, const char * argv[] )
 
   // Write modified sequence
 
-  std::cout << "Writing sequence ... ";
+  std::cout << "Writing sequence ... "; std::cout.flush();
 
   typedef itk::ImageFileWriter< SequenceType >  WriterType;
 
