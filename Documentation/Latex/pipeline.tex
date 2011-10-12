@@ -44,8 +44,7 @@ btkImageReconstruction -i ana01.nii.gz -i ana02.nii.gz -i ana03.nii.gz
                        -m ana01_mask.nii.gz -m ana02_mask.nii.gz -m ana03_mask.nii.gz
                        -o ana3D.nii.gz --mask
 
-btkSetStandardCoorSystem -i ana3D.nii.gz -o ana3D_standard.nii.gz -d 3
-btkReorientImageToStandard -i ana3D_standard.nii.gz -o ana3D_oriented.nii.gz -l landmarks.fcsv
+btkReorientImageToStandard -i ana3D.nii.gz -o ana3D_oriented.nii.gz -l landmarks.fcsv
 
 \end{verbatim}
 
