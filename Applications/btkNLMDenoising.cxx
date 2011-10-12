@@ -31,6 +31,15 @@ The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-B license and that you accept its terms.
 */
 
+/*
+This program implements a denoising method proposed by Coupé et al. described in :
+ Coupé, P., Yger, P., Prima, S., Hellier, P., Kervrann, C., Barillot, C., 2008. 
+ An optimized blockwise nonlocal means denoising filter for 3-D magnetic resonance images.
+ IEEE Transactions on Medical Imaging 27 (4), 425–441.
+*/
+
+
+
 #include <tclap/CmdLine.h>
 
 #include "itkImageFileReader.h"
@@ -48,7 +57,7 @@ int main(int argc, char** argv)
 
   try {
 
-    TCLAP::CmdLine cmd("Non-Local mean denoising", ' ', "1.0", true);
+    TCLAP::CmdLine cmd("Non-Local mean denoising: implementation of the method proposed by Coupé et al., IEEE TMI 2008 ", ' ', "1.0", true);
 
     TCLAP::ValueArg<std::string> inputImageArg("i","image_file","input image file (short)",true,"","string");
     cmd.add( inputImageArg );

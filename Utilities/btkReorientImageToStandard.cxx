@@ -65,7 +65,7 @@ int main( int argc, char *argv[] )
 
   // Parse arguments
 
-  TCLAP::CmdLine cmd("Reorient an image to standard orientation", ' ', "Unversioned");
+  TCLAP::CmdLine cmd("Reorient an image to standard orientation (itk RAI = dicom LPS)", ' ', "Unversioned");
 
   TCLAP::ValueArg<std::string> inputArg("i","input","Input image",true,"","string",cmd);
   TCLAP::ValueArg<std::string> outputArg("o","output","Reoriented image",true,"","string",cmd);
@@ -117,15 +117,14 @@ int main( int argc, char *argv[] )
   vnl_matrix<double> oriDirection(3,3);
   oriDirection = image -> GetDirection().GetVnlMatrix();
 
-  // Reorient mean gradient to RAI
+  // Reorient to itk RAI
 
   typedef itk::OrientImageFilter< ImageType, ImageType >  FilterType;
-
-  // Reorient sequence to RAI
 
   FilterType::Pointer filter = FilterType::New();
   filter -> SetInput( image  );
   filter -> UseImageDirectionOn();
+  //Force orientation to be equal to itk RAI (= dicom LPS)
   filter -> SetDesiredCoordinateOrientation( itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RAI );
   filter -> Update();
 
@@ -180,6 +179,7 @@ int main( int argc, char *argv[] )
   R(2,0) = sup_lps(0) ; R(2,1) = sup_lps(1);  R(2,2) = sup_lps(2);
 
   // Corrects rotation matrix
+  //if left_lps and pos_lps are not exactly orthogonal, we need to extract the rotation component from the matrix.  
 
   vnl_matrix<double> PQ = R;
   vnl_matrix<double> NQ = R;

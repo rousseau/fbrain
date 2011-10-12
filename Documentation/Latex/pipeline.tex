@@ -44,8 +44,7 @@ btkImageReconstruction -i ana01.nii.gz -i ana02.nii.gz -i ana03.nii.gz
                        -m ana01_mask.nii.gz -m ana02_mask.nii.gz -m ana03_mask.nii.gz
                        -o ana3D.nii.gz --mask
 
-btkSetStandardCoorSystem -i ana3D.nii.gz -o ana3D_standard.nii.gz -d 3
-btkReorientImageToStandard -i ana3D_standard.nii.gz -o ana3D_oriented.nii.gz -l landmarks.fcsv
+btkReorientImageToStandard -i ana3D.nii.gz -o ana3D_oriented.nii.gz -l landmarks.fcsv
 
 \end{verbatim}
 
@@ -65,4 +64,4 @@ This can be performed by using \textbf{btkRegisterDiffusionToAnatomicalData}
 If you have followed the previous steps correctly, at this point you should
 have the reconstructed anatomical and diffusion data spatially aligned, and
 ready to perform the tractography. To do this, BTK provides
-\textbf{btkTractography} (Section \ref{subsec:tracto})
+\textbf{btkTractography} (Section \ref{subsec:tracto}).

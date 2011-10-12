@@ -1162,6 +1162,7 @@ void LabelFusionTool<T>::ComputeHROutput()
   
   itkFloatIterator HRIt( HRImage, HRImage->GetLargestPossibleRegion() );
   itkTIterator outputIt( m_outputImage, m_outputImage->GetLargestPossibleRegion());
+  itkTIterator inputIt( m_inputImage, m_outputImage->GetLargestPossibleRegion());
   
   int x,y,z;
   
@@ -1240,13 +1241,23 @@ void LabelFusionTool<T>::ComputeHROutput()
     
     itkTIterator maskImageIt( m_maskImage, m_maskImage->GetLargestPossibleRegion() );
     itkFloatIterator weightIt( m_weightImage, m_weightImage->GetLargestPossibleRegion() );
-    itkTIterator inputIt( m_inputImage, m_inputImage->GetLargestPossibleRegion() );
     //weight normalization    
     for ( HRIt.GoToBegin(), weightIt.GoToBegin(), inputIt.GoToBegin(); !HRIt.IsAtEnd(); ++HRIt, ++weightIt, ++inputIt)
       if( weightIt.Get() > 0 )
         HRIt.Set( HRIt.Get() / weightIt.Get() );
-      else
-        HRIt.Set( inputIt.Get() );
+      else{
+        switch(m_centralPointStrategy){
+          case 0:
+            HRIt.Set( 0 ); //It can be a specific value to explicitly say that no example has been found 
+            break;
+          case 1: 
+            HRIt.Set( inputIt.Get() ); //Copy the low resolution value into the HR image
+            break;
+          default: 
+            HRIt.Set( inputIt.Get() ); //Copy the low resolution value into the HR image
+            break;
+        }
+      }
         
     for(maskImageIt.GoToBegin(), HRIt.GoToBegin(); !HRIt.IsAtEnd(); ++maskImageIt, ++HRIt)
       if( (maskImageIt.Get() == 0) )
@@ -1436,14 +1447,28 @@ double LabelFusionTool<T>::GetHRPatch(typename itkTImage::IndexType p, itkFloatP
   
   if(sum>0.0001)
     //Normalization of the denoised patch 
-    for(patchIt.GoToBegin(), centralPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++centralPatchIt){
+    for(patchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt){
       patchIt.Set( patchIt.Get() / sum );
     }
-  else
-    //copy the central patch to the denoised patch
-    for(patchIt.GoToBegin(), centralPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++centralPatchIt)
-      patchIt.Set( centralPatchIt.Get() );  
-  
+  else{
+    switch(m_centralPointStrategy){
+      case 0: 
+        sum = 0;
+        for(patchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt)
+          patchIt.Set( 0 ); 
+        break;
+      case 1: 
+        //copy the central patch to the current patch
+        for(patchIt.GoToBegin(), centralPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++centralPatchIt)
+          patchIt.Set( centralPatchIt.Get() ); 
+        break;
+      default: 
+        //copy the central patch to the current patch
+        for(patchIt.GoToBegin(), centralPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++centralPatchIt)
+          patchIt.Set( centralPatchIt.Get() ); 
+        break;                
+    }
+  }  
   
   return sum;
 }

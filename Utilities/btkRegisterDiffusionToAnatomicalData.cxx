@@ -113,13 +113,13 @@ int main( int argc, char *argv[] )
   const char *toutName = NULL, *invToutName = NULL, *maskName = NULL;
   const char *mgradName = NULL, *mgradResampled = NULL;
 
-  TCLAP::CmdLine cmd("Registers diffusion to anatomical data.", ' ', "Unversioned");
+  TCLAP::CmdLine cmd("Registers diffusion to anatomical data using mutual information.", ' ', "Unversioned");
 
   TCLAP::ValueArg<std::string> inputArg("i","input","Diffusion sequence",true,"","string",cmd);
   TCLAP::ValueArg<std::string> referenceArg("r","reference","Anatomical image",true,"","string",cmd);
   TCLAP::ValueArg<std::string> outputArg("o","output","Registered diffusion sequence",true,"","string",cmd);
   TCLAP::ValueArg<std::string> maskArg("m","mask","Mask for the b0 image",false,"","string",cmd);
-  TCLAP::ValueArg<std::string> mgradArg("","mean-gradient","Mean gradient",false,"","string",cmd);
+  TCLAP::ValueArg<std::string> mgradArg("","mean-gradient (for validation purpose)","Mean gradient",false,"","string",cmd);
   TCLAP::ValueArg<std::string> mgradResampledArg("","mean-gradient-resampled","Mean gradient resampled",false,"","string",cmd);
 
   // TODO: is this way of passing rois useful? If not, consider removing it ...

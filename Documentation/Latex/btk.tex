@@ -62,13 +62,12 @@ same conditions as regards security.
 Baby Brain Toolkit (BTK) needs the following packages\footnote{BTK has been tested under Debian 5.0 and MacOSX 10.6.8}:
 \begin{itemize}
  \item CMake (www.cmake.org), Tclap (tclap.sourceforge.net), OpenMP
-(openmp.org), VTK (www.vtk.org), ANN (www.cs.umd.edu/\string~mount/ANN). These
+(openmp.org), VTK (www.vtk.org), ANN (www.cs.umd.edu/\string~mount/ANN) and Doxygen. These
 libraries can be installed using the following command line: 
  \begin{itemize}
  \item for debian-based distributions: \texttt{apt-get install cmake
-cmake-curses-gui
- libtclap-dev libgomp1 libvtk5-dev libann-dev}
- \item for MacOSX using macports: \texttt{port install cmake tclap vtk5 libANN}
+cmake-curses-gui libtclap-dev libgomp1 libvtk5-dev libann-dev doxygen}
+ \item for MacOSX using macports: \texttt{port install cmake tclap vtk5 libANN doxygen}
  \end{itemize}
  \item Install Git: this library can be installed using the following command line : 
  \begin{itemize}
@@ -91,6 +90,7 @@ BUILD_TESTING = OFF
 CMAKE_BUILD_TYPE = Release
 ITK_USE_REVIEW = ON
 ITK_BUILD_ALL_MODULES = ON
+BUILD_DOCUMENTATION = ON
 \end{verbatim}
 Then press \texttt{[c]} to configure and \texttt{[g]} to generate the make file.
 Finally, type \texttt{make} at the prompt to obtain the final build of ITK.
