@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 
   try {
 
-    TCLAP::CmdLine cmd("Non-Local mean denoising", ' ', "1.0", true);
+    TCLAP::CmdLine cmd("Non-Local mean denoising: implementation of the method proposed by Coupé et al., IEEE TMI 2008 ", ' ', "1.0", true);
 
     TCLAP::ValueArg<std::string> inputImageArg("i","image_file","input image file (short)",true,"","string");
     cmd.add( inputImageArg );

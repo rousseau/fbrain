@@ -1439,10 +1439,24 @@ double LabelFusionTool<T>::GetHRPatch(typename itkTImage::IndexType p, itkFloatP
       patchIt.Set( patchIt.Get() / sum );
     }
   else{
-    sum = 0;
-    for(patchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt)
-      patchIt.Set( 0 );  
-  }
+    switch(m_centralPointStrategy){
+      case 0: 
+        sum = 0;
+        for(patchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt)
+          patchIt.Set( 0 ); 
+        break;
+      case 1: 
+        //copy the central patch to the current patch
+        for(patchIt.GoToBegin(), centralPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++centralPatchIt)
+          patchIt.Set( centralPatchIt.Get() ); 
+        break;
+      default: 
+        //copy the central patch to the current patch
+        for(patchIt.GoToBegin(), centralPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++centralPatchIt)
+          patchIt.Set( centralPatchIt.Get() ); 
+        break;                
+    }
+  }  
   
   return sum;
 }
