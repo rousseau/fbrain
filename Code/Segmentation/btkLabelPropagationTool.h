@@ -1162,6 +1162,7 @@ void LabelFusionTool<T>::ComputeHROutput()
   
   itkFloatIterator HRIt( HRImage, HRImage->GetLargestPossibleRegion() );
   itkTIterator outputIt( m_outputImage, m_outputImage->GetLargestPossibleRegion());
+  itkTIterator inputIt( m_inputImage, m_outputImage->GetLargestPossibleRegion());
   
   int x,y,z;
   
@@ -1241,11 +1242,22 @@ void LabelFusionTool<T>::ComputeHROutput()
     itkTIterator maskImageIt( m_maskImage, m_maskImage->GetLargestPossibleRegion() );
     itkFloatIterator weightIt( m_weightImage, m_weightImage->GetLargestPossibleRegion() );
     //weight normalization    
-    for ( HRIt.GoToBegin(), weightIt.GoToBegin(); !HRIt.IsAtEnd(); ++HRIt, ++weightIt)
+    for ( HRIt.GoToBegin(), weightIt.GoToBegin(), inputIt.GoToBegin(); !HRIt.IsAtEnd(); ++HRIt, ++weightIt, ++inputIt)
       if( weightIt.Get() > 0 )
         HRIt.Set( HRIt.Get() / weightIt.Get() );
-      else
-        HRIt.Set( 0 ); //It can be a specific value to explicitly say that no example has been found 
+      else{
+        switch(m_centralPointStrategy){
+          case 0:
+            HRIt.Set( 0 ); //It can be a specific value to explicitly say that no example has been found 
+            break;
+          case 1: 
+            HRIt.Set( inputIt.Get() ); //Copy the low resolution value into the HR image
+            break;
+          default: 
+            HRIt.Set( inputIt.Get() ); //Copy the low resolution value into the HR image
+            break;
+        }
+      }
         
     for(maskImageIt.GoToBegin(), HRIt.GoToBegin(); !HRIt.IsAtEnd(); ++maskImageIt, ++HRIt)
       if( (maskImageIt.Get() == 0) )
