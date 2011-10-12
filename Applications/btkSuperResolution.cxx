@@ -139,6 +139,7 @@ int main( int argc, char *argv[] )
   for (unsigned int i=0; i<numberOfImages; i++)
   {
     // add image
+    std::cout<<"Reading image : "<<input[i].c_str()<<std::endl;
     ImageReaderType::Pointer imageReader = ImageReaderType::New();
     imageReader -> SetFileName( input[i].c_str() );
     imageReader -> Update();
@@ -147,6 +148,7 @@ int main( int argc, char *argv[] )
     // add region
     if ( mask.size() > 0 )
     {
+      std::cout<<"Reading mask image : "<<mask[i].c_str()<<std::endl;
       MaskReaderType::Pointer maskReader = MaskReaderType::New();
       maskReader -> SetFileName( mask[i].c_str() );
       maskReader -> Update();
@@ -162,6 +164,7 @@ int main( int argc, char *argv[] )
 
     } else
         {
+          std::cout<<"Creating a mask image (entire input image)"<<std::endl;
           roiSize  = imageReader -> GetOutput() -> GetLargestPossibleRegion().GetSize();
           roiIndex = imageReader -> GetOutput() -> GetLargestPossibleRegion().GetIndex();
         }
@@ -174,7 +177,7 @@ int main( int argc, char *argv[] )
 
     if (transform.size() > 0)
     {
-
+    std::cout<<"Reading transform:"<<transform[i]<<std::endl;
     TransformReaderType::Pointer transformReader = TransformReaderType::New();
     transformReader -> SetFileName( transform[i] );
     transformReader -> Update();
@@ -191,11 +194,12 @@ int main( int argc, char *argv[] )
   }
 
   // Set reference image
-
+    std::cout<<"Reading the reference image : "<<refImage<<std::endl;
   ImageReaderType::Pointer refReader = ImageReaderType::New();
   refReader -> SetFileName( refImage );
   refReader -> Update();
 
+  std::cout<<"Performing super resolution"<<std::endl;
   resampler -> UseReferenceImageOn();
   resampler -> SetReferenceImage( refReader -> GetOutput() );
   resampler -> SetIterations(iter);
@@ -208,6 +212,7 @@ int main( int argc, char *argv[] )
     
     
   for (int i=0; i<numberOfLoops; i++){
+    std::cout<<"Loop : "<<i+1<<std::endl;
     typedef itk::Image< short, Dimension> itkShortImage;
     typedef itkShortImage::Pointer        itkShortPointer;
     
@@ -232,7 +237,7 @@ int main( int argc, char *argv[] )
     resampler -> SetReferenceImage( short2FloatFilter->GetOutput() );
     resampler -> Update();
   }
-  //NL denoising desired at the last step if number of loops > 0
+  //NLM denoising desired at the last step if number of loops > 0
   if(numberOfLoops>0){
     typedef itk::Image< short, Dimension> itkShortImage;
     typedef itkShortImage::Pointer        itkShortPointer;
