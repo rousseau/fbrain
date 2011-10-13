@@ -254,7 +254,7 @@ ResampleLabelsByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionT
     for ( unsigned int i=inputIndex[2]; i < inputIndex[2] + inputSize[2]; i++ )
     {
       // Extract rotation from affine metric to orient the PDF
-      VnlMatrixType NQd = m_Transform[im][i] -> GetMatrix().GetVnlMatrix();
+      VnlMatrixType NQd = m_Transform[im] -> GetSliceTransform(i) -> GetMatrix().GetVnlMatrix();
 
       VnlVectorType idirTransformed = NQd*idir.Get_vnl_vector();
       VnlVectorType jdirTransformed = NQd*jdir.Get_vnl_vector();
@@ -291,7 +291,7 @@ ResampleLabelsByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionT
         fixedIndex = fixedIt.GetIndex();
         m_ImageArray[im] -> TransformIndexToPhysicalPoint( fixedIndex, physicalPoint );
 
-        transformedPoint = m_Transform[im][i] -> TransformPoint( physicalPoint);
+        transformedPoint = m_Transform[im] -> TransformPoint( physicalPoint);
         outputPtr -> TransformPhysicalPointToIndex( transformedPoint, outputIndex);
 
         nbIt.SetLocation(outputIndex);
@@ -552,12 +552,9 @@ ResampleLabelsByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionT
     {
       for(unsigned int i=0; i<m_Transform.size(); i++)
       {
-        for(unsigned int j=0; j<m_Transform[i].size(); j++)
+        if( latestTime < m_Transform[i]->GetMTime() )
         {
-          if( latestTime < m_Transform[i][j]->GetMTime() )
-          {
-            latestTime = m_Transform[i][j]->GetMTime();
-          }
+          latestTime = m_Transform[i]->GetMTime();
         }
       }
     }

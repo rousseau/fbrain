@@ -53,6 +53,8 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "btkDiffusionGradientTable.h"
 #include "itkEuler3DTransform.h"
 
+#include "btkNiftiFilenameRadix.h"
+
 int main( int argc, char *argv[] )
 {
 
@@ -65,28 +67,40 @@ int main( int argc, char *argv[] )
 
   double rspa, rgra, factor;
 
-  TCLAP::CmdLine cmd("Resampling of dwi sequences using Radial Basis Functions", ' ', "Unversioned");
 
-  TCLAP::ValueArg<std::string> inputArg("i","input","Original sequence",true,"","string",cmd);
-  TCLAP::ValueArg<std::string> outputArg("o","output","Corrected sequence",true,"","string",cmd);
-  TCLAP::ValueArg<std::string> tpathArg("t","transformation-folder","Path to transforms",true,"","string",cmd);
-  TCLAP::ValueArg<std::string> maskArg("m","mask","Image mask for the input sequence",true,"","string",cmd);
+  TCLAP::CmdLine cmd("Reconstruction of dwi sequences after distortion and motion"
+      " correction performed with btkGroupwiseS2SDistortionCorrection.",
+      ' ', "Unversioned");
 
-  TCLAP::ValueArg<std::string> refArg("r","reference","Reference image to specify the resampling grid"
-      ,false,"","string",cmd);
+  TCLAP::ValueArg<std::string> inputArg("i","input","Original sequence",true,"",
+      "string",cmd);
+  TCLAP::ValueArg<std::string> outputArg("o","output","Corrected sequence",true,"",
+      "string",cmd);
+  TCLAP::ValueArg<std::string> tpathArg("t","transformation-folder","Path to "
+      "transforms",true,"","string",cmd);
+  TCLAP::ValueArg<std::string> maskArg("m","mask","Image mask for the input "
+      "sequence",true,"","string",cmd);
+
+  TCLAP::ValueArg<std::string> refArg("r","reference","Reference image to specify"
+      " the resampling grid",false,"","string",cmd);
   TCLAP::ValueArg<std::string> trefArg("","tref","Transform from reference to sequence"
       ,false,"","string",cmd);
 
-  TCLAP::ValueArg<std::string> rbfArg("","rbf","Radial basis function (default gauss)",false,"gauss","string",cmd);
-  TCLAP::ValueArg<float> rspaArg("","rspa","Spatial kernel width (default 1)",false,1,"float",cmd);
-  TCLAP::ValueArg<float> rgraArg("","rgra","Angular kernel width (default 0.5)",false,0.2,"float",cmd);
-  TCLAP::ValueArg<float> factorArg("","resampling-factor","The voxel size of the reconstructed image is the original "
-      "in-plane spacing divided by this value. (default 1)",false, 1.0,"float",cmd);
+  TCLAP::ValueArg<std::string> rbfArg("","rbf","Radial basis function (default "
+      "gauss)",false,"gauss","string",cmd);
+  TCLAP::ValueArg<float> rspaArg("","rspa","Spatial kernel width (default 1)",
+      false,1,"float",cmd);
+  TCLAP::ValueArg<float> rgraArg("","rgra","Angular kernel width (default 0.5)",
+      false,0.2,"float",cmd);
+  TCLAP::ValueArg<float> factorArg("","resampling-factor","The voxel size of the"
+      " reconstructed image is the original in-plane spacing divided by this value."
+      " (default 1)",false, 1.0,"float",cmd);
 
   TCLAP::SwitchArg oriSwitch("","original-space","Original resampling space. "
       "By default, an isovoxel reconstruction is performed.", cmd, false);
-  TCLAP::SwitchArg refSwitch("","reference-space","Resampling space provided by image reference. "
-      "By default, an isovoxel reconstruction is performed.", cmd, false);
+  TCLAP::SwitchArg refSwitch("","reference-space","Resampling space provided by "
+      "image reference. By default, an isovoxel reconstruction is performed.",
+      cmd, false);
 
   // Parse the argv array.
   cmd.parse( argc, argv );
@@ -102,30 +116,15 @@ int main( int argc, char *argv[] )
   rgra = rgraArg.getValue();
   factor = factorArg.getValue();
 
-  char input[255];
-  strcpy( input, (char*)inputArg.getValue().c_str() );
-  strcat ( input,".nii" );
+  std::string input = inputArg.getValue();
+  std::string inRadix = btk::GetRadixOf(input);
+  std::string bvec_in = inRadix + ".bvec";
+  std::string bval_in = inRadix + ".bval";
 
-  char bvec[255];
-  strcpy( bvec, (char*)inputArg.getValue().c_str() );
-  strcat ( bvec,".bvec" );
-
-  char bval[255];
-  strcpy( bval, (char*)inputArg.getValue().c_str() );
-  strcat ( bval,".bval" );
-
-  char output[255];
-  strcpy( output, (char*)outputArg.getValue().c_str() );
-  strcat ( output,".nii.gz" );
-
-  char bvec_out[255];
-  strcpy( bvec_out, (char*)outputArg.getValue().c_str() );
-  strcat ( bvec_out,".bvec" );
-
-  char bval_out[255];
-  strcpy( bval_out, (char*)outputArg.getValue().c_str() );
-  strcat ( bval_out,".bval" );
-
+  std::string output = outputArg.getValue();
+  std::string outRadix = btk::GetRadixOf(output);
+  std::string bvec_out = outRadix + ".bvec";
+  std::string bval_out = outRadix + ".bval";
 
   // Read sequence
 
@@ -136,7 +135,7 @@ int main( int argc, char *argv[] )
   typedef itk::ImageFileReader< SequenceType >  SequenceReaderType;
 
   SequenceReaderType::Pointer sequenceReader = SequenceReaderType::New();
-  sequenceReader -> SetFileName( input );
+  sequenceReader -> SetFileName( input.c_str() );
   sequenceReader -> Update();
   SequenceType::Pointer       sequence     = sequenceReader -> GetOutput();
 
@@ -289,7 +288,7 @@ int main( int argc, char *argv[] )
   InterpolatorType::Pointer interpolator = InterpolatorType::New();
   interpolator -> SetInputImage( sequence );
   interpolator -> SetTransforms(tpath);
-  interpolator -> SetGradientTable( bvec );
+  interpolator -> SetGradientTable( bvec_in.c_str() );
   interpolator -> Initialize( seqROI );
 
   typedef itk::ImageRegionIteratorWithIndex<SequenceType> IteratorType;
@@ -310,7 +309,7 @@ int main( int argc, char *argv[] )
 
   start = clock();
 
-  // First resample the T2 image
+  // First resample the T2 image ...
   typedef itk::LinearInterpolateImageFunction< SequenceType,
                                                double >      LinearInterpolatorType;
   LinearInterpolatorType::Pointer linearInterpolator = LinearInterpolatorType::New();
@@ -324,6 +323,7 @@ int main( int argc, char *argv[] )
     recIt.Set( linearInterpolator -> Evaluate(pointRef) );
   }
 
+  // ... and then the diffusion weighted images.
   unsigned int image = 0;
 
   for (; !recIt.IsAtEnd(); ++recIt)
@@ -370,7 +370,7 @@ int main( int argc, char *argv[] )
 
   typedef itk::ImageFileWriter< SequenceType >  SequenceWriterType;
   SequenceWriterType::Pointer sequenceWriter = SequenceWriterType::New();
-  sequenceWriter -> SetFileName( output );
+  sequenceWriter -> SetFileName( output.c_str() );
   sequenceWriter -> SetInput( recSequence );
   sequenceWriter -> Update();
 
@@ -410,13 +410,13 @@ int main( int argc, char *argv[] )
   gradientTable -> SetNumberOfGradients(numberOfFrames);
   gradientTable -> SetImage( sequence );
   gradientTable -> SetTransform( transform );
-  gradientTable -> LoadFromFile( bvec);
+  gradientTable -> LoadFromFile( bvec_in.c_str());
   gradientTable -> RotateGradientsInWorldCoordinates();
-  gradientTable -> SaveToFile( bvec_out);
+  gradientTable -> SaveToFile( bvec_out.c_str());
 
   // Write b-values
   char clcopybval[255];
-  sprintf(clcopybval,"cp %s %s",bval,bval_out);
+  sprintf(clcopybval,"cp %s %s",bval_in.c_str(),bval_out.c_str());
   system(clcopybval);
 
   return EXIT_SUCCESS;

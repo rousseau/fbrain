@@ -413,7 +413,7 @@ GroupwiseS2SDistortionCorrection<TSequence>
       {
         m_Registration -> SetTransformArray( m_TransformArray[i-1] );
       }
-      std::cout << "Registering diffusion image " << i << " (iter " << nrep
+      std::cout << "Registering diffusion image " << i << " (iter " << nrep + 1
           << ") ... "; std::cout.flush();
 
       // Perform the registration ---------------------

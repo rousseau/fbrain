@@ -37,15 +37,18 @@
 #pragma warning ( disable : 4786 )
 #endif
 
+#include "btkSliceBySliceTransform.h"
 #include "itkEuler3DTransform.h"
 
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
+#include "itkCastImageFilter.h"
 
 #include "itkImageMaskSpatialObject.h"
 
 #include "itkTransformFileReader.h"
+#include "itkTransformFactory.h"
 
 #include "btkResampleLabelsByInjectionFilter.h"
 
@@ -93,9 +96,12 @@ int main( int argc, char *argv[] )
 
   // typedefs
   const   unsigned int    Dimension = 3;
-  typedef itk::Euler3DTransform< double > TransformType;
-  typedef TransformType::Pointer                    TransformPointer;
-  typedef std::vector<TransformPointer>             TransformPointerArray;
+
+  typedef btk::SliceBySliceTransform< double, Dimension > TransformType;
+  typedef TransformType::Pointer                          TransformPointer;
+
+  typedef itk::Euler3DTransform< double > Euler3DTransformType;
+  typedef Euler3DTransformType::Pointer   Euler3DTransformPointer;
 
   typedef float  PixelType;
 
@@ -103,8 +109,12 @@ int main( int argc, char *argv[] )
   typedef ImageType::Pointer                  ImagePointer;
   typedef std::vector<ImagePointer>           ImagePointerArray;
 
-  typedef itk::Image< unsigned char, Dimension >  ImageMaskType;
-  typedef itk::ImageFileReader< ImageMaskType > MaskReaderType;
+  typedef itk::Image< short, Dimension >  ShortImageType;
+
+  typedef itk::CastImageFilter<ImageType,ShortImageType> CasterType;
+
+  typedef itk::Image< unsigned char, Dimension >   ImageMaskType;
+  typedef itk::ImageFileReader< ImageMaskType > 	 MaskReaderType;
   typedef itk::ImageMaskSpatialObject< Dimension > MaskType;
 
   typedef ImageType::RegionType               RegionType;
@@ -113,7 +123,7 @@ int main( int argc, char *argv[] )
   typedef itk::ImageFileReader< ImageType >   ImageReaderType;
   typedef itk::ImageFileWriter< ImageType >   WriterType;
 
-  typedef itk::TransformFileReader     TransformReaderType;
+  typedef itk::TransformFileReader     						 TransformReaderType;
   typedef TransformReaderType::TransformListType * TransformListType;
 
   typedef btk::ResampleLabelsByInjectionFilter< ImageType, ImageType >  ResamplerType;
@@ -122,10 +132,16 @@ int main( int argc, char *argv[] )
   unsigned int numberOfLabels = 6;
   unsigned int numberOfImages = input.size();
 
+  std::vector< TransformPointer >  transforms(numberOfImages);
+
   // Filter setup
 
   ImageType::IndexType  roiIndex;
   ImageType::SizeType   roiSize;
+
+  // Read transforms
+  itk::TransformFactory<TransformType>::RegisterTransform();
+  itk::TransformFactory<Euler3DTransformType>::RegisterTransform();
 
   for (unsigned int i=0; i<numberOfImages; i++)
   {
@@ -165,14 +181,17 @@ int main( int argc, char *argv[] )
     transformReader -> SetFileName( transform[i] );
     transformReader -> Update();
 
-    TransformListType transforms = transformReader->GetTransformList();
-    TransformReaderType::TransformListType::const_iterator titr = transforms->begin();
+    TransformListType transformList = transformReader->GetTransformList();
+    TransformReaderType::TransformListType::const_iterator titr = transformList->begin();
 
-    for(unsigned int j=0; j<transforms -> size(); j++,titr++)
-    {
-      resampler -> SetTransform(i, j, dynamic_cast< TransformType * >( titr->GetPointer() ) ) ;
-    }
+    transforms[i] = dynamic_cast< TransformType * >( titr->GetPointer() );
 
+    CasterType::Pointer caster = CasterType::New();
+    caster -> SetInput( imageReader -> GetOutput() );
+    caster -> Update();
+
+    transforms[i] -> SetImage( caster -> GetOutput() );
+    resampler -> SetTransform(i, transforms[i] ) ;
   }
 
   // Set reference image
