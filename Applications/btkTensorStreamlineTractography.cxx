@@ -233,9 +233,6 @@ int main(int argc, char *argv[])
         LabelMapIterator labelIt(resampledLabelVolume, resampledLabelVolume->GetLargestPossibleRegion());
 
 
-        // Apply filter on each labeled voxels
-        LabelMapIterator it(labelVolume, labelVolume->GetLargestPossibleRegion());
-
 
         unsigned int numOfSeeds = 0;
 
@@ -252,18 +249,18 @@ int main(int argc, char *argv[])
         std::cout << std::fixed;
         std::cout << std::setprecision(2);
         Display1(displayMode, std::cout << "Running tractography..." << std::endl);
-        for(it.GoToBegin(); !it.IsAtEnd(); ++it)
+        for(labelIt.GoToBegin(); !labelIt.IsAtEnd(); ++labelIt)
         {
-            int label = (int)it.Get();
+            int label = (int)labelIt.Get();
 
             if(label > 0 &&
                (select_labels.size() == 0 ||
                 *std::find(select_labels.begin(),select_labels.end(),label) == label) )
             {
-                Image::IndexType index = it.GetIndex();
+                Image::IndexType index = labelIt.GetIndex();
 
                 itk::Point<Real,3> worldPoint;
-                labelVolume->TransformIndexToPhysicalPoint(index, worldPoint);
+                resampledLabelVolume->TransformIndexToPhysicalPoint(index, worldPoint);
 
                 Mask::IndexType maskIndex;
                 mask->TransformPhysicalPointToIndex(worldPoint, maskIndex);
