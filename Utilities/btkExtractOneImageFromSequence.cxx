@@ -1,5 +1,5 @@
 /*
-Copyright or © or Copr. Université de Strasbourg - Centre National de la Recherche Scientifique
+Copyright or ï¿½ or Copr. Universitï¿½ de Strasbourg - Centre National de la Recherche Scientifique
 
 21 february 2011
 < pontabry at unistra dot fr >
@@ -75,6 +75,7 @@ int ImageExtractor(std::string inputFileName, std::string outputFileName, unsign
   region.SetSize(3,0);
   region.SetIndex(3,imageIndex);
   filter->SetExtractionRegion(region);
+  filter->SetDirectionCollapseToSubmatrix();
   filter->Update();
 
   // Write image

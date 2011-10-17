@@ -31,6 +31,15 @@ The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-B license and that you accept its terms.
 */
 
+/*
+This program implements a denoising method proposed by Coupé et al. described in :
+ Coupé, P., Yger, P., Prima, S., Hellier, P., Kervrann, C., Barillot, C., 2008. 
+ An optimized blockwise nonlocal means denoising filter for 3-D magnetic resonance images.
+ IEEE Transactions on Medical Imaging 27 (4), 425–441.
+*/
+
+
+
 #include <tclap/CmdLine.h>
 
 #include "itkImageFileReader.h"
@@ -48,7 +57,7 @@ int main(int argc, char** argv)
 
   try {
 
-    TCLAP::CmdLine cmd("Command description message", ' ', "1.0", true);
+    TCLAP::CmdLine cmd("Non-Local mean denoising: implementation of the method proposed by Coupé et al., IEEE TMI 2008 ", ' ', "1.0", true);
 
     TCLAP::ValueArg<std::string> inputImageArg("i","image_file","input image file (short)",true,"","string");
     cmd.add( inputImageArg );
@@ -56,6 +65,8 @@ int main(int argc, char** argv)
     cmd.add( outputImageArg );
     TCLAP::ValueArg<std::string> inputMaskArg("m","mask_file","filename of the mask image",false,"","string");
     cmd.add( inputMaskArg );
+    TCLAP::ValueArg<std::string> inputReferenceArg("r","ref_file","filename of the reference image",false,"","string");
+    cmd.add( inputReferenceArg );
     TCLAP::ValueArg< float > paddingArg("p","pad","padding value (used if no mask image is provided, default is -1)",false,-1,"float");
     cmd.add( paddingArg );
     TCLAP::ValueArg< int > hwnArg("","hwn","patch half size (default is 1)",false,1,"int");
@@ -86,6 +97,7 @@ int main(int argc, char** argv)
     std::string output_file      = outputImageArg.getValue();
 
     std::string mask_file        = inputMaskArg.getValue();
+    std::string ref_file         = inputReferenceArg.getValue();
     float padding                = paddingArg.getValue();
     int hwn                      = hwnArg.getValue();
     int hwvs                     = hwvsArg.getValue();
@@ -115,6 +127,7 @@ int main(int argc, char** argv)
     ImagePointer outputImage = ImageType::New();
 
     ImagePointer maskImage;
+    ImagePointer refImage;
 
     btkNLMTool<PixelType> myTool;
 
@@ -139,6 +152,15 @@ int main(int argc, char** argv)
     myTool.SetLowerThresholds(lowerMeanThreshold, lowerVarianceThreshold);
 
 
+    if (ref_file != ""){
+      ReaderType::Pointer refReader = ReaderType::New();
+      refReader->SetFileName( ref_file );
+      refReader->Update();
+      refImage = refReader->GetOutput();
+      myTool.SetReferenceImage(refImage);    
+      myTool.SetSmoothingUsingReferenceImage(beta);
+    }
+    
     myTool.ComputeOutput();
 
     myTool.GetOutput(outputImage);

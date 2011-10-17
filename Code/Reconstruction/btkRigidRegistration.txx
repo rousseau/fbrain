@@ -55,7 +55,6 @@ RigidRegistration<ImageType>
 
   m_InitializeWithTransform = false;
   m_InitializeWithMask = false;
-  m_InitializeWithRegion = false;
 }
 
 /*
@@ -87,26 +86,40 @@ RigidRegistration<ImageType>
     {
       m_Transform -> SetParameters( this -> GetInitialTransformParameters() );
       m_Transform -> SetCenter( this -> GetTransformCenter() );
-    }
+    } else
+      {
+        PointType rotationCenter;
+        IndexType centerIndex;
+
+        IndexType  fixedImageRegionIndex = this -> GetFixedImageRegion().GetIndex();
+        SizeType   fixedImageRegionSize  = this -> GetFixedImageRegion().GetSize();
+
+        centerIndex[0] = fixedImageRegionIndex[0] + fixedImageRegionSize[0] / 2.0;
+        centerIndex[1] = fixedImageRegionIndex[1] + fixedImageRegionSize[1] / 2.0;
+        centerIndex[2] = fixedImageRegionIndex[2] + fixedImageRegionSize[2] / 2.0;
+
+        this -> GetFixedImage() -> TransformIndexToPhysicalPoint(centerIndex, rotationCenter);
+
+        m_Transform -> SetIdentity();
+        m_Transform -> SetCenter( rotationCenter );
+
+      }
 
   this -> SetInitialTransformParameters( m_Transform -> GetParameters() );
-
-//  std::cout << "Transform center = " << m_Transform -> GetCenter() << std::endl;
-//  std::cout << "Transform parameters = " << m_Transform -> GetParameters() << std::endl;
 
   m_Interpolator = InterpolatorType::New();
   m_Metric = MetricType::New();
   m_Optimizer = OptimizerType::New();
 
   // Configure metric
-  // FIXME Delete lines afterchecking results with masks
-  m_FixedMask = MaskType::New();
-  m_FixedMask -> SetImage( this -> GetFixedImageMask() );
-  m_Metric -> SetFixedImageMask( m_FixedMask );
+  if (m_FixedImageMask)
+  {
+    m_FixedMask = MaskType::New();
+    m_FixedMask -> SetImage( this -> GetFixedImageMask() );
+    m_Metric -> SetFixedImageMask( m_FixedMask );
+  }
 
-//  std::cout << this -> GetFixedImageRegion().GetNumberOfPixels() << std::endl;
-
-  // FIXME Uncomment after testing NC
+  // FIXME Uncomment if MI is used instead of NC
 //  m_Metric -> SetNumberOfHistogramBins( 24 );
 //  m_Metric -> UseAllPixelsOn();
   m_Metric -> SetNumberOfSpatialSamples(0.2*this -> GetFixedImageRegion().GetNumberOfPixels());
@@ -114,11 +127,6 @@ RigidRegistration<ImageType>
   // Configure optimizer
 
   m_Optimizer->MinimizeOn();
-
-  // FIXME Use MaximumStepLength = 1 for Initialization (3D) and 0.5 for SliceBySlice
-  // Perhaps I can adjust these parameters taking into account the maximal expected
-  // rotations and translations (+/- 10 deg and +/- 10 mm) . Check notes in my notebook
-  // on 4th November
   m_Optimizer->SetMaximumStepLength( 0.1 );
   m_Optimizer->SetMinimumStepLength( 0.001 );
   m_Optimizer->SetNumberOfIterations( m_Iterations );
@@ -142,34 +150,11 @@ RigidRegistration<ImageType>
     m_Optimizer -> AddObserver( itk::IterationEvent(), m_Observer );
   }
 
-/*  PointType rotationCenter;
-  IndexType centerIndex;
-
-  IndexType  fixedImageRegionIndex = this -> GetFixedImageRegion().GetIndex();
-  SizeType   fixedImageRegionSize  = this -> GetFixedImageRegion().GetSize();
-
-  centerIndex[0] = fixedImageRegionIndex[0] + fixedImageRegionSize[0] / 2.0;
-  centerIndex[1] = fixedImageRegionIndex[1] + fixedImageRegionSize[1] / 2.0;
-  centerIndex[2] = fixedImageRegionIndex[2] + fixedImageRegionSize[2] / 2.0;
-
-  this -> GetFixedImage() -> TransformIndexToPhysicalPoint(centerIndex, rotationCenter);
-
-  std::cout << "rotationIndex = " << centerIndex << std::endl;
-  std::cout << "rotationPoint = " << rotationCenter << std::endl;
-
-  m_Transform -> SetIdentity();
-  m_Transform -> SetCenter( rotationCenter );
-
-  */
-
   // Connect components
   SetTransform( this -> m_Transform );
   SetMetric( this -> m_Metric );
   SetOptimizer( this -> m_Optimizer );
   SetInterpolator( this -> m_Interpolator );
-
-//  m_InitialTransformParameters = m_Transform -> GetParameters();
-//  m_Registration->SetInitialTransformParameters( m_InitialTransformParameters );
 
   Superclass::Initialize();
 

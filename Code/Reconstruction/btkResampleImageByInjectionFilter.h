@@ -39,6 +39,7 @@
 #include "itkFixedArray.h"
 #include "itkTransform.h"
 #include "itkEuler3DTransform.h"
+#include "btkSliceBySliceTransform.h"
 #include "itkImageFunction.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkImageRegionConstIteratorWithIndex.h"
@@ -47,6 +48,7 @@
 #include "itkNeighborhoodAlgorithm.h"
 #include "itkSize.h"
 #include "btkUserMacro.h"
+#include "itkImageMaskSpatialObject.h"
 
 namespace btk
 {
@@ -99,8 +101,19 @@ public:
   typedef typename InputImageType::ConstPointer   InputImageConstPointer;
   typedef typename OutputImageType::Pointer       OutputImagePointer;
 
+  /** Type of the slice by slice transform. */
+  typedef SliceBySliceTransform< double, ImageDimension > TransformType;
+  typedef typename TransformType::Pointer TransformPointer;
+
   typedef Image<float,ImageDimension>    FloatImageType;
   typedef typename FloatImageType::Pointer FloatImagePointer;
+
+  /** Type of the image mask. */
+  typedef Image< unsigned char, ImageDimension >    ImageMaskType;
+  typedef typename ImageMaskType::Pointer ImageMaskPointer;
+
+  /** Type of the mask. */
+  typedef ImageMaskSpatialObject< ImageDimension >  MaskType;
 
   typedef typename InputImageType::RegionType     InputImageRegionType;
   typedef std::vector<InputImageRegionType>       InputImageRegionVectorType;
@@ -111,11 +124,7 @@ public:
   /** Run-time type information (and related methods). */
   itkTypeMacro(ResampleImageByInjectionFilter, ImageToImageFilter);
 
-  /** Transform typedef. */
-  typedef Euler3DTransform<TInterpolatorPrecisionType> TransformType;
-  typedef typename TransformType::Pointer TransformPointerType;
-
-  typedef std::vector< std::vector<TransformPointerType> > TransformPointerArrayType;
+  typedef std::vector< TransformPointer > TransformPointerArrayType;
 
   /** Image size typedef. */
   typedef Size<itkGetStaticConstMacro(ImageDimension)> SizeType;
@@ -150,7 +159,6 @@ public:
   /**Const float iterator typedef. */
   typedef ImageRegionConstIteratorWithIndex< FloatImageType >  ConstFloatIteratorType;
 
-
   /**Neighborhood iterator typedef. */
   typedef NeighborhoodIterator< OutputImageType >  NeighborhoodIteratorType;
 
@@ -175,24 +183,19 @@ public:
     this -> SetInput(_arg);
 
     m_Transform.resize( m_Transform.size() + 1 );
-    SizeType _argSize = _arg -> GetLargestPossibleRegion().GetSize();
-    m_Transform[m_Transform.size()-1].resize(_argSize[2]);
   }
 
-  /** Set the transform array. */
-  void SetTransform( int i, int j, TransformType* transform )
+  /** Set a the transform for the image i. */
+  void SetTransform( int i, TransformType* transform )
   {
-    m_Transform[i][j] = transform;
+    m_Transform[i] = transform;
   }
 
-  /** Get the transform array. */
-//  TransformType* GetTransform( int i)
-//  {
-//    return this -> m_Transform[i].GetPointer();
-//  }
-
-  /** Get the transform array. */
-//  itkGetMacroNoDeb( Transform, TransformPointerArrayType );
+  /** Get a the transform for the image i. */
+  TransformType* GetTransform( int i)
+  {
+    return this -> m_Transform[i].GetPointer();
+  }
 
   /** Set the size of the output image. */
   itkSetMacro( Size, SizeType );
@@ -270,6 +273,10 @@ public:
     m_InputImageRegion.push_back(_arg);
   }
 
+  /** Sets the mask where to perform the injection. */
+  itkSetObjectMacro(ImageMask, ImageMaskType);
+
+
 #ifdef ITK_USE_CONCEPT_CHECKING
   /** Begin concept checking */
   itkConceptMacro(OutputHasNumericTraitsCheck,
@@ -298,10 +305,11 @@ private:
   InputImageRegionVectorType  m_InputImageRegion;
 
   std::vector<InputImagePointer> m_ImageArray;
+  ImageMaskPointer 							 m_ImageMask;
 
   PixelType                   m_DefaultPixelValue; // default pixel value
-                                               // if the point is
-                                               // outside the image
+                                                     // if the point is
+                                                     // outside the image
   SpacingType                 m_OutputSpacing;     // output image spacing
   OriginPointType             m_OutputOrigin;      // output image origin
   DirectionType               m_OutputDirection;   // output image direction cosines

@@ -51,6 +51,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
      * @class SHModelEstimator
      * @brief Estimate diffusion model
      * @author Julien Pontabry
+     * @ingroup Tractography
      */
     class SHModelEstimator
     {

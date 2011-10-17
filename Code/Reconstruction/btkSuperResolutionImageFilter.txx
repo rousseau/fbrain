@@ -36,22 +36,7 @@
 #ifndef __SuperResolutionImageFilter_txx
 #define __SuperResolutionImageFilter_txx
 
-// First make sure that the configuration is available.
-// This line can be removed once the optimized versions
-// gets integrated into the main directories.
-#include "itkConfigure.h"
-
 #include "btkSuperResolutionImageFilter.h"
-#include "itkObjectFactory.h"
-#include "itkIdentityTransform.h"
-#include "itkProgressReporter.h"
-#include "itkNeighborhoodIterator.h"
-#include "itkNeighborhoodAlgorithm.h"
-#include "itkSpecialCoordinatesImage.h"
-#include "btkOrientedSpatialFunction.h"
-
-#include "vnl/vnl_inverse.h"
-#include "vnl/vnl_matops.h"
 
 namespace btk
 {
@@ -76,10 +61,8 @@ SuperResolutionImageFilter<TInputImage, TOutputImage,TInterpolatorPrecisionType>
 
   m_Iterations = 30;
   m_Lambda = 0.1;
-  m_OptimizationMethod = MSE;
   m_PSF = GAUSSIAN;
 }
-
 
 /**
  * Print out a description of self
@@ -101,14 +84,10 @@ SuperResolutionImageFilter<TInputImage, TOutputImage,TInterpolatorPrecisionType>
   os << indent << "OutputOrigin: " << m_OutputOrigin << std::endl;
   os << indent << "OutputSpacing: " << m_OutputSpacing << std::endl;
   os << indent << "OutputDirection: " << m_OutputDirection << std::endl;
-//  os << indent << "Transform: " << m_Transform.GetPointer() << std::endl;
   os << indent << "UseReferenceImage: " << (m_UseReferenceImage ? "On" : "Off") << std::endl;
   return;
 }
 
-/**
- * Set the output image spacing.
- */
 template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
 void
 SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
@@ -117,6 +96,25 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 {
   SpacingType s(spacing);
   this->SetOutputSpacing( s );
+}
+
+template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
+void
+SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
+::AddInput(InputImageType* _arg)
+{
+  m_ImageArray.push_back(_arg);
+
+  this -> SetInput(_arg);
+
+  // Add transforms for this image
+  m_Transform.resize( m_Transform.size() + 1 );
+  SizeType _argSize = _arg -> GetLargestPossibleRegion().GetSize();
+  m_Transform[m_Transform.size()-1].resize(_argSize[2]);
+
+  // Initialize transforms
+  for (unsigned int i=0; i<_argSize[2]; i++)
+    m_Transform[m_Transform.size()-1][i] = TransformType::New();
 }
 
 template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
@@ -182,13 +180,13 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   }
   f.SetReferenceImage(this -> GetReferenceImage());
   f.SetLambda( m_Lambda );
+  f.SetPSF( m_PSF );
   f.Initialize();
 
   // Setup optimizer
 
   vnl_conjugate_gradient cg(f);
   cg.set_max_function_evals(m_Iterations);
-//  cg.set_g_tolerance(1e-10);
 
   // Start minimization
 
@@ -197,16 +195,13 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 
 }
 
-/**
- * Set the output image origin.
- */
 template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
 void
 SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 ::SetOutputOrigin(
   const double* origin)
 {
-  OriginPointType p(origin);
+  PointType p(origin);
   this->SetOutputOrigin( p );
 }
 
@@ -307,9 +302,8 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   return;
 }
 
-
 /**
- * Set the smart pointer to the reference image that will provide
+ * Get the smart pointer to the reference image that will provide
  * the grid parameters for the output image.
  */
 template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
@@ -322,7 +316,6 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
     static_cast<const OutputImageType *>(surrogate->ProcessObject::GetInput(1));
   return referenceImage;
 }
-
 
 /**
  * Set the smart pointer to the reference image that will provide
@@ -430,6 +423,6 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   return latestTime;
 }
 
-} // end namespace itk
+} // end namespace btk
 
 #endif

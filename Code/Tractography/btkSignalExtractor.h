@@ -50,6 +50,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
      * @class SignalExtractor
      * @brief Extract signal from a dwi dataset
      * @author Julien Pontabry
+     * @ingroup Tractography
      */
     class SignalExtractor
     {

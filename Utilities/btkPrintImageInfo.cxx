@@ -201,6 +201,7 @@ int main( int argc, char *argv[] )
     size[3] = 0;
     region.SetSize( size );
     extractor -> SetExtractionRegion( region );
+    extractor -> SetDirectionCollapseToSubmatrix();
     extractor -> Update();
 
     std::cout << std::endl << "Anatomical orientation = " << SO_OrientationToString(

@@ -16,7 +16,7 @@ SliceBySliceRigidRegistration<ImageType>
   m_Interpolator = 0;
   m_ImageMask = 0;
   m_Transform = 0;
-
+  m_Iterations = 200;
 }
 
 /*
@@ -34,7 +34,7 @@ SliceBySliceRigidRegistration<ImageType>
   m_Registration -> SetMovingImage( m_MovingImage );
   m_Registration -> InitializeWithTransform();
   m_Registration -> SetEnableObserver( false );
-//  m_Registration -> SetIterations( 0 );
+  m_Registration -> SetIterations( m_Iterations );
 
   // TODO We have to decide after checking the results which one is the
   // the default behavior
@@ -56,6 +56,7 @@ SliceBySliceRigidRegistration<ImageType>
   {
     m_Transform = SliceBySliceTransformType::New();
     m_Transform -> SetImage( m_FixedImage );
+    m_Transform -> Initialize();
   }
 
 }
@@ -108,7 +109,7 @@ SliceBySliceRigidRegistration<ImageType>
 
       m_Registration -> SetFixedImageRegion( fixedImageRegion );
       m_Registration -> SetInitialTransformParameters( m_Transform -> GetSliceTransform(i) -> GetParameters() );
-      m_Registration -> SetTransformCenter( m_Transform -> GetSliceTransform(i) -> GetCenter() );
+//      m_Registration -> SetTransformCenter( m_Transform -> GetSliceTransform(i) -> GetCenter() );
 
 //      std::cout << "Initial registration parameters = " << m_Transform -> GetSliceTransform(i) -> GetParameters() << std::endl;
 

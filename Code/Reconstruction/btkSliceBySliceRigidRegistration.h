@@ -33,21 +33,6 @@
 
 ==========================================================================*/
 
-
-/*=========================================================================
-
-  Purpose: class for obtaining a high resolution image from different views
-  by applying affine registration and averaging. First step of the method
-  described in:
-
-  Rousseau, F., Glenn, O.A., Iordanova, B., Rodriguez-Carranza, C.,
-  Vigneron, D.B., Barkovich, J.A., Studholme, C.: Registration-based approach
-  for reconstruction of high-resolution in utero fetal MR brain images. Acad
-  Radiol 13(9) (Sep 2006) 1072–1081
-
-=========================================================================*/
-
-
 #ifndef __btkSliceBySliceRigidRegistration_h
 #define __btkSliceBySliceRigidRegistration_h
 
@@ -74,7 +59,7 @@ namespace btk
 using namespace itk;
 
 /** \class SliceBySliceRigidRegistration
- * \brief Describe the class briefly here.
+ * \brief This class registers two images by using a slice by slice rigid transform.
  *
  * Full class description
  * Full class description
@@ -179,6 +164,10 @@ public:
   itkSetObjectMacro( Transform, SliceBySliceTransformType );
   itkGetObjectMacro( Transform, SliceBySliceTransformType );
 
+  /** Set/Get the number of iterations. */
+  itkSetMacro( Iterations, unsigned int );
+  itkGetMacro( Iterations, unsigned int );
+
 
 protected:
   SliceBySliceRigidRegistration();
@@ -209,6 +198,8 @@ private:
   ParametersType                   m_InitialTransformParameters;
   ParametersType                   m_LastTransformParameters;
   ImageRegionType                  m_FixedImageRegion;
+
+  unsigned int 										 m_Iterations;
 
 };
 

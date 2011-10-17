@@ -47,6 +47,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
          * @class APrioriDensity
          * @brief A priori density
          * @author Julien Pontabry
+         * @ingroup Tractography
          */
         class APrioriDensity
         {

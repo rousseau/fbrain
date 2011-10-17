@@ -47,6 +47,7 @@ namespace btk
      * Exemple: With filename equal to "data.nii.gz" or "data.nii", this function returns "data".
      * @param filename Nitfi filename
      * @return Radix of the Nitfi filename
+     * @ingroup InputOutput
      */
     std::string GetRadixOf(std::string filename)
     {

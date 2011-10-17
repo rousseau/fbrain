@@ -59,33 +59,41 @@ same conditions as regards security.
 
 \subsubsection{Dependencies}
 
-Baby Brain Toolkit (BTK) needs the following packages:
+Baby Brain Toolkit (BTK) needs the following packages\footnote{BTK has been tested under Debian 5.0 and MacOSX 10.6.8}:
 \begin{itemize}
- \item CMake (www.cmake.org), Tclap (tclap.sourceforge.net), OpenMP (openmp.org), VTK (www.vtk.org), ANN (www.cs.umd.edu/\string~mount/ANN). These libraries can be installed using the following command line: 
+ \item CMake (www.cmake.org), Tclap (tclap.sourceforge.net), OpenMP
+(openmp.org), VTK (www.vtk.org), ANN (www.cs.umd.edu/\string~mount/ANN) and Doxygen. These
+libraries can be installed using the following command line: 
  \begin{itemize}
- \item for debian-based distributions: \texttt{apt-get install cmake cmake-curses-gui libtclap-dev libgomp1 libvtk5-dev libann-dev}
- \item for MacOSX using macports: \texttt{port install cmake tclap vtk5 libANN}
+ \item for debian-based distributions: \texttt{apt-get install cmake
+cmake-curses-gui libtclap-dev libgomp1 libvtk5-dev libann-dev doxygen}
+ \item for MacOSX using macports: \texttt{port install cmake tclap vtk5 libANN doxygen}
  \end{itemize}
  \item Install Git: this library can be installed using the following command line : 
  \begin{itemize}
  \item for debian-based distribution: \texttt{apt-get install git-core}
  \item for MacOSX using macports: \texttt{port install git-core}
  \end{itemize}
- \item Insight Toolkit (ITK) version 4:
+ \item Insight Toolkit (ITK) version 4\footnote{As there is still not a stable version for ITK4, there are potential compilation problems when using the HEAD version. We have tested BTK with the version of ITK corresponding to the tag v4.0a08.}:
 \begin{verbatim}
 git clone git://itk.org/ITK.git
+git checkout v4.0a08
 mkdir ITK-build
 cd ITK-build
 ccmake ../ITK/
 \end{verbatim}
-This will bring up the CMake configuration screen. Press \texttt{[c]} for configure and then use \texttt{[t]} to toggle the advanced mode. Make the following changes:
+This will bring up the CMake configuration screen. Press \texttt{[c]} for
+configure and then use \texttt{[t]} to toggle the advanced mode. Make the
+following changes:
 \begin{verbatim}
 BUILD_TESTING = OFF
 CMAKE_BUILD_TYPE = Release
 ITK_USE_REVIEW = ON
 ITK_BUILD_ALL_MODULES = ON
+BUILD_DOCUMENTATION = ON
 \end{verbatim}
-Then press \texttt{[c]} to configure and \texttt{[g]} to generate the make file. Finally, type \texttt{make} at the prompt to obtain the final build of ITK.
+Then press \texttt{[c]} to configure and \texttt{[g]} to generate the make file.
+Finally, type \texttt{make} at the prompt to obtain the final build of ITK.
 
 \end{itemize}
 

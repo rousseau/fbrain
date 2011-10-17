@@ -225,6 +225,34 @@ DiffusionGradientTable<TInputImage>
 
 }
 
+template < typename TInputImage >
+void
+DiffusionGradientTable<TInputImage>
+::RemoveRepeatedZeroEntries()
+{
+
+  vnl_matrix< double >  modGradientTable;
+  modGradientTable.set_size( m_NumberOfGradients,3 );
+  modGradientTable.set_row(0,m_GradientTable.get_row(0));
+
+  unsigned int j=1;
+
+  for (unsigned int i=1; i < m_GradientTable.rows(); i++)
+  {
+    vnl_vector<double> grad = m_GradientTable.get_row(i);
+    if ((grad[0]!=0)||(grad[1]!=0)||(grad[2]!=0))
+    {
+      modGradientTable.set_row(j,m_GradientTable.get_row(i));
+      j++;
+    }
+    else
+      m_NumberOfGradients--;
+  }
+
+  m_GradientTable = modGradientTable.extract(m_NumberOfGradients,3);
+
+}
+
 
 template < typename TInputImage >
 void

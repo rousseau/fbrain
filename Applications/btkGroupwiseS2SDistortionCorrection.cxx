@@ -39,8 +39,6 @@
 
 #include <tclap/CmdLine.h>
 
-#include "string"
-
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
@@ -52,38 +50,45 @@
 int main( int argc, char *argv[] )
 {
 
-  try {
+try {
 
-    std::string input, bvec, bval, output, bvec_out, bval_out, mgrad, folder, maskFile, inRadix, outRadix;
+  std::string input, bvec, bval, maskFile;
+  std::string output, bvec_out, bval_out, mgrad;
+  std::string folder, inRadix, outRadix;
 
-  TCLAP::CmdLine cmd("Correct distortions caused by eddy currents in dwi sequences", ' ', "Unversioned");
+  TCLAP::CmdLine cmd("Correct distortions caused by eddy currents in dwi "
+      "sequences", ' ', "Unversioned");
 
-  TCLAP::ValueArg<std::string> inputArg("i","input","Original sequence",true,"","string",cmd);
-  TCLAP::ValueArg<std::string> maskArg("m","mask","Mask in the B0 image",true,"","string",cmd);
-  TCLAP::ValueArg<std::string> outputArg("o","output","Corrected sequence",true,"","string",cmd);
-  TCLAP::ValueArg<std::string> folderArg("f","transformation_folder","Folder for transformatios",true,"","string",cmd);
+  TCLAP::ValueArg<std::string> inputArg("i","input","Original sequence",true,"",
+      "string",cmd);
+  TCLAP::ValueArg<std::string> maskArg("m","mask","Mask in the B0 image",true,"",
+      "string",cmd);
+  TCLAP::ValueArg<std::string> outputArg("o","output","Corrected sequence (spatial resampling, not in the Q-space)",true,"",
+      "string",cmd);
+  TCLAP::ValueArg<std::string> folderArg("f","transformation_folder","Folder for"
+      " transformations (main output of the algorithm)",true,"","string",cmd);
 
-  TCLAP::ValueArg<std::string> mgradArg("","mean_gradient","Mean gradient",false,"","string",cmd);
+  TCLAP::ValueArg<std::string> mgradArg("","mean-gradient","Mean gradient (output of the algorithm)",false,
+      "","string",cmd);
 
   // Parse the argv array.
   cmd.parse( argc, argv );
 
+  input = inputArg.getValue();
+  output = outputArg.getValue();
+  mgrad = mgradArg.getValue();
+  folder = folderArg.getValue();
+  maskFile = maskArg.getValue();
 
-    input = inputArg.getValue();
-    output = outputArg.getValue();
-    mgrad = mgradArg.getValue();
-    folder = folderArg.getValue();
-    maskFile = maskArg.getValue();
+  std::cout << folder.c_str() << std::endl;
 
+  inRadix = btk::GetRadixOf(input);
+  bvec = inRadix + ".bvec";
+  bval = inRadix + ".bval";
 
-    inRadix = btk::GetRadixOf(input);
-    bvec = inRadix + ".bvec";
-    bval = inRadix + ".bval";
-
-    outRadix = btk::GetRadixOf(output);
-    bvec_out = outRadix + ".bvec";
-    bval_out = outRadix + ".bval";
-
+  outRadix = btk::GetRadixOf(output);
+  bvec_out = outRadix + ".bvec";
+  bval_out = outRadix + ".bval";
 
   // Read sequence
 
@@ -98,7 +103,6 @@ int main( int argc, char *argv[] )
   sequenceReader -> Update();
 
   SequenceType::Pointer sequence = sequenceReader -> GetOutput();
-
 
   // Read image mask and create spatial object
 
@@ -116,8 +120,7 @@ int main( int argc, char *argv[] )
 
   mask -> SetImage( imageMask );
 
-
-  // Distortion correction
+  // Distortion correction -- (main part of the program)
 
   typedef btk::GroupwiseS2SDistortionCorrection< SequenceType >  FilterType;
   FilterType::Pointer filter = FilterType::New();
@@ -142,12 +145,12 @@ int main( int argc, char *argv[] )
 
   // Write gradient table
   char clcopybvec[255];
-  sprintf(clcopybvec,"cp %s %s",bvec,bvec_out);
+  sprintf(clcopybvec,"cp %s %s",bvec.c_str(),bvec_out.c_str());
   system(clcopybvec);
 
   // Write b-values
   char clcopybval[255];
-  sprintf(clcopybval,"cp %s %s",bval,bval_out);
+  sprintf(clcopybval,"cp %s %s",bval.c_str(),bval_out.c_str());
   system(clcopybval);
 
   // Write transformations
@@ -164,7 +167,6 @@ int main( int argc, char *argv[] )
     imageWriter->SetInput( filter -> GetMeanGradient() );
     imageWriter->Update();
   }
-
 
   return EXIT_SUCCESS;
 

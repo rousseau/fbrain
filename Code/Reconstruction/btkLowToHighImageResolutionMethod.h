@@ -33,21 +33,6 @@
 
 ==========================================================================*/
 
-
-/*=========================================================================
-
-  Purpose: class for obtaining a high resolution image from different views
-  by applying affine registration and averaging. First step of the method
-  described in:
-
-  Rousseau, F., Glenn, O.A., Iordanova, B., Rodriguez-Carranza, C.,
-  Vigneron, D.B., Barkovich, J.A., Studholme, C.: Registration-based approach
-  for reconstruction of high-resolution in utero fetal MR brain images. Acad
-  Radiol 13(9) (Sep 2006) 1072–1081
-
-=========================================================================*/
-
-
 #ifndef __btkLowToHighImageResolutionMethod_h
 #define __btkLowToHighImageResolutionMethod_h
 
@@ -70,11 +55,16 @@ namespace btk
 using namespace itk;
 
 /** \class LowToHighImageResolutionMethod
- * \brief Describe the class briefly here.
+ * \brief Class for obtaining an isovoxel image from low resolution images.
  *
- * Full class description
- * Full class description
- * Full class description
+ * Class for obtaining an isovoxel image from different low resolution images
+ * by applying affine registration and averaging. First step of the method
+ * described in:
+ *
+ * Rousseau, F., Glenn, O.A., Iordanova, B., Rodriguez-Carranza, C.,
+ * Vigneron, D.B., Barkovich, J.A., Studholme, C.: Registration-based approach
+ * for reconstruction of high-resolution in utero fetal MR brain images. Acad
+ * Radiol 13(9) (Sep 2006) 1072–1081
 
  * \sa ImageRegistrationMethod
  * \ingroup RegistrationFilters
@@ -114,11 +104,17 @@ public:
   typedef  std::vector<RegionType>                      RegionArray;
 
   typedef itk::Image< unsigned char, 3 >                ImageMaskType;
+  typedef typename ImageMaskType::Pointer								ImageMaskPointer;
   typedef std::vector<ImageMaskType::Pointer>           ImageMaskArray;
 
+  /**  Type of the image writer. */
   typedef ImageFileWriter< ImageType >  ImageWriterType;
 
+  /**  Type of the image iterator. */
   typedef ImageRegionIteratorWithIndex< ImageType >  IteratorType;
+
+  /**  Type of the image mask iterator. */
+  typedef ImageRegionIteratorWithIndex< ImageMaskType >  ImageMaskIteratorType;
 
   /**  Type of the Transform . */
   typedef Euler3DTransform< double >             				TransformType;
@@ -131,8 +127,14 @@ public:
                                     double>             InterpolatorType;
   typedef typename InterpolatorType::Pointer            InterpolatorPointer;
 
+  /**  Type of the image mask interpolator. */
+  typedef LinearInterpolateImageFunction<
+                                    ImageMaskType,
+                                    double>             ImageMaskInterpolatorType;
+  typedef typename ImageMaskInterpolatorType::Pointer   ImageMaskInterpolatorPointer;
+
    /**  Type of the registration method. */
-  typedef RigidRegistration<ImageType>  RegistrationType;
+  typedef RigidRegistration<ImageType>  				 RegistrationType;
   typedef typename RegistrationType::Pointer     RegistrationPointer;
 
   typedef ResampleImageFilter< ImageType, ImageType >    ResampleType;
@@ -162,9 +164,6 @@ public:
   /** Get the resampled image array. */
   UserGetObjectMacro( ResampledImageArray, ImageType );
 
-  /** Method to stop the registration. */
-//  void StopRegistration();
-
   /** Get the high resolution Image. */
   itkGetObjectMacro( HighResolutionImage, ImageType );
 
@@ -184,9 +183,13 @@ public:
   itkSetMacro( Margin, double );
   itkGetMacro( Margin, double );
 
-  /** Set/Get the Transfrom. */
+  /** Set/Get the transform. */
   UserSetObjectMacro( TransformArray, TransformType );
   UserGetObjectMacro( TransformArray, TransformType );
+
+  /** Set/Get the inverse transform. */
+  UserSetObjectMacro( InverseTransformArray, TransformType );
+  UserGetObjectMacro( InverseTransformArray, TransformType );
 
   /** Set/Get the image array. */
   UserSetObjectMacro( ImageArray, ImageType );
@@ -200,10 +203,18 @@ public:
   UserSetMacro( RegionArray, RegionType );
 //  UserGetMacro( RegionArray, RegionType );
 
+  /** Get the image mask combination. */
+  itkGetObjectMacro( ImageMaskCombination, ImageMaskType );
+
+  /** Set/Get the number of iterations. */
+  itkSetMacro( Iterations, unsigned int );
+  itkGetMacro( Iterations, unsigned int );
+
   /** Set the number of images */
   void SetNumberOfImages(int N);
 
-  /** write output images and extract their slices after each resolution */
+  /** Initialize by setting the interconnects between the components.*/
+  void Initialize() throw (ExceptionObject);
 
 
 protected:
@@ -211,22 +222,16 @@ protected:
   virtual ~LowToHighImageResolutionMethod() {};
   void PrintSelf(std::ostream& os, Indent indent) const;
 
-  /** Initialize by setting the interconnects between the components.
-   */
-  void Initialize() throw (ExceptionObject);
-
-
 
 private:
   LowToHighImageResolutionMethod(const Self&); //purposely not implemented
   void operator=(const Self&); //purposely not implemented
 
   TransformPointerArray            m_TransformArray;
+  TransformPointerArray            m_InverseTransformArray;
   ImageArrayPointer 			         m_ImageArray;
   RegionArray                      m_RegionArray;
   ImageMaskArray                   m_ImageMaskArray;
-//  RegistrationPointer							 m_Registration;
-//  ParametersArrayType              m_InitialRigidParameters;
 
   SpacingType											 m_ResampleSpacing;
   SizeType											   m_ResampleSize;
@@ -238,6 +243,7 @@ private:
   InterpolatorPointer              m_Interpolator;
 
   ImagePointer										 m_HighResolutionImage;
+  ImageMaskPointer					 			 m_ImageMaskCombination;
 
   ParametersType                   m_InitialTransformParameters;
   ParametersType                   m_LastTransformParameters;
@@ -247,6 +253,7 @@ private:
   unsigned int                     m_TargetImage;
 
   bool                             m_InitializeWithMask;
+  unsigned int                     m_Iterations;
 
 };
 

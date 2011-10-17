@@ -13,14 +13,14 @@ template < typename ImageType >
 LowToHighImageResolutionMethod<ImageType>
 ::LowToHighImageResolutionMethod()
 {
-
   m_TransformArray.resize(0);
+  m_InverseTransformArray.resize(0);
   m_Interpolator = 0;
   m_NumberOfImages = 0;
   m_TargetImage = 0;
   m_InitializeWithMask= false;
   m_Margin = 0.0;
-
+  m_Iterations = 200;
 }
 
 template < typename ImageType >
@@ -29,6 +29,7 @@ void LowToHighImageResolutionMethod<ImageType>
 {
 
   m_TransformArray.resize(N);
+  m_InverseTransformArray.resize(N);
   m_ImageArray.resize(N);
   m_ResampledImageArray.resize(N);
   m_RegionArray.resize(N);
@@ -51,65 +52,8 @@ void
 LowToHighImageResolutionMethod<ImageType>
 ::Initialize() throw (ExceptionObject)
 {
-
-/*  m_Registration = RegistrationType::New();
-  m_Registration -> SetFixedImage(  m_ImageArray[m_TargetImage]  );
-  m_Registration -> SetFixedImageRegion( m_RegionArray[m_TargetImage] );
-
-  // FIXME The following lines should be executed only if masks are set
-
-  m_Registration -> SetFixedImageMask( m_ImageMaskArray[m_TargetImage] );
-  m_Registration -> InitializeWithMask();
-  m_Registration -> SetEnableObserver( false ); */
-
-  // Initial rigid parameters computed from the center of ROIs
-/*  PointType centerPointTarget = m_Registration -> GetRotationCenter();
-
-  m_InitialRigidParameters.resize(m_NumberOfImages);
-
-  for (unsigned int i=0; i<m_NumberOfImages; i++)
-  {
-    // if the user doesn't provide masks, we initialize the transformation with
-    // rois, if not we use the masks
-    if (m_InitializeWithMask)
-    {
-      m_InitialRigidParameters[i].SetSize(6);
-      m_InitialRigidParameters[i].Fill(0.0);
-
-      IndexType regionStart = m_RegionArray[i].GetIndex();
-      SizeType  regionSize  = m_RegionArray[i].GetSize();
-
-      IndexType centerIndex;
-      centerIndex[0] = regionStart[0] + regionSize[0]/2;
-      centerIndex[1] = regionStart[1] + regionSize[1]/2;
-      centerIndex[2] = regionStart[2] + regionSize[2]/2;
-
-      PointType centerPoint;
-      m_ImageArray[i] -> TransformIndexToPhysicalPoint(centerIndex,centerPoint);
-
-      m_InitialRigidParameters[i][3] = centerPoint[0] - centerPointTarget[0];
-      m_InitialRigidParameters[i][4] = centerPoint[1] - centerPointTarget[1];
-      m_InitialRigidParameters[i][5] = centerPoint[2] - centerPointTarget[2];
-    } else
-    {
-
-      TransformInitializerType::Pointer initializer = TransformInitializerType::New();
-      EulerTransformType::Pointer transform = EulerTransformType::New();
-
-      initializer->SetTransform( transform );
-      initializer->SetFixedImage(  m_ImageMaskArray[m_TargetImage] );
-      initializer->SetMovingImage( m_ImageMaskArray[i] );
-      initializer->MomentsOn();
-      initializer->InitializeTransform();
-      m_InitialRigidParameters[i] = transform -> GetParameters();
-
-    }
-  }
-
-*/
-
-   /* Create interpolator */
-   m_Interpolator = InterpolatorType::New();
+  /* Create interpolator */
+  m_Interpolator = InterpolatorType::New();
 
   /* Resampling matrix */
   SpacingType  fixedSpacing   = m_ImageArray[m_TargetImage] -> GetSpacing();
@@ -123,7 +67,6 @@ LowToHighImageResolutionMethod<ImageType>
   IndexType index;
   IndexType targetIndex;
   PointType point;
-//  SizeType  newSize();
 
   indexMin = m_ImageArray[m_TargetImage] -> GetLargestPossibleRegion().GetIndex();
 
@@ -153,13 +96,6 @@ LowToHighImageResolutionMethod<ImageType>
       }
     }
   }
-
-/*  std::cout << "index min = " << indexMin << std::endl;
-  std::cout << "index = " << m_ImageArray[m_TargetImage] -> GetLargestPossibleRegion().GetIndex() << std::endl;
-
-  std::cout << "index max = " << indexMax << std::endl;
-  std::cout << "size = " << m_ImageArray[m_TargetImage] -> GetLargestPossibleRegion().GetSize()  << std::endl; */
-
 
   m_ResampleSpacing[0] = fixedSpacing[0];
   m_ResampleSpacing[1] = fixedSpacing[0];
@@ -225,11 +161,14 @@ LowToHighImageResolutionMethod<ImageType>
   m_Registration -> SetFixedImage(  m_ImageArray[m_TargetImage]  );
   m_Registration -> SetFixedImageRegion( m_RegionArray[m_TargetImage] );
 
-  // FIXME The following lines should be executed only if masks are set
+  if ( m_InitializeWithMask )
+  {
+    m_Registration -> SetFixedImageMask( m_ImageMaskArray[m_TargetImage] );
+    m_Registration -> InitializeWithMask();
+  }
 
-  m_Registration -> SetFixedImageMask( m_ImageMaskArray[m_TargetImage] );
-  m_Registration -> InitializeWithMask();
   m_Registration -> SetEnableObserver( false );
+  m_Registration -> SetIterations( m_Iterations );
 
   m_ResamplingStatus.resize( m_NumberOfImages );
   for (unsigned int i=0; i < m_ResamplingStatus.size(); i++)
@@ -243,8 +182,6 @@ LowToHighImageResolutionMethod<ImageType>
 
     if (i != m_TargetImage )
     {
-      std::cout << "Registering image " << i << " to " << m_TargetImage << " ... "; std::cout.flush();
-
       try
       {
         m_Registration->StartRegistration();
@@ -255,51 +192,104 @@ LowToHighImageResolutionMethod<ImageType>
         std::cerr << err << std::endl;
         throw err;
       }
-
-      std::cout << "done." << std::endl; std::cout.flush();
       m_TransformArray[i] = m_Registration->GetTransform();
-      }
+    }
       else
       {
         m_TransformArray[i] = TransformType::New();
         m_TransformArray[i] -> SetIdentity();
 //        m_TransformArray[i] -> SetCenter( m_Registration -> GetTransformCenter() );
-
       }
 
-    }
+  }
 
-    IteratorType imageIt( m_HighResolutionImage, m_HighResolutionImage->GetLargestPossibleRegion() );
+  // Calculate inverse transform array
+  for (unsigned int i=0; i < m_NumberOfImages; i++)
+  {
+    m_InverseTransformArray[i] = TransformType::New();
+    m_InverseTransformArray[i] -> SetIdentity();
+    m_InverseTransformArray[i] -> SetCenter( m_TransformArray[i] -> GetCenter() );
+    m_InverseTransformArray[i] -> SetParameters( m_TransformArray[i] -> GetParameters() );
+    m_InverseTransformArray[i] -> GetInverse( m_InverseTransformArray[i] );
+  }
 
-    PointType physicalPoint;
-    PointType transformedPoint;
+  // Create combination of masks
+  PointType physicalPoint;
+  PointType transformedPoint;
+  IndexType index;
 
-    IndexType index;
-    int value;
-    unsigned int counter;
+  if ( m_InitializeWithMask )
+  {
+    m_ImageMaskCombination = ImageMaskType::New();
+    m_ImageMaskCombination -> SetRegions( m_HighResolutionImage -> GetLargestPossibleRegion() );
+    m_ImageMaskCombination -> Allocate();
+    m_ImageMaskCombination -> SetSpacing(   m_HighResolutionImage -> GetSpacing() );
+    m_ImageMaskCombination -> SetDirection( m_HighResolutionImage -> GetDirection() );
+    m_ImageMaskCombination -> SetOrigin(    m_HighResolutionImage -> GetOrigin() );
+    m_ImageMaskCombination -> FillBuffer( 0 );
 
-//    std::cout << "Creating initial HR image ... " ; std::cout.flush();
+    IteratorType imageIt( m_HighResolutionImage, m_HighResolutionImage -> GetLargestPossibleRegion() );
+    ImageMaskIteratorType maskIt( m_ImageMaskCombination, m_ImageMaskCombination -> GetLargestPossibleRegion() );
 
-    for (imageIt.GoToBegin(); !imageIt.IsAtEnd(); ++imageIt )
+    ImageMaskInterpolatorPointer imageMaskInterpolator = ImageMaskInterpolatorType::New();
+
+    for(imageIt.GoToBegin(),maskIt.GoToBegin(); !imageIt.IsAtEnd(); ++imageIt, ++maskIt )
     {
       index = imageIt.GetIndex();
-      m_HighResolutionImage -> TransformIndexToPhysicalPoint( index, physicalPoint);
+      m_ImageMaskCombination -> TransformIndexToPhysicalPoint( index, physicalPoint );
 
-      value = 0;
-      counter = 0;
       for (unsigned int i=0; i < m_NumberOfImages; i++)
       {
-        m_Interpolator -> SetInputImage( m_ImageArray[i] );
-        transformedPoint = m_TransformArray[i]->TransformPoint(physicalPoint);
-        if ( m_Interpolator -> IsInsideBuffer (transformedPoint) )
+        transformedPoint = m_TransformArray[i] -> TransformPoint(physicalPoint);
+        imageMaskInterpolator -> SetInputImage( m_ImageMaskArray[i] );
+
+        if ( imageMaskInterpolator -> IsInsideBuffer(transformedPoint) )
         {
-          value+= m_Interpolator->Evaluate(transformedPoint);
-          counter++;
+          if ( imageMaskInterpolator -> Evaluate(transformedPoint) > 0 )
+          {
+            maskIt.Set(1);
+            continue;
+          }
         }
       }
-      if ( counter>0 ) imageIt.Set(value/counter);
-     }
-//     std::cout << "done." << std::endl; std::cout.flush();
+    }
+
+  }
+
+  // Average registered images
+
+  int value;
+  unsigned int counter;
+
+  IteratorType imageIt( m_HighResolutionImage, m_HighResolutionImage -> GetLargestPossibleRegion() );
+
+  for (imageIt.GoToBegin(); !imageIt.IsAtEnd(); ++imageIt )
+  {
+    index = imageIt.GetIndex();
+
+    m_HighResolutionImage -> TransformIndexToPhysicalPoint( index, physicalPoint);
+
+    value = 0;
+    counter = 0;
+
+    for (unsigned int i=0; i < m_NumberOfImages; i++)
+    {
+      m_Interpolator -> SetInputImage( m_ImageArray[i] );
+      transformedPoint = m_TransformArray[i]->TransformPoint(physicalPoint);
+      if ( m_Interpolator -> IsInsideBuffer (transformedPoint) )
+      {
+        value+= m_Interpolator->Evaluate(transformedPoint);
+        counter++;
+      }
+    }
+    if ( counter>0 ) imageIt.Set(value/counter);
+
+    if ( m_InitializeWithMask && ( m_ImageMaskCombination -> GetPixel(index) == 0 ) )
+    {
+      imageIt.Set(0);
+    }
+
+  }
 
 }
 

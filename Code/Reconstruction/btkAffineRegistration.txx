@@ -50,6 +50,7 @@ AffineRegistration<ImageType>
 {
   m_Iterations = 300;
   m_EnableObserver = false;
+  m_FixedImageMask = 0;
 }
 
 /*
@@ -68,7 +69,10 @@ AffineRegistration<ImageType>
 
   // Configure metric
 
-//  m_Metric->SetMovingImageMask(m_MovingImageMask);
+  if (!m_FixedImageMask)
+  {
+    m_Metric->SetFixedImageMask(m_FixedImageMask);
+  }
   m_Metric->SetNumberOfHistogramBins( 24 );
   m_Metric->UseAllPixelsOn();
 
@@ -128,8 +132,8 @@ AffineRegistration<ImageType>
   SetOptimizer( this -> m_Optimizer );
   SetInterpolator( this -> m_Interpolator );
 
-//  m_InitialTransformParameters = m_Transform -> GetParameters();
-//  m_Registration->SetInitialTransformParameters( m_InitialTransformParameters );
+  if (this -> GetInitialTransformParameters().GetSize() == 1)
+    this -> SetInitialTransformParameters( m_Transform -> GetParameters() );
 
   Superclass::Initialize();
 

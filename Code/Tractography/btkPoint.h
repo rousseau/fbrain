@@ -47,6 +47,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
      * @class Point
      * @brief Point in 3D space
      * @author Julien Pontabry
+     * @ingroup Tractography
      */
     class Point : public CartesianCoordinates
     {

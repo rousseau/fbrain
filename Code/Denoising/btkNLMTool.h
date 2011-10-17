@@ -31,6 +31,13 @@ The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-B license and that you accept its terms.
 */
 
+/*
+ This program implements a denoising method proposed by Coupé et al. described in :
+ Coupé, P., Yger, P., Prima, S., Hellier, P., Kervrann, C., Barillot, C., 2008. 
+ An optimized blockwise nonlocal means denoising filter for 3-D magnetic resonance images.
+ IEEE Transactions on Medical Imaging 27 (4), 425–441.
+*/
+
 #ifndef btkNLMTool_H
 #define btkNLMTool_H
 
@@ -68,6 +75,7 @@ class btkNLMTool
   itkTPointer m_inputImage;
   itkTPointer m_outputImage;
   itkTPointer m_maskImage;
+  itkTPointer m_refImage;
   itkFloatPointer m_meanImage;
   itkFloatPointer m_varianceImage;
   
@@ -88,8 +96,11 @@ class btkNLMTool
   int   m_optimized;
   float m_lowerMeanThreshold;
   float m_lowerVarianceThreshold;
+  bool  m_useTheReferenceImage;
 
   void SetInput(itkTPointer inputImage);
+  void SetReferenceImage(itkTPointer refImage);
+  void SetDefaultParameters();
   void SetPatchSize(int h);
   void SetSpatialBandwidth(int s);
   void SetPaddingValue(float padding);
@@ -99,6 +110,7 @@ class btkNLMTool
   void SetOptimizationStrategy(int o);
   void SetLowerThresholds(float m, float v);
   void SetSmoothing(float beta);                       //set the smoothing parameter and compute the corrected smoothing value (m_rangeBandwidth)
+  void SetSmoothingUsingReferenceImage(float beta);    //set the smoothing parameter and compute the corrected smoothing value (m_rangeBandwidth) using the reference image
   void GetOutput(itkTPointer & outputImage);
   void ComputeOutput();
   void PrintInfo();
@@ -106,10 +118,12 @@ class btkNLMTool
   void CreatePatch(itkTPointer & patch);
   void CreatePatch(itkFloatPointer & patch);
   void GetPatch(typename itkTImage::IndexType p, itkTPointer & patch);
+  void GetPatchFromReferenceImage(typename itkTImage::IndexType p, itkTPointer & patch);
   void AddPatchToImage(typename itkTImage::IndexType p, itkFloatPointer & patch, itkFloatPointer & image, itkFloatPointer & weightImage, double weight);
   double PatchDistance(itkTPointer & p,itkTPointer & q);
 
   double GetDenoisedPatch(typename itkTImage::IndexType p, itkFloatPointer & patch);
+  double GetDenoisedPatchUsingTheReferenceImage(typename itkTImage::IndexType p, itkFloatPointer & patch);
   void ComputeSearchRegion(typename itkTImage::IndexType p, typename itkTImage::RegionType & region);
   void ComputePatchRegion(typename itkTImage::IndexType p, typename itkTImage::RegionType & imageRegion, typename itkTImage::RegionType & patchRegion);
   bool CheckSpeed(typename itkTImage::IndexType p, typename itkTImage::IndexType q);
@@ -129,6 +143,27 @@ void btkNLMTool<T>::SetInput(itkTPointer inputImage)
   duplicator->SetInputImage( inputImage );
   duplicator->Update();
   m_outputImage = duplicator->GetOutput();
+  m_useTheReferenceImage = false;
+}
+
+template <typename T>
+void btkNLMTool<T>::SetReferenceImage(itkTPointer refImage)
+{
+  m_refImage = refImage;
+  m_useTheReferenceImage = true;
+}
+
+template <typename T>
+void btkNLMTool<T>::SetDefaultParameters()
+{
+  SetPaddingValue(0);
+  SetPatchSize(1);
+  SetSpatialBandwidth(5);
+  SetSmoothing(1);
+  SetCentralPointStrategy(-1);
+  SetBlockwiseStrategy(2);
+  SetOptimizationStrategy(1);
+  SetLowerThresholds(0.95, 0.5);  
 }
 
 template <typename T>
@@ -362,6 +397,65 @@ void btkNLMTool<T>::SetSmoothing(float beta)
 }
 
 template <typename T>
+void btkNLMTool<T>::SetSmoothingUsingReferenceImage(float beta)
+{
+  //this function should be rewritten using a convolution-based approach
+  std::cout<<"Computing the range bandwidth (corresponding to the smoothing parameter for the NLM algorithm).\n";
+  uint count = 0;
+  double sigma2 = 0;
+  int x,y,z;
+  typename itkTImage::IndexType pixelIndex;	
+  float ei = 0;
+  std::vector<float> vecei;
+  T value = 0;
+  //since we have use to use a neighborhood around the current voxel, we neglect the border to avoid slow tests.
+  for(z=1;z<(int)m_size[2]-1;z++)
+    for(y=1;y<(int)m_size[1]-1;y++)
+      for(x=1;x<(int)m_size[0]-1;x++){
+        pixelIndex[0] = x;
+        pixelIndex[1] = y;
+        pixelIndex[2] = z;
+        value = m_refImage->GetPixel(pixelIndex);
+        if( m_maskImage->GetPixel(pixelIndex) > 0){
+          //pourrait se faire avec une convolution !
+          pixelIndex[0] = x+1;	  pixelIndex[1] = y;	  pixelIndex[2] = z;
+          ei = m_refImage->GetPixel(pixelIndex);
+          pixelIndex[0] = x-1;	  pixelIndex[1] = y;	  pixelIndex[2] = z;
+          ei += m_refImage->GetPixel(pixelIndex);
+          pixelIndex[0] = x;	          pixelIndex[1] = y+1;	  pixelIndex[2] = z;
+          ei += m_refImage->GetPixel(pixelIndex);
+          pixelIndex[0] = x;  	  pixelIndex[1] = y-1;	  pixelIndex[2] = z;
+          ei += m_refImage->GetPixel(pixelIndex);
+          pixelIndex[0] = x;  	  pixelIndex[1] = y;	  pixelIndex[2] = z+1;
+          ei += m_refImage->GetPixel(pixelIndex);
+          pixelIndex[0] = x;  	  pixelIndex[1] = y;	  pixelIndex[2] = z-1;
+          ei += m_refImage->GetPixel(pixelIndex);
+          pixelIndex[0] = x;            pixelIndex[1] = y;	  pixelIndex[2] = z;
+          ei = sqrt(6.0/7.0)*(m_refImage->GetPixel(pixelIndex) -ei/6.0);
+          
+          sigma2 += ei*ei;
+          count ++;
+          if(fabs(ei>0))
+            vecei.push_back(fabs(ei));
+        }
+      }
+  //Estimation of sigma with MAD
+  std::sort(vecei.begin(), vecei.end());
+  float med = vecei[(int)(vecei.size()/2)];
+  for(uint i=0; i<vecei.size(); i++)
+    vecei[i] = fabs(vecei[i] - med);
+  std::sort(vecei.begin(), vecei.end());
+  
+  sigma2 = 1.4826 * vecei[(int)(vecei.size()/2)];
+  sigma2 = sigma2 * sigma2;
+  std::cout<<"Number of points for estimation : "<<count<<"\n";
+  std::cout<<"Estimated Global Sigma : "<<sqrt(sigma2)<<"\n";
+  float NLMsmooth = 2 * beta * sigma2 * (2*m_halfPatchSize[0]+1) * (2*m_halfPatchSize[1]+1) * (2*m_halfPatchSize[2]+1);
+  std::cout<<"Global smoothing parameter h : "<<sqrt(NLMsmooth)<<"\n";
+  m_rangeBandwidth = NLMsmooth;   
+}
+
+template <typename T>
 void btkNLMTool<T>::GetOutput(itkTPointer & outputImage)
 {
   outputImage = m_outputImage; 
@@ -371,6 +465,8 @@ template <typename T>
 void btkNLMTool<T>::ComputeOutput()
 {
   std::cout<<"Compute the denoised image using NLM algorithm\n";
+  if(m_useTheReferenceImage == true)
+    std::cout<<"Use of a reference image\n";
   
   itkFloatPointer denoisedImage = itkFloatImage::New();
   denoisedImage->SetRegions(m_inputImage->GetLargestPossibleRegion());
@@ -391,21 +487,24 @@ void btkNLMTool<T>::ComputeOutput()
     typename itkTImage::IndexType q;
     for(unsigned int i=0; i!= q.GetIndexDimension(); i++)
       q[i] = m_halfPatchSize[i];
-    #pragma omp parallel for private(x,y,z) schedule(dynamic)
-    for(z=0; z < (int)m_size[2]; z++)
-      for(y=0; y < (int)m_size[1]; y++)
-        for(x=0; x < (int)m_size[0]; x++){
-	  typename itkTImage::IndexType p;
-	  p[0] = x;
-	  p[1] = y;
-	  p[2] = z;
+      #pragma omp parallel for private(x,y,z) schedule(dynamic)
+      for(z=0; z < (int)m_size[2]; z++)
+        for(y=0; y < (int)m_size[1]; y++)
+          for(x=0; x < (int)m_size[0]; x++){
+            typename itkTImage::IndexType p;
+            p[0] = x;
+            p[1] = y;
+            p[2] = z;
 
-  	  if( m_maskImage->GetPixel(p) > 0 ){	  
-	    itkFloatPointer patch = itkFloatImage::New();
-            double sum = GetDenoisedPatch(p, patch);
-            denoisedImage->SetPixel( p, patch->GetPixel(q) );	  	  
-	  }
-      }
+            if( m_maskImage->GetPixel(p) > 0 ){	  
+              itkFloatPointer patch = itkFloatImage::New();
+              double sum = 0;
+              if(m_useTheReferenceImage==false) sum = GetDenoisedPatch(p, patch);
+              else sum = GetDenoisedPatchUsingTheReferenceImage(p, patch);
+
+              denoisedImage->SetPixel( p, patch->GetPixel(q) );	  	  
+            }
+          }
   }
   if(m_blockwise >= 1){
     itkFloatPointer weightImage = itkFloatImage::New();
@@ -422,18 +521,21 @@ void btkNLMTool<T>::ComputeOutput()
       for(z=0; z < (int)m_size[2]; z++)
         for(y=0; y < (int)m_size[1]; y++)
           for(x=0; x < (int)m_size[0]; x++){
-	    typename itkTImage::IndexType p;
-	    p[0] = x;
-	    p[1] = y;
-	    p[2] = z;
+            typename itkTImage::IndexType p;
+            p[0] = x;
+            p[1] = y;
+            p[2] = z;
 
-	    if( m_maskImage->GetPixel(p) > 0 ){	  
-	      itkFloatPointer patch = itkFloatImage::New();
-              double sum = GetDenoisedPatch(p, patch);             
+            if( m_maskImage->GetPixel(p) > 0 ){	  
+              itkFloatPointer patch = itkFloatImage::New();
+              double sum = 0;
+              if(m_useTheReferenceImage==false) sum = GetDenoisedPatch(p, patch);
+              else sum = GetDenoisedPatchUsingTheReferenceImage(p, patch);
+              
               double weight = 1.0;
               #pragma omp critical
               AddPatchToImage(p, patch, denoisedImage, weightImage, weight);
-	    }
+            }
           }
     }
     if(m_blockwise == 2){
@@ -445,18 +547,21 @@ void btkNLMTool<T>::ComputeOutput()
           if( y%(m_halfPatchSize[1]+1) == 0){
           for(x=0; x < (int)m_size[0]; x++)
             if( x%(m_halfPatchSize[0]+1) == 0 ){
-	      typename itkTImage::IndexType p;
-	      p[0] = x;
-	      p[1] = y;
-	      p[2] = z;
+              typename itkTImage::IndexType p;
+              p[0] = x;
+              p[1] = y;
+              p[2] = z;
 
-	      if( m_maskImage->GetPixel(p) > 0 ){	  
-	        itkFloatPointer patch = itkFloatImage::New();
-                double sum = GetDenoisedPatch(p, patch);
+              if( m_maskImage->GetPixel(p) > 0 ){	  
+                itkFloatPointer patch = itkFloatImage::New();
+                double sum = 0;
+                if(m_useTheReferenceImage==false) sum = GetDenoisedPatch(p, patch);
+                else sum = GetDenoisedPatchUsingTheReferenceImage(p, patch);
+                
                 double weight = 1.0;
                 #pragma omp critical
                 AddPatchToImage(p, patch, denoisedImage, weightImage, weight);
-	      }
+              }
             }
           }
         }
@@ -484,6 +589,8 @@ void btkNLMTool<T>::ComputeOutput()
   */
   
 }
+
+
 
 template <typename T>
 void btkNLMTool<T>::PrintInfo()
@@ -573,6 +680,23 @@ void btkNLMTool<T>::GetPatch(typename itkTImage::IndexType p, itkTPointer & patc
   }
   */
   
+}
+
+template <typename T>
+void btkNLMTool<T>::GetPatchFromReferenceImage(typename itkTImage::IndexType p, itkTPointer & patch)
+{
+  //this function is equivalent to a cropping function
+  //WARNING : no check about the size of the input patch !
+  patch->FillBuffer(0);
+  typename itkTImage::RegionType imageRegion;
+  typename itkTImage::RegionType patchRegion;
+  ComputePatchRegion(p,imageRegion,patchRegion);
+  
+  itkTConstIterator refIt( m_refImage, imageRegion);
+  itkTIterator outputIt( patch, patchRegion);
+  
+  for ( refIt.GoToBegin(), outputIt.GoToBegin(); !refIt.IsAtEnd(); ++refIt, ++outputIt)
+    outputIt.Set( refIt.Get() );
 }
 
 template <typename T>
@@ -695,6 +819,105 @@ double btkNLMTool<T>::GetDenoisedPatch(typename itkTImage::IndexType p, itkFloat
     
   return sum;
 }
+
+template <typename T>
+double btkNLMTool<T>::GetDenoisedPatchUsingTheReferenceImage(typename itkTImage::IndexType p, itkFloatPointer & patch)
+{
+  double wmax = 0; //maximum weight of patches
+  double sum  = 0; //sum of weights (used for normalization purpose)
+  
+  //create the patch and set the estimate to 0
+  CreatePatch(patch);
+  itkFloatIterator patchIt(patch, patch->GetRequestedRegion());
+  
+  //get the value of the patch around the current pixel
+  itkTPointer centralPatch = itkTImage::New();
+  CreatePatch(centralPatch);
+  GetPatch(p,centralPatch);
+  itkTIterator centralPatchIt(centralPatch, centralPatch->GetRequestedRegion());
+
+  //get the value of the patch around the current pixel in the reference image
+  itkTPointer centralPatchReferenceImage = itkTImage::New();
+  CreatePatch(centralPatchReferenceImage);
+  GetPatchFromReferenceImage(p,centralPatchReferenceImage);
+  
+  //set the search region around the current pixel
+  typename itkTImage::RegionType searchRegion;
+  ComputeSearchRegion(p,searchRegion);
+  
+  //create the patch for pixels in the neighbourhood of the current pixel
+  itkTPointer neighbourPatch = itkTImage::New();
+  CreatePatch(neighbourPatch);
+  itkTIterator neighbourPatchIt(neighbourPatch, neighbourPatch->GetRequestedRegion());
+
+  //create the patch for pixels in the neighbourhood of the current pixel in the reference image
+  itkTPointer neighbourPatchReferenceImage = itkTImage::New();
+  CreatePatch(neighbourPatchReferenceImage);
+  
+  //go through the neighbourhood with a region iterator
+  itkTIteratorWithIndex it( m_inputImage, searchRegion);
+  typename itkTImage::IndexType neighbourPixelIndex;	
+  
+  for(it.GoToBegin(); !it.IsAtEnd(); ++it){
+    neighbourPixelIndex = it.GetIndex();
+    
+    bool goForIt = true;
+    if(m_optimized == 1)
+      goForIt = CheckSpeed(p, neighbourPixelIndex);
+    
+    if(goForIt == true){
+      
+      GetPatchFromReferenceImage(neighbourPixelIndex, neighbourPatchReferenceImage);
+      GetPatch(neighbourPixelIndex, neighbourPatch);
+      
+      double weight = exp( - PatchDistance(centralPatchReferenceImage, neighbourPatchReferenceImage) / m_rangeBandwidth);
+      
+      if(weight>wmax)
+        if( (p[0] != neighbourPixelIndex[0]) && (p[1] != neighbourPixelIndex[1]) && (p[2] != neighbourPixelIndex[2]) ) //has to be modify
+          wmax = weight;
+      
+      sum += weight;
+      
+      //Add this patch to the current estimate using the computed weight
+      for(patchIt.GoToBegin(), neighbourPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++neighbourPatchIt){
+        patchIt.Set( patchIt.Get() + neighbourPatchIt.Get() * weight );
+      }
+    }
+  }
+  
+  
+  //consider now the special case of the central patch
+  switch(m_centralPointStrategy){
+    case 0:                                        //remove the central patch to the estimated patch
+      for(patchIt.GoToBegin(), centralPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++centralPatchIt)
+        patchIt.Set( patchIt.Get() -1.0 * centralPatchIt.Get() );
+      sum -= 1.0;
+      break;
+    case 1: break;                                 //nothing to do
+    case -1:
+      for(patchIt.GoToBegin(), centralPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++centralPatchIt)
+        patchIt.Set( patchIt.Get()  + (wmax -1.0) * centralPatchIt.Get() );
+      sum += (wmax - 1.0);
+      break;
+    default:                                       //as in case -1
+      for(patchIt.GoToBegin(), centralPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++centralPatchIt)
+        patchIt.Set( patchIt.Get()  + (wmax -1.0) * centralPatchIt.Get() );
+      sum += (wmax - 1.0);
+      break;
+  }  
+  
+  if(sum>0.0001)
+    //Normalization of the denoised patch 
+    for(patchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt)
+      patchIt.Set( patchIt.Get() / sum );
+  else
+    //copy the central patch to the denoised patch
+    for(patchIt.GoToBegin(), centralPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++centralPatchIt)
+      patchIt.Set( centralPatchIt.Get() );  
+  
+  return sum;
+}
+
 
 template <typename T>
 bool btkNLMTool<T>::CheckSpeed(typename itkTImage::IndexType p, typename itkTImage::IndexType q)

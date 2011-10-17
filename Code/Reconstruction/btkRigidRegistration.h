@@ -45,7 +45,6 @@
 #include "itkImageMaskSpatialObject.h"
 
 #include "itkMattesMutualInformationImageToImageMetric.h"
-#include "itkMeanSquaresImageToImageMetric.h"
 #include "itkNormalizedCorrelationImageToImageMetric.h"
 
 #include "itkNumericTraits.h"
@@ -94,19 +93,18 @@ public:
 
 namespace btk
 {
-/** \class btkRigidRegistration
- * \brief Initialized registration method.
- *
- * This class aims to encapsulate registration code common to many
- * application/classes of the library. The used components provided good
- * results in fetal brain imaging, and therefore can remain fixed.
-
- * \sa ImageRegistrationMethod
- * \ingroup RegistrationFilters
- */
 
 using namespace itk;
 
+/**
+ * \brief Preconfigured rigid registration.
+ *
+ * This class encapsulates registration code common to many applications/classes
+ * of the library (metric, optimizer, transform, interpolator). The used components
+ * provided good results in fetal brain imaging, and therefore were kept fixed.
+ *
+ * \ingroup Reconstruction
+ */
 template <typename TImage>
 class RigidRegistration :
 public ImageRegistrationMethod <TImage,TImage>
@@ -124,29 +122,33 @@ public:
   /** Run-time type information (and related methods). */
   itkTypeMacro(RigidRegistration, ImageRegistrationMethod);
 
-  /**  Type of the Fixed image. */
+  /**  Type of the fixed image. */
   typedef          TImage                               ImageType;
   typedef typename ImageType::Pointer                   ImagePointer;
 
+  /**  Type of the image mask. */
   typedef Image< unsigned char, 3 >                     ImageMaskType;
   typedef typename ImageMaskType::Pointer               ImageMaskPointer;
 
+  /**  Type of the image mask spatial object. */
   typedef ImageMaskSpatialObject< 3 >                   MaskType;
   typedef typename MaskType::Pointer                    MaskPointer;
 
+  /**  Point typedef support. */
   typedef typename ImageType::PointType                 PointType;
+
+  /**  Size typedef support. */
   typedef typename ImageType::SizeType               		SizeType;
+
+  /**  Index typedef support. */
   typedef typename ImageType::IndexType               	IndexType;
 
   /**  Type of the metric. */
   // typedef MattesMutualInformationImageToImageMetric<
-  //typedef MeanSquaresImageToImageMetric<
   // FIXME Change metric to MI after testing NC
   typedef NormalizedCorrelationImageToImageMetric<
                                           ImageType,
                                           ImageType >   MetricType;
-
-
 
   typedef typename MetricType::Pointer                  MetricPointer;
 
@@ -154,18 +156,25 @@ public:
      like VersorRigid3DTransform. The ITK user's guide says this transformation
      could have problems for large rotations */
 
-  /**  Type of the Transform . */
+  /**  Type of the transform . */
   typedef Euler3DTransform< double >                    TransformType;
   typedef typename TransformType::Pointer               TransformPointer;
+
+  /**  Type of the transform parameters. */
   typedef  TransformType::ParametersType                ParametersType;
 
+  /**  Type of the transform initializer. The transform initializer is used to
+   * provide an initial rigid transformation computed from the image masks. This
+   * is important when a large misalignment is introduced by fetal movement and
+   * images fall outside of the metric's capture region.
+   * */
   typedef CenteredTransformInitializer<
                                     TransformType,
                                     ImageMaskType,
                                     ImageMaskType >  TransformInitializerType;
 
 
-  /**  Type of the Interpolator. */
+  /**  Type of the interpolator. */
   typedef LinearInterpolateImageFunction<
                                     ImageType,
                                     double>             InterpolatorType;
@@ -174,15 +183,15 @@ public:
   /**  Type of the optimizer. */
   typedef RegularStepGradientDescentOptimizer           OptimizerType;
   typedef typename OptimizerType::Pointer               OptimizerPointer;
-  typedef OptimizerType::ScalesType 										OptimizerScalesType;
 
+  /**  Optimizer's scales typedef support. */
+  typedef OptimizerType::ScalesType 										OptimizerScalesType;
 
   /** Set/Get transform. */
   itkGetObjectMacro(Transform, TransformType);
 
-  /** Set/Get transform center. */
-  itkSetMacro(TransformCenter, PointType);
-  itkGetMacro(TransformCenter, PointType);
+  PointType GetTransformCenter() const
+    { return m_Transform -> GetCenter(); }
 
     /** Set/Get iterations. */
   itkSetMacro(Iterations, unsigned int);
@@ -200,36 +209,26 @@ public:
   itkSetObjectMacro(MovingImageMask, ImageMaskType);
   itkGetObjectMacro(MovingImageMask, ImageMaskType);
 
+  /** Initialization is performed with the provided transform. */
   void InitializeWithTransform()
   {
     m_InitializeWithTransform = true;
     m_InitializeWithMask = false;
-    m_InitializeWithRegion = false;
   }
 
+  /** Initialization is performed with the provided image masks. */
   void InitializeWithMask()
   {
     m_InitializeWithTransform = false;
     m_InitializeWithMask = true;
-    m_InitializeWithRegion = false;
   }
-
-  void InitializeWithRegion()
-  {
-    m_InitializeWithTransform = false;
-    m_InitializeWithMask = false;
-    m_InitializeWithRegion = true;
-  }
-
-
 
 protected:
   RigidRegistration();
   virtual ~RigidRegistration() {};
   void PrintSelf(std::ostream& os, Indent indent) const;
 
-  /** Initialize by setting the interconnects between the components.
-   */
+  /** Initialize by setting the interconnects between the components.*/
   void Initialize() throw (ExceptionObject);
 
 private:
@@ -246,12 +245,8 @@ private:
 
   MaskPointer          m_FixedMask;
 
-  PointType            m_TransformCenter;
-
   bool m_InitializeWithMask;
-  bool m_InitializeWithRegion;
   bool m_InitializeWithTransform;
-
 
   unsigned int m_Iterations;
   bool         m_EnableObserver;

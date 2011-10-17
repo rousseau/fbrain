@@ -52,6 +52,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
      * @class Signal
      * @brief Continuous image representing the diffusion signal
      * @author Julien Pontabry
+     * @ingroup Tractography
      */
     class Signal
     {

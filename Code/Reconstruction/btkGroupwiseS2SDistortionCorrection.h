@@ -66,14 +66,12 @@ namespace btk
 using namespace itk;
 
 /** \class GroupwiseS2SDistortionCorrection
- * \brief Describe the class briefly here.
+ * \brief It performs a groupwise registration by using slice by slice transforms.
  *
- * Full class description
- * Full class description
- * Full class description
-
- * \sa ImageRegistrationMethod
- * \ingroup RegistrationFilters
+ * This class performs a groupwise registration of a set of images by using slice
+ * by slice affine transforms.
+ *
+ * \ingroup Reconstruction
  */
 
 template <typename TSequence >
@@ -92,83 +90,130 @@ public:
   /** Run-time type information (and related methods). */
   itkTypeMacro(GroupwiseS2SDistortionCorrection, ProcessObject);
 
+  /** Type of the sequence. */
   typedef          TSequence                            SequenceType;
   typedef typename SequenceType::Pointer                SequencePointer;
 
+  /** Sequence pixel typedef support. */
   typedef typename SequenceType::PixelType              SequencePixelType;
+
+  /** Sequence region typedef support. */
   typedef typename SequenceType::RegionType             SequenceRegionType;
+
+  /** Sequence size typedef support. */
   typedef typename SequenceType::SizeType             	SequenceSizeType;
+
+  /** Sequence index typedef support. */
   typedef typename SequenceType::IndexType             	SequenceIndexType;
 
+  /** Type of the sequence iterator. */
   typedef ImageRegionIteratorWithIndex< SequenceType > SequenceIteratorType;
 
-
-  /**  Type of the Fixed image. */
+  /** Type of the image. */
   typedef          Image< SequencePixelType, 3 >        ImageType;
   typedef typename ImageType::Pointer                   ImagePointer;
+
+  /** Image pixel typedef support. */
+  typedef typename ImageType::PixelType                 PixelType;
+
+  /** Image point typedef support. */
+  typedef typename ImageType::PointType                 PointType;
+
+  /** Image spacing typedef support. */
+  typedef typename ImageType::SpacingType               SpacingType;
+
+  /** Image size typedef support. */
+  typedef typename ImageType::SizeType               		SizeType;
+
+  /** Image index typedef support. */
+  typedef typename ImageType::IndexType               	IndexType;
+
+  /** Image region typedef support. */
+  typedef typename ImageType::RegionType               	RegionType;
+
+  /** Type of the image pointer array. */
   typedef          std::vector<ImagePointer>            ImageArrayPointer;
 
+  /** Type of the image mask. */
   typedef          Image< unsigned char, 3 >       			ImageMaskType;
   typedef typename ImageMaskType::Pointer               ImageMaskPointer;
 
+  /** Type of the mask. */
   typedef ImageMaskSpatialObject< 3 >   								MaskType;
   typedef typename MaskType::Pointer               			MaskPointer;
 
-  typedef typename ImageType::PixelType                 PixelType;
-  typedef typename ImageType::PointType                 PointType;
-  typedef typename ImageType::SpacingType               SpacingType;
-  typedef typename ImageType::SizeType               		SizeType;
-  typedef typename ImageType::IndexType               	IndexType;
-  typedef typename ImageType::RegionType               	RegionType;
-
+  /** Type of the image iterator. */
   typedef ImageRegionIteratorWithIndex< ImageType >  IteratorType;
 
-  /**  Type of the Transform . */
+  /** Type of the Transform . */
   typedef AffineTransform< double, 3>           				TransformType;
   typedef typename TransformType::Pointer               TransformPointer;
+
+  //TODO This should be replaced by the use of the affine version of
+  // btkSliceBySliceTransform (to be created)
+  /** Type of the slice by slice transform. */
   typedef  std::vector<TransformPointer>                S2STransformType;
+
+  /** Type of the slice by slice transform array. */
   typedef  std::vector<S2STransformType>                S2STransformArray;
 
+  /** Type of the transform writer. */
   typedef TransformFileWriter                           TransformWriterType;
 
+  /** Type of the transform matrix. */
   typedef typename TransformType::MatrixType            MatrixType;
+
+  /** Type of the transform offset . */
   typedef typename TransformType::OffsetType            OffsetType;
 
-  /**  Type of the Interpolator. */
+  /** Type of the transform parameters. */
+  typedef  TransformType::ParametersType    ParametersType;
+
+  /** Type of the RBF interpolator. */
   typedef SliceToSliceInterpolateImageFunction<
                                       ImageType,
                                       double >          RBFInterpolatorType;
   typedef typename RBFInterpolatorType::Pointer         RBFInterpolatorPointer;
 
-    typedef LinearInterpolateImageFunction<
+  /** Type of the linear interpolator. */
+  typedef LinearInterpolateImageFunction<
                                     ImageType,
                                     double>             InterpolatorType;
   typedef typename InterpolatorType::Pointer            InterpolatorPointer;
 
-   /**  Type of the registration method. */
-  typedef SliceBySliceRegistration< ImageType >    RegistrationType;
+  /** Type of the registration method. */
+  typedef SliceBySliceRegistration< ImageType >   			RegistrationType;
   typedef typename RegistrationType::Pointer            RegistrationPointer;
 
-  /** Type of affine registration method */
+  /** Type of affine registration method. */
   typedef AffineRegistration<ImageType>                 AffineRegistrationType;
   typedef typename AffineRegistrationType::Pointer      AffineRegistrationPointer;
 
+  /** Type of the image resampler. */
   typedef ResampleImageFilter< ImageType, ImageType >   ResampleType;
   typedef typename ResampleType::Pointer 								ResamplePointer;
 
+  /** Type of the image extractor. */
   typedef ExtractImageFilter< SequenceType, ImageType > ImageExtractorType;
   typedef typename ImageExtractorType::Pointer 					ImageExtractorPointer;
 
+  /** Type of the image writer. */
   typedef ImageFileWriter< ImageType >  ImageWriterType;
 
-  typedef  TransformType::ParametersType    ParametersType;
-
+  /** Type of the Gaussian filter. */
   typedef DiscreteGaussianImageFilter< ImageType, ImageType > GaussianFilterType;
   typedef typename GaussianFilterType::Pointer GaussianFilterPointer;
 
+  /** Type of the Vnl matrix. */
   typedef vnl_matrix<double> VnlMatrixType;
+
+  /** Type of the Vnl vector. */
   typedef vnl_vector<double> VnlVectorType;
 
+  //TODO The library has now a class called btkDiffusionGradientTable to manage
+  // gradient tables. We could set the gradient information by setting an object
+  // of this type, instead of providing the file name.
+  /** Sets the gradient table (file name). */
   void SetGradientTable( const char* input );
 //  void WriteGradientTable( const char* output );
 //  void RotateGradients( );
@@ -176,39 +221,43 @@ public:
   /** Method that initiates the registration. */
   void StartRegistration();
 
-    /** Set/Get the original sequence (to be corrected). */
+  /** Sets the input sequence. */
   itkSetObjectMacro( Input, SequenceType );
+
+  /** Gets the input sequence. */
   itkGetObjectMacro( Input, SequenceType );
 
-   /** Get the corrected sequence. */
-//  itkGetObjectMacro( Output, SequenceType );
-
-  /** Set/Get the FixedImageRegion. */
+  /** Get the corrected sequence. */
   TSequence * GetOutput();
 
-  /** Set/Get the maximum number of iterations. */
+  /** Sets the maximum number of iterations. */
   itkSetMacro( Iterations, unsigned int );
+
+  /** Gets the maximum number of iterations. */
   itkGetMacro( Iterations, unsigned int );
 
-  /** Set/Get the FixedImageRegion. */
+  /** Sets the FixedImageRegion. */
   void SetFixedImageRegion( const  RegionType & region );
 
-  /** Set/Get the image mask. */
+  /** Sets the image mask. */
   itkSetObjectMacro( ImageMask, ImageMaskType );
+
+  /** Gets the image mask. */
   itkGetObjectMacro( ImageMask, ImageMaskType );
 
-   /** Set/Get the mean dw-image. */
+   /** Gets the mean dw-image. */
   virtual ImageType * GetMeanGradient()
   {
-    return this -> m_Resample -> GetOutput();
+    return m_MeanGradient;
   }
 
-   /** Set/Get the image array. */
-//  UserGetObjectMacro( TransformArray, TransformType );
+  /** Gets the mean gradient registered to B0. */
+  itkGetObjectMacro( RegisteredMeanGradient, ImageType);
 
-   /** Write transforms ( DW -> T2). */
+  /** Write transforms ( DW -> T2) to the specified location. */
   void WriteTransforms( const char* folder );
 
+  /** Performs the class initialization.*/
   void Initialize();
 
 
@@ -219,9 +268,6 @@ protected:
 
   /** Initialize by setting the interconnects between the components.
    */
-
-
-
 
 private:
   GroupwiseS2SDistortionCorrection(const Self&); //purposely not implemented
@@ -237,16 +283,15 @@ private:
   ImagePointer										 m_FixedImage;
   ImagePointer                     m_T2epi;
   ImagePointer										 m_MeanGradient;
+  ImagePointer										 m_RegisteredMeanGradient;
 
   float  *m_OriginalGradients;
   double *m_CorrectedGradients;
 
   S2STransformArray                m_TransformArray;
-//  TransformPointerArray            m_NormalizedTransformArray;
   InterpolatorPointer			         m_Interpolator;
   ImageArrayPointer 			         m_ImageArray;
   RegistrationPointer							 m_Registration;
-  ResamplePointer                  m_Resample;
 
   RegionType 											 m_FixedImageRegion;
   bool                             m_FixedImageRegionDefined;
@@ -255,7 +300,7 @@ private:
   SequenceSizeType 							 	 m_SequenceSize;
   SequenceIndexType 							 m_SequenceIndex;
 
-  AffineRegistrationPointer m_AffineRegistration;
+  AffineRegistrationPointer 			 m_AffineRegistration;
 
   vnl_matrix< double > m_GradientTable;
 

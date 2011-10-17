@@ -60,7 +60,7 @@ namespace btk
  * Initialize new instance
  */
 template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
-ResampleImageByInjectionFilter<TInputImage, TOutputImage,TInterpolatorPrecisionType>
+ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecisionType>
 ::ResampleImageByInjectionFilter()
 {
   m_OutputSpacing.Fill(1.0);
@@ -73,6 +73,7 @@ ResampleImageByInjectionFilter<TInputImage, TOutputImage,TInterpolatorPrecisionT
   m_OutputStartIndex.Fill( 0 );
 
   m_DefaultPixelValue = 0;
+  m_ImageMask = 0;
 
 }
 
@@ -84,7 +85,7 @@ ResampleImageByInjectionFilter<TInputImage, TOutputImage,TInterpolatorPrecisionT
  */
 template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
 void
-ResampleImageByInjectionFilter<TInputImage, TOutputImage,TInterpolatorPrecisionType>
+ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecisionType>
 ::PrintSelf(std::ostream& os, Indent indent) const
 {
   Superclass::PrintSelf(os,indent);
@@ -107,7 +108,7 @@ ResampleImageByInjectionFilter<TInputImage, TOutputImage,TInterpolatorPrecisionT
  */
 template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
 void
-ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
+ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecisionType>
 ::SetOutputSpacing(
   const double* spacing)
 {
@@ -121,7 +122,7 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
  */
 template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
 void
-ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
+ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecisionType>
 ::SetOutputOrigin(
   const double* origin)
 {
@@ -132,7 +133,7 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
 
 template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
 void
-ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
+ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecisionType>
 ::GenerateData()
 {
   // Get the output pointers
@@ -177,7 +178,8 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
 
   // Create gaussian (psf)
 
-  typedef GaussianSpatialFunction< double, ImageDimension, PointType> GaussianFunctionType;
+  typedef GaussianSpatialFunction< double, ImageDimension,
+                                  PointType> GaussianFunctionType;
   typename GaussianFunctionType::Pointer gaussian = GaussianFunctionType::New();
 
   gaussian -> SetNormalized(false);
@@ -191,24 +193,33 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
   ArrayType sigma;
   double cst = 2*sqrt(2*log(2.0));
 
+  // Create spatial object for injecting in the mask only
+  typename MaskType::Pointer mask = MaskType::New();
+  mask -> SetImage (m_ImageMask);
+
   unsigned int im;
   #pragma omp parallel for private(im) schedule(dynamic)
 
   for(im = 0; im < m_ImageArray.size(); im++)
   {
-
     // ijk directions for gaussian orientation
 
     DirectionType inputDirection = m_ImageArray[im] -> GetDirection();
 
     PointType idir;
-    idir[0] =  inputDirection(0,0); idir[1] =  inputDirection(1,0); idir[2] =  inputDirection(2,0);
+    idir[0] =  inputDirection(0,0);
+    idir[1] =  inputDirection(1,0);
+    idir[2] =  inputDirection(2,0);
 
     PointType jdir;
-    jdir[0] =  inputDirection(0,1); jdir[1] =  inputDirection(1,1); jdir[2] =  inputDirection(2,1);
+    jdir[0] =  inputDirection(0,1);
+    jdir[1] =  inputDirection(1,1);
+    jdir[2] =  inputDirection(2,1);
 
     PointType kdir;
-    kdir[0] =  inputDirection(0,2); kdir[1] =  inputDirection(1,2); kdir[2] =  inputDirection(2,2);
+    kdir[0] =  inputDirection(0,2);
+    kdir[1] =  inputDirection(1,2);
+    kdir[2] =  inputDirection(2,2);
 
     // Neighborhood iterators on output and weights
 
@@ -216,24 +227,25 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
 
     SpacingType inputSpacing = m_ImageArray[im] -> GetSpacing();
 
-    // TODO: it needs some checking : is it normal to have an isotropic neighborhood for anisotropic
-    // images? (the PSF has the same width in x, y, z?)
-
+    //radius = maximum size of the bounding box in the HR space
     radius[0] = ceil(inputSpacing[2] / m_OutputSpacing[0]);
     radius[1] = ceil(inputSpacing[2] / m_OutputSpacing[1]);
     radius[2] = ceil(inputSpacing[2] / m_OutputSpacing[2]);
 
-    FloatNeighborhoodIteratorType nbIt( radius, sumImage, sumImage -> GetLargestPossibleRegion() );
+    FloatNeighborhoodIteratorType nbIt( radius, sumImage,
+                                      sumImage -> GetLargestPossibleRegion() );
     nbIt.NeedToUseBoundaryConditionOff();
 
-    FloatNeighborhoodIteratorType nbWtIt( radius, wtImage, wtImage -> GetLargestPossibleRegion() );
+    FloatNeighborhoodIteratorType nbWtIt( radius, wtImage,
+                                        wtImage -> GetLargestPossibleRegion() );
     nbWtIt.NeedToUseBoundaryConditionOff();
 
     // Division of outputImage into regions (for iteration over neighborhoods)
     FaceCalculatorType faceCalculator;
     FaceListType faceList;
 
-    faceList = faceCalculator( sumImage, sumImage -> GetLargestPossibleRegion(), radius);
+    faceList = faceCalculator( sumImage, sumImage -> GetLargestPossibleRegion(),
+                               radius);
     typename FaceCalculatorType::FaceListType::iterator fit;
     fit=faceList.begin();
 
@@ -247,21 +259,22 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
     IndexType inputIndex = m_InputImageRegion[im].GetIndex();
     SizeType  inputSize  = m_InputImageRegion[im].GetSize();
 
+    //Iteration over the slices of the LR images
     for ( unsigned int i=inputIndex[2]; i < inputIndex[2] + inputSize[2]; i++ )
     {
-      // Extract rotation from affine metric to orient the PDF
-      VnlMatrixType NQd = m_Transform[im][i] -> GetMatrix().GetVnlMatrix();
+      // Get the rotation of the rigid transform for the rotation of the Gaussian PSF
+      VnlMatrixType NQd;
+      NQd = m_Transform[im] -> GetSliceTransform(i) -> GetMatrix().GetVnlMatrix();
 
       VnlVectorType idirTransformed = NQd*idir.Get_vnl_vector();
       VnlVectorType jdirTransformed = NQd*jdir.Get_vnl_vector();
       VnlVectorType kdirTransformed = NQd*kdir.Get_vnl_vector();
 
       InputImageRegionType wholeSliceRegion;
- //     wholeSliceRegion = m_ImageArray[im] -> GetLargestPossibleRegion();
       wholeSliceRegion = m_InputImageRegion[im];
 
       IndexType  wholeSliceRegionIndex = wholeSliceRegion.GetIndex();
-      SizeType   wholeSliceRegionSize = wholeSliceRegion.GetSize();
+      SizeType   wholeSliceRegionSize  = wholeSliceRegion.GetSize();
 
       wholeSliceRegionIndex[2]= i;
       wholeSliceRegionSize[2] = 1;
@@ -281,13 +294,15 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
       PointType transformedPoint;
 
       double value;
-
+      //Loop over pixels of the current slice
       for(fixedIt.GoToBegin(); !fixedIt.IsAtEnd(); ++fixedIt)
       {
+        //Put in the world coordinates
         fixedIndex = fixedIt.GetIndex();
         m_ImageArray[im] -> TransformIndexToPhysicalPoint( fixedIndex, physicalPoint );
 
-        transformedPoint = m_Transform[im][i] -> TransformPoint( physicalPoint);
+        //Put in the HR image space
+        transformedPoint = m_Transform[im]-> TransformPoint( physicalPoint );
         sumImage -> TransformPhysicalPointToIndex( transformedPoint, outputIndex);
 
         nbIt.SetLocation(outputIndex);
@@ -295,21 +310,25 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
 
         if ( (*fit).IsInside(outputIndex) )
         {
+          //Loop over the Gaussian PSF
           for(unsigned int i=0; i<nbIt.Size(); i++)
           {
             nbIndex = nbIt.GetIndex(i);
 
             sumImage -> TransformIndexToPhysicalPoint( nbIndex, nbPoint );
 
-            VnlVectorType diffPoint = nbPoint.Get_vnl_vector() - transformedPoint.Get_vnl_vector();
-            rotPoint[0] = dot_product(diffPoint,idirTransformed);
-            rotPoint[1] = dot_product(diffPoint,jdirTransformed);
-            rotPoint[2] = dot_product(diffPoint,kdirTransformed);
+            if ( mask -> IsInside(nbPoint))
+            {
+              VnlVectorType diffPoint = nbPoint.Get_vnl_vector() - transformedPoint.Get_vnl_vector();
+              rotPoint[0] = dot_product(diffPoint,idirTransformed);
+              rotPoint[1] = dot_product(diffPoint,jdirTransformed);
+              rotPoint[2] = dot_product(diffPoint,kdirTransformed);
 
-            value = gaussian->Evaluate( rotPoint );
+              value = gaussian->Evaluate( rotPoint );
 
-            nbIt.SetPixel(i, fixedIt.Get() *value + nbIt.GetPixel(i) );
-            nbWtIt.SetPixel(i, value + nbWtIt.GetPixel(i) );
+              nbIt.SetPixel(i, fixedIt.Get() *value + nbIt.GetPixel(i) );
+              nbWtIt.SetPixel(i, value + nbWtIt.GetPixel(i) );
+            }
           }
         }
         else
@@ -323,22 +342,24 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
 
               sumImage -> TransformIndexToPhysicalPoint( nbIndex, nbPoint );
 
-              VnlVectorType diffPoint = nbPoint.Get_vnl_vector() - transformedPoint.Get_vnl_vector();
-              rotPoint[0] = dot_product(diffPoint,idirTransformed);
-              rotPoint[1] = dot_product(diffPoint,jdirTransformed);
-              rotPoint[2] = dot_product(diffPoint,kdirTransformed);
+              if ( mask -> IsInside(nbPoint))
+              {
+                VnlVectorType diffPoint = nbPoint.Get_vnl_vector() - transformedPoint.Get_vnl_vector();
+                rotPoint[0] = dot_product(diffPoint,idirTransformed);
+                rotPoint[1] = dot_product(diffPoint,jdirTransformed);
+                rotPoint[2] = dot_product(diffPoint,kdirTransformed);
 
-              value = gaussian->Evaluate( rotPoint );
+                value = gaussian->Evaluate( rotPoint );
 
-              nbIt.SetPixel(i, fixedIt.Get() *value + nbIt.GetPixel(i) );
-              nbWtIt.SetPixel(i, value + nbWtIt.GetPixel(i) );
+                nbIt.SetPixel(i, fixedIt.Get() *value + nbIt.GetPixel(i) );
+                nbWtIt.SetPixel(i, value + nbWtIt.GetPixel(i) );
+              }
 
             }
 
           }
 
         }
-
 
       }
 
@@ -386,7 +407,7 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
  */
 template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
 void
-ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
+ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecisionType>
 ::GenerateInputRequestedRegion()
 {
   // call the superclass's implementation of this method
@@ -415,8 +436,9 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
  * the grid parameters for the output image.
  */
 template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
-const typename ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>::OutputImageType *
-ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
+const typename ResampleImageByInjectionFilter<TInputImage,TOutputImage,
+                TInterpolatorPrecisionType>::OutputImageType *
+ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecisionType>
 ::GetReferenceImage() const
 {
   Self * surrogate = const_cast< Self * >( this );
@@ -432,7 +454,7 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
  */
 template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
 void
-ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
+ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecisionType>
 ::SetReferenceImage( const TOutputImage *image )
 {
   itkDebugMacro("setting input ReferenceImage to " << image);
@@ -446,7 +468,7 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
 /** Helper method to set the output parameters based on this image */
 template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
 void
-ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
+ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecisionType>
 ::SetOutputParametersFromImage ( const ImageBaseType * image )
 {
   this->SetOutputOrigin ( image->GetOrigin() );
@@ -461,7 +483,7 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
  */
 template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
 void
-ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
+ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecisionType>
 ::GenerateOutputInformation()
 {
   // call the superclass' implementation of this method
@@ -510,7 +532,7 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
  */
 template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
 unsigned long
-ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
+ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecisionType>
 ::GetMTime( void ) const
 {
   unsigned long latestTime = Object::GetMTime();
@@ -519,12 +541,9 @@ ResampleImageByInjectionFilter<TInputImage,TOutputImage,TInterpolatorPrecisionTy
     {
       for(unsigned int i=0; i<m_Transform.size(); i++)
       {
-        for(unsigned int j=0; j<m_Transform[i].size(); j++)
+        if( latestTime < m_Transform[i]->GetMTime() )
         {
-          if( latestTime < m_Transform[i][j]->GetMTime() )
-          {
-            latestTime = m_Transform[i][j]->GetMTime();
-          }
+          latestTime = m_Transform[i]->GetMTime();
         }
       }
     }

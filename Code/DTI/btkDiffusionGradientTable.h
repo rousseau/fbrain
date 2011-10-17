@@ -125,6 +125,8 @@ public:
   // Save gradient table to file
   void SaveToFile( const char* output );
 
+  void RemoveRepeatedZeroEntries();
+
   // Set/Get transform
   itkSetObjectMacro( Transform, TransformType );
   itkGetObjectMacro( Transform, TransformType );

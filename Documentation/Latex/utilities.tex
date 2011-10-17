@@ -98,4 +98,23 @@ Recommended usage: \texttt{btkReorientDiffusionSequenceToStandard -i input
 The list of optional parameters can be obtained by \texttt{btkNiftiToNrrd
 --help}
 
+\item[btkImageInjection] This program performs the injection of a set
+of images with an already existing set of transformations. This avoids the need
+to perform a new image reconstruction (computationally expensive) after
+modification of the input images (some filtering for example) or an involuntary
+deletion of the reconstructed image.
+
+Recommended usage: \texttt{btkImageInjection -i image1 $\cdots$ -i
+imageN -m mask1 $\cdots$ -m maskN -i transform1 $\cdots$ -i
+transformN -o output --mask}.
+\begin{itemize}
+\item[-i] input image
+\item[-m] image mask
+\item[-t] image transform
+\item[-o] reconstructed image
+\end{itemize}
+
+The list of optional parameters can be obtained by \texttt{btkImageInjection
+--help}
+
 \end{description}
