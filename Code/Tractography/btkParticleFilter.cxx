@@ -403,7 +403,7 @@ void ParticleFilter::run(int label, Direction dir)
         {
             // Resample if ESS is below a threshold
             // keeping proportionnality of weights
-            if(ESS < m_epsilon*(nbInsPart))
+            if(ESS < m_epsilon/*(nbInsPart)*/)
             {
                 Display2(m_displayMode, std::cout << " (Resampling, ESS = " << (ESS/nbInsPart)*100.0 << "%) " << std::flush);
                 this->ResampleCloud(nbInsPart);
@@ -899,17 +899,37 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
     m_fiber->GetPointData()->SetScalars(gfa);
 }
 
-void ParticleFilter::saveFiber(int label, unsigned int step, Point begin)
+void ParticleFilter::saveFiber(int label/*, unsigned int step, Point begin*/)
 {
-    // Save VTK PolyData object into VTK file
-    std::stringstream filename;
-    filename << "fiber-" << label << "-" << begin << "-" << m_dirNum << "-" << step << ".vtk";
+//    // Save VTK PolyData object into VTK file
+//    std::stringstream filename;
+//    filename << "fiber-" << label << "-" << begin << "-" << m_dirNum << "-" << step << ".vtk";
+//
+//    vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
+//    writer->SetInput(m_fiber);
+//    writer->SetFileName(filename.str().c_str());
+//    writer->SetFileTypeToBinary();
+//    writer->Write();
 
-    vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
-    writer->SetInput(m_fiber);
-    writer->SetFileName(filename.str().c_str());
-    writer->SetFileTypeToBinary();
-    writer->Write();
+    std::stringstream filename;
+    filename << "fiber-" << label << ".txt";
+
+    std::fstream file(filename.str().c_str(), std::fstream::out);
+
+    double p[3]; p[0] = -10000; p[1] = -10000; p[2] = -10000;
+    vtkSmartPointer<vtkPoints> points = m_fiber->GetPoints();
+    for(vtkIdType id=0; id<points->GetNumberOfPoints(); id++)
+    {
+        double tmp[3];
+        points->GetPoint(id, tmp);
+
+        if(!(EQUAL(p[0], tmp[0]) && EQUAL(p[1], tmp[1]) && EQUAL(p[2], tmp[2])))
+            file << tmp[0] << " " << tmp[1] << " " << tmp[2] << std::endl;
+
+        p[0] = tmp[0]; p[1] = tmp[1]; p[2] = tmp[2];
+    }
+
+    file.close();
 }
 
 vtkSmartPointer<vtkPolyData> ParticleFilter::GetFiber()
