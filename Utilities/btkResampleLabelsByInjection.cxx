@@ -74,14 +74,14 @@ int main( int argc, char *argv[] )
 
   TCLAP::CmdLine cmd("Resample a set of images using the injection method", ' ', "Unversioned");
 
-  TCLAP::MultiArg<std::string> inputArg("i","input","image file",true,"string",cmd);
-  TCLAP::MultiArg<std::string> fLabelArg("f","fl","fuzzy label file",true,"string",cmd);
-  TCLAP::MultiArg<int> labelArg("l","label","label number",true,"int",cmd);
-  TCLAP::MultiArg<std::string> maskArg("m","mask","mask file",false,"string",cmd);
+  TCLAP::MultiArg<std::string> inputArg("i","input","image input file",true,"string",cmd);
+  TCLAP::MultiArg<std::string> fLabelArg("f","fl","fuzzy label output file",true,"string",cmd);
+  TCLAP::MultiArg<int> labelArg        ("l","label","label number (for each input image)",true,"int",cmd);
+  TCLAP::MultiArg<std::string> maskArg ("m","mask","mask file (for each input image)",false,"string",cmd);
   TCLAP::ValueArg<std::string> refArg  ("r","reference","Reference image",true,"none","string",cmd);
-  TCLAP::ValueArg<std::string> outArg  ("o","output","High resolution image",true,"none","string",cmd);
-
-  TCLAP::MultiArg<std::string> transArg("t","transform","transform file",true,"string",cmd);
+  TCLAP::ValueArg<std::string> outArg  ("o","output","High resolution label output image",true,"none","string",cmd);
+  TCLAP::ValueArg<int> numberLabelArg  ("n","numberoflabels","number of labels (default:2)",true,2,"int",cmd);
+  TCLAP::MultiArg<std::string> transArg("t","transform","transform file (for each input image)",true,"string",cmd);
 
   // Parse the argv array.
   cmd.parse( argc, argv );
@@ -93,6 +93,7 @@ int main( int argc, char *argv[] )
   outImage = outArg.getValue().c_str();
   transform = transArg.getValue();
   labels = labelArg.getValue();
+  unsigned int numberOfLabels = numberLabelArg.getValue();
 
   // typedefs
   const   unsigned int    Dimension = 3;
@@ -129,7 +130,6 @@ int main( int argc, char *argv[] )
   typedef btk::ResampleLabelsByInjectionFilter< ImageType, ImageType >  ResamplerType;
   ResamplerType::Pointer resampler = ResamplerType::New();
 
-  unsigned int numberOfLabels = 6;
   unsigned int numberOfImages = input.size();
 
   std::vector< TransformPointer >  transforms(numberOfImages);
@@ -145,7 +145,7 @@ int main( int argc, char *argv[] )
 
   for (unsigned int i=0; i<numberOfImages; i++)
   {
-    // add image
+    std::cout<<"Reading image : "<<input[i].c_str()<<"\n";
     ImageReaderType::Pointer imageReader = ImageReaderType::New();
     imageReader -> SetFileName( input[i].c_str() );
     imageReader -> Update();
@@ -176,7 +176,7 @@ int main( int argc, char *argv[] )
     imageRegion.SetSize (roiSize);
     resampler -> AddRegion( imageRegion );
 
-    // set transformation
+    std::cout<<"set transformation : "<<transform[i]<<"\n";
     TransformReaderType::Pointer transformReader = TransformReaderType::New();
     transformReader -> SetFileName( transform[i] );
     transformReader -> Update();
@@ -193,9 +193,8 @@ int main( int argc, char *argv[] )
     transforms[i] -> SetImage( caster -> GetOutput() );
     resampler -> SetTransform(i, transforms[i] ) ;
   }
-
-  // Set reference image
-
+  
+  std::cout<<"Set reference image: "<<refImage<<"\n";
   ImageReaderType::Pointer refReader = ImageReaderType::New();
   refReader -> SetFileName( refImage );
   refReader -> Update();
@@ -203,17 +202,17 @@ int main( int argc, char *argv[] )
   resampler -> UseReferenceImageOn();
   resampler -> SetReferenceImage( refReader -> GetOutput() );
 
+  std::cout<<"Perform resampling\n";  
   resampler -> Update();
 
-  // Write fuzzy labels
-
+  std::cout<<"number of labels: "<<numberOfLabels<<"\n";
   for (unsigned int i=0; i<numberOfLabels; i++)
   {
+    std::cout<<"Write fuzzy label:"<<flabel[i].c_str()<<"\n";
     resampler -> WriteFuzzyLabel( i, flabel[i].c_str() );
   }
 
-  // Write image
-
+  std::cout<<"Write output image:"<<outImage<<"\n";
   WriterType::Pointer writer =  WriterType::New();
   writer -> SetFileName( outImage );
   writer -> SetInput( resampler -> GetOutput() );
