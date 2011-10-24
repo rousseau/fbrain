@@ -124,7 +124,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
                  * @param label Label number (of label image)
                  * @param step Step number
                  */
-                void saveFiber(int label, unsigned int step, Point begin);
+                void saveFiber(int label/*, unsigned int step, Point begin*/);
 
                 /**
                  * @brief Save Connection map in 3D image
