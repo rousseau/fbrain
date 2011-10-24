@@ -90,7 +90,7 @@ int main( int argc, char *argv[] )
   TCLAP::MultiArg<std::string> roiArg("","roi","roi file (written as mask)",false,
       "string",cmd);
   TCLAP::MultiArg<std::string> resampledArg("","ir","Resampled image with initial "
-      "transform",false,"string",cmd);
+      "transform (this is an output to check initial transform consistency)",false,"string",cmd);
   TCLAP::ValueArg<std::string> outArg("o","output","High resolution image",true,
       "","string",cmd);
   TCLAP::ValueArg<std::string> combinedMaskArg("","combined-masks","All image "
@@ -485,7 +485,7 @@ int main( int argc, char *argv[] )
 
     previousMetric = currentMetric;
     currentMetric = - nc -> GetValue( identity -> GetParameters() );
-
+    std::cout<<"previousMetric: "<<previousMetric<<", currentMetric: "<<currentMetric<<"\n";
     double delta = 0.0;
 
     if (it >= 2)

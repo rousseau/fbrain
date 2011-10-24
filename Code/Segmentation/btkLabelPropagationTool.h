@@ -463,7 +463,7 @@ void LabelFusionTool<T>::SetOptimizationStrategy(int o)
   m_optimized = o;
 
   //if(o==1){
-    std::cout<<"Optimized mode. Computing Mean and Variance images\n";
+    std::cout<<"Optimized mode requirements: Computing Mean and Variance images\n";
     InitImage(m_meanImage);
     InitImage(m_varianceImage);
 

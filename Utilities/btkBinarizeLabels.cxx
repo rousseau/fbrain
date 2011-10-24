@@ -56,7 +56,7 @@ int main( int argc, char *argv[] )
   TCLAP::CmdLine cmd("Splits a label image into binary components", ' ', "Unversioned");
 
   TCLAP::ValueArg<std::string> inputArg("i","input","Input image",true,"none","string",cmd);
-  TCLAP::ValueArg<std::string> outputArg("o","output","Output folder",true,"none","string",cmd);
+  TCLAP::ValueArg<std::string> outputArg("o","output","Output image",true,"none","string",cmd);
   TCLAP::ValueArg<int> labelArg("l","label","Label value",true,0,"int",cmd);
 
   // Parse the argv array.
