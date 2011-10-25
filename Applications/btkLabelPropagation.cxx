@@ -77,7 +77,7 @@ int main(int argc, char** argv)
   cmd.add( hwvsArg );
   TCLAP::ValueArg< float > betaArg("b","beta","beta: smoothing parameter (high beta produces smoother result, default is 1)",false,1,"float");
   cmd.add( betaArg );
-  TCLAP::ValueArg< int > blockArg("","block","0: pointwise, 1: blockwise, 2: fast blockwise (default is 1)",false,2,"int");
+  TCLAP::ValueArg< int > blockArg("","block","0: pointwise, 1: blockwise, 2: fast blockwise (default is 2)",false,2,"int");
   cmd.add( blockArg );
   TCLAP::ValueArg< int > centerArg("c","center","weight of the central patch (possible value: 0, 1, -1 (max)) (default is -1)",false,-1,"int");
   cmd.add( centerArg );
