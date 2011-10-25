@@ -119,8 +119,8 @@ int main( int argc, char *argv[] )
   TCLAP::ValueArg<std::string> referenceArg("r","reference","Anatomical image",true,"","string",cmd);
   TCLAP::ValueArg<std::string> outputArg("o","output","Registered diffusion sequence",true,"","string",cmd);
   TCLAP::ValueArg<std::string> maskArg("m","mask","Mask for the b0 image",false,"","string",cmd);
-  TCLAP::ValueArg<std::string> mgradArg("","mean-gradient (for validation purpose)","Mean gradient",false,"","string",cmd);
-  TCLAP::ValueArg<std::string> mgradResampledArg("","mean-gradient-resampled","Mean gradient resampled",false,"","string",cmd);
+  TCLAP::ValueArg<std::string> mgradArg("","mean_gradient","Mean gradient (for validation purpose)",false,"","string",cmd);
+  TCLAP::ValueArg<std::string> mgradResampledArg("","mean_gradient_resampled","Mean gradient resampled",false,"","string",cmd);
 
   // TODO: is this way of passing rois useful? If not, consider removing it ...
 
@@ -141,6 +141,8 @@ int main( int argc, char *argv[] )
   TCLAP::SwitchArg nnSwitch("","nn","Nearest neighbor interpolation", cmd, false);
   TCLAP::SwitchArg bsplineSwitch("","bspline","BSpline interpolation", cmd, false);
 
+  TCLAP::ValueArg<unsigned int> optIterArg("","nb_of_iterations", "Number of iterations of optimizer (default is 1000)", false, 1000, "unsigned int", cmd);
+
   // Parse the argv array.
   cmd.parse( argc, argv );
 
@@ -157,6 +159,8 @@ int main( int argc, char *argv[] )
 
   unsigned int z1 = z1Arg.getValue();
   unsigned int z2 = z2Arg.getValue();
+
+  unsigned int optIter = optIterArg.getValue();
 
   bool roiIsSet = false;
 
@@ -363,7 +367,7 @@ int main( int argc, char *argv[] )
   optimizer->MinimizeOn();
   optimizer->SetMaximumStepLength( 0.2 );
   optimizer->SetMinimumStepLength( 0.001 );
-  optimizer->SetNumberOfIterations( 300 );
+  optimizer->SetNumberOfIterations( optIter );
 
   typedef OptimizerType::ScalesType       OptimizerScalesType;
   OptimizerScalesType optimizerScales( transform->GetNumberOfParameters() );
