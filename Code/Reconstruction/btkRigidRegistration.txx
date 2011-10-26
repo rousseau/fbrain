@@ -120,9 +120,9 @@ RigidRegistration<ImageType>
   }
 
   // FIXME Uncomment if MI is used instead of NC
-  m_Metric -> SetNumberOfHistogramBins( 64 );
-  m_Metric -> UseAllPixelsOn();
-  //m_Metric -> SetNumberOfSpatialSamples(0.2*this -> GetFixedImageRegion().GetNumberOfPixels());
+  //m_Metric -> SetNumberOfHistogramBins( 64 );
+  //m_Metric -> UseAllPixelsOn();
+  m_Metric -> SetNumberOfSpatialSamples(0.2*this -> GetFixedImageRegion().GetNumberOfPixels());
 
   // Configure optimizer
 

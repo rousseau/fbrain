@@ -144,9 +144,9 @@ public:
   typedef typename ImageType::IndexType               	IndexType;
 
   /**  Type of the metric. */
-  typedef MattesMutualInformationImageToImageMetric<
+  //typedef MattesMutualInformationImageToImageMetric<
   //FIXME Change metric to MI after testing NC
-  //typedef NormalizedCorrelationImageToImageMetric<
+  typedef NormalizedCorrelationImageToImageMetric<
                                           ImageType,
                                           ImageType >   MetricType;
 
