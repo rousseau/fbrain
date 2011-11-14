@@ -151,10 +151,10 @@ RigidRegistration<ImageType>
   }
 
   // Connect components
-  SetTransform( this -> m_Transform );
-  SetMetric( this -> m_Metric );
-  SetOptimizer( this -> m_Optimizer );
-  SetInterpolator( this -> m_Interpolator );
+  this->SetTransform( this -> m_Transform );
+  this->SetMetric( this -> m_Metric );
+  this->SetOptimizer( this -> m_Optimizer );
+  this->SetInterpolator( this -> m_Interpolator );
 
   Superclass::Initialize();
 
