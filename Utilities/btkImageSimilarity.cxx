@@ -41,7 +41,7 @@
 #include "itkMattesMutualInformationImageToImageMetric.h"
 #include "itkMeanSquaresImageToImageMetric.h"
 #include "itkLinearInterpolateImageFunction.h"
-#include "itkDivideByConstantImageFilter.h"
+//#include "itkDivideByConstantImageFilter.h"
 #include "itkMinimumMaximumImageCalculator.h"
 
 #include "itkImage.h"

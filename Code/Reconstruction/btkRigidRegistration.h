@@ -190,8 +190,9 @@ public:
   /** Set/Get transform. */
   itkGetObjectMacro(Transform, TransformType);
 
-  PointType GetTransformCenter() const
-    { return m_Transform -> GetCenter(); }
+  /** Set/Get transform center. */
+  itkSetMacro(TransformCenter, PointType);
+  itkGetMacro(TransformCenter, PointType);
 
     /** Set/Get iterations. */
   itkSetMacro(Iterations, unsigned int);
@@ -244,6 +245,8 @@ private:
   ImageMaskPointer     m_MovingImageMask;
 
   MaskPointer          m_FixedMask;
+
+  PointType            m_TransformCenter;
 
   bool m_InitializeWithMask;
   bool m_InitializeWithTransform;
