@@ -72,6 +72,9 @@ TARGET_LINK_LIBRARIES(btkWeightedMean ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkSequenceNormalization btkSequenceNormalization.cxx )
 TARGET_LINK_LIBRARIES(btkSequenceNormalization ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkRescaleIntensity btkRescaleIntensity.cxx )
+TARGET_LINK_LIBRARIES(btkRescaleIntensity ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
