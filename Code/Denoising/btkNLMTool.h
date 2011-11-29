@@ -177,7 +177,7 @@ void btkNLMTool<T>::SetPatchSize(int h)
   m_halfPatchSize[0] = (int)(0.5 + h * minVoxSz / m_spacing[0]);
   m_halfPatchSize[1] = (int)(0.5 + h * minVoxSz / m_spacing[1]);
   m_halfPatchSize[2] = (int)(0.5 + h * minVoxSz / m_spacing[2]);
-  std::cout<<"patchSize : "<<m_halfPatchSize[0]<<" "<<m_halfPatchSize[1]<<" "<<m_halfPatchSize[2]<<"\n";
+  std::cout<<"half patchSize : "<<m_halfPatchSize[0]<<" "<<m_halfPatchSize[1]<<" "<<m_halfPatchSize[2]<<"\n";
   
   m_fullPatchSize[0] = 2 * m_halfPatchSize[0] + 1;
   m_fullPatchSize[1] = 2 * m_halfPatchSize[1] + 1;
@@ -195,7 +195,7 @@ void btkNLMTool<T>::SetSpatialBandwidth(int s)
   m_halfSpatialBandwidth[0] = (int)(0.5 + s * minVoxSz / m_spacing[0]);
   m_halfSpatialBandwidth[1] = (int)(0.5 + s * minVoxSz / m_spacing[1]);
   m_halfSpatialBandwidth[2] = (int)(0.5 + s * minVoxSz / m_spacing[2]);
-  std::cout<<"spatialBandwidth : "<<m_halfSpatialBandwidth[0]<<" "<<m_halfSpatialBandwidth[1]<<" "<<m_halfSpatialBandwidth[2]<<"\n";  
+  std::cout<<"half spatialBandwidth : "<<m_halfSpatialBandwidth[0]<<" "<<m_halfSpatialBandwidth[1]<<" "<<m_halfSpatialBandwidth[2]<<"\n";  
   
   m_fullSpatialBandwidth[0] = 2 * m_halfSpatialBandwidth[0] + 1;
   m_fullSpatialBandwidth[1] = 2 * m_halfSpatialBandwidth[1] + 1;
