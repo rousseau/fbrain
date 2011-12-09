@@ -78,6 +78,9 @@ TARGET_LINK_LIBRARIES(btkRescaleIntensity ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkReconstructionComparisonTool btkReconstructionComparisonTool.cxx )
 TARGET_LINK_LIBRARIES(btkReconstructionComparisonTool ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkIteratedBackProjection btkIteratedBackProjection.cxx)
+TARGET_LINK_LIBRARIES(btkIteratedBackProjection ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -99,4 +102,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkWeightedMean
                 btkSequenceNormalization
                 btkReconstructionComparisonTool
+		btkIteratedBackProjection
         DESTINATION bin)
