@@ -112,7 +112,7 @@ void SuperResolutionDataManager::ReadHRImage(std::string input_file)
   duplicator->SetInputImage( m_inputHRImage );
   duplicator->Update();
   m_outputHRImage = duplicator->GetOutput();
-  m_outputHRImage->FillBuffer(0); 
+  m_outputHRImage->FillBuffer(0);
 }
 
 void SuperResolutionDataManager::ReadLRImages(std::vector<std::string> & input_file)
