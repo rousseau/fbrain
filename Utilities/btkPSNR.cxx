@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
     
   
   //ITK declaration
-  typedef short PixelType;
+  typedef double PixelType;
   const   unsigned int        Dimension = 3;
   typedef itk::Image< PixelType, Dimension >    ImageType;
   typedef itk::ImageFileReader< ImageType >  ReaderType;
