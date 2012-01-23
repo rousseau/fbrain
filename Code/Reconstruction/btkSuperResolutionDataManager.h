@@ -52,10 +52,10 @@ class SuperResolutionDataManager
 public:
   typedef float PixelType;
   typedef itk::Image< PixelType, 3>          itkImage;
-  typedef itkImage::Pointer                 itkPointer;  
-  typedef itk::ImageFileReader< itkImage >  itkReader;
-  typedef itk::ImageFileWriter< itkImage >  itkWriter;
-  typedef itk::ImageDuplicator< itkImage >  itkDuplicator;
+  typedef itkImage::Pointer                  itkPointer;  
+  typedef itk::ImageFileReader< itkImage >   itkReader;
+  typedef itk::ImageFileWriter< itkImage >   itkWriter;
+  typedef itk::ImageDuplicator< itkImage >   itkDuplicator;
   typedef itk::Image< unsigned char, 3 >     itkImageMask;
   typedef itk::ImageFileReader< itkImageMask > itkMaskReader;
   typedef itk::ImageMaskSpatialObject< 3 >   itkMask;
@@ -68,6 +68,7 @@ public:
   itkPointer                  m_outputHRImage;
   itkPointer                  m_maskHRImage; //not yet used
   std::vector<itkPointer>     m_inputLRImages;
+  std::vector<itkPointer>     m_simulatedInputLRImages;
   std::vector<itkMaskPointer>  m_maskLRImages;
   std::vector<itkImage::RegionType> m_regionLRImages;
   std::vector<itkAffineDeformation::Pointer> m_affineTransform;
@@ -90,6 +91,8 @@ public:
   void ReadLRImages(std::vector<std::string> & input_file);
   void ReadMaskLRImages(std::vector<std::string> & input_file);
   void ReadAffineTransform(std::vector<std::string> & input_file);
+  void WriteSimulatedLRImages(std::vector<std::string> & input_file);
+  void WriteOutputHRImage(std::string & input_file);
   
 };
 
@@ -118,6 +121,7 @@ void SuperResolutionDataManager::ReadHRImage(std::string input_file)
 void SuperResolutionDataManager::ReadLRImages(std::vector<std::string> & input_file)
 {
   m_inputLRImages.resize(input_file.size());
+  m_simulatedInputLRImages.resize(input_file.size());
   
   for(unsigned int i=0;i<input_file.size();i++){
     std::cout<<"Reading Low-Resolution Input Image : "<<input_file[i]<<"\n";
@@ -125,6 +129,13 @@ void SuperResolutionDataManager::ReadLRImages(std::vector<std::string> & input_f
     reader->SetFileName( input_file[i]  );
     reader->Update();
     m_inputLRImages[i] = reader->GetOutput();
+    
+    //duplicate the input LR image into the output simulated image to keep all header information
+    itkDuplicator::Pointer duplicator = itkDuplicator::New();
+    duplicator->SetInputImage( m_inputLRImages[i] );
+    duplicator->Update();
+    m_simulatedInputLRImages[i] = duplicator->GetOutput();
+    m_simulatedInputLRImages[i]->FillBuffer(0);
   }
 }
 
@@ -176,5 +187,27 @@ void SuperResolutionDataManager::ReadAffineTransform(std::vector<std::string> & 
 
     m_affineTransform[i] = dynamic_cast<itkAffineDeformation *>( titr->GetPointer() ) ; 
   }
+}
+
+
+void SuperResolutionDataManager::WriteSimulatedLRImages(std::vector<std::string> & input_file)
+{
+  for(unsigned int i=0;i<input_file.size();i++){    
+    std::string output_file = "simulated_"+input_file[i];
+    std::cout<<"Writing simulated LR image : "<<output_file<<"\n";
+    WriterType::Pointer writer =  WriterType::New();
+    writer -> SetFileName( output_file );
+    writer -> SetInput( m_simulatedInputLRImages[i] );
+    writer -> Update();
+  }
+}
+
+void SuperResolutionDataManager::WriteOutputHRImage(std::string & input_file)
+{
+  std::cout<<"Writing output HR image : "<<input_file<<"\n";
+  WriterType::Pointer writer =  WriterType::New();
+  writer -> SetFileName( input_file );
+  writer -> SetInput( m_outputHRImage );
+  writer -> Update();
 }
 #endif

@@ -55,11 +55,24 @@ public:
   SuperResolutionTools          tool;
   
   void Initialize();
+  void SimulateLRImages();
+  void IteratedBackProjection();
   
 };
 
 void SuperResolutionManager::Initialize()
 {
   tool.InitializePSF(data);
+  tool.HComputation(data);
+}
+
+void SuperResolutionManager::SimulateLRImages()
+{
+  tool.SimulateLRImages(data);
+}
+
+void SuperResolutionManager::IteratedBackProjection()
+{
+  tool.IteratedBackProjection(data);
 }
 #endif

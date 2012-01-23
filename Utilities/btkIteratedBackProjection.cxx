@@ -155,6 +155,13 @@ int main( int argc, char *argv[] )
     btkSRM.data.ReadAffineTransform(transform_file);
     
     btkSRM.Initialize();
+    btkSRM.SimulateLRImages();
+    btkSRM.data.WriteSimulatedLRImages(input_file);
+    
+    btkSRM.IteratedBackProjection();
+    btkSRM.data.WriteOutputHRImage(output_file);
+    
+    
     
     //-------------------------------------------------------
     
