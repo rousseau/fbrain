@@ -56,7 +56,7 @@ public:
   
   void Initialize();
   void SimulateLRImages();
-  void IteratedBackProjection();
+  void IteratedBackProjection(int & loops);
   
 };
 
@@ -71,8 +71,9 @@ void SuperResolutionManager::SimulateLRImages()
   tool.SimulateLRImages(data);
 }
 
-void SuperResolutionManager::IteratedBackProjection()
+void SuperResolutionManager::IteratedBackProjection(int & loops)
 {
-  tool.IteratedBackProjection(data);
+  for(int i=0; i<loops; i++)
+    tool.IteratedBackProjection(data);
 }
 #endif

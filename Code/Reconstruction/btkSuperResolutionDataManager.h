@@ -65,6 +65,7 @@ public:
   typedef itk::TransformFileReader           itkTransformReader;
   
   itkPointer                  m_inputHRImage;
+  itkPointer                  m_currentHRImage;
   itkPointer                  m_outputHRImage;
   itkPointer                  m_maskHRImage; //not yet used
   std::vector<itkPointer>     m_inputLRImages;
@@ -93,6 +94,7 @@ public:
   void ReadAffineTransform(std::vector<std::string> & input_file);
   void WriteSimulatedLRImages(std::vector<std::string> & input_file);
   void WriteOutputHRImage(std::string & input_file);
+  void WriteOneImage(itkPointer image, std::string & filename);
   
 };
 
@@ -116,6 +118,11 @@ void SuperResolutionDataManager::ReadHRImage(std::string input_file)
   duplicator->Update();
   m_outputHRImage = duplicator->GetOutput();
   m_outputHRImage->FillBuffer(0);
+  
+  itkDuplicator::Pointer duplicator2 = itkDuplicator::New();
+  duplicator2->SetInputImage( m_inputHRImage );
+  duplicator2->Update();
+  m_currentHRImage = duplicator2->GetOutput();
 }
 
 void SuperResolutionDataManager::ReadLRImages(std::vector<std::string> & input_file)
@@ -194,20 +201,28 @@ void SuperResolutionDataManager::WriteSimulatedLRImages(std::vector<std::string>
 {
   for(unsigned int i=0;i<input_file.size();i++){    
     std::string output_file = "simulated_"+input_file[i];
-    std::cout<<"Writing simulated LR image : "<<output_file<<"\n";
-    WriterType::Pointer writer =  WriterType::New();
-    writer -> SetFileName( output_file );
-    writer -> SetInput( m_simulatedInputLRImages[i] );
-    writer -> Update();
+    WriteOneImage(m_simulatedInputLRImages[i], output_file);
   }
 }
 
 void SuperResolutionDataManager::WriteOutputHRImage(std::string & input_file)
 {
-  std::cout<<"Writing output HR image : "<<input_file<<"\n";
+  //Copy current estimate to the output HR image
+  itkDuplicator::Pointer duplicator = itkDuplicator::New();
+  duplicator->SetInputImage( m_currentHRImage );
+  duplicator->Update();
+  m_outputHRImage = duplicator->GetOutput();
+  
+  WriteOneImage(m_outputHRImage, input_file);
+}
+
+void SuperResolutionDataManager::WriteOneImage(itkPointer image, std::string & filename)
+{
+  std::cout<<"Writing : "<<filename<<"\n";
   WriterType::Pointer writer =  WriterType::New();
-  writer -> SetFileName( input_file );
-  writer -> SetInput( m_outputHRImage );
+  writer -> SetFileName( filename );
+  writer -> SetInput( image );
   writer -> Update();
 }
+ 
 #endif

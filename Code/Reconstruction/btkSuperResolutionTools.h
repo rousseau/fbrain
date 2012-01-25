@@ -92,6 +92,7 @@ public:
   void SetPSFComputation(int & type);
   void InitializePSF(SuperResolutionDataManager & data);
   void HComputation(SuperResolutionDataManager & data);
+  void UpdateX(SuperResolutionDataManager & data);
   void SimulateLRImages(SuperResolutionDataManager & data);
   void IteratedBackProjection(SuperResolutionDataManager & data);
 };
@@ -141,6 +142,7 @@ void SuperResolutionTools::InitializePSF(SuperResolutionDataManager & data)
     LRPSF->SetSpacing(lrSpacing);
     LRPSF->Allocate();
     LRPSF->FillBuffer(0);
+    std::cout<<"LRPSF size : "   <<lrSize[0]   <<" "<<lrSize[1]   <<" "<<lrSize[2]<<"\n";
     std::cout<<"LRPSF spacing : "<<lrSpacing[0]<<" "<<lrSpacing[1]<<" "<<lrSpacing[2]<<"\n";
     
     itkImage::IndexType lrIndexCenter;
@@ -179,16 +181,17 @@ void SuperResolutionTools::InitializePSF(SuperResolutionDataManager & data)
     hrIndexCenter[2] = (hrSize[2]-1)/2.0;
     itkImage::PointType hrPointCenter;
     m_PSF[i]->TransformContinuousIndexToPhysicalPoint(hrIndexCenter,hrPointCenter);
-    //modification of the origin of m_PSF so that LRPSF and m_PSF are centered.
+    
+    std::cout<<"modification of the origin of m_PSF so that LRPSF and m_PSF are centered.\n";
     itkImage::PointType hrOrigin;
     hrOrigin[0] = lrPointCenter[0] - hrPointCenter[0];
     hrOrigin[1] = lrPointCenter[1] - hrPointCenter[1];
     hrOrigin[2] = lrPointCenter[2] - hrPointCenter[2];
     m_PSF[i]->SetOrigin(hrOrigin);
     m_PSF[i]->TransformContinuousIndexToPhysicalPoint(hrIndexCenter,hrPointCenter);
+    std::cout<<"HRPSF origin : "<<hrOrigin[0]<<" "<<hrOrigin[1]<<" "<<hrOrigin[2]<<"\n";
     std::cout<<"HRPSF physical center : "<<hrPointCenter[0]<<" "<<hrPointCenter[1]<<" "<<hrPointCenter[2]<<"\n";
-    
-    
+        
     itkBSplineInterpolator::Pointer bsInterpolator = itkBSplineInterpolator::New();
     bsInterpolator->SetSplineOrder(m_interpolationOrder);
     bsInterpolator->SetInputImage(LRPSF);
@@ -277,11 +280,18 @@ void SuperResolutionTools::InitializePSF(SuperResolutionDataManager & data)
       for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF)
         itPSF.Set( itPSF.Get() / sum );
     
-    std::cout<<"Positive values of the PSF for the "<<i+1<<"th LR image : ";
+    std::cout<<"Positive values of the PSF for the "<<i+1<<"th LR image : \n";
     for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF) 
-      if(itPSF.Get()>0)
-        std::cout<<itPSF.Get()<<" ";
-    std::cout<<"\n";
+      if(itPSF.Get()>0){
+        hrIndex = itPSF.GetIndex();
+        std::cout<<itPSF.Get()<<" ("<<hrIndex[0]<<", "<<hrIndex[1]<<", "<<hrIndex[2]<<") \n";
+      }
+    
+    std::cout<<"Set the HR origin to 0 since the PSF now should be centered with image voxels\n\n";
+    hrOrigin[0] = 0;
+    hrOrigin[1] = 0;
+    hrOrigin[2] = 0;
+    m_PSF[i]->SetOrigin(hrOrigin);
   }
 }
 
@@ -362,6 +372,8 @@ void SuperResolutionTools::HComputation(SuperResolutionDataManager & data)
         //Coordinate in the current LR image
         lrIndex = itLRImage.GetIndex();
         
+        //std::cout<<"current LR index:"<<lrIndex[0]<<" "<<lrIndex[1]<<" "<<lrIndex[2]<<" -------------- \n";
+        
         //Compute the corresponding linear index of lrIndex
         lrLinearIndex = lrIndex[0] + lrIndex[1]*lrSize[0] + lrIndex[2]*lrSize[0]*lrSize[1];
         
@@ -375,8 +387,24 @@ void SuperResolutionTools::HComputation(SuperResolutionDataManager & data)
         psfOrigin[2] = lrPoint[2] - psfPointCenter[2];
         m_PSF[i]->SetOrigin(psfOrigin);
         
+        //std::cout<<"current lr point:"<<lrPoint[0]<<" "<<lrPoint[1]<<" "<<lrPoint[2]<<" \n";
+        //std::cout<<"psfSize:"<<psfSize[0]<<" "<<psfSize[1]<<" "<<psfSize[2]<<" \n";
+        //std::cout<<"psfIndexCenter:"<<psfIndexCenter[0]<<" "<<psfIndexCenter[1]<<" "<<psfIndexCenter[2]<<"\n";
+        //std::cout<<"psfPointCenter:"<<psfPointCenter[0]<<" "<<psfPointCenter[1]<<" "<<psfPointCenter[2]<<"\n";
+        //std::cout<<"psf origin:"<<psfOrigin[0]<<" "<<psfOrigin[1]<<" "<<psfOrigin[2]<<" \n";
+        
         //Loop over the m_PSF
         for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF){
+        
+          //debug
+          /*
+          psfIndex = itPSF.GetIndex();
+          m_PSF[i]->TransformIndexToPhysicalPoint(psfIndex,psfPoint);
+          data.m_inputHRImage->TransformPhysicalPointToContinuousIndex(psfPoint,hrContIndex);
+          std::cout<<"current psf point: "<<hrContIndex[0]<<" "<<hrContIndex[1]<<" "<<hrContIndex[2]<<" "<<itPSF.Get()<<"\n ";
+          */
+          //end of debug
+          
           
           if(itPSF.Get() > 0){
             
@@ -388,11 +416,12 @@ void SuperResolutionTools::HComputation(SuperResolutionDataManager & data)
             
             //Get back to the index in the HR image
             data.m_inputHRImage->TransformPhysicalPointToContinuousIndex(psfPoint,hrContIndex);
-            
+            //std::cout<<"hrContIndex no check: "<<hrContIndex[0]<<" "<<hrContIndex[1]<<" "<<hrContIndex[2]<<" \n ";
+
             //Check if the continuous index hrContIndex is inside the HR image
             if (data.m_inputHRImage->GetLargestPossibleRegion().IsInside(hrContIndex)) {
               
-              //std::cout<<"hrContIndex: "<<hrContIndex[0]<<" "<<hrContIndex[1]<<" "<<hrContIndex[2]<<" - ";
+              //std::cout<<"hrContIndex: "<<hrContIndex[0]<<" "<<hrContIndex[1]<<" "<<hrContIndex[2]<<" \n ";
               //Get the interpolation weight using itkBSplineInterpolationWeightFunction
               bsplineFunction->Evaluate(hrContIndex,bsplineWeights,bsplineStartIndex);
               //std::cout<<"bsplineIndex: "<<bsplineStartIndex[0]<<" "<<bsplineStartIndex[1]<<" "<<bsplineStartIndex[2]<<"\n";
@@ -429,6 +458,7 @@ void SuperResolutionTools::HComputation(SuperResolutionDataManager & data)
                   //Add weight*PSFValue to the corresponding element in H
                   m_H(lrLinearIndex,hrLinearIndex) += itPSF.Get() * bsplineWeights[weightLinearIndex];
                   weightLinearIndex += 1;
+                  //std::cout<<"HR point:"<<hrIndex[0]<<" "<<hrIndex[1]<<" "<<hrIndex[2]<<", weight:"<<m_H(lrLinearIndex,hrLinearIndex)<<"\n";
                   
                 } //end of loop over the support region
                 
@@ -467,10 +497,27 @@ void SuperResolutionTools::HComputation(SuperResolutionDataManager & data)
     m_X[hrLinearIndex] = itHRImage.Get();
   }
 }
+void SuperResolutionTools::UpdateX(SuperResolutionDataManager & data)
+{
+  std::cout<<"Update x\n";
+  m_X.fill(0.0);
+  itkImage::IndexType hrIndex;
+  uint hrLinearIndex = 0;
+  itkImage::SizeType  hrSize  = data.m_currentHRImage->GetLargestPossibleRegion().GetSize();
 
+  itkIteratorWithIndex itHRImage(data.m_currentHRImage,data.m_currentHRImage->GetLargestPossibleRegion());
+  for(itHRImage.GoToBegin(); !itHRImage.IsAtEnd(); ++itHRImage){
+    hrIndex = itHRImage.GetIndex();
+    hrLinearIndex = hrIndex[0] + hrIndex[1]*hrSize[0] + hrIndex[2]*hrSize[0]*hrSize[1];
+    m_X[hrLinearIndex] = itHRImage.Get();
+  }
+}
 void SuperResolutionTools::SimulateLRImages(SuperResolutionDataManager & data)
 {
   std::cout<<"Simulating LR images (= Hx)\n";
+  
+  //Update x
+  UpdateX(data);
   
   //Compute H * x
   vnl_vector<float> Hx;
@@ -523,13 +570,18 @@ void SuperResolutionTools::SimulateLRImages(SuperResolutionDataManager & data)
 void SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager & data)
 {
   std::cout<<"Do iterated back projection\n";
+  
+  std::cout<<"Compute y-Hx\n";
+  SimulateLRImages(data);
+  
+  std::cout<<"Update the current HR image\n";
   //Initialize to 0 the output HR image
   data.m_outputHRImage->FillBuffer(0);
     
   //parameters for interpolation (identity transform and bspline interpolator)
   itkIdentityTransform::Pointer transform = itkIdentityTransform::New();
   transform->SetIdentity();
-  int interpolationOrder = 3;
+  int interpolationOrder = 5;
   itkBSplineInterpolator::Pointer bsInterpolator = itkBSplineInterpolator::New();
   bsInterpolator->SetSplineOrder(interpolationOrder);
   
@@ -541,29 +593,39 @@ void SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager & d
     subtractFilter->SetInput2(data.m_simulatedInputLRImages[i]);
     subtractFilter->Update();
 
+    std::string s = "ibp_substract.nii.gz";
+    data.WriteOneImage(subtractFilter->GetOutput(), s);
+    
     //interpolate the LR difference 
     itkResampleFilter::Pointer resample = itkResampleFilter::New();
     resample->SetTransform(transform);
     resample->SetInterpolator(bsInterpolator);
     resample->UseReferenceImageOn();
-    resample->SetReferenceImage(data.m_inputHRImage);
+    resample->SetReferenceImage(data.m_currentHRImage);
     resample->SetInput(subtractFilter->GetOutput());
+    
+    s = "ibp_resample.nii.gz";
+    data.WriteOneImage(resample->GetOutput(), s);
 
-    //Add the interpolated difference with the output HR image
+    //Add the interpolated differences
     itkAddImageFilter::Pointer addFilter = itkAddImageFilter::New ();
     addFilter->SetInput1(data.m_outputHRImage);
     addFilter->SetInput2(resample->GetOutput());
     addFilter->Update();
     
-    data.m_outputHRImage = addFilter->GetOutput();        
+    data.m_outputHRImage = addFilter->GetOutput();
+    
+    s = "ibp_simulated.nii.gz";
+    data.WriteOneImage(data.m_simulatedInputLRImages[i], s);
+    
   }
   //Update the HR image correspondly
   itkAddImageFilter::Pointer addFilter2 = itkAddImageFilter::New ();
   addFilter2->SetInput1(data.m_outputHRImage);
-  addFilter2->SetInput2(data.m_inputHRImage);
+  addFilter2->SetInput2(data.m_currentHRImage);
   addFilter2->Update();
   
-  data.m_outputHRImage = addFilter2->GetOutput();        
+  data.m_currentHRImage = addFilter2->GetOutput();        
   
 }
 

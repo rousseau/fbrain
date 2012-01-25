@@ -99,6 +99,7 @@ int main( int argc, char *argv[] )
     TCLAP::ValueArg<std::string> outArg  ("o","output","Output image obtained using iterated by back-projection.", true,"","string",cmd);
     TCLAP::SwitchArg  boxcarSwitchArg("","boxcar","A boxcar-shaped PSF is assumed as imaging model (by default a Gaussian-shaped PSF is employed.).",false);
     TCLAP::MultiArg<std::string> transArg("t","transform","transform file",false,"string",cmd);
+    TCLAP::ValueArg<int> loopArg  ("l","loop","Number of loops (iterations of IBP algorithm).", false,1,"int",cmd);
     
     // Parse the argv array.
     cmd.parse( argc, argv );
@@ -110,6 +111,7 @@ int main( int argc, char *argv[] )
 
     std::string reference_file   = refArg.getValue();
     std::string output_file      = outArg.getValue();
+    int loops                    = loopArg.getValue();
     
     
     // typedefs
@@ -155,16 +157,17 @@ int main( int argc, char *argv[] )
     btkSRM.data.ReadAffineTransform(transform_file);
     
     btkSRM.Initialize();
+    
     btkSRM.SimulateLRImages();
     btkSRM.data.WriteSimulatedLRImages(input_file);
     
-    btkSRM.IteratedBackProjection();
-    btkSRM.data.WriteOutputHRImage(output_file);
+    //btkSRM.IteratedBackProjection(loops);
+    //btkSRM.data.WriteOutputHRImage(output_file);
     
     
     
     //-------------------------------------------------------
-    
+    /*
     typedef itk::BSplineInterpolateImageFunction<ImageType, double, double>    itkInterpolator;
     itkInterpolator::Pointer interpolator = itkInterpolator::New();
     interpolator->SetSplineOrder(1);
@@ -180,6 +183,7 @@ int main( int argc, char *argv[] )
     typedef itk::ContinuousIndex<double, ImageType::ImageDimension> ContinuousIndexType;
 
     ContinuousIndexType hrIndex;
+    */
     /*
     for(LRImageIt.GoToBegin(); !LRImageIt.IsAtEnd(); ++LRImageIt){
       lrIndex = LRImageIt.GetIndex();
