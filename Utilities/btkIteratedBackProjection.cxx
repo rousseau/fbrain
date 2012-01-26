@@ -71,6 +71,7 @@
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkContinuousIndex.h"
 
+
 /*
 class vnl_rosenbrock : public vnl_cost_function
 {
@@ -100,6 +101,7 @@ int main( int argc, char *argv[] )
     TCLAP::SwitchArg  boxcarSwitchArg("","boxcar","A boxcar-shaped PSF is assumed as imaging model (by default a Gaussian-shaped PSF is employed.).",false);
     TCLAP::MultiArg<std::string> transArg("t","transform","transform file",false,"string",cmd);
     TCLAP::ValueArg<int> loopArg  ("l","loop","Number of loops (iterations of IBP algorithm).", false,1,"int",cmd);
+    TCLAP::ValueArg<int> nlmArg  ("n","nlm","Type of filtering during IBP process (0: no filtering, 1: error map filtering, 2: current HR image filtering).", false,0,"int",cmd);
     
     // Parse the argv array.
     cmd.parse( argc, argv );
@@ -112,7 +114,7 @@ int main( int argc, char *argv[] )
     std::string reference_file   = refArg.getValue();
     std::string output_file      = outArg.getValue();
     int loops                    = loopArg.getValue();
-    
+    int nlm                      = nlmArg.getValue();
     
     // typedefs
     const   unsigned int    Dimension = 3;
@@ -161,7 +163,7 @@ int main( int argc, char *argv[] )
     //btkSRM.SimulateLRImages();
     //btkSRM.data.WriteSimulatedLRImages(input_file);
     
-    btkSRM.IteratedBackProjection(loops);
+    btkSRM.IteratedBackProjection(loops,nlm);
     btkSRM.data.WriteOutputHRImage(output_file);
     
     

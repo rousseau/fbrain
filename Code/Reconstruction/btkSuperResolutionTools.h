@@ -51,6 +51,9 @@
 
 #include "vnl/vnl_sparse_matrix.h"
 
+#include "../Denoising/btkNLMTool.h"
+
+
 class SuperResolutionDataManager;
 
 class SuperResolutionTools
@@ -94,7 +97,7 @@ public:
   void HComputation(SuperResolutionDataManager & data);
   void UpdateX(SuperResolutionDataManager & data);
   void SimulateLRImages(SuperResolutionDataManager & data);
-  void IteratedBackProjection(SuperResolutionDataManager & data);
+  void IteratedBackProjection(SuperResolutionDataManager & data, int & nlm);
 };
 
 
@@ -567,9 +570,10 @@ void SuperResolutionTools::SimulateLRImages(SuperResolutionDataManager & data)
   }
 }
 
-void SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager & data)
+void SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager & data, int & nlm)
 {
   std::cout<<"Do iterated back projection\n";
+  std::cout<<"NLM Filtering type: "<<nlm<<"\n";
   
   std::cout<<"Compute y-Hx\n";
   SimulateLRImages(data);
@@ -585,6 +589,8 @@ void SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager & d
   itkBSplineInterpolator::Pointer bsInterpolator = itkBSplineInterpolator::New();
   bsInterpolator->SetSplineOrder(interpolationOrder);
   
+  std::string s = "";
+  
   for(uint i=0; i<data.m_inputLRImages.size(); i++){
 
     //compute the difference between LR input and the simulated LR image
@@ -593,7 +599,7 @@ void SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager & d
     subtractFilter->SetInput2(data.m_simulatedInputLRImages[i]);
     subtractFilter->Update();
 
-    std::string s = "ibp_substract.nii.gz";
+    s = "ibp_substract.nii.gz";
     data.WriteOneImage(subtractFilter->GetOutput(), s);
     
     //interpolate the LR difference 
@@ -619,14 +625,35 @@ void SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager & d
     data.WriteOneImage(data.m_simulatedInputLRImages[i], s);
     
   }
+  if(nlm==1){
+    //Smooth the error map using the current reconstructed image as reference for NLM filter
+    btkNLMTool<float> myTool;
+    myTool.SetInput(data.m_outputHRImage);
+    myTool.SetDefaultParameters();
+    myTool.SetReferenceImage(data.m_currentHRImage);    
+    myTool.SetSmoothingUsingReferenceImage(0.5);
+    myTool.ComputeOutput();
+    myTool.GetOutput(data.m_outputHRImage);    
+    s = "ibp_nlm_error.nii.gz";
+    data.WriteOneImage(data.m_outputHRImage, s);     
+  }
+ 
   //Update the HR image correspondly
   itkAddImageFilter::Pointer addFilter2 = itkAddImageFilter::New ();
   addFilter2->SetInput1(data.m_outputHRImage);
   addFilter2->SetInput2(data.m_currentHRImage);
   addFilter2->Update();
   
-  data.m_currentHRImage = addFilter2->GetOutput();        
+  data.m_currentHRImage = addFilter2->GetOutput();  
   
+  if(nlm==2){
+    //Smooth the current reconstructed image
+    btkNLMTool<float> myTool;
+    myTool.SetInput(data.m_currentHRImage);
+    myTool.SetDefaultParameters();
+    myTool.ComputeOutput();
+    myTool.GetOutput(data.m_currentHRImage);        
+  }  
 }
 
 #endif
