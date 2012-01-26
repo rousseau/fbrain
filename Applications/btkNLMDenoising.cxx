@@ -110,7 +110,7 @@ int main(int argc, char** argv)
     std::string difference_file  = outputDifferenceImageArg.getValue();
 
     //ITK declaration
-    typedef short PixelType;
+    typedef float PixelType;
     const   unsigned int        Dimension = 3;
     typedef itk::Image< PixelType, Dimension >    ImageType; //same type for input and output
     typedef ImageType::Pointer ImagePointer;

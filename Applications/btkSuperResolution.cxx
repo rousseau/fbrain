@@ -213,52 +213,30 @@ int main( int argc, char *argv[] )
     
   for (int i=0; i<numberOfLoops; i++){
     std::cout<<"Loop : "<<i+1<<std::endl;
-    typedef itk::Image< short, Dimension> itkShortImage;
-    typedef itkShortImage::Pointer        itkShortPointer;
-    
-    //There is an issue with the denoising algorithm. It works with short by default. 
-    //There is a conflict (overload) if the input type is float! 
-    itk::CastImageFilter< ImageType, itkShortImage >::Pointer float2ShortFilter = itk::CastImageFilter< ImageType, itkShortImage >::New();
-    float2ShortFilter->SetInput(resampler -> GetOutput());
-    float2ShortFilter->Update();    
-    
-    btkNLMTool<short> myTool;
-    myTool.SetInput(float2ShortFilter->GetOutput());
+       
+    btkNLMTool<float> myTool;
+    myTool.SetInput(resampler -> GetOutput());
     myTool.SetDefaultParameters();
     myTool.ComputeOutput();
     
-    itkShortPointer outputImage = itkShortImage::New();
+    ImagePointer outputImage = ImageType::New();
     myTool.GetOutput(outputImage);
-    
-    itk::CastImageFilter< itkShortImage, ImageType >::Pointer short2FloatFilter = itk::CastImageFilter< itkShortImage, ImageType >::New();
-    short2FloatFilter->SetInput(outputImage);
-    short2FloatFilter->Update();    
 
-    resampler -> SetReferenceImage( short2FloatFilter->GetOutput() );
+    resampler -> SetReferenceImage( outputImage );
     resampler -> Update();
   }
   //NLM denoising desired at the last step if number of loops > 0
   if(numberOfLoops>0){
-    typedef itk::Image< short, Dimension> itkShortImage;
-    typedef itkShortImage::Pointer        itkShortPointer;
-    
-    itk::CastImageFilter< ImageType, itkShortImage >::Pointer float2ShortFilter = itk::CastImageFilter< ImageType, itkShortImage >::New();
-    float2ShortFilter->SetInput(resampler -> GetOutput());
-    float2ShortFilter->Update();    
-    
-    btkNLMTool<short> myTool;
-    myTool.SetInput(float2ShortFilter->GetOutput());
+      
+    btkNLMTool<float> myTool;
+    myTool.SetInput(resampler -> GetOutput());
     myTool.SetDefaultParameters();
     myTool.ComputeOutput();
     
-    itkShortPointer outputImage = itkShortImage::New();
+    ImagePointer outputImage = ImageType::New();
     myTool.GetOutput(outputImage);
-    
-    itk::CastImageFilter< itkShortImage, ImageType >::Pointer short2FloatFilter = itk::CastImageFilter< itkShortImage, ImageType >::New();
-    short2FloatFilter->SetInput(outputImage);
-    short2FloatFilter->Update();    
-    
-    resampler -> SetReferenceImage( short2FloatFilter->GetOutput() );    
+        
+    resampler -> SetReferenceImage( outputImage );    
   }
 
   // Write image

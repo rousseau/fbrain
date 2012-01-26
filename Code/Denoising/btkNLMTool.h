@@ -55,6 +55,9 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include <sstream>
 #include <fstream>
 
+//WARNING:
+//the possible types for T are float or double. Other types may introduce error during the computations 
+
 template <typename T>
 class btkNLMTool
 {
@@ -66,18 +69,12 @@ class btkNLMTool
   typedef typename itk::ImageRegionConstIterator< itkTImage > itkTConstIterator;
   typedef typename itk::ImageRegionIteratorWithIndex< itkTImage > itkTIteratorWithIndex;
 
-  typedef typename itk::Image< float, 3> itkFloatImage;
-  typedef typename itkFloatImage::Pointer itkFloatPointer;
-  typedef typename itk::ImageRegionIterator< itkFloatImage > itkFloatIterator;
-  typedef typename itk::ImageRegionIteratorWithIndex< itkFloatImage > itkFloatIteratorWithIndex;
-
-
   itkTPointer m_inputImage;
   itkTPointer m_outputImage;
   itkTPointer m_maskImage;
   itkTPointer m_refImage;
-  itkFloatPointer m_meanImage;
-  itkFloatPointer m_varianceImage;
+  itkTPointer m_meanImage;
+  itkTPointer m_varianceImage;
   
   //Image information (size, spacing etc.)
   typename itkTImage::SpacingType m_spacing;
@@ -116,14 +113,13 @@ class btkNLMTool
   void PrintInfo();
   
   void CreatePatch(itkTPointer & patch);
-  void CreatePatch(itkFloatPointer & patch);
   void GetPatch(typename itkTImage::IndexType p, itkTPointer & patch);
   void GetPatchFromReferenceImage(typename itkTImage::IndexType p, itkTPointer & patch);
-  void AddPatchToImage(typename itkTImage::IndexType p, itkFloatPointer & patch, itkFloatPointer & image, itkFloatPointer & weightImage, double weight);
+  void AddPatchToImage(typename itkTImage::IndexType p, itkTPointer & patch, itkTPointer & image, itkTPointer & weightImage, double weight);
   double PatchDistance(itkTPointer & p,itkTPointer & q);
 
-  double GetDenoisedPatch(typename itkTImage::IndexType p, itkFloatPointer & patch);
-  double GetDenoisedPatchUsingTheReferenceImage(typename itkTImage::IndexType p, itkFloatPointer & patch);
+  double GetDenoisedPatch(typename itkTImage::IndexType p, itkTPointer & patch);
+  double GetDenoisedPatchUsingTheReferenceImage(typename itkTImage::IndexType p, itkTPointer & patch);
   void ComputeSearchRegion(typename itkTImage::IndexType p, typename itkTImage::RegionType & region);
   void ComputePatchRegion(typename itkTImage::IndexType p, typename itkTImage::RegionType & imageRegion, typename itkTImage::RegionType & patchRegion);
   bool CheckSpeed(typename itkTImage::IndexType p, typename itkTImage::IndexType q);
@@ -280,7 +276,7 @@ void btkNLMTool<T>::SetOptimizationStrategy(int o)
 
   if(o==1){
     std::cout<<"Optimized mode. Computing Mean and Variance images\n";
-    m_meanImage = itkFloatImage::New();
+    m_meanImage = itkTImage::New();
     m_meanImage->SetRegions(m_inputImage->GetLargestPossibleRegion());
     m_meanImage->SetSpacing( m_inputImage->GetSpacing() );
     m_meanImage->SetOrigin( m_inputImage->GetOrigin() );
@@ -288,7 +284,7 @@ void btkNLMTool<T>::SetOptimizationStrategy(int o)
     m_meanImage->Allocate();
     m_meanImage->FillBuffer(0); 
 
-    m_varianceImage = itkFloatImage::New();
+    m_varianceImage = itkTImage::New();
     m_varianceImage->SetRegions(m_inputImage->GetLargestPossibleRegion());
     m_varianceImage->SetSpacing( m_inputImage->GetSpacing() );
     m_varianceImage->SetOrigin( m_inputImage->GetOrigin() );
@@ -468,7 +464,7 @@ void btkNLMTool<T>::ComputeOutput()
   if(m_useTheReferenceImage == true)
     std::cout<<"Use of a reference image\n";
   
-  itkFloatPointer denoisedImage = itkFloatImage::New();
+  itkTPointer denoisedImage = itkTImage::New();
   denoisedImage->SetRegions(m_inputImage->GetLargestPossibleRegion());
   denoisedImage->SetSpacing( m_inputImage->GetSpacing() );
   denoisedImage->SetOrigin( m_inputImage->GetOrigin() );
@@ -477,7 +473,7 @@ void btkNLMTool<T>::ComputeOutput()
   denoisedImage->FillBuffer(0); 
 
   
-  itkFloatIterator denoisedIt( denoisedImage, denoisedImage->GetLargestPossibleRegion() );
+  itkTIterator denoisedIt( denoisedImage, denoisedImage->GetLargestPossibleRegion() );
   itkTIterator outputIt( m_outputImage, m_outputImage->GetLargestPossibleRegion());
 
   int x,y,z;
@@ -497,7 +493,7 @@ void btkNLMTool<T>::ComputeOutput()
             p[2] = z;
 
             if( m_maskImage->GetPixel(p) > 0 ){	  
-              itkFloatPointer patch = itkFloatImage::New();
+              itkTPointer patch = itkTImage::New();
               double sum = 0;
               if(m_useTheReferenceImage==false) sum = GetDenoisedPatch(p, patch);
               else sum = GetDenoisedPatchUsingTheReferenceImage(p, patch);
@@ -507,7 +503,7 @@ void btkNLMTool<T>::ComputeOutput()
           }
   }
   if(m_blockwise >= 1){
-    itkFloatPointer weightImage = itkFloatImage::New();
+    itkTPointer weightImage = itkTImage::New();
     weightImage->SetRegions(m_inputImage->GetLargestPossibleRegion());
     weightImage->SetSpacing( m_inputImage->GetSpacing() );
     weightImage->SetOrigin( m_inputImage->GetOrigin() );
@@ -527,7 +523,7 @@ void btkNLMTool<T>::ComputeOutput()
             p[2] = z;
 
             if( m_maskImage->GetPixel(p) > 0 ){	  
-              itkFloatPointer patch = itkFloatImage::New();
+              itkTPointer patch = itkTImage::New();
               double sum = 0;
               if(m_useTheReferenceImage==false) sum = GetDenoisedPatch(p, patch);
               else sum = GetDenoisedPatchUsingTheReferenceImage(p, patch);
@@ -553,7 +549,7 @@ void btkNLMTool<T>::ComputeOutput()
               p[2] = z;
 
               if( m_maskImage->GetPixel(p) > 0 ){	  
-                itkFloatPointer patch = itkFloatImage::New();
+                itkTPointer patch = itkTImage::New();
                 double sum = 0;
                 if(m_useTheReferenceImage==false) sum = GetDenoisedPatch(p, patch);
                 else sum = GetDenoisedPatchUsingTheReferenceImage(p, patch);
@@ -567,7 +563,7 @@ void btkNLMTool<T>::ComputeOutput()
         }
     }
 
-    itkFloatIterator weightIt( weightImage, weightImage->GetLargestPossibleRegion() );
+    itkTIterator weightIt( weightImage, weightImage->GetLargestPossibleRegion() );
     //weight normalization
     for ( denoisedIt.GoToBegin(), weightIt.GoToBegin(); !denoisedIt.IsAtEnd(); ++denoisedIt, ++weightIt)
       if( weightIt.Get() > 0 )
@@ -575,18 +571,11 @@ void btkNLMTool<T>::ComputeOutput()
 
   }
 
-  //Convert float data from denoisedImage to T data for m_outputImage
+  //This should be modified by just copy the two images.
+  //Convert data from denoisedImage to m_outputImage
   for ( denoisedIt.GoToBegin(), outputIt.GoToBegin(); !denoisedIt.IsAtEnd(); ++denoisedIt, ++outputIt)
     //outputIt.Set( (T)rint(denoisedIt.Get()) );
     outputIt.Set( (T)(denoisedIt.Get()) );
-
-  //This can be done also using an ITK filter, but in this case, the output data are truncated (not rounded)
-  /*
-  typename itk::CastImageFilter< itkFloatImage, itkTImage >::Pointer castFilter = itk::CastImageFilter< itkFloatImage, itkTImage >::New();
-  castFilter->SetInput(denoisedImage);
-  castFilter->Update();
-  m_outputImage = castFilter->GetOutput();
-  */
   
 }
 
@@ -622,19 +611,6 @@ void btkNLMTool<T>::CreatePatch(itkTPointer & patch)
   patch->SetRegions(region);
   patch->Allocate();
   patch->FillBuffer(0);  
-}
-
-
-template <typename T>
-void btkNLMTool<T>::CreatePatch(itkFloatPointer & patch)
-{
-  //resize and allocate the patch and set the estimate to 0
-  typename itkFloatImage::SizeType size = m_fullPatchSize;
-  typename itkFloatImage::RegionType region;
-  region.SetSize(size);
-  patch->SetRegions(region);
-  patch->Allocate();
-  patch->FillBuffer(0.0);  
 }
 
 template <typename T>
@@ -700,16 +676,16 @@ void btkNLMTool<T>::GetPatchFromReferenceImage(typename itkTImage::IndexType p, 
 }
 
 template <typename T>
-void btkNLMTool<T>::AddPatchToImage(typename itkTImage::IndexType p, itkFloatPointer & patch, itkFloatPointer & image, itkFloatPointer & weightImage, double weight)
+void btkNLMTool<T>::AddPatchToImage(typename itkTImage::IndexType p, itkTPointer & patch, itkTPointer & image, itkTPointer & weightImage, double weight)
 {
   //this function add a patch value to the denoised image
   typename itkTImage::RegionType imageRegion;
   typename itkTImage::RegionType patchRegion;
   ComputePatchRegion(p,imageRegion,patchRegion);
   
-  itkFloatIterator imageIt( image, imageRegion);
-  itkFloatIterator weightIt( weightImage, imageRegion);
-  itkFloatIterator patchIt( patch, patchRegion);
+  itkTIterator imageIt( image, imageRegion);
+  itkTIterator weightIt( weightImage, imageRegion);
+  itkTIterator patchIt( patch, patchRegion);
 
   for ( imageIt.GoToBegin(), patchIt.GoToBegin(), weightIt.GoToBegin(); !imageIt.IsAtEnd(); ++imageIt, ++patchIt, ++weightIt){
     imageIt.Set( imageIt.Get() + patchIt.Get() );
@@ -734,14 +710,14 @@ double btkNLMTool<T>::PatchDistance(itkTPointer & p,itkTPointer & q)
 }
 
 template <typename T>
-double btkNLMTool<T>::GetDenoisedPatch(typename itkTImage::IndexType p, itkFloatPointer & patch)
+double btkNLMTool<T>::GetDenoisedPatch(typename itkTImage::IndexType p, itkTPointer & patch)
 {
   double wmax = 0; //maximum weight of patches
   double sum  = 0; //sum of weights (used for normalization purpose)
   
   //create the patch and set the estimate to 0
   CreatePatch(patch);
-  itkFloatIterator patchIt(patch, patch->GetRequestedRegion());
+  itkTIterator patchIt(patch, patch->GetRequestedRegion());
 
   //get the value of the patch around the current pixel
   itkTPointer centralPatch = itkTImage::New();
@@ -821,14 +797,14 @@ double btkNLMTool<T>::GetDenoisedPatch(typename itkTImage::IndexType p, itkFloat
 }
 
 template <typename T>
-double btkNLMTool<T>::GetDenoisedPatchUsingTheReferenceImage(typename itkTImage::IndexType p, itkFloatPointer & patch)
+double btkNLMTool<T>::GetDenoisedPatchUsingTheReferenceImage(typename itkTImage::IndexType p, itkTPointer & patch)
 {
   double wmax = 0; //maximum weight of patches
   double sum  = 0; //sum of weights (used for normalization purpose)
   
   //create the patch and set the estimate to 0
   CreatePatch(patch);
-  itkFloatIterator patchIt(patch, patch->GetRequestedRegion());
+  itkTIterator patchIt(patch, patch->GetRequestedRegion());
   
   //get the value of the patch around the current pixel
   itkTPointer centralPatch = itkTImage::New();

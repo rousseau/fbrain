@@ -158,11 +158,11 @@ int main( int argc, char *argv[] )
     
     btkSRM.Initialize();
     
-    btkSRM.SimulateLRImages();
-    btkSRM.data.WriteSimulatedLRImages(input_file);
+    //btkSRM.SimulateLRImages();
+    //btkSRM.data.WriteSimulatedLRImages(input_file);
     
-    //btkSRM.IteratedBackProjection(loops);
-    //btkSRM.data.WriteOutputHRImage(output_file);
+    btkSRM.IteratedBackProjection(loops);
+    btkSRM.data.WriteOutputHRImage(output_file);
     
     
     

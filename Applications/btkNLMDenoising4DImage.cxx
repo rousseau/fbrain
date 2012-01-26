@@ -100,7 +100,7 @@ int main(int argc, char** argv)
 
 
     //ITK declaration
-    typedef short PixelType;
+    typedef float PixelType;
     const   unsigned int        Dimension = 4;
     typedef itk::Image< PixelType, Dimension >    Image4DType; //same type for input and output
     typedef itk::Image< PixelType, Dimension-1 >  Image3DType; //temp images (we use here a 3D version of the NLM filter)
