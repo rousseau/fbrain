@@ -102,7 +102,7 @@ int main( int argc, char *argv[] )
     TCLAP::MultiArg<std::string> transArg("t","transform","transform file",false,"string",cmd);
     TCLAP::ValueArg<int> loopArg  ("l","loop","Number of loops (iterations of IBP algorithm).", false,1,"int",cmd);
     TCLAP::ValueArg<int> nlmArg  ("n","nlm","Type of filtering during IBP process (0: no filtering, 1: error map filtering, 2: current HR image filtering).", false,0,"int",cmd);
-    TCLAP::ValueArg<int> simArg  ("s","sim","Simulation of LR images based on the input HR image (0: no simulation, 1: simulation).", false,0,"int",cmd);
+    TCLAP::ValueArg<int> simArg  ("s","sim","Simulation of LR images based on the input HR image and the input LR images (0: no simulation, 1: simulation).", false,0,"int",cmd);
     
     // Parse the argv array.
     cmd.parse( argc, argv );
