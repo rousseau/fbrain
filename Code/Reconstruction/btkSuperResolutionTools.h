@@ -625,13 +625,23 @@ void SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager & d
     data.WriteOneImage(data.m_simulatedInputLRImages[i], s);
     
   }
+  
+  //Normalize the resampled difference image
+  itkIteratorWithIndex itImage(data.m_outputHRImage,data.m_outputHRImage->GetLargestPossibleRegion());
+  for(itImage.GoToBegin(); !itImage.IsAtEnd(); ++itImage)
+    itImage.Set( itImage.Get() / data.m_inputLRImages.size() );
+
+
+  
   if(nlm==1){
     //Smooth the error map using the current reconstructed image as reference for NLM filter
     btkNLMTool<float> myTool;
     myTool.SetInput(data.m_outputHRImage);
     myTool.SetDefaultParameters();
     myTool.SetReferenceImage(data.m_currentHRImage);    
-    myTool.SetSmoothingUsingReferenceImage(0.5);
+    myTool.SetSmoothingUsingReferenceImage(1.0);
+    myTool.SetBlockwiseStrategy(1); //0 pointwise, 1 block, 2 fast block
+
     myTool.ComputeOutput();
     myTool.GetOutput(data.m_outputHRImage);    
     s = "ibp_nlm_error.nii.gz";
@@ -644,13 +654,16 @@ void SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager & d
   addFilter2->SetInput2(data.m_currentHRImage);
   addFilter2->Update();
   
-  data.m_currentHRImage = addFilter2->GetOutput();  
+  data.m_currentHRImage = addFilter2->GetOutput(); 
+  s = "ibp_updated.nii.gz";
+  data.WriteOneImage(data.m_currentHRImage, s);      
   
   if(nlm==2){
     //Smooth the current reconstructed image
     btkNLMTool<float> myTool;
     myTool.SetInput(data.m_currentHRImage);
     myTool.SetDefaultParameters();
+    myTool.SetBlockwiseStrategy(1); //0 pointwise, 1 block, 2 fast block
     myTool.ComputeOutput();
     myTool.GetOutput(data.m_currentHRImage);        
   }  
