@@ -63,6 +63,7 @@ public:
 void SuperResolutionManager::Initialize()
 {
   tool.InitializePSF(data);
+  tool.CreateMaskHRImage(data);
   tool.HComputation(data);
 }
 

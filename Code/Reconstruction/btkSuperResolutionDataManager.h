@@ -40,11 +40,13 @@
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkImageDuplicator.h"
+#include "itkTransformFactory.h"
 
 #include "itkAffineTransform.h"
 #include "itkEuler3DTransform.h"
 #include "itkTransformFileReader.h"
 #include "itkImageMaskSpatialObject.h"
+#include "itkMatrixOffsetTransformBase.h"
 
 
 class SuperResolutionDataManager
@@ -63,11 +65,12 @@ public:
 
   typedef itk::AffineTransform<double,3>     itkAffineDeformation;
   typedef itk::TransformFileReader           itkTransformReader;
+  typedef itk::MatrixOffsetTransformBase<double,3,3> TransformType;
   
   itkPointer                  m_inputHRImage;
   itkPointer                  m_currentHRImage;
   itkPointer                  m_outputHRImage;
-  itkPointer                  m_maskHRImage; //not yet used
+  itkPointer                  m_maskHRImage; //should be in short or bool to save memory
   std::vector<itkPointer>     m_inputLRImages;
   std::vector<itkPointer>     m_simulatedInputLRImages;
   std::vector<itkMaskPointer>  m_maskLRImages;
@@ -123,6 +126,11 @@ void SuperResolutionDataManager::ReadHRImage(std::string input_file)
   duplicator2->SetInputImage( m_inputHRImage );
   duplicator2->Update();
   m_currentHRImage = duplicator2->GetOutput();
+  
+  itkDuplicator::Pointer duplicator3 = itkDuplicator::New();
+  duplicator3->SetInputImage( m_inputHRImage );
+  duplicator3->Update();
+  m_maskHRImage = duplicator3->GetOutput();
 }
 
 void SuperResolutionDataManager::ReadLRImages(std::vector<std::string> & input_file)
@@ -173,27 +181,44 @@ void SuperResolutionDataManager::ReadMaskLRImages(std::vector<std::string> & inp
 
 void SuperResolutionDataManager::ReadAffineTransform(std::vector<std::string> & input_file)
 {
-  m_affineTransform.resize(input_file.size());
   
-  for(unsigned int i=0;i<input_file.size();i++){
-    std::cout<<"Reading Affine Transform : "<<input_file[i]<<"\n";
-    itkTransformReader::Pointer reader = itkTransformReader::New();
-    reader->SetFileName(input_file[i]);
-    try
-    {
-      reader->Update();
+  
+  m_affineTransform.resize(m_inputLRImages.size());
+  if(input_file.size() > 0){
+  
+    if(m_inputLRImages.size() != input_file.size())
+      std::cout<<"WARNING : the number of input transforms is different to the number of LR images!!\n";
+    
+    itk::TransformFactory<TransformType>::RegisterTransform();
+  
+    for(unsigned int i=0;i<input_file.size();i++){
+     std::cout<<"Reading Affine Transform : "<<input_file[i]<<"\n";
+     itkTransformReader::Pointer reader = itkTransformReader::New();
+     reader->SetFileName(input_file[i]);
+     try
+      {
+        reader->Update();
+      }
+      catch( itk::ExceptionObject & excp )
+      {
+        std::cerr << "Error while reading the transform file" << std::endl;
+        std::cerr << excp << std::endl;
+        std::cerr << "[FAILED]" << std::endl;
+      } 
+      m_affineTransform[i] = static_cast<itkAffineDeformation *>( reader->GetTransformList()->front().GetPointer());
+      std::cout<<"affine transform:"<<m_affineTransform[i]<<"\n";
     }
-    catch( itk::ExceptionObject & excp )
-    {
-      std::cerr << "Error while reading the transform file" << std::endl;
-      std::cerr << excp << std::endl;
-      std::cerr << "[FAILED]" << std::endl;
-    } 
-    TransformListType transforms = reader->GetTransformList();
-    TransformReaderType::TransformListType::const_iterator titr = transforms->begin();
-
-    m_affineTransform[i] = dynamic_cast<itkAffineDeformation *>( titr->GetPointer() ) ; 
   }
+  //else set the transforms with identity 
+  else
+  {
+    std::cout<<"Affine transforms are set to identity\n";
+    for(unsigned int i=0;i<m_inputLRImages.size();i++){
+      m_affineTransform[i] = itkAffineDeformation::New();
+      std::cout<<"affine transform:"<<m_affineTransform[i]<<"\n";
+    }
+  
+  }  
 }
 
 

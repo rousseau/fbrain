@@ -67,7 +67,7 @@ int main(int argc, char** argv)
     cmd.add( inputMaskArg );
     TCLAP::ValueArg<std::string> inputReferenceArg("r","ref_file","filename of the reference image",false,"","string");
     cmd.add( inputReferenceArg );
-    TCLAP::ValueArg< float > paddingArg("p","pad","padding value (used if no mask image is provided, default is -1)",false,-1,"float");
+    TCLAP::ValueArg< float > paddingArg("p","pad","padding value (used if no mask image is provided, default is 0)",false,0,"float");
     cmd.add( paddingArg );
     TCLAP::ValueArg< int > hwnArg("","hwn","patch half size (default is 1)",false,1,"int");
     cmd.add( hwnArg );

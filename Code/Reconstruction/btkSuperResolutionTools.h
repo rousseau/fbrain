@@ -98,6 +98,7 @@ public:
   void UpdateX(SuperResolutionDataManager & data);
   void SimulateLRImages(SuperResolutionDataManager & data);
   void IteratedBackProjection(SuperResolutionDataManager & data, int & nlm);
+  void CreateMaskHRImage(SuperResolutionDataManager & data);
 };
 
 
@@ -325,6 +326,7 @@ void SuperResolutionTools::HComputation(SuperResolutionDataManager & data)
   itkImage::PointType lrPoint;  //physical point location of lrIndex
   itkImage::IndexType psfIndex; //index of the current voxel in the PSF
   itkImage::PointType psfPoint; //physical point location of psfIndex
+  itkImage::PointType transformedPoint; //Physical point location after applying affine transform
   itkContinuousIndex  hrContIndex;  //continuous index in HR image of psfPoint
   itkImage::IndexType hrIndex;  //index in HR image of interpolated psfPoint
 
@@ -398,17 +400,7 @@ void SuperResolutionTools::HComputation(SuperResolutionDataManager & data)
         
         //Loop over the m_PSF
         for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF){
-        
-          //debug
-          /*
-          psfIndex = itPSF.GetIndex();
-          m_PSF[i]->TransformIndexToPhysicalPoint(psfIndex,psfPoint);
-          data.m_inputHRImage->TransformPhysicalPointToContinuousIndex(psfPoint,hrContIndex);
-          std::cout<<"current psf point: "<<hrContIndex[0]<<" "<<hrContIndex[1]<<" "<<hrContIndex[2]<<" "<<itPSF.Get()<<"\n ";
-          */
-          //end of debug
-          
-          
+                  
           if(itPSF.Get() > 0){
             
             //Get coordinate in m_PSF
@@ -417,8 +409,11 @@ void SuperResolutionTools::HComputation(SuperResolutionDataManager & data)
             //Compute the physical point of psfIndex
             m_PSF[i]->TransformIndexToPhysicalPoint(psfIndex,psfPoint);
             
+            //Apply estimated affine transform to psfPoint
+            transformedPoint = data.m_affineTransform[i]->TransformPoint(psfPoint);
+            
             //Get back to the index in the HR image
-            data.m_inputHRImage->TransformPhysicalPointToContinuousIndex(psfPoint,hrContIndex);
+            data.m_inputHRImage->TransformPhysicalPointToContinuousIndex(transformedPoint,hrContIndex);
             //std::cout<<"hrContIndex no check: "<<hrContIndex[0]<<" "<<hrContIndex[1]<<" "<<hrContIndex[2]<<" \n ";
 
             //Check if the continuous index hrContIndex is inside the HR image
@@ -634,13 +629,15 @@ void SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager & d
 
   
   if(nlm==1){
-    //Smooth the error map using the current reconstructed image as reference for NLM filter
+    std::cout<<"Smooth the error map using the current reconstructed image as reference for NLM filter --------------------------\n";
     btkNLMTool<float> myTool;
     myTool.SetInput(data.m_outputHRImage);
+    myTool.SetMaskImage(data.m_maskHRImage);
     myTool.SetDefaultParameters();
     myTool.SetReferenceImage(data.m_currentHRImage);    
     myTool.SetSmoothingUsingReferenceImage(1.0);
     myTool.SetBlockwiseStrategy(1); //0 pointwise, 1 block, 2 fast block
+
 
     myTool.ComputeOutput();
     myTool.GetOutput(data.m_outputHRImage);    
@@ -659,14 +656,50 @@ void SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager & d
   data.WriteOneImage(data.m_currentHRImage, s);      
   
   if(nlm==2){
-    //Smooth the current reconstructed image
+    std::cout<<"Smooth the current reconstructed image ------------------ \n";
     btkNLMTool<float> myTool;
     myTool.SetInput(data.m_currentHRImage);
+    myTool.SetMaskImage(data.m_maskHRImage);
     myTool.SetDefaultParameters();
     myTool.SetBlockwiseStrategy(1); //0 pointwise, 1 block, 2 fast block
     myTool.ComputeOutput();
-    myTool.GetOutput(data.m_currentHRImage);        
+    myTool.GetOutput(data.m_currentHRImage);  
+    s = "ibp_nlm_smmoth.nii.gz";
+    data.WriteOneImage(data.m_currentHRImage, s);                
   }  
+}
+
+void SuperResolutionTools::CreateMaskHRImage(SuperResolutionDataManager & data)
+{
+  std::cout<<"Create Mask HR Image by interpolating Masks of LR Images\n";
+  
+  //Initialize to 0 the output HR image
+  data.m_maskHRImage->FillBuffer(0);
+  
+  //parameters for interpolation (bspline interpolator)
+  int interpolationOrder = 0;
+  itkBSplineInterpolator::Pointer bsInterpolator = itkBSplineInterpolator::New();
+  bsInterpolator->SetSplineOrder(interpolationOrder);
+  
+  for(uint i=0; i<data.m_inputLRImages.size(); i++){
+  
+    //interpolate the LR mask 
+    itkResampleFilter::Pointer resample = itkResampleFilter::New();
+    resample->SetTransform(data.m_affineTransform[i]);
+    resample->SetInterpolator(bsInterpolator);
+    resample->UseReferenceImageOn();
+    resample->SetReferenceImage(data.m_currentHRImage);
+    resample->SetInput(data.m_inputLRImages[i]);
+    
+    //Add the interpolated mask
+    itkAddImageFilter::Pointer addFilter = itkAddImageFilter::New ();
+    addFilter->SetInput1(data.m_maskHRImage);
+    addFilter->SetInput2(resample->GetOutput());
+    addFilter->Update();
+    
+    data.m_maskHRImage = addFilter->GetOutput();
+  }
+  
 }
 
 #endif
