@@ -48,6 +48,9 @@
 #include "itkBSplineInterpolationWeightFunction.h"
 #include "itkSubtractImageFilter.h"
 #include "itkAddImageFilter.h"
+#include "itkBinaryThresholdImageFilter.h"
+
+
 
 #include "vnl/vnl_sparse_matrix.h"
 
@@ -74,7 +77,7 @@ public:
   typedef itk::BSplineInterpolateImageFunction<itkImage, double, double>  itkBSplineInterpolator;
   typedef itk::SubtractImageFilter <itkImage, itkImage >                  itkSubtractImageFilter;
   typedef itk::AddImageFilter <itkImage, itkImage >                       itkAddImageFilter;
-
+  typedef itk::BinaryThresholdImageFilter <itkImage, itkImage>            itkBinaryThresholdImageFilter;
   
   int                       m_psftype; // 0: 3D interpolated boxcar, 1: 3D oversampled boxcar
   std::vector<itkPointer>   m_PSF;
@@ -594,8 +597,8 @@ void SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager & d
     subtractFilter->SetInput2(data.m_simulatedInputLRImages[i]);
     subtractFilter->Update();
 
-    s = "ibp_substract.nii.gz";
-    data.WriteOneImage(subtractFilter->GetOutput(), s);
+    //s = "ibp_substract.nii.gz";
+    //data.WriteOneImage(subtractFilter->GetOutput(), s);
     
     //interpolate the LR difference 
     itkResampleFilter::Pointer resample = itkResampleFilter::New();
@@ -605,8 +608,8 @@ void SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager & d
     resample->SetReferenceImage(data.m_currentHRImage);
     resample->SetInput(subtractFilter->GetOutput());
     
-    s = "ibp_resample.nii.gz";
-    data.WriteOneImage(resample->GetOutput(), s);
+    //s = "ibp_resample.nii.gz";
+    //data.WriteOneImage(resample->GetOutput(), s);
 
     //Add the interpolated differences
     itkAddImageFilter::Pointer addFilter = itkAddImageFilter::New ();
@@ -616,8 +619,8 @@ void SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager & d
     
     data.m_outputHRImage = addFilter->GetOutput();
     
-    s = "ibp_simulated.nii.gz";
-    data.WriteOneImage(data.m_simulatedInputLRImages[i], s);
+    //s = "ibp_simulated.nii.gz";
+    //data.WriteOneImage(data.m_simulatedInputLRImages[i], s);
     
   }
   
@@ -641,8 +644,8 @@ void SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager & d
 
     myTool.ComputeOutput();
     myTool.GetOutput(data.m_outputHRImage);    
-    s = "ibp_nlm_error.nii.gz";
-    data.WriteOneImage(data.m_outputHRImage, s);     
+    //s = "ibp_nlm_error.nii.gz";
+    //data.WriteOneImage(data.m_outputHRImage, s);     
   }
  
   //Update the HR image correspondly
@@ -651,22 +654,38 @@ void SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager & d
   addFilter2->SetInput2(data.m_currentHRImage);
   addFilter2->Update();
   
-  data.m_currentHRImage = addFilter2->GetOutput(); 
-  s = "ibp_updated.nii.gz";
-  data.WriteOneImage(data.m_currentHRImage, s);      
+  data.m_outputHRImage = addFilter2->GetOutput(); 
+  //s = "ibp_updated.nii.gz";
+  //data.WriteOneImage(data.m_currentHRImage, s);      
   
   if(nlm==2){
     std::cout<<"Smooth the current reconstructed image ------------------ \n";
     btkNLMTool<float> myTool;
-    myTool.SetInput(data.m_currentHRImage);
+    myTool.SetInput(data.m_outputHRImage);
     myTool.SetMaskImage(data.m_maskHRImage);
     myTool.SetDefaultParameters();
     myTool.SetBlockwiseStrategy(1); //0 pointwise, 1 block, 2 fast block
     myTool.ComputeOutput();
-    myTool.GetOutput(data.m_currentHRImage);  
-    s = "ibp_nlm_smmoth.nii.gz";
-    data.WriteOneImage(data.m_currentHRImage, s);                
+    myTool.GetOutput(data.m_outputHRImage);  
+    //s = "ibp_nlm_smooth.nii.gz";
+    //data.WriteOneImage(data.m_currentHRImage, s);                
   }  
+  
+  std::cout<<"Compute difference between the two consecutive estimates\n";
+  itkSubtractImageFilter::Pointer subtractFilter2 = itkSubtractImageFilter::New ();
+  subtractFilter2->SetInput1(data.m_outputHRImage);
+  subtractFilter2->SetInput2(data.m_currentHRImage);
+  subtractFilter2->Update();
+
+  //data.WriteOneImage(subtractFilter->GetOutput(), s);
+  
+  std::cout<<"Copying new estimate to current estimate HR image\n";
+  //Not efficient strategy but clearer to understand the code
+  itkDuplicator::Pointer duplicator = itkDuplicator::New();
+  duplicator->SetInputImage( data.m_outputHRImage );
+  duplicator->Update();
+  data.m_currentHRImage = duplicator->GetOutput();
+  
 }
 
 void SuperResolutionTools::CreateMaskHRImage(SuperResolutionDataManager & data)
@@ -699,6 +718,15 @@ void SuperResolutionTools::CreateMaskHRImage(SuperResolutionDataManager & data)
     
     data.m_maskHRImage = addFilter->GetOutput();
   }
+  
+  std::cout<<"Binarize the HR mask image\n";
+  itkBinaryThresholdImageFilter::Pointer thresholdFilter = itkBinaryThresholdImageFilter::New();
+  thresholdFilter->SetInput( data.m_maskHRImage );
+  thresholdFilter->SetLowerThreshold(1);
+  thresholdFilter->SetUpperThreshold(data.m_inputLRImages.size()+1);
+  thresholdFilter->SetInsideValue(1.0);
+  thresholdFilter->SetOutsideValue(0.0);
+  
   
 }
 
