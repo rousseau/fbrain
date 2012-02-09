@@ -57,6 +57,8 @@
 #include "../Denoising/btkNLMTool.h"
 
 
+#include <sstream>
+
 class SuperResolutionDataManager;
 
 class SuperResolutionTools
@@ -89,6 +91,7 @@ public:
   vnl_vector<float>         m_Y;
   vnl_vector<float>         m_X;
   float                     m_paddingValue;
+  std::vector<unsigned int> m_offset;
   
   
   SuperResolutionTools(){
@@ -313,10 +316,13 @@ void SuperResolutionTools::HComputation(SuperResolutionDataManager & data)
   // Set size of matrices
   unsigned int ncols = data.m_inputHRImage->GetLargestPossibleRegion().GetNumberOfPixels();
   
+  //m_offset is used to fill correctly the vector m_Y with the input LR image values (offset for the linear index)
+  m_offset.resize(data.m_inputLRImages.size());
   unsigned int nrows = 0;
-  for(unsigned int im = 0; im < data.m_inputLRImages.size(); im++)
+  for(unsigned int im = 0; im < data.m_inputLRImages.size(); im++){
+    m_offset[im] = nrows;
     nrows += data.m_inputLRImages[im]->GetLargestPossibleRegion().GetNumberOfPixels();
-  
+  }
   m_H.set_size(nrows, ncols);
   m_Y.set_size(nrows);
   m_Y.fill(0.0);
@@ -386,7 +392,7 @@ void SuperResolutionTools::HComputation(SuperResolutionDataManager & data)
         //std::cout<<"current LR index:"<<lrIndex[0]<<" "<<lrIndex[1]<<" "<<lrIndex[2]<<" -------------- \n";
         
         //Compute the corresponding linear index of lrIndex
-        lrLinearIndex = lrIndex[0] + lrIndex[1]*lrSize[0] + lrIndex[2]*lrSize[0]*lrSize[1];
+        lrLinearIndex = m_offset[i] + lrIndex[0] + lrIndex[1]*lrSize[0] + lrIndex[2]*lrSize[0]*lrSize[1];
         
         //Fill m_Y
         m_Y[lrLinearIndex] = itLRImage.Get();
@@ -556,7 +562,7 @@ void SuperResolutionTools::SimulateLRImages(SuperResolutionDataManager & data)
       lrIndex = itLRImage.GetIndex();
       
       //Compute the corresponding linear index of lrIndex
-      lrLinearIndex = lrIndex[0] + lrIndex[1]*lrSize[0] + lrIndex[2]*lrSize[0]*lrSize[1];
+      lrLinearIndex = m_offset[i] + lrIndex[0] + lrIndex[1]*lrSize[0] + lrIndex[2]*lrSize[0]*lrSize[1];
       
       //Fill the simulated input LR image
       itLRImage.Set(Hx[lrLinearIndex]);
@@ -585,9 +591,7 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
   //Initialize to 0 the output HR image
   data.m_outputHRImage->FillBuffer(0);
     
-  //parameters for interpolation (identity transform and bspline interpolator)
-  itkIdentityTransform::Pointer transform = itkIdentityTransform::New();
-  transform->SetIdentity();
+  //parameters for interpolation (bspline interpolator)
   int interpolationOrder = 5;
   itkBSplineInterpolator::Pointer bsInterpolator = itkBSplineInterpolator::New();
   bsInterpolator->SetSplineOrder(interpolationOrder);
@@ -602,18 +606,20 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
     subtractFilter->SetInput2(data.m_simulatedInputLRImages[i]);
     subtractFilter->Update();
 
-    //s = "ibp_substract.nii.gz";
+    //std::ostringstream oss ;
+    //oss << i+1 ;
+    //s = "ibp_"+oss.str()+"_substract.nii.gz";
     //data.WriteOneImage(subtractFilter->GetOutput(), s);
     
     //interpolate the LR difference 
     itkResampleFilter::Pointer resample = itkResampleFilter::New();
-    resample->SetTransform(transform);
+    resample->SetTransform(data.m_affineTransform[i]);
     resample->SetInterpolator(bsInterpolator);
     resample->UseReferenceImageOn();
     resample->SetReferenceImage(data.m_currentHRImage);
     resample->SetInput(subtractFilter->GetOutput());
     
-    //s = "ibp_resample.nii.gz";
+    //s = "ibp_"+oss.str()+"_resample.nii.gz";
     //data.WriteOneImage(resample->GetOutput(), s);
 
     //Add the interpolated differences
@@ -624,7 +630,7 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
     
     data.m_outputHRImage = addFilter->GetOutput();
     
-    //s = "ibp_simulated.nii.gz";
+    //s = "ibp_"+oss.str()+"_simulated.nii.gz";
     //data.WriteOneImage(data.m_simulatedInputLRImages[i], s);
     
   }

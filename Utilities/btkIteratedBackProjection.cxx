@@ -100,8 +100,8 @@ int main( int argc, char *argv[] )
     TCLAP::ValueArg<std::string> outArg  ("o","output","Output image obtained using iterated by back-projection.", true,"","string",cmd);
     TCLAP::SwitchArg  boxcarSwitchArg("","boxcar","A boxcar-shaped PSF is assumed as imaging model (by default a Gaussian-shaped PSF is employed.).",false);
     TCLAP::MultiArg<std::string> transArg("t","transform","transform file",false,"string",cmd);
-    TCLAP::ValueArg<int> loopArg  ("l","loop","Number of loops (iterations of IBP algorithm).", false,1,"int",cmd);
-    TCLAP::ValueArg<int> nlmArg  ("n","nlm","Type of filtering during IBP process (0: no filtering, 1: error map filtering, 2: current HR image filtering).", false,0,"int",cmd);
+    TCLAP::ValueArg<int> loopArg  ("l","loop","Maximum number of loops (iterations of IBP algorithm). Default=20.", false,20,"int",cmd);
+    TCLAP::ValueArg<int> nlmArg  ("n","nlm","Type of filtering during IBP process (0: no filtering (default), 1: error map filtering, 2: current HR image filtering).", false,0,"int",cmd);
     TCLAP::ValueArg<int> simArg  ("s","sim","Simulation of LR images based on the input HR image and the input LR images (0: no simulation, 1: simulation).", false,0,"int",cmd);
     
     // Parse the argv array.
