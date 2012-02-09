@@ -74,8 +74,12 @@ void SuperResolutionManager::SimulateLRImages()
 
 void SuperResolutionManager::IteratedBackProjection(int & loops, int & nlm)
 {
-  
-  for(int i=0; i<loops; i++)
-    tool.IteratedBackProjection(data, nlm);
+  double e = 0.1; //current change between two consecutive estimate.
+  int i = 0;
+  while( (e>0) && (i<loops) ){
+    e = tool.IteratedBackProjection(data, nlm);
+    i++;
+    std::cout<<"Loop "<<i+1<<", current e: "<<e<<"\n";
+  }
 }
 #endif

@@ -49,8 +49,8 @@
 #include "itkSubtractImageFilter.h"
 #include "itkAddImageFilter.h"
 #include "itkBinaryThresholdImageFilter.h"
-
-
+#include "itkAbsoluteValueDifferenceImageFilter.h"
+#include "itkStatisticsImageFilter.h"
 
 #include "vnl/vnl_sparse_matrix.h"
 
@@ -78,7 +78,10 @@ public:
   typedef itk::SubtractImageFilter <itkImage, itkImage >                  itkSubtractImageFilter;
   typedef itk::AddImageFilter <itkImage, itkImage >                       itkAddImageFilter;
   typedef itk::BinaryThresholdImageFilter <itkImage, itkImage>            itkBinaryThresholdImageFilter;
-  
+  typedef itk::AbsoluteValueDifferenceImageFilter <itkImage, itkImage, itkImage>  itkAbsoluteValueDifferenceImageFilter;  
+  typedef itk::StatisticsImageFilter<itkImage>                            itkStatisticsImageFilter;
+
+
   int                       m_psftype; // 0: 3D interpolated boxcar, 1: 3D oversampled boxcar
   std::vector<itkPointer>   m_PSF;
   int                       m_interpolationOrder;
@@ -100,7 +103,7 @@ public:
   void HComputation(SuperResolutionDataManager & data);
   void UpdateX(SuperResolutionDataManager & data);
   void SimulateLRImages(SuperResolutionDataManager & data);
-  void IteratedBackProjection(SuperResolutionDataManager & data, int & nlm);
+  double IteratedBackProjection(SuperResolutionDataManager & data, int & nlm);
   void CreateMaskHRImage(SuperResolutionDataManager & data);
 };
 
@@ -306,7 +309,7 @@ void SuperResolutionTools::HComputation(SuperResolutionDataManager & data)
 {
   std::cout<<"Computing the matrix H (y=Hx) + fill y and x. \n";
   //Principle: for each voxel of the LR images, we compute the influence of each voxel of the PSF (centered at the current LR voxel) and add the corresponding influence value (PSF value * interpolation weight) in the matrix H
-  
+ 
   // Set size of matrices
   unsigned int ncols = data.m_inputHRImage->GetLargestPossibleRegion().GetNumberOfPixels();
   
@@ -323,7 +326,7 @@ void SuperResolutionTools::HComputation(SuperResolutionDataManager & data)
   //linear index : an integer value corresponding to (x,y,z) triplet coordinates (ITK index)
   uint lrLinearIndex = 0;
   uint hrLinearIndex = 0;
-  
+
   //Temporary variables
   itkImage::IndexType lrIndex;  //index of the current voxel in the LR image
   itkImage::PointType lrPoint;  //physical point location of lrIndex
@@ -346,7 +349,7 @@ void SuperResolutionTools::HComputation(SuperResolutionDataManager & data)
   //Get the size of the HR image
   itkImage::SizeType  hrSize  = data.m_inputHRImage->GetLargestPossibleRegion().GetSize();
   
-  //loop over LR images
+  std::cout<<"loop over LR images\n";
   for(uint i=0; i<data.m_inputLRImages.size(); i++){
     
     //Get the size of the current LR image
@@ -412,8 +415,8 @@ void SuperResolutionTools::HComputation(SuperResolutionDataManager & data)
             //Compute the physical point of psfIndex
             m_PSF[i]->TransformIndexToPhysicalPoint(psfIndex,psfPoint);
             
-            //Apply estimated affine transform to psfPoint
-            transformedPoint = data.m_affineTransform[i]->TransformPoint(psfPoint);
+            //Apply estimated affine transform to psfPoint (need to apply the inverse since the transform goes from the HR image to the LR image)           
+            transformedPoint = data.m_inverseAffineTransform[i]->TransformPoint(psfPoint);
             
             //Get back to the index in the HR image
             data.m_inputHRImage->TransformPhysicalPointToContinuousIndex(transformedPoint,hrContIndex);
@@ -544,9 +547,7 @@ void SuperResolutionTools::SimulateLRImages(SuperResolutionDataManager & data)
     
     //Instantiate an iterator over the current LR image
     itkIteratorWithIndex itLRImage(data.m_simulatedInputLRImages[i],data.m_simulatedInputLRImages[i]->GetLargestPossibleRegion());
-    
-    float min = 1000000;
-    float max = -1000000;
+
     
     //Loop over the voxels of the current LR image
     for(itLRImage.GoToBegin(); !itLRImage.IsAtEnd(); ++itLRImage){
@@ -559,16 +560,20 @@ void SuperResolutionTools::SimulateLRImages(SuperResolutionDataManager & data)
       
       //Fill the simulated input LR image
       itLRImage.Set(Hx[lrLinearIndex]);
-      
-      if(min>itLRImage.Get()) min = itLRImage.Get();
-      if(max<itLRImage.Get()) max = itLRImage.Get();
     }
-    std::cout<<"min of the LR image y=Hx : "<<min<<", max of the LR image y=Hx : "<<max<<"\n";
+    
+    itkStatisticsImageFilter::Pointer statisticsImageFilter = itkStatisticsImageFilter::New ();
+    statisticsImageFilter->SetInput(data.m_simulatedInputLRImages[i]);
+    statisticsImageFilter->Update();
+    std::cout << "Stat of the LR image y=Hx. \nMean: " << statisticsImageFilter->GetMean() << std::endl;
+    std::cout << "Std.: " << statisticsImageFilter->GetSigma() << std::endl;
+    std::cout << "Min: " << statisticsImageFilter->GetMinimum() << std::endl;
+    std::cout << "Max: " << statisticsImageFilter->GetMaximum() << std::endl;        
 
   }
 }
 
-void SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager & data, int & nlm)
+double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager & data, int & nlm)
 {
   std::cout<<"Do iterated back projection\n";
   std::cout<<"NLM Filtering type: "<<nlm<<"\n";
@@ -671,14 +676,28 @@ void SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager & d
     //data.WriteOneImage(data.m_currentHRImage, s);                
   }  
   
-  std::cout<<"Compute difference between the two consecutive estimates\n";
-  itkSubtractImageFilter::Pointer subtractFilter2 = itkSubtractImageFilter::New ();
-  subtractFilter2->SetInput1(data.m_outputHRImage);
-  subtractFilter2->SetInput2(data.m_currentHRImage);
-  subtractFilter2->Update();
-
-  //data.WriteOneImage(subtractFilter->GetOutput(), s);
+  std::cout<<"Compute the changes between the two consecutive estimates\n";
+  itkAbsoluteValueDifferenceImageFilter::Pointer absoluteValueDifferenceFilter = itkAbsoluteValueDifferenceImageFilter::New ();
+  absoluteValueDifferenceFilter->SetInput1(data.m_outputHRImage);
+  absoluteValueDifferenceFilter->SetInput2(data.m_currentHRImage);
+  absoluteValueDifferenceFilter->Update();
   
+  double magnitude       = 0.0;
+  double numberOfPoints  = 0.0;
+  itkPointer  tmpImage = absoluteValueDifferenceFilter->GetOutput();
+  itkIterator itTmpImage(tmpImage, tmpImage->GetLargestPossibleRegion());
+  itkIterator itMaskHRImage(data.m_maskHRImage,data.m_maskHRImage->GetLargestPossibleRegion());
+  
+  for(itMaskHRImage.GoToBegin(),itTmpImage.GoToBegin(); !itMaskHRImage.IsAtEnd(); ++itMaskHRImage, ++itTmpImage){
+    if(itMaskHRImage.Get() > 0){
+      magnitude += itTmpImage.Get();
+      numberOfPoints += 1;
+    }
+  }
+  
+  double meanMagnitude = magnitude/numberOfPoints;
+  std::cout<<"Current mean change: "<<meanMagnitude<<"\n";
+
   std::cout<<"Copying new estimate to current estimate HR image\n";
   //Not efficient strategy but clearer to understand the code
   itkDuplicator::Pointer duplicator = itkDuplicator::New();
@@ -686,6 +705,21 @@ void SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager & d
   duplicator->Update();
   data.m_currentHRImage = duplicator->GetOutput();
   
+  itkStatisticsImageFilter::Pointer statisticsImageFilter = itkStatisticsImageFilter::New ();
+  statisticsImageFilter->SetInput(data.m_currentHRImage);
+  statisticsImageFilter->Update();
+  std::cout << "Stat of the current HR estimate: \nMean: " << statisticsImageFilter->GetMean() << std::endl;
+  std::cout << "Std.: " << statisticsImageFilter->GetSigma() << std::endl;
+  std::cout << "Min: " << statisticsImageFilter->GetMinimum() << std::endl;
+  std::cout << "Max: " << statisticsImageFilter->GetMaximum() << std::endl;  
+  
+  double manjonCriterion = 0.002*statisticsImageFilter->GetSigma();
+  std::cout<<"stopping criterion of manjon et al.: "<<manjonCriterion<<"\n";
+  
+  if(meanMagnitude < manjonCriterion)
+    meanMagnitude = 0;
+    
+  return meanMagnitude;
 }
 
 void SuperResolutionTools::CreateMaskHRImage(SuperResolutionDataManager & data)
@@ -719,15 +753,24 @@ void SuperResolutionTools::CreateMaskHRImage(SuperResolutionDataManager & data)
     data.m_maskHRImage = addFilter->GetOutput();
   }
   
+  itkStatisticsImageFilter::Pointer statisticsImageFilter = itkStatisticsImageFilter::New ();
+  statisticsImageFilter->SetInput(data.m_maskHRImage);
+  statisticsImageFilter->Update();
+  std::cout << "Stat of the HR mask: \nMean: " << statisticsImageFilter->GetMean() << std::endl;
+  std::cout << "Std.: " << statisticsImageFilter->GetSigma() << std::endl;
+  std::cout << "Min: " << statisticsImageFilter->GetMinimum() << std::endl;
+  std::cout << "Max: " << statisticsImageFilter->GetMaximum() << std::endl;        
+  
   std::cout<<"Binarize the HR mask image\n";
   itkBinaryThresholdImageFilter::Pointer thresholdFilter = itkBinaryThresholdImageFilter::New();
   thresholdFilter->SetInput( data.m_maskHRImage );
-  thresholdFilter->SetLowerThreshold(1);
-  thresholdFilter->SetUpperThreshold(data.m_inputLRImages.size()+1);
+  thresholdFilter->SetLowerThreshold(0.5);
+  thresholdFilter->SetUpperThreshold( statisticsImageFilter->GetMaximum() + 1);
   thresholdFilter->SetInsideValue(1.0);
-  thresholdFilter->SetOutsideValue(0.0);
-  
-  
+  thresholdFilter->SetOutsideValue(0.0); 
+  thresholdFilter->Update(); 
+  data.m_maskHRImage = thresholdFilter->GetOutput();
+
 }
 
 #endif
