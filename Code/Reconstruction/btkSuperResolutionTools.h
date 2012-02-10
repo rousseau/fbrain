@@ -106,7 +106,7 @@ public:
   void HComputation(SuperResolutionDataManager & data);
   void UpdateX(SuperResolutionDataManager & data);
   void SimulateLRImages(SuperResolutionDataManager & data);
-  double IteratedBackProjection(SuperResolutionDataManager & data, int & nlm);
+  double IteratedBackProjection(SuperResolutionDataManager & data, int & nlm, float & beta);
   void CreateMaskHRImage(SuperResolutionDataManager & data);
 };
 
@@ -579,7 +579,7 @@ void SuperResolutionTools::SimulateLRImages(SuperResolutionDataManager & data)
   }
 }
 
-double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager & data, int & nlm)
+double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager & data, int & nlm, float & beta)
 {
   std::cout<<"Do iterated back projection\n";
   std::cout<<"NLM Filtering type: "<<nlm<<"\n";
@@ -649,7 +649,7 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
     myTool.SetMaskImage(data.m_maskHRImage);
     myTool.SetDefaultParameters();
     myTool.SetReferenceImage(data.m_currentHRImage);    
-    myTool.SetSmoothingUsingReferenceImage(1.0);
+    myTool.SetSmoothingUsingReferenceImage(beta);
     myTool.SetBlockwiseStrategy(1); //0 pointwise, 1 block, 2 fast block
 
 
@@ -675,6 +675,7 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
     myTool.SetInput(data.m_outputHRImage);
     myTool.SetMaskImage(data.m_maskHRImage);
     myTool.SetDefaultParameters();
+    myTool.SetSmoothing(beta);
     myTool.SetBlockwiseStrategy(1); //0 pointwise, 1 block, 2 fast block
     myTool.ComputeOutput();
     myTool.GetOutput(data.m_outputHRImage);  
