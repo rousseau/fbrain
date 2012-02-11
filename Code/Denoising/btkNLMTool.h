@@ -106,8 +106,7 @@ class btkNLMTool
   void SetBlockwiseStrategy(int b);
   void SetOptimizationStrategy(int o);
   void SetLowerThresholds(float m, float v);
-  void SetSmoothing(float beta);                       //set the smoothing parameter and compute the corrected smoothing value (m_rangeBandwidth)
-  void SetSmoothingUsingReferenceImage(float beta);    //set the smoothing parameter and compute the corrected smoothing value (m_rangeBandwidth) using the reference image
+  void SetSmoothing(float beta, itkTPointer & inputImage); //set the smoothing parameter and compute the corrected smoothing value (m_rangeBandwidth)
   void GetOutput(itkTPointer & outputImage);
   void ComputeOutput();
   void PrintInfo();
@@ -155,7 +154,7 @@ void btkNLMTool<T>::SetDefaultParameters()
   //SetPaddingValue(0);
   SetPatchSize(1);
   SetSpatialBandwidth(5);
-  SetSmoothing(1);
+  SetSmoothing(1, m_inputImage);
   SetCentralPointStrategy(-1);
   SetBlockwiseStrategy(2);
   SetOptimizationStrategy(1);
@@ -334,7 +333,7 @@ void btkNLMTool<T>::SetLowerThresholds(float m, float v)
 
 
 template <typename T>
-void btkNLMTool<T>::SetSmoothing(float beta)
+void btkNLMTool<T>::SetSmoothing(float beta, itkTPointer & inputImage)
 {
   //this function should be rewritten using a convolution-based approach
   std::cout<<"Computing the range bandwidth (corresponding to the smoothing parameter for the NLM algorithm).\n";
@@ -352,23 +351,23 @@ void btkNLMTool<T>::SetSmoothing(float beta)
 	pixelIndex[0] = x;
 	pixelIndex[1] = y;
 	pixelIndex[2] = z;
-	value = m_inputImage->GetPixel(pixelIndex);
+	value = inputImage->GetPixel(pixelIndex);
         if( m_maskImage->GetPixel(pixelIndex) > 0){
 	  //pourrait se faire avec une convolution !
 	  pixelIndex[0] = x+1;	  pixelIndex[1] = y;	  pixelIndex[2] = z;
-	  ei = m_inputImage->GetPixel(pixelIndex);
+	  ei = inputImage->GetPixel(pixelIndex);
 	  pixelIndex[0] = x-1;	  pixelIndex[1] = y;	  pixelIndex[2] = z;
-	  ei += m_inputImage->GetPixel(pixelIndex);
+	  ei += inputImage->GetPixel(pixelIndex);
 	  pixelIndex[0] = x;	          pixelIndex[1] = y+1;	  pixelIndex[2] = z;
-	  ei += m_inputImage->GetPixel(pixelIndex);
+	  ei += inputImage->GetPixel(pixelIndex);
 	  pixelIndex[0] = x;  	  pixelIndex[1] = y-1;	  pixelIndex[2] = z;
-	  ei += m_inputImage->GetPixel(pixelIndex);
+	  ei += inputImage->GetPixel(pixelIndex);
 	  pixelIndex[0] = x;  	  pixelIndex[1] = y;	  pixelIndex[2] = z+1;
-	  ei += m_inputImage->GetPixel(pixelIndex);
+	  ei += inputImage->GetPixel(pixelIndex);
 	  pixelIndex[0] = x;  	  pixelIndex[1] = y;	  pixelIndex[2] = z-1;
-	  ei += m_inputImage->GetPixel(pixelIndex);
+	  ei += inputImage->GetPixel(pixelIndex);
 	  pixelIndex[0] = x;            pixelIndex[1] = y;	  pixelIndex[2] = z;
-	  ei = sqrt(6.0/7.0)*(m_inputImage->GetPixel(pixelIndex) -ei/6.0);
+	  ei = sqrt(6.0/7.0)*(inputImage->GetPixel(pixelIndex) -ei/6.0);
 	    
 	  sigma2 += ei*ei;
 	  count ++;
@@ -383,65 +382,6 @@ void btkNLMTool<T>::SetSmoothing(float beta)
     vecei[i] = fabs(vecei[i] - med);
   std::sort(vecei.begin(), vecei.end());
     
-  sigma2 = 1.4826 * vecei[(int)(vecei.size()/2)];
-  sigma2 = sigma2 * sigma2;
-  std::cout<<"Number of points for estimation : "<<count<<"\n";
-  std::cout<<"Estimated Global Sigma : "<<sqrt(sigma2)<<"\n";
-  float NLMsmooth = 2 * beta * sigma2 * (2*m_halfPatchSize[0]+1) * (2*m_halfPatchSize[1]+1) * (2*m_halfPatchSize[2]+1);
-  std::cout<<"Global smoothing parameter h : "<<sqrt(NLMsmooth)<<"\n";
-  m_rangeBandwidth = NLMsmooth;   
-}
-
-template <typename T>
-void btkNLMTool<T>::SetSmoothingUsingReferenceImage(float beta)
-{
-  //this function should be rewritten using a convolution-based approach
-  std::cout<<"Computing the range bandwidth (corresponding to the smoothing parameter for the NLM algorithm).\n";
-  uint count = 0;
-  double sigma2 = 0;
-  int x,y,z;
-  typename itkTImage::IndexType pixelIndex;	
-  float ei = 0;
-  std::vector<float> vecei;
-  T value = 0;
-  //since we have use to use a neighborhood around the current voxel, we neglect the border to avoid slow tests.
-  for(z=1;z<(int)m_size[2]-1;z++)
-    for(y=1;y<(int)m_size[1]-1;y++)
-      for(x=1;x<(int)m_size[0]-1;x++){
-        pixelIndex[0] = x;
-        pixelIndex[1] = y;
-        pixelIndex[2] = z;
-        value = m_refImage->GetPixel(pixelIndex);
-        if( m_maskImage->GetPixel(pixelIndex) > 0){
-          //pourrait se faire avec une convolution !
-          pixelIndex[0] = x+1;	  pixelIndex[1] = y;	  pixelIndex[2] = z;
-          ei = m_refImage->GetPixel(pixelIndex);
-          pixelIndex[0] = x-1;	  pixelIndex[1] = y;	  pixelIndex[2] = z;
-          ei += m_refImage->GetPixel(pixelIndex);
-          pixelIndex[0] = x;	          pixelIndex[1] = y+1;	  pixelIndex[2] = z;
-          ei += m_refImage->GetPixel(pixelIndex);
-          pixelIndex[0] = x;  	  pixelIndex[1] = y-1;	  pixelIndex[2] = z;
-          ei += m_refImage->GetPixel(pixelIndex);
-          pixelIndex[0] = x;  	  pixelIndex[1] = y;	  pixelIndex[2] = z+1;
-          ei += m_refImage->GetPixel(pixelIndex);
-          pixelIndex[0] = x;  	  pixelIndex[1] = y;	  pixelIndex[2] = z-1;
-          ei += m_refImage->GetPixel(pixelIndex);
-          pixelIndex[0] = x;            pixelIndex[1] = y;	  pixelIndex[2] = z;
-          ei = sqrt(6.0/7.0)*(m_refImage->GetPixel(pixelIndex) -ei/6.0);
-          
-          sigma2 += ei*ei;
-          count ++;
-          if(fabs(ei>0))
-            vecei.push_back(fabs(ei));
-        }
-      }
-  //Estimation of sigma with MAD
-  std::sort(vecei.begin(), vecei.end());
-  float med = vecei[(int)(vecei.size()/2)];
-  for(uint i=0; i<vecei.size(); i++)
-    vecei[i] = fabs(vecei[i] - med);
-  std::sort(vecei.begin(), vecei.end());
-  
   sigma2 = 1.4826 * vecei[(int)(vecei.size()/2)];
   sigma2 = sigma2 * sigma2;
   std::cout<<"Number of points for estimation : "<<count<<"\n";
