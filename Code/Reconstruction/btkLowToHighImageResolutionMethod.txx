@@ -184,7 +184,8 @@ LowToHighImageResolutionMethod<ImageType>
     {
       try
       {
-        m_Registration->StartRegistration();
+        //m_Registration->StartRegistration();// FIXME : in ITK4 StartRegistration() is replaced by Update()
+          m_Registration->Update();
       }
       catch( itk::ExceptionObject & err )
       {

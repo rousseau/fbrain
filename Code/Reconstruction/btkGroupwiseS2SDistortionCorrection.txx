@@ -543,7 +543,8 @@ GroupwiseS2SDistortionCorrection<TSequence>
 
   try
   {
-    m_AffineRegistration -> StartRegistration();
+    //m_AffineRegistration -> StartRegistration();// FIXME : in ITK4 StartRegistration() is replaced by Update()
+    m_AffineRegistration->Update();
   }
   catch( itk::ExceptionObject & err )
     {

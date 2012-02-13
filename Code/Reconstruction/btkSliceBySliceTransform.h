@@ -171,7 +171,7 @@ public:
 
 protected:
     /** Default constructor. Otherwise we get a run time warning from itkTransform. */
-  SliceBySliceTransform() : Superclass( NDimensions, 0 ) {}
+  SliceBySliceTransform() : Superclass( 0 ) {}
 
 private:
   /** List of transforms. */

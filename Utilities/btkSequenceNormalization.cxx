@@ -223,8 +223,8 @@ int main( int argc, char * argv[] )
         registration -> SetFixedImageRegion( b0[0] -> GetLargestPossibleRegion() );
       }
 
-    registration -> StartRegistration();
-
+    //registration -> StartRegistration(); // FIXME : in ITK4 StartRegistration() is replaced by Update()
+    registration->Update();
     std::cout << "done." << std::endl;
 
     std::cout << registration -> GetLastTransformParameters() << std::endl;

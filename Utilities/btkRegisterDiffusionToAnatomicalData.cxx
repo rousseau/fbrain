@@ -395,7 +395,8 @@ int main( int argc, char *argv[] )
 
   try
     {
-    registration->StartRegistration();
+      //registration->StartRegistration(); // FIXME : in ITK4 StartRegistration() is replaced by Update()
+      registration->Update();
     }
   catch( itk::ExceptionObject & err )
     {

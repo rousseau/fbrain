@@ -224,7 +224,8 @@ int main( int argc, char *argv[] )
   // Start registration
   try
     {
-    lowToHighResFilter->StartRegistration();
+      //lowToHighResFilter->StartRegistration(); //FIXME : in ITK 4 StartRegistration is protected, we must use Update to starting the registration
+        lowToHighResFilter->Update();
     }
   catch( itk::ExceptionObject & err )
     {

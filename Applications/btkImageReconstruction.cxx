@@ -386,7 +386,8 @@ int main( int argc, char *argv[] )
 
         try
           {
-          rigid3DRegistration[im] -> StartRegistration();
+          //rigid3DRegistration[im] -> StartRegistration();// FIXME : in ITK4 StartRegistration() is replaced by Update()
+          rigid3DRegistration[im]->Update();
           }
         catch( itk::ExceptionObject & err )
           {

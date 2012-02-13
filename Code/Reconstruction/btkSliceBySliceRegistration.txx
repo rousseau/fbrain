@@ -141,7 +141,8 @@ SliceBySliceRegistration<ImageType>
 
       try
       {
-        rigidRegistration -> StartRegistration();
+        //rigidRegistration -> StartRegistration();// FIXME : in ITK4 StartRegistration() is replaced by Update()
+        rigidRegistration->Update();
       }
       catch( itk::ExceptionObject & err )
       {
@@ -183,7 +184,8 @@ SliceBySliceRegistration<ImageType>
 
     try
       {
-      affineRegistration -> StartRegistration();
+      //affineRegistration -> StartRegistration();// FIXME : in ITK4 StartRegistration() is replaced by Update()
+      affineRegistration->Update();
       }
     catch( itk::ExceptionObject & err )
       {
