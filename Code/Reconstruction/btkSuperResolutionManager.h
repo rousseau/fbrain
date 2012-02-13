@@ -56,7 +56,7 @@ public:
   
   void Initialize();
   void SimulateLRImages();
-  void IteratedBackProjection(int & loops, int & nlm);
+  void IteratedBackProjection(int & loops, int & nlm, float & beta);
   
 };
 
@@ -72,10 +72,15 @@ void SuperResolutionManager::SimulateLRImages()
   tool.SimulateLRImages(data);
 }
 
-void SuperResolutionManager::IteratedBackProjection(int & loops, int & nlm)
+void SuperResolutionManager::IteratedBackProjection(int & loops, int & nlm, float & beta)
 {
+  double e = 0.1; //current change between two consecutive estimate.
+  int i = 0;
   
-  for(int i=0; i<loops; i++)
-    tool.IteratedBackProjection(data, nlm);
+  while( (e>0) && (i<loops) ){
+    e = tool.IteratedBackProjection(data, nlm, beta);
+    i++;
+    std::cout<<"Loop "<<i+1<<", current e: "<<e<<"\n";
+  }
 }
 #endif

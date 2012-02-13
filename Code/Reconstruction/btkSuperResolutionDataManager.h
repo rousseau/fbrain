@@ -76,6 +76,7 @@ public:
   std::vector<itkMaskPointer>  m_maskLRImages;
   std::vector<itkImage::RegionType> m_regionLRImages;
   std::vector<itkAffineDeformation::Pointer> m_affineTransform;
+  std::vector<itkAffineDeformation::Pointer> m_inverseAffineTransform;
 
   
   
@@ -180,10 +181,10 @@ void SuperResolutionDataManager::ReadMaskLRImages(std::vector<std::string> & inp
 }
 
 void SuperResolutionDataManager::ReadAffineTransform(std::vector<std::string> & input_file)
-{
-  
-  
+{    
   m_affineTransform.resize(m_inputLRImages.size());
+  m_inverseAffineTransform.resize(m_inputLRImages.size());
+
   if(input_file.size() > 0){
   
     if(m_inputLRImages.size() != input_file.size())
@@ -205,8 +206,11 @@ void SuperResolutionDataManager::ReadAffineTransform(std::vector<std::string> & 
         std::cerr << excp << std::endl;
         std::cerr << "[FAILED]" << std::endl;
       } 
-      m_affineTransform[i] = static_cast<itkAffineDeformation *>( reader->GetTransformList()->front().GetPointer());
-      std::cout<<"affine transform:"<<m_affineTransform[i]<<"\n";
+      m_affineTransform[i] = static_cast<itkAffineDeformation *>( reader->GetTransformList()->front().GetPointer());  
+      m_inverseAffineTransform[i] = itkAffineDeformation::New(); 
+      m_inverseAffineTransform[i]->SetCenter( m_affineTransform[i]->GetCenter() );   
+      m_affineTransform[i]->GetInverse(m_inverseAffineTransform[i]); 
+      std::cout<<"affine transform:"<<m_affineTransform[i]<<"\n---------------\n";
     }
   }
   //else set the transforms with identity 
@@ -215,6 +219,7 @@ void SuperResolutionDataManager::ReadAffineTransform(std::vector<std::string> & 
     std::cout<<"Affine transforms are set to identity\n";
     for(unsigned int i=0;i<m_inputLRImages.size();i++){
       m_affineTransform[i] = itkAffineDeformation::New();
+      m_inverseAffineTransform[i] = itkAffineDeformation::New();
       std::cout<<"affine transform:"<<m_affineTransform[i]<<"\n";
     }
   

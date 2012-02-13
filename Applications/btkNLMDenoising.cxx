@@ -145,7 +145,7 @@ int main(int argc, char** argv)
 
     myTool.SetPatchSize(hwn);
     myTool.SetSpatialBandwidth(hwvs);
-    myTool.SetSmoothing(beta);
+    myTool.SetSmoothing(beta, myTool.m_inputImage);
     myTool.SetCentralPointStrategy(center);
     myTool.SetBlockwiseStrategy(block);
     myTool.SetOptimizationStrategy(optimized);
@@ -157,8 +157,8 @@ int main(int argc, char** argv)
       refReader->SetFileName( ref_file );
       refReader->Update();
       refImage = refReader->GetOutput();
-      myTool.SetReferenceImage(refImage);    
-      myTool.SetSmoothingUsingReferenceImage(beta);
+      myTool.SetReferenceImage(refImage);
+      myTool.SetSmoothing(beta, myTool.m_refImage);    
     }
     
     myTool.ComputeOutput();

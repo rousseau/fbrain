@@ -94,15 +94,16 @@ int main( int argc, char *argv[] )
   try {
     
     TCLAP::CmdLine cmd("Apply iterated back projection to high resolution image using one low resolution image", ' ', "Unversioned");
-    TCLAP::MultiArg<std::string> inputArg("i","input","Low-resolution image file.", true,"string",cmd);
-    TCLAP::MultiArg<std::string> maskArg("m","mask","Low-resolution image mask file.", true,"string",cmd);
-    TCLAP::ValueArg<std::string> refArg  ("r","reconstructed","Current reconstructed image (input HR image). ",true,"","string",cmd);
-    TCLAP::ValueArg<std::string> outArg  ("o","output","Output image obtained using iterated by back-projection.", true,"","string",cmd);
-    TCLAP::SwitchArg  boxcarSwitchArg("","boxcar","A boxcar-shaped PSF is assumed as imaging model (by default a Gaussian-shaped PSF is employed.).",false);
-    TCLAP::MultiArg<std::string> transArg("t","transform","transform file",false,"string",cmd);
-    TCLAP::ValueArg<int> loopArg  ("l","loop","Number of loops (iterations of IBP algorithm).", false,1,"int",cmd);
-    TCLAP::ValueArg<int> nlmArg  ("n","nlm","Type of filtering during IBP process (0: no filtering, 1: error map filtering, 2: current HR image filtering).", false,0,"int",cmd);
-    TCLAP::ValueArg<int> simArg  ("s","sim","Simulation of LR images based on the input HR image and the input LR images (0: no simulation, 1: simulation).", false,0,"int",cmd);
+    TCLAP::MultiArg<std::string> inputArg ("i","input","Low-resolution image file.", true,"string",cmd);
+    TCLAP::MultiArg<std::string> maskArg  ("m","mask","Low-resolution image mask file.", true,"string",cmd);
+    TCLAP::ValueArg<std::string> refArg   ("r","reconstructed","Current reconstructed image (input HR image). ",true,"","string",cmd);
+    TCLAP::ValueArg<std::string> outArg   ("o","output","Output image obtained using iterated by back-projection.", true,"","string",cmd);
+    TCLAP::SwitchArg  boxcarSwitchArg     ("","boxcar","A boxcar-shaped PSF is assumed as imaging model (by default a Gaussian-shaped PSF is employed.).",false);
+    TCLAP::MultiArg<std::string> transArg ("t","transform","transform file",false,"string",cmd);
+    TCLAP::ValueArg<int> loopArg          ("l","loop","Maximum number of loops (iterations of IBP algorithm). Default=50.", false,50,"int",cmd);
+    TCLAP::ValueArg<int> nlmArg           ("n","nlm","Type of filtering during IBP process (0: no filtering (default), 1: error map filtering, 2: current HR image filtering).", false,0,"int",cmd);
+    TCLAP::ValueArg<float> betaArg        ("b","beta","Smoothing parameter for NLM filtering (default = 1).", false,1,"float",cmd);
+    TCLAP::ValueArg<int> simArg           ("s","sim","Simulation of LR images based on the input HR image and the input LR images (0: no simulation, 1: simulation).", false,0,"int",cmd);
     
     // Parse the argv array.
     cmd.parse( argc, argv );
@@ -117,6 +118,7 @@ int main( int argc, char *argv[] )
     int loops                    = loopArg.getValue();
     int nlm                      = nlmArg.getValue();
     int simulation               = simArg.getValue();
+    float beta                   = betaArg.getValue();
     
     // typedefs
     const   unsigned int    Dimension = 3;
@@ -167,7 +169,7 @@ int main( int argc, char *argv[] )
       btkSRM.data.WriteSimulatedLRImages(input_file);
     }
     
-    btkSRM.IteratedBackProjection(loops,nlm);
+    btkSRM.IteratedBackProjection(loops,nlm,beta);
     btkSRM.data.WriteOutputHRImage(output_file);
     
     
