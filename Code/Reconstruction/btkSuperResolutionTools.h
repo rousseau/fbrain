@@ -649,7 +649,7 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
     myTool.SetMaskImage(data.m_maskHRImage);
     myTool.SetDefaultParameters();
     myTool.SetReferenceImage(data.m_currentHRImage);  
-    myTool.SetSmoothing(beta, myTool.m_refImage);  
+    myTool.SetSmoothing(beta);  
     myTool.SetBlockwiseStrategy(1); //0 pointwise, 1 block, 2 fast block
 
 
@@ -675,7 +675,7 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
     myTool.SetInput(data.m_outputHRImage);
     myTool.SetMaskImage(data.m_maskHRImage);
     myTool.SetDefaultParameters();
-    myTool.SetSmoothing(beta, myTool.m_inputImage);
+    myTool.SetSmoothing(beta);
     myTool.SetBlockwiseStrategy(1); //0 pointwise, 1 block, 2 fast block
     myTool.ComputeOutput();
     myTool.GetOutput(data.m_outputHRImage);  

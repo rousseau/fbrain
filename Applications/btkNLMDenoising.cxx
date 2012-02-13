@@ -87,6 +87,9 @@ int main(int argc, char** argv)
     cmd.add( lowerVarianceThresholdArg );
     TCLAP::ValueArg<std::string> outputDifferenceImageArg("d","difference_file","filename of the difference image",false,"","string");
     cmd.add( outputDifferenceImageArg );
+    TCLAP::ValueArg< int > localArg("","local","Estimation of the smoothing parameter. 0: global, 1: local (default is 0)",false,0,"int");
+    cmd.add( localArg );
+    
  
     // Parse the args.
     cmd.parse( argc, argv );
@@ -108,6 +111,7 @@ int main(int argc, char** argv)
     float lowerMeanThreshold     = lowerMeanThresholdArg.getValue();
     float lowerVarianceThreshold = lowerVarianceThresholdArg.getValue();
     std::string difference_file  = outputDifferenceImageArg.getValue();
+    int localSmoothing           = localArg.getValue();
 
     //ITK declaration
     typedef float PixelType;
@@ -145,20 +149,30 @@ int main(int argc, char** argv)
 
     myTool.SetPatchSize(hwn);
     myTool.SetSpatialBandwidth(hwvs);
-    myTool.SetSmoothing(beta, myTool.m_inputImage);
-    myTool.SetCentralPointStrategy(center);
-    myTool.SetBlockwiseStrategy(block);
-    myTool.SetOptimizationStrategy(optimized);
-    myTool.SetLowerThresholds(lowerMeanThreshold, lowerVarianceThreshold);
-
-
+    
     if (ref_file != ""){
       ReaderType::Pointer refReader = ReaderType::New();
       refReader->SetFileName( ref_file );
       refReader->Update();
       refImage = refReader->GetOutput();
-      myTool.SetReferenceImage(refImage);
-      myTool.SetSmoothing(beta, myTool.m_refImage);    
+      myTool.SetReferenceImage(refImage);    
+    }    
+    
+    myTool.SetCentralPointStrategy(center);
+    myTool.SetBlockwiseStrategy(block);
+    myTool.SetOptimizationStrategy(optimized);
+    myTool.SetLowerThresholds(lowerMeanThreshold, lowerVarianceThreshold);
+
+    myTool.SetSmoothing(beta);
+    if(localSmoothing == 1)
+      myTool.SetLocalSmoothing(beta);
+
+    if(localSmoothing == 1){
+
+    WriterType::Pointer writer2 = WriterType::New();
+    writer2->SetFileName( "smoothingMap.nii.gz" );
+    writer2->SetInput( myTool.m_rangeBandwidthImage );
+    writer2->Update();
     }
     
     myTool.ComputeOutput();
@@ -182,6 +196,8 @@ int main(int argc, char** argv)
       diffWriter->SetInput( diffFilter->GetOutput() );
       diffWriter->Update();
     }
+
+
 
     return 1;
 

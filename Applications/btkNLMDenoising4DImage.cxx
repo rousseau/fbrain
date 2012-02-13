@@ -77,7 +77,9 @@ int main(int argc, char** argv)
     cmd.add( lowerMeanThresholdArg );
     TCLAP::ValueArg< float > lowerVarianceThresholdArg("","lvt","lower variance threshold (0.5 by default) -- for optimized mode only",false,0.5,"float");
     cmd.add( lowerVarianceThresholdArg );
-
+    TCLAP::ValueArg< int > localArg("","local","Estimation of the smoothing parameter. 0: global, 1: local (default is 0)",false,0,"int");
+    cmd.add( localArg );
+    
     // Parse the args.
     cmd.parse( argc, argv );
 
@@ -97,6 +99,7 @@ int main(int argc, char** argv)
     int optimized                = optimizedArg.getValue();
     float lowerMeanThreshold     = lowerMeanThresholdArg.getValue();
     float lowerVarianceThreshold = lowerVarianceThresholdArg.getValue();
+    int localSmoothing           = localArg.getValue();
 
 
     //ITK declaration
@@ -180,11 +183,6 @@ int main(int argc, char** argv)
 
       myTool.SetPatchSize(hwn);
       myTool.SetSpatialBandwidth(hwvs);
-      myTool.SetSmoothing(beta, myTool.m_inputImage);
-      myTool.SetCentralPointStrategy(center);
-      myTool.SetBlockwiseStrategy(block);
-      myTool.SetOptimizationStrategy(optimized);
-      myTool.SetLowerThresholds(lowerMeanThreshold, lowerVarianceThreshold);
 
       if (ref_file != ""){
         Reader3DType::Pointer refReader = Reader3DType::New();
@@ -192,8 +190,19 @@ int main(int argc, char** argv)
         refReader->Update();
         refImage = refReader->GetOutput();
         myTool.SetReferenceImage(refImage);    
-        myTool.SetSmoothing(beta, myTool.m_refImage);
       }
+      
+      myTool.SetCentralPointStrategy(center);
+      myTool.SetBlockwiseStrategy(block);
+      myTool.SetOptimizationStrategy(optimized);
+      myTool.SetLowerThresholds(lowerMeanThreshold, lowerVarianceThreshold);
+
+      myTool.SetSmoothing(beta);
+      if(localSmoothing == 1)
+        myTool.SetLocalSmoothing(beta);
+
+
+
       
       myTool.ComputeOutput();
       myTool.GetOutput(output3DImage);
