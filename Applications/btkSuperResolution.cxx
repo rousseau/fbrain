@@ -51,7 +51,7 @@
 
 #include "btkSuperResolutionImageFilter.h"
 
-#include "../Code/Denoising/btkNLMTool.h"
+#include "btkNLMTool.h"
 #include "itkCastImageFilter.h"
 
 

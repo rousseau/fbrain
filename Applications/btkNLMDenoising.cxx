@@ -48,7 +48,7 @@ This program implements a denoising method proposed by Coupé et al. described i
 #include "itkImage.h"
 #include "itkConstrainedValueDifferenceImageFilter.h"
 
-#include "../Code/Denoising/btkNLMTool.h"
+#include "btkNLMTool.h"
 
 #include <vector>
 

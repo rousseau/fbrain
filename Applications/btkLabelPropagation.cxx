@@ -38,7 +38,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 #include "itkImage.h"
 
-#include "../Code/Segmentation/btkLabelPropagationTool.h"
+#include "btkLabelPropagationTool.h"
 
 #include <vector>
 #include <sstream>
