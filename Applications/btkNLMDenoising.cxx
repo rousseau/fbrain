@@ -167,13 +167,6 @@ int main(int argc, char** argv)
     if(localSmoothing == 1)
       myTool.SetLocalSmoothing(beta);
 
-    if(localSmoothing == 1){
-
-    WriterType::Pointer writer2 = WriterType::New();
-    writer2->SetFileName( "smoothingMap.nii.gz" );
-    writer2->SetInput( myTool.m_rangeBandwidthImage );
-    writer2->Update();
-    }
     
     myTool.ComputeOutput();
 

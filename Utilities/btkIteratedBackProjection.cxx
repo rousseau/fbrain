@@ -104,6 +104,7 @@ int main( int argc, char *argv[] )
     TCLAP::ValueArg<int> nlmArg           ("n","nlm","Type of filtering during IBP process (0: no filtering (default), 1: error map filtering, 2: current HR image filtering).", false,0,"int",cmd);
     TCLAP::ValueArg<float> betaArg        ("b","beta","Smoothing parameter for NLM filtering (default = 1).", false,1,"float",cmd);
     TCLAP::ValueArg<int> simArg           ("s","sim","Simulation of LR images based on the input HR image and the input LR images (0: no simulation, 1: simulation).", false,0,"int",cmd);
+    TCLAP::ValueArg<int> ibpOrderArg      ("","ibpOrder","Order for the B-spline interpolation during image backprojections (0: nearest neighbor, 1: trilinear etc.)", false,5,"int",cmd);
     
     // Parse the argv array.
     cmd.parse( argc, argv );
@@ -119,6 +120,7 @@ int main( int argc, char *argv[] )
     int nlm                      = nlmArg.getValue();
     int simulation               = simArg.getValue();
     float beta                   = betaArg.getValue();
+    int ibpOrder                 = ibpOrderArg.getValue();
     
     // typedefs
     const   unsigned int    Dimension = 3;
@@ -161,6 +163,8 @@ int main( int argc, char *argv[] )
     btkSRM.data.ReadLRImages(input_file);
     btkSRM.data.ReadMaskLRImages(mask_file);
     btkSRM.data.ReadAffineTransform(transform_file);
+    
+    btkSRM.tool.SetPSFInterpolationOrderIBP(ibpOrder);
     
     btkSRM.Initialize();
     
