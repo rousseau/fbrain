@@ -216,6 +216,7 @@ int main( int argc, char *argv[] )
        
     btkNLMTool<float> myTool;
     myTool.SetInput(resampler -> GetOutput());
+    myTool.SetPaddingValue(0);
     myTool.SetDefaultParameters();
     myTool.ComputeOutput();
     
@@ -230,6 +231,7 @@ int main( int argc, char *argv[] )
       
     btkNLMTool<float> myTool;
     myTool.SetInput(resampler -> GetOutput());
+    myTool.SetPaddingValue(0);
     myTool.SetDefaultParameters();
     myTool.ComputeOutput();
     
