@@ -74,7 +74,7 @@ cmake-curses-gui libtclap-dev libgomp1 libvtk5-dev libann-dev doxygen}
  \item for debian-based distribution: \texttt{apt-get install git-core}
  \item for MacOSX using macports: \texttt{port install git-core}
  \end{itemize}
- \item Insight Toolkit (ITK) version 4\footnote{As there is still not a stable version for ITK4, there are potential compilation problems when using the HEAD version. We have tested BTK with the version of ITK corresponding to the tag v4.0a08.}:
+ \item Insight Toolkit (ITK) version 4\footnote{As there is still not a stable version for ITK4, there are potential compilation problems when using the HEAD version. We have tested BTK with the version of ITK corresponding to the tag v4.0a08. This will be fixed soon}:
 \begin{verbatim}
 git clone git://itk.org/ITK.git
 git checkout v4.0a08
@@ -93,7 +93,7 @@ ITK_BUILD_ALL_MODULES = ON
 BUILD_DOCUMENTATION = ON
 \end{verbatim}
 Then press \texttt{[c]} to configure and \texttt{[g]} to generate the make file.
-Finally, type \texttt{make} at the prompt to obtain the final build of ITK.
+Finally, go to the build folder of ITK (ITK-build) and type \texttt{make} at the prompt to obtain the final build of ITK.
 
 \end{itemize}
 
