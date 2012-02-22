@@ -67,7 +67,7 @@ int main(int argc, char** argv)
 
     TCLAP::MultiArg<std::string> inputArg  ("i","input","input image files.", true,"string",cmd);
     TCLAP::MultiArg<std::string> outputArg ("o","output","output image files.", true,"string",cmd);
-    TCLAP::MultiArg<std::string> biasArg   ("b","bias","estimated differential bias.", true,"string",cmd);
+    TCLAP::MultiArg<std::string> biasArg   ("b","bias","estimated differential bias.", false,"string",cmd);
     TCLAP::ValueArg<int>         radiusArg ("r","radius","radius of the median filter. Default=5.", false,5,"int",cmd);
    
  
@@ -212,12 +212,14 @@ int main(int argc, char** argv)
     }
 
     //Write bias images
-    for(unsigned int i=0;i<numberOfImages;i++){
-      std::cout<<"Writing bias Image : "<<bias_file[i]<<"\n";
-      itkWriter::Pointer writer = itkWriter::New();
-      writer->SetFileName( bias_file[i]  );
-      writer->SetInput( biasImages[i] );
-      writer->Update();
+    if(bias_file.size() > 0){
+      for(unsigned int i=0;i<numberOfImages;i++){
+        std::cout<<"Writing bias Image : "<<bias_file[i]<<"\n";
+        itkWriter::Pointer writer = itkWriter::New();
+        writer->SetFileName( bias_file[i]  );
+        writer->SetInput( biasImages[i] );
+        writer->Update();
+      }
     }
     return 1;
 
