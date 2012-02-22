@@ -165,7 +165,7 @@ void btkNLMTool<T>::SetReferenceImage(itkTPointer refImage)
 template <typename T>
 void btkNLMTool<T>::SetDefaultParameters()
 {
-  //SetPaddingValue(0);
+  SetPaddingValue(0);
   SetPatchSize(1);
   SetSpatialBandwidth(5);
   SetSmoothing(1);
