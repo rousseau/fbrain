@@ -84,6 +84,9 @@ TARGET_LINK_LIBRARIES(btkIteratedBackProjection ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkImageResampling btkImageResampling.cxx)
 TARGET_LINK_LIBRARIES(btkImageResampling ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkDifferentialBiasCorrection btkDifferentialBiasCorrection.cxx)
+TARGET_LINK_LIBRARIES(btkDifferentialBiasCorrection ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -107,4 +110,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkReconstructionComparisonTool
 		            btkIteratedBackProjection
 		            btkImageResampling
+		            btkDifferentialBiasCorrection
         DESTINATION bin)
