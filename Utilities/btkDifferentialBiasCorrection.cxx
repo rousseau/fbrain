@@ -55,6 +55,7 @@ Neuroimage 59 (2012) 3995-4005
 #include "itkImageRegionIterator.h"
 #include "itkDivideImageFilter.h"
 #include "itkStatisticsImageFilter.h"
+#include "itkAddImageFilter.h"
 
 #include <vector>
 
@@ -98,7 +99,7 @@ int main(int argc, char** argv)
     typedef itk::ImageRegionIterator< itkImage >                 itkIterator;
     typedef itk::DivideImageFilter<itkImage, itkImage, itkImage> itkDivideFilter;
     typedef itk::StatisticsImageFilter<itkImage>                 itkStatisticsImageFilter;
-
+    typedef itk::AddImageFilter<itkImage, itkImage, itkImage>    itkAddFilter;
 
     itkMedianFilter::InputSizeType itkRadius;
     itkRadius.Fill(radius);
@@ -108,12 +109,14 @@ int main(int argc, char** argv)
     std::vector<itkPointer>     log10Images;
     std::vector<itkPointer>     outputImages;
     std::vector<itkPointer>     biasImages;
+    std::vector<PixelType>      minValues;
     
     unsigned int numberOfImages = input_file.size();
     inputImages.resize(numberOfImages);
     log10Images.resize(numberOfImages);
     outputImages.resize(numberOfImages);
     biasImages.resize(numberOfImages);
+    minValues.resize(numberOfImages);
     
     //Read input images  
     for(unsigned int i=0;i<numberOfImages;i++){
@@ -122,6 +125,22 @@ int main(int argc, char** argv)
       reader->SetFileName( input_file[i]  );
       reader->Update();
       inputImages[i] = reader->GetOutput();
+      
+      itkStatisticsImageFilter::Pointer statisticsImageFilter = itkStatisticsImageFilter::New ();
+      statisticsImageFilter->SetInput(inputImages[i]);
+      statisticsImageFilter->Update();
+      std::cout << "Mean: " << statisticsImageFilter->GetMean() << std::endl;
+      std::cout << "Std.: " << statisticsImageFilter->GetSigma() << std::endl;
+      std::cout << "Min: " << statisticsImageFilter->GetMinimum() << std::endl;
+      std::cout << "Max: " << statisticsImageFilter->GetMaximum() << std::endl;  
+      
+      //We add the minimum value +1 to be sure that all intensities are positive (>0)
+      minValues[i] = statisticsImageFilter->GetMinimum();
+      itkAddFilter::Pointer add = itkAddFilter::New();
+      add->SetInput1(inputImages[i]);
+      add->SetConstant2(minValues[i]+1);
+      add->Update();
+      inputImages[i] = add->GetOutput();     
     }
     
     std::cout<<"Compute log10 images\n";
@@ -130,6 +149,7 @@ int main(int argc, char** argv)
       log10->SetInput(inputImages[i]);
       log10->Update();
       log10Images[i] = log10->GetOutput();
+   
     }
       
     //Each ratio image is computed. (This is not optimal at all. Best option should be to compute the upper matrix of ratio images.)
@@ -199,7 +219,14 @@ int main(int argc, char** argv)
       divide->SetInput1(inputImages[i]);
       divide->SetInput2(biasImages[i]);
       divide->Update();
-      outputImages[i] = divide->GetOutput();        
+      outputImages[i] = divide->GetOutput(); 
+      
+      //remove the minValue step
+      itkAddFilter::Pointer add = itkAddFilter::New();
+      add->SetInput1(outputImages[i]);
+      add->SetConstant2(-minValues[i]-1);
+      add->Update();
+      outputImages[i] = add->GetOutput();       
     }  
 
     //Write output images
