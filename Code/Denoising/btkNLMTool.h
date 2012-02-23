@@ -165,7 +165,7 @@ void btkNLMTool<T>::SetReferenceImage(itkTPointer refImage)
 template <typename T>
 void btkNLMTool<T>::SetDefaultParameters()
 {
-  SetPaddingValue(0);
+  //SetPaddingValue(0);
   SetPatchSize(1);
   SetSpatialBandwidth(5);
   SetSmoothing(1);
@@ -360,7 +360,7 @@ double btkNLMTool<T>::ComputePseudoResidual(typename itkTImage::IndexType & pixe
   int x = pixelIndex[0];
   int y = pixelIndex[1];
   int z = pixelIndex[2];
-   
+     
   double value = tmpImage->GetPixel(pixelIndex);
 	//pourrait se faire avec une convolution !
 	pixelIndex[0] = x+1;	  pixelIndex[1] = y;	  pixelIndex[2] = z;
@@ -412,23 +412,21 @@ void btkNLMTool<T>::SetSmoothing(float beta)
 {
   //this function should be rewritten using a convolution-based approach
   std::cout<<"Computing the global range bandwidth (corresponding to the smoothing parameter for the NLM algorithm).\n";
-  double sigma2 = 0;
   int x,y,z;
-  typename itkTImage::IndexType pixelIndex;	
-  double ei = 0;
+
   std::vector<float> vecei;
   //since we have use to use a neighborhood around the current voxel, we neglect the border to avoid slow tests.
   #pragma omp parallel for private(x,y,z) schedule(dynamic)
   for(z=1;z<(int)m_size[2]-1;z++)
     for(y=1;y<(int)m_size[1]-1;y++)
       for(x=1;x<(int)m_size[0]-1;x++){
+        typename itkTImage::IndexType pixelIndex;
       	pixelIndex[0] = x;
 	      pixelIndex[1] = y;
 	      pixelIndex[2] = z;
 	
 	      if( m_maskImage->GetPixel(pixelIndex) > 0){
-	        ei = ComputePseudoResidual(pixelIndex);
-	        sigma2 += ei*ei;
+	        double ei = ComputePseudoResidual(pixelIndex);
 	        #pragma omp critical
           if(fabs(ei>0))
             vecei.push_back(fabs(ei));
@@ -466,7 +464,6 @@ void btkNLMTool<T>::SetLocalSmoothing(float beta)
           typename itkTImage::IndexType neighbourPixelIndex;	
 
           std::vector<float> vecei;
-          double sigma2 = 0;
 
           for(itRegion.GoToBegin(); !itRegion.IsAtEnd(); ++itRegion){
             neighbourPixelIndex = itRegion.GetIndex();
@@ -478,7 +475,6 @@ void btkNLMTool<T>::SetLocalSmoothing(float beta)
             if(goForIt == true){
               if( m_maskImage->GetPixel(neighbourPixelIndex) > 0){
 	              ei = ComputePseudoResidualSafely(neighbourPixelIndex);
-	              sigma2 += ei*ei;
 	              if(fabs(ei>0))
                   vecei.push_back(fabs(ei));
               }
