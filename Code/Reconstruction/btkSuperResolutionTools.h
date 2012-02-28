@@ -86,21 +86,22 @@ public:
 
   int                       m_psftype; // 0: 3D interpolated boxcar, 1: 3D oversampled boxcar
   std::vector<itkPointer>   m_PSF;
-  int                       m_interpolationOrder;
+  int                       m_interpolationOrderPSF;
+  int                       m_interpolationOrderIBP;
   vnl_sparse_matrix<float>  m_H;
   vnl_vector<float>         m_Y;
   vnl_vector<float>         m_X;
   float                     m_paddingValue;
   std::vector<unsigned int> m_offset;
   
-  
   SuperResolutionTools(){
-    m_interpolationOrder = 1;   //linear interpolation for interpolated PSF
+    m_interpolationOrderPSF = 1;   //linear interpolation for interpolated PSF
     m_psftype = 1;              //interpolated PSF by default (1: oversampled PSF)
     m_paddingValue = 0;         //0 is considered as background by default.
   };
   
-  void SetPSFInterpolationOrder(int & order);
+  void SetPSFInterpolationOrderPSF(int & order);
+  void SetPSFInterpolationOrderIBP(int & order);
   void SetPSFComputation(int & type);
   void InitializePSF(SuperResolutionDataManager & data);
   void HComputation(SuperResolutionDataManager & data);
@@ -111,12 +112,19 @@ public:
 };
 
 
-void SuperResolutionTools::SetPSFInterpolationOrder(int & order)
+void SuperResolutionTools::SetPSFInterpolationOrderPSF(int & order)
 {
   //order of the BSpline used for interpolated PSF
-  m_interpolationOrder = order;
+  m_interpolationOrderPSF = order;
   std::cout<<"Order of the BSpline interpolator: "<<order<<". ";
   std::cout<<"This order is used for PSF computation if m_psftype=0.\n";
+}
+
+void SuperResolutionTools::SetPSFInterpolationOrderIBP(int & order)
+{
+  //order of the BSpline used for interpolated IBP
+  m_interpolationOrderIBP = order;
+  std::cout<<"Order of the BSpline interpolator for image backprojection: "<<order<<". \n";
 }
 
 void SuperResolutionTools::SetPSFComputation(int & type)
@@ -206,7 +214,7 @@ void SuperResolutionTools::InitializePSF(SuperResolutionDataManager & data)
     std::cout<<"HRPSF physical center : "<<hrPointCenter[0]<<" "<<hrPointCenter[1]<<" "<<hrPointCenter[2]<<"\n";
         
     itkBSplineInterpolator::Pointer bsInterpolator = itkBSplineInterpolator::New();
-    bsInterpolator->SetSplineOrder(m_interpolationOrder);
+    bsInterpolator->SetSplineOrder(m_interpolationOrderPSF);
     bsInterpolator->SetInputImage(LRPSF);
     
     itkIteratorWithIndex itPSF(m_PSF[i],m_PSF[i]->GetLargestPossibleRegion());
@@ -214,7 +222,7 @@ void SuperResolutionTools::InitializePSF(SuperResolutionDataManager & data)
 
     switch (m_psftype) {
       case 0:
-        std::cout<<"3D interpolated boxcar using "<<m_interpolationOrder<<" order B-Spline.\n";
+        std::cout<<"3D interpolated boxcar using "<<m_interpolationOrderPSF<<" order B-Spline.\n";
         //Loop over voxels of HR PSF
         for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF){
           
@@ -592,7 +600,7 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
   data.m_outputHRImage->FillBuffer(0);
     
   //parameters for interpolation (bspline interpolator)
-  int interpolationOrder = 5;
+  int interpolationOrder = m_interpolationOrderIBP;
   itkBSplineInterpolator::Pointer bsInterpolator = itkBSplineInterpolator::New();
   bsInterpolator->SetSplineOrder(interpolationOrder);
   
@@ -649,7 +657,7 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
     myTool.SetMaskImage(data.m_maskHRImage);
     myTool.SetDefaultParameters();
     myTool.SetReferenceImage(data.m_currentHRImage);  
-    myTool.SetSmoothing(beta, myTool.m_refImage);  
+    myTool.SetSmoothing(beta);  
     myTool.SetBlockwiseStrategy(1); //0 pointwise, 1 block, 2 fast block
 
 
@@ -675,7 +683,7 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
     myTool.SetInput(data.m_outputHRImage);
     myTool.SetMaskImage(data.m_maskHRImage);
     myTool.SetDefaultParameters();
-    myTool.SetSmoothing(beta, myTool.m_inputImage);
+    myTool.SetSmoothing(beta);
     myTool.SetBlockwiseStrategy(1); //0 pointwise, 1 block, 2 fast block
     myTool.ComputeOutput();
     myTool.GetOutput(data.m_outputHRImage);  
