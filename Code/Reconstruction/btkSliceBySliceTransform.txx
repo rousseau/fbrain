@@ -111,7 +111,7 @@ GetJacobian(const InputPointType &p ) const
 
   typename ImageType::IndexType index;
   m_Image -> TransformPhysicalPointToIndex( p , index);
-  //JacobianType jacobian = m_TransformList[ index[2] ] -> GetJacobian(p); // FIXME : in ITK GetJacobian is replacer by ComputeJacobianWithRespectToParameters (const InputPointType &p, JacobianType &jacobian)
+  //JacobianType jacobian = m_TransformList[ index[2] ] -> GetJacobian(p); // FIXME : in ITK GetJacobian is replaced by ComputeJacobianWithRespectToParameters (const InputPointType &p, JacobianType &jacobian)
   JacobianType jacobian;
   m_TransformList[ index[2] ]->ComputeJacobianWithRespectToParameters( p, jacobian ) ;
   unsigned int offset = index[2]*m_TransformList[0]->GetNumberOfParameters();

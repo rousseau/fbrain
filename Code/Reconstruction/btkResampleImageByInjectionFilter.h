@@ -296,6 +296,11 @@ protected:
    * */
   void GenerateData();
 
+  /** This method overrides the itkImageToImageFilter's
+   *  This method do nothing, we don't want to verify if inputs are in the same physical space
+   * */
+  virtual void VerifyInputInformation() {};
+
 private:
   ResampleImageByInjectionFilter( const Self& ); //purposely not implemented
   void operator=( const Self& ); //purposely not implemented

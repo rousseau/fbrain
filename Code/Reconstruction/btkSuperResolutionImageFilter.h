@@ -304,6 +304,8 @@ protected:
    * */
   void GenerateData();
 
+  virtual void VerifyInputInformation() {};
+
 private:
 
   SuperResolutionImageFilter( const Self& ); //purposely not implemented

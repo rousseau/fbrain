@@ -110,7 +110,7 @@ public:
   virtual const JacobianType & GetJacobian(const InputPointType &p ) const;
 
   /** NOT IMPLEMENTED: */
-  virtual void GetJacobianWithRespectToParameters( const InputPointType  &p,
+  virtual void ComputeJacobianWithRespectToParameters( const InputPointType  &p,
                                  JacobianType & jacobian) const
   {
     itkExceptionMacro("GetJacobianWithRespectToParameters "
@@ -118,7 +118,7 @@ public:
   }
 
   /** NOT IMPLEMENTED: */
-  virtual void GetJacobianWithRespectToPosition(
+  virtual void ComputeJacobianWithRespectToPosition(
                                        const InputPointType & p,
                                        JacobianType &j ) const
   {
