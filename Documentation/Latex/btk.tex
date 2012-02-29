@@ -5,6 +5,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 
+
 % Title Page
 \title{Baby Brain Toolkit}
 \author{Fbrain ERC project: Computational Anatomy of Fetal Brain}
@@ -74,13 +75,16 @@ cmake-curses-gui libtclap-dev libgomp1 libvtk5-dev libann-dev doxygen}
  \item for debian-based distribution: \texttt{apt-get install git-core}
  \item for MacOSX using macports: \texttt{port install git-core}
  \end{itemize}
- \item Insight Toolkit (ITK) version 4\footnote{As there is still not a stable version for ITK4, there are potential compilation problems when using the HEAD version. We have tested BTK with the version of ITK corresponding to the tag v4.0a08. This will be fixed soon}:
+ \item Insight Toolkit (ITK) version 4 (http://www.itk.org/ITK/resources/software.html)
+ \begin{itemize}
+ \item Download the tar.gz archive of ITK v4.0
+ \item Extract the archive 
+ \item Then open a terminal and type :
+ \end{itemize}
 \begin{verbatim}
-git clone git://itk.org/ITK.git
-git checkout v4.0a08
 mkdir ITK-build
 cd ITK-build
-ccmake ../ITK/
+ccmake ../(your-ITK-Source-folder)/
 \end{verbatim}
 This will bring up the CMake configuration screen. Press \texttt{[c]} for
 configure and then use \texttt{[t]} to toggle the advanced mode. Make the
@@ -90,6 +94,7 @@ BUILD_TESTING = OFF
 CMAKE_BUILD_TYPE = Release
 ITK_USE_REVIEW = ON
 ITK_BUILD_ALL_MODULES = ON
+ITKV3_COMPATIBILITY = ON
 BUILD_DOCUMENTATION = ON
 \end{verbatim}
 Then press \texttt{[c]} to configure and \texttt{[g]} to generate the make file.
