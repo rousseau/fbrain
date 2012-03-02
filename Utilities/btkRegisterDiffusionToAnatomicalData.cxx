@@ -452,7 +452,8 @@ typedef itk::TransformFileWriter                         AffineDeformationFileWr
     AffineDeformation::Pointer affine = static_cast<AffineDeformation *>( reader->GetTransformList()->front().GetPointer() );
 
     finalParameters = affine->GetParameters();
-    centerPoint[0] = 84.5732; centerPoint[1] = 138.557; centerPoint[2] = 86.9035;
+    //centerPoint[0] = 84.5732; centerPoint[1] = 138.557; centerPoint[2] = 86.9035;
+    centerPoint = affine->GetCenter();
 }
 // TEST
 
@@ -499,6 +500,7 @@ std::cout << finalTransform << std::endl;
      resample -> SetTransform( inverseTransform );
     else
      resample -> SetTransform( finalTransform );
+
      resample -> SetInput( extractor -> GetOutput() );
      resample -> SetUseReferenceImage( true );
      resample -> SetReferenceImage( reference );
