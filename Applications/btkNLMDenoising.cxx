@@ -48,7 +48,7 @@ This program implements a denoising method proposed by Coupé et al. described i
 #include "itkImage.h"
 #include "itkConstrainedValueDifferenceImageFilter.h"
 
-#include "../Code/Denoising/btkNLMTool.h"
+#include "btkNLMTool.h"
 
 #include <vector>
 
@@ -67,7 +67,7 @@ int main(int argc, char** argv)
     cmd.add( inputMaskArg );
     TCLAP::ValueArg<std::string> inputReferenceArg("r","ref_file","filename of the reference image",false,"","string");
     cmd.add( inputReferenceArg );
-    TCLAP::ValueArg< float > paddingArg("p","pad","padding value (used if no mask image is provided, default is -1)",false,-1,"float");
+    TCLAP::ValueArg< float > paddingArg("p","pad","padding value (used if no mask image is provided, default is 0)",false,0,"float");
     cmd.add( paddingArg );
     TCLAP::ValueArg< int > hwnArg("","hwn","patch half size (default is 1)",false,1,"int");
     cmd.add( hwnArg );
@@ -87,6 +87,9 @@ int main(int argc, char** argv)
     cmd.add( lowerVarianceThresholdArg );
     TCLAP::ValueArg<std::string> outputDifferenceImageArg("d","difference_file","filename of the difference image",false,"","string");
     cmd.add( outputDifferenceImageArg );
+    TCLAP::ValueArg< int > localArg("","local","Estimation of the smoothing parameter. 0: global, 1: local (default is 0)",false,0,"int");
+    cmd.add( localArg );
+    
  
     // Parse the args.
     cmd.parse( argc, argv );
@@ -108,9 +111,10 @@ int main(int argc, char** argv)
     float lowerMeanThreshold     = lowerMeanThresholdArg.getValue();
     float lowerVarianceThreshold = lowerVarianceThresholdArg.getValue();
     std::string difference_file  = outputDifferenceImageArg.getValue();
+    int localSmoothing           = localArg.getValue();
 
     //ITK declaration
-    typedef short PixelType;
+    typedef float PixelType;
     const   unsigned int        Dimension = 3;
     typedef itk::Image< PixelType, Dimension >    ImageType; //same type for input and output
     typedef ImageType::Pointer ImagePointer;
@@ -145,21 +149,24 @@ int main(int argc, char** argv)
 
     myTool.SetPatchSize(hwn);
     myTool.SetSpatialBandwidth(hwvs);
-    myTool.SetSmoothing(beta);
-    myTool.SetCentralPointStrategy(center);
-    myTool.SetBlockwiseStrategy(block);
-    myTool.SetOptimizationStrategy(optimized);
-    myTool.SetLowerThresholds(lowerMeanThreshold, lowerVarianceThreshold);
-
-
+    
     if (ref_file != ""){
       ReaderType::Pointer refReader = ReaderType::New();
       refReader->SetFileName( ref_file );
       refReader->Update();
       refImage = refReader->GetOutput();
       myTool.SetReferenceImage(refImage);    
-      myTool.SetSmoothingUsingReferenceImage(beta);
-    }
+    }    
+    
+    myTool.SetCentralPointStrategy(center);
+    myTool.SetBlockwiseStrategy(block);
+    myTool.SetOptimizationStrategy(optimized);
+    myTool.SetLowerThresholds(lowerMeanThreshold, lowerVarianceThreshold);
+
+    myTool.SetSmoothing(beta);
+    if(localSmoothing == 1)
+      myTool.SetLocalSmoothing(beta);
+
     
     myTool.ComputeOutput();
 
@@ -182,6 +189,8 @@ int main(int argc, char** argv)
       diffWriter->SetInput( diffFilter->GetOutput() );
       diffWriter->Update();
     }
+
+
 
     return 1;
 

@@ -42,7 +42,7 @@
 #include "btkResampleImageByInjectionFilter.h"
 #include "itkNormalizedCorrelationImageToImageMetric.h"
 #include "itkLinearInterpolateImageFunction.h"
-#include "itkDivideByConstantImageFilter.h"
+//#include "itkDivideByConstantImageFilter.h"
 #include "itkMinimumMaximumImageCalculator.h"
 
 #include "itkEuler3DTransform.h"
@@ -93,7 +93,7 @@ int main( int argc, char *argv[] )
       "transform (this is an output to check initial transform consistency)",false,"string",cmd);
   TCLAP::ValueArg<std::string> outArg("o","output","High resolution image",true,
       "","string",cmd);
-  TCLAP::ValueArg<std::string> combinedMaskArg("","combined-masks","All image "
+  TCLAP::ValueArg<std::string> combinedMaskArg("","combinedMasks","All image "
       "masks combined in a single one",false,"","string",cmd);
   TCLAP::ValueArg<unsigned int> iterArg("n","iter","Maximum number of iterations"
       " (default 10)",false, 10,"unsigned int",cmd);
@@ -386,7 +386,8 @@ int main( int argc, char *argv[] )
 
         try
           {
-          rigid3DRegistration[im] -> StartRegistration();
+          //rigid3DRegistration[im] -> StartRegistration();// FIXME : in ITK4 StartRegistration() is replaced by Update()
+          rigid3DRegistration[im]->Update();
           }
         catch( itk::ExceptionObject & err )
           {

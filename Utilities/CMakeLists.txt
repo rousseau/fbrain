@@ -72,6 +72,21 @@ TARGET_LINK_LIBRARIES(btkWeightedMean ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkSequenceNormalization btkSequenceNormalization.cxx )
 TARGET_LINK_LIBRARIES(btkSequenceNormalization ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkRescaleIntensity btkRescaleIntensity.cxx )
+TARGET_LINK_LIBRARIES(btkRescaleIntensity ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkReconstructionComparisonTool btkReconstructionComparisonTool.cxx )
+TARGET_LINK_LIBRARIES(btkReconstructionComparisonTool ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkIteratedBackProjection btkIteratedBackProjection.cxx)
+TARGET_LINK_LIBRARIES(btkIteratedBackProjection ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkImageResampling btkImageResampling.cxx)
+TARGET_LINK_LIBRARIES(btkImageResampling ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkDifferentialBiasCorrection btkDifferentialBiasCorrection.cxx)
+TARGET_LINK_LIBRARIES(btkDifferentialBiasCorrection ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -92,4 +107,8 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkPSNR
                 btkWeightedMean
                 btkSequenceNormalization
+                btkReconstructionComparisonTool
+		            btkIteratedBackProjection
+		            btkImageResampling
+		            btkDifferentialBiasCorrection
         DESTINATION bin)

@@ -6,11 +6,18 @@ INCLUDE_DIRECTORIES(${TCLAP_DIRECTORY})
 
 # GENERAL PROCESSING
 # ------------------
+INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Denoising)
 
-ADD_EXECUTABLE(btkNLMDenoising btkNLMDenoising.cxx )
+ADD_EXECUTABLE(btkNLMDenoising btkNLMDenoising.cxx
+              ${fbrain_SOURCE_DIR}/Code/Denoising/btkNLMTool.h)
+
 TARGET_LINK_LIBRARIES(btkNLMDenoising ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkNLMDenoising4DImage btkNLMDenoising4DImage.cxx )
+INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Denoising)
+
+ADD_EXECUTABLE(btkNLMDenoising4DImage btkNLMDenoising4DImage.cxx
+               ${fbrain_SOURCE_DIR}/Code/Denoising/btkNLMTool.h)
+
 TARGET_LINK_LIBRARIES(btkNLMDenoising4DImage ${ITK_LIBRARIES})
 
 INSTALL(TARGETS btkNLMDenoising btkNLMDenoising4DImage DESTINATION bin)
@@ -22,14 +29,25 @@ INSTALL(TARGETS btkNLMDenoising btkNLMDenoising4DImage DESTINATION bin)
 INCLUDE_DIRECTORIES(${ANN_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Reconstruction)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/DTI)
+INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Segmentation)
 
-ADD_EXECUTABLE(btkImageReconstruction btkImageReconstruction.cxx )
+ADD_EXECUTABLE(btkImageReconstruction btkImageReconstruction.cxx
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLowToHighImageResolutionMethod.h
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceRigidRegistration.h
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkResampleImageByInjectionFilter.h
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkImageIntersectionCalculator.h )
+
 TARGET_LINK_LIBRARIES(btkImageReconstruction ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkLabelPropagation btkLabelPropagation.cxx )
+
+ADD_EXECUTABLE(btkLabelPropagation btkLabelPropagation.cxx
+              ${fbrain_SOURCE_DIR}/Code/Segmentation/btkLabelPropagationTool.h)
+
 TARGET_LINK_LIBRARIES(btkLabelPropagation ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkSuperResolution btkSuperResolution.cxx )
+ADD_EXECUTABLE(btkSuperResolution btkSuperResolution.cxx
+             ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h)
 TARGET_LINK_LIBRARIES(btkSuperResolution ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkGroupwiseS2SDistortionCorrection btkGroupwiseS2SDistortionCorrection.cxx )

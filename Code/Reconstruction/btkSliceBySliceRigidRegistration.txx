@@ -51,7 +51,7 @@ SliceBySliceRigidRegistration<ImageType>
       m_Registration -> SetFixedImageMask( m_ImageMask );
       m_ROI = mask -> GetAxisAlignedBoundingBoxRegion();
     }
-
+    
   if ( !m_Transform)
   {
     m_Transform = SliceBySliceTransformType::New();
@@ -109,13 +109,14 @@ SliceBySliceRigidRegistration<ImageType>
 
       m_Registration -> SetFixedImageRegion( fixedImageRegion );
       m_Registration -> SetInitialTransformParameters( m_Transform -> GetSliceTransform(i) -> GetParameters() );
-//      m_Registration -> SetTransformCenter( m_Transform -> GetSliceTransform(i) -> GetCenter() );
+      m_Registration -> SetTransformCenter( m_Transform -> GetSliceTransform(i) -> GetCenter() );
 
 //      std::cout << "Initial registration parameters = " << m_Transform -> GetSliceTransform(i) -> GetParameters() << std::endl;
 
       try
         {
-        m_Registration -> StartRegistration();
+        //m_Registration -> StartRegistration();// FIXME : in ITK4 StartRegistration() is replaced by Update()
+        m_Registration->Update();
         }
       catch( itk::ExceptionObject & err )
         {

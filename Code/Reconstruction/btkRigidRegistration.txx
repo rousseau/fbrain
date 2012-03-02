@@ -120,9 +120,9 @@ RigidRegistration<ImageType>
   }
 
   // FIXME Uncomment if MI is used instead of NC
-  m_Metric -> SetNumberOfHistogramBins( 64 );
-  m_Metric -> UseAllPixelsOn();
-  //m_Metric -> SetNumberOfSpatialSamples(0.2*this -> GetFixedImageRegion().GetNumberOfPixels());
+  //m_Metric -> SetNumberOfHistogramBins( 64 );
+  //m_Metric -> UseAllPixelsOn();
+  m_Metric -> SetNumberOfSpatialSamples(0.2*this -> GetFixedImageRegion().GetNumberOfPixels());
 
   // Configure optimizer
 
@@ -151,10 +151,10 @@ RigidRegistration<ImageType>
   }
 
   // Connect components
-  SetTransform( this -> m_Transform );
-  SetMetric( this -> m_Metric );
-  SetOptimizer( this -> m_Optimizer );
-  SetInterpolator( this -> m_Interpolator );
+  this->SetTransform( this -> m_Transform );
+  this->SetMetric( this -> m_Metric );
+  this->SetOptimizer( this -> m_Optimizer );
+  this->SetInterpolator( this -> m_Interpolator );
 
   Superclass::Initialize();
 

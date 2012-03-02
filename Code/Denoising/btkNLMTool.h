@@ -32,7 +32,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 */
 
 /*
- This program implements a denoising method proposed by Coupé et al. described in :
+ This program implements a denoising method based on the work of Coupé et al. described in :
  Coupé, P., Yger, P., Prima, S., Hellier, P., Kervrann, C., Barillot, C., 2008. 
  An optimized blockwise nonlocal means denoising filter for 3-D magnetic resonance images.
  IEEE Transactions on Medical Imaging 27 (4), 425–441.
@@ -55,6 +55,9 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include <sstream>
 #include <fstream>
 
+//WARNING:
+//the possible types for T are float or double. Other types may introduce error during the computations 
+
 template <typename T>
 class btkNLMTool
 {
@@ -66,18 +69,13 @@ class btkNLMTool
   typedef typename itk::ImageRegionConstIterator< itkTImage > itkTConstIterator;
   typedef typename itk::ImageRegionIteratorWithIndex< itkTImage > itkTIteratorWithIndex;
 
-  typedef typename itk::Image< float, 3> itkFloatImage;
-  typedef typename itkFloatImage::Pointer itkFloatPointer;
-  typedef typename itk::ImageRegionIterator< itkFloatImage > itkFloatIterator;
-  typedef typename itk::ImageRegionIteratorWithIndex< itkFloatImage > itkFloatIteratorWithIndex;
-
-
   itkTPointer m_inputImage;
   itkTPointer m_outputImage;
   itkTPointer m_maskImage;
   itkTPointer m_refImage;
-  itkFloatPointer m_meanImage;
-  itkFloatPointer m_varianceImage;
+  itkTPointer m_meanImage;
+  itkTPointer m_varianceImage;
+  itkTPointer m_rangeBandwidthImage;
   
   //Image information (size, spacing etc.)
   typename itkTImage::SpacingType m_spacing;
@@ -90,13 +88,13 @@ class btkNLMTool
   typename itkTImage::SizeType m_fullSpatialBandwidth;   //spatial bandwidth : 2 * halfSpatialBandwidth + 1
 
   float m_padding;
-  float m_rangeBandwidth;
   int   m_centralPointStrategy;
   int   m_blockwise;
   int   m_optimized;
   float m_lowerMeanThreshold;
   float m_lowerVarianceThreshold;
   bool  m_useTheReferenceImage;
+  bool  m_useGlobalSmoothing;
 
   void SetInput(itkTPointer inputImage);
   void SetReferenceImage(itkTPointer refImage);
@@ -109,21 +107,23 @@ class btkNLMTool
   void SetBlockwiseStrategy(int b);
   void SetOptimizationStrategy(int o);
   void SetLowerThresholds(float m, float v);
-  void SetSmoothing(float beta);                       //set the smoothing parameter and compute the corrected smoothing value (m_rangeBandwidth)
-  void SetSmoothingUsingReferenceImage(float beta);    //set the smoothing parameter and compute the corrected smoothing value (m_rangeBandwidth) using the reference image
+  double ComputePseudoResidual(typename itkTImage::IndexType & pixelIndex);
+  double ComputePseudoResidualSafely(typename itkTImage::IndexType & pixelIndex);
+  float MADEstimation(std::vector<float> & vecei, float & beta);
+  void SetSmoothing(float beta); //set the smoothing parameter and compute the corrected smoothing value (m_rangeBandwidth)
+  void SetLocalSmoothing(float beta); //set the smoothing parameter for every voxel and compute the corrected smoothing value (m_rangeBandwidth)
   void GetOutput(itkTPointer & outputImage);
   void ComputeOutput();
   void PrintInfo();
   
   void CreatePatch(itkTPointer & patch);
-  void CreatePatch(itkFloatPointer & patch);
   void GetPatch(typename itkTImage::IndexType p, itkTPointer & patch);
   void GetPatchFromReferenceImage(typename itkTImage::IndexType p, itkTPointer & patch);
-  void AddPatchToImage(typename itkTImage::IndexType p, itkFloatPointer & patch, itkFloatPointer & image, itkFloatPointer & weightImage, double weight);
+  void AddPatchToImage(typename itkTImage::IndexType p, itkTPointer & patch, itkTPointer & image, itkTPointer & weightImage, double weight);
   double PatchDistance(itkTPointer & p,itkTPointer & q);
 
-  double GetDenoisedPatch(typename itkTImage::IndexType p, itkFloatPointer & patch);
-  double GetDenoisedPatchUsingTheReferenceImage(typename itkTImage::IndexType p, itkFloatPointer & patch);
+  double GetDenoisedPatch(typename itkTImage::IndexType p, itkTPointer & patch);
+  double GetDenoisedPatchUsingTheReferenceImage(typename itkTImage::IndexType p, itkTPointer & patch);
   void ComputeSearchRegion(typename itkTImage::IndexType p, typename itkTImage::RegionType & region);
   void ComputePatchRegion(typename itkTImage::IndexType p, typename itkTImage::RegionType & imageRegion, typename itkTImage::RegionType & patchRegion);
   bool CheckSpeed(typename itkTImage::IndexType p, typename itkTImage::IndexType q);
@@ -143,7 +143,16 @@ void btkNLMTool<T>::SetInput(itkTPointer inputImage)
   duplicator->SetInputImage( inputImage );
   duplicator->Update();
   m_outputImage = duplicator->GetOutput();
+  
   m_useTheReferenceImage = false;
+  m_useGlobalSmoothing = true;
+  
+  //duplicate the input image into the rangeBandwidth image to keep all header information
+  typename itkTDuplicator::Pointer duplicator2 = itkTDuplicator::New();
+  duplicator2->SetInputImage( inputImage );
+  duplicator2->Update();
+  m_rangeBandwidthImage = duplicator2->GetOutput();
+  m_rangeBandwidthImage->FillBuffer(0.0);
 }
 
 template <typename T>
@@ -156,7 +165,7 @@ void btkNLMTool<T>::SetReferenceImage(itkTPointer refImage)
 template <typename T>
 void btkNLMTool<T>::SetDefaultParameters()
 {
-  SetPaddingValue(0);
+  //SetPaddingValue(0);
   SetPatchSize(1);
   SetSpatialBandwidth(5);
   SetSmoothing(1);
@@ -177,7 +186,7 @@ void btkNLMTool<T>::SetPatchSize(int h)
   m_halfPatchSize[0] = (int)(0.5 + h * minVoxSz / m_spacing[0]);
   m_halfPatchSize[1] = (int)(0.5 + h * minVoxSz / m_spacing[1]);
   m_halfPatchSize[2] = (int)(0.5 + h * minVoxSz / m_spacing[2]);
-  std::cout<<"patchSize : "<<m_halfPatchSize[0]<<" "<<m_halfPatchSize[1]<<" "<<m_halfPatchSize[2]<<"\n";
+  std::cout<<"half patchSize : "<<m_halfPatchSize[0]<<" "<<m_halfPatchSize[1]<<" "<<m_halfPatchSize[2]<<"\n";
   
   m_fullPatchSize[0] = 2 * m_halfPatchSize[0] + 1;
   m_fullPatchSize[1] = 2 * m_halfPatchSize[1] + 1;
@@ -195,7 +204,7 @@ void btkNLMTool<T>::SetSpatialBandwidth(int s)
   m_halfSpatialBandwidth[0] = (int)(0.5 + s * minVoxSz / m_spacing[0]);
   m_halfSpatialBandwidth[1] = (int)(0.5 + s * minVoxSz / m_spacing[1]);
   m_halfSpatialBandwidth[2] = (int)(0.5 + s * minVoxSz / m_spacing[2]);
-  std::cout<<"spatialBandwidth : "<<m_halfSpatialBandwidth[0]<<" "<<m_halfSpatialBandwidth[1]<<" "<<m_halfSpatialBandwidth[2]<<"\n";  
+  std::cout<<"half spatialBandwidth : "<<m_halfSpatialBandwidth[0]<<" "<<m_halfSpatialBandwidth[1]<<" "<<m_halfSpatialBandwidth[2]<<"\n";  
   
   m_fullSpatialBandwidth[0] = 2 * m_halfSpatialBandwidth[0] + 1;
   m_fullSpatialBandwidth[1] = 2 * m_halfSpatialBandwidth[1] + 1;
@@ -280,7 +289,7 @@ void btkNLMTool<T>::SetOptimizationStrategy(int o)
 
   if(o==1){
     std::cout<<"Optimized mode. Computing Mean and Variance images\n";
-    m_meanImage = itkFloatImage::New();
+    m_meanImage = itkTImage::New();
     m_meanImage->SetRegions(m_inputImage->GetLargestPossibleRegion());
     m_meanImage->SetSpacing( m_inputImage->GetSpacing() );
     m_meanImage->SetOrigin( m_inputImage->GetOrigin() );
@@ -288,7 +297,7 @@ void btkNLMTool<T>::SetOptimizationStrategy(int o)
     m_meanImage->Allocate();
     m_meanImage->FillBuffer(0); 
 
-    m_varianceImage = itkFloatImage::New();
+    m_varianceImage = itkTImage::New();
     m_varianceImage->SetRegions(m_inputImage->GetLargestPossibleRegion());
     m_varianceImage->SetSpacing( m_inputImage->GetSpacing() );
     m_varianceImage->SetOrigin( m_inputImage->GetOrigin() );
@@ -338,48 +347,53 @@ void btkNLMTool<T>::SetLowerThresholds(float m, float v)
 
 
 template <typename T>
-void btkNLMTool<T>::SetSmoothing(float beta)
+double btkNLMTool<T>::ComputePseudoResidual(typename itkTImage::IndexType & pixelIndex)
 {
-  //this function should be rewritten using a convolution-based approach
-  std::cout<<"Computing the range bandwidth (corresponding to the smoothing parameter for the NLM algorithm).\n";
-  uint count = 0;
-  double sigma2 = 0;
-  int x,y,z;
-  typename itkTImage::IndexType pixelIndex;	
-  float ei = 0;
-  std::vector<float> vecei;
-  T value = 0;
-  //since we have use to use a neighborhood around the current voxel, we neglect the border to avoid slow tests.
-  for(z=1;z<(int)m_size[2]-1;z++)
-    for(y=1;y<(int)m_size[1]-1;y++)
-      for(x=1;x<(int)m_size[0]-1;x++){
-	pixelIndex[0] = x;
-	pixelIndex[1] = y;
-	pixelIndex[2] = z;
-	value = m_inputImage->GetPixel(pixelIndex);
-        if( m_maskImage->GetPixel(pixelIndex) > 0){
-	  //pourrait se faire avec une convolution !
-	  pixelIndex[0] = x+1;	  pixelIndex[1] = y;	  pixelIndex[2] = z;
-	  ei = m_inputImage->GetPixel(pixelIndex);
-	  pixelIndex[0] = x-1;	  pixelIndex[1] = y;	  pixelIndex[2] = z;
-	  ei += m_inputImage->GetPixel(pixelIndex);
-	  pixelIndex[0] = x;	          pixelIndex[1] = y+1;	  pixelIndex[2] = z;
-	  ei += m_inputImage->GetPixel(pixelIndex);
-	  pixelIndex[0] = x;  	  pixelIndex[1] = y-1;	  pixelIndex[2] = z;
-	  ei += m_inputImage->GetPixel(pixelIndex);
-	  pixelIndex[0] = x;  	  pixelIndex[1] = y;	  pixelIndex[2] = z+1;
-	  ei += m_inputImage->GetPixel(pixelIndex);
-	  pixelIndex[0] = x;  	  pixelIndex[1] = y;	  pixelIndex[2] = z-1;
-	  ei += m_inputImage->GetPixel(pixelIndex);
-	  pixelIndex[0] = x;            pixelIndex[1] = y;	  pixelIndex[2] = z;
-	  ei = sqrt(6.0/7.0)*(m_inputImage->GetPixel(pixelIndex) -ei/6.0);
-	    
-	  sigma2 += ei*ei;
-	  count ++;
-          if(fabs(ei>0))
-            vecei.push_back(fabs(ei));
-        }
-      }
+  double ei = 0;
+  
+  itkTPointer tmpImage;
+  if(m_useTheReferenceImage == false) 
+    tmpImage = m_inputImage;
+  else
+    tmpImage = m_refImage;
+   
+  int x = pixelIndex[0];
+  int y = pixelIndex[1];
+  int z = pixelIndex[2];
+     
+  double value = tmpImage->GetPixel(pixelIndex);
+	//pourrait se faire avec une convolution !
+	pixelIndex[0] = x+1;	  pixelIndex[1] = y;	  pixelIndex[2] = z;
+	ei = tmpImage->GetPixel(pixelIndex);
+	pixelIndex[0] = x-1;	  pixelIndex[1] = y;	  pixelIndex[2] = z;
+	ei += tmpImage->GetPixel(pixelIndex);
+	pixelIndex[0] = x;	    pixelIndex[1] = y+1;	pixelIndex[2] = z;
+	ei += tmpImage->GetPixel(pixelIndex);
+	pixelIndex[0] = x;  	  pixelIndex[1] = y-1;	pixelIndex[2] = z;
+	ei += tmpImage->GetPixel(pixelIndex);
+	pixelIndex[0] = x;  	  pixelIndex[1] = y;	  pixelIndex[2] = z+1;
+	ei += tmpImage->GetPixel(pixelIndex);
+	pixelIndex[0] = x;  	  pixelIndex[1] = y;	  pixelIndex[2] = z-1;
+	ei += tmpImage->GetPixel(pixelIndex);
+
+	ei = sqrt(6.0/7.0)*(value -ei/6.0);  
+  
+  return ei;
+}
+
+template <typename T>
+double btkNLMTool<T>::ComputePseudoResidualSafely(typename itkTImage::IndexType & pixelIndex)
+{
+  double tmp = 0;
+  
+  if( (pixelIndex[0] > 1) && (pixelIndex[1] > 1) && (pixelIndex[2] > 1) && (pixelIndex[0] < (uint)m_size[0]-1 ) && (pixelIndex[1] < (uint)m_size[1]-1) && (pixelIndex[2] < (uint)m_size[2]-1) )
+    tmp = ComputePseudoResidual(pixelIndex);
+  return tmp;
+}
+
+template <typename T>
+float btkNLMTool<T>::MADEstimation(std::vector<float> & vecei, float & beta)
+{
   //Estimation of sigma with MAD
   std::sort(vecei.begin(), vecei.end());
   float med = vecei[(int)(vecei.size()/2)];
@@ -387,72 +401,97 @@ void btkNLMTool<T>::SetSmoothing(float beta)
     vecei[i] = fabs(vecei[i] - med);
   std::sort(vecei.begin(), vecei.end());
     
-  sigma2 = 1.4826 * vecei[(int)(vecei.size()/2)];
+  double sigma2 = 1.4826 * vecei[(int)(vecei.size()/2)];
   sigma2 = sigma2 * sigma2;
-  std::cout<<"Number of points for estimation : "<<count<<"\n";
-  std::cout<<"Estimated Global Sigma : "<<sqrt(sigma2)<<"\n";
   float NLMsmooth = 2 * beta * sigma2 * (2*m_halfPatchSize[0]+1) * (2*m_halfPatchSize[1]+1) * (2*m_halfPatchSize[2]+1);
-  std::cout<<"Global smoothing parameter h : "<<sqrt(NLMsmooth)<<"\n";
-  m_rangeBandwidth = NLMsmooth;   
+  return NLMsmooth;
 }
 
 template <typename T>
-void btkNLMTool<T>::SetSmoothingUsingReferenceImage(float beta)
+void btkNLMTool<T>::SetSmoothing(float beta)
 {
   //this function should be rewritten using a convolution-based approach
-  std::cout<<"Computing the range bandwidth (corresponding to the smoothing parameter for the NLM algorithm).\n";
-  uint count = 0;
-  double sigma2 = 0;
+  std::cout<<"Computing the global range bandwidth (corresponding to the smoothing parameter for the NLM algorithm).\n";
   int x,y,z;
-  typename itkTImage::IndexType pixelIndex;	
-  float ei = 0;
+
   std::vector<float> vecei;
-  T value = 0;
   //since we have use to use a neighborhood around the current voxel, we neglect the border to avoid slow tests.
+  #pragma omp parallel for private(x,y,z) schedule(dynamic)
   for(z=1;z<(int)m_size[2]-1;z++)
     for(y=1;y<(int)m_size[1]-1;y++)
       for(x=1;x<(int)m_size[0]-1;x++){
-        pixelIndex[0] = x;
-        pixelIndex[1] = y;
-        pixelIndex[2] = z;
-        value = m_refImage->GetPixel(pixelIndex);
-        if( m_maskImage->GetPixel(pixelIndex) > 0){
-          //pourrait se faire avec une convolution !
-          pixelIndex[0] = x+1;	  pixelIndex[1] = y;	  pixelIndex[2] = z;
-          ei = m_refImage->GetPixel(pixelIndex);
-          pixelIndex[0] = x-1;	  pixelIndex[1] = y;	  pixelIndex[2] = z;
-          ei += m_refImage->GetPixel(pixelIndex);
-          pixelIndex[0] = x;	          pixelIndex[1] = y+1;	  pixelIndex[2] = z;
-          ei += m_refImage->GetPixel(pixelIndex);
-          pixelIndex[0] = x;  	  pixelIndex[1] = y-1;	  pixelIndex[2] = z;
-          ei += m_refImage->GetPixel(pixelIndex);
-          pixelIndex[0] = x;  	  pixelIndex[1] = y;	  pixelIndex[2] = z+1;
-          ei += m_refImage->GetPixel(pixelIndex);
-          pixelIndex[0] = x;  	  pixelIndex[1] = y;	  pixelIndex[2] = z-1;
-          ei += m_refImage->GetPixel(pixelIndex);
-          pixelIndex[0] = x;            pixelIndex[1] = y;	  pixelIndex[2] = z;
-          ei = sqrt(6.0/7.0)*(m_refImage->GetPixel(pixelIndex) -ei/6.0);
-          
-          sigma2 += ei*ei;
-          count ++;
+        typename itkTImage::IndexType pixelIndex;
+      	pixelIndex[0] = x;
+	      pixelIndex[1] = y;
+	      pixelIndex[2] = z;
+	
+	      if( m_maskImage->GetPixel(pixelIndex) > 0){
+	        double ei = ComputePseudoResidual(pixelIndex);
+	        #pragma omp critical
           if(fabs(ei>0))
             vecei.push_back(fabs(ei));
         }
       }
-  //Estimation of sigma with MAD
-  std::sort(vecei.begin(), vecei.end());
-  float med = vecei[(int)(vecei.size()/2)];
-  for(uint i=0; i<vecei.size(); i++)
-    vecei[i] = fabs(vecei[i] - med);
-  std::sort(vecei.begin(), vecei.end());
-  
-  sigma2 = 1.4826 * vecei[(int)(vecei.size()/2)];
-  sigma2 = sigma2 * sigma2;
-  std::cout<<"Number of points for estimation : "<<count<<"\n";
-  std::cout<<"Estimated Global Sigma : "<<sqrt(sigma2)<<"\n";
-  float NLMsmooth = 2 * beta * sigma2 * (2*m_halfPatchSize[0]+1) * (2*m_halfPatchSize[1]+1) * (2*m_halfPatchSize[2]+1);
+  float NLMsmooth = MADEstimation(vecei, beta);
   std::cout<<"Global smoothing parameter h : "<<sqrt(NLMsmooth)<<"\n";
-  m_rangeBandwidth = NLMsmooth;   
+  m_rangeBandwidthImage->FillBuffer(NLMsmooth);
+  
+}
+template <typename T>
+void btkNLMTool<T>::SetLocalSmoothing(float beta)
+{  
+  std::cout<<"Computing the range bandwidth locally, for every voxel. \n";
+  int x,y,z;
+
+
+  #pragma omp parallel for private(x,y,z) schedule(dynamic)
+  for(z=0;z<(int)m_size[2];z++)
+    for(y=0;y<(int)m_size[1];y++)
+      for(x=0;x<(int)m_size[0];x++){
+        
+        typename itkTImage::IndexType pixelIndex;	
+        double ei = 0;
+        pixelIndex[0] = x;
+	      pixelIndex[1] = y;
+	      pixelIndex[2] = z;
+	
+	      if( m_maskImage->GetPixel(pixelIndex) > 0){
+	      
+	        typename itkTImage::RegionType searchRegion;
+          ComputeSearchRegion(pixelIndex,searchRegion);
+          
+          itkTIteratorWithIndex itRegion(m_inputImage, searchRegion); 
+          typename itkTImage::IndexType neighbourPixelIndex;	
+
+          std::vector<float> vecei;
+
+          for(itRegion.GoToBegin(); !itRegion.IsAtEnd(); ++itRegion){
+            neighbourPixelIndex = itRegion.GetIndex();
+
+            bool goForIt = true;
+            if(m_optimized == 1)
+              goForIt = CheckSpeed(pixelIndex, neighbourPixelIndex);
+              
+            if(goForIt == true){
+              if( m_maskImage->GetPixel(neighbourPixelIndex) > 0){
+	              ei = ComputePseudoResidualSafely(neighbourPixelIndex);
+	              if(fabs(ei>0))
+                  vecei.push_back(fabs(ei));
+              }
+              
+            
+            }
+              
+          }
+          if(vecei.size()>0){  
+            float NLMsmooth = MADEstimation(vecei, beta);
+	          m_rangeBandwidthImage->SetPixel(pixelIndex, NLMsmooth);
+	          
+          }	  	
+	      }        
+        
+      }  
+  
 }
 
 template <typename T>
@@ -468,7 +507,7 @@ void btkNLMTool<T>::ComputeOutput()
   if(m_useTheReferenceImage == true)
     std::cout<<"Use of a reference image\n";
   
-  itkFloatPointer denoisedImage = itkFloatImage::New();
+  itkTPointer denoisedImage = itkTImage::New();
   denoisedImage->SetRegions(m_inputImage->GetLargestPossibleRegion());
   denoisedImage->SetSpacing( m_inputImage->GetSpacing() );
   denoisedImage->SetOrigin( m_inputImage->GetOrigin() );
@@ -477,7 +516,7 @@ void btkNLMTool<T>::ComputeOutput()
   denoisedImage->FillBuffer(0); 
 
   
-  itkFloatIterator denoisedIt( denoisedImage, denoisedImage->GetLargestPossibleRegion() );
+  itkTIterator denoisedIt( denoisedImage, denoisedImage->GetLargestPossibleRegion() );
   itkTIterator outputIt( m_outputImage, m_outputImage->GetLargestPossibleRegion());
 
   int x,y,z;
@@ -497,7 +536,7 @@ void btkNLMTool<T>::ComputeOutput()
             p[2] = z;
 
             if( m_maskImage->GetPixel(p) > 0 ){	  
-              itkFloatPointer patch = itkFloatImage::New();
+              itkTPointer patch = itkTImage::New();
               double sum = 0;
               if(m_useTheReferenceImage==false) sum = GetDenoisedPatch(p, patch);
               else sum = GetDenoisedPatchUsingTheReferenceImage(p, patch);
@@ -507,7 +546,7 @@ void btkNLMTool<T>::ComputeOutput()
           }
   }
   if(m_blockwise >= 1){
-    itkFloatPointer weightImage = itkFloatImage::New();
+    itkTPointer weightImage = itkTImage::New();
     weightImage->SetRegions(m_inputImage->GetLargestPossibleRegion());
     weightImage->SetSpacing( m_inputImage->GetSpacing() );
     weightImage->SetOrigin( m_inputImage->GetOrigin() );
@@ -527,7 +566,7 @@ void btkNLMTool<T>::ComputeOutput()
             p[2] = z;
 
             if( m_maskImage->GetPixel(p) > 0 ){	  
-              itkFloatPointer patch = itkFloatImage::New();
+              itkTPointer patch = itkTImage::New();
               double sum = 0;
               if(m_useTheReferenceImage==false) sum = GetDenoisedPatch(p, patch);
               else sum = GetDenoisedPatchUsingTheReferenceImage(p, patch);
@@ -553,7 +592,7 @@ void btkNLMTool<T>::ComputeOutput()
               p[2] = z;
 
               if( m_maskImage->GetPixel(p) > 0 ){	  
-                itkFloatPointer patch = itkFloatImage::New();
+                itkTPointer patch = itkTImage::New();
                 double sum = 0;
                 if(m_useTheReferenceImage==false) sum = GetDenoisedPatch(p, patch);
                 else sum = GetDenoisedPatchUsingTheReferenceImage(p, patch);
@@ -567,7 +606,7 @@ void btkNLMTool<T>::ComputeOutput()
         }
     }
 
-    itkFloatIterator weightIt( weightImage, weightImage->GetLargestPossibleRegion() );
+    itkTIterator weightIt( weightImage, weightImage->GetLargestPossibleRegion() );
     //weight normalization
     for ( denoisedIt.GoToBegin(), weightIt.GoToBegin(); !denoisedIt.IsAtEnd(); ++denoisedIt, ++weightIt)
       if( weightIt.Get() > 0 )
@@ -575,18 +614,11 @@ void btkNLMTool<T>::ComputeOutput()
 
   }
 
-  //Convert float data from denoisedImage to T data for m_outputImage
+  //This should be modified by just copy the two images.
+  //Convert data from denoisedImage to m_outputImage
   for ( denoisedIt.GoToBegin(), outputIt.GoToBegin(); !denoisedIt.IsAtEnd(); ++denoisedIt, ++outputIt)
     //outputIt.Set( (T)rint(denoisedIt.Get()) );
     outputIt.Set( (T)(denoisedIt.Get()) );
-
-  //This can be done also using an ITK filter, but in this case, the output data are truncated (not rounded)
-  /*
-  typename itk::CastImageFilter< itkFloatImage, itkTImage >::Pointer castFilter = itk::CastImageFilter< itkFloatImage, itkTImage >::New();
-  castFilter->SetInput(denoisedImage);
-  castFilter->Update();
-  m_outputImage = castFilter->GetOutput();
-  */
   
 }
 
@@ -622,19 +654,6 @@ void btkNLMTool<T>::CreatePatch(itkTPointer & patch)
   patch->SetRegions(region);
   patch->Allocate();
   patch->FillBuffer(0);  
-}
-
-
-template <typename T>
-void btkNLMTool<T>::CreatePatch(itkFloatPointer & patch)
-{
-  //resize and allocate the patch and set the estimate to 0
-  typename itkFloatImage::SizeType size = m_fullPatchSize;
-  typename itkFloatImage::RegionType region;
-  region.SetSize(size);
-  patch->SetRegions(region);
-  patch->Allocate();
-  patch->FillBuffer(0.0);  
 }
 
 template <typename T>
@@ -700,16 +719,16 @@ void btkNLMTool<T>::GetPatchFromReferenceImage(typename itkTImage::IndexType p, 
 }
 
 template <typename T>
-void btkNLMTool<T>::AddPatchToImage(typename itkTImage::IndexType p, itkFloatPointer & patch, itkFloatPointer & image, itkFloatPointer & weightImage, double weight)
+void btkNLMTool<T>::AddPatchToImage(typename itkTImage::IndexType p, itkTPointer & patch, itkTPointer & image, itkTPointer & weightImage, double weight)
 {
   //this function add a patch value to the denoised image
   typename itkTImage::RegionType imageRegion;
   typename itkTImage::RegionType patchRegion;
   ComputePatchRegion(p,imageRegion,patchRegion);
   
-  itkFloatIterator imageIt( image, imageRegion);
-  itkFloatIterator weightIt( weightImage, imageRegion);
-  itkFloatIterator patchIt( patch, patchRegion);
+  itkTIterator imageIt( image, imageRegion);
+  itkTIterator weightIt( weightImage, imageRegion);
+  itkTIterator patchIt( patch, patchRegion);
 
   for ( imageIt.GoToBegin(), patchIt.GoToBegin(), weightIt.GoToBegin(); !imageIt.IsAtEnd(); ++imageIt, ++patchIt, ++weightIt){
     imageIt.Set( imageIt.Get() + patchIt.Get() );
@@ -734,14 +753,15 @@ double btkNLMTool<T>::PatchDistance(itkTPointer & p,itkTPointer & q)
 }
 
 template <typename T>
-double btkNLMTool<T>::GetDenoisedPatch(typename itkTImage::IndexType p, itkFloatPointer & patch)
+double btkNLMTool<T>::GetDenoisedPatch(typename itkTImage::IndexType p, itkTPointer & patch)
 {
   double wmax = 0; //maximum weight of patches
   double sum  = 0; //sum of weights (used for normalization purpose)
+  double rangeBandwidth = m_rangeBandwidthImage->GetPixel(p);
   
   //create the patch and set the estimate to 0
   CreatePatch(patch);
-  itkFloatIterator patchIt(patch, patch->GetRequestedRegion());
+  itkTIterator patchIt(patch, patch->GetRequestedRegion());
 
   //get the value of the patch around the current pixel
   itkTPointer centralPatch = itkTImage::New();
@@ -772,7 +792,7 @@ double btkNLMTool<T>::GetDenoisedPatch(typename itkTImage::IndexType p, itkFloat
     if(goForIt == true){
     
       GetPatch(neighbourPixelIndex, neighbourPatch);  
-      double weight = exp( - PatchDistance(centralPatch, neighbourPatch) / m_rangeBandwidth);
+      double weight = exp( - PatchDistance(centralPatch, neighbourPatch) / rangeBandwidth);
 
       if(weight>wmax)
         if( (p[0] != neighbourPixelIndex[0]) && (p[1] != neighbourPixelIndex[1]) && (p[2] != neighbourPixelIndex[2]) ) //has to be modify
@@ -821,14 +841,15 @@ double btkNLMTool<T>::GetDenoisedPatch(typename itkTImage::IndexType p, itkFloat
 }
 
 template <typename T>
-double btkNLMTool<T>::GetDenoisedPatchUsingTheReferenceImage(typename itkTImage::IndexType p, itkFloatPointer & patch)
+double btkNLMTool<T>::GetDenoisedPatchUsingTheReferenceImage(typename itkTImage::IndexType p, itkTPointer & patch)
 {
   double wmax = 0; //maximum weight of patches
   double sum  = 0; //sum of weights (used for normalization purpose)
-  
+  double rangeBandwidth = m_rangeBandwidthImage->GetPixel(p);
+
   //create the patch and set the estimate to 0
   CreatePatch(patch);
-  itkFloatIterator patchIt(patch, patch->GetRequestedRegion());
+  itkTIterator patchIt(patch, patch->GetRequestedRegion());
   
   //get the value of the patch around the current pixel
   itkTPointer centralPatch = itkTImage::New();
@@ -870,7 +891,7 @@ double btkNLMTool<T>::GetDenoisedPatchUsingTheReferenceImage(typename itkTImage:
       GetPatchFromReferenceImage(neighbourPixelIndex, neighbourPatchReferenceImage);
       GetPatch(neighbourPixelIndex, neighbourPatch);
       
-      double weight = exp( - PatchDistance(centralPatchReferenceImage, neighbourPatchReferenceImage) / m_rangeBandwidth);
+      double weight = exp( - PatchDistance(centralPatchReferenceImage, neighbourPatchReferenceImage) / rangeBandwidth);
       
       if(weight>wmax)
         if( (p[0] != neighbourPixelIndex[0]) && (p[1] != neighbourPixelIndex[1]) && (p[2] != neighbourPixelIndex[2]) ) //has to be modify

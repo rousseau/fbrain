@@ -39,7 +39,6 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "itkImageDuplicator.h"
 #include "itkImageRegionIterator.h"
 #include "itkImageRegionConstIterator.h"
-#include "itkImageRegionIterator.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkCastImageFilter.h"
 #include "itkImageFileReader.h"
