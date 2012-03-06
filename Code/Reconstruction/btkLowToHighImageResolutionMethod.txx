@@ -18,7 +18,7 @@ LowToHighImageResolutionMethod<ImageType>
   m_Interpolator = 0;
   m_NumberOfImages = 0;
   m_TargetImage = 0;
-  m_InitializeWithMask= false; //TODO: Maybe set it to true (always used with Initialize with mask activated)
+  m_InitializeWithMask= true;
   m_Margin = 0.0;
   m_Iterations = 200;
 }

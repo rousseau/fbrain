@@ -267,7 +267,7 @@ int main( int argc, char *argv[] )
       rois[i] = masks[i] -> GetAxisAlignedBoundingBoxRegion();
 
       lowToHighResFilter -> SetRegionArray( i, rois[i] );
-      lowToHighResFilter -> SetInitializeWithMask(true);
+
 
     }
     // estimate the intersection of the ROIs (-> brain can be cropped !)
@@ -280,7 +280,7 @@ int main( int argc, char *argv[] )
         masks[i] -> SetImage( imageMasks[i] );
         rois[i] = masks[i] -> GetAxisAlignedBoundingBoxRegion();
         lowToHighResFilter -> SetRegionArray( i, rois[i] );
-        lowToHighResFilter -> SetInitializeWithMask(true);
+
 
       } 
       // use the entire image (longer computation)
@@ -302,7 +302,7 @@ int main( int argc, char *argv[] )
           masks[i] -> SetImage( imageMasks[i] );
           rois[i] = masks[i] -> GetAxisAlignedBoundingBoxRegion();
           lowToHighResFilter -> SetRegionArray( i, rois[i] );
-          lowToHighResFilter -> SetInitializeWithMask(true);
+
         }
   }
 

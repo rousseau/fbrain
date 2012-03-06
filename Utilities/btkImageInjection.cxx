@@ -201,7 +201,7 @@ int main( int argc, char *argv[] )
       rois[i] = masks[i] -> GetAxisAlignedBoundingBoxRegion();
 
       lowToHighResFilter -> SetRegionArray( i, rois[i] );
-      lowToHighResFilter -> SetInitializeWithMask(true);
+
 
     } else if ( boxSwitchArg.isSet() )
       {
@@ -212,14 +212,14 @@ int main( int argc, char *argv[] )
         masks[i] -> SetImage( imageMasks[i] );
         rois[i] = masks[i] -> GetAxisAlignedBoundingBoxRegion();
         lowToHighResFilter -> SetRegionArray( i, rois[i] );
-        lowToHighResFilter -> SetInitializeWithMask(true);
+
 
       } else if ( allSwitchArg.isSet() )
         {
           rois[i] = images[i] -> GetLargestPossibleRegion();
 
           lowToHighResFilter -> SetRegionArray( i, rois[i] );
-          lowToHighResFilter -> SetInitializeWithMask(true);
+
         }
   }
 
