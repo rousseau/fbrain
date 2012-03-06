@@ -309,13 +309,13 @@ int main( int argc, char *argv[] )
   // Start rigid registration on the desired target image (#0 by default)
   try
     {
-    lowToHighResFilter->StartRegistration();
+        lowToHighResFilter->StartRegistration();
     }
   catch( itk::ExceptionObject & err )
     {
-    std::cerr << "ExceptionObject caught !" << std::endl;
-    std::cerr << err << std::endl;
-    return EXIT_FAILURE;
+        std::cerr << "ExceptionObject caught !" << std::endl;
+        std::cerr << err << std::endl;
+        return EXIT_FAILURE;
     }
 
   // Write combined image mask

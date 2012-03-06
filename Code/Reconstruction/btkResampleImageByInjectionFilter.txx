@@ -178,8 +178,7 @@ ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecision
 
   // Create gaussian (psf)
 
-  typedef GaussianSpatialFunction< double, ImageDimension,
-                                  PointType> GaussianFunctionType;
+  typedef GaussianSpatialFunction< double, ImageDimension, PointType > GaussianFunctionType;
   typename GaussianFunctionType::Pointer gaussian = GaussianFunctionType::New();
 
   gaussian -> SetNormalized(false);
@@ -191,7 +190,7 @@ ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecision
   gaussian -> SetMean( mean  );
 
   ArrayType sigma;
-  double cst = 2*sqrt(2*log(2.0));
+  double cst = 2*sqrt(2*log(2.0)); //TODO: switch for a const var ? value never changed
 
   // Create spatial object for injecting in the mask only
   typename MaskType::Pointer mask = MaskType::New();

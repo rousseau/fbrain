@@ -18,7 +18,7 @@ LowToHighImageResolutionMethod<ImageType>
   m_Interpolator = 0;
   m_NumberOfImages = 0;
   m_TargetImage = 0;
-  m_InitializeWithMask= false;
+  m_InitializeWithMask= false; //TODO: Maybe set it to true (always used with Initialize with mask activated)
   m_Margin = 0.0;
   m_Iterations = 200;
 }
@@ -184,7 +184,7 @@ LowToHighImageResolutionMethod<ImageType>
     {
       try
       {
-        //m_Registration->StartRegistration();// FIXME : in ITK4 StartRegistration() is replaced by Update()
+          //m_Registration->StartRegistration();// FIXME : in ITK4 StartRegistration() is replaced by Update()
           m_Registration->Update();
       }
       catch( itk::ExceptionObject & err )
