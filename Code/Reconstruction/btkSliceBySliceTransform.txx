@@ -125,7 +125,29 @@ GetJacobian(const InputPointType &p ) const
   return this->m_Jacobian;
 
 }
+template <class TScalarType,unsigned int NDimensions>
+void SliceBySliceTransform<TScalarType,NDimensions>::
+ComputeJacobianWithRespectToParameters( const InputPointType & p, JacobianType &_jacobian ) const
+{
 
+  _jacobian.SetSize( NDimensions, this->GetNumberOfParameters() );
+  _jacobian.Fill(0.0);
+
+  typename ImageType::IndexType index;
+  m_Image -> TransformPhysicalPointToIndex( p , index);
+
+  JacobianType jacobian;
+  m_TransformList[ index[2] ]->ComputeJacobianWithRespectToParameters( p, jacobian ) ;
+  unsigned int offset = index[2]*m_TransformList[0]->GetNumberOfParameters();
+
+  for(unsigned int i = 0; i < NDimensions; i++)
+    for(unsigned int j = 0; j < m_TransformList[0]->GetNumberOfParameters(); j++)
+    {
+      _jacobian[i][j] = jacobian[i][j+offset];
+    }
+  this->m_Jacobian = _jacobian;
+
+}
 template <class TScalarType,unsigned int NDimensions>
 void
 SliceBySliceTransform<TScalarType,NDimensions>::
