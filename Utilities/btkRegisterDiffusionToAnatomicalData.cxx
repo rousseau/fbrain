@@ -66,6 +66,12 @@
 
 #include "btkDiffusionGradientTable.h"
 
+#include "itkAffineTransform.h"
+#include "itkMatrixOffsetTransformBase.h"
+#include "itkTransformFileReader.h"
+#include "itkTransformFileWriter.h"
+#include "itkTransformFactory.h"
+
 
 //  The following section of code implements a Command observer
 //  used to monitor the evolution of the registration process.
@@ -113,6 +119,10 @@ int main( int argc, char *argv[] )
   const char *toutName = NULL, *invToutName = NULL, *maskName = NULL;
   const char *mgradName = NULL, *mgradResampled = NULL;
 
+// TEST
+std::string inTrans;
+// TEST
+
   TCLAP::CmdLine cmd("Registers diffusion to anatomical data using mutual information.", ' ', "Unversioned");
 
   TCLAP::ValueArg<std::string> inputArg("i","input","Diffusion sequence",true,"","string",cmd);
@@ -143,6 +153,10 @@ int main( int argc, char *argv[] )
 
   TCLAP::ValueArg<unsigned int> optIterArg("","nb_of_iterations", "Number of iterations of optimizer (default is 1000)", false, 1000, "unsigned int", cmd);
 
+// TEST
+TCLAP::ValueArg<std::string> inTransArg("", "set_transformation", "Set the transformation to apply", false, "", "string", cmd);
+// TEST
+
   // Parse the argv array.
   cmd.parse( argc, argv );
 
@@ -161,6 +175,10 @@ int main( int argc, char *argv[] )
   unsigned int z2 = z2Arg.getValue();
 
   unsigned int optIter = optIterArg.getValue();
+
+// TEST
+inTrans = inTransArg.getValue();
+// TEST
 
   bool roiIsSet = false;
 
@@ -366,8 +384,10 @@ int main( int argc, char *argv[] )
 
   optimizer->MinimizeOn();
   optimizer->SetMaximumStepLength( 0.2 );
-  optimizer->SetMinimumStepLength( 0.001 );
+  optimizer->SetMinimumStepLength( 0.0001 );
   optimizer->SetNumberOfIterations( optIter );
+  optimizer->SetGradientMagnitudeTolerance(0.00001);
+
 
   typedef OptimizerType::ScalesType       OptimizerScalesType;
   OptimizerScalesType optimizerScales( transform->GetNumberOfParameters() );
@@ -392,7 +412,12 @@ int main( int argc, char *argv[] )
   CommandIterationUpdate::Pointer observer = CommandIterationUpdate::New();
   optimizer->AddObserver( itk::IterationEvent(), observer );
 
+// TEST
+ParametersType finalParameters;
 
+if (inTrans.empty())
+{
+// TEST
   try
     {
       //registration->StartRegistration(); // FIXME : in ITK4 StartRegistration() is replaced by Update()
@@ -405,13 +430,39 @@ int main( int argc, char *argv[] )
     return EXIT_FAILURE;
     }
 
-  ParametersType finalParameters = registration->GetLastTransformParameters();
+//  ParametersType finalParameters = registration->GetLastTransformParameters();
+    finalParameters = registration->GetLastTransformParameters();
+
+// TEST
+}
+else
+{
+typedef double ScalarType;
+const unsigned int MatrixDimension = 3;
+
+typedef itk::AffineTransform<ScalarType,MatrixDimension> AffineDeformation;
+typedef itk::MatrixOffsetTransformBase<ScalarType,MatrixDimension,MatrixDimension> TransformType;
+typedef itk::TransformFileReader                         AffineDeformationFileReader;
+typedef itk::TransformFileWriter                         AffineDeformationFileWriter;
+
+    itk::TransformFactory<TransformType>::RegisterTransform();
+
+    AffineDeformationFileReader::Pointer reader = AffineDeformationFileReader::New();
+    reader->SetFileName(inTrans.c_str());
+    reader->Update();
+    AffineDeformation::Pointer affine = static_cast<AffineDeformation *>( reader->GetTransformList()->front().GetPointer() );
+
+    finalParameters = affine->GetParameters();
+    //centerPoint[0] = 84.5732; centerPoint[1] = 138.557; centerPoint[2] = 86.9035;
+    centerPoint = affine->GetCenter();
+}
+// TEST
 
   TransformType::Pointer finalTransform = TransformType::New();
 
   finalTransform->SetParameters( finalParameters );
   finalTransform->SetCenter( centerPoint );
-
+std::cout << finalTransform << std::endl;
   // Calculate inverse transform (anat -> diffusion)
 
   TransformType::Pointer inverseTransform = TransformType::New();
@@ -445,7 +496,12 @@ int main( int argc, char *argv[] )
 
      ResampleFilterType::Pointer resample = ResampleFilterType::New();
 
+    // !!!! en passant le fichier de transformation, il faut pas inverser !!!!!
+    if (inTrans.empty())
      resample -> SetTransform( inverseTransform );
+    else
+     resample -> SetTransform( finalTransform );
+
      resample -> SetInput( extractor -> GetOutput() );
      resample -> SetUseReferenceImage( true );
      resample -> SetReferenceImage( reference );

@@ -4,7 +4,14 @@
 \usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage{amssymb}
-
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,       % false: boxed links; true: colored links
+    linkcolor=blue,          % color of internal links
+    citecolor=green,        % color of links to bibliography
+    filecolor=magenta,      % color of file links
+    urlcolor=cyan           % color of external links
+}
 
 % Title Page
 \title{Baby Brain Toolkit}
@@ -36,8 +43,7 @@ development of a realistic numerical model of brain aging.
 This software is governed by the CeCILL-B license under French law and
 abiding by the rules of distribution of free software.  You can  use, 
 modify and/ or redistribute the software under the terms of the CeCILL-B
-license as circulated by CEA, CNRS and INRIA at the following URL
-"http://www.cecill.info". 
+license as circulated by CEA, CNRS and INRIA at the following URL: \url{http://www.cecill.info}. 
 
 As a counterpart to the access to the source code and rights to copy,
 modify and redistribute granted by the license, users are provided only
@@ -56,14 +62,18 @@ requirements in conditions enabling the security of their systems and/or
 data to be ensured and,  more generally, to use and operate it in the 
 same conditions as regards security. 
 
+Any researcher reporting results using BTK should acknowledge this software by citing the following article:
+\begin{enumerate}
+\item F. Rousseau, E. Oubel, J. Pontabry, C. Studholme, M. Koob, J.-L. Dietemann: BTK: An Open-Source Toolkit for Fetal Brain MR Image Processing. Research Report, October 2011, available on \href{http://hal.archives-ouvertes.fr/index.php?halsid=d0mrvug09qhhou49vgaqc6ogd3&view_this_doc=hal-00671183&version=1}{HAL}.
+\end{enumerate}
+
 \subsection{Installation}
 
 \subsubsection{Dependencies}
 
 Baby Brain Toolkit (BTK) needs the following packages\footnote{BTK has been tested under Debian 5.0 and MacOSX 10.6.8}:
 \begin{itemize}
- \item CMake (www.cmake.org), Tclap (tclap.sourceforge.net), OpenMP
-(openmp.org), VTK (www.vtk.org), ANN (www.cs.umd.edu/\string~mount/ANN) and Doxygen. These
+ \item \href{http://www.cmake.org}{CMake}, \href{http://tclap.sourceforge.net}{Tclap}, \href{http://openmp.org}{OpenMP}, \href{http://www.vtk.org}{VTK}, ANN (www.cs.umd.edu/\string~mount/ANN) and Doxygen. These
 libraries can be installed using the following command line: 
  \begin{itemize}
  \item for debian-based distributions: \texttt{apt-get install cmake
@@ -75,7 +85,7 @@ cmake-curses-gui libtclap-dev libgomp1 libvtk5-dev libann-dev doxygen}
  \item for debian-based distribution: \texttt{apt-get install git-core}
  \item for MacOSX using macports: \texttt{port install git-core}
  \end{itemize}
- \item Insight Toolkit (ITK) version 4 (http://www.itk.org/ITK/resources/software.html)
+ \item \href{http://www.itk.org/ITK/resources/software.html}{Insight Toolkit (ITK) version 4}
  \begin{itemize}
  \item Download the tar.gz archive of ITK v4.0
  \item Extract the archive 

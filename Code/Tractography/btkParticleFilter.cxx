@@ -611,10 +611,11 @@ Particle ParticleFilter::GetMAP()
         #pragma omp parallel for
         for(unsigned int m=0; m<m_M; m++)
         {
-//            if(m_cloud[m].length() > 1)
-            if(m_cloud[m].length() >= 1)
+            if(m_cloud[m].length() > 1)
+//            if(m_cloud[m].length() >= 1)
             {
-                assert(m_cloud[m].length() >= 1);
+//                assert(m_cloud[m].length() >= 1);
+                assert(m_cloud[m].length() > 1);
                 delta[Ind(0,m)] = m_aPriori.compute(m_cloud[m].getVector(1).toDirection(), m_cloud[m].getVector(0).toDirection()) + m_cloud[m].getLikelihood(0);
             }
             else
