@@ -124,22 +124,17 @@ int main(int argc, char *argv[])
     {
         if(dwiConversion)
         {
-////////////// FIXME : à cause ug avec fichiers .nrrd, à corriger
-            if(btk::GetExtensionOf(inputFileName) == ".nrrd")
-                throw std::string("The DWI files with \".nrrd\" extension are not currently supported ! Please convert it to couple \".nhdr/.raw\" files.");
-//////////////
             //
             // Read input image (Nrrd file format)
             //
 
-            std::cout << "Reading file \"" << inputFileName << "\"..." << std::flush;
+            std::cout << "Reading file \"" << inputFileName << "\"... " << std::flush;
 
             // Read raw data
             InputSequenceFileReader::Pointer reader = InputSequenceFileReader::New();
             reader->SetFileName(inputFileName.c_str());
             reader->Update();
 
-////////////// FIXME : bug avec fichiers .nrrd, à corriger
             // Read header data
             std::fstream headerFile(inputFileName.c_str(), std::fstream::in);
 
@@ -153,7 +148,7 @@ int main(int argc, char *argv[])
             headerFile.getline(buffer, 256);
             token = buffer;
 
-            while(!vectorFound && !headerFile.eof() && !headerFile.fail() && !headerFile.bad())
+            while(!vectorFound && !headerFile.eof() && !headerFile.fail() && !headerFile.bad() && !token.empty())
             {
                 btk::btkNrrdField currentField(token);
                 key   = currentField.GetKey();
@@ -194,7 +189,7 @@ int main(int argc, char *argv[])
                 else
                     bvals.push_back(bvalue);
 
-                while(!headerFile.eof() && !headerFile.fail() && !headerFile.bad())
+                while(!headerFile.eof() && !headerFile.fail() && !headerFile.bad() && !token.empty())
                 {
                     btk::btkNrrdField field(token);
                     key   = field.GetKey();
@@ -217,7 +212,7 @@ int main(int argc, char *argv[])
             } // if vector found
 
             headerFile.close();
-/////////////
+
             std::cout << "done." << std::endl;
 
 
@@ -225,7 +220,7 @@ int main(int argc, char *argv[])
             // Convert file
             //
 
-            std::cout << "Converting file..." << std::endl;
+            std::cout << "Converting file... " << std::flush;
 
             // Get input image's properties
             InputSequence::RegionType inputRegion = reader->GetOutput()->GetLargestPossibleRegion();
@@ -296,21 +291,21 @@ int main(int argc, char *argv[])
             } // for each component
 
 
-////////////// FIXME : à corriger par une version ITK
-            // Conversion loop for gradient vectors (world coordinates to image coordinates)
-            vnl_vector<double> worldCoord(3);
-            vnl_vector<double> imgCoord(3);
-            vnl_matrix<double> wcToImg = vnl_inverse(inputDirection.GetVnlMatrix());
-            std::vector<double>::iterator ivx;
-            std::vector<double>::iterator ivy;
-            std::vector<double>::iterator ivz;
-            for(ivx=vx.begin(), ivy=vy.begin(), ivz=vz.begin(); ivx!=vx.end() && ivy!=vy.end() && ivz!=vz.end(); ivx++, ivy++, ivz++)
-            {
-                worldCoord(0) = -(*ivx); worldCoord(1) = -(*ivy); worldCoord(2) = *ivz;
-                imgCoord = wcToImg * worldCoord;
-                *ivx = imgCoord(0); *ivy = imgCoord(1); *ivz = imgCoord(2);
-            }
-/////////////
+//////////////// FIXME : à corriger par une version ITK
+//            // Conversion loop for gradient vectors (world coordinates to image coordinates)
+//            vnl_vector<double> worldCoord(3);
+//            vnl_vector<double> imgCoord(3);
+//            vnl_matrix<double> wcToImg = vnl_inverse(inputDirection.GetVnlMatrix());
+//            std::vector<double>::iterator ivx;
+//            std::vector<double>::iterator ivy;
+//            std::vector<double>::iterator ivz;
+//            for(ivx=vx.begin(), ivy=vy.begin(), ivz=vz.begin(); ivx!=vx.end() && ivy!=vy.end() && ivz!=vz.end(); ivx++, ivy++, ivz++)
+//            {
+//                worldCoord(0) = -(*ivx); worldCoord(1) = -(*ivy); worldCoord(2) = *ivz;
+//                imgCoord = wcToImg * worldCoord;
+//                *ivx = imgCoord(0); *ivy = imgCoord(1); *ivz = imgCoord(2);
+//            }
+///////////////
             std::cout << "done." << std::endl;
 
 
@@ -318,7 +313,7 @@ int main(int argc, char *argv[])
             // Write output image (Nifti file format)
             //
 
-            std::cout << "Writing files \"" << outputFileName << "{.nii.gz|.bval|.bvec}\"..." << std::flush;
+            std::cout << "Writing files \"" << outputFileName << "{.nii.gz|.bval|.bvec}\"... " << std::flush;
 
             // Write raw data
             OutputSequenceFileWriter::Pointer writer = OutputSequenceFileWriter::New();
