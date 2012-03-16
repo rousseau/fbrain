@@ -252,14 +252,12 @@ int main(int argc, char *argv[])
             outputSpacing[2] = inputSpacing[2];
             outputSpacing[3] = 1;
 
-////////////// FIXME : permettre le choix de l'orientation (LPS-RAS ?)
             itk::Matrix<double,3,3> inputDirection = reader->GetOutput()->GetDirection();
             itk::Matrix<double,4,4> outputDirection;
             outputDirection(0,0) = inputDirection(0,0); outputDirection(0,1) = inputDirection(0,1); outputDirection(0,2) = inputDirection(0,2); outputDirection(0,3) = 0;
             outputDirection(1,0) = inputDirection(1,0); outputDirection(1,1) = inputDirection(1,1); outputDirection(1,2) = inputDirection(1,2); outputDirection(1,3) = 0;
             outputDirection(2,0) = inputDirection(2,0); outputDirection(2,1) = inputDirection(2,1); outputDirection(2,2) = inputDirection(2,2); outputDirection(2,3) = 0;
             outputDirection(3,0) = 0;                   outputDirection(3,1) = 0;                   outputDirection(3,2) = 0;                   outputDirection(3,3) = 1;
-/////////////
 
             // Create and initialize a new sequence with the same properties as the original
             OutputSequence::Pointer newSequence = OutputSequence::New();
@@ -385,9 +383,7 @@ int main(int argc, char *argv[])
             newImage->SetRegions(region.GetSize());
             newImage->SetOrigin(reader->GetOutput()->GetOrigin());
             newImage->SetSpacing(reader->GetOutput()->GetSpacing());
-////////////// FIXME : permettre le choix de l'orientation (LPS-RAS ?)
             newImage->SetDirection(reader->GetOutput()->GetDirection());
-/////////////
             newImage->Allocate();
             newImage->FillBuffer(0);
 

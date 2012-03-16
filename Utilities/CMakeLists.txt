@@ -30,6 +30,7 @@ ADD_EXECUTABLE(btkRegisterDiffusionToAnatomicalData btkRegisterDiffusionToAnatom
 TARGET_LINK_LIBRARIES(btkRegisterDiffusionToAnatomicalData ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkNrrdToNifti btkNrrdToNifti.cxx
+        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkFileNameTools.h
         ${fbrain_SOURCE_DIR}/Code/InputOutput/btkNrrdField.cxx)
 TARGET_LINK_LIBRARIES(btkNrrdToNifti ${ITK_LIBRARIES})
 
