@@ -122,6 +122,21 @@ int main(int argc, char *argv[])
 
     try
     {
+        //
+        // Verifications before processing
+        //
+
+        // Only .nhdr and .nrrd file formats are supported
+        std::string inputFormat = btk::GetExtensionOf(inputFileName);
+
+        if(inputFormat != ".nhdr" && inputFormat != ".nrrd")
+            throw std::string("Only NRRD file formats, such as .nhdr/.raw(.gz) and .nrrd, are supported !");
+
+
+        //
+        // Processing
+        //
+
         if(dwiConversion)
         {
             //
