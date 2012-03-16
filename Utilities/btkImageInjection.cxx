@@ -146,7 +146,8 @@ int main( int argc, char *argv[] )
   std::vector< ImagePointer >         		images(numberOfImages);
   std::vector< ImageMaskPointer >     		imageMasks(numberOfImages);
   std::vector< TransformPointer >     		transforms(numberOfImages);
-  std::vector< Euler3DTransformPointer >  euler3DTransforms(numberOfImages);
+  std::vector< Euler3DTransformPointer >    euler3DTransforms(numberOfImages);
+  std::vector< TransformPointer>               Transforms(numberOfImages);
   std::vector< MaskPointer >          		masks(numberOfImages);
   std::vector< RegionType >           		rois(numberOfImages);
 
@@ -201,6 +202,7 @@ int main( int argc, char *argv[] )
 
       lowToHighResFilter -> SetRegionArray( i, rois[i] );
 
+
     } else if ( boxSwitchArg.isSet() )
       {
         imageMasks[i] = intersectionCalculator -> GetImageMask(i);
@@ -211,11 +213,13 @@ int main( int argc, char *argv[] )
         rois[i] = masks[i] -> GetAxisAlignedBoundingBoxRegion();
         lowToHighResFilter -> SetRegionArray( i, rois[i] );
 
+
       } else if ( allSwitchArg.isSet() )
         {
           rois[i] = images[i] -> GetLargestPossibleRegion();
 
           lowToHighResFilter -> SetRegionArray( i, rois[i] );
+
         }
   }
 
@@ -228,14 +232,13 @@ int main( int argc, char *argv[] )
     }
   catch( itk::ExceptionObject & err )
     {
-    std::cerr << "ExceptionObject caught !" << std::endl;
-    std::cerr << err << std::endl;
-    return EXIT_FAILURE;
+        std::cerr << "ExceptionObject caught !" << std::endl;
+        std::cerr << err << std::endl;
+        return EXIT_FAILURE;
     }
 
   std::cout << "done. " << std::endl;
 
-  lowToHighResFilter -> Initialize();
   refImage = lowToHighResFilter->GetHighResolutionImage();
 
   // Read transforms
@@ -262,17 +265,43 @@ int main( int argc, char *argv[] )
         transforms[i] = TransformType::New();
         transforms[i] -> SetImage( images[i] );
         transforms[i] -> Initialize( euler3DTransforms[i] );
-      } else if (strcmp(className,"SliceBySliceTransform") == 0)
-        {
-          transforms[i] = dynamic_cast< TransformType * >( titr->GetPointer() );
-          transforms[i] -> SetImage( images[i]);
-        } else
+
+      }
+      else
+      {
+          if (strcmp(className,"SliceBySliceTransform") == 0)
           {
-            std::cout << className << " is not a valid transform. Exiting ..."
-                << std::endl;
-            return EXIT_FAILURE;
+
+                // HACK : only way to initialise a SliceBySliceTransform
+                // TODO : Simplify this !
+                Transforms[i] = TransformType::New();
+                Transforms[i] = dynamic_cast< TransformType * >( titr->GetPointer() );
+
+                transforms[i] = dynamic_cast< TransformType * >( titr->GetPointer() );
+                transforms[i] = TransformType::New();
+
+                transforms[i] -> SetImage( images[i] );
+
+                transforms[i] -> Initialize( );
+                transforms[i]->SetParameters(Transforms[i]->GetParameters());
+                transforms[i]->SetFixedParameters(Transforms[i]->GetFixedParameters());
+
+
+
           }
+          else
+          {
+              std::cout << className << " is not a valid transform. Exiting ..." << std::endl;
+              return EXIT_FAILURE;
+          }
+      }
     }
+    else
+    {
+        std::cout << " No Transformation" << std::endl;
+        return EXIT_FAILURE;
+    }
+
   }
 
   // Inject images
