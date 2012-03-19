@@ -46,6 +46,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "itkImageFileWriter.h"
 #include "itkImageRegionIterator.h"
 #include "itkMatrix.h"
+#include "itkFixedArray.h"
 #include "vnl/vnl_inverse.h"
 
 // BTK includes
@@ -85,24 +86,27 @@ int main(int argc, char *argv[])
     std::string inputFileName;
     std::string outputFileName;
     bool dwiConversion;
+    bool worldToImageCoordConversion;
 
 
     // Define command line parser
-    TCLAP::CmdLine cmd("Nrrd to Nifti Converter", ' ', "0.1");
+    TCLAP::CmdLine cmd("Nrrd to Nifti Converter", ' ', "Unversioned");
 
     // Define command line arguments
     TCLAP::ValueArg<std::string> inputArg("i", "input", "Input image", true, "", "string", cmd);
     TCLAP::ValueArg<std::string> outputArg("o", "output", "Output image (default: \"name.nii.gz\" -- input name with nifti extension)", false, "", "string", cmd);
 
     TCLAP::SwitchArg dwiConversionArg("", "dwi", "Proceed to a conversion diffusion weighted image conversion (default: false -- anatomical 3D volume)", cmd, false);
+    TCLAP::SwitchArg worldToImageCoordConversionArg("", "world2ImageCoordinates", "Proceed to a world to image coordinates conversion of the gradient table (default: false -- keep gradient table in world coordinates)", cmd, false);
 
     // Parse arguments
     cmd.parse(argc, argv);
 
     // Get back arguments' values
-    inputFileName   = inputArg.getValue();
-    outputFileName  = outputArg.getValue();
-    dwiConversion   = dwiConversionArg.getValue();
+    inputFileName               = inputArg.getValue();
+    outputFileName              = outputArg.getValue();
+    dwiConversion               = dwiConversionArg.getValue();
+    worldToImageCoordConversion = worldToImageCoordConversionArg.getValue();
 
 
     // If no filename is given for output, set it up with input name
@@ -143,7 +147,10 @@ int main(int argc, char *argv[])
             // Read input image (Nrrd file format)
             //
 
-            std::cout << "Reading file \"" << inputFileName << "\"... " << std::flush;
+            if(inputFormat == ".nhdr")
+                std::cout << "Reading files \"" << btk::GetRadixOf(inputFileName) << "{.nhdr|.raw(.gz)}\"... " << std::flush;
+            else // inputFormat == .nrrd
+                std::cout << "Reading file \"" << inputFileName << "\"... " << std::flush;
 
             // Read raw data
             InputSequenceFileReader::Pointer reader = InputSequenceFileReader::New();
@@ -306,21 +313,21 @@ int main(int argc, char *argv[])
             } // for each component
 
 
-//////////////// FIXME : à corriger par une version ITK
-//            // Conversion loop for gradient vectors (world coordinates to image coordinates)
-//            vnl_vector<double> worldCoord(3);
-//            vnl_vector<double> imgCoord(3);
-//            vnl_matrix<double> wcToImg = vnl_inverse(inputDirection.GetVnlMatrix());
-//            std::vector<double>::iterator ivx;
-//            std::vector<double>::iterator ivy;
-//            std::vector<double>::iterator ivz;
-//            for(ivx=vx.begin(), ivy=vy.begin(), ivz=vz.begin(); ivx!=vx.end() && ivy!=vy.end() && ivz!=vz.end(); ivx++, ivy++, ivz++)
-//            {
-//                worldCoord(0) = -(*ivx); worldCoord(1) = -(*ivy); worldCoord(2) = *ivz;
-//                imgCoord = wcToImg * worldCoord;
-//                *ivx = imgCoord(0); *ivy = imgCoord(1); *ivz = imgCoord(2);
-//            }
-///////////////
+            // Conversion loop for gradient vectors (world coordinates to image coordinates)
+            if(worldToImageCoordConversion)
+            {
+                itk::FixedArray<double,3> worldCoordinates, imageCoordinates;
+
+                // Conversion loop
+                std::vector<double>::iterator vxIt, vyIt, vzIt;
+                for(vxIt = vx.begin(), vyIt = vy.begin(), vzIt = vz.begin(); vxIt != vx.end() && vyIt != vy.end() && vzIt != vz.end(); vxIt++, vyIt++, vzIt++)
+                {
+                    worldCoordinates[0] = *vxIt; worldCoordinates[1] = *vyIt; worldCoordinates[2] = *vzIt;
+                    reader->GetOutput()->TransformPhysicalVectorToLocalVector(worldCoordinates, imageCoordinates);
+                    *vxIt = imageCoordinates[0]; *vyIt = imageCoordinates[1]; *vzIt = imageCoordinates[2];
+                } // for each vector
+            }
+
             std::cout << "done." << std::endl;
 
 
@@ -423,9 +430,9 @@ int main(int argc, char *argv[])
             std::cout << "done." << std::endl;
         } // else !dwiConversion
     }
-    catch(itk::ExceptionObject &err)
+    catch(itk::ExceptionObject &error)
     {
-        std::cout << "Error: " << err << std::endl;
+        std::cout << "ITK error: " << error << std::endl;
     }
     catch(std::string &message)
     {
