@@ -298,23 +298,6 @@ void SignalExtractor::extract()
             }
         } // for refImIt
 
-/*
-        // Write B0 image
-        ImageWriter::Pointer writer = ImageWriter::New();
-
-        writer->SetFileName("B0.nii.gz");
-        writer->SetInput(B0);
-
-        try
-        {
-            writer->Update();
-        }
-        catch(itk::ImageFileWriterException &err)
-        {
-            std::cout << "Error: " << std::endl;
-            std::cout << err << std::endl;
-        }
-//*/
         Display2(m_displayMode, std::cout << "done." << std::endl);
 
 

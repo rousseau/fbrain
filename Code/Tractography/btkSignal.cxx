@@ -70,18 +70,10 @@ Signal::Signal(const std::string &filename, const std::string &sigmasFilename, c
         std::exit(EXIT_FAILURE);
     }
 
-//    std::cout << "\tThere are " << kMax << " images of size ";
-//    std::cout << xMax << "x" << yMax << "x" << zMax << "." << std::endl;
-
-
     // Allocate space memory for the array of images
-//    std::cout << "\tAllocating space memory..." << std::flush;
     m_signal = new Image::Pointer[kMax];
     m_interp = new ImageInterpolator::Pointer[kMax];
-//    std::cout << "done." << std::endl;
 
-
-//    std::cout << "\tPreparing and interpolating data..." << std::flush;
 
     // Define images region
     ImageRegion iRegion;
@@ -142,11 +134,6 @@ Signal::Signal(const std::string &filename, const std::string &sigmasFilename, c
         m_interp[k] = ImageInterpolator::New();
         m_interp[k]->SetInputImage(m_signal[k]);
     } // for k
-
-//    std::cout << "done." << std::endl;
-
-
-//    std::cout << "done." << std::endl;
 }
 
 Signal::Signal(Sequence::Pointer signal, std::vector<Real> *sigmas, std::vector<Direction> *directions, char displayMode)
@@ -283,24 +270,18 @@ Signal::~Signal()
 
 Sequence::Pointer Signal::readFiles(const std::string &filename, const std::string &sigmasFilename, const std::string &dirFileName)
 {
-//    std::cout << "Loading signal file \"" << filename << "\"..." << std::endl;
-
     //
     // Read signal file
     //
 
-//        std::cout << "\tReading signal's file..." << std::flush;
         SequenceReader::Pointer reader = SequenceReader::New();
         reader->SetFileName(filename);
         reader->Update();
-//        std::cout << "done." << std::endl;
 
 
     //
     // Read std deviance file
     //
-
-//        std::cout << "\tReading signal standard deviations' file..." << std::flush;
 
         // Open file
         std::fstream sigmasFile(sigmasFilename.c_str(), std::fstream::in);
@@ -323,14 +304,10 @@ Sequence::Pointer Signal::readFiles(const std::string &filename, const std::stri
         // Close file
         sigmasFile.close();
 
-//        std::cout << "done." << std::endl;
-
 
     //
     // Read direction's file
     //
-
-//        std::cout << "\tReading gradient directions' file..." << std::flush;
 
         // Open file
         std::fstream dirFile(dirFileName.c_str(), std::fstream::in);
@@ -352,9 +329,6 @@ Sequence::Pointer Signal::readFiles(const std::string &filename, const std::stri
 
         // Close file
         dirFile.close();
-
-//        std::cout << "done." << std::endl;
-
 
     return reader->GetOutput();
 }

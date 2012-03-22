@@ -32,7 +32,7 @@
  */
 
 // TCLAP : Templatized C++ Command Line Parser includes
-#include <tclap/CmdLine.h>
+#include "CmdLine.h"
 
 // STL includes
 #include "string"

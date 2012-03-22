@@ -109,7 +109,6 @@ Direction ImportanceDensity::computeMeanDirection(Point xk, Direction ukm1)
             return mus.front();
         else // mus.size() == 0
         {
-//            return ukm1;
             Direction nullDir;
             nullDir.setNull();
 
@@ -120,7 +119,6 @@ Direction ImportanceDensity::computeMeanDirection(Point xk, Direction ukm1)
         return maxima.front();
     else // maxima.size() == 0
     {
-//        return ukm1;
         Direction nullDir;
         nullDir.setNull();
 
