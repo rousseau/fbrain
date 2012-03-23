@@ -14,6 +14,7 @@ SuperResolutionFilter::SuperResolutionFilter()
     m_MotionCorrectionFilter = NULL;
     m_BiasCorrectionFilter = NULL;
     m_HighResolutionReconstructionFilter = NULL;
+    m_SliceRejectionFilter = NULL;
 
     m_ReconstructionType = ALGO1;
 
@@ -63,6 +64,12 @@ SuperResolutionFilter::~SuperResolutionFilter()
         delete m_HighResolutionReconstructionFilter;
         m_HighResolutionReconstructionFilter = NULL;
     }
+
+    if(m_SliceRejectionFilter != NULL)
+    {
+        delete m_SliceRejectionFilter;
+        m_SliceRejectionFilter = NULL;
+    }
 }
 
 void SuperResolutionFilter::Update()
@@ -81,9 +88,6 @@ void SuperResolutionFilter::Update()
     {
         m_MotionCorrectionFilter = new btk::MotionCorrectionSliceBySliceFilter();
     }
-
-
-
 
     m_MotionCorrectionFilter->Update();
 
@@ -105,6 +109,9 @@ void SuperResolutionFilter::Update()
     }
 
     m_HighResolutionReconstructionFilter->Update();
+
+    m_SliceRejectionFilter = new btk::SliceRejectionFilter();
+    m_SliceRejectionFilter->Update();
 
 
 }

@@ -76,6 +76,7 @@
 #include "btkHighResolutionReconstructionFilter.h"
 #include "btkMotionCorrectionFilter.h"
 #include "btkPSFEstimationFilter.h"
+#include "btkSliceRejectionFilter.h"
 
 
 
@@ -240,6 +241,8 @@ private:
     btk::MotionCorrectionFilter * m_MotionCorrectionFilter;
     btk::BiasCorrectionFilter *   m_BiasCorrectionFilter;
     btk::HighResolutionReconstructionFilter * m_HighResolutionReconstructionFilter;
+    btk::SliceRejectionFilter * m_SliceRejectionFilter;
+
 
 
 
