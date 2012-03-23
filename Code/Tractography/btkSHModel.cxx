@@ -1,5 +1,5 @@
 /*
-Copyright or © or Copr. Université de Strasbourg - Centre National de la Recherche Scientifique
+Copyright or Â© or Copr. UniversitÃ© de Strasbourg - Centre National de la Recherche Scientifique
 
 12 februar 2010
 < pontabry at unistra dot fr >
@@ -68,7 +68,6 @@ SHModel::SHModel(const std::string &filename, const std::string &directionsfilen
     m_pasTheta = m_maxTheta / (Real)m_reso;
 
     m_maxPhi = 2.0 * M_PI;
-//    m_maxPhi = M_PI;
     m_pasPhi = m_maxPhi / (Real)m_reso;
 
     m_4PI = 4. * M_PI;
@@ -86,9 +85,6 @@ SHModel::SHModel(const std::string &filename, const std::string &directionsfilen
     unsigned int zMax = smodelRegion.GetSize(2);
     unsigned int kMax = smodelRegion.GetSize(3);
 
-//    std::cout << "\tThere are " << kMax << " images of size ";
-//    std::cout << xMax << "x" << yMax << "x" << zMax << "." << std::endl;
-
 
     // Compute order
     Real discr = 2.25 - 2.*(1. - kMax);
@@ -96,11 +92,7 @@ SHModel::SHModel(const std::string &filename, const std::string &directionsfilen
     m_R        = kMax;
 
 
-//    std::cout << "\tModel is at order " << m_order << "." << std::endl;
-
-
     // Generate directions following resolution
-//    std::cout << "\tGenerating directions (sampling resolution " << m_reso << "x" << m_reso << ")..." << std::flush;
     m_directions = new std::vector<Direction>;
 
     for(unsigned int i=0; i<m_reso+1; i++)
@@ -108,39 +100,22 @@ SHModel::SHModel(const std::string &filename, const std::string &directionsfilen
         for(unsigned int j=0; j<m_reso; j++)
             m_directions->push_back(Direction(i*m_pasTheta,j*m_pasPhi));
     }
-//    for(unsigned int i=0; i<m_reso; i++)
-//    {
-//        for(unsigned int j=0; j<m_reso-1; j++)
-//            m_directions->push_back(Direction(i*m_pasTheta,j*m_pasPhi));
-//    }
-//    std::cout << "done." << std::endl;
 
 
     // SH basis matrix
-//    std::cout << "\tSpherical harmonics basis matrix..." << std::flush;
     this->computeSHBasisMatrix();
     this->computeSHBasisOriMatrix();
-//    std::cout << "done." << std::endl;
 
     // Compute Legendre matrix
-//    std::cout << "\tComputing Legendre matrix..." << std::flush;
     this->computeLegendreMatrix();
-//    std::cout << "done." << std::endl;
 
     // Build sharp coefficients
-//    std::cout << "\tBuilding sharper ODF matrix..." << std::flush;
     this->buildSharperODFMatrix();
-//    std::cout << "done." << std::endl;
 
 
     // Allocate space memory for the array of images
-//    std::cout << "\tAllocating space memory..." << std::flush;
     m_model  = new Image::Pointer[kMax];
     m_interp = new ImageInterpolator::Pointer[kMax];
-//    std::cout << "done." << std::endl;
-
-
-//    std::cout << "\tPreparing and interpolating data..." << std::flush;
 
     // Define images region
     ImageRegion iRegion;
@@ -217,11 +192,6 @@ SHModel::SHModel(const std::string &filename, const std::string &directionsfilen
         m_interp[k] = ImageInterpolator::New();
         m_interp[k]->SetInputImage(m_model[k]);
     } // for k
-
-//    std::cout << "done." << std::endl;
-
-
-//    std::cout << "done." << std::endl;
 }
 
 SHModel::SHModel(Sequence::Pointer model, std::vector<Direction> *originalDirections, char displayMode)
@@ -284,11 +254,6 @@ SHModel::SHModel(Sequence::Pointer model, std::vector<Direction> *originalDirect
         for(unsigned int j=0; j<m_reso; j++)
             m_directions->push_back(Direction(i*m_pasTheta,j*m_pasPhi));
     }
-//    for(unsigned int i=0; i<m_reso; i++)
-//    {
-//        for(unsigned int j=0; j<m_reso-1; j++)
-//            m_directions->push_back(Direction(i*m_pasTheta,j*m_pasPhi));
-//    }
     Display2(m_displayMode, std::cout << "done." << std::endl);
 
 
@@ -402,23 +367,17 @@ SHModel::SHModel(Sequence::Pointer model, std::vector<Direction> *originalDirect
 
 Sequence::Pointer SHModel::readFiles(const std::string &filename, const std::string &directionsfilename)
 {
-//    std::cout << "Loading model file \"" << filename << "\"..." << std::endl;
-
     //
     // Read model file
     //
 
-//        std::cout << "\tReading model's file..." << std::flush;
         SequenceReader::Pointer reader = SequenceReader::New();
         reader->SetFileName(filename);
         reader->Update();
-//        std::cout << "done." << std::endl;
 
     //
     // Read direction's file
     //
-
-//        std::cout << "\tReading gradient directions' file..." << std::flush;
 
         // Open file
         std::fstream dirFile(directionsfilename.c_str(), std::fstream::in);
@@ -440,9 +399,6 @@ Sequence::Pointer SHModel::readFiles(const std::string &filename, const std::str
 
         // Close file
         dirFile.close();
-
-//        std::cout << "done." << std::endl;
-
 
 
     return reader->GetOutput();
@@ -584,7 +540,6 @@ Real SHModel::odfAt(Direction u, Point p)
 
 
     return (Y * (P * (Sharp * C)))(0,0);
-//    return (Y * (P * C))(0,0);
 }
 
 Matrix SHModel::odfAt(Point p)
@@ -609,7 +564,6 @@ Matrix SHModel::odfAt(Point p)
 
 
     return (Y * (P * (Sharp * C)));
-//    return (Y * (P * C));
 }
 
 Direction SHModel::getMaxDirectionAt(Point p)
@@ -699,110 +653,6 @@ std::vector<Direction> SHModel::getMaxDirectionsAt(Point p)
             }
         } // for each phi
     } // for each theta
-
-//    unsigned int phiRes = m_reso-1;
-//    bool isGreater;
-//    unsigned int j;
-//
-//    // i=0
-//    isGreater = true;
-//    j = 0;
-//
-//    do
-//    {
-//        isGreater = ( Psi(phiRes + j,0) < Psi(0,0) );
-//        j++;
-//    } while(isGreater && j<phiRes);
-//
-//    if(isGreater)
-//    {
-//        if((Psi(0,0)-min)/(max-min) > MAXIMA_THRESHOLD)
-//        {
-//            maxima.push_back(Direction(0,0));
-//            maxima.push_back(Direction(M_PI,0));
-//        }
-//    }
-//
-////    // i=|theta|
-////    isGreater = true;
-////    j = 0;
-////
-////    do
-////    {
-////        isGreater = ( Psi(phiRes*phiRes,0) < Psi(m_reso-1,0) );
-////        j++;
-////    } while(isGreater && j<phiRes);
-////
-////    if(isGreater)
-////    {
-////        if((Psi(m_reso-1,0)-min)/(max-min) > MAXIMA_THRESHOLD)
-////        {
-////            maxima.push_back(Direction(M_PI,0));
-////            maxima.push_back(Direction(0,0));
-////        }
-////    }
-//
-//    // j=0 & general case
-//    for(unsigned int i=1; i<m_reso-1; i++)
-//    {
-//        for(unsigned int j=0; j<phiRes; j++)
-//        {
-//            Real odf, odf1, odf2, odf3, odf4, odf5, odf6, odf7, odf8;
-//
-//            if(j == 0)
-//            {
-//                odf = Psi(phiRes*i,0);
-//
-//                odf1 = Psi(phiRes*(i-1),0);
-//                odf2 = Psi(phiRes*(i+1),0);
-//                odf3 = Psi(phiRes*(i-1) + (phiRes-1),0);
-//                odf4 = Psi(phiRes*i + (phiRes-1),0);
-//                odf5 = Psi(phiRes*(i+1) + (phiRes-1),0);
-//                odf6 = Psi(phiRes*(i-1) + 1,0);
-//                odf7 = Psi(phiRes*i + 1,0);
-//                odf8 = Psi(phiRes*(i+1) + 1,0);
-//            }
-//            else if(j == phiRes-1)
-//            {
-//                odf = Psi(phiRes*i,phiRes-1);
-//
-//                odf1 = Psi(phiRes*(i-1) + (phiRes-1),0);
-//                odf2 = Psi(phiRes*(i+1) + (phiRes-1),0);
-//                odf3 = Psi(phiRes*(i-1) + (phiRes-2),0);
-//                odf4 = Psi(phiRes*i + (phiRes-2),0);
-//                odf5 = Psi(phiRes*(i+1) + (phiRes-2),0);
-//                odf6 = Psi(phiRes*(i-1),0);
-//                odf7 = Psi(phiRes*i,0);
-//                odf8 = Psi(phiRes*(i+1),0);
-//            }
-//            else // general case
-//            {
-//                odf = Psi(phiRes*i + j,0);
-//
-//                odf1 = Psi(phiRes*(i-1) + (j+1),0);
-//                odf2 = Psi(phiRes*i + (j+1),0);
-//                odf3 = Psi(phiRes*(i+1) + (j+1),0);
-//                odf4 = Psi(phiRes*(i-1) + j,0);
-//                odf5 = Psi(phiRes*(i+1) + j,0);
-//                odf6 = Psi(phiRes*(i-1) + (j-1),0);
-//                odf7 = Psi(phiRes*i + (j-1),0);
-//                odf8 = Psi(phiRes*(i+1) + (j-1),0);
-//            }
-//
-//            if(odf > odf1 && odf > odf2 && odf > odf3 && odf > odf4 && odf > odf5 && odf > odf6 && odf > odf7 && odf > odf8)
-//            {
-//                if((Psi(phiRes*i,0)-min)/(max-min) > MAXIMA_THRESHOLD)
-//                {
-//                    Direction u(i*m_pasTheta,j*m_pasPhi);
-//                    Vector v = u.toVector();
-//
-//                    maxima.push_back(u);
-//                    maxima.push_back(Vector(-v.x(), -v.y(), -v.z()).toDirection());
-//                }
-//            }
-//        }
-//    }
-
 
     return maxima;
 }

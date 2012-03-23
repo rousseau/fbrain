@@ -1,5 +1,5 @@
 /*
-Copyright or © or Copr. Université de Strasbourg - Centre National de la Recherche Scientifique
+Copyright or Â© or Copr. UniversitÃ© de Strasbourg - Centre National de la Recherche Scientifique
 
 15 june 2010
 < pontabry at unistra dot fr >
@@ -109,7 +109,6 @@ Direction ImportanceDensity::computeMeanDirection(Point xk, Direction ukm1)
             return mus.front();
         else // mus.size() == 0
         {
-//            return ukm1;
             Direction nullDir;
             nullDir.setNull();
 
@@ -120,7 +119,6 @@ Direction ImportanceDensity::computeMeanDirection(Point xk, Direction ukm1)
         return maxima.front();
     else // maxima.size() == 0
     {
-//        return ukm1;
         Direction nullDir;
         nullDir.setNull();
 
