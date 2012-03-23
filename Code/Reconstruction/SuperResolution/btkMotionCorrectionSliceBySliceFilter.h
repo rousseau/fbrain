@@ -32,8 +32,9 @@
   knowledge of the CeCILL-B license and that you accept its terms.
 
 ==========================================================================*/
-#ifndef __BTK_HIGHRESOLUTIONSRFILTER_H__
-#define __BTK_HIGHRESOLUTIONSRFILTER_H__
+
+#ifndef __BTK_MOTIONCORRECTIONSLICEBYSLICEFILTER_H__
+#define __BTK_MOTIONCORRECTIONSLICEBYSLICEFILTER_H__
 
 /* ITK */
 #include "itkImage.h"
@@ -45,31 +46,34 @@
 
 /* BTK */
 #include "btkMacro.h"
-#include "btkHighResolutionReconstructionFilter.h"
+#include "btkMotionCorrectionFilter.h"
 
 /* OTHERS */
 #include "iostream"
 
+
 namespace btk
 {
-class HighResolutionSRFilter : public HighResolutionReconstructionFilter
+class MotionCorrectionSliceBySliceFilter : public MotionCorrectionFilter
 {
-
-
 public:
 
+    /* Typedefs */
+    typedef float PixelType;
+    typedef itk::Image< PixelType, 3>         itkImage;
+    typedef itk::Image< PixelType, 2>         SliceType;
+    typedef itk::Transform<double, 3> TransformType;
+    typedef itk::Image< unsigned char, 3 >     itkImageMask;
+    typedef itk::ImageMaskSpatialObject< 3 >   itkMask;
 
+    MotionCorrectionSliceBySliceFilter();
+    ~MotionCorrectionSliceBySliceFilter();
 
-    HighResolutionSRFilter();
-    ~HighResolutionSRFilter();
-
-    virtual void Update();
-
+     virtual void Update();
 
 
 protected:
 private:
-
 
 
 };

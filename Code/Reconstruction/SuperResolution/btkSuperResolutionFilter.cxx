@@ -2,6 +2,8 @@
 
 #include "btkHighResolutionIBPFilter.h"
 #include "btkHighResolutionSRFilter.h"
+#include "btkMotionCorrectionAffine3DFilter.h"
+#include "btkMotionCorrectionSliceBySliceFilter.h"
 
 namespace btk
 {
@@ -14,6 +16,8 @@ SuperResolutionFilter::SuperResolutionFilter()
     m_HighResolutionReconstructionFilter = NULL;
 
     m_ReconstructionType = ALGO1;
+
+    m_TransformationType = AFFINE;
 
     btkCoutMacro(SuperResolutionFilter : Constructor );
 
@@ -68,7 +72,19 @@ void SuperResolutionFilter::Update()
     m_PSFEstimationFilter = new btk::PSFEstimationFilter();
     m_PSFEstimationFilter->Update();
 
-    m_MotionCorrectionFilter = new btk::MotionCorrectionFilter();
+
+    if(m_TransformationType == AFFINE)
+    {
+        m_MotionCorrectionFilter = new btk::MotionCorrectionAffine3DFilter();
+    }
+    else
+    {
+        m_MotionCorrectionFilter = new btk::MotionCorrectionSliceBySliceFilter();
+    }
+
+
+
+
     m_MotionCorrectionFilter->Update();
 
     m_BiasCorrectionFilter = new btk::BiasCorrectionFilter();

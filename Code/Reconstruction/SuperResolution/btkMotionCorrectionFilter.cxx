@@ -13,9 +13,5 @@ MotionCorrectionFilter::~MotionCorrectionFilter()
     btkCoutMacro(MotionCorrectionFilter : Destructor );
 }
 
-void MotionCorrectionFilter::Update()
-{
-     btkCoutMacro(MotionCorrectionFilter : Update Method );
-}
 
 }

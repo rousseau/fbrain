@@ -68,7 +68,7 @@ public:
     MotionCorrectionFilter();
     ~MotionCorrectionFilter();
 
-    void Update();
+     virtual void Update() = 0;
 
 
 
@@ -99,7 +99,6 @@ public:
 
 
 protected:
-private:
 
     std::vector< itkImage::Pointer >         m_ImagesLR;
     std::vector< TransformType::Pointer  >   m_TransformsLR;
@@ -111,6 +110,10 @@ private:
     itkImageMask::Pointer                    m_ImageMaskHR;
     itkMask::Pointer                         m_MaskHR;
     itkImage::Pointer                        m_ReferenceImage;
+
+private:
+
+
 };
 }
 

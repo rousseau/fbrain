@@ -81,6 +81,10 @@ ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkHighResolutionSRFilt
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkHighResolutionSRFilter.h
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrectionFilter.cxx
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrectionFilter.h
+${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrectionSliceBySliceFilter.cxx
+${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrectionSliceBySliceFilter.h
+${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrectionAffine3DFilter.cxx
+${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrectionAffine3DFilter.h
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkPSFEstimationFilter.cxx
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkPSFEstimationFilter.h
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkSuperResolutionFilter.cxx
