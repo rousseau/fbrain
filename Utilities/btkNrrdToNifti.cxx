@@ -1,5 +1,5 @@
 /*
-Copyright or © or Copr. Université de Strasbourg - Centre National de la Recherche Scientifique
+Copyright or Â© or Copr. UniversitÃ© de Strasbourg - Centre National de la Recherche Scientifique
 
 15 februar 2011
 < pontabry at unistra dot fr >
@@ -31,9 +31,8 @@ The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-B license and that you accept its terms.
 */
 
-#define Pr(x) std::cerr << #x << " = " << x << std::endl
 // TCLAP include
-#include <tclap/CmdLine.h>
+#include "tclap/CmdLine.h"
 
 // STL includes
 #include "string"
@@ -45,33 +44,35 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "itkVectorImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
-#include "itkImageRegionIteratorWithIndex.h"
 #include "itkImageRegionIterator.h"
 #include "itkMatrix.h"
+#include "itkFixedArray.h"
 #include "vnl/vnl_inverse.h"
 
 // BTK includes
 #include "btkNrrdField.h"
-#include "btkNiftiFilenameRadix.h"
+#include "btkFileNameTools.h"
 
 
+// Precision of images' intensities
 typedef short PixelType;
-const unsigned int InDimension  = 3;
-const unsigned int OutDimension = 4;
 
-typedef itk::VectorImage<PixelType,InDimension> InSequence;
-typedef itk::ImageFileReader<InSequence> InSequenceFileReader;
-typedef itk::ImageFileWriter<InSequence> InSequenceFileWriter;
-typedef itk::ImageRegionIteratorWithIndex<InSequence> InSequenceIterator;
+// Input sequence (Nrrd -- nhdr)
+typedef itk::VectorImage<PixelType,3>           InputSequence;
+typedef itk::ImageFileReader<InputSequence>     InputSequenceFileReader;
+typedef itk::ImageFileWriter<InputSequence>     InputSequenceFileWriter;
+typedef itk::ImageRegionIterator<InputSequence> InputSequenceIterator;
 
-typedef itk::Image<PixelType,OutDimension> OutSequence;
-typedef itk::ImageFileReader<OutSequence> OutSequenceFileReader;
-typedef itk::ImageFileWriter<OutSequence> OutSequenceFileWriter;
+// Output sequence (Nifti -- .nii.gz)
+typedef itk::Image<PixelType,4>                  OutputSequence;
+typedef itk::ImageFileReader<OutputSequence>     OutputSequenceFileReader;
+typedef itk::ImageFileWriter<OutputSequence>     OutputSequenceFileWriter;
+typedef itk::ImageRegionIterator<OutputSequence> OutputSequenceIterator;
 
-const unsigned int Dimension = 3;
-typedef itk::Image<PixelType,Dimension> Image;
-typedef itk::ImageFileReader<Image> ImageFileReader;
-typedef itk::ImageFileWriter<Image> ImageFileWriter;
+// Anatomical volume (3D)
+typedef itk::Image<PixelType,3>         Image;
+typedef itk::ImageFileReader<Image>     ImageFileReader;
+typedef itk::ImageFileWriter<Image>     ImageFileWriter;
 typedef itk::ImageRegionIterator<Image> ImageIterator;
 
 
@@ -81,251 +82,269 @@ int main(int argc, char *argv[])
     // Parse program's arguments
     //
 
-    // Define command line variables
-    std::string inFileName;
-    std::string outFileName;
-    std::string vecFileName;
-    std::string bvalFileName;
-    bool dwi;
+    // Define command line parameters
+    std::string inputFileName;
+    std::string outputFileName;
+    bool dwiConversion;
+    bool worldToImageCoordConversion;
 
-    std::string outRadix;
 
     // Define command line parser
-    TCLAP::CmdLine cmd("Nrrd to Nifti Converter", ' ', "0.1");
+    TCLAP::CmdLine cmd("Nrrd to Nifti Converter", ' ', "Unversioned");
 
     // Define command line arguments
-    TCLAP::ValueArg<std::string> inArg("i", "input", "Input image", true, "", "string", cmd);
-    TCLAP::ValueArg<std::string> outArg("o", "output", "Output image (default \"data.nii.gz\")", false, "data.nii.gz", "string", cmd);
+    TCLAP::ValueArg<std::string> inputArg("i", "input", "Input image", true, "", "string", cmd);
+    TCLAP::ValueArg<std::string> outputArg("o", "output", "Output image (default: \"name.nii.gz\" -- input name with nifti extension)", false, "", "string", cmd);
 
-    TCLAP::SwitchArg dwiArg("", "dwi", "DWI image conversion", cmd, false);
+    TCLAP::SwitchArg dwiConversionArg("", "dwi", "Proceed to a conversion diffusion weighted image conversion (default: false -- anatomical 3D volume)", cmd, false);
+    TCLAP::SwitchArg worldToImageCoordConversionArg("", "world2ImageCoordinates", "Proceed to a world to image coordinates conversion of the gradient table (default: false -- keep gradient table in world coordinates)", cmd, false);
 
     // Parse arguments
     cmd.parse(argc, argv);
 
     // Get back arguments' values
-    inFileName   = inArg.getValue();
-    outFileName  = outArg.getValue();
-    dwi          = dwiArg.getValue();
-
-    outRadix     = btk::GetRadixOf(outFileName);
-    vecFileName  = outRadix + ".bvec";
-    bvalFileName = outRadix + ".bval";
+    inputFileName               = inputArg.getValue();
+    outputFileName              = outputArg.getValue();
+    dwiConversion               = dwiConversionArg.getValue();
+    worldToImageCoordConversion = worldToImageCoordConversionArg.getValue();
 
 
-    if(dwi)
+    // If no filename is given for output, set it up with input name
+    if(outputFileName.empty())
+    {
+        outputFileName = btk::GetRadixOf(inputFileName);
+    }
+    else // !outputFileName.empty()
+    {
+        outputFileName = btk::GetRadixOf(outputFileName);
+    }
+
+
+    //
+    // Main part
+    //
+
+    try
     {
         //
-        // Read input image (Nrrd file format)
+        // Verifications before processing
         //
 
-        std::cout << "Reading file..." << std::flush;
+        // Only .nhdr and .nrrd file formats are supported
+        std::string inputFormat = btk::GetExtensionOf(inputFileName);
 
-        InSequenceFileReader::Pointer reader = InSequenceFileReader::New();
-        reader->SetFileName(inFileName.c_str());
-        reader->Update();
+        if(inputFormat != ".nhdr" && inputFormat != ".nrrd")
+            throw std::string("Only NRRD file formats, such as .nhdr/.raw(.gz) and .nrrd, are supported !");
 
 
-        std::fstream headFile(inFileName.c_str(), std::fstream::in);
+        //
+        // Processing
+        //
 
-        std::string s;
-        std::string key;
-        std::string value;
-        unsigned int bvalue = 0;
-        bool stop = false;
-
-        char buf[256];
-        headFile.getline(buf, 256);
-        s = buf;
-
-        while(!stop && !headFile.eof() && !headFile.fail() && !headFile.bad())
+        if(dwiConversion)
         {
-            btk::btkNrrdField field(s);
-            key   = field.GetKey();
-            value = field.GetValue();
+            //
+            // Read input image (Nrrd file format)
+            //
 
-            if(key == "DWMRI_b-value")
+            if(inputFormat == ".nhdr")
+                std::cout << "Reading files \"" << btk::GetRadixOf(inputFileName) << "{.nhdr|.raw(.gz)}\"... " << std::flush;
+            else // inputFormat == .nrrd
+                std::cout << "Reading file \"" << inputFileName << "\"... " << std::flush;
+
+            // Read raw data
+            InputSequenceFileReader::Pointer reader = InputSequenceFileReader::New();
+            reader->SetFileName(inputFileName.c_str());
+            reader->Update();
+
+            // Read header data
+            std::fstream headerFile(inputFileName.c_str(), std::fstream::in);
+
+            std::string token;
+            std::string key;
+            std::string value;
+            unsigned int bvalue = 0;
+            bool vectorFound = false;
+
+            char buffer[256];
+            headerFile.getline(buffer, 256);
+            token = buffer;
+
+            while(!vectorFound && !headerFile.eof() && !headerFile.fail() && !headerFile.bad() && !token.empty())
             {
-                std::stringstream st;
-                st << value;
-                st >> bvalue;
-            }
-            else if(key == "DWMRI_gradient_0000")
+                btk::btkNrrdField currentField(token);
+                key   = currentField.GetKey();
+                value = currentField.GetValue();
+
+                if(key == "DWMRI_b-value")
+                {
+                    std::stringstream stream;
+                    stream << value;
+                    stream >> bvalue;
+                }
+                else if(key == "DWMRI_gradient_0000")
+                {
+                    vectorFound = true;
+                }
+
+                headerFile.getline(buffer,256);
+                token = buffer;
+            } // while file is not empty
+
+            std::vector<double> vx;
+            std::vector<double> vy;
+            std::vector<double> vz;
+            std::vector<unsigned int> bvals;
+
+            if(vectorFound == true)
             {
-                stop = true;
-            }
+                double x,y,z;
 
-            headFile.getline(buf,256);
-            s = buf;
-        }
-
-        std::vector<double> vx;
-        std::vector<double> vy;
-        std::vector<double> vz;
-        std::vector<unsigned int> bvals;
-
-        if(stop == true)
-        {
-            double x,y,z;
-
-            std::stringstream st;
-            st << value;
-            st >> x; vx.push_back(x);
-            st >> y; vy.push_back(y);
-            st >> z; vz.push_back(z);
+                std::stringstream stream;
+                stream << value;
+                stream >> x; vx.push_back(x);
+                stream >> y; vy.push_back(y);
+                stream >> z; vz.push_back(z);
 
                 if(x == 0 && y == 0 && z == 0)
                     bvals.push_back(0);
                 else
                     bvals.push_back(bvalue);
 
-            while(!headFile.eof() && !headFile.fail() && !headFile.bad())
+                while(!headerFile.eof() && !headerFile.fail() && !headerFile.bad() && !token.empty())
+                {
+                    btk::btkNrrdField field(token);
+                    key   = field.GetKey();
+                    value = field.GetValue();
+
+                    stream.clear();
+                    stream << value;
+                    stream >> x; vx.push_back(x);
+                    stream >> y; vy.push_back(y);
+                    stream >> z; vz.push_back(z);
+
+                    if(x == 0 && y == 0 && z == 0)
+                        bvals.push_back(0);
+                    else
+                        bvals.push_back(bvalue);
+
+                    headerFile.getline(buffer,256);
+                    token = buffer;
+                } // while file is not empty
+            } // if vector found
+
+            headerFile.close();
+
+            std::cout << "done." << std::endl;
+
+
+            //
+            // Convert file
+            //
+
+            std::cout << "Converting file... " << std::flush;
+
+            // Get input image's properties
+            InputSequence::RegionType inputRegion = reader->GetOutput()->GetLargestPossibleRegion();
+            unsigned int componentsNumber         = reader->GetOutput()->GetVectorLength();
+
+            InputSequence::SizeType inputSize = inputRegion.GetSize();
+            OutputSequence::SizeType outputSize;
+            outputSize[0] = inputSize[0];
+            outputSize[1] = inputSize[1];
+            outputSize[2] = inputSize[2];
+            outputSize[3] = componentsNumber;
+
+            InputSequence::PointType inputOrigin = reader->GetOutput()->GetOrigin();
+            OutputSequence::PointType outputOrigin;
+            outputOrigin[0] = inputOrigin[0];
+            outputOrigin[1] = inputOrigin[1];
+            outputOrigin[2] = inputOrigin[2];
+            outputOrigin[3] = 0;
+
+            InputSequence::SpacingType inputSpacing = reader->GetOutput()->GetSpacing();
+            OutputSequence::SpacingType outputSpacing;
+            outputSpacing[0] = inputSpacing[0];
+            outputSpacing[1] = inputSpacing[1];
+            outputSpacing[2] = inputSpacing[2];
+            outputSpacing[3] = 1;
+
+            itk::Matrix<double,3,3> inputDirection = reader->GetOutput()->GetDirection();
+            itk::Matrix<double,4,4> outputDirection;
+            outputDirection(0,0) = inputDirection(0,0); outputDirection(0,1) = inputDirection(0,1); outputDirection(0,2) = inputDirection(0,2); outputDirection(0,3) = 0;
+            outputDirection(1,0) = inputDirection(1,0); outputDirection(1,1) = inputDirection(1,1); outputDirection(1,2) = inputDirection(1,2); outputDirection(1,3) = 0;
+            outputDirection(2,0) = inputDirection(2,0); outputDirection(2,1) = inputDirection(2,1); outputDirection(2,2) = inputDirection(2,2); outputDirection(2,3) = 0;
+            outputDirection(3,0) = 0;                   outputDirection(3,1) = 0;                   outputDirection(3,2) = 0;                   outputDirection(3,3) = 1;
+
+            // Create and initialize a new sequence with the same properties as the original
+            OutputSequence::Pointer newSequence = OutputSequence::New();
+            newSequence->SetRegions(outputSize);
+            newSequence->SetOrigin(outputOrigin);
+            newSequence->SetSpacing(outputSpacing);
+            newSequence->SetDirection(outputDirection);
+            newSequence->Allocate();
+            newSequence->FillBuffer(0);
+
+
+            // Conversion loop
+            InputSequenceIterator inputIt(reader->GetOutput(), inputRegion);
+
+            for(unsigned int k=0; k<componentsNumber; k++)
             {
-                btk::btkNrrdField field(s);
-                key   = field.GetKey();
-                value = field.GetValue();
+                // Set region in output sequence for current gradient image
+                OutputSequence::IndexType outputRegionCorner;
+                outputRegionCorner[0] = 0; outputRegionCorner[1] = 0; outputRegionCorner[2] = 0; outputRegionCorner[3] = k;
 
-                st.clear();
-                st << value;
-                st >> x; vx.push_back(x);
-                st >> y; vy.push_back(y);
-                st >> z; vz.push_back(z);
+                OutputSequence::SizeType outputRegionSize = outputSize;
+                outputRegionSize[3] = 1;
 
-                if(x == 0 && y == 0 && z == 0)
-                    bvals.push_back(0);
-                else
-                    bvals.push_back(bvalue);
+                OutputSequence::RegionType outputRegion;
+                outputRegion.SetIndex(outputRegionCorner);
+                outputRegion.SetSize(outputRegionSize);
 
-                headFile.getline(buf,256);
-                s = buf;
+                // Set region iterator for current gradient image
+                OutputSequenceIterator outputIt(newSequence, outputRegion);
+
+                // Loop
+                for(inputIt.GoToBegin(), outputIt.GoToBegin(); !inputIt.IsAtEnd() && !outputIt.IsAtEnd(); ++inputIt, ++outputIt)
+                {
+                    outputIt.Set(inputIt.Get()[k]);
+                } // for each voxel
+            } // for each component
+
+
+            // Conversion loop for gradient vectors (world coordinates to image coordinates)
+            if(worldToImageCoordConversion)
+            {
+                itk::FixedArray<double,3> worldCoordinates, imageCoordinates;
+
+                // Conversion loop
+                std::vector<double>::iterator vxIt, vyIt, vzIt;
+                for(vxIt = vx.begin(), vyIt = vy.begin(), vzIt = vz.begin(); vxIt != vx.end() && vyIt != vy.end() && vzIt != vz.end(); vxIt++, vyIt++, vzIt++)
+                {
+                    worldCoordinates[0] = *vxIt; worldCoordinates[1] = *vyIt; worldCoordinates[2] = *vzIt;
+                    reader->GetOutput()->TransformPhysicalVectorToLocalVector(worldCoordinates, imageCoordinates);
+                    *vxIt = imageCoordinates[0]; *vyIt = imageCoordinates[1]; *vzIt = imageCoordinates[2];
+                } // for each vector
             }
-        }
 
-        headFile.close();
-
-        std::cout << "done." << std::endl;
+            std::cout << "done." << std::endl;
 
 
-        //
-        // Convert file
-        //
+            //
+            // Write output image (Nifti file format)
+            //
 
-        std::cout << "Converting file..." << std::endl;
+            std::cout << "Writing files \"" << outputFileName << "{.nii.gz|.bval|.bvec}\"... " << std::flush;
 
-        // Image properties
-        OutSequence::SizeType size;
-        size[0] = reader->GetOutput()->GetLargestPossibleRegion().GetSize(0);
-        size[1] = reader->GetOutput()->GetLargestPossibleRegion().GetSize(1);
-        size[2] = reader->GetOutput()->GetLargestPossibleRegion().GetSize(2);
-        size[3] = reader->GetOutput()->GetVectorLength();
-
-        std::cout << "\tsize: " << size[0] << "x" << size[1] << "x" << size[2] << "x" << size[3] << std::endl;
-
-        OutSequence::PointType origin;
-        origin[0] = reader->GetOutput()->GetOrigin()[0];
-        origin[1] = reader->GetOutput()->GetOrigin()[1];
-        origin[2] = reader->GetOutput()->GetOrigin()[2];
-        origin[3] = 0;
-
-        std::cout << "\torigin = (" << origin[0] << "," << origin[1] << "," << origin[2] << ")" << std::endl;
-
-        OutSequence::SpacingType spacing;
-        spacing[0] = reader->GetOutput()->GetSpacing()[0];
-        spacing[1] = reader->GetOutput()->GetSpacing()[1];
-        spacing[2] = reader->GetOutput()->GetSpacing()[2];
-        spacing[3] = 1;
-
-        std::cout << "\tspacing: " << spacing[0] << "x" << spacing[1] << "x" << spacing[2] << "x" << spacing[3] << std::endl;
-
-        itk::Matrix<double,4,4> dirMat;
-        itk::Matrix<double,3,3> iniMat = reader->GetOutput()->GetDirection();
-
-        dirMat(0,0) = iniMat(0,0);
-        dirMat(0,1) = iniMat(0,1);
-        dirMat(0,2) = iniMat(0,2);
-        dirMat(0,3) = 0;
-
-        dirMat(1,0) = iniMat(1,0);
-        dirMat(1,1) = iniMat(1,1);
-        dirMat(1,2) = iniMat(1,2);
-        dirMat(1,3) = 0;
-
-        dirMat(2,0) = iniMat(2,0);
-        dirMat(2,1) = iniMat(2,1);
-        dirMat(2,2) = iniMat(2,2);
-        dirMat(2,3) = 0;
-
-        dirMat(3,0) = 0;
-        dirMat(3,1) = 0;
-        dirMat(3,2) = 0;
-        dirMat(3,3) = 1;
-
-        // FIXME : the image's orientation seems not to be read in nifti files, although it is correct to nrrd header file.
-        std::cout << "\torientation:" << std::endl;
-        std::cout << "\t(" << dirMat(0,0) << "," << dirMat(0,1) << "," << dirMat(0,2) << "," << dirMat(0,3) << ")" << std::endl;
-        std::cout << "\t(" << dirMat(1,0) << "," << dirMat(1,1) << "," << dirMat(1,2) << "," << dirMat(1,3) << ")" << std::endl;
-        std::cout << "\t(" << dirMat(2,0) << "," << dirMat(2,1) << "," << dirMat(2,2) << "," << dirMat(2,3) << ")" << std::endl;
-        std::cout << "\t(" << dirMat(3,0) << "," << dirMat(3,1) << "," << dirMat(3,2) << "," << dirMat(3,3) << ")" << std::endl;
-
-        // Temporary image file
-        OutSequence::Pointer image = OutSequence::New();
-        image->SetRegions(size);
-        image->SetOrigin(origin);
-        image->SetSpacing(spacing);
-        image->SetDirection(dirMat);
-        image->Allocate();
-        image->FillBuffer(0);
-
-        // Iterators
-        InSequenceIterator in(reader->GetOutput(), reader->GetOutput()->GetLargestPossibleRegion());
-
-        // Conversion loop
-        for(in.GoToBegin(); !in.IsAtEnd(); ++in)
-        {
-            for(unsigned int k=0; k<reader->GetOutput()->GetVectorLength(); k++)
-            {
-                InSequence::IndexType  inIndex = in.GetIndex();
-
-                OutSequence::IndexType outIndex;
-                outIndex[0] = inIndex[0]; outIndex[1] = inIndex[1]; outIndex[2] = inIndex[2]; outIndex[3] = k;
-
-                image->SetPixel(outIndex, in.Get()[k]);
-            } // for each scalar
-        } // for each vector
-
-        // Conversion loop for gradient vectors (world coordinates to image coordinates)
-        vnl_vector<double> worldCoord(3);
-        vnl_vector<double> imgCoord(3);
-        vnl_matrix<double> wcToImg = vnl_inverse(iniMat.GetVnlMatrix());
-        std::vector<double>::iterator ivx;
-        std::vector<double>::iterator ivy;
-        std::vector<double>::iterator ivz;
-        for(ivx=vx.begin(), ivy=vy.begin(), ivz=vz.begin(); ivx!=vx.end() && ivy!=vy.end() && ivz!=vz.end(); ivx++, ivy++, ivz++)
-        {
-            worldCoord(0) = -(*ivx); worldCoord(1) = -(*ivy); worldCoord(2) = *ivz;
-            imgCoord = wcToImg * worldCoord;
-            *ivx = imgCoord(0); *ivy = imgCoord(1); *ivz = imgCoord(2);
-        }
-
-        std::cout << "done." << std::endl;
-
-
-        //
-        // Write output image (Nifti file format)
-        //
-
-        std::cout << "Writing file..." << std::flush;
-
-        OutSequenceFileWriter::Pointer writer = OutSequenceFileWriter::New();
-        writer->SetFileName(outFileName);
-        writer->SetInput(image);
-
-        try
-        {
-            // image
+            // Write raw data
+            OutputSequenceFileWriter::Pointer writer = OutputSequenceFileWriter::New();
+            writer->SetFileName(outputFileName+".nii.gz");
+            writer->SetInput(newSequence);
             writer->Update();
 
-            // gradient table
-            std::fstream bvecFile(vecFileName.c_str(), std::fstream::out);
+            // Write gradient table of vectors
+            std::fstream bvecFile((outputFileName+".bvec").c_str(), std::fstream::out);
 
             for(std::vector<double>::iterator it=vx.begin(); it != vx.end(); it++)
                 bvecFile << *it << " ";
@@ -344,8 +363,8 @@ int main(int argc, char *argv[])
 
             bvecFile.close();
 
-            // b-values
-            std::fstream bvalFile(bvalFileName.c_str(), std::fstream::out);
+            // Write b-values
+            std::fstream bvalFile((outputFileName+".bval").c_str(), std::fstream::out);
 
             for(std::vector<unsigned int>::iterator it=bvals.begin(); it != bvals.end(); it++)
                 bvalFile << *it << " ";
@@ -354,126 +373,71 @@ int main(int argc, char *argv[])
 
             std::cout << "done." << std::endl;
         }
-        catch(itk::ExceptionObject &err)
+        else // !dwiConversion
         {
-            std::cout << "Error: " << err << std::endl;
-        }
-    }
-    else // not dwi image
-    {
-        //
-        // Read input image (Nrrd file format)
-        //
+            //
+            // Read input image (Nrrd file format)
+            //
 
-        std::cout << "Reading file..." << std::flush;
+            std::cout << "Reading file \"" << inputFileName << "\"..." << std::flush;
 
-        ImageFileReader::Pointer reader = ImageFileReader::New();
-        reader->SetFileName(inFileName.c_str());
-        reader->Update();
+            ImageFileReader::Pointer reader = ImageFileReader::New();
+            reader->SetFileName(inputFileName.c_str());
+            reader->Update();
 
-        std::cout << "done." << std::endl;
+            std::cout << "done." << std::endl;
 
 
-        //
-        // Convert file
-        //
+            //
+            // Convert file
+            //
 
-        std::cout << "Converting file..." << std::endl;
+            std::cout << "Converting file..." << std::flush;
 
-        // Image properties
-        Image::SizeType size;
-        size[0] = reader->GetOutput()->GetLargestPossibleRegion().GetSize(0);
-        size[1] = reader->GetOutput()->GetLargestPossibleRegion().GetSize(1);
-        size[2] = reader->GetOutput()->GetLargestPossibleRegion().GetSize(2);
+            // Create and initialize a new image with the same properties as the original
+            Image::RegionType region = reader->GetOutput()->GetLargestPossibleRegion();
+            Image::Pointer newImage  = Image::New();
+            newImage->SetRegions(region.GetSize());
+            newImage->SetOrigin(reader->GetOutput()->GetOrigin());
+            newImage->SetSpacing(reader->GetOutput()->GetSpacing());
+            newImage->SetDirection(reader->GetOutput()->GetDirection());
+            newImage->Allocate();
+            newImage->FillBuffer(0);
 
-        std::cout << "\tsize: " << size[0] << "x" << size[1] << "x" << size[2] << std::endl;
+            // Conversion loop
+            ImageIterator inputIt(reader->GetOutput(), region);
+            ImageIterator outputIt(newImage, newImage->GetLargestPossibleRegion());
 
-        Image::PointType origin;
-        origin[0] = reader->GetOutput()->GetOrigin()[0];
-        origin[1] = reader->GetOutput()->GetOrigin()[1];
-        origin[2] = reader->GetOutput()->GetOrigin()[2];
+            for(inputIt.GoToBegin(), outputIt.GoToBegin(); !inputIt.IsAtEnd() && !outputIt.IsAtEnd(); ++inputIt, ++outputIt)
+            {
+                outputIt.Set(inputIt.Get());
+            } // for each voxel
 
-        std::cout << "\torigin = (" << origin[0] << "," << origin[1] << "," << origin[2] << ")" << std::endl;
-
-        Image::SpacingType spacing;
-        spacing[0] = reader->GetOutput()->GetSpacing()[0];
-        spacing[1] = reader->GetOutput()->GetSpacing()[1];
-        spacing[2] = reader->GetOutput()->GetSpacing()[2];
-
-        std::cout << "\tspacing: " << spacing[0] << "x" << spacing[1] << "x" << spacing[2] << std::endl;
-
-        itk::Matrix<double,4,4> dirMat;
-        itk::Matrix<double,3,3> iniMat = reader->GetOutput()->GetDirection();
-
-        dirMat(0,0) = iniMat(0,0);
-        dirMat(0,1) = iniMat(0,1);
-        dirMat(0,2) = iniMat(0,2);
-        dirMat(0,3) = 0;
-
-        dirMat(1,0) = iniMat(1,0);
-        dirMat(1,1) = iniMat(1,1);
-        dirMat(1,2) = iniMat(1,2);
-        dirMat(1,3) = 0;
-
-        dirMat(2,0) = iniMat(2,0);
-        dirMat(2,1) = iniMat(2,1);
-        dirMat(2,2) = iniMat(2,2);
-        dirMat(2,3) = 0;
-
-        dirMat(3,0) = 0;
-        dirMat(3,1) = 0;
-        dirMat(3,2) = 0;
-        dirMat(3,3) = 1;
-
-        std::cout << "\torientation:" << std::endl;
-        std::cout << "\t(" << dirMat(0,0) << "," << dirMat(0,1) << "," << dirMat(0,2) << ")" << std::endl;
-        std::cout << "\t(" << dirMat(1,0) << "," << dirMat(1,1) << "," << dirMat(1,2) << ")" << std::endl;
-        std::cout << "\t(" << dirMat(2,0) << "," << dirMat(2,1) << "," << dirMat(2,2) << ")" << std::endl;
-
-        // Temporary image file
-        Image::Pointer image = Image::New();
-        image->SetRegions(size);
-        image->SetOrigin(origin);
-        image->SetSpacing(spacing);
-        image->Allocate();
-        image->FillBuffer(0);
-
-        // Iterators
-        ImageIterator in(reader->GetOutput(), reader->GetOutput()->GetLargestPossibleRegion());
-        ImageIterator out(image, image->GetLargestPossibleRegion());
-
-        // Conversion loop
-        for(in.GoToBegin(), out.GoToBegin(); !in.IsAtEnd() && !out.IsAtEnd(); ++in, ++out)
-        {
-            out.Set(in.Get());
-        } // for each vector
-
-        std::cout << "done." << std::endl;
+            std::cout << "done." << std::endl;
 
 
-        //
-        // Write output image (Nifti file format)
-        //
+            //
+            // Write output image (Nifti file format)
+            //
 
-        std::cout << "Writing file..." << std::flush;
+            std::cout << "Writing file \"" << outputFileName << ".nii.gz\"..." << std::flush;
 
-        ImageFileWriter::Pointer writer = ImageFileWriter::New();
-        writer->SetFileName(outFileName);
-        writer->SetInput(reader->GetOutput());
-
-        try
-        {
+            ImageFileWriter::Pointer writer = ImageFileWriter::New();
+            writer->SetFileName(outputFileName+".nii.gz");
+            writer->SetInput(reader->GetOutput());
             writer->Update();
 
             std::cout << "done." << std::endl;
-        }
-        catch(itk::ExceptionObject &err)
-        {
-            std::cout << "Error: " << err << std::endl;
-        }
+        } // else !dwiConversion
     }
-
-
+    catch(itk::ExceptionObject &error)
+    {
+        std::cout << "ITK error: " << error << std::endl;
+    }
+    catch(std::string &message)
+    {
+        std::cout << "Error: " << message << std::endl;
+    }
 
     return EXIT_SUCCESS;
 }
