@@ -72,6 +72,8 @@ virtual void Set##name (const type _arg)                          \
 
 #define btkCoutVariable(variable)    std::cout<<#variable<<" : "<<variable<<" "<<std::endl;
 
+#define btkCerrMacro(string)        std::cerr<<"On file : "<<__FILE__<<" line : "<<__LINE__<<" "<<#string<<std::endl;
+
 //TODO: To be continued with const, pointer, string, vector...etc.
 
 
