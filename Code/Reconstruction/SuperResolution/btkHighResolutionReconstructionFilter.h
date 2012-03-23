@@ -35,20 +35,80 @@
 #ifndef __BTK_HIGHRESOLUTIONRECONSTRUCTIONFILTER_H__
 #define __BTK_HIGHRESOLUTIONRECONSTRUCTIONFILTER_H__
 
+/* ITK */
+#include "itkImage.h"
+#include "itkImageMaskSpatialObject.h"
+#include "itkIdentityTransform.h"
+#include "itkTransformFactory.h"
+#include "itkAffineTransform.h"
+#include "itkEuler3DTransform.h"
+
+/* BTK */
 #include "btkMacro.h"
+
+/* OTHERS */
 #include "iostream"
 
 namespace btk
 {
 class HighResolutionReconstructionFilter
 {
+    //TODO: Maybe we should create sub-class of this one for doing several type of reconstruction !
+    // ex : HighResolutionIterativeBackProjecton, HighResolutionSR...
+
+
+
 public:
+    /* Typedefs */
+    typedef float PixelType;
+    typedef itk::Image< PixelType, 3>         itkImage;
+    typedef itk::Image< PixelType, 2>         SliceType;
+    typedef itk::Transform<double, 3> TransformType;
+    typedef itk::Image< unsigned char, 3 >     itkImageMask;
+    typedef itk::ImageMaskSpatialObject< 3 >   itkMask;
+
     HighResolutionReconstructionFilter();
     ~HighResolutionReconstructionFilter();
     void Update();
 
+
+    // GETTER/SETTER :
+
+    btkGetMacro(TransformsLR,std::vector< TransformType::Pointer >);
+    btkSetMacro(TransformsLR,std::vector< TransformType::Pointer >);
+
+    btkGetMacro(ImagesLR,std::vector< itkImage::Pointer > );
+    btkSetMacro(ImagesLR,std::vector< itkImage::Pointer > );
+
+
+    btkGetMacro(ImagesMaskLR,std::vector< itkImageMask::Pointer >  );
+    btkSetMacro(ImagesMaskLR,std::vector< itkImageMask::Pointer >  );
+
+    btkGetMacro(MasksLR,std::vector< itkMask::Pointer >);
+    btkSetMacro(MasksLR,std::vector< itkMask::Pointer >);
+
+    btkGetMacro(ImageHR, itkImage::Pointer);
+    btkSetMacro(ImageHR, itkImage::Pointer);
+
+    btkGetMacro(ImageMaskHR, itkImageMask::Pointer);
+    btkSetMacro(ImageMaskHR, itkImageMask::Pointer);
+
+    btkGetMacro(ReferenceImage, itkImage::Pointer);
+    btkSetMacro(ReferenceImage, itkImage::Pointer);
+
 protected:
 private:
+
+    std::vector< itkImage::Pointer >         m_ImagesLR;
+    std::vector< TransformType::Pointer  >   m_TransformsLR;
+    std::vector< TransformType::Pointer >    m_InverseTransformsLR;
+    std::vector< itkImageMask::Pointer >     m_ImagesMaskLR;
+    std::vector< itkMask::Pointer >          m_MasksLR;
+    itkImage::Pointer                        m_ImageHR;
+    itkImage::Pointer                        m_OutputHRImage;
+    itkImageMask::Pointer                    m_ImageMaskHR;
+    itkMask::Pointer                         m_MaskHR;
+    itkImage::Pointer                        m_ReferenceImage;
 
 };
 }

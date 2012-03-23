@@ -107,7 +107,6 @@ public:
 
     typedef itk::Image< unsigned char, 3 >     itkImageMask;
     typedef itk::ImageMaskSpatialObject< 3 >   itkMask;
-    typedef itkMask::Pointer                   itkMaskPointer;
 
     typedef itk::AffineTransform<double,3>     itkAffineDeformation;
 
@@ -160,10 +159,6 @@ public:
 
 
     // GETTER/SETTER :
-
-    // btkGet/SetMacro : If filter does not inherit of a itk class we can only use simple Get/Set Macro
-    //(itk[Get/Set]Macro(name,Type)
-
 
     btkGetMacro(TransformsLR,std::vector< TransformType::Pointer >);
     btkSetMacro(TransformsLR,std::vector< TransformType::Pointer >);
