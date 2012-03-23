@@ -1,5 +1,8 @@
 #include "btkSuperResolutionFilter.h"
 
+#include "btkHighResolutionIBPFilter.h"
+#include "btkHighResolutionSRFilter.h"
+
 namespace btk
 {
 
@@ -9,6 +12,8 @@ SuperResolutionFilter::SuperResolutionFilter()
     m_MotionCorrectionFilter = NULL;
     m_BiasCorrectionFilter = NULL;
     m_HighResolutionReconstructionFilter = NULL;
+
+    m_ReconstructionType = ALGO1;
 
     btkCoutMacro(SuperResolutionFilter : Constructor );
 
@@ -69,7 +74,20 @@ void SuperResolutionFilter::Update()
     m_BiasCorrectionFilter = new btk::BiasCorrectionFilter();
     m_BiasCorrectionFilter->Update();
 
-    m_HighResolutionReconstructionFilter = new btk::HighResolutionReconstructionFilter();
+
+
+
+    if(m_ReconstructionType == ALGO1)
+    {
+
+         m_HighResolutionReconstructionFilter = new btk::HighResolutionIBPFilter();
+    }
+    else
+    {
+
+        m_HighResolutionReconstructionFilter = new btk::HighResolutionSRFilter();
+    }
+
     m_HighResolutionReconstructionFilter->Update();
 
 

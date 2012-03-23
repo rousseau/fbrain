@@ -13,9 +13,4 @@ HighResolutionReconstructionFilter::~HighResolutionReconstructionFilter()
     btkCoutMacro(HighResolutionReconstructionFilter : Destructor );
 }
 
-void HighResolutionReconstructionFilter::Update()
-{
-    btkCoutMacro(HighResolutionReconstructionFilter : Update Method );
-}
-
 }

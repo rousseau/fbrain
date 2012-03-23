@@ -69,7 +69,8 @@ public:
 
     HighResolutionReconstructionFilter();
     ~HighResolutionReconstructionFilter();
-    void Update();
+
+    virtual void Update() =0;
 
 
     // GETTER/SETTER :
@@ -97,8 +98,7 @@ public:
     btkSetMacro(ReferenceImage, itkImage::Pointer);
 
 protected:
-private:
-
+    // accessible for subclasses
     std::vector< itkImage::Pointer >         m_ImagesLR;
     std::vector< TransformType::Pointer  >   m_TransformsLR;
     std::vector< TransformType::Pointer >    m_InverseTransformsLR;
@@ -109,6 +109,10 @@ private:
     itkImageMask::Pointer                    m_ImageMaskHR;
     itkMask::Pointer                         m_MaskHR;
     itkImage::Pointer                        m_ReferenceImage;
+
+private:
+
+
 
 };
 }

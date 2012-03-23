@@ -213,6 +213,8 @@ private:
     float                     m_PaddingValue;
     std::vector<unsigned int> m_Offset;
     TRANSFORMATION_TYPE m_TransformationType;
+    RECONSTRUCTION_TYPE m_ReconstructionType;
+
 
     std::vector< itkImage::Pointer >         m_ImagesLR;
     std::vector< TransformType::Pointer  >   m_TransformsLR;
