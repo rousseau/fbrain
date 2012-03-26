@@ -203,9 +203,10 @@ int main(int argc, char** argv)
 	  
   if (weight_file != "") {
     std::cout<<"Writing the weight image.\n";
-    ImagePointer weightImage = ImageType::New();
+    
+    itk::Image< float, 3 >::Pointer weightImage = itk::Image< float, 3 >::New();
     myTool.GetWeightImage(weightImage);
-    WriterType::Pointer writerFilter = WriterType::New();  
+    itk::ImageFileWriter< itk::Image< float, 3 > >::Pointer writerFilter = itk::ImageFileWriter< itk::Image< float, 3 > >::New();
     writerFilter->SetFileName( weight_file );
     writerFilter->SetInput( weightImage );
     writerFilter->Update();  

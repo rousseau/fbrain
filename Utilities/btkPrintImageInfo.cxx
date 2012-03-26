@@ -35,7 +35,7 @@
 
 
 // TCLAP includes
-#include "CmdLine.h"
+#include <tclap/CmdLine.h>
 
 // STL includes
 #include "iostream"
