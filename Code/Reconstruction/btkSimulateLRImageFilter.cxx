@@ -21,26 +21,26 @@ void SimulateLRImageFilter::Update()
     m_H.mult(m_X,Hx);
 
     //resize the vector of simulated input LR images
-    m_simulatedOutputImages.resize(m_lRImages.size());
+    m_SimulatedOutputImages.resize(m_LRImages.size());
 
     //Temporary variables
     itkImage::IndexType lrIndex;  //index of the current voxel in the LR image
     unsigned int lrLinearIndex = 0;
 
-    for(unsigned int i=0; i<m_lRImages.size(); i++)
+    for(unsigned int i=0; i<m_LRImages.size(); i++)
     {
         //duplicate the LR input image into the simulated LR images to keep all header information
         itkDuplicator::Pointer duplicator = itkDuplicator::New();
-        duplicator->SetInputImage( m_lRImages[i] );
+        duplicator->SetInputImage( m_LRImages[i] );
         duplicator->Update();
-        m_simulatedOutputImages[i] = duplicator->GetOutput();
-        m_simulatedOutputImages[i]->FillBuffer(0);
+        m_SimulatedOutputImages[i] = duplicator->GetOutput();
+        m_SimulatedOutputImages[i]->FillBuffer(0);
 
         //Get the size of the current LR image
-        itkImage::SizeType  lrSize  = m_lRImages[i]->GetLargestPossibleRegion().GetSize();
+        itkImage::SizeType  lrSize  = m_LRImages[i]->GetLargestPossibleRegion().GetSize();
 
         //Instantiate an iterator over the current LR image
-        itkIteratorWithIndex itLRImage(m_simulatedOutputImages[i],m_simulatedOutputImages[i]->GetLargestPossibleRegion());
+        itkIteratorWithIndex itLRImage(m_SimulatedOutputImages[i],m_SimulatedOutputImages[i]->GetLargestPossibleRegion());
 
 
         //Loop over the voxels of the current LR image
@@ -51,14 +51,14 @@ void SimulateLRImageFilter::Update()
             lrIndex = itLRImage.GetIndex();
 
             //Compute the corresponding linear index of lrIndex
-            lrLinearIndex = m_offset[i] + lrIndex[0] + lrIndex[1]*lrSize[0] + lrIndex[2]*lrSize[0]*lrSize[1];
+            lrLinearIndex = m_Offset[i] + lrIndex[0] + lrIndex[1]*lrSize[0] + lrIndex[2]*lrSize[0]*lrSize[1];
 
             //Fill the simulated input LR image
             itLRImage.Set(Hx[lrLinearIndex]);
         }
 
         itkStatisticsImageFilter::Pointer statisticsImageFilter = itkStatisticsImageFilter::New ();
-        statisticsImageFilter->SetInput(m_simulatedOutputImages[i]);
+        statisticsImageFilter->SetInput(m_SimulatedOutputImages[i]);
         statisticsImageFilter->Update();
         std::cout << "Stat of the LR image y=Hx. \nMean: " << statisticsImageFilter->GetMean() << std::endl;
         std::cout << "Std.: " << statisticsImageFilter->GetSigma() << std::endl;

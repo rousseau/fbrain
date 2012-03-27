@@ -49,6 +49,9 @@
 //VNL includes
 #include "vnl/vnl_sparse_matrix.h"
 
+// BTK includes
+
+#include "btkMacro.h"
 
 
 namespace btk
@@ -59,7 +62,7 @@ public:
     typedef float PixelType;
     typedef itk::Image< PixelType, 3>         itkImage;
     typedef itk::Image< PixelType, 2>         SliceType;
-    typedef itkImage::Pointer                 itkPointer;
+
     typedef itk::ImageDuplicator< itkImage >  itkDuplicator;
     typedef itk::ImageRegionIterator< itkImage > itkIterator;
     typedef itk::ImageRegionIteratorWithIndex< itkImage > itkIteratorWithIndex;
@@ -72,63 +75,42 @@ public:
     ~SimulateLRImageFilter();
     void Update();
 
-    std::vector< itkPointer > GetOutput()
+    std::vector< itkImage::Pointer > GetOutput()
     {
-        return m_simulatedOutputImages;
+        return m_SimulatedOutputImages;
     }
 
     //GETTER/SETTER
 
-    void SetLRImages(std::vector< itkPointer > images)
-    {
-        m_lRImages = images;
-        m_simulatedOutputImages.resize(m_lRImages.size());
-    }
-    std::vector< itkPointer > GetLRImages()
-    {
-        return m_lRImages;
-    }
+    //TODO : Use btkMacro
 
-    void setH(vnl_sparse_matrix<float> & H)
-    {
-        m_H = H;
-    }
-    vnl_sparse_matrix<float> GetH()
-    {
-        return m_H;
-    }
+    btkSetMacro(LRImages, std::vector< itkImage::Pointer >);
+    btkGetMacro(LRImages, std::vector< itkImage::Pointer >);
 
-    void setH(vnl_vector<float> & X)
-    {
-        m_X = X;
-    }
-    vnl_vector<float> GetX()
-    {
-        return m_X;
-    }
+    btkSetMacro(H,vnl_sparse_matrix< float >);
+    btkGetMacro(H,vnl_sparse_matrix< float >);
+
+    btkSetMacro(X,vnl_vector< float >);
+    btkGetMacro(X,vnl_vector< float >);
+
+    btkSetMacro(Offset,std::vector< unsigned int >);
+    btkGetMacro(Offset,std::vector< unsigned int >);
 
 
-    void SetOffset(std::vector<unsigned int> offset)
-    {
-        m_offset = offset;
-    }
-    std::vector< unsigned int > GetOffset()
-    {
-        return m_offset;
-    }
+
 
 
 private:
 
-    std::vector< itkPointer > m_lRImages;
+    std::vector< itkImage::Pointer > m_LRImages;
 
-    std::vector< itkPointer > m_simulatedOutputImages;
+    std::vector< itkImage::Pointer > m_SimulatedOutputImages;
 
     vnl_sparse_matrix<float>  m_H;
 
     vnl_vector<float> m_X;
 
-    std::vector<unsigned int> m_offset;
+    std::vector<unsigned int> m_Offset;
 
 
 };

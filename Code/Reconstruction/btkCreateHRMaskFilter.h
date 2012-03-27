@@ -61,6 +61,7 @@
 #include "itkMatrixOffsetTransformBase.h"
 
 #include "btkSliceBySliceTransform.h"
+#include "btkMacro.h"
 
 
 namespace btk
@@ -71,7 +72,6 @@ public:
     // Typedef
     typedef float PixelType;
     typedef itk::Image< PixelType, 3>          itkImage;
-    typedef itkImage::Pointer                  itkPointer;
     typedef itk::ImageDuplicator< itkImage >   itkDuplicator;
     typedef itk::Image< unsigned char, 3 >     itkImageMask;
     typedef itk::ImageMaskSpatialObject< 3 >   itkMask;
@@ -104,40 +104,33 @@ public :
     ~CreateHRMaskFilter();
     void Update();
 
-    itkPointer GetOutput()
+    itkImage::Pointer GetOutput()
     {
-        return m_maskHRImage;
+        return m_MaskHRImage;
     }
 
-    void SetInputs(std::vector< itkPointer > inputs)
-    {
-        m_inputLRImages = inputs;
-    }
 
-    std::vector< itkPointer > GetInputs()
-    {
-        return m_inputLRImages;
-    }
+    btkGetMacro(InputLRImages,std::vector< itkImage::Pointer >);
+    btkSetMacro(InputLRImages,std::vector< itkImage::Pointer >);
 
-    void SetTransforms(std::vector< TransformType::Pointer > transforms)
-    {
-        m_transforms = transforms;
-    }
+    btkGetMacro(Transforms, std::vector< TransformType::Pointer >);
+    btkSetMacro(Transforms, std::vector< TransformType::Pointer >);
 
-    std::vector< TransformType::Pointer > GetTransforms()
-    {
-        return m_transforms;
-    }
+    btkGetMacro(HRImage,itkImage::Pointer);
+    btkSetMacro(HRImage, itkImage::Pointer);
+
+
+
 
 
 
 protected:
 private:
 
-    std::vector< TransformType::Pointer > m_transforms;
-    std::vector< itkPointer > m_inputLRImages;
-    itkPointer m_maskHRImage;
-    itkPointer m_HRImage;
+    std::vector< TransformType::Pointer > m_Transforms;
+    std::vector< itkImage::Pointer > m_InputLRImages;
+    itkImage::Pointer m_MaskHRImage;
+    itkImage::Pointer m_HRImage;
 
 
 };
