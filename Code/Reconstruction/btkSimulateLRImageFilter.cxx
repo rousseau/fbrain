@@ -25,9 +25,9 @@ void SimulateLRImageFilter::Update()
 
     //Temporary variables
     itkImage::IndexType lrIndex;  //index of the current voxel in the LR image
-    uint lrLinearIndex = 0;
+    unsigned int lrLinearIndex = 0;
 
-    for(uint i=0; i<m_lRImages.size(); i++)
+    for(unsigned int i=0; i<m_lRImages.size(); i++)
     {
         //duplicate the LR input image into the simulated LR images to keep all header information
         itkDuplicator::Pointer duplicator = itkDuplicator::New();
