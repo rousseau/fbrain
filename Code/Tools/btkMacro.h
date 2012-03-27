@@ -36,14 +36,6 @@
 #ifndef __BTKMACRO_H__
 #define __BTKMACRO_H__
 
-#include <string>
-#include <cstdlib>
-
-#ifndef NDEBUG
-#include <cassert>
-#endif
-
-#include <sstream>
 #include "iostream"
 
 
