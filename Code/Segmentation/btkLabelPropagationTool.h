@@ -45,6 +45,8 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "itkImageFileWriter.h"
 #include "itkRescaleIntensityImageFilter.h"
 
+#include "itkChiSquareDistribution.h"
+
 #include <string>
 #include <iomanip>
 #include <sstream>
@@ -142,6 +144,7 @@ class LabelFusionTool
   void ComputeDenoisedOutput();
   void ComputeHROutput();
   double GetDenoisedPatch(typename itkTImage::IndexType p, itkFloatPointer & patch);
+  double GetDenoisedPatchSylvain(typename itkTImage::IndexType p, itkFloatPointer & patch);
   double GetHRPatch(typename itkTImage::IndexType p, itkFloatPointer & patch);
   void AddPatchToImage(typename itkTImage::IndexType p, itkFloatPointer & patch, itkFloatPointer & image, itkFloatPointer & weightImage, double weight);
   double GetLabelPatch(typename itkTImage::IndexType p, itkTPointer & patch);
@@ -152,7 +155,7 @@ class LabelFusionTool
   double PatchDistance(itkTPointer & p,itkTPointer & q);
   double PatchDistance(itkFloatPointer & p,itkFloatPointer & q);
   void GetOutput(itkTPointer & outputImage);
-  void GetWeightImage(itkTPointer & outputImage);
+  void GetWeightImage(itkFloatPointer & outputImage);
 	void GetFuzzyWeightImage(itkFloatPointer & outputImage, int label);
 
   void ReadOneImage(std::string input_file, itkTPointer & image);
@@ -1378,6 +1381,100 @@ double LabelFusionTool<T>::GetDenoisedPatch(typename itkTImage::IndexType p, itk
 }
 
 template <typename T>
+double LabelFusionTool<T>::GetDenoisedPatchSylvain(typename itkTImage::IndexType p, itkFloatPointer & patch)
+{
+  double wmax = 0; //maximum weight of patches
+  double sum  = 0; //sum of weights (used for normalization purpose)
+  
+  //create the patch and set the estimate to 0
+  CreatePatch(patch);
+  itkFloatIterator patchIt(patch, patch->GetRequestedRegion());
+
+  //get the value of the patch around the current pixel
+  itkTPointer centralPatch = itkTImage::New();
+  CreatePatch(centralPatch);
+  GetPatch(p, centralPatch, m_inputImage);
+  itkTIterator centralPatchIt(centralPatch, centralPatch->GetRequestedRegion());
+
+  //set the search region around the current pixel
+  typename itkTImage::RegionType searchRegion;
+  ComputeSearchRegion(p,searchRegion);
+  
+  //create the patch for pixels in the neighbourhood of the current pixel
+  itkTPointer neighbourPatch = itkTImage::New();
+  //itkFloatPointer neighbourPatch = itkFloatImage::New();
+  CreatePatch(neighbourPatch);
+  //itkFloatIterator neighbourPatchIt(neighbourPatch, neighbourPatch->GetRequestedRegion());
+  itkTIterator neighbourPatchIt(neighbourPatch, neighbourPatch->GetRequestedRegion());
+  
+  //go through the neighbourhood with a region iterator
+  itkTIteratorWithIndex it( m_inputImage, searchRegion);
+  typename itkTImage::IndexType neighbourPixelIndex;	
+
+  for(it.GoToBegin(); !it.IsAtEnd(); ++it){
+    neighbourPixelIndex = it.GetIndex();
+
+    for(unsigned int i=0; i < m_anatomicalImages.size(); i++){
+
+      bool goForIt = true;
+      if(m_optimized == 1)
+        goForIt = CheckSpeed(p, neighbourPixelIndex, i);
+
+      if(goForIt == true){
+      
+        GetPatch(neighbourPixelIndex, neighbourPatch, m_anatomicalImages[i]);
+
+        double weight = exp( - PatchDistance(centralPatch, neighbourPatch) / m_rangeBandwidth);
+
+        if(weight>wmax)
+          if( (p[0] != neighbourPixelIndex[0]) && (p[1] != neighbourPixelIndex[1]) && (p[2] != neighbourPixelIndex[2]) ) //has to be modify (not appropriate if the input image is in the anatomical input images.
+	    wmax = weight;
+      
+        sum += weight;
+    
+        //Add this patch to the current estimate using the computed weight
+        for(patchIt.GoToBegin(), neighbourPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++neighbourPatchIt){
+          patchIt.Set( patchIt.Get() + neighbourPatchIt.Get() * weight );
+        }
+      }
+    }
+  }
+
+  
+  //consider now the special case of the central patch
+  switch(m_centralPointStrategy){
+    case 0:                                        //remove the central patch to the estimated patch
+      for(patchIt.GoToBegin(), centralPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++centralPatchIt)
+        patchIt.Set( patchIt.Get() -1.0 * centralPatchIt.Get() );
+      sum -= 1.0;
+      break;
+    case 1: break;                                 //nothing to do
+    case -1:
+      for(patchIt.GoToBegin(), centralPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++centralPatchIt)
+        patchIt.Set( patchIt.Get()  + (wmax -1.0) * centralPatchIt.Get() );
+      sum += (wmax - 1.0);
+      break;
+    default:                                       //as in case -1
+      for(patchIt.GoToBegin(), centralPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++centralPatchIt)
+        patchIt.Set( patchIt.Get()  + (wmax -1.0) * centralPatchIt.Get() );
+      sum += (wmax - 1.0);
+      break;
+  }  
+    
+  if(sum>0.0001)
+    //Normalization of the denoised patch 
+    for(patchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt)
+      patchIt.Set( patchIt.Get() / sum );
+  else
+    //copy the central patch to the denoised patch
+    for(patchIt.GoToBegin(), centralPatchIt.GoToBegin(); !patchIt.IsAtEnd(); ++patchIt, ++centralPatchIt)
+      patchIt.Set( centralPatchIt.Get() );  
+    
+  return sum;
+}
+
+
+template <typename T>
 double LabelFusionTool<T>::GetHRPatch(typename itkTImage::IndexType p, itkFloatPointer & patch)
 {
   double wmax = 0; //maximum weight of patches
@@ -1811,8 +1908,9 @@ void LabelFusionTool<T>::GetOutput(itkTPointer & outputImage)
 }
 
 template <typename T>
-void LabelFusionTool<T>::GetWeightImage(itkTPointer & outputImage)
+void LabelFusionTool<T>::GetWeightImage(itkFloatPointer &  outputImage)
 {
+  /*
   typename itk::RescaleIntensityImageFilter<itkFloatImage,itkTImage>::Pointer rescaleFilter = itk::RescaleIntensityImageFilter<itkFloatImage,itkTImage>::New();
   rescaleFilter->SetOutputMinimum(0);
   rescaleFilter->SetOutputMaximum(10000);
@@ -1820,6 +1918,8 @@ void LabelFusionTool<T>::GetWeightImage(itkTPointer & outputImage)
   rescaleFilter->UpdateLargestPossibleRegion();
     
   outputImage = rescaleFilter->GetOutput();
+  */
+  outputImage = m_weightImage;
 }
 
 template <typename T>

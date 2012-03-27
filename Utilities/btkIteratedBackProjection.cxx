@@ -37,14 +37,6 @@
 #pragma warning ( disable : 4786 )
 #endif
 
-//#include "vcl_iostream.h"
-//#include "vnl/vnl_double_2.h"
-//#include "vnl/vnl_cost_function.h"
-//#include "vnl/algo/vnl_amoeba.h"
-
-
-//#include "itkEuler3DTransform.h"
-
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
@@ -56,10 +48,6 @@
 #include "itkMatrixOffsetTransformBase.h"
 #include "btkSliceBySliceTransform.h"
 
-//#include "btkSliceBySliceTransform.h"
-
-//#include "btkSuperResolutionImageFilter.h"
-
 #include <tclap/CmdLine.h>
 #include <stdio.h>
 
@@ -70,22 +58,6 @@
 #include "itkImageRegionIterator.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkContinuousIndex.h"
-
-
-/*
-class vnl_rosenbrock : public vnl_cost_function
-{
-public:
-  vnl_rosenbrock(): vnl_cost_function(2) {}
-  double y;
-  double f(const vnl_vector<double>& x)
-  {
-    double u = 10*(x[1] - x[0]*x[0]);
-    double v = 1 - x[0];
-    return u*u + v*v;
-  }  
-};
-*/
 
 
 int main( int argc, char *argv[] )
@@ -105,6 +77,9 @@ int main( int argc, char *argv[] )
     TCLAP::ValueArg<float> betaArg        ("b","beta","Smoothing parameter for NLM filtering (default = 1).", false,1,"float",cmd);
     TCLAP::ValueArg<int> simArg           ("s","sim","Simulation of LR images based on the input HR image and the input LR images (0: no simulation, 1: simulation).", false,0,"int",cmd);
     TCLAP::ValueArg<int> ibpOrderArg      ("","ibpOrder","Order for the B-spline interpolation during image backprojections (0: nearest neighbor, 1: trilinear etc.)", false,5,"int",cmd);
+    TCLAP::ValueArg<int> psfArg           ("p","psftype","Type of the PSF (0: interpolated boxcar, 1: oversampled boxcar (default), 2: Gaussian)", false,1,"int",cmd);
+    TCLAP::ValueArg<int> medArg           ("","medianIBP","Type of filtering on the error map (0: mean of error maps (default), 1: median)", false,0,"int",cmd);
+    
     
     // Parse the argv array.
     cmd.parse( argc, argv );
@@ -121,6 +96,8 @@ int main( int argc, char *argv[] )
     int simulation               = simArg.getValue();
     float beta                   = betaArg.getValue();
     int ibpOrder                 = ibpOrderArg.getValue();
+    int psftype                  = psfArg.getValue();
+    int medianIBP                = medArg.getValue();
     
     // typedefs
     const   unsigned int    Dimension = 3;
@@ -159,6 +136,7 @@ int main( int argc, char *argv[] )
     btkSRM.data.ReadAffineTransform(transform_file);
     
     btkSRM.tool.SetPSFInterpolationOrderIBP(ibpOrder);
+    btkSRM.tool.SetPSFComputation(psftype);
     
     btkSRM.Initialize();
     
@@ -167,7 +145,7 @@ int main( int argc, char *argv[] )
       btkSRM.data.WriteSimulatedLRImages(input_file);
     }
     
-    btkSRM.IteratedBackProjection(loops,nlm,beta);
+    btkSRM.IteratedBackProjection(loops,nlm,beta,medianIBP);
     btkSRM.data.WriteOutputHRImage(output_file);
         
     
