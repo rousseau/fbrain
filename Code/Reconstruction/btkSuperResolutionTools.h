@@ -657,7 +657,7 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
     //data.WriteOneImage(errorImages[i], s);
 
     
-/*
+
     //Add the interpolated differences
     itkAddImageFilter::Pointer addFilter = itkAddImageFilter::New ();
     addFilter->SetInput1(data.m_outputHRImage);
@@ -665,9 +665,10 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
     addFilter->Update();
     
     data.m_outputHRImage = addFilter->GetOutput();
+    /*
     std::string s1 = "switch_out.nii.gz";
       data.WriteOneImage(data.m_outputHRImage, s1);
-      */
+    */
 
     //s = "ibp_"+oss.str()+"_simulated.nii.gz";
     //data.WriteOneImage(data.m_simulatedInputLRImages[i], s);
@@ -683,10 +684,10 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
         itImage.Set( itImage.Get() / data.m_inputLRImages.size() );
   */
       
-          std::string s2 = "switch_in.nii.gz";
+  //std::string s2 = "switch_in.nii.gz";
 
-    
-          
+  //TO FIX : switch for filtering choice runs under MacOSX but not under Debian !!!  
+  /*        
   switch(medianIBP)
   {
     case 0:
@@ -726,10 +727,15 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
       break;          
   }
 
-      //Normalize the resampled difference image
-      for(itImage.GoToBegin(); !itImage.IsAtEnd(); ++itImage)
-        itImage.Set( itImage.Get() / data.m_inputLRImages.size() );
-          
+  */
+  //Normalize the resampled difference image
+  for(itImage.GoToBegin(); !itImage.IsAtEnd(); ++itImage)
+  {
+    double value = itImage.Get() / data.m_inputLRImages.size();  
+    itImage.Set( value );
+  }   
+    
+       
   
   if(nlm==1){
     std::cout<<"Smooth the error map using the current reconstructed image as reference for NLM filter --------------------------\n";
