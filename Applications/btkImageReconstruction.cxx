@@ -76,6 +76,7 @@ int main( int argc, char *argv[] )
   double margin;
 
   const char *outImage = NULL;
+  const char *refImage = NULL;
   const char *combinedMask = NULL;
 
   // Parse arguments
@@ -93,6 +94,8 @@ int main( int argc, char *argv[] )
       "transform (this is an output to check initial transform consistency)",false,"string",cmd);
   TCLAP::ValueArg<std::string> outArg("o","output","High resolution image",true,
       "","string",cmd);
+  TCLAP::ValueArg<std::string> refArg("r","reference","Reference Image",false, "","string",cmd);
+
   TCLAP::ValueArg<std::string> combinedMaskArg("","combinedMasks","All image "
       "masks combined in a single one",false,"","string",cmd);
   TCLAP::ValueArg<unsigned int> iterArg("n","iter","Maximum number of iterations"
@@ -131,6 +134,7 @@ int main( int argc, char *argv[] )
   input = inputArg.getValue();
   mask = maskArg.getValue();
   outImage = outArg.getValue().c_str();
+  refImage = outArg.getValue().c_str();
   combinedMask = combinedMaskArg.getValue().c_str();
   transform = transformArg.getValue();
   roi = roiArg.getValue();
@@ -225,6 +229,15 @@ int main( int argc, char *argv[] )
     lowToHighResFilter -> SetIterations( 0 );
     itMax = 1;
   }
+  bool computeRefImage = true;
+  if(refImage)
+  {
+      ImageReaderType::Pointer imageReader = ImageReaderType::New();
+      imageReader -> SetFileName( refImage );
+      imageReader -> Update();
+      hrImageIni = imageReader -> GetOutput();
+      computeRefImage = false;
+  }
 
   for (unsigned int i=0; i<numberOfImages; i++)
   {
@@ -309,7 +322,9 @@ int main( int argc, char *argv[] )
   // Start rigid registration on the desired target image (#0 by default)
   try
     {
-        lowToHighResFilter->StartRegistration();
+
+       lowToHighResFilter->StartRegistration();
+
     }
   catch( itk::ExceptionObject & err )
     {
@@ -342,7 +357,11 @@ int main( int argc, char *argv[] )
   // Image registration performed slice by slice or affine 3D according to
   // the user selection
 
-  hrImageIni = lowToHighResFilter->GetHighResolutionImage();
+  if(computeRefImage)
+  {
+      hrImageIni = lowToHighResFilter->GetHighResolutionImage();
+  }
+
 
   for (unsigned int i=0; i<numberOfImages; i++)
   {
