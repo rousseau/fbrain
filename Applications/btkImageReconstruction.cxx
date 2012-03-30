@@ -244,8 +244,7 @@ int main( int argc, char *argv[] )
 
   for (unsigned int i=0; i<numberOfImages; i++)
   {
-    // Read and set image
-
+    std::cout<<"Reading image : "<<input[i].c_str()<<"\n";
     ImageReaderType::Pointer imageReader = ImageReaderType::New();
     imageReader -> SetFileName( input[i].c_str() );
     imageReader -> Update();
@@ -322,7 +321,7 @@ int main( int argc, char *argv[] )
         }
   }
 
-  // Start rigid registration on the desired target image (#0 by default)
+  std::cout<<"Start rigid registration on the desired target image (#0 by default)\n";
   try
     {
 
@@ -360,9 +359,10 @@ int main( int argc, char *argv[] )
   // Image registration performed slice by slice or affine 3D according to
   // the user selection
 
+  hrImageIni = lowToHighResFilter->GetHighResolutionImage();
+  
   if(computeRefImage)
   {
-      hrImageIni = lowToHighResFilter->GetHighResolutionImage();
       hrRefImage = lowToHighResFilter->GetHighResolutionImage();
   }
 
