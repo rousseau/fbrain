@@ -220,6 +220,7 @@ int main( int argc, char *argv[] )
   ImagePointer hrImage;
   ImagePointer hrImageOld;
   ImagePointer hrImageIni;
+  ImagePointer hrRefImage;
 
   lowToHighResFilter -> SetNumberOfImages(numberOfImages);
   lowToHighResFilter -> SetTargetImage( 0 );
@@ -231,12 +232,13 @@ int main( int argc, char *argv[] )
     itMax = 1;
   }
   bool computeRefImage = true;
+
   if(refImage != "")
   {
       ImageReaderType::Pointer imageReader = ImageReaderType::New();
       imageReader -> SetFileName( refImage );
       imageReader -> Update();
-      hrImageIni = imageReader -> GetOutput();
+      hrRefImage = imageReader -> GetOutput();
       computeRefImage = false;
   }
 
@@ -361,6 +363,7 @@ int main( int argc, char *argv[] )
   if(computeRefImage)
   {
       hrImageIni = lowToHighResFilter->GetHighResolutionImage();
+      hrRefImage = lowToHighResFilter->GetHighResolutionImage();
   }
 
 
@@ -397,7 +400,7 @@ int main( int argc, char *argv[] )
       {
         rigid3DRegistration[im] = Rigid3DRegistrationType::New();
         rigid3DRegistration[im] -> SetFixedImage( images[im] );
-        rigid3DRegistration[im] -> SetMovingImage( hrImageIni );
+        rigid3DRegistration[im] -> SetMovingImage( hrRefImage );
         rigid3DRegistration[im] -> SetFixedImageMask( imageMasks[im] );
         rigid3DRegistration[im] -> SetTransform( rigid3DTransforms[im] );
 
@@ -421,7 +424,7 @@ int main( int argc, char *argv[] )
         {
           registration[im] = RegistrationType::New();
           registration[im] -> SetFixedImage( images[im] );
-          registration[im] -> SetMovingImage( hrImageIni );
+          registration[im] -> SetMovingImage( hrRefImage );
           registration[im] -> SetImageMask( imageMasks[im] );
           registration[im] -> SetTransform( transforms[im] );
 
@@ -471,7 +474,7 @@ int main( int argc, char *argv[] )
     }
 
     resampler -> UseReferenceImageOn();
-    resampler -> SetReferenceImage( hrImageIni );
+    resampler -> SetReferenceImage( hrRefImage );
     resampler -> SetImageMask(lowToHighResFilter -> GetImageMaskCombination());
     resampler -> Update();
 
@@ -481,14 +484,6 @@ int main( int argc, char *argv[] )
       hrImageOld = hrImage;
 
     hrImage = resampler -> GetOutput();
-
-    if(computeRefImage)
-    {
-        hrImage = resampler -> GetOutput();
-    }
-    else
-        hrImage = hrImageIni;
-
 
     std::cout << "done. " << std::endl; std::cout.flush();
 
