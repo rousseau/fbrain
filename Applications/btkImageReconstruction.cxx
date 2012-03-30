@@ -134,7 +134,7 @@ int main( int argc, char *argv[] )
   input = inputArg.getValue();
   mask = maskArg.getValue();
   outImage = outArg.getValue().c_str();
-  refImage = outArg.getValue().c_str();
+  refImage = refArg.getValue().c_str();
   combinedMask = combinedMaskArg.getValue().c_str();
   transform = transformArg.getValue();
   roi = roiArg.getValue();
