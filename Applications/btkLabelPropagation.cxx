@@ -95,7 +95,8 @@ int main(int argc, char** argv)
   cmd.add( normalizationArg );
   TCLAP::ValueArg< int > minLabelArg("","minLabel","minimum label (default : -1)",false,-1,"int");
   cmd.add( minLabelArg );
-  
+  TCLAP::ValueArg< int > defaultArg("","defaultValue","0: 0, 1: copy the value of the original data",false,0,"int");
+  cmd.add( defaultArg );  
   // Parse the args.
   cmd.parse( argc, argv );
 
@@ -127,6 +128,7 @@ int main(int argc, char** argv)
   int mode                     = modeArg.getValue();
   int normalization            = normalizationArg.getValue();
   int minLabel                 = minLabelArg.getValue();
+  int defaultValue             = defaultArg.getValue();
   
   std::cout<<" input file : "<<input_file<<"\n";
   std::cout << "Number of anatomical image files is: " << anatomical_file.size() << "\n";
@@ -182,6 +184,7 @@ int main(int argc, char** argv)
   myTool.SetLowerThresholds(lowerMeanThreshold, lowerVarianceThreshold);
   myTool.SetNormalizationStrategy(normalization);
   myTool.SetMinLabel(minLabel);
+  myTool.SetDefaultValue(defaultValue);
 
   if(mode==0)
     myTool.ComputeOutput();            //pair-wise label propagation

@@ -92,6 +92,7 @@ class LabelFusionTool
   int   m_blockwise;
   int   m_optimized;
   int   m_centralPointStrategy;
+  int   m_defaultValue;
   float m_lowerMeanThreshold;
   float m_lowerVarianceThreshold;
   int   m_aggregation;
@@ -121,6 +122,7 @@ class LabelFusionTool
   void SetSpatialBandwidth(int s);
   void SetSmoothing(float beta);
   void SetCentralPointStrategy(int s);
+  void SetDefaultValue(int s);
   void SetBlockwiseStrategy(int b);
   void SetAggregationStrategy(int a);
   void SetOptimizationStrategy(int o);
@@ -444,18 +446,28 @@ void LabelFusionTool<T>::SetSmoothing(float beta)
 template <typename T>
 void LabelFusionTool<T>::SetCentralPointStrategy(int s)
 {
+  std::cout<<"Set central point strategy : "<<s<<"\n";
   m_centralPointStrategy = s;
+}
+
+template <typename T>
+void LabelFusionTool<T>::SetDefaultValue(int s)
+{
+  std::cout<<"Set default value : "<<s<<"\n";
+  m_defaultValue = s;
 }
 
 template <typename T>
 void LabelFusionTool<T>::SetBlockwiseStrategy(int b)
 {
+  std::cout<<"Set blockwise strategy : "<<b<<"\n";
   m_blockwise = b;
 }
 
 template <typename T>
 void LabelFusionTool<T>::SetAggregationStrategy(int a)
 {
+  std::cout<<"Set aggregation strategy : "<<a<<"\n";
   m_aggregation = a;
 }
 
@@ -1248,7 +1260,7 @@ void LabelFusionTool<T>::ComputeHROutput()
       if( weightIt.Get() > 0 )
         HRIt.Set( HRIt.Get() / weightIt.Get() );
       else{
-        switch(m_centralPointStrategy){
+        switch(m_defaultValue){
           case 0:
             HRIt.Set( 0 ); //It can be a specific value to explicitly say that no example has been found 
             break;
