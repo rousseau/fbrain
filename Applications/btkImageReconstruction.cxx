@@ -76,8 +76,9 @@ int main( int argc, char *argv[] )
   double margin;
 
   const char *outImage = NULL;
-  const char *refImage = NULL;
   const char *combinedMask = NULL;
+
+  std::string refImage;
 
   // Parse arguments
 
@@ -134,7 +135,7 @@ int main( int argc, char *argv[] )
   input = inputArg.getValue();
   mask = maskArg.getValue();
   outImage = outArg.getValue().c_str();
-  refImage = refArg.getValue().c_str();
+  refImage = refArg.getValue();
   combinedMask = combinedMaskArg.getValue().c_str();
   transform = transformArg.getValue();
   roi = roiArg.getValue();
@@ -230,7 +231,7 @@ int main( int argc, char *argv[] )
     itMax = 1;
   }
   bool computeRefImage = true;
-  if(refImage)
+  if(refImage != "")
   {
       ImageReaderType::Pointer imageReader = ImageReaderType::New();
       imageReader -> SetFileName( refImage );
@@ -480,6 +481,13 @@ int main( int argc, char *argv[] )
       hrImageOld = hrImage;
 
     hrImage = resampler -> GetOutput();
+
+    if(computeRefImage)
+    {
+        hrImage = resampler -> GetOutput();
+    }
+    else
+        hrImage = hrImageIni;
 
 
     std::cout << "done. " << std::endl; std::cout.flush();
