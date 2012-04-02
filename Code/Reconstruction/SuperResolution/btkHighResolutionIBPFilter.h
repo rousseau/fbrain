@@ -35,17 +35,16 @@
 #ifndef __BTK_HIGHRESOLUTIONIBPFILTER_H__
 #define __BTK_HIGHRESOLUTIONIBPFILTER_H__
 
-/* ITK */
-#include "itkImage.h"
-#include "itkImageMaskSpatialObject.h"
-#include "itkIdentityTransform.h"
-#include "itkTransformFactory.h"
-#include "itkAffineTransform.h"
-#include "itkEuler3DTransform.h"
+
+
 
 /* BTK */
 #include "btkMacro.h"
 #include "btkHighResolutionReconstructionFilter.h"
+#include "btkCreateHRMaskFilter.h"
+#include "btkSimulateLRImageFilter.h"
+
+
 
 /* OTHERS */
 #include "iostream"
@@ -63,11 +62,36 @@ public:
     HighResolutionIBPFilter();
     ~HighResolutionIBPFilter();
 
+    void Initialize();
+
     virtual void Update();
+
+    btkGetMacro(Nlm,int);
+    btkSetMacro(Nlm,int);
+
+    btkGetMacro(Beta,float);
+    btkSetMacro(Beta,float);
+
+    btkGetMacro(MedianIBP,int);
+    btkSetMacro(MedianIBP,int);
 
 
 protected:
+
+    void HComputation();
+    void InitializePSF();
+    void UpdateX();
+    double ComputeIterativeBackProjection( int & nlm, float & beta, int & medianIBP);
+
 private:
+
+    int m_Nlm;
+    float m_Beta;
+    int m_MedianIBP;
+
+
+    CreateHRMaskFilter* m_HRMaskFilter;
+    SimulateLRImageFilter* m_SimuLRImagesFilter;
 
 
 

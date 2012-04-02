@@ -62,6 +62,7 @@
 
 #include "btkSliceBySliceTransform.h"
 #include "btkMacro.h"
+#include "btkSuperResolutionType.h"
 
 
 namespace btk
@@ -69,35 +70,12 @@ namespace btk
 class CreateHRMaskFilter
 {
 public:
-    // Typedef
-    typedef float PixelType;
-    typedef itk::Image< PixelType, 3>          itkImage;
-    typedef itk::ImageDuplicator< itkImage >   itkDuplicator;
-    typedef itk::Image< unsigned char, 3 >     itkImageMask;
-    typedef itk::ImageMaskSpatialObject< 3 >   itkMask;
-    typedef itkMask::Pointer                   itkMaskPointer;
-
-    typedef itk::AffineTransform<double,3>     itkAffineDeformation;
-
-    typedef btk::SliceBySliceTransform<double,3> SbSTransformType;
-    typedef SbSTransformType::Pointer            SbSTransformPointer;
-
-
-    typedef itk::Transform<double,3> TransformType;
 
     typedef itk::Euler3DTransform<double> EulerTransformType;
     typedef EulerTransformType::Pointer EulerTransformPointerType;
     typedef std::vector< std::vector< EulerTransformPointerType > > EulerTransformArrayType;
 
-    typedef itk::ResampleImageFilter<itkImage, itkImage>                    itkResampleFilter;
-    typedef itk::IdentityTransform<double, 3>                               itkIdentityTransform;
-    typedef itk::LinearInterpolateImageFunction<itkImage, double>           itkLinearInterpolator;
-    typedef itk::BSplineInterpolateImageFunction<itkImage, double, double>  itkBSplineInterpolator;
-    typedef itk::SubtractImageFilter <itkImage, itkImage >                  itkSubtractImageFilter;
-    typedef itk::AddImageFilter <itkImage, itkImage >                       itkAddImageFilter;
-    typedef itk::BinaryThresholdImageFilter <itkImage, itkImage>            itkBinaryThresholdImageFilter;
-    typedef itk::AbsoluteValueDifferenceImageFilter <itkImage, itkImage, itkImage>  itkAbsoluteValueDifferenceImageFilter;
-    typedef itk::StatisticsImageFilter<itkImage>                            itkStatisticsImageFilter;
+
 
 public :
     CreateHRMaskFilter();
@@ -113,11 +91,21 @@ public :
     btkGetMacro(InputLRImages,std::vector< itkImage::Pointer >);
     btkSetMacro(InputLRImages,std::vector< itkImage::Pointer >);
 
-    btkGetMacro(Transforms, std::vector< TransformType::Pointer >);
-    btkSetMacro(Transforms, std::vector< TransformType::Pointer >);
+    btkGetMacro(Transforms, std::vector< itkTransformBase::Pointer >);
+    btkSetMacro(Transforms, std::vector< itkTransformBase::Pointer >);
+
+    btkGetMacro(TransformsAffine, std::vector< itkAffineTransform::Pointer >);
+    btkSetMacro(TransformsAffine, std::vector< itkAffineTransform::Pointer >);
+
+    btkGetMacro(TransformsSbS, std::vector< btkSliceBySliceTransform::Pointer >);
+    btkSetMacro(TransformsSbS, std::vector< btkSliceBySliceTransform::Pointer >);
 
     btkGetMacro(HRImage,itkImage::Pointer);
     btkSetMacro(HRImage, itkImage::Pointer);
+
+    btkGetMacro(TransformType,TRANSFORMATION_TYPE);
+    btkSetMacro(TransformType,TRANSFORMATION_TYPE);
+
 
 
 
@@ -127,10 +115,16 @@ public :
 protected:
 private:
 
-    std::vector< TransformType::Pointer > m_Transforms;
+    std::vector< itkTransformBase::Pointer > m_Transforms;
+    std::vector< itkAffineTransform::Pointer > m_TransformsAffine;
+    std::vector< btkSliceBySliceTransform::Pointer > m_TransformsSbS;
+
     std::vector< itkImage::Pointer > m_InputLRImages;
     itkImage::Pointer m_MaskHRImage;
     itkImage::Pointer m_HRImage;
+
+    TRANSFORMATION_TYPE m_TransformType;
+
 
 
 };

@@ -60,6 +60,7 @@
 #include "itkTransformFileReader.h"
 #include "itkImageMaskSpatialObject.h"
 #include "itkMatrixOffsetTransformBase.h"
+#include "itkTransformFileReader.h"
 
 /* VNL */
 #include "vnl/vnl_sparse_matrix.h"
@@ -69,6 +70,8 @@
 #include "btkCreateHRMaskFilter.h"
 #include "btkSimulateLRImageFilter.h"
 #include "btkMacro.h"
+//Typedefs :
+#include "btkSuperResolutionType.h"
 
 
 // Filter used for SuperResolution pipeline :
@@ -86,56 +89,7 @@ namespace btk
 class SuperResolutionFilter
 {
 public:
-    typedef float PixelType;
-    typedef itk::Image< PixelType, 3>         itkImage;
-    typedef itk::Image< PixelType, 2>         SliceType;
 
-    typedef itk::ImageDuplicator< itkImage >  itkDuplicator;
-    typedef itk::ImageRegionIterator< itkImage > itkIterator;
-    typedef itk::ImageRegionIteratorWithIndex< itkImage > itkIteratorWithIndex;
-    typedef itk::ContinuousIndex<double,3>     itkContinuousIndex;
-
-
-    typedef itk::ResampleImageFilter<itkImage, itkImage>                    itkResampleFilter;
-    typedef itk::IdentityTransform<double, 3>                               itkIdentityTransform;
-    typedef itk::LinearInterpolateImageFunction<itkImage, double>           itkLinearInterpolator;
-    typedef itk::BSplineInterpolateImageFunction<itkImage, double, double>  itkBSplineInterpolator;
-    typedef itk::SubtractImageFilter <itkImage, itkImage >                  itkSubtractImageFilter;
-    typedef itk::AddImageFilter <itkImage, itkImage >                       itkAddImageFilter;
-    typedef itk::BinaryThresholdImageFilter <itkImage, itkImage>            itkBinaryThresholdImageFilter;
-    typedef itk::AbsoluteValueDifferenceImageFilter <itkImage, itkImage, itkImage>  itkAbsoluteValueDifferenceImageFilter;
-    typedef itk::StatisticsImageFilter<itkImage>    itkStatisticsImageFilter;
-
-    typedef itk::Image< unsigned char, 3 >     itkImageMask;
-    typedef itk::ImageMaskSpatialObject< 3 >   itkMask;
-
-    typedef itk::AffineTransform<double,3>     itkAffineDeformation;
-
-    typedef btk::SliceBySliceTransform<double,3> SbSTransformType;
-    typedef SbSTransformType::Pointer            SbSTransformPointer;
-
-    typedef itk::Euler3DTransform<double> EulerTransformType;
-    typedef EulerTransformType::Pointer EulerTransformPointerType;
-    typedef std::vector< std::vector< EulerTransformPointerType > > EulerTransformArrayType;
-
-    typedef itk::MatrixOffsetTransformBase<double,3,3> MatrixTransformType;
-
-    typedef itk::Transform<double, 3> TransformType;
-
-    enum TRANSFORMATION_TYPE
-    {
-        AFFINE = 0,
-        EULER_3D,
-        SLICE_BY_SLICE
-    };
-
-    // Example of reconstruction type :
-    enum RECONSTRUCTION_TYPE
-    {
-        ALGO1 = 0,
-        ALGO2,
-        ALGO3
-    };
 
 
     /** Constructor with no parameters */
@@ -161,8 +115,16 @@ public:
 
     // GETTER/SETTER :
 
-    btkGetMacro(TransformsLR,std::vector< TransformType::Pointer >);
-    btkSetMacro(TransformsLR,std::vector< TransformType::Pointer >);
+    btkGetMacro(TransformsLR,std::vector< itkTransformBase::Pointer >);// To remove
+    btkSetMacro(TransformsLR,std::vector< itkTransformBase::Pointer >);
+
+
+    btkGetMacro(TransformsLRSbS,std::vector< btkSliceBySliceTransform::Pointer >);
+    btkSetMacro(TransformsLRSbS,std::vector< btkSliceBySliceTransform::Pointer >);
+
+    btkGetMacro(TransformsLRAffine,std::vector< itkAffineTransform::Pointer >);
+    btkSetMacro(TransformsLRAffine,std::vector< itkAffineTransform::Pointer >);
+
 
     btkGetMacro(ImagesLR,std::vector< itkImage::Pointer > );
     btkSetMacro(ImagesLR,std::vector< itkImage::Pointer > );
@@ -192,14 +154,33 @@ public:
     btkGetMacro(Loop, int);
     btkSetMacro(Loop,int);
 
+    btkGetMacro(MedianIBP, int);
+    btkSetMacro(MedianIBP,int);
+
+    btkGetMacro(Psftype, int);
+    btkSetMacro(Psftype,int);
+
+    btkGetMacro(InterpolationOrderPSF, int);
+    btkSetMacro(InterpolationOrderPSF,int);
+
+    btkGetMacro(InterpolationOrderIBP, int);
+    btkSetMacro(InterpolationOrderIBP,int);
+
+
+    btkGetMacro(TransformationType, TRANSFORMATION_TYPE);
+    btkSetMacro(TransformationType, TRANSFORMATION_TYPE);
+
+    btkGetMacro(ReconstructionType,RECONSTRUCTION_TYPE);
+    btkSetMacro(ReconstructionType,RECONSTRUCTION_TYPE);
 
 
 
-
-
+    void SetParameters(int Nlm, float Beta, int Loop, int MedianIBP, int PsfType, int InterpolationOrderIBP, int InterpolationOrderPSF);
+    void SetDefaultParameters();
 
 protected:
 
+    void InverseTransforms();
 private:
 
     // !! Since use of btkMacro for get/set use a Capital letter after the m_ (ex : m_MyVariable) !!
@@ -218,8 +199,15 @@ private:
 
 
     std::vector< itkImage::Pointer >         m_ImagesLR;
-    std::vector< TransformType::Pointer  >   m_TransformsLR;
-    std::vector< TransformType::Pointer >    m_InverseTransformsLR;
+    std::vector< itkTransformBase::Pointer  >   m_TransformsLR;
+    std::vector< itkTransformBase::Pointer >    m_InverseTransformsLR;
+
+    std::vector< btkSliceBySliceTransform::Pointer  >   m_TransformsLRSbS;
+    std::vector< btkSliceBySliceTransform::Pointer >    m_InverseTransformsLRSbS;
+
+    std::vector< itkAffineTransform::Pointer  >   m_TransformsLRAffine;
+    std::vector< itkAffineTransform::Pointer >    m_InverseTransformsLRAffine;
+
     std::vector< itkImageMask::Pointer >     m_ImagesMaskLR;
     std::vector< itkMask::Pointer >          m_MasksLR;
     itkImage::Pointer                        m_ImageHR;
@@ -228,9 +216,11 @@ private:
     itkMask::Pointer                         m_MaskHR;
     itkImage::Pointer                        m_ReferenceImage;
 
+
     int m_Nlm;
     float m_Beta;
     int m_Loop;
+    int m_MedianIBP;
 
     //Image information (size, spacing etc.)
     itkImage::SpacingType m_Spacing;
