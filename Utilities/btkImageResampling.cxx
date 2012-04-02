@@ -40,6 +40,8 @@
 #include "itkResampleImageFilter.h"
 #include "itkIdentityTransform.h"
 #include "itkBSplineInterpolateImageFunction.h"
+#include "itkContinuousIndex.h"
+
 
 #include <string>
 #include <iomanip>
@@ -91,6 +93,7 @@ int main(int argc, char *argv[])
     typedef itk::IdentityTransform<double, 3>                               itkIdentityTransform;
     typedef itk::BSplineInterpolateImageFunction<itkImage, double, double>  itkBSplineInterpolator;
   
+    typedef itk::ContinuousIndex<double,3>     itkContinuousIndex;
   
 
     std::cout<<"Reading the input image:"<<input_file<<"\n";
@@ -164,6 +167,31 @@ int main(int argc, char *argv[])
     resample->SetDefaultPixelValue(0.0);
    
     resample->SetInput( input_reader->GetOutput() );
+    
+    //Set the new origin correctly:
+    itkImage::IndexType inputIndex;
+    inputIndex[0] = 0;
+    inputIndex[1] = 0;
+    inputIndex[2] = 0;
+    itkImage::PointType inputPoint;
+    //This point should corresponds to the origin of the input image
+    input_reader->GetOutput()->TransformIndexToPhysicalPoint(inputIndex,inputPoint);
+    std::cout<<"Origin of the input image:"<<inputPoint<<"\n";
+    
+    itkContinuousIndex outputIndex;
+    outputIndex[0] = -0.5 * input_reader->GetOutput()->GetSpacing()[0] + 0.5 * resample->GetOutputSpacing()[0]  ;
+    outputIndex[1] = -0.5 * input_reader->GetOutput()->GetSpacing()[1] + 0.5 * resample->GetOutputSpacing()[1] ;
+    outputIndex[2] = -0.5 * input_reader->GetOutput()->GetSpacing()[2] + 0.5 * resample->GetOutputSpacing()[2] ;
+    
+    itkImage::PointType outputPoint;
+    input_reader->GetOutput()->TransformContinuousIndexToPhysicalPoint(outputIndex,outputPoint);
+    std::cout<<"Origin of the output image:"<<outputPoint<<"\n";
+
+    resample->SetOutputOrigin( outputPoint );
+    resample->SetOutputDirection( input_reader->GetOutput()->GetDirection() );
+
+
+    resample->Update();
 
 
     //Write the result image
