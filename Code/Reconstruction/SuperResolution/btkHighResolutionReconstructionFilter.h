@@ -45,6 +45,13 @@
 
 /* BTK */
 #include "btkMacro.h"
+#include "btkSliceBySliceTransform.h"
+//Typedefs:
+#include "btkSuperResolutionType.h"
+
+
+/* VNL */
+#include "vnl/vnl_sparse_matrix.h"
 
 /* OTHERS */
 #include "iostream"
@@ -59,27 +66,45 @@ class HighResolutionReconstructionFilter
 
 
 public:
-    /* Typedefs */
-    typedef float PixelType;
-    typedef itk::Image< PixelType, 3>         itkImage;
-    typedef itk::Image< PixelType, 2>         SliceType;
-    typedef itk::Transform<double, 3> TransformType;
-    typedef itk::Image< unsigned char, 3 >     itkImageMask;
-    typedef itk::ImageMaskSpatialObject< 3 >   itkMask;
+
 
     HighResolutionReconstructionFilter();
     ~HighResolutionReconstructionFilter();
 
-    virtual void Update() =0;
+    virtual void Update() = 0;
 
+    virtual itkImage::Pointer GetOutput()
+    {
+        return m_OutputHRImage;
+    }
 
     // GETTER/SETTER :
 
-    btkGetMacro(TransformsLR,std::vector< TransformType::Pointer >);
-    btkSetMacro(TransformsLR,std::vector< TransformType::Pointer >);
+
+    //TODO:Remove useless GET/SET or getter/setter for parameters which are compute and used  only in this class
+    btkGetMacro(TransformsLR,std::vector< itkTransformBase::Pointer >);
+    btkSetMacro(TransformsLR,std::vector< itkTransformBase::Pointer >);
+
+    btkGetMacro(InverseTransformsLR,std::vector< itkTransformBase::Pointer >);
+    btkSetMacro(InverseTransformsLR,std::vector< itkTransformBase::Pointer >);
+
+    btkGetMacro(TransformsLRAffine,std::vector< itkAffineTransform::Pointer >);
+    btkSetMacro(TransformsLRAffine,std::vector< itkAffineTransform::Pointer >);
+
+    btkGetMacro(InverseTransformsLRAffine,std::vector< itkAffineTransform::Pointer >);
+    btkSetMacro(InverseTransformsLRAffine,std::vector< itkAffineTransform::Pointer >);
+
+    btkGetMacro(TransformsLRSbS,std::vector< btkSliceBySliceTransform::Pointer >);
+    btkSetMacro(TransformsLRSbS,std::vector< btkSliceBySliceTransform::Pointer >);
+
+    btkGetMacro(InverseTransformsLRSbS,std::vector< btkSliceBySliceTransform::Pointer >);
+    btkSetMacro(InverseTransformsLRSbS,std::vector< btkSliceBySliceTransform::Pointer >);
 
     btkGetMacro(ImagesLR,std::vector< itkImage::Pointer > );
     btkSetMacro(ImagesLR,std::vector< itkImage::Pointer > );
+
+    btkGetMacro(SimulatedImagesLR,std::vector< itkImage::Pointer > );
+    btkSetMacro(SimulatedImagesLR,std::vector< itkImage::Pointer > );
 
 
     btkGetMacro(ImagesMaskLR,std::vector< itkImageMask::Pointer >  );
@@ -91,24 +116,82 @@ public:
     btkGetMacro(ImageHR, itkImage::Pointer);
     btkSetMacro(ImageHR, itkImage::Pointer);
 
-    btkGetMacro(ImageMaskHR, itkImageMask::Pointer);
-    btkSetMacro(ImageMaskHR, itkImageMask::Pointer);
+    btkGetMacro(ImageMaskHR, itkImage::Pointer);
+    btkSetMacro(ImageMaskHR, itkImage::Pointer);
 
     btkGetMacro(ReferenceImage, itkImage::Pointer);
     btkSetMacro(ReferenceImage, itkImage::Pointer);
 
+
+    btkSetMacro(H,vnl_sparse_matrix< float >);
+    btkGetMacro(H,vnl_sparse_matrix< float >);
+
+    btkSetMacro(X,vnl_vector< float >);
+    btkGetMacro(X,vnl_vector< float >);
+
+
+    btkSetMacro(Y,vnl_vector< float >);
+    btkGetMacro(Y,vnl_vector< float >);
+
+    btkGetMacro(Offset,std::vector< unsigned int >);
+    btkSetMacro(Offset,std::vector< unsigned int >);
+
+    btkGetMacro(PSF, std::vector< itkImage::Pointer >);
+    btkSetMacro(PSF, std::vector< itkImage::Pointer >);
+
+    btkGetMacro(PaddingValue,float);
+    btkSetMacro(PaddingValue,float);
+
+    btkGetMacro(InterpolationOrderPSF,int);
+    btkSetMacro(InterpolationOrderPSF,int);
+
+    btkGetMacro(InterpolationOrderIBP,int);
+    btkSetMacro(InterpolationOrderIBP,int);
+
+    btkGetMacro(PsfType,int);
+    btkSetMacro(PsfType,int);
+
+    btkGetMacro(Nloops,int);
+    btkSetMacro(Nloops,int);
+
+    btkGetMacro(TransformType,TRANSFORMATION_TYPE);
+    btkSetMacro(TransformType,TRANSFORMATION_TYPE);
+
+
 protected:
     // accessible for subclasses
     std::vector< itkImage::Pointer >         m_ImagesLR;
-    std::vector< TransformType::Pointer  >   m_TransformsLR;
-    std::vector< TransformType::Pointer >    m_InverseTransformsLR;
+    std::vector< itkImage::Pointer >         m_SimulatedImagesLR;
+    std::vector< itkTransformBase::Pointer  >   m_TransformsLR;
+    std::vector< itkTransformBase::Pointer >    m_InverseTransformsLR;
+
+    std::vector< itkAffineTransform::Pointer  >   m_TransformsLRAffine;
+    std::vector< itkAffineTransform::Pointer >    m_InverseTransformsLRAffine;
+
+    std::vector< btkSliceBySliceTransform::Pointer  >   m_TransformsLRSbS;
+    std::vector< btkSliceBySliceTransform::Pointer >    m_InverseTransformsLRSbS;
+
     std::vector< itkImageMask::Pointer >     m_ImagesMaskLR;
     std::vector< itkMask::Pointer >          m_MasksLR;
     itkImage::Pointer                        m_ImageHR;
+    itkImage::Pointer                        m_CurrentImageHR;
     itkImage::Pointer                        m_OutputHRImage;
-    itkImageMask::Pointer                    m_ImageMaskHR;
+    itkImage::Pointer                        m_ImageMaskHR;
     itkMask::Pointer                         m_MaskHR;
     itkImage::Pointer                        m_ReferenceImage;
+
+    TRANSFORMATION_TYPE                      m_TransformType;
+
+    vnl_sparse_matrix< float >               m_H;
+    vnl_vector< float >                      m_X;
+    vnl_vector< float >                      m_Y;
+    std::vector< unsigned int >              m_Offset;
+    std::vector< itkImage::Pointer >         m_PSF;
+    float                                    m_PaddingValue;
+    int                                      m_InterpolationOrderPSF;
+    int                                      m_InterpolationOrderIBP;
+    int                                      m_PsfType;
+    int                                      m_Nloops;
 
 private:
 
