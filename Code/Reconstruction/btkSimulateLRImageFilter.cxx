@@ -6,11 +6,11 @@ namespace btk
 SimulateLRImageFilter::SimulateLRImageFilter()
 {
 }
-
+//-----------------------------------------------------------------------------------------------------------
 SimulateLRImageFilter::~SimulateLRImageFilter()
 {
 }
-
+//-----------------------------------------------------------------------------------------------------------
 void SimulateLRImageFilter::Update()
 {
     std::cout<<"Simulating LR images (= Hx)\n";
