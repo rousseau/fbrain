@@ -1,21 +1,30 @@
 #include "btkCreateHRMaskFilter.h"
 
+#include "itkImageDuplicator.h"
+
 namespace btk
 {
 
 CreateHRMaskFilter::CreateHRMaskFilter()
 {
+    m_MaskHRImage = NULL;
 }
-
+//-----------------------------------------------------------------------------------------------------------
 CreateHRMaskFilter::~CreateHRMaskFilter()
 {
 }
-
+//-----------------------------------------------------------------------------------------------------------
 void CreateHRMaskFilter::Update()
 {
 
-    std::cout<<"Create Mask HR Image by interpolating Masks of LR Images\n";
 
+    itkDuplicator::Pointer duplicator3 = itkDuplicator::New();
+    duplicator3->SetInputImage( m_HRImage );
+    duplicator3->Update();
+    m_MaskHRImage = duplicator3->GetOutput();
+
+
+    std::cout<<"Create Mask HR Image by interpolating Masks of LR Images\n";
     //Initialize to 0 the output HR image
     m_MaskHRImage->FillBuffer(0);
 
@@ -26,12 +35,20 @@ void CreateHRMaskFilter::Update()
 
     for(unsigned int i=0; i<m_InputLRImages.size(); i++)
     {
-       const char * className =  m_Transforms[i]->GetNameOfClass();
-       // TODO: Add a different method for each type of transformation
+
+       // TODO: Check if SbS transform do the correct Transformation
 
       //interpolate the LR mask
       itkResampleFilter::Pointer resample = itkResampleFilter::New();
-      resample->SetTransform(m_Transforms[i]); //testing
+      if(m_TransformType ==  AFFINE)
+      {
+          resample->SetTransform(m_TransformsAffine[i]);
+      }
+      else
+      {
+          resample->SetTransform(m_TransformsSbS[i]);
+      }
+
       resample->SetInterpolator(bsInterpolator);
       resample->UseReferenceImageOn();
       resample->SetReferenceImage(m_HRImage);
