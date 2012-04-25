@@ -55,8 +55,6 @@ public:
     typedef itk::ImageFileWriter< itkImage >   itkWriter;
     typedef typename itkWriter::Pointer        itkWriterPointer;
 
-    ImageHelper();
-    ~ImageHelper();
 
     static void WriteImage(itkImagePointer image, std::string &fileName);
     static void WriteImageArray(std::vector< itkImagePointer> &images, std::vector< std::string > &fileNames);
