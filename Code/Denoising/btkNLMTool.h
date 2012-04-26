@@ -386,7 +386,7 @@ double btkNLMTool<T>::ComputePseudoResidualSafely(typename itkTImage::IndexType 
 {
   double tmp = 0;
   
-  if( (pixelIndex[0] > 1) && (pixelIndex[1] > 1) && (pixelIndex[2] > 1) && (pixelIndex[0] < (uint)m_size[0]-1 ) && (pixelIndex[1] < (uint)m_size[1]-1) && (pixelIndex[2] < (uint)m_size[2]-1) )
+  if( (pixelIndex[0] > 1) && (pixelIndex[1] > 1) && (pixelIndex[2] > 1) && (pixelIndex[0] < (unsigned int)m_size[0]-1 ) && (pixelIndex[1] < (unsigned int)m_size[1]-1) && (pixelIndex[2] < (unsigned int)m_size[2]-1) )
     tmp = ComputePseudoResidual(pixelIndex);
   return tmp;
 }
@@ -397,7 +397,7 @@ float btkNLMTool<T>::MADEstimation(std::vector<float> & vecei, float & beta)
   //Estimation of sigma with MAD
   std::sort(vecei.begin(), vecei.end());
   float med = vecei[(int)(vecei.size()/2)];
-  for(uint i=0; i<vecei.size(); i++)
+  for(unsigned int i=0; i<vecei.size(); i++)
     vecei[i] = fabs(vecei[i] - med);
   std::sort(vecei.begin(), vecei.end());
     

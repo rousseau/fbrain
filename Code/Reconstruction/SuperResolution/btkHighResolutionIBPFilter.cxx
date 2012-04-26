@@ -128,8 +128,8 @@ void HighResolutionIBPFilter::HComputation()
       m_X.fill(0.0);
 
       //linear index : an integer value corresponding to (x,y,z) triplet coordinates (ITK index)
-      uint lrLinearIndex = 0;
-      uint hrLinearIndex = 0;
+      unsigned int lrLinearIndex = 0;
+      unsigned int hrLinearIndex = 0;
 
       //Temporary variables
       itkImage::IndexType lrIndex;  //index of the current voxel in the LR image
@@ -155,7 +155,7 @@ void HighResolutionIBPFilter::HComputation()
       itkImage::SizeType  hrSize  = m_ImageHR->GetLargestPossibleRegion().GetSize();
 
       std::cout<<"loop over LR images\n";
-      for(uint i=0; i<m_ImagesLR.size(); i++)
+      for(unsigned int i=0; i<m_ImagesLR.size(); i++)
       {
         std::cout<<"Adding image "<<i+1<<"\n";
 
@@ -732,7 +732,7 @@ double HighResolutionIBPFilter::ComputeIterativeBackProjection( int & nlm, float
       std::cout<<"Averaging the error maps (obtained for each LR image)\n";
         m_ImageHR->FillBuffer(0);
 
-        for(uint i=0; i<m_ImagesLR.size(); i++)
+        for(unsigned int i=0; i<m_ImagesLR.size(); i++)
         {
           //Add the interpolated differences
           itkAddImageFilter::Pointer addFilter = itkAddImageFilter::New ();
@@ -751,7 +751,7 @@ double HighResolutionIBPFilter::ComputeIterativeBackProjection( int & nlm, float
           {
             itkImage::IndexType p = itImage.GetIndex();
             std::vector<float>  v;
-            for(uint i=0; i<m_ImagesLR.size(); i++)
+            for(unsigned int i=0; i<m_ImagesLR.size(); i++)
               v.push_back(errorImages[i]->GetPixel(p));
             std::sort(v.begin(), v.end());
 
