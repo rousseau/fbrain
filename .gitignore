@@ -42,7 +42,15 @@
 # OS generated files #
 ######################
 .DS_Store?
+.DS_Store
 ehthumbs.db
 Icon?
 Thumbs.db
 
+# QtCreator generated files #
+#############################
+CMakeLists.txt.user
+
+# Build directories #
+#####################
+build
