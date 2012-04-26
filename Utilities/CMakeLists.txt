@@ -5,6 +5,7 @@ INCLUDE_DIRECTORIES(${TCLAP_DIRECTORY})
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Reconstruction)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/DTI)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/InputOutput)
+INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Tools)
 
 ADD_EXECUTABLE(btkModifyImageUsingLookUpTable btkModifyImageUsingLookUpTable.cxx )
 TARGET_LINK_LIBRARIES(btkModifyImageUsingLookUpTable ${ITK_LIBRARIES} )
@@ -30,6 +31,7 @@ ADD_EXECUTABLE(btkRegisterDiffusionToAnatomicalData btkRegisterDiffusionToAnatom
 TARGET_LINK_LIBRARIES(btkRegisterDiffusionToAnatomicalData ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkNrrdToNifti btkNrrdToNifti.cxx
+        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkFileNameTools.h
         ${fbrain_SOURCE_DIR}/Code/InputOutput/btkNrrdField.cxx)
 TARGET_LINK_LIBRARIES(btkNrrdToNifti ${ITK_LIBRARIES})
 
@@ -78,7 +80,10 @@ TARGET_LINK_LIBRARIES(btkRescaleIntensity ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkReconstructionComparisonTool btkReconstructionComparisonTool.cxx )
 TARGET_LINK_LIBRARIES(btkReconstructionComparisonTool ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkIteratedBackProjection btkIteratedBackProjection.cxx)
+ADD_EXECUTABLE(btkIteratedBackProjection
+btkIteratedBackProjection.cxx
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionImageFilter.h
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h)
 TARGET_LINK_LIBRARIES(btkIteratedBackProjection ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkImageResampling btkImageResampling.cxx)

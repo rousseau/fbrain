@@ -612,9 +612,7 @@ Particle ParticleFilter::GetMAP()
         for(unsigned int m=0; m<m_M; m++)
         {
             if(m_cloud[m].length() > 1)
-//            if(m_cloud[m].length() >= 1)
             {
-//                assert(m_cloud[m].length() >= 1);
                 assert(m_cloud[m].length() > 1);
                 delta[Ind(0,m)] = m_aPriori.compute(m_cloud[m].getVector(1).toDirection(), m_cloud[m].getVector(0).toDirection()) + m_cloud[m].getLikelihood(0);
             }
@@ -785,7 +783,6 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
     line->GetPointIds()->SetNumberOfIds(map1.length() + map2.length()/* - 2*/);
 
     // First point
-//    Point p = map1.getPoint(map1.length()-1);
     Point p = map1.getPoint(map1.length());
     ci[0] = p.x(); ci[1] = p.y(); ci[2] = p.z();
     m_map->TransformContinuousIndexToPhysicalPoint(ci,wp);
@@ -800,7 +797,6 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
     line->GetPointIds()->SetId(id++,pid);
 
     // First part
-//    for(int k=map1.length()-3; k>=0; k--)
     for(int k=map1.length()-2; k>=0; k--)
     {
         assert(k+2 <= map1.length());
@@ -863,7 +859,6 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
 
 
     // Last part
-//    for(unsigned int k=2; k<map2.length(); k++)
     for(unsigned int k=2; k<=map2.length(); k++)
     {
         assert(k-2 <= map2.length());
@@ -902,16 +897,6 @@ void ParticleFilter::ComputeFiber(Particle map1, Particle map2)
 
 void ParticleFilter::saveFiber(int label/*, unsigned int step, Point begin*/)
 {
-//    // Save VTK PolyData object into VTK file
-//    std::stringstream filename;
-//    filename << "fiber-" << label << "-" << begin << "-" << m_dirNum << "-" << step << ".vtk";
-//
-//    vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
-//    writer->SetInput(m_fiber);
-//    writer->SetFileName(filename.str().c_str());
-//    writer->SetFileTypeToBinary();
-//    writer->Write();
-
     std::stringstream filename;
     filename << "fiber-" << label << ".txt";
 

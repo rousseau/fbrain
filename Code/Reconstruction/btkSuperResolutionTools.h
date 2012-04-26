@@ -83,7 +83,6 @@ public:
   typedef itk::AbsoluteValueDifferenceImageFilter <itkImage, itkImage, itkImage>  itkAbsoluteValueDifferenceImageFilter;  
   typedef itk::StatisticsImageFilter<itkImage>                            itkStatisticsImageFilter;
 
-
   int                       m_psftype; // 0: 3D interpolated boxcar, 1: 3D oversampled boxcar
   std::vector<itkPointer>   m_PSF;
   int                       m_interpolationOrderPSF;
@@ -95,9 +94,9 @@ public:
   std::vector<unsigned int> m_offset;
   
   SuperResolutionTools(){
-    m_interpolationOrderPSF = 1;   //linear interpolation for interpolated PSF
-    m_psftype = 1;              //interpolated PSF by default (1: oversampled PSF)
-    m_paddingValue = 0;         //0 is considered as background by default.
+    m_interpolationOrderPSF = 1;  //linear interpolation for interpolated PSF
+    m_psftype = 1;                //interpolated PSF by default (1: oversampled PSF)
+    m_paddingValue = 0;           //0 is considered as background by default.
   };
   
   void SetPSFInterpolationOrderPSF(int & order);
@@ -107,7 +106,7 @@ public:
   void HComputation(SuperResolutionDataManager & data);
   void UpdateX(SuperResolutionDataManager & data);
   void SimulateLRImages(SuperResolutionDataManager & data);
-  double IteratedBackProjection(SuperResolutionDataManager & data, int & nlm, float & beta);
+  double IteratedBackProjection(SuperResolutionDataManager & data, int & nlm, float & beta, int & medianIBP);
   void CreateMaskHRImage(SuperResolutionDataManager & data);
 };
 
@@ -131,6 +130,7 @@ void SuperResolutionTools::SetPSFComputation(int & type)
 {
   // type = 0 : interpolated PSF
   // type = 1 : oversampled PSF
+  // type = 2 : Gaussian PSF
   m_psftype = type;
 }
 
@@ -219,6 +219,7 @@ void SuperResolutionTools::InitializePSF(SuperResolutionDataManager & data)
     
     itkIteratorWithIndex itPSF(m_PSF[i],m_PSF[i]->GetLargestPossibleRegion());
     double nbSamples = 20; //parameter for oversampled HR PSF.
+    std::vector<float> sigma(3); //parameter for 3D Gaussian PSF
 
     switch (m_psftype) {
       case 0:
@@ -283,6 +284,25 @@ void SuperResolutionTools::InitializePSF(SuperResolutionDataManager & data)
           itPSF.Set(sum);
         }
         break;
+        case 2: 
+          std::cout<<"Compute a 3D Gaussian PSF.\n";
+          //Note that we should also do oversampling to obtain a more accurate estimate of the PSF 
+          //Here, we use a piecewise constant approximation
+          //Set the FWHM equal to the voxel size
+          //FWHM = 2.3548 sigma
+          sigma[0] = lrSpacing[0] / 2.3548;
+          sigma[1] = lrSpacing[1] / 2.3548;
+          sigma[2] = lrSpacing[2] / 2.3548;
+          std::cout<<"Sigma :"<<sigma[0]<<" "<<sigma[1]<<" "<<sigma[2]<<"\n";
+          for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF){   
+            hrIndex = itPSF.GetIndex();
+            float x = hrIndex[0] - hrIndexCenter[0];
+            float y = hrIndex[1] - hrIndexCenter[1];
+            float z = hrIndex[2] - hrIndexCenter[2];
+            float value = (x*x)/(2*sigma[0]*sigma[0]) + (y*y)/(2*sigma[1]*sigma[1]) + (z*z)/(2*sigma[2]*sigma[2]);
+            itPSF.Set(exp(-value));
+          }                    
+          break;
       default:
         std::cout<<"Invalid choice for the psf building\n"; 
         break;
@@ -365,6 +385,7 @@ void SuperResolutionTools::HComputation(SuperResolutionDataManager & data)
   
   std::cout<<"loop over LR images\n";
   for(uint i=0; i<data.m_inputLRImages.size(); i++){
+    std::cout<<"Adding image "<<i+1<<"\n";
     
     //Get the size of the current LR image
     itkImage::SizeType  lrSize  = data.m_inputLRImages[i]->GetLargestPossibleRegion().GetSize();
@@ -587,7 +608,7 @@ void SuperResolutionTools::SimulateLRImages(SuperResolutionDataManager & data)
   }
 }
 
-double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager & data, int & nlm, float & beta)
+double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager & data, int & nlm, float & beta, int & medianIBP)
 {
   std::cout<<"Do iterated back projection\n";
   std::cout<<"NLM Filtering type: "<<nlm<<"\n";
@@ -605,6 +626,8 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
   bsInterpolator->SetSplineOrder(interpolationOrder);
   
   std::string s = "";
+  std::vector<itkPointer>   errorImages;            //difference image between simulated images and observed images.
+  errorImages.resize(data.m_inputLRImages.size());
   
   for(uint i=0; i<data.m_inputLRImages.size(); i++){
 
@@ -614,8 +637,8 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
     subtractFilter->SetInput2(data.m_simulatedInputLRImages[i]);
     subtractFilter->Update();
 
-    //std::ostringstream oss ;
-    //oss << i+1 ;
+    std::ostringstream oss ;
+    oss << i+1 ;
     //s = "ibp_"+oss.str()+"_substract.nii.gz";
     //data.WriteOneImage(subtractFilter->GetOutput(), s);
     
@@ -626,9 +649,14 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
     resample->UseReferenceImageOn();
     resample->SetReferenceImage(data.m_currentHRImage);
     resample->SetInput(subtractFilter->GetOutput());
+    resample->Update();
     
+    errorImages[i] = resample->GetOutput();
+
     //s = "ibp_"+oss.str()+"_resample.nii.gz";
-    //data.WriteOneImage(resample->GetOutput(), s);
+    //data.WriteOneImage(errorImages[i], s);
+
+    
 
     //Add the interpolated differences
     itkAddImageFilter::Pointer addFilter = itkAddImageFilter::New ();
@@ -637,18 +665,77 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
     addFilter->Update();
     
     data.m_outputHRImage = addFilter->GetOutput();
-    
+    /*
+    std::string s1 = "switch_out.nii.gz";
+      data.WriteOneImage(data.m_outputHRImage, s1);
+    */
+
     //s = "ibp_"+oss.str()+"_simulated.nii.gz";
     //data.WriteOneImage(data.m_simulatedInputLRImages[i], s);
-    
+        
   }
-  
-  //Normalize the resampled difference image
+
+  //Iterator over the output image filled with backprojected error.
   itkIteratorWithIndex itImage(data.m_outputHRImage,data.m_outputHRImage->GetLargestPossibleRegion());
+  
+  /*
+      //Normalize the resampled difference image
+      for(itImage.GoToBegin(); !itImage.IsAtEnd(); ++itImage)
+        itImage.Set( itImage.Get() / data.m_inputLRImages.size() );
+  */
+      
+  //std::string s2 = "switch_in.nii.gz";
+
+  //TO FIX : switch for filtering choice runs under MacOSX but not under Debian !!!  
+  /*        
+  switch(medianIBP)
+  {
+    case 0:
+    std::cout<<"Averaging the error maps (obtained for each LR image)\n";
+      data.m_outputHRImage->FillBuffer(0);
+
+      for(uint i=0; i<data.m_inputLRImages.size(); i++)
+      {
+        //Add the interpolated differences
+        itkAddImageFilter::Pointer addFilter = itkAddImageFilter::New ();
+        addFilter->SetInput1(data.m_outputHRImage);
+        addFilter->SetInput2(errorImages[i]);
+        addFilter->Update();    
+        data.m_outputHRImage = addFilter->GetOutput();        
+      }
+
+      data.WriteOneImage(data.m_outputHRImage, s2);
+
+      break;
+    case 1:
+        std::cout<<"Compute the median of the error map at each voxel\n"; 
+        for(itImage.GoToBegin(); !itImage.IsAtEnd(); ++itImage)
+        {
+          itkImage::IndexType p = itImage.GetIndex();
+          std::vector<float>  v;
+          for(uint i=0; i<data.m_inputLRImages.size(); i++)
+            v.push_back(errorImages[i]->GetPixel(p));
+          std::sort(v.begin(), v.end());
+          
+          itImage.Set(v.size() * v[(int)(v.size()/2)]); 
+          
+        }
+            
+      break;
+    default:
+      std::cout<<"Invalid choice for the median IBP parameter (0 or 1).\n"; 
+      break;          
+  }
+
+  */
+  //Normalize the resampled difference image
   for(itImage.GoToBegin(); !itImage.IsAtEnd(); ++itImage)
-    itImage.Set( itImage.Get() / data.m_inputLRImages.size() );
-
-
+  {
+    double value = itImage.Get() / data.m_inputLRImages.size();  
+    itImage.Set( value );
+  }   
+    
+       
   
   if(nlm==1){
     std::cout<<"Smooth the error map using the current reconstructed image as reference for NLM filter --------------------------\n";
@@ -728,8 +815,8 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
   std::cout << "Min: " << statisticsImageFilter->GetMinimum() << std::endl;
   std::cout << "Max: " << statisticsImageFilter->GetMaximum() << std::endl;  
   
-  double manjonCriterion = 0.002*statisticsImageFilter->GetSigma();
-  std::cout<<"stopping criterion of manjon et al.: "<<manjonCriterion<<"\n";
+  double manjonCriterion = 0.002*statisticsImageFilter->GetSigma(); //As defined in Manjon et al. 2010
+  std::cout<<"stopping criterion : "<<manjonCriterion<<"\n";
   
   if(meanMagnitude < manjonCriterion)
     meanMagnitude = 0;

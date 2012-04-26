@@ -402,6 +402,7 @@ float btkNLMTool<T>::MADEstimation(std::vector<float> & vecei, float & beta)
   std::sort(vecei.begin(), vecei.end());
     
   double sigma2 = 1.4826 * vecei[(int)(vecei.size()/2)];
+  std::cout<<"sigma : "<<sigma2<<"\n";
   sigma2 = sigma2 * sigma2;
   float NLMsmooth = 2 * beta * sigma2 * (2*m_halfPatchSize[0]+1) * (2*m_halfPatchSize[1]+1) * (2*m_halfPatchSize[2]+1);
   return NLMsmooth;

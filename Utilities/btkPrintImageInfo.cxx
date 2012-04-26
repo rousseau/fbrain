@@ -33,200 +33,288 @@
 
 ==========================================================================*/
 
-#if defined(_MSC_VER)
-#pragma warning ( disable : 4786 )
-#endif
 
-#include "itkImage.h"
-#include "itkImageRegionIteratorWithIndex.h"
-
-#include "itkImageFileReader.h"
-#include "itkSpatialOrientationAdapter.h"
-#include "itkExtractImageFilter.h"
-#include "itkSpatialOrientationAdapter.h"
-
-#include <iostream>
-
+// TCLAP includes
 #include <tclap/CmdLine.h>
 
-typedef itk::SpatialOrientation::ValidCoordinateOrientationFlags
-SO_OrientationType;
-std::string SO_OrientationToString(SO_OrientationType in)
+// STL includes
+#include "iostream"
+#include "string"
+
+// ITK includes
+#include "itkImage.h"
+#include "itkImageFileReader.h"
+#include "itkSpatialOrientationAdapter.h"
+#include "vnl/vnl_matrix.h"
+
+
+// Spatial orientation (RAS, LPS, etc.)
+typedef itk::SpatialOrientation::ValidCoordinateOrientationFlags SpatialOrientation;
+
+/**
+  * @brief Get the spatial orientation token (RAS, LPS, etc.) from the ITK spatial orientation.
+  * @param orientation ITK spatial orientation
+  * @return The corresponding spatial orientation token (RAS, LPS, etc.)
+  */
+std::string SpatialOrientationToString(SpatialOrientation orientation)
 {
-  switch(in)
+    std::string orientationString;
+
+    switch(orientation)
     {
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RIP:
-      return std::string("RIP");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_LIP:
-      return std::string("LIP");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RSP:
-      return std::string("RSP");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_LSP:
-      return std::string("LSP");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RIA:
-      return std::string("RIA");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_LIA:
-      return std::string("LIA");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RSA:
-      return std::string("RSA");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_LSA:
-      return std::string("LSA");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_IRP:
-      return std::string("IRP");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_ILP:
-      return std::string("ILP");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_SRP:
-      return std::string("SRP");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_SLP:
-      return std::string("SLP");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_IRA:
-      return std::string("IRA");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_ILA:
-      return std::string("ILA");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_SRA:
-      return std::string("SRA");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_SLA:
-      return std::string("SLA");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RPI:
-      return std::string("RPI");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_LPI:
-      return std::string("LPI");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RAI:
-      return std::string("RAI");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_LAI:
-      return std::string("LAI");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RPS:
-      return std::string("RPS");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_LPS:
-      return std::string("LPS");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RAS:
-      return std::string("RAS");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_LAS:
-      return std::string("LAS");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_PRI:
-      return std::string("PRI");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_PLI:
-      return std::string("PLI");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_ARI:
-      return std::string("ARI");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_ALI:
-      return std::string("ALI");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_PRS:
-      return std::string("PRS");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_PLS:
-      return std::string("PLS");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_ARS:
-      return std::string("ARS");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_ALS:
-      return std::string("ALS");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_IPR:
-      return std::string("IPR");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_SPR:
-      return std::string("SPR");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_IAR:
-      return std::string("IAR");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_SAR:
-      return std::string("SAR");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_IPL:
-      return std::string("IPL");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_SPL:
-      return std::string("SPL");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_IAL:
-      return std::string("IAL");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_SAL:
-      return std::string("SAL");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_PIR:
-      return std::string("PIR");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_PSR:
-      return std::string("PSR");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_AIR:
-      return std::string("AIR");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_ASR:
-      return std::string("ASR");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_PIL:
-      return std::string("PIL");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_PSL:
-      return std::string("PSL");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_AIL:
-      return std::string("AIL");
-    case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_ASL:
-      return "ASL";
-    default:
-      {
-      std::stringstream x;
-      x << (in & 0xff) << ", " << ((in >> 8) & 0xff) << ", " << ((in >> 16) && 0xff);
-      return x.str();
-      }
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RIP:
+            orientationString = "RIP";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_LIP:
+            orientationString = "LIP";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RSP:
+            orientationString = "RSP";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_LSP:
+            orientationString = "LSP";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RIA:
+            orientationString = "RIA";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_LIA:
+            orientationString = "LIA";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RSA:
+            orientationString = "RSA";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_LSA:
+            orientationString = "LSA";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_IRP:
+            orientationString = "IRP";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_ILP:
+            orientationString = "ILP";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_SRP:
+            orientationString = "SRP";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_SLP:
+            orientationString = "SLP";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_IRA:
+            orientationString = "IRA";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_ILA:
+            orientationString = "ILA";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_SRA:
+            orientationString = "SRA";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_SLA:
+            orientationString = "SLA";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RPI:
+            orientationString = "RPI";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_LPI:
+            orientationString = "LPI";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RAI:
+            orientationString = "RAI";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_LAI:
+            orientationString = "LAI";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RPS:
+            orientationString = "RPS";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_LPS:
+            orientationString = "LPS";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_RAS:
+            orientationString = "RAS";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_LAS:
+            orientationString = "LAS";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_PRI:
+            orientationString = "PRI";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_PLI:
+            orientationString = "PLI";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_ARI:
+            orientationString = "ARI";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_ALI:
+            orientationString = "ALI";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_PRS:
+            orientationString = "PRS";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_PLS:
+            orientationString = "PLS";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_ARS:
+            orientationString = "ARS";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_ALS:
+            orientationString = "ALS";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_IPR:
+            orientationString = "IPR";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_SPR:
+            orientationString = "SPR";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_IAR:
+            orientationString = "IAR";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_SAR:
+            orientationString = "SAR";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_IPL:
+            orientationString = "IPL";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_SPL:
+            orientationString = "SPL";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_IAL:
+            orientationString = "IAL";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_SAL:
+            orientationString = "SAL";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_PIR:
+            orientationString = "PIR";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_PSR:
+            orientationString = "PSR";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_AIR:
+            orientationString = "AIR";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_ASR:
+            orientationString = "ASR";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_PIL:
+            orientationString = "PIL";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_PSL:
+            orientationString = "PSL";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_AIL:
+            orientationString = "AIL";
+            break;
+        case itk::SpatialOrientation::ITK_COORDINATE_ORIENTATION_ASL:
+            orientationString = "ASL";
+            break;
+        default:
+            std::stringstream x;
+            x << (orientation & 0xff) << ", " << ((orientation >> 8) & 0xff) << ", " << ((orientation >> 16) && 0xff);
+            orientationString = x.str();
     }
+
+    return orientationString;
 }
+
+
+// Input sequence (4D)
+typedef itk::Image<short,4>            Sequence;
+typedef itk::ImageFileReader<Sequence> SequenceReader;
+
+// Input volume (3D)
+typedef itk::Image<short,3>         Image;
+typedef itk::ImageFileReader<Image> ImageReader;
+
 
 int main( int argc, char *argv[] )
 {
+    //
+    // Parse program's arguments
+    //
 
-  const char *inputFile = NULL;
-  unsigned int dim;
+    // Define command line parameters
+    std::string inputFileName;
+    unsigned int dimension;
 
-  TCLAP::CmdLine cmd("Prints some image information.", ' ', "Unversioned");
+    // Define command line parser
+    TCLAP::CmdLine cmd("Prints some image information.", ' ', "Unversioned");
 
-  TCLAP::ValueArg<std::string> inputArg("i","input","Input image",true,"","string",cmd);
-  TCLAP::ValueArg<unsigned int> dimArg("d","dimension","Image dimension (3 or 4, default is 3)",true,3,"unsigned int",cmd);
+    // Define command line arguments
+    TCLAP::ValueArg<std::string> inputFileNameArg("i", "input", "Input image", true, "", "string", cmd);
+    TCLAP::ValueArg<unsigned int> dimensionArg("d", "dimension", "Image dimension (default: 3; values: 3-4)", true, 3, "unsigned int", cmd);
 
-  cmd.parse( argc, argv );
+    // Parse arguments
+    cmd.parse( argc, argv );
 
-  inputFile = inputArg.getValue().c_str();
-  dim       = dimArg.getValue();
+    // Get back arguments' values
+    inputFileName = inputFileNameArg.getValue();
+    dimension     = dimensionArg.getValue();
 
-  typedef itk::Image< short, 3 >  ImageType;
 
-  if (dim==4)
-  {
-    typedef itk::Image< short, 4 >  SequenceType;
+    //
+    // Processing
+    //
 
-    typedef itk::ImageFileReader< SequenceType > SequenceReaderType;
-    SequenceReaderType::Pointer  sequenceReader  = SequenceReaderType::New();
-    sequenceReader->SetFileName(  inputFile );
-    sequenceReader->Update();
-
-    SequenceType::Pointer sequence = sequenceReader->GetOutput();
-    sequence->Print(std::cout);
-
-    typedef itk::ExtractImageFilter< SequenceType, ImageType > ExtractorType;
-    ExtractorType::Pointer extractor  = ExtractorType::New();
-    extractor -> SetInput( sequence );
-
-    SequenceType::RegionType region = sequence -> GetLargestPossibleRegion();
-    SequenceType::IndexType  start  = region.GetIndex();
-    SequenceType::SizeType   size   = sequence -> GetLargestPossibleRegion().GetSize();
-
-    size[3] = 0;
-    region.SetSize( size );
-    extractor -> SetExtractionRegion( region );
-    extractor -> SetDirectionCollapseToSubmatrix();
-    extractor -> Update();
-
-    std::cout << std::endl << "Anatomical orientation = " << SO_OrientationToString(
-        itk::SpatialOrientationAdapter().FromDirectionCosines( extractor -> GetOutput() -> GetDirection() )
-        ) << std::endl;
-
-  } else if (dim==3)
+    try
     {
-      typedef itk::ImageFileReader< ImageType > ImageReaderType;
-      ImageReaderType::Pointer  imageReader  = ImageReaderType::New();
-      imageReader->SetFileName(  inputFile );
-      imageReader->Update();
-      ImageType::Pointer image = imageReader->GetOutput();
-      image->Print(std::cout);
+        if(dimension == 4)
+        {
+            // Read sequence
+            SequenceReader::Pointer  sequenceReader  = SequenceReader::New();
+            sequenceReader->SetFileName(inputFileName);
+            sequenceReader->Update();
 
-      std::cout << std::endl << "Anatomical orientation = " << SO_OrientationToString(
-        itk::SpatialOrientationAdapter().FromDirectionCosines( image -> GetDirection() )
-        ) << std::endl;
-    } else
-      {
-        std::cout << "ERROR: Image dimension unsupported." << std::endl;
-        return EXIT_FAILURE;
+            Sequence::Pointer sequence = sequenceReader->GetOutput();
 
-      }
+            // Display informations
+            std::cout << "Dimension: " << Sequence::GetImageDimension() << std::endl << std::endl;
 
-  return EXIT_SUCCESS;
+            std::cout << "Size:    " << sequence->GetLargestPossibleRegion().GetSize() << std::endl;
+            std::cout << "Origin:  " << sequence->GetOrigin() << std::endl;
+            std::cout << "Spacing: " << sequence->GetSpacing() << std::endl << std::endl;
+
+            std::cout << "Direction:" << std::endl << sequence->GetDirection() << std::endl;
+
+            // Display spatial orientation
+            Image::DirectionType direction(sequence->GetDirection().GetVnlMatrix().extract(3,3));
+            std::cout << "Anatomical orientation: " << SpatialOrientationToString(itk::SpatialOrientationAdapter().FromDirectionCosines(direction)) << std::endl;
+        }
+        else if (dimension == 3)
+        {
+            // Read image
+            ImageReader::Pointer imageReader = ImageReader::New();
+            imageReader->SetFileName(inputFileName);
+            imageReader->Update();
+
+            Image::Pointer image = imageReader->GetOutput();
+
+            // Display informations
+            std::cout << "Dimension: " << Image::GetImageDimension() << std::endl << std::endl;
+
+            std::cout << "Size:    " << image->GetLargestPossibleRegion().GetSize() << std::endl;
+            std::cout << "Origin:  " << image->GetOrigin() << std::endl;
+            std::cout << "Spacing: " << image->GetSpacing() << std::endl << std::endl;
+
+            std::cout << "Direction:" << std::endl << image->GetDirection() << std::endl;
+
+            // Display spatial orientation
+            std::cout << std::endl << "Anatomical orientation: " << SpatialOrientationToString(itk::SpatialOrientationAdapter().FromDirectionCosines(image->GetDirection())) << std::endl;
+        }
+        else // dimension != 3 && dimension != 4
+        {
+            std::stringstream message;
+            message << "Image dimension (" << dimension << ") is unsupported ! You should use either dimension 3 or 4.";
+            throw std::string(message.str());
+        }
+    }
+    catch(itk::ExceptionObject &error)
+    {
+        std::cout << "ITK error: " << error << std::endl;
+    }
+    catch(std::string &message)
+    {
+        std::cout << "Error: " << message << std::endl;
+    }
+
+    return EXIT_SUCCESS;
 }
 

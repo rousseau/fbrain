@@ -1,5 +1,5 @@
 /*
-Copyright or © or Copr. Université de Strasbourg - Centre National de la Recherche Scientifique
+Copyright or Â© or Copr. UniversitÃ© de Strasbourg - Centre National de la Recherche Scientifique
 
 12 februar 2010
 < pontabry at unistra dot fr >

@@ -78,6 +78,8 @@ int main( int argc, char *argv[] )
   const char *outImage = NULL;
   const char *combinedMask = NULL;
 
+  std::string refImage;
+
   // Parse arguments
 
   TCLAP::CmdLine cmd("Creates a high resolution image from a set of low "
@@ -93,6 +95,8 @@ int main( int argc, char *argv[] )
       "transform (this is an output to check initial transform consistency)",false,"string",cmd);
   TCLAP::ValueArg<std::string> outArg("o","output","High resolution image",true,
       "","string",cmd);
+  TCLAP::ValueArg<std::string> refArg("r","reference","Reference Image",false, "","string",cmd);
+
   TCLAP::ValueArg<std::string> combinedMaskArg("","combinedMasks","All image "
       "masks combined in a single one",false,"","string",cmd);
   TCLAP::ValueArg<unsigned int> iterArg("n","iter","Maximum number of iterations"
@@ -131,6 +135,7 @@ int main( int argc, char *argv[] )
   input = inputArg.getValue();
   mask = maskArg.getValue();
   outImage = outArg.getValue().c_str();
+  refImage = refArg.getValue();
   combinedMask = combinedMaskArg.getValue().c_str();
   transform = transformArg.getValue();
   roi = roiArg.getValue();
@@ -215,6 +220,7 @@ int main( int argc, char *argv[] )
   ImagePointer hrImage;
   ImagePointer hrImageOld;
   ImagePointer hrImageIni;
+  ImagePointer hrRefImage;
 
   lowToHighResFilter -> SetNumberOfImages(numberOfImages);
   lowToHighResFilter -> SetTargetImage( 0 );
@@ -225,11 +231,20 @@ int main( int argc, char *argv[] )
     lowToHighResFilter -> SetIterations( 0 );
     itMax = 1;
   }
+  bool computeRefImage = true;
+
+  if(refImage != "")
+  {
+      ImageReaderType::Pointer imageReader = ImageReaderType::New();
+      imageReader -> SetFileName( refImage );
+      imageReader -> Update();
+      hrRefImage = imageReader -> GetOutput();
+      computeRefImage = false;
+  }
 
   for (unsigned int i=0; i<numberOfImages; i++)
   {
-    // Read and set image
-
+    std::cout<<"Reading image : "<<input[i].c_str()<<"\n";
     ImageReaderType::Pointer imageReader = ImageReaderType::New();
     imageReader -> SetFileName( input[i].c_str() );
     imageReader -> Update();
@@ -306,10 +321,12 @@ int main( int argc, char *argv[] )
         }
   }
 
-  // Start rigid registration on the desired target image (#0 by default)
+  std::cout<<"Start rigid registration on the desired target image (#0 by default)\n";
   try
     {
-        lowToHighResFilter->StartRegistration();
+
+       lowToHighResFilter->StartRegistration();
+
     }
   catch( itk::ExceptionObject & err )
     {
@@ -343,6 +360,12 @@ int main( int argc, char *argv[] )
   // the user selection
 
   hrImageIni = lowToHighResFilter->GetHighResolutionImage();
+  
+  if(computeRefImage)
+  {
+      hrRefImage = lowToHighResFilter->GetHighResolutionImage();
+  }
+
 
   for (unsigned int i=0; i<numberOfImages; i++)
   {
@@ -377,7 +400,7 @@ int main( int argc, char *argv[] )
       {
         rigid3DRegistration[im] = Rigid3DRegistrationType::New();
         rigid3DRegistration[im] -> SetFixedImage( images[im] );
-        rigid3DRegistration[im] -> SetMovingImage( hrImageIni );
+        rigid3DRegistration[im] -> SetMovingImage( hrRefImage );
         rigid3DRegistration[im] -> SetFixedImageMask( imageMasks[im] );
         rigid3DRegistration[im] -> SetTransform( rigid3DTransforms[im] );
 
@@ -401,7 +424,7 @@ int main( int argc, char *argv[] )
         {
           registration[im] = RegistrationType::New();
           registration[im] -> SetFixedImage( images[im] );
-          registration[im] -> SetMovingImage( hrImageIni );
+          registration[im] -> SetMovingImage( hrRefImage );
           registration[im] -> SetImageMask( imageMasks[im] );
           registration[im] -> SetTransform( transforms[im] );
 
@@ -451,7 +474,7 @@ int main( int argc, char *argv[] )
     }
 
     resampler -> UseReferenceImageOn();
-    resampler -> SetReferenceImage( hrImageIni );
+    resampler -> SetReferenceImage( hrRefImage );
     resampler -> SetImageMask(lowToHighResFilter -> GetImageMaskCombination());
     resampler -> Update();
 
@@ -461,7 +484,6 @@ int main( int argc, char *argv[] )
       hrImageOld = hrImage;
 
     hrImage = resampler -> GetOutput();
-
 
     std::cout << "done. " << std::endl; std::cout.flush();
 
