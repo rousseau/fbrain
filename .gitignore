@@ -54,3 +54,4 @@ CMakeLists.txt.user
 # Build directories #
 #####################
 build
+release
