@@ -522,8 +522,8 @@ SliceToSliceInterpolateImageFunction< TInputImage, TCoordRep >
 
     // Fill data structures for RBF interpolation
 
-    MatDoub pts(k_spa, ImageDimension);
-    VecDoub y(k_spa);
+    BtkMatrix<double> pts(k_spa, ImageDimension);
+    BtkVector<double> y(k_spa);
 
     for( unsigned int i=0; i< k_spa; ++i)
       {

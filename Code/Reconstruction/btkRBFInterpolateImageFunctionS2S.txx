@@ -619,8 +619,8 @@ RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
       fixedNN = true;
     }
 
-    MatDoub pts(numberOfPoints,5);
-    VecDoub y(numberOfPoints);
+    BtkMatrix<double> pts(numberOfPoints,5);
+    BtkVector<double> y(numberOfPoints);
 
     typename IteratorType::IndexType index;
     typename InputImageType::PointType physicalPoint;
@@ -710,11 +710,11 @@ RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
 
 
     RBF2_gauss gaussian(r_spa,r_gra);
-    RBF_interp RBFInterpolator(pts,y,gaussian,1);
+    RBF2_interp RBFInterpolator(pts,y,gaussian,1);
 
     RealType value = NumericTraits<RealType>::Zero;
 
-    VecDoub pt(5);
+    BtkVector<double> pt(5);
     pt[0] = point[0]; pt[1] = point[1]; pt[2] = point[2];
     pt[3] = theta; pt[4] = phi;
 

@@ -49,9 +49,10 @@
 #include "itkTransformFileWriter.h"
 #include "itkTransformFileReader.h"
 
-#include "nr3.h"
-#include "ludcmp.h"
-#include "interp_rbf_nr.h"
+//#include "nr3.h"
+//#include "ludcmp.h"
+//#include "interp_rbf_nr.h"
+#include "btkRBFInterpolation.h"
 
 #include "ANN.h"
 

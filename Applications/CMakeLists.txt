@@ -101,10 +101,19 @@ ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkMseCostFunction.h
 
 TARGET_LINK_LIBRARIES(btkSuperResolutionFilterTest ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkGroupwiseS2SDistortionCorrection btkGroupwiseS2SDistortionCorrection.cxx )
+ADD_EXECUTABLE(btkGroupwiseS2SDistortionCorrection btkGroupwiseS2SDistortionCorrection.cxx
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolation.h
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.h
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.cxx
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkNumerical.h
+ )
 TARGET_LINK_LIBRARIES(btkGroupwiseS2SDistortionCorrection ${ITK_LIBRARIES} ${ANN_LIBRARY})
 
-ADD_EXECUTABLE(btkRBFInterpolationS2S btkRBFInterpolationS2S.cxx )
+ADD_EXECUTABLE(btkRBFInterpolationS2S btkRBFInterpolationS2S.cxx
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolation.h
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.h
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.cxx
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkNumerical.h )
 TARGET_LINK_LIBRARIES(btkRBFInterpolationS2S ${ITK_LIBRARIES} ${ANN_LIBRARY})
 
 INSTALL(TARGETS btkImageReconstruction
