@@ -53,10 +53,11 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "btkDiffusionGradientTable.h"
 #include "itkEuler3DTransform.h"
 
-#include "btkNiftiFilenameRadix.h"
+
 
 //FIXME : Error when using this with relative path (like ../toto.nii)
 //#include "btkFileNameTools.h"
+#include "btkNiftiFilenameRadix.h"
 
 int main( int argc, char *argv[] )
 {
