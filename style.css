@@ -1,0 +1,126 @@
+body
+{
+	margin-top: 1.0em;
+	background-color: #CDC9C9;
+	font-family: "Helvetica,Arial,FreeSans";
+	color: #000000;
+}
+
+#container
+{
+	margin: 0 auto;
+	width: 800px;
+	background-color: #ffffff;
+	padding-bottom: 25px;
+	padding-right:25px;
+	padding-left:25px;
+	border: 2px solid #aaa;
+	border-radius: 10px;
+  box-shadow: 1px 1px 12px #555;
+}
+
+#Examples
+{
+   width:auto;
+   margin-top:20px;
+   padding-bottom:25px;
+   padding-top:5px;
+}
+
+#ExCol1
+{
+   width:400px;
+   height:600px;
+   float:left;
+}
+
+#ExCol2
+{
+   width:400px;
+   height:600px;
+   float:right;
+
+}
+
+
+#ExTracto
+{
+	padding-top: 100px;
+	padding-bottom: 100px;
+}
+
+#MyImg
+{
+  box-shadow: 1px 1px 12px #555;
+	border-radius: 10px;
+}
+
+h1
+{
+	font-size: 3.8em; 
+	color: #067e6a; 
+	margin-bottom: 3px; 
+}
+
+h1 .small
+{
+	font-size: 0.4em; 
+}
+
+h1 a
+{ 
+	text-decoration: none 
+}
+
+h2 
+{ 
+	font-size: 1.5em; 
+	color: #067e6a; 
+}
+
+h3 
+{ 
+	text-align: center; 
+	color: #067e6a; 
+}
+
+a 
+{ 
+	color: #067e6a; 
+}
+
+.description 
+{
+	font-size: 1.2em;
+	margin-bottom: 30px;
+	margin-top: 30px;
+	font-style: italic;
+}
+
+.download 
+{ 
+	float: right;
+}
+
+pre 
+{
+	background: #000;
+	color: #fff;
+	padding: 15px;
+  box-shadow: 1px 1px 12px #555;
+	border-radius: 10px;
+}
+
+hr
+{ 
+	border: 0; 
+	width: 80%;
+	border-bottom: 1px solid #aaa
+}
+
+.footer 
+{ 
+	text-align:center; 
+	padding-top:30px;
+	font-style: italic;
+}
