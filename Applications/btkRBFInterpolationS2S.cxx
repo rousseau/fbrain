@@ -55,6 +55,9 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 #include "btkNiftiFilenameRadix.h"
 
+//FIXME : Error when using this with relative path (like ../toto.nii)
+//#include "btkFileNameTools.h"
+
 int main( int argc, char *argv[] )
 {
 
