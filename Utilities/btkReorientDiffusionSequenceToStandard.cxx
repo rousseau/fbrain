@@ -60,9 +60,8 @@
 /* Btk includes */
 #include "btkLandmarksFileReader.h"
 #include "btkDiffusionGradientTable.h"
-//FIXME : Error when using this with relative path (like ../toto.nii)
-//#include "btkFileNameTools.h"
-#include "btkNiftiFilenameRadix.h"
+#include "btkFileNameTools.h"
+
 
 int main( int argc, char *argv[] )
 {

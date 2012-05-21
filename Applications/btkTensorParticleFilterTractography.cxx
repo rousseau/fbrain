@@ -1,5 +1,5 @@
 /*
- * Copyright or © or Copr. Université de Strasbourg - Centre National de la Recherche Scientifique
+ * Copyright or Â© or Copr. UniversitÃ© de Strasbourg - Centre National de la Recherche Scientifique
  *
  * 24 januar 2011
  * < pontabry at unistra dot fr >
@@ -54,7 +54,7 @@
 #include "btkDTFPAPrioriDensity.h"
 #include "btkDTFPLikelihoodDensity.h"
 #include "btkDTFPParticleFilter.h"
-#include "btkNiftiFilenameRadix.h"
+#include "btkFileNameTools.h"
 
 
 using namespace btk;

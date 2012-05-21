@@ -53,7 +53,7 @@
 
 /* Btk includes */
 #include "btkDiffusionGradientTable.h"
-#include "btkNiftiFilenameRadix.h"
+#include "btkFileNameTools.h"
 #include "btkAffineRegistration.h"
 
 

@@ -56,7 +56,7 @@
 #include "btkAPrioriDensity.h"
 #include "btkLikelihoodDensity.h"
 #include "btkParticleFilter.h"
-#include "btkNiftiFilenameRadix.h"
+#include "btkFileNameTools.h"
 
 
 using namespace btk;
