@@ -50,22 +50,14 @@ TARGET_LINK_LIBRARIES(btkLabelPropagation ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkSuperResolution btkSuperResolution.cxx
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionImageFilter.h
-#${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkSuperResolutionFilter.cxx
-#${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkSuperResolutionFilter.h
-#${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkBiasCorrectionFilter.cxx
-#${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkBiasCorrectionFilter.h
-#${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkHighResolutionReconstructionFilter.cxx
-#${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkHighResolutionReconstructionFilter.h
-#${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrectionFilter.cxx
-#${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrectionFilter.h
-#${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkPSFEstimationFilter.cxx
-#${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkPSFEstimationFilter.h
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSimulateLRImageFilter.cxx
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSimulateLRImageFilter.h
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkCreateHRMaskFilter.cxx
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkCreateHRMaskFilter.h
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkMseCostFunction.h
+${fbrain_SOURCE_DIR}/Code/Denoising/btkNLMTool.h
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionImageFilter.h
 )
 
 TARGET_LINK_LIBRARIES(btkSuperResolution ${ITK_LIBRARIES})
@@ -97,6 +89,7 @@ ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkCreateHRMaskFilter.cxx
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkCreateHRMaskFilter.h
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkMseCostFunction.h
+
 )
 
 TARGET_LINK_LIBRARIES(btkSuperResolutionFilterTest ${ITK_LIBRARIES})
@@ -106,6 +99,8 @@ ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolation.h
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.h
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.cxx
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkNumerical.h
+${fbrain_SOURCE_DIR}/Code/InputOutput/btkNiftiFilenameRadix.h
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkGroupwiseS2SDistortionCorrection.h
  )
 TARGET_LINK_LIBRARIES(btkGroupwiseS2SDistortionCorrection ${ITK_LIBRARIES} ${ANN_LIBRARY})
 
@@ -113,7 +108,12 @@ ADD_EXECUTABLE(btkRBFInterpolationS2S btkRBFInterpolationS2S.cxx
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolation.h
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.h
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.cxx
-${fbrain_SOURCE_DIR}/Code/Reconstruction/btkNumerical.h )
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkNumerical.h
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolateImageFunctionS2S.h
+${fbrain_SOURCE_DIR}/Code/DTI/btkDiffusionGradientTable.h
+${fbrain_SOURCE_DIR}/Code/InputOutput/btkNiftiFilenameRadix.h
+)
+
 TARGET_LINK_LIBRARIES(btkRBFInterpolationS2S ${ITK_LIBRARIES} ${ANN_LIBRARY})
 
 INSTALL(TARGETS btkImageReconstruction

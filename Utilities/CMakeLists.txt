@@ -10,32 +10,49 @@ INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Tools)
 ADD_EXECUTABLE(btkModifyImageUsingLookUpTable btkModifyImageUsingLookUpTable.cxx )
 TARGET_LINK_LIBRARIES(btkModifyImageUsingLookUpTable ${ITK_LIBRARIES} )
 
-ADD_EXECUTABLE(btkConvertGradientTable btkConvertGradientTable.cxx )
+ADD_EXECUTABLE(btkConvertGradientTable btkConvertGradientTable.cxx
+        ${fbrain_SOURCE_DIR}/Code/DTI/btkDiffusionGradientTable.h
+ )
 TARGET_LINK_LIBRARIES(btkConvertGradientTable ${ITK_LIBRARIES} )
 
 ADD_EXECUTABLE(btkReorientImageToStandard btkReorientImageToStandard.cxx
-        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkLandmarksFileReader.cxx)
+        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkLandmarksFileReader.cxx
+        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkLandmarksFileReader.h
+)
 TARGET_LINK_LIBRARIES(btkReorientImageToStandard ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkReorientDiffusionSequenceToStandard btkReorientDiffusionSequenceToStandard.cxx
-        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkLandmarksFileReader.cxx)
+        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkLandmarksFileReader.cxx
+        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkLandmarksFileReader.h
+        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkNiftiFilenameRadix.h
+        ${fbrain_SOURCE_DIR}/Code/DTI/btkDiffusionGradientTable.h
+)
 TARGET_LINK_LIBRARIES(btkReorientDiffusionSequenceToStandard ${ITK_LIBRARIES} ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkSetStandardCoorSystem btkSetStandardCoorSystem.cxx )
+ADD_EXECUTABLE(btkSetStandardCoorSystem btkSetStandardCoorSystem.cxx
+        ${fbrain_SOURCE_DIR}/Code/DTI/btkDiffusionGradientTable.h
+ )
 TARGET_LINK_LIBRARIES(btkSetStandardCoorSystem ${ITK_LIBRARIES} )
 
 ADD_EXECUTABLE(btkPrintImageInfo btkPrintImageInfo.cxx )
 TARGET_LINK_LIBRARIES(btkPrintImageInfo ${ITK_LIBRARIES} )
 
-ADD_EXECUTABLE(btkRegisterDiffusionToAnatomicalData btkRegisterDiffusionToAnatomicalData.cxx )
+ADD_EXECUTABLE(btkRegisterDiffusionToAnatomicalData btkRegisterDiffusionToAnatomicalData.cxx
+        ${fbrain_SOURCE_DIR}/Code/DTI/btkDiffusionGradientTable.h
+        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkNiftiFilenameRadix.h
+ )
 TARGET_LINK_LIBRARIES(btkRegisterDiffusionToAnatomicalData ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkNrrdToNifti btkNrrdToNifti.cxx
         ${fbrain_SOURCE_DIR}/Code/InputOutput/btkFileNameTools.h
-        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkNrrdField.cxx)
+        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkNrrdField.cxx
+        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkNrrdField.h
+)
 TARGET_LINK_LIBRARIES(btkNrrdToNifti ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkNiftiToNrrd btkNiftiToNrrd.cxx)
+ADD_EXECUTABLE(btkNiftiToNrrd btkNiftiToNrrd.cxx
+        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkNiftiFilenameRadix.h
+)
 TARGET_LINK_LIBRARIES(btkNiftiToNrrd ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkExtractOneImageFromSequence btkExtractOneImageFromSequence.cxx)
@@ -47,7 +64,10 @@ TARGET_LINK_LIBRARIES(btkCropImageUsingMask ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkBinarizeLabels btkBinarizeLabels.cxx )
 TARGET_LINK_LIBRARIES(btkBinarizeLabels ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkResampleLabelsByInjection btkResampleLabelsByInjection.cxx )
+ADD_EXECUTABLE(btkResampleLabelsByInjection btkResampleLabelsByInjection.cxx
+        ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkResampleLabelsByInjectionFilter.h
+        ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
+ )
 TARGET_LINK_LIBRARIES(btkResampleLabelsByInjection ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkSimulateStandardViewFromIsotropicImage btkSimulateStandardViewFromIsotropicImage.cxx)
@@ -59,7 +79,12 @@ TARGET_LINK_LIBRARIES(btkSimulateStandardViewFromIsotropicImage ${ITK_LIBRARIES}
 ADD_EXECUTABLE(btkAverageImagesWithReference btkAverageImagesWithReference.cxx)
 TARGET_LINK_LIBRARIES(btkAverageImagesWithReference ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkImageInjection btkImageInjection.cxx )
+ADD_EXECUTABLE(btkImageInjection btkImageInjection.cxx
+        ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLowToHighImageResolutionMethod.h
+        ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkResampleImageByInjectionFilter.h
+        ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkImageIntersectionCalculator.h
+        ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
+)
 TARGET_LINK_LIBRARIES(btkImageInjection ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkImageSimilarity btkImageSimilarity.cxx )
@@ -71,7 +96,11 @@ TARGET_LINK_LIBRARIES(btkPSNR ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkWeightedMean btkWeightedMean.cxx )
 TARGET_LINK_LIBRARIES(btkWeightedMean ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkSequenceNormalization btkSequenceNormalization.cxx )
+ADD_EXECUTABLE(btkSequenceNormalization btkSequenceNormalization.cxx
+        ${fbrain_SOURCE_DIR}/Code/DTI/btkDiffusionGradientTable.h
+        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkNiftiFilenameRadix.h
+        ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkAffineRegistration.h
+ )
 TARGET_LINK_LIBRARIES(btkSequenceNormalization ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkRescaleIntensity btkRescaleIntensity.cxx )
@@ -83,7 +112,9 @@ TARGET_LINK_LIBRARIES(btkReconstructionComparisonTool ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkIteratedBackProjection
 btkIteratedBackProjection.cxx
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionImageFilter.h
-${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h)
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionManager.h
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
+)
 TARGET_LINK_LIBRARIES(btkIteratedBackProjection ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkImageResampling btkImageResampling.cxx)
