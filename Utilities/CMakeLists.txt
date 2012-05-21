@@ -27,7 +27,7 @@ ADD_EXECUTABLE(btkReorientDiffusionSequenceToStandard btkReorientDiffusionSequen
         ${fbrain_SOURCE_DIR}/Code/InputOutput/btkNiftiFilenameRadix.h
         ${fbrain_SOURCE_DIR}/Code/DTI/btkDiffusionGradientTable.h
 )
-TARGET_LINK_LIBRARIES(btkReorientDiffusionSequenceToStandard ${ITK_LIBRARIES} ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkReorientDiffusionSequenceToStandard ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkSetStandardCoorSystem btkSetStandardCoorSystem.cxx
         ${fbrain_SOURCE_DIR}/Code/DTI/btkDiffusionGradientTable.h
