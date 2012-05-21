@@ -38,7 +38,9 @@ ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLowToHighImageResolutionMethod.h
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceRigidRegistration.h
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkResampleImageByInjectionFilter.h
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
-${fbrain_SOURCE_DIR}/Code/Reconstruction/btkImageIntersectionCalculator.h )
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkImageIntersectionCalculator.h
+${fbrain_SOURCE_DIR}/Code/Tools/btkMacro.h
+ )
 
 TARGET_LINK_LIBRARIES(btkImageReconstruction ${ITK_LIBRARIES})
 
