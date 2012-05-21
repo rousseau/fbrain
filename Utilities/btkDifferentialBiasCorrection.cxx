@@ -39,9 +39,11 @@ Neuroimage 59 (2012) 3995-4005
 */
 
 
-
+/* Standard includes */
 #include <tclap/CmdLine.h>
+#include "vector"
 
+/* Itk includes */
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
@@ -51,13 +53,12 @@ Neuroimage 59 (2012) 3995-4005
 #include "itkSubtractImageFilter.h"
 #include "itkExpImageFilter.h"
 #include "itkMultiplyImageFilter.h"
-//#include "itkPowImageFilter.h"
 #include "itkImageRegionIterator.h"
 #include "itkDivideImageFilter.h"
 #include "itkStatisticsImageFilter.h"
 #include "itkAddImageFilter.h"
 
-#include <vector>
+
 
 int main(int argc, char** argv)
 {

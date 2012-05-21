@@ -54,6 +54,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "btkFileNameTools.h"
 
 
+
 // Precision of images' intensities
 typedef short PixelType;
 

@@ -37,16 +37,15 @@
 #pragma warning ( disable : 4786 )
 #endif
 
+/* Standard includes */
+#include <tclap/CmdLine.h>
+
+/* Itk includes */
 #include "itkImage.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkContinuousIndex.h"
-
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
-
-#include <tclap/CmdLine.h>
-#include "vnl/vnl_cross.h"
-
 #include "itkEuler3DTransform.h"
 #include "itkExtractImageFilter.h"
 #include "itkResampleImageFilter.h"
@@ -54,15 +53,13 @@
 #include "itkJoinSeriesImageFilter.h"
 #include "itkOrientImageFilter.h"
 
-#include "btkDiffusionGradientTable.h"
-
+/* Vnl includes */
 #include "vnl/vnl_inverse.h"
+#include "vnl/vnl_cross.h"
 
-// Local includes
+/* Btk includes */
 #include "btkLandmarksFileReader.h"
-
-
-
+#include "btkDiffusionGradientTable.h"
 //FIXME : Error when using this with relative path (like ../toto.nii)
 //#include "btkFileNameTools.h"
 #include "btkNiftiFilenameRadix.h"

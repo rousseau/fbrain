@@ -31,16 +31,18 @@ The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-B license and that you accept its terms.
 */
 
+/* Standard includes */
 #include <tclap/CmdLine.h>
+#include "string"
+#include "iomanip"
 
+/* Itk includes */
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
-
 #include "itkImage.h"
 #include "itkCropImageFilter.h"
 
-#include <string>
-#include <iomanip>
+
 
 template<unsigned int imageDimension>
 int CropImageUsingMask(std::string input_file, std::string output_file, std::string mask_file)

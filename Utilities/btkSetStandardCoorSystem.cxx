@@ -37,8 +37,10 @@
 #pragma warning ( disable : 4786 )
 #endif
 
+/* Standard includes*/
 #include <tclap/CmdLine.h>
 
+/* Itk includes */
 #include "itkImage.h"
 #include "itkImage.h"
 
@@ -49,9 +51,12 @@
 #include "itkExtractImageFilter.h"
 #include "itkJoinSeriesImageFilter.h"
 
+#include "itkEuler3DTransform.h"
+
+/* Btk includes */
 #include "btkDiffusionGradientTable.h"
 
-#include "itkEuler3DTransform.h"
+
 
 int main( int argc, char *argv[] )
 {

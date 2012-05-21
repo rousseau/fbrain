@@ -37,9 +37,14 @@
 #pragma warning ( disable : 4786 )
 #endif
 
+/* Standard includes */
+#include <tclap/CmdLine.h>
+
+/* Itk includes */
 #include "itkImage.h"
 #include "itkImageFileReader.h"
-#include <tclap/CmdLine.h>
+
+/* Btk includes */
 #include "btkDiffusionGradientTable.h"
 
 int main( int argc, char *argv[] )

@@ -37,24 +37,25 @@
 #pragma warning ( disable : 4786 )
 #endif
 
+/* Standard includes */
+#include <tclap/CmdLine.h>
+
+/* Itk includes */
 #include "itkImage.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkContinuousIndex.h"
-
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
-
-#include <tclap/CmdLine.h>
-#include "vnl/vnl_cross.h"
-
 #include "itkEuler3DTransform.h"
 #include "itkResampleImageFilter.h"
 #include "itkNearestNeighborInterpolateImageFunction.h"
 #include "itkOrientImageFilter.h"
 
+/* Vnl includes */
 #include "vnl/vnl_inverse.h"
+#include "vnl/vnl_cross.h"
 
-// Local includes
+/* Btk includes */
 #include "btkLandmarksFileReader.h"
 
 

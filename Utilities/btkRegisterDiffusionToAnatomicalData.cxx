@@ -37,8 +37,10 @@
 #pragma warning ( disable : 4786 )
 #endif
 
+/* Standard includes */
 #include <tclap/CmdLine.h>
 
+/* Itk includes */
 #include "itkImage.h"
 
 #include "itkAffineTransform.h"
@@ -64,15 +66,14 @@
 #include "itkDiscreteGaussianImageFilter.h"
 #include "itkJoinSeriesImageFilter.h"
 
-#include "btkDiffusionGradientTable.h"
-
 #include "itkAffineTransform.h"
 #include "itkMatrixOffsetTransformBase.h"
 #include "itkTransformFileReader.h"
 #include "itkTransformFileWriter.h"
 #include "itkTransformFactory.h"
 
-
+/* Btk includes */
+#include "btkDiffusionGradientTable.h"
 //FIXME : Error when using this with relative path (like ../toto.nii)
 //#include "btkFileNameTools.h"
 #include "btkNiftiFilenameRadix.h"

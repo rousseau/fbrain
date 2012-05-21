@@ -33,16 +33,16 @@
  
  ==========================================================================*/
 
+/* Standard includes */
+#include "string"
+#include "iomanip"
+#include <tclap/CmdLine.h>
 
+/* Itk includes */
 #include "itkImageFileReader.h"
-
 #include "itkImage.h"
 #include "itkMinimumMaximumImageCalculator.h"
 
-#include <string>
-#include <iomanip>
-
-#include <tclap/CmdLine.h>
 
 
 int main(int argc, char *argv[])

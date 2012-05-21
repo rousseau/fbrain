@@ -37,27 +37,26 @@
 #pragma warning ( disable : 4786 )
 #endif
 
+/* Standard includes */
+#include <tclap/CmdLine.h>
+#include "stdio.h"
+
+/* Itk includes */
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
-
 #include "itkImageMaskSpatialObject.h"
-
 #include "itkTransformFileReader.h"
 #include "itkTransformFactory.h"
 #include "itkMatrixOffsetTransformBase.h"
-#include "btkSliceBySliceTransform.h"
-
-#include <tclap/CmdLine.h>
-#include <stdio.h>
-
-#include "btkSuperResolutionManager.h"
-
-
 #include "itkBSplineInterpolateImageFunction.h"
 #include "itkImageRegionIterator.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkContinuousIndex.h"
+
+/* Btk includes */
+#include "btkSuperResolutionManager.h"
+#include "btkSliceBySliceTransform.h"
 
 
 int main( int argc, char *argv[] )
