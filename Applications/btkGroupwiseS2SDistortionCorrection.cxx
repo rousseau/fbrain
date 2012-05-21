@@ -47,7 +47,7 @@
 #include "itkImageMaskSpatialObject.h"
 
 /* Btk includes */
-#include "btkNiftiFilenameRadix.h"
+#include "btkFileNameTools.h"
 #include "btkGroupwiseS2SDistortionCorrection.h"
 
 

@@ -55,9 +55,8 @@ knowledge of the CeCILL-B license and that you accept its terms.
 /* Btk includes */
 #include "btkDiffusionGradientTable.h"
 #include "btkRBFInterpolateImageFunctionS2S.h"
-//FIXME : Error when using this with relative path (like ../toto.nii)
-//#include "btkFileNameTools.h"
-#include "btkNiftiFilenameRadix.h"
+#include "btkFileNameTools.h"
+
 
 int main( int argc, char *argv[] )
 {

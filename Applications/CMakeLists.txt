@@ -99,7 +99,7 @@ ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolation.h
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.h
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.cxx
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkNumerical.h
-${fbrain_SOURCE_DIR}/Code/InputOutput/btkNiftiFilenameRadix.h
+${fbrain_SOURCE_DIR}/Code/InputOutput/btkFileNameTools.h
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkGroupwiseS2SDistortionCorrection.h
  )
 TARGET_LINK_LIBRARIES(btkGroupwiseS2SDistortionCorrection ${ITK_LIBRARIES} ${ANN_LIBRARY})
@@ -111,7 +111,7 @@ ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.cxx
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkNumerical.h
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolateImageFunctionS2S.h
 ${fbrain_SOURCE_DIR}/Code/DTI/btkDiffusionGradientTable.h
-${fbrain_SOURCE_DIR}/Code/InputOutput/btkNiftiFilenameRadix.h
+${fbrain_SOURCE_DIR}/Code/InputOutput/btkFileNameTools.h
 )
 
 TARGET_LINK_LIBRARIES(btkRBFInterpolationS2S ${ITK_LIBRARIES} ${ANN_LIBRARY})

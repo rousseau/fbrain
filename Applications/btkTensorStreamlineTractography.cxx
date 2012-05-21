@@ -1,5 +1,5 @@
 /*
- * Copyright or © or Copr. Université de Strasbourg - Centre National de la Recherche Scientifique
+ * Copyright or Â© or Copr. UniversitÃ© de Strasbourg - Centre National de la Recherche Scientifique
  *
  * 07 july 2011
  * < pontabry at unistra dot fr >
@@ -54,7 +54,7 @@
 #include "btkDirection.h"
 #include "btkDTFPSignal.h"
 #include "btkDTFPSignalExtractor.h"
-#include "btkNiftiFilenameRadix.h"
+#include "btkFileNameTools.h"
 
 
 using namespace btk;
@@ -281,23 +281,23 @@ int main(int argc, char *argv[])
                     // Streamline propagation
                     //
 
-                    // Entrées : signalFun, mask, begin, stepSize, faThreshold
+                    // EntrÃ©es : signalFun, mask, begin, stepSize, faThreshold
                     // Sortie : fiber (vtkPolyData)
 
-                    // Principe : propagation streamline (suivi direction de chaque tenseur -à chaque point de l'image) en avançant dans la direction d'un pas égal à stepSize
-                    // Condition d'arrêt : FA inférieure à un seuil
+                    // Principe : propagation streamline (suivi direction de chaque tenseur -Ã  chaque point de l'image) en avanÃ§ant dans la direction d'un pas Ã©gal Ã  stepSize
+                    // Condition d'arrÃªt : FA infÃ©rieure Ã  un seuil
 
                     // Algorithme
-                    // chercher direction max du point courant et sa symétrique
-                    // pour chaque direction, exécuter les instructions suivantes :
-                    // initialiser dernière direction à la direction de départ
-                    // initialiser le point courant à begin + déplacement dans la dernière direction
-                    // initialiser continuer à vrai
+                    // chercher direction max du point courant et sa symÃ©trique
+                    // pour chaque direction, exÃ©cuter les instructions suivantes :
+                    // initialiser derniÃ¨re direction Ã  la direction de dÃ©part
+                    // initialiser le point courant Ã  begin + dÃ©placement dans la derniÃ¨re direction
+                    // initialiser continuer Ã  vrai
                     // tant qu'on peut continuer
                     // faire
                     // |    si point courant pas dans le masque ou fa sous le seuil
                     // |    |   alors stop
-                    // |    |   sinon propager dans la direction adéquate du tenseur (demi-sphère) et mettre à jour point courant et dernière direction
+                    // |    |   sinon propager dans la direction adÃ©quate du tenseur (demi-sphÃ¨re) et mettre Ã  jour point courant et derniÃ¨re direction
                     // |    fsi
                     // ffaire
 

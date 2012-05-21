@@ -50,7 +50,7 @@
 #include "itkImageRegionIteratorWithIndex.h"
 
 /* Btk includes */
-#include "btkNiftiFilenameRadix.h"
+#include "btkFileNameTools.h"
 
 
 

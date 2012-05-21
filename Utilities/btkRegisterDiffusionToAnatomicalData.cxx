@@ -74,9 +74,7 @@
 
 /* Btk includes */
 #include "btkDiffusionGradientTable.h"
-//FIXME : Error when using this with relative path (like ../toto.nii)
-//#include "btkFileNameTools.h"
-#include "btkNiftiFilenameRadix.h"
+#include "btkFileNameTools.h"
 
 
 //  The following section of code implements a Command observer

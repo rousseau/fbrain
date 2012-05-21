@@ -38,32 +38,110 @@
 // STL includes
 #include "string"
 
-
 namespace btk
 {
 
     /**
+     * @brief Get the position of the first point of the extension
+     * @param filename Filename
+     * @return Positopn of the first point of the extension
+     * @ingroup InputOutput
+     */
+    unsigned int GetExtensionPosition(std::string filename)
+    {
+        unsigned int      i = 0;
+        unsigned int    pos = 0;
+        unsigned int length = filename.length();
+        char          state = 0;
+        bool           pass;
+
+        while(i < length)
+        {
+            switch(state)
+            {
+                case 0: // start
+                    if(filename[i] == '.')
+                        state = 1;
+                    else
+                        pos++;
+                    break;
+
+                case 1: // test extensions
+                    pass = false;
+
+                    if(i+6 == length)
+                    {
+                        std::string tmpString = filename.substr(i,i+5);
+                        if(tmpString == "nii.gz")
+                            pass = true;
+                    }
+                    else if(i+4 == length)
+                    {
+                        std::string tmpString = filename.substr(i,i+3);
+                        if(tmpString == "nhdr" || tmpString == "nrrd")
+                            pass = true;
+                    }
+                    else if(i+3 == length)
+                    {
+                        std::string tmpString = filename.substr(i,i+2);
+                        if(tmpString == "nii")
+                            pass = true;
+                    }
+
+                    if(pass)
+                    {
+                        i = length-1;
+                    }
+                    else
+                    {
+                        state = 0;
+                        pos  += 2;
+                    }
+                    break;
+
+                default: // error
+                    state = 0;
+                    break;
+            } // switch
+
+            i++;
+        } // while
+
+        return pos;
+    }
+
+    /**
      * @brief Extract the radix filename.
-     * Exemple: With filename equal to "xxx.nii.gz" or "xxx.nii", this function returns "xxx".
+     * Exemple: With filename equal to "xxx.yy.zz" or "xxx.yy", this function returns "xxx".
      * @param filename Filename
      * @return Radix of the filename
      * @ingroup InputOutput
      */
-    inline std::string GetRadixOf(std::string filename)
+    std::string GetRadixOf(std::string filename)
     {
-        return filename.substr(0,filename.find('.'));
+        std::string radix = "";
+
+        unsigned int pos = GetExtensionPosition(filename);
+        radix            = filename.substr(0,pos);
+
+        return radix;
     }
 
     /**
      * @brief Extract the extension of the filename.
-     * Exemple: With filename equal to "xxx.nii.gz" or "xxx.nii", this function returns ".nii.gz" or ".nii".
+     * Exemple: With filename equal to "xxx.yy.zz" or "xxx.yy", this function returns ".yy.zz" or ".yy".
      * @param filename Filename
      * @return Extension of the filename
      * @ingroup InputOutput
      */
-    inline std::string GetExtensionOf(std::string filename)
+    std::string GetExtensionOf(std::string filename)
     {
-        return filename.substr(filename.find('.'));
+        std::string extension = "";
+
+        unsigned int pos = GetExtensionPosition(filename);
+        extension        = filename.substr(pos,filename.length()-1);
+
+        return extension;
     }
 
 } // namespace btk
