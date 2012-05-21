@@ -30,18 +30,20 @@ same conditions as regards security.
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-B license and that you accept its terms.
 */
-
+/* Standard includes */
 #include <tclap/CmdLine.h>
+#include "vector"
+#include "sstream"
 
+/* Itk includes */
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
-
 #include "itkImage.h"
 
+/*Btk includes*/
 #include "btkLabelPropagationTool.h"
 
-#include <vector>
-#include <sstream>
+
 
 int main(int argc, char** argv)
 {

@@ -37,29 +37,31 @@
 #pragma warning ( disable : 4786 )
 #endif
 
-#include "btkLowToHighImageResolutionMethod.h"
-#include "btkSliceBySliceRigidRegistration.h"
-#include "btkResampleImageByInjectionFilter.h"
+/* Standard includes */
+#include <tclap/CmdLine.h>
+#include "stdio.h"
+
+/* Itk includes */
 #include "itkNormalizedCorrelationImageToImageMetric.h"
 #include "itkLinearInterpolateImageFunction.h"
-//#include "itkDivideByConstantImageFilter.h"
 #include "itkMinimumMaximumImageCalculator.h"
-
 #include "itkEuler3DTransform.h"
-#include "btkSliceBySliceTransform.h"
 #include "itkTransformFileWriter.h"
 #include "itkImage.h"
-#include <tclap/CmdLine.h>
-
 #include "itkImageMaskSpatialObject.h"
-#include "btkImageIntersectionCalculator.h"
 #include "itkCastImageFilter.h"
 #include "itkImageDuplicator.h"
-
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 
-#include <stdio.h>
+/*Btk includes*/
+#include "btkSliceBySliceTransform.h"
+#include "btkLowToHighImageResolutionMethod.h"
+#include "btkSliceBySliceRigidRegistration.h"
+#include "btkResampleImageByInjectionFilter.h"
+#include "btkImageIntersectionCalculator.h"
+
+
 
 int main( int argc, char *argv[] )
 {

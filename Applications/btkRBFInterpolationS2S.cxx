@@ -37,24 +37,24 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #pragma warning ( disable : 4786 )
 #endif
 
+/* Standard includes */
+#include <tclap/CmdLine.h>
+#include "time.h"
+
+/* Itk includes */
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkLinearInterpolateImageFunction.h"
 #include "itkImage.h"
-#include <tclap/CmdLine.h>
-#include "btkRBFInterpolateImageFunctionS2S.h"
-
+#include "itkEuler3DTransform.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
-#include "time.h"
-
 #include "itkTransformFileReader.h"
 #include "itkImageMaskSpatialObject.h"
 
+
+/* Btk includes */
 #include "btkDiffusionGradientTable.h"
-#include "itkEuler3DTransform.h"
-
-
-
+#include "btkRBFInterpolateImageFunctionS2S.h"
 //FIXME : Error when using this with relative path (like ../toto.nii)
 //#include "btkFileNameTools.h"
 #include "btkNiftiFilenameRadix.h"

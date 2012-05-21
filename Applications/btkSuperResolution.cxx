@@ -37,25 +37,24 @@
 #pragma warning ( disable : 4786 )
 #endif
 
-#include "itkEuler3DTransform.h"
+/* Standard includes */
+#include <tclap/CmdLine.h>
 
+/* Itk includes */
+#include "itkEuler3DTransform.h"
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
-
 #include "itkImageMaskSpatialObject.h"
-
 #include "itkTransformFileReader.h"
 #include "itkTransformFactory.h"
-#include "btkSliceBySliceTransform.h"
-
-#include "btkSuperResolutionImageFilter.h"
-
-#include "btkNLMTool.h"
 #include "itkCastImageFilter.h"
 
+/*Btk includes*/
+#include "btkSliceBySliceTransform.h"
+#include "btkSuperResolutionImageFilter.h"
+#include "btkNLMTool.h"
 
-#include <tclap/CmdLine.h>
 
 int main( int argc, char *argv[] )
 {
