@@ -16,7 +16,7 @@ body
 	padding-left:25px;
 	border: 2px solid #aaa;
 	border-radius: 10px;
-  box-shadow: 1px 1px 12px #555;
+        box-shadow: 1px 1px 12px #555;
 }
 
 #Examples
@@ -78,12 +78,22 @@ h2
 	color: #067e6a; 
 }
 
-h3 
+h3.center
 { 
 	text-align: center; 
 	color: #067e6a; 
 }
 
+h3.normal
+{ 
+        text-align:left;
+        color: #067e6a; 
+}
+
+h4
+{
+        text-decoration:underline;
+}
 a 
 { 
 	color: #067e6a; 
@@ -102,12 +112,20 @@ a
 	float: right;
 }
 
+.enclose
+{
+        margin-left: 10%;
+        margin-right:10%;
+        box-shadow: 1px 1px 6px #555;
+        border-radius: 10px;
+        padding: 15px;
+}
 pre 
 {
 	background: #000;
 	color: #fff;
 	padding: 15px;
-  box-shadow: 1px 1px 12px #555;
+        box-shadow: 1px 1px 12px #555;
 	border-radius: 10px;
 }
 
@@ -124,3 +142,29 @@ hr
 	padding-top:30px;
 	font-style: italic;
 }
+
+#MyLogo
+{
+        margin-left:10%;
+        margin-right:10%;
+	width: 5%;
+	height:5%;
+}
+#MyLogoSource
+{
+        margin-left:10%;
+        margin-right:10%;
+        width: 7%;
+        height:7%;
+}
+#contact
+{
+        margin-left:45%;
+        padding: 15px;
+        box-shadow: 1px 1px 12px #555;
+        border-radius: 10px;
+        font-weight:bold;
+    
+}
+
+
