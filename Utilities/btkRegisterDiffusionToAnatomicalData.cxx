@@ -75,45 +75,7 @@
 /* Btk includes */
 #include "btkDiffusionGradientTable.h"
 #include "btkFileNameTools.h"
-
-
-//  The following section of code implements a Command observer
-//  used to monitor the evolution of the registration process.
-//
-#include "itkCommand.h"
-class CommandIterationUpdate : public itk::Command
-{
-public:
-  typedef  CommandIterationUpdate   Self;
-  typedef  itk::Command             Superclass;
-  typedef itk::SmartPointer<Self>  Pointer;
-  itkNewMacro( Self );
-protected:
-  CommandIterationUpdate() {};
-public:
-  typedef itk::RegularStepGradientDescentOptimizer     OptimizerType;
-  typedef   const OptimizerType   *    OptimizerPointer;
-
-  void Execute(itk::Object *caller, const itk::EventObject & event)
-    {
-      Execute( (const itk::Object *)caller, event);
-    }
-
-  void Execute(const itk::Object * object, const itk::EventObject & event)
-    {
-      OptimizerPointer optimizer =
-        dynamic_cast< OptimizerPointer >( object );
-      if( ! itk::IterationEvent().CheckEvent( &event ) )
-        {
-        return;
-        }
-      std::cout << optimizer->GetCurrentIteration() << "   ";
-      std::cout << optimizer -> GetCurrentStepLength() << "   ";
-      std::cout << optimizer->GetValue() << "   ";
-
-      std::cout << optimizer->GetCurrentPosition() << std::endl;
-    }
-};
+#include "btkCommandIterationUpdate.h"
 
 
 int main( int argc, char *argv[] )
@@ -425,7 +387,7 @@ inTrans = inTransArg.getValue();
 
   // Create the Command observer and register it with the optimizer.
   //
-  CommandIterationUpdate::Pointer observer = CommandIterationUpdate::New();
+  btk::CommandIterationUpdate::Pointer observer = btk::CommandIterationUpdate::New();
   optimizer->AddObserver( itk::IterationEvent(), observer );
 
 // TEST
