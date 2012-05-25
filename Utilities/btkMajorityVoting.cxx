@@ -33,14 +33,16 @@
 
 ==========================================================================*/
 
+
+/*  Standard includes */
+#include "vector"
+#include <tclap/CmdLine.h>
+
+/* Itk includes */
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
-
 #include "itkImage.h"
 
-
-#include <vector>
-#include <tclap/CmdLine.h>
 
 int main( int argc, char *argv[] )
 {

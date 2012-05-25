@@ -37,14 +37,18 @@
 #pragma warning ( disable : 4786 )
 #endif
 
+/* Standard includes */
 #include <tclap/CmdLine.h>
 
+/* Itk includes */
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
-#include "btkGroupwiseS2SDistortionCorrection.h"
 #include "itkImageMaskSpatialObject.h"
-#include "btkNiftiFilenameRadix.h"
+
+/* Btk includes */
+#include "btkFileNameTools.h"
+#include "btkGroupwiseS2SDistortionCorrection.h"
 
 
 int main( int argc, char *argv[] )

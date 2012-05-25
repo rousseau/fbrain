@@ -302,9 +302,19 @@ int main( int argc, char *argv[] )
         else // dimension != 3 && dimension != 4
         {
             std::stringstream message;
-            message << "Image dimension (" << dimension << ") is unsupported ! You should use either dimension 3 or 4.";
+            message << "Image dimension (" << dimension << ") not supported ! You should use either dimension 3 or 4. Exiting";
             throw std::string(message.str());
         }
+
+
+        // Trying to determine the pixel type
+        typedef itk::ImageIOBase::IOComponentType ScalarPixelType;
+        itk::ImageIOBase::Pointer imageIO = itk::ImageIOFactory::CreateImageIO(inputFileName.c_str(), itk::ImageIOFactory::ReadMode);
+
+        imageIO->SetFileName(inputFileName);
+        imageIO->ReadImageInformation();
+        const ScalarPixelType pixelType = imageIO->GetComponentType();
+        std::cout << "Pixel type: " << imageIO->GetComponentTypeAsString(pixelType) << std::endl;
     }
     catch(itk::ExceptionObject &error)
     {

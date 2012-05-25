@@ -37,7 +37,10 @@
 #pragma warning ( disable : 4786 )
 #endif
 
-#include "btkSliceBySliceTransform.h"
+/* Standard includes */
+#include <tclap/CmdLine.h>
+
+/* Itk includes */
 #include "itkEuler3DTransform.h"
 
 #include "itkImage.h"
@@ -50,9 +53,9 @@
 #include "itkTransformFileReader.h"
 #include "itkTransformFactory.h"
 
+/* Btk includes */
 #include "btkResampleLabelsByInjectionFilter.h"
-
-#include <tclap/CmdLine.h>
+#include "btkSliceBySliceTransform.h"
 
 int main( int argc, char *argv[] )
 {

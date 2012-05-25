@@ -37,9 +37,11 @@
 #pragma warning ( disable : 4786 )
 #endif
 
-#include "itkImage.h"
+/* Standard includes */
 #include <tclap/CmdLine.h>
 
+/* Itk includes */
+#include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkImageRegionIteratorWithIndex.h"

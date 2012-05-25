@@ -37,17 +37,22 @@
 #pragma warning ( disable : 4786 )
 #endif
 
-#include <iostream>
-#include <string>
+/* Standard includes */
+#include <tclap/CmdLine.h>
+#include "iostream"
+#include "string"
 
+/* Itk includes */
 #include "itkImage.h"
 #include "itkVectorImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkImageRegionIteratorWithIndex.h"
-#include "btkNiftiFilenameRadix.h"
 
-#include <tclap/CmdLine.h>
+/* Btk includes */
+#include "btkFileNameTools.h"
+
+
 
 int main( int argc, char * argv[] )
 {

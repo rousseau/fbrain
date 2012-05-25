@@ -37,8 +37,10 @@
 #pragma warning ( disable : 4786 )
 #endif
 
+/* Standard includes */
 #include <tclap/CmdLine.h>
 
+/* Itk includes */
 #include "itkImage.h"
 
 #include "itkAffineTransform.h"
@@ -64,13 +66,15 @@
 #include "itkDiscreteGaussianImageFilter.h"
 #include "itkJoinSeriesImageFilter.h"
 
-#include "btkDiffusionGradientTable.h"
-
 #include "itkAffineTransform.h"
 #include "itkMatrixOffsetTransformBase.h"
 #include "itkTransformFileReader.h"
 #include "itkTransformFileWriter.h"
 #include "itkTransformFactory.h"
+
+/* Btk includes */
+#include "btkDiffusionGradientTable.h"
+#include "btkFileNameTools.h"
 
 
 //  The following section of code implements a Command observer
@@ -188,29 +192,41 @@ inTrans = inTransArg.getValue();
   toutName = toutArg.getValue().c_str();
   invToutName = invToutArg.getValue().c_str();
 
-  char inputName[255];
-  strcpy( inputName, (char*)inputArg.getValue().c_str() );
-  strcat ( inputName,".nii" );
+//  char inputName[255];
+//  strcpy( inputName, (char*)inputArg.getValue().c_str() );
+//  strcat ( inputName,".nii" );
 
-  char bvec[255];
-  strcpy( bvec, (char*)inputArg.getValue().c_str() );
-  strcat ( bvec,".bvec" );
+//  char bvec[255];
+//  strcpy( bvec, (char*)inputArg.getValue().c_str() );
+//  strcat ( bvec,".bvec" );
 
-  char bval[255];
-  strcpy(  bval, (char*)inputArg.getValue().c_str() );
-  strcat (  bval,".bval" );
+//  char bval[255];
+//  strcpy(  bval, (char*)inputArg.getValue().c_str() );
+//  strcat (  bval,".bval" );
 
-  char outputName[255];
-  strcpy( outputName, (char*)outputArg.getValue().c_str() );
-  strcat ( outputName,".nii.gz" );
+//  char outputName[255];
+//  strcpy( outputName, (char*)outputArg.getValue().c_str() );
+//  strcat ( outputName,".nii.gz" );
 
-  char bvec_out[255];
-  strcpy( bvec_out, (char*)outputArg.getValue().c_str() );
-  strcat ( bvec_out,".bvec" );
+//  char bvec_out[255];
+//  strcpy( bvec_out, (char*)outputArg.getValue().c_str() );
+//  strcat ( bvec_out,".bvec" );
 
-  char bval_out[255];
-  strcpy( bval_out, (char*)outputArg.getValue().c_str() );
-  strcat ( bval_out,".bval" );
+//  char bval_out[255];
+//  strcpy( bval_out, (char*)outputArg.getValue().c_str() );
+//  strcat ( bval_out,".bval" );
+
+
+
+  std::string inputName = inputArg.getValue();
+  std::string inRadix = btk::GetRadixOf(inputName);
+  std::string bvec = inRadix + ".bvec";
+  std::string bval = inRadix + ".bval";
+
+  std::string outputName = outputArg.getValue();
+  std::string outRadix = btk::GetRadixOf(outputName);
+  std::string bvec_out = outRadix + ".bvec";
+  std::string bval_out = outRadix + ".bval";
 
 
   // Typedefs
@@ -557,7 +573,7 @@ std::cout << finalTransform << std::endl;
   writer->SetFileName( outputName );
   writer->SetInput( joiner -> GetOutput() );
 
-  if (strcmp(outputName,"")) writer->Update();
+  if (strcmp(outputName.c_str(),"")) writer->Update();
 
   // Change and write gradient table
 
@@ -597,15 +613,15 @@ std::cout << finalTransform << std::endl;
   gradientTable -> SetNumberOfGradients( inputLength );
   gradientTable -> SetImage( input );
   gradientTable -> SetTransform( eulerTransform );
-  gradientTable -> LoadFromFile( bvec );
+  gradientTable -> LoadFromFile( bvec.c_str() );
   gradientTable -> RotateGradientsInWorldCoordinates();
-  gradientTable -> SaveToFile( bvec_out);
+  gradientTable -> SaveToFile( bvec_out.c_str());
 
   // Write b-values
 
   // Write b-values
   char clcopybval[255];
-  sprintf(clcopybval,"cp %s %s",bval,bval_out);
+  sprintf(clcopybval,"cp %s %s",bval.c_str(),bval_out.c_str());
   system(clcopybval);
 
 

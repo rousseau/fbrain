@@ -30,21 +30,21 @@ same conditions as regards security.
 The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-B license and that you accept its terms.
 */
-#include <tclap/CmdLine.h>
 
+
+
+/* Standard includes */
+#include <tclap/CmdLine.h>
+#include "iostream"
+#include "fstream"
+#include "string"
+#include "iomanip"
+#include "map"
+
+/* Itk includes */
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
-
 #include "itkImage.h"
-
-#include <iostream>
-#include <fstream>
-
-#include <string>
-#include <iomanip>
-
-#include <map>
-
 
 
 int main(int argc, char** argv)

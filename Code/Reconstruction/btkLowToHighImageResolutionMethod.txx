@@ -21,6 +21,7 @@ LowToHighImageResolutionMethod<ImageType>
   m_InitializeWithMask= true;
   m_Margin = 0.0;
   m_Iterations = 200;
+  m_UseReference = false;
 }
 
 template < typename ImageType >
@@ -52,13 +53,21 @@ void
 LowToHighImageResolutionMethod<ImageType>
 ::Initialize() throw (ExceptionObject)
 {
+    // if we don't use a reference we use a LR image as a reference (set by int TargetImage)
+    if(!m_UseReference)
+    {
+        m_ReferenceImage = m_ImageArray[m_TargetImage];
+        m_ReferenceRegion = m_RegionArray[m_TargetImage];
+        m_ReferenceMask = m_ImageMaskArray[m_TargetImage];
+    }
+
   /* Create interpolator */
   m_Interpolator = InterpolatorType::New();
 
   /* Resampling matrix */
-  SpacingType  fixedSpacing   = m_ImageArray[m_TargetImage] -> GetSpacing();
-  SizeType     fixedSize      = m_ImageArray[m_TargetImage] -> GetLargestPossibleRegion().GetSize();
-  PointType    fixedOrigin    = m_ImageArray[m_TargetImage] -> GetOrigin();
+  SpacingType  fixedSpacing   = m_ReferenceImage->GetSpacing();
+  SizeType     fixedSize      = m_ReferenceImage->GetLargestPossibleRegion().GetSize();
+  PointType    fixedOrigin    = m_ReferenceImage->GetOrigin();
 
   // Combine masks to redefine the resampling region
 
@@ -68,7 +77,7 @@ LowToHighImageResolutionMethod<ImageType>
   IndexType targetIndex;
   PointType point;
 
-  indexMin = m_ImageArray[m_TargetImage] -> GetLargestPossibleRegion().GetIndex();
+  indexMin = m_ReferenceImage-> GetLargestPossibleRegion().GetIndex();
 
   indexMax[0] = fixedSize[0]-1;
   indexMax[1] = fixedSize[1]-1;
@@ -76,14 +85,14 @@ LowToHighImageResolutionMethod<ImageType>
 
   for (unsigned int i=0; i<m_NumberOfImages; i++)
   {
-    if (i != m_TargetImage)
+    if (i != m_TargetImage || m_UseReference == true)
     {
       IteratorType regionIt(m_ImageArray[i],m_RegionArray[i]);
       for(regionIt.GoToBegin(); !regionIt.IsAtEnd(); ++regionIt )
       {
         index = regionIt.GetIndex();
         m_ImageArray[i] -> TransformIndexToPhysicalPoint(index,point);
-        m_ImageArray[m_TargetImage] -> TransformPhysicalPointToIndex(point,targetIndex);
+        m_ReferenceImage -> TransformPhysicalPointToIndex(point,targetIndex);
 
         for (unsigned int k=0; k<3; k++)
         {
@@ -122,7 +131,7 @@ LowToHighImageResolutionMethod<ImageType>
   m_HighResolutionImage -> Allocate();
   m_HighResolutionImage -> SetOrigin( fixedOrigin );
   m_HighResolutionImage -> SetSpacing( m_ResampleSpacing );
-  m_HighResolutionImage -> SetDirection( m_ImageArray[m_TargetImage]-> GetDirection() );
+  m_HighResolutionImage -> SetDirection( m_ReferenceImage-> GetDirection() );
   m_HighResolutionImage -> FillBuffer( 0 );
 
   IndexType newOriginIndex;
@@ -158,12 +167,12 @@ LowToHighImageResolutionMethod<ImageType>
   }
 
   RegistrationPointer m_Registration = RegistrationType::New();
-  m_Registration -> SetFixedImage(  m_ImageArray[m_TargetImage]  );
-  m_Registration -> SetFixedImageRegion( m_RegionArray[m_TargetImage] );
+  m_Registration -> SetFixedImage(  m_ReferenceImage  );
+  m_Registration -> SetFixedImageRegion( m_ReferenceRegion );
 
   if ( m_InitializeWithMask )
   {
-    m_Registration -> SetFixedImageMask( m_ImageMaskArray[m_TargetImage] );
+    m_Registration -> SetFixedImageMask( m_ReferenceMask );
     m_Registration -> InitializeWithMask();
   }
 
@@ -176,30 +185,30 @@ LowToHighImageResolutionMethod<ImageType>
 
   for (unsigned int i=0; i < m_NumberOfImages; i++)
   {
-    m_Registration->SetMovingImage( m_ImageArray[i] );
-    m_Registration->SetMovingImageMask( m_ImageMaskArray[i] );
-//      m_Registration->SetInitialTransformParameters( m_InitialRigidParameters[i] );
+      m_Registration->SetMovingImage( m_ImageArray[i] );
+      m_Registration->SetMovingImageMask( m_ImageMaskArray[i] );
+      //      m_Registration->SetInitialTransformParameters( m_InitialRigidParameters[i] );
 
-    if (i != m_TargetImage )
-    {
-      try
+      if (i != m_TargetImage || m_UseReference == true )
       {
-          //m_Registration->StartRegistration();// FIXME : in ITK4 StartRegistration() is replaced by Update()
-          m_Registration->Update();
+          try
+          {
+              //m_Registration->StartRegistration();// FIXME : in ITK4 StartRegistration() is replaced by Update()
+              m_Registration->Update();
+          }
+          catch( itk::ExceptionObject & err )
+          {
+              std::cerr << "ExceptionObject caught !" << std::endl;
+              std::cerr << err << std::endl;
+              throw err;
+          }
+          m_TransformArray[i] = m_Registration->GetTransform();
       }
-      catch( itk::ExceptionObject & err )
-      {
-        std::cerr << "ExceptionObject caught !" << std::endl;
-        std::cerr << err << std::endl;
-        throw err;
-      }
-      m_TransformArray[i] = m_Registration->GetTransform();
-    }
       else
       {
-        m_TransformArray[i] = TransformType::New();
-        m_TransformArray[i] -> SetIdentity();
-//        m_TransformArray[i] -> SetCenter( m_Registration -> GetTransformCenter() );
+          m_TransformArray[i] = TransformType::New();
+          m_TransformArray[i] -> SetIdentity();
+          //        m_TransformArray[i] -> SetCenter( m_Registration -> GetTransformCenter() );
       }
 
   }

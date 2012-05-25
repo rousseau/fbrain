@@ -37,16 +37,15 @@
 #pragma warning ( disable : 4786 )
 #endif
 
+/* Standard includes */
+#include <tclap/CmdLine.h>
+
+/* Itk includes */
 #include "itkImage.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkContinuousIndex.h"
-
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
-
-#include <tclap/CmdLine.h>
-#include "vnl/vnl_cross.h"
-
 #include "itkEuler3DTransform.h"
 #include "itkExtractImageFilter.h"
 #include "itkResampleImageFilter.h"
@@ -54,12 +53,14 @@
 #include "itkJoinSeriesImageFilter.h"
 #include "itkOrientImageFilter.h"
 
-#include "btkDiffusionGradientTable.h"
-
+/* Vnl includes */
 #include "vnl/vnl_inverse.h"
+#include "vnl/vnl_cross.h"
 
-// Local includes
+/* Btk includes */
 #include "btkLandmarksFileReader.h"
+#include "btkDiffusionGradientTable.h"
+#include "btkFileNameTools.h"
 
 
 int main( int argc, char *argv[] )
@@ -93,29 +94,16 @@ int main( int argc, char *argv[] )
 
   const    unsigned int    Dimension = 4;
 
-  char inputImageFile[255];
-  strcpy( inputImageFile, (char*)inputArg.getValue().c_str() );
-  strcat ( inputImageFile,".nii" );
 
-  char bvec[255];
-  strcpy( bvec, (char*)inputArg.getValue().c_str() );
-  strcat ( bvec,".bvec" );
+  std::string inputImageFile = inputArg.getValue();
+  std::string inRadix = btk::GetRadixOf(inputImageFile);
+  std::string bvec_in = inRadix + ".bvec";
+  std::string bval_in = inRadix + ".bval";
 
-  char bval[255];
-  strcpy( bval, (char*)inputArg.getValue().c_str() );
-  strcat ( bval,".bval" );
-
-  char outputImageFile[255];
-  strcpy( outputImageFile, (char*)outputArg.getValue().c_str() );
-  strcat ( outputImageFile,".nii.gz" );
-
-  char bvec_out[255];
-  strcpy( bvec_out, (char*)outputArg.getValue().c_str() );
-  strcat ( bvec_out,".bvec" );
-
-  char bval_out[255];
-  strcpy( bval_out, (char*)outputArg.getValue().c_str() );
-  strcat ( bval_out,".bval" );
+  std::string outputImageFile = outputArg.getValue();
+  std::string outRadix = btk::GetRadixOf(outputImageFile);
+  std::string bvec_out = outRadix + ".bvec";
+  std::string bval_out = outRadix + ".bval";
 
   // Read image
 
@@ -124,7 +112,7 @@ int main( int argc, char *argv[] )
 
   typedef itk::ImageFileReader< ImageType > ImageReaderType;
   ImageReaderType::Pointer  imageReader  = ImageReaderType::New();
-  imageReader -> SetFileName(  inputImageFile );
+  imageReader -> SetFileName(  inputImageFile.c_str() );
   imageReader -> Update();
   ImageType::Pointer image = imageReader->GetOutput();
 
@@ -268,7 +256,7 @@ int main( int argc, char *argv[] )
 
   gradientTable -> SetNumberOfGradients(numberOfFrames);
   gradientTable -> SetRotationMatrix( rotationMatrix );
-  gradientTable -> LoadFromFile( bvec);
+  gradientTable -> LoadFromFile( bvec_in.c_str());
   gradientTable -> RotateGradients();
 
   // Create the image in standard orientation
@@ -514,7 +502,7 @@ int main( int argc, char *argv[] )
   typedef itk::ImageFileWriter< ImageType > ImageWriterType;
   ImageWriterType::Pointer  imageWriter  = ImageWriterType::New();
   imageWriter -> SetInput( joiner2 -> GetOutput() );
-  imageWriter -> SetFileName(  outputImageFile );
+  imageWriter -> SetFileName(  outputImageFile.c_str() );
   imageWriter -> Update();
 
   typedef itk::ImageFileWriter< Image3DType > Image3DWriterType;
@@ -532,11 +520,11 @@ int main( int argc, char *argv[] )
   gradientTable -> SetImage( stdImage );
   gradientTable -> SetTransform( transform );
   gradientTable -> RotateGradientsInWorldCoordinates();
-  gradientTable -> SaveToFile( bvec_out);
+  gradientTable -> SaveToFile( bvec_out.c_str());
 
   // Write b-values
   char clcopybval[255];
-  sprintf(clcopybval,"cp %s %s",bval,bval_out);
+  sprintf(clcopybval,"cp %s %s",bval_in.c_str(),bval_out.c_str());
   system(clcopybval);
 
 

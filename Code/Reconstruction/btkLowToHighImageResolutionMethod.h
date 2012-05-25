@@ -210,6 +210,25 @@ public:
   itkSetMacro( Iterations, unsigned int );
   itkGetMacro( Iterations, unsigned int );
 
+  /** Set/Get the reference Image if used */
+  itkSetMacro(ReferenceImage, ImagePointer);
+  itkGetMacro(ReferenceImage, ImagePointer);
+
+  /** Set/Get use of reference image, if enable you must Set a Reference Image, Region and mask */
+  itkSetMacro( UseReference, bool );
+  itkGetMacro( UseReference, bool );
+
+  /** Set/Get reference region is used */
+  itkSetMacro(ReferenceRegion, RegionType);
+  itkGetMacro(ReferenceRegion, RegionType);
+
+  /** Set/Get Reference mask if used */
+  itkSetMacro(ReferenceMask, ImageMaskPointer);
+  itkGetMacro(ReferenceMask, ImageMaskPointer);
+
+
+
+
   /** Set the number of images */
   void SetNumberOfImages(int N);
 
@@ -231,6 +250,10 @@ private:
   TransformPointerArray            m_InverseTransformArray;
   ImageArrayPointer 			         m_ImageArray;
   RegionArray                      m_RegionArray;
+  RegionType                       m_ReferenceRegion;
+
+  ImageMaskPointer                 m_ReferenceMask;
+
   ImageMaskArray                   m_ImageMaskArray;
 
   SpacingType											 m_ResampleSpacing;
@@ -243,6 +266,7 @@ private:
   InterpolatorPointer              m_Interpolator;
 
   ImagePointer										 m_HighResolutionImage;
+  ImagePointer										 m_ReferenceImage;
   ImageMaskPointer					 			 m_ImageMaskCombination;
 
   ParametersType                   m_InitialTransformParameters;
@@ -253,6 +277,7 @@ private:
   unsigned int                     m_TargetImage;
 
   bool                             m_InitializeWithMask;
+  bool                             m_UseReference;
   unsigned int                     m_Iterations;
 
 };

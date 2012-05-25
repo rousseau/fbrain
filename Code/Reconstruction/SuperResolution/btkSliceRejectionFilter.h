@@ -60,7 +60,7 @@ public:
     typedef float PixelType;
     typedef itk::Image< PixelType, 3>         itkImage;
     typedef itk::Image< PixelType, 2>         SliceType;
-     typedef itk::Transform<double, 3> TransformType;
+    typedef itk::Transform<double, 3> TransformType;
     typedef itk::Image< unsigned char, 3 >     itkImageMask;
     typedef itk::ImageMaskSpatialObject< 3 >   itkMask;
 

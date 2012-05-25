@@ -1,5 +1,5 @@
 /*
- * Copyright or © or Copr. Université de Strasbourg - Centre National de la Recherche Scientifique
+ * Copyright or Â© or Copr. UniversitÃ© de Strasbourg - Centre National de la Recherche Scientifique
  *
  * 06 july 2011
  * < pontabry at unistra dot fr >
@@ -56,7 +56,7 @@
 #include "btkSignalExtractor.h"
 #include "btkSHModel.h"
 #include "btkSHModelEstimator.h"
-#include "btkNiftiFilenameRadix.h"
+#include "btkFileNameTools.h"
 
 
 using namespace btk;
@@ -396,25 +396,25 @@ int main(int argc, char *argv[])
                     // Streamline propagation
                     //
 
-                    // Entrées : modelFun, mask, begin, stepSize, angleThreshold
+                    // EntrÃ©es : modelFun, mask, begin, stepSize, angleThreshold
                     // Sortie : fiber (vtkPolyData)
 
-                    // Principe : propagation streamline (suivi direction max de chaque ODF -à chaque point de l'image) en avançant dans la direction d'un pas égal à stepSize
-                    // Condition d'arrêt : Pas de direction max dans l'angle demandé ou point hors du masque
+                    // Principe : propagation streamline (suivi direction max de chaque ODF -Ã  chaque point de l'image) en avanÃ§ant dans la direction d'un pas Ã©gal Ã  stepSize
+                    // Condition d'arrÃªt : Pas de direction max dans l'angle demandÃ© ou point hors du masque
 
                     // Algorithme
-                    // chercher direction max du point courant et sa symétrique
-                    // pour chaque direction, exécuter les instructions suivantes :
-                    // initialiser dernière direction à la direction de départ
-                    // initialiser le point courant à begin + déplacement dans la dernière direction
-                    // initialiser continuer à vrai
+                    // chercher direction max du point courant et sa symÃ©trique
+                    // pour chaque direction, exÃ©cuter les instructions suivantes :
+                    // initialiser derniÃ¨re direction Ã  la direction de dÃ©part
+                    // initialiser le point courant Ã  begin + dÃ©placement dans la derniÃ¨re direction
+                    // initialiser continuer Ã  vrai
                     // tant qu'on peut continuer
                     // faire
                     // |    si point courant pas dans le masque
                     // |    |   alors stop
                     // |    |   sinon si recherche direction max dans seuil ne donne rien
                     // |    |   |   alors stop
-                    // |    |   |   sinon propager et mettre à jour point courant et dernière direction
+                    // |    |   |   sinon propager et mettre Ã  jour point courant et derniÃ¨re direction
                     // |    |   fsi
                     // |    fsi
                     // ffaire

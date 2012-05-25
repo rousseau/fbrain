@@ -37,21 +37,21 @@
 #pragma warning ( disable : 4786 )
 #endif
 
+/* Standard includes */
+#include <tclap/CmdLine.h>
+#include "stdio.h"
+
+/* Itk includes */
 #include "itkNormalizedCorrelationImageToImageMetric.h"
 #include "itkMattesMutualInformationImageToImageMetric.h"
 #include "itkMeanSquaresImageToImageMetric.h"
 #include "itkLinearInterpolateImageFunction.h"
-//#include "itkDivideByConstantImageFilter.h"
 #include "itkMinimumMaximumImageCalculator.h"
-
 #include "itkImage.h"
-#include <tclap/CmdLine.h>
-
 #include "itkImageMaskSpatialObject.h"
 #include "itkImageFileReader.h"
 #include "itkEuler3DTransform.h"
 
-#include <stdio.h>
 
 int main( int argc, char *argv[] )
 {

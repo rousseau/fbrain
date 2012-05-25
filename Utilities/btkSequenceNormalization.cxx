@@ -33,26 +33,29 @@
 
 ==========================================================================*/
 
+/* Standard includes */
+#include "iostream"
+#include "algorithm"
+#include "string"
+#include <tclap/CmdLine.h>
 
-#include <iostream>
-#include <algorithm>
-#include <string>
-
+/* Itk includes */
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkImage.h"
 #include "itkExtractImageFilter.h"
 #include "itkImageRegionIteratorWithIndex.h"
-#include "btkNiftiFilenameRadix.h"
-#include "btkAffineRegistration.h"
 #include "itkResampleImageFilter.h"
 #include "itkImageMaskSpatialObject.h"
 #include "itkImageDuplicator.h"
 #include "itkImageRegionIterator.h"
 #include "itkJoinSeriesImageFilter.h"
-#include "btkDiffusionGradientTable.h"
 
-#include <tclap/CmdLine.h>
+/* Btk includes */
+#include "btkDiffusionGradientTable.h"
+#include "btkFileNameTools.h"
+#include "btkAffineRegistration.h"
+
 
 int main( int argc, char * argv[] )
 {
