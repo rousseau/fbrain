@@ -235,6 +235,7 @@ int main( int argc, char *argv[] )
 
   if(refImage != "")
   {
+      std::cout<<"Reading the reference image : "<<refImage<<"\n";
       ImageReaderType::Pointer imageReader = ImageReaderType::New();
       imageReader -> SetFileName( refImage );
       imageReader -> Update();
