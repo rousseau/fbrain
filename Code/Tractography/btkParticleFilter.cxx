@@ -63,9 +63,6 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "itkPoint.h"
 #include "itkContinuousIndex.h"
 
-// OpenMP includes
-#include "omp.h"
-
 
 #define Ind(i,j) (m_M*(i) + (j))
 
