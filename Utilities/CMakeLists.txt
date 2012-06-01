@@ -129,6 +129,9 @@ TARGET_LINK_LIBRARIES(btkMajorityVoting ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkProbabilityMapNormalization btkProbabilityMapNormalization.cxx)
 TARGET_LINK_LIBRARIES(btkProbabilityMapNormalization ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkImageGaussianFilter btkImageGaussianFilter.cxx)
+TARGET_LINK_LIBRARIES(btkImageGaussianFilter ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -150,9 +153,10 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkWeightedMean
                 btkSequenceNormalization
                 btkReconstructionComparisonTool
-		            btkIteratedBackProjection
-		            btkImageResampling
-		            btkDifferentialBiasCorrection
-		            btkMajorityVoting
-		            btkProbabilityMapNormalization
+                btkIteratedBackProjection
+                btkImageResampling
+                btkDifferentialBiasCorrection
+                btkMajorityVoting
+                btkProbabilityMapNormalization
+                btkImageGaussianFilter
         DESTINATION bin)
