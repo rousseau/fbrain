@@ -59,7 +59,7 @@ public:
     static void WriteImage(itkImagePointer image, std::string &fileName);
     static void WriteImageArray(std::vector< itkImagePointer> &images, std::vector< std::string > &fileNames);
     static itkImagePointer ReadImage(std::string &fileName);
-    static void ReadImageArray(std::vector< itkImagePointer > &images ,std::vector< std::string> &fileNames);
+    static std::vector< itkImagePointer > & ReadImageArray(std::vector< std::string> &fileNames);
 
 protected:
 
