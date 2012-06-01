@@ -58,9 +58,12 @@ typename ImageHelper<TImage>::itkImagePointer ImageHelper<TImage>::ReadImage(std
 }
 //----------------------------------------------------------------------------------------
 template <class TImage >
-void ImageHelper< TImage >::ReadImageArray(std::vector< itkImagePointer > &images, std::vector<std::string> &fileNames)
+std::vector< typename ImageHelper<TImage>::itkImagePointer >&
+ImageHelper< TImage >::ReadImageArray( std::vector<std::string> &fileNames)
 {
     int i = fileNames.size();
+    std::vector< itkImagePointer > *ptrImages = new std::vector< itkImagePointer >;
+    std::vector< itkImagePointer > &images = *ptrImages;
     images.resize(i);
 
     for(i = 0; i < fileNames.size(); i++)
@@ -72,6 +75,7 @@ void ImageHelper< TImage >::ReadImageArray(std::vector< itkImagePointer > &image
 
         images[i] = reader->GetOutput();
     }
+    return images;
 }
 
 //----------------------------------------------------------------------------------------
