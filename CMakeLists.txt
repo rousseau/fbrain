@@ -50,6 +50,8 @@ if(BUILD_DOCUMENTATION)
   endif(DOXYGEN_FOUND)
 endif(BUILD_DOCUMENTATION)
 
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+
 SUBDIRS(
   Utilities
   Applications

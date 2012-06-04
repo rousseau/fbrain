@@ -9,8 +9,8 @@
 namespace btk
 {
 
-    template < class TImage >
-    void ImageHelper< TImage >::WriteImage(typename TImage::Pointer image, std::string &fileName)
+    template < class TImageInput, class TImageOutput >
+    void ImageHelper< TImageInput, TImageOutput >::WriteImage(typename TImageInput::Pointer image, std::string &fileName)
     {
         std::cout << "Writing \"" << fileName << "\"... " << std::flush;
 
@@ -24,8 +24,8 @@ namespace btk
 
     //----------------------------------------------------------------------------------------
 
-    template < class TImage >
-    void ImageHelper< TImage >::WriteImageArray(std::vector< typename TImage::Pointer > &images, std::vector<std::string> &fileNames)
+    template < class TImageInput, class TImageOutput >
+    void ImageHelper< TImageInput, TImageOutput >::WriteImageArray(std::vector< typename TImageInput::Pointer > &images, std::vector<std::string> &fileNames)
     {
         int i = images.size();
 
@@ -53,8 +53,8 @@ namespace btk
 
     //----------------------------------------------------------------------------------------
 
-    template < class TImage >
-    typename TImage::Pointer ImageHelper<TImage>::ReadImage(std::string &fileName)
+    template < class TImageInput, class TImageOutput >
+    typename TImageInput::Pointer ImageHelper< TImageInput, TImageOutput >::ReadImage(std::string &fileName)
     {
         std::cout << "Reading image \"" << fileName << "\"... " << std::flush;
 
@@ -69,12 +69,12 @@ namespace btk
 
     //----------------------------------------------------------------------------------------
 
-    template < class TImage >
-    std::vector< typename TImage::Pointer > &ImageHelper<TImage>::ReadImageArray(std::vector<std::string> &fileNames)
+    template < class TImageInput, class TImageOutput >
+    std::vector< typename TImageInput::Pointer > &ImageHelper< TImageInput, TImageOutput >::ReadImageArray(std::vector<std::string> &fileNames)
     {
         int i = fileNames.size();
-        std::vector< typename TImage::Pointer > *ptrImages = new std::vector< typename TImage::Pointer >;
-        std::vector< typename TImage::Pointer > &images = *ptrImages;
+        std::vector< typename TImageInput::Pointer > *ptrImages = new std::vector< typename TImageInput::Pointer >;
+        std::vector< typename TImageInput::Pointer > &images = *ptrImages;
         images.resize(i);
 
         for(i = 0; i < fileNames.size(); i++)
@@ -95,10 +95,10 @@ namespace btk
 
     //----------------------------------------------------------------------------------------
 
-    template < class TImage >
-    typename TImage::Pointer ImageHelper<TImage>::CreateNewFromSpaceOf(typename TImage::Pointer image)
+    template < class TImageInput, class TImageOutput >
+    typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::CreateNewFromSpaceOf(typename TImageInput::Pointer image)
     {
-        typename TImage::Pointer newImage = TImage::New();
+        typename TImageOutput::Pointer newImage = TImageOutput::New();
         newImage->SetRegions(image->GetLargestPossibleRegion());
         newImage->SetOrigin(image->GetOrigin());
         newImage->SetSpacing(image->GetSpacing());
