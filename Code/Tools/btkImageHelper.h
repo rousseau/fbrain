@@ -33,9 +33,14 @@
 
 ==========================================================================*/
 
+
 #ifndef __BTK_IMAGEHELPER_H__
 #define __BTK_IMAGEHELPER_H__
 
+// STL includes
+#include "string"
+
+// ITK includes
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
@@ -43,31 +48,64 @@
 
 namespace btk
 {
-template <class TImage >
-class ImageHelper
-{
-public:
+    /**
+     * Helper class for image management (read, write and create operations)
+     * @author Marc Schweitzer, Julien Pontabry
+     */
+    template < class TImage >
+    class ImageHelper
+    {
+        public:
 
-    typedef TImage  itkImage;
-    typedef typename itkImage::Pointer itkImagePointer;
-    typedef itk::ImageFileReader< itkImage >   itkReader;
-    typedef typename itkReader::Pointer        itkReaderPointer;
-    typedef itk::ImageFileWriter< itkImage >   itkWriter;
-    typedef typename itkWriter::Pointer        itkWriterPointer;
+            /**
+             * @brief Image reader type.
+             */
+            typedef itk::ImageFileReader< TImage > ImageReader;
 
-
-    static void WriteImage(itkImagePointer image, std::string &fileName);
-    static void WriteImageArray(std::vector< itkImagePointer> &images, std::vector< std::string > &fileNames);
-    static itkImagePointer ReadImage(std::string &fileName);
-    static std::vector< itkImagePointer > & ReadImageArray(std::vector< std::string> &fileNames);
-
-protected:
-
-private:
+            /**
+             * @brief Image writer type.
+             */
+            typedef itk::ImageFileWriter< TImage > ImageWriter;
 
 
-};
-}
+            /**
+             * @brief Write an image.
+             * @param image Image to write.
+             * @param fileName File name of the image to write.
+             */
+            static void WriteImage(typename TImage::Pointer image, std::string &fileName);
+
+            /**
+             * @brief Write a vector of images.
+             * @param images vector of images to write.
+             * @param fileNames File names of the images to write.
+             */
+            static void WriteImageArray(std::vector< typename TImage::Pointer > &images, std::vector< std::string > &fileNames);
+
+            /**
+             * @brief Read an image.
+             * @param fileName File name of the image to read.
+             * @return A pointer to the image that have been red.
+             */
+            static typename TImage::Pointer ReadImage(std::string &fileName);
+
+            /**
+             * @brief Read a vector of images.
+             * @param fileNames File names of the images to read.
+             * @return A reference to a vector containing the images that have been red.
+             */
+            static std::vector< typename TImage::Pointer > &ReadImageArray(std::vector< std::string> &fileNames);
+
+            /**
+             * @brief Create a new image in the same physical space of a current image.
+             * @param image Image of which physical space will be used for creation.
+             * @return New image in the same physical space.
+             */
+            static typename TImage::Pointer CreateNewFromSpaceOf(typename TImage::Pointer image);
+    };
+
+} // namespace btk
 
 #include "btkImageHelper.txx"
-#endif
+
+#endif // __BTK_IMAGEHELPER_H__
