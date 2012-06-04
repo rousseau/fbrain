@@ -129,7 +129,8 @@ TARGET_LINK_LIBRARIES(btkMajorityVoting ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkProbabilityMapNormalization btkProbabilityMapNormalization.cxx)
 TARGET_LINK_LIBRARIES(btkProbabilityMapNormalization ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkImageGaussianFilter btkImageGaussianFilter.cxx)
+ADD_EXECUTABLE(btkImageGaussianFilter btkImageGaussianFilter.cxx
+    ${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
 TARGET_LINK_LIBRARIES(btkImageGaussianFilter ${ITK_LIBRARIES})
 
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
