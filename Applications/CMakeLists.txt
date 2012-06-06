@@ -134,13 +134,6 @@ TARGET_LINK_LIBRARIES(btkGroupwiseS2SDistortionCorrection ${ITK_LIBRARIES} ${ANN
 
 TARGET_LINK_LIBRARIES(btkGroupwiseS2SDistortionCorrection ${ITK_LIBRARIES} ${ANN_LIBRARY})
 
-ADD_EXECUTABLE(btkSandBox btkSandBox.cxx
-${fbrain_SOURCE_DIR}/Code/Transformations/btkSliceBySliceTransformBase.h
-${fbrain_SOURCE_DIR}/Code/Transformations/btkAffineSliceBySliceTransform.h
-${fbrain_SOURCE_DIR}/Code/Transformations/btkEulerSliceBySliceTransform.h
-)
-TARGET_LINK_LIBRARIES(btkSandBox ${ITK_LIBRARIES})
-
 ADD_EXECUTABLE(btkRBFInterpolationS2S btkRBFInterpolationS2S.cxx
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolation.h
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.h
@@ -157,7 +150,6 @@ INSTALL(TARGETS btkImageReconstruction
                 btkLabelPropagation
                 btkSuperResolution
                 btkSuperResolutionFilterTest
-                btkSandBox
                 btkGroupwiseS2SDistortionCorrection
                 btkRBFInterpolationS2S
         DESTINATION bin)
