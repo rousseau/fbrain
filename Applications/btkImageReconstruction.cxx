@@ -55,7 +55,9 @@
 #include "itkImageFileWriter.h"
 
 /*Btk includes*/
-#include "btkSliceBySliceTransform.h"
+//#include "btkSliceBySliceTransform.h"
+#include "btkEulerSliceBySliceTransform.h"
+#include "btkSliceBySliceTransformBase.h"
 #include "btkLowToHighImageResolutionMethod.h"
 #include "btkSliceBySliceRigidRegistration.h"
 #include "btkResampleImageByInjectionFilter.h"
@@ -152,7 +154,7 @@ int main( int argc, char *argv[] )
   // typedefs
 
   const    unsigned int    Dimension = 3;
-  typedef  short           PixelType;
+  typedef  float           PixelType;
 
   typedef itk::Image< PixelType, Dimension >  ImageType;
   typedef ImageType::Pointer                  ImagePointer;
@@ -169,9 +171,7 @@ int main( int argc, char *argv[] )
   typedef itk::ImageMaskSpatialObject< Dimension >  MaskType;
   typedef MaskType::Pointer  MaskPointer;
 
-  // This filter does a rigid registration over all the LR images and compute the average image in HR space
-  typedef btk::LowToHighImageResolutionMethod<ImageType> LowToHighResFilterType;
-  LowToHighResFilterType::Pointer lowToHighResFilter = LowToHighResFilterType::New();
+
 
   /* Registration type required in case of slice by slice transformations
   A rigid transformation is employed because there is not distortions like
@@ -185,12 +185,19 @@ int main( int argc, char *argv[] )
   typedef Rigid3DRegistrationType::Pointer Rigid3DRegistrationPointer;
 
   // Slice by slice transform definition (typically for in utero reconstructions)
+  typedef btk::SliceBySliceTransformBase< double, Dimension > TransformBaseType;
   typedef btk::SliceBySliceTransform< double, Dimension > TransformType;
   typedef TransformType::Pointer                          TransformPointer;
+
+
 
   // Rigid 3D transform definition (typically for reconstructions in adults)
   typedef btk::Euler3DTransform< double > Rigid3DTransformType;
   typedef Rigid3DTransformType::Pointer   Rigid3DTransformPointer;
+
+  // This filter does a rigid registration over all the LR images and compute the average image in HR space
+  typedef btk::LowToHighImageResolutionMethod<ImageType,Rigid3DTransformType > LowToHighResFilterType;
+  LowToHighResFilterType::Pointer lowToHighResFilter = LowToHighResFilterType::New();
 
   // Resampler type required in case of a slice by slice transform
   typedef btk::ResampleImageByInjectionFilter< ImageType, ImageType
@@ -445,7 +452,7 @@ int main( int argc, char *argv[] )
     //        return EXIT_FAILURE;
             }
 
-          transforms[im] = registration[im] -> GetTransform();
+          transforms[im] = static_cast< TransformType* >(registration[im] -> GetTransform());
         }
 
       std::cout << "done. "; std::cout.flush();
