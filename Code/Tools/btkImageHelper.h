@@ -102,6 +102,8 @@ namespace btk
              * @return New image in the same physical space.
              */
             static typename TImageOutput::Pointer CreateNewFromSpaceOf(typename TImageInput::Pointer image);
+
+            static std::vector< typename TImageOutput::Pointer > &CreateNewFromSpaceOf(std::vector< typename TImageInput::Pointer > &images);
     };
 
 } // namespace btk

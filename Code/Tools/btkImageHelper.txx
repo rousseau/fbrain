@@ -81,7 +81,7 @@ namespace btk
         {
             std::cout << "Reading image \"" << fileNames[i] << "\"... " << std::flush;
 
-            typename ImageWriter::Pointer reader = ImageWriter::New();
+            typename ImageReader::Pointer reader = ImageReader::New();
             reader->SetFileName(fileNames[i]);
             reader->Update();
 
@@ -107,6 +107,22 @@ namespace btk
         newImage->FillBuffer(0);
 
         return newImage;
+    }
+
+    //----------------------------------------------------------------------------------------
+
+    template < class TImageInput, class TImageOutput >
+    std::vector< typename TImageOutput::Pointer > &ImageHelper< TImageInput, TImageOutput >::CreateNewFromSpaceOf(std::vector< typename TImageInput::Pointer > &images)
+    {
+        std::vector< typename TImageOutput::Pointer > *ptrNewImages = new std::vector< typename TImageOutput::Pointer >;
+        std::vector< typename TImageOutput::Pointer > &newImages = *ptrNewImages;
+
+        for(typename std::vector< typename TImageInput::Pointer >::iterator it = images.begin(); it != images.end(); it++)
+        {
+            newImages.push_back(CreateNewFromSpaceOf(*it));
+        }
+
+        return newImages;
     }
 
 } // namespace btk
