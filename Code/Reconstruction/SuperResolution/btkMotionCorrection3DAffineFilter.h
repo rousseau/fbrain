@@ -2,7 +2,7 @@
 
   © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-  Date: 22/03/2012
+  Date: 30/05/2012
   Author(s): Schweitzer Marc (marc.schweitzer@unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
@@ -33,8 +33,8 @@
 
 ==========================================================================*/
 
-#ifndef __BTK_MOTIONCORRECTIONFILTER_H__
-#define __BTK_MOTIONCORRECTIONFILTER_H__
+#ifndef __BTK_MOTIONCORRECTION3DAFFINEFILTER_H__
+#define __BTK_MOTIONCORRECTION3DAFFINEFILTER_H__
 
 /* ITK */
 #include "itkImage.h"
@@ -45,7 +45,9 @@
 #include "itkEuler3DTransform.h"
 
 /* BTK */
+//#include "btkAffineRegistration.h"
 #include "btkMacro.h"
+#include "btkMotionCorrectionFilter.h"
 #include "btkSuperResolutionType.h"
 
 
@@ -55,43 +57,33 @@
 
 namespace btk
 {
-class MotionCorrectionFilter
+class MotionCorrection3DAffineFilter: public MotionCorrectionFilter
 {
+
 public:
 
-
-    MotionCorrectionFilter(){};
-    ~MotionCorrectionFilter(){};
-
-     virtual void Update() = 0;
+    typedef btk::AffineRegistration< itkImage >     Affine3DRegistration;
 
 
+    typedef MotionCorrection3DAffineFilter   Self;
+    typedef MotionCorrectionFilter           SuperClass;
 
 
-    // GETTER/SETTER :
+    MotionCorrection3DAffineFilter();
+    ~MotionCorrection3DAffineFilter();
 
+    virtual void Update();
 
-    btkGetMacro(ImagesLR,std::vector< itkImage::Pointer > );
-    btkSetMacro(ImagesLR,std::vector< itkImage::Pointer > );
+    virtual void DoRegistration();
 
+   // btkGetMacro(TransformsLR,std::vector< itkTransformBase::Pointer >);
+    //btkSetMacro(TransformsLR, std::vector< itkTransformBase::Pointer >);
 
-    btkGetMacro(ImagesMaskLR,std::vector< itkImageMask::Pointer >  );
-    btkSetMacro(ImagesMaskLR,std::vector< itkImageMask::Pointer >  );
+    virtual std::vector<itkAffineTransform::Pointer> GetOutputTransformsLR()
+    {
+        return m_OutputTransformsLR;
+    }
 
-    btkGetMacro(MasksLR,std::vector< itkMask::Pointer >);
-    btkSetMacro(MasksLR,std::vector< itkMask::Pointer >);
-
-    btkGetMacro(ImageHR, itkImage::Pointer);
-    btkSetMacro(ImageHR, itkImage::Pointer);
-
-    btkGetMacro(ImageMaskHR, itkImageMask::Pointer);
-    btkSetMacro(ImageMaskHR, itkImageMask::Pointer);
-
-    btkGetMacro(ReferenceImage, itkImage::Pointer);
-    btkSetMacro(ReferenceImage, itkImage::Pointer);
-
-    btkGetMacro(TransformsLR, std::vector< itkTransformBase::Pointer >);
-    btkSetMacro(TransformsLR, std::vector< itkTransformBase::Pointer >);
 
 
 
@@ -99,25 +91,21 @@ public:
 
 protected:
 
-    virtual void Initialize() = 0;
-    virtual void DoRegistration() = 0;
-
-    std::vector< itkImage::Pointer >         m_ImagesLR;
-    std::vector< itkImageMask::Pointer >     m_ImagesMaskLR;
-    std::vector< itkMask::Pointer >          m_MasksLR;
-    std::vector< itkTransformBase::Pointer>  m_TransformsLR;
-    itkImage::Pointer                        m_ImageHR;
-    itkImage::Pointer                        m_OutputHRImage;
-    itkImageMask::Pointer                    m_ImageMaskHR;
-    itkMask::Pointer                         m_MaskHR;
-    itkImage::Pointer                        m_ReferenceImage;
-
+    virtual void Initialize();
 
 
 private:
 
+    std::vector< Affine3DRegistration::Pointer > m_Affine3DRegistration;
+   // std::vector< itkAffineTransform::Pointer > m_TransformsLR;
+    std::vector< itkAffineTransform::Pointer > m_OutputTransformsLR;
+
+
+    bool    m_UseAffine;
+    bool    m_UseEuler;
 
 };
 }
+
 
 #endif

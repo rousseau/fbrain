@@ -33,8 +33,8 @@
 
 ==========================================================================*/
 
-#ifndef __BTK_MOTIONCORRECTIONFILTER_H__
-#define __BTK_MOTIONCORRECTIONFILTER_H__
+#ifndef __BTK_MOTIONCORRECTIONSLICEBYSLICEEULERFILTER_H__
+#define __BTK_MOTIONCORRECTIONSLICEBYSLICEEULERFILTER_H__
 
 /* ITK */
 #include "itkImage.h"
@@ -45,7 +45,10 @@
 #include "itkEuler3DTransform.h"
 
 /* BTK */
+#include "btkSliceBySliceRigidRegistration.h"
+#include "btkSliceBySliceAffineRegistration.h"
 #include "btkMacro.h"
+#include "btkMotionCorrectionFilter.h"
 #include "btkSuperResolutionType.h"
 
 
@@ -55,66 +58,47 @@
 
 namespace btk
 {
-class MotionCorrectionFilter
+class MotionCorrectionSliceBySliceEulerFilter : public MotionCorrectionFilter
 {
 public:
 
+    typedef btk::SliceBySliceRigidRegistration< itkImage > SliceBySliceRegistration;
 
-    MotionCorrectionFilter(){};
-    ~MotionCorrectionFilter(){};
+    typedef MotionCorrectionSliceBySliceEulerFilter   Self;
+    typedef MotionCorrectionFilter               SuperClass;
 
-     virtual void Update() = 0;
+    MotionCorrectionSliceBySliceEulerFilter();
+    ~MotionCorrectionSliceBySliceEulerFilter();
 
-
-
-
-    // GETTER/SETTER :
-
-
-    btkGetMacro(ImagesLR,std::vector< itkImage::Pointer > );
-    btkSetMacro(ImagesLR,std::vector< itkImage::Pointer > );
+     virtual void Update();
 
 
-    btkGetMacro(ImagesMaskLR,std::vector< itkImageMask::Pointer >  );
-    btkSetMacro(ImagesMaskLR,std::vector< itkImageMask::Pointer >  );
-
-    btkGetMacro(MasksLR,std::vector< itkMask::Pointer >);
-    btkSetMacro(MasksLR,std::vector< itkMask::Pointer >);
-
-    btkGetMacro(ImageHR, itkImage::Pointer);
-    btkSetMacro(ImageHR, itkImage::Pointer);
-
-    btkGetMacro(ImageMaskHR, itkImageMask::Pointer);
-    btkSetMacro(ImageMaskHR, itkImageMask::Pointer);
-
-    btkGetMacro(ReferenceImage, itkImage::Pointer);
-    btkSetMacro(ReferenceImage, itkImage::Pointer);
-
-    btkGetMacro(TransformsLR, std::vector< itkTransformBase::Pointer >);
-    btkSetMacro(TransformsLR, std::vector< itkTransformBase::Pointer >);
 
 
+    //btkSetMacro(TransformsLR,std::vector< btkSliceBySliceTransformBase::Pointer >);
+    //btkGetMacro(TransformsLR, std::vector< btkSliceBySliceTransformBase::Pointer >);
+
+    virtual std::vector< btkSliceBySliceTransformBase::Pointer> GetOutputTransformsLR()
+    {
+        return m_OutputTransformsLR;
+    }
 
 
 
 protected:
 
-    virtual void Initialize() = 0;
-    virtual void DoRegistration() = 0;
-
-    std::vector< itkImage::Pointer >         m_ImagesLR;
-    std::vector< itkImageMask::Pointer >     m_ImagesMaskLR;
-    std::vector< itkMask::Pointer >          m_MasksLR;
-    std::vector< itkTransformBase::Pointer>  m_TransformsLR;
-    itkImage::Pointer                        m_ImageHR;
-    itkImage::Pointer                        m_OutputHRImage;
-    itkImageMask::Pointer                    m_ImageMaskHR;
-    itkMask::Pointer                         m_MaskHR;
-    itkImage::Pointer                        m_ReferenceImage;
-
+     virtual void Initialize();
+     virtual void DoRegistration();
 
 
 private:
+
+    std::vector< SliceBySliceRegistration::Pointer>     m_SliceBySliceRegistration;
+    //std::vector< btkSliceBySliceTransformBase::Pointer >    m_TransformsLR;
+    std::vector< btkSliceBySliceTransformBase::Pointer >    m_OutputTransformsLR;
+
+    bool    m_UseAffine;
+    bool    m_UseEuler;
 
 
 };
