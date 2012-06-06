@@ -2,8 +2,8 @@
 
   © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-  Date: 24/01/2011
-  Author(s): Estanislao Oubel (oubel@unistra.fr)
+  Date: 09/05/2012
+  Author(s): Marc Schweitzer (marc.schweitzer(at)unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -33,16 +33,15 @@
 
 ==========================================================================*/
 
-#ifndef __btkSliceBySliceRigidRegistration_h
-#define __btkSliceBySliceRigidRegistration_h
+#ifndef __BTKSLICEBYSLICEAFFINEREGISTRATION_H__
+#define __BTKSLICEBYSLICEAFFINEREGISTRATION_H__
 
 #include "itkProcessObject.h"
 #include "itkEuler3DTransform.h"
 #include "btkSliceBySliceTransform.h"
 #include "itkResampleImageFilter.h"
 #include "itkImageRegionIteratorWithIndex.h"
-
-#include "btkRigidRegistration.h"
+#include "btkAffineRegistration.h"
 
 #include "itkImageFileWriter.h"
 #include "itkTransformFileReader.h"
@@ -60,8 +59,8 @@ namespace btk
 
 using namespace itk;
 
-/** \class SliceBySliceRigidRegistration
- * \brief This class registers two images by using a slice by slice rigid transform.
+/** \class SliceBySliceAffineRegistration
+ * \brief This class registers two images by using a slice by slice affine transform.
  *
  * Full class description
  * Full class description
@@ -74,11 +73,11 @@ using namespace itk;
 // TODO Change the template to provide two types of images (Low and High resolution)
 
 template <typename TImage>
-class SliceBySliceRigidRegistration : public ProcessObject
+class SliceBySliceAffineRegistration : public ProcessObject
 {
 public:
   /** Standard class typedefs. */
-  typedef SliceBySliceRigidRegistration  Self;
+  typedef SliceBySliceAffineRegistration  Self;
   typedef ProcessObject                                Superclass;
   typedef SmartPointer<Self>                           Pointer;
   typedef SmartPointer<const Self>                     ConstPointer;
@@ -87,7 +86,7 @@ public:
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(SliceBySliceRigidRegistration, ProcessObject);
+  itkTypeMacro(SliceBySliceAffineRegistration, ProcessObject);
 
   /**  Type of the Fixed image. */
   typedef          TImage                               ImageType;
@@ -117,8 +116,7 @@ public:
   typedef ImageRegionIteratorWithIndex< ImageType >  IteratorType;
 
   /**  Type of the Transform . */
-  typedef Euler3DTransform< double >             				TransformType;
-  //typedef AffineTransform< double, 3 >                   TransformType;
+  typedef AffineTransform< double, 3 >                  TransformType;
   typedef typename TransformType::Pointer               TransformPointer;
   typedef  std::vector<TransformPointer>                TransformPointerArray;
 
@@ -136,7 +134,7 @@ public:
   typedef typename InterpolatorType::Pointer            InterpolatorPointer;
 
    /**  Type of the registration method. */
-  typedef RigidRegistration<ImageType>  RegistrationType;
+  typedef AffineRegistration<ImageType>  RegistrationType;
   typedef typename RegistrationType::Pointer     RegistrationPointer;
 
   typedef ResampleImageFilter< ImageType, ImageType >    ResampleType;
@@ -173,8 +171,8 @@ public:
 
 
 protected:
-  SliceBySliceRigidRegistration();
-  virtual ~SliceBySliceRigidRegistration() {};
+  SliceBySliceAffineRegistration();
+  virtual ~SliceBySliceAffineRegistration() {};
   void PrintSelf(std::ostream& os, Indent indent) const;
 
   /** Initialize by setting the interconnects between the components.
@@ -184,7 +182,7 @@ protected:
 
 
 private:
-  SliceBySliceRigidRegistration(const Self&); //purposely not implemented
+  SliceBySliceAffineRegistration(const Self&); //purposely not implemented
   void operator=(const Self&); //purposely not implemented
 
   ImagePointer                     m_FixedImage;
@@ -194,7 +192,7 @@ private:
   SliceBySliceTransformPointer     m_Transform;
 
   RegionType                       m_ROI;
-  RegistrationPointer			   m_Registration;
+  RegistrationPointer							 m_Registration;
 
   InterpolatorPointer              m_Interpolator;
 
@@ -211,7 +209,7 @@ private:
 
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "btkSliceBySliceRigidRegistration.txx"
+#include "btkSliceBySliceAffineRegistration.txx"
 #endif
 
 #endif

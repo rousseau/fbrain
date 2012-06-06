@@ -80,6 +80,9 @@ ADD_EXECUTABLE(btkAverageImagesWithReference btkAverageImagesWithReference.cxx)
 TARGET_LINK_LIBRARIES(btkAverageImagesWithReference ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkImageInjection btkImageInjection.cxx
+        ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRegistration.h
+        ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkAffineRegistration.h
+        ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRigidRegistration.h
         ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLowToHighImageResolutionMethod.h
         ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkResampleImageByInjectionFilter.h
         ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkImageIntersectionCalculator.h
@@ -100,6 +103,10 @@ ADD_EXECUTABLE(btkSequenceNormalization btkSequenceNormalization.cxx
         ${fbrain_SOURCE_DIR}/Code/DTI/btkDiffusionGradientTable.h
         ${fbrain_SOURCE_DIR}/Code/InputOutput/btkFileNameTools.h
         ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkAffineRegistration.h
+        #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRegistration.h
+        #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkAffineRegistration.h
+        #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRigidRegistration.h
+
  )
 TARGET_LINK_LIBRARIES(btkSequenceNormalization ${ITK_LIBRARIES})
 
@@ -111,7 +118,8 @@ TARGET_LINK_LIBRARIES(btkReconstructionComparisonTool ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkIteratedBackProjection
 btkIteratedBackProjection.cxx
-${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionImageFilter.h
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionRigidImageFilter.h
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionAffineImageFilter.h
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionManager.h
 ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
 )

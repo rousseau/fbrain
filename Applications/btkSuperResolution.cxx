@@ -52,7 +52,9 @@
 
 /*Btk includes*/
 #include "btkSliceBySliceTransform.h"
-#include "btkSuperResolutionImageFilter.h"
+//#include "btkSuperResolutionImageFilter.h"
+#include "btkSuperResolutionRigidImageFilter.h"
+
 #include "btkNLMTool.h"
 
 

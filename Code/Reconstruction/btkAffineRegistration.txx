@@ -33,8 +33,8 @@
 
 ==========================================================================*/
 
-#ifndef _btkAffineRegistration_txx
-#define _btkAffineRegistration_txx
+#ifndef __BTK_AFFINEREGISTRATION_TXX__
+#define __BTK_AFFINEREGISTRATION_TXX__
 
 #include "btkAffineRegistration.h"
 
@@ -72,6 +72,12 @@ AffineRegistration<ImageType>
   if (!m_FixedImageMask)
   {
     m_Metric->SetFixedImageMask(m_FixedImageMask);
+  }
+  else
+  {
+      m_FixedMask = MaskType::New();
+      m_FixedMask -> SetImage( this -> GetFixedImageMask() );
+      m_Metric -> SetFixedImageMask( m_FixedMask );
   }
   m_Metric->SetNumberOfHistogramBins( 24 );
   m_Metric->UseAllPixelsOn();

@@ -33,8 +33,8 @@
 
 ==========================================================================*/
 
-#ifndef _btkRigidRegistration_cxx
-#define _btkRigidRegistration_cxx
+#ifndef __BTK_RIGIDREGISTRATION_TXX__
+#define __BTK_RIGIDREGISTRATION_TXX__
 
 #include "btkRigidRegistration.h"
 
@@ -45,8 +45,7 @@ namespace btk
  * Constructor
  */
 template < typename ImageType >
-RigidRegistration<ImageType>
-::RigidRegistration()
+RigidRegistration<ImageType>::RigidRegistration()
 {
   m_Iterations = 200;
   m_EnableObserver = false;
@@ -55,6 +54,9 @@ RigidRegistration<ImageType>
 
   m_InitializeWithTransform = false;
   m_InitializeWithMask = false;
+
+
+
 }
 
 /*
@@ -65,12 +67,34 @@ void
 RigidRegistration<ImageType>
 ::Initialize() throw (ExceptionObject)
 {
-  // Configure transform
 
+
+  // Configure transform
   m_Transform = TransformType::New();
+//  ParametersType initialTransformParameters( m_Transform->GetNumberOfParameters() );
+//  //rotation matrix 3D
+//  initialTransformParameters[0] = 1.0;
+//  initialTransformParameters[1] = 0.0;
+//  initialTransformParameters[2] = 0.0;
+
+//  initialTransformParameters[3] = 0.0;
+//  initialTransformParameters[4] = 1.0;
+//  initialTransformParameters[5] = 0.0;
+
+//  initialTransformParameters[6] = 0.0;
+//  initialTransformParameters[7] = 0.0;
+//  initialTransformParameters[8] = 1.0;
+
+//  //translation vector
+//  initialTransformParameters[9] = 0.0;
+//  initialTransformParameters[10] = 0.0;
+//  initialTransformParameters[11] = 0.0;
+
+  //this->SetInitialTransformParameters( initialTransformParameters );
 
   if (m_InitializeWithMask)
   {
+
     TransformInitializerType::Pointer initializer = TransformInitializerType::New();
 
     initializer -> SetTransform( m_Transform );
@@ -82,12 +106,14 @@ RigidRegistration<ImageType>
     initializer -> SetMovingImage( this -> GetMovingImageMask() );
     initializer -> MomentsOn();
     initializer -> InitializeTransform();
+
   } else if (m_InitializeWithTransform)
     {
       m_Transform -> SetParameters( this -> GetInitialTransformParameters() );
       m_Transform -> SetCenter( this -> GetTransformCenter() );
     } else
       {
+
         PointType rotationCenter;
         IndexType centerIndex;
 
@@ -107,7 +133,10 @@ RigidRegistration<ImageType>
 
   this -> SetInitialTransformParameters( m_Transform -> GetParameters() );
 
+
+
   m_Interpolator = InterpolatorType::New();
+  //m_Interpolator->SetMovingImage(this->GetMovingImage());
   m_Metric = MetricType::New();
   m_Optimizer = OptimizerType::New();
 
@@ -120,35 +149,80 @@ RigidRegistration<ImageType>
   }
 
   // FIXME Uncomment if MI is used instead of NC
-  //m_Metric -> SetNumberOfHistogramBins( 64 );
+ // m_Metric -> SetNumberOfHistogramBins( 64 );
   //m_Metric -> UseAllPixelsOn();
   m_Metric -> SetNumberOfSpatialSamples(0.2*this -> GetFixedImageRegion().GetNumberOfPixels());
 
-  // Configure optimizer
 
-  m_Optimizer->MinimizeOn();
-  m_Optimizer->SetMaximumStepLength( 0.1 );
-  m_Optimizer->SetMinimumStepLength( 0.001 );
-  m_Optimizer->SetNumberOfIterations( m_Iterations );
-  m_Optimizer->SetRelaxationFactor( 0.8 );
+  //std::cout<<"NameOfClass : "<<m_Transform->GetNameOfClass()<<std::endl;
 
-  OptimizerScalesType optimizerScales( m_Transform -> GetNumberOfParameters() );
+ // std::cout<<(m_Transform->GetNameOfClass() == "Euler3DTransform")<<std::endl;
+  //std::cout<<(m_Transform->GetNameOfClass() == "AffineTransform")<<std::endl;
 
-  optimizerScales[0] =  1.0;
-  optimizerScales[1] =  1.0;
-  optimizerScales[2] =  1.0;
-  optimizerScales[3] =  1.0/100.0;
-  optimizerScales[4] =  1.0/100.0;
-  optimizerScales[5] =  1.0/100.0;
+  if(std::string(m_Transform->GetNameOfClass()) == "Euler3DTransform")
+  {
+      // Configure optimizer
 
-  m_Optimizer->SetScales( optimizerScales );
+      m_Optimizer->MinimizeOn();
+      m_Optimizer->SetMaximumStepLength( 0.1 );
+      m_Optimizer->SetMinimumStepLength( 0.001 );
+      m_Optimizer->SetNumberOfIterations( m_Iterations );
+      m_Optimizer->SetRelaxationFactor( 0.8 );
+
+      OptimizerScalesType optimizerScales( m_Transform -> GetNumberOfParameters() );
+
+      optimizerScales[0] =  1.0;
+      optimizerScales[1] =  1.0;
+      optimizerScales[2] =  1.0;
+      optimizerScales[3] =  1.0/100.0;
+      optimizerScales[4] =  1.0/100.0;
+      optimizerScales[5] =  1.0/100.0;
+      m_Optimizer->SetScales( optimizerScales );
+  }
+  else if(std::string(m_Transform->GetNameOfClass()) == "AffineTransform")
+  {
+      m_Optimizer->MinimizeOn();
+      m_Optimizer->SetMaximumStepLength( 0.2 );
+      m_Optimizer->SetMinimumStepLength( 0.0001 );
+      m_Optimizer->SetNumberOfIterations( m_Iterations );
+      m_Optimizer->SetGradientMagnitudeTolerance(0.00001);
+
+      OptimizerScalesType optimizerScales( m_Transform->GetNumberOfParameters() );
+
+      optimizerScales[0] =  1.0;
+      optimizerScales[1] =  1.0;
+      optimizerScales[2] =  1.0;
+      optimizerScales[3] =  1.0;
+      optimizerScales[4] =  1.0;
+      optimizerScales[5] =  1.0;
+      optimizerScales[6] =  1.0;
+      optimizerScales[7] =  1.0;
+      optimizerScales[8] =  1.0;
+      optimizerScales[9] =  1/1000.0;
+      optimizerScales[10] =  1/1000.0;
+      optimizerScales[11] =  1/1000.0;
+      m_Optimizer->SetScales( optimizerScales );
+
+
+  }
+  else
+  {
+      throw(std::string("Wrong type of Transform ! Only Euler3D and Affine transform are accepted."));
+  }
+
+
+  //m_Optimizer->SetScales( optimizerScales );
 
   m_Observer = CommandIterationUpdate::New();
+
+  m_EnableObserver = true;
 
   if (m_EnableObserver)
   {
     m_Optimizer -> AddObserver( itk::IterationEvent(), m_Observer );
   }
+
+
 
   // Connect components
   this->SetTransform( this -> m_Transform );
@@ -156,8 +230,12 @@ RigidRegistration<ImageType>
   this->SetOptimizer( this -> m_Optimizer );
   this->SetInterpolator( this -> m_Interpolator );
 
+
   Superclass::Initialize();
 
+
+  //std::cout<<"Transform Parameters "<<m_Transform -> GetParameters()<<std::endl;
+  //std::cout<<"Transform "<<m_Transform<<std::endl;
 }
 
 /*

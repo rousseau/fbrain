@@ -33,13 +33,16 @@
 
 ==========================================================================*/
 
-#ifndef __btkRigidRegistration_h
-#define __btkRigidRegistration_h
+#ifndef __BTK_RIGIDREGISTRATION_H__
+#define __BTK_RIGIDREGISTRATION_H__
+
+#include "btkRegistration.h"
 
 #include "itkImageRegistrationMethod.h"
 #include "itkRegularStepGradientDescentOptimizer.h"
 #include "itkLinearInterpolateImageFunction.h"
 #include "itkEuler3DTransform.h"
+#include "itkAffineTransform.h"
 #include "itkCenteredTransformInitializer.h"
 
 #include "itkImageMaskSpatialObject.h"
@@ -48,48 +51,9 @@
 #include "itkNormalizedCorrelationImageToImageMetric.h"
 
 #include "itkNumericTraits.h"
+
 #include "btkUserMacro.h"
 
-#include "itkCommand.h"
-
-#ifndef __CommandIterationUpdate
-#define __CommandIterationUpdate
-
-class CommandIterationUpdate : public itk::Command
-{
-public:
-  typedef  CommandIterationUpdate   Self;
-  typedef  itk::Command             Superclass;
-  typedef itk::SmartPointer<Self>  Pointer;
-  itkNewMacro( Self );
-protected:
-  CommandIterationUpdate() {};
-public:
-  typedef itk::RegularStepGradientDescentOptimizer     OptimizerType;
-  typedef   const OptimizerType   *    OptimizerPointer;
-
-  void Execute(itk::Object *caller, const itk::EventObject & event)
-    {
-      Execute( (const itk::Object *)caller, event);
-    }
-
-  void Execute(const itk::Object * object, const itk::EventObject & event)
-    {
-      OptimizerPointer optimizer =
-        dynamic_cast< OptimizerPointer >( object );
-      if( ! itk::IterationEvent().CheckEvent( &event ) )
-        {
-        return;
-        }
-      std::cout << optimizer->GetCurrentIteration() << "   ";
-      std::cout << optimizer -> GetCurrentStepLength() << "   ";
-      std::cout << optimizer->GetValue() << "   ";
-
-      std::cout << optimizer->GetCurrentPosition() << std::endl;
-    }
-};
-
-#endif
 
 namespace btk
 {
@@ -106,13 +70,13 @@ using namespace itk;
  * \ingroup Reconstruction
  */
 template <typename TImage>
-class RigidRegistration :
-public ImageRegistrationMethod <TImage,TImage>
+class RigidRegistration : public btk::Registration <TImage>
 {
 public:
+
   /** Standard class typedefs. */
   typedef RigidRegistration  Self;
-  typedef ImageRegistrationMethod<TImage,TImage>       Superclass;
+  typedef btk::Registration<TImage>       Superclass;
   typedef SmartPointer<Self>                           Pointer;
   typedef SmartPointer<const Self>                     ConstPointer;
 
@@ -157,9 +121,10 @@ public:
      could have problems for large rotations */
 
   /**  Type of the transform . */
+  //typedef   MatrixOffsetTransformBase< double, 3 >          TransformType;
+  //typedef AffineTransform< double , 3>                    TransformType;
   typedef Euler3DTransform< double >                    TransformType;
   typedef typename TransformType::Pointer               TransformPointer;
-
   /**  Type of the transform parameters. */
   typedef  TransformType::ParametersType                ParametersType;
 
@@ -192,7 +157,9 @@ public:
 
   /** Set/Get transform center. */
   itkSetMacro(TransformCenter, PointType);
-  itkGetMacro(TransformCenter, PointType);
+
+  virtual PointType GetTransformCenter() const
+    { return m_Transform -> GetCenter(); }
 
     /** Set/Get iterations. */
   itkSetMacro(Iterations, unsigned int);
@@ -211,26 +178,28 @@ public:
   itkGetObjectMacro(MovingImageMask, ImageMaskType);
 
   /** Initialization is performed with the provided transform. */
-  void InitializeWithTransform()
+  virtual void InitializeWithTransform()
   {
     m_InitializeWithTransform = true;
     m_InitializeWithMask = false;
   }
 
   /** Initialization is performed with the provided image masks. */
-  void InitializeWithMask()
+  virtual void InitializeWithMask()
   {
     m_InitializeWithTransform = false;
     m_InitializeWithMask = true;
   }
 
+  itkGetObjectMacro(Optimizer, OptimizerType);
+
 protected:
   RigidRegistration();
   virtual ~RigidRegistration() {};
-  void PrintSelf(std::ostream& os, Indent indent) const;
+  virtual void PrintSelf(std::ostream& os, Indent indent) const;
 
   /** Initialize by setting the interconnects between the components.*/
-  void Initialize() throw (ExceptionObject);
+  virtual void Initialize() throw (ExceptionObject);
 
 private:
   RigidRegistration(const Self&); //purposely not implemented
@@ -240,6 +209,8 @@ private:
   OptimizerPointer     m_Optimizer;
   TransformPointer     m_Transform;
   InterpolatorPointer  m_Interpolator;
+
+  ParametersType       m_InitialTransformParameters;
 
   ImageMaskPointer     m_FixedImageMask;
   ImageMaskPointer     m_MovingImageMask;
