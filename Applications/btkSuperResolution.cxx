@@ -127,7 +127,7 @@ int main( int argc, char *argv[] )
   typedef itk::TransformFileReader     TransformReaderType;
   typedef TransformReaderType::TransformListType * TransformListType;
 
-  typedef btk::SuperResolutionImageFilter< ImageType, ImageType >  ResamplerType;
+  typedef btk::SuperResolutionRigidImageFilter< ImageType, ImageType >  ResamplerType;
   ResamplerType::Pointer resampler = ResamplerType::New();
 
   // Filter setup
