@@ -52,6 +52,7 @@
 // BTK includes
 
 #include "btkMacro.h"
+#include "btkSuperResolutionType.h"
 
 
 namespace btk
@@ -59,17 +60,7 @@ namespace btk
 class SimulateLRImageFilter
 {
 public:
-    typedef float PixelType;
-    typedef itk::Image< PixelType, 3>         itkImage;
-    typedef itk::Image< PixelType, 2>         SliceType;
 
-    typedef itk::ImageDuplicator< itkImage >  itkDuplicator;
-    typedef itk::ImageRegionIterator< itkImage > itkIterator;
-    typedef itk::ImageRegionIteratorWithIndex< itkImage > itkIteratorWithIndex;
-    typedef itk::ContinuousIndex<double,3>     itkContinuousIndex;
-
-
-    typedef itk::StatisticsImageFilter<itkImage>        itkStatisticsImageFilter;
 
     SimulateLRImageFilter();
     ~SimulateLRImageFilter();

@@ -46,18 +46,26 @@
 /* BTK */
 #include "btkMacro.h"
 #include "btkHighResolutionReconstructionFilter.h"
+#include "btkSuperResolutionType.h"
+#include "btkSuperResolutionRigidImageFilter.h"
+#include "btkSuperResolutionAffineImageFilter.h"
+#include "btkNLMTool.h"
 
 /* OTHERS */
 #include "iostream"
 
 namespace btk
 {
+
 class HighResolutionSRFilter : public HighResolutionReconstructionFilter
 {
 
 
 public:
 
+    typedef btk::HighResolutionReconstructionFilter     SuperClass;
+
+    //typedef btk::SuperResolutionRigidImageFilter< itkImage, itkImage, itkEulerTransform >   Resampler;
 
 
     HighResolutionSRFilter();
@@ -65,14 +73,37 @@ public:
 
     virtual void Update();
 
+    btkSetMacro(Lambda,float);
+    btkGetMacro(Lambda,float);
+
+    btkSetMacro(Iter,unsigned int);
+    btkGetMacro(Iter, unsigned int);
+
+
 
 
 protected:
+    virtual void Initialize();
+    virtual void DoAffineReconstruction();
+    virtual void DoRigidReconstruction();
 private:
+
+   //Resampler::Pointer  m_Resampler;
+    btkNLMTool<float>*   m_NlmTools;
+
+    float               m_Lambda;
+    unsigned int        m_Iter;
+    bool                m_UseAffineFilter;
+    bool                m_UseEulerFilter;
+    bool                m_UseSliceBySlice;
+
+
+
 
 
 
 };
 }
+
 
 #endif

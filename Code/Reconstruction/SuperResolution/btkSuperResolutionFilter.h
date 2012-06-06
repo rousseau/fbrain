@@ -33,8 +33,8 @@
 
 ==========================================================================*/
 
-#ifndef __BTK_SUPERRESOLUTIONFILTER_h__
-#define __BTK_SUPERRESOLUTIONFILTER_h__
+#ifndef __BTK_SUPERRESOLUTIONFILTER_H__
+#define __BTK_SUPERRESOLUTIONFILTER_H__
 
 /* ITK */
 #include "itkImage.h"
@@ -70,16 +70,25 @@
 #include "btkCreateHRMaskFilter.h"
 #include "btkSimulateLRImageFilter.h"
 #include "btkMacro.h"
+#include "btkHighResolutionReconstructionFilter.h"
+#include "btkHighResolutionIBPFilter.h"
+#include "btkHighResolutionSRFilter.h"
+#include "btkMotionCorrection3DAffineFilter.h"
+#include "btkMotionCorrection3DEulerFilter.h"
+#include "btkMotionCorrectionSliceBySliceAffineFilter.h"
+#include "btkMotionCorrectionSliceBySliceEulerFilter.h"
 //Typedefs :
 #include "btkSuperResolutionType.h"
 
 
 // Filter used for SuperResolution pipeline :
 #include "btkBiasCorrectionFilter.h"
-#include "btkHighResolutionReconstructionFilter.h"
 #include "btkMotionCorrectionFilter.h"
 #include "btkPSFEstimationFilter.h"
 #include "btkSliceRejectionFilter.h"
+#include "btkResampleImageByInjectionFilter.h"
+#include "btkImageHelper.h"
+
 
 
 
@@ -91,6 +100,7 @@ class SuperResolutionFilter
 public:
 
 
+    typedef btk::ResampleImageByInjectionFilter< itkImage, itkImage  >  ResamplerByInjectionType;
 
     /** Constructor with no parameters */
     SuperResolutionFilter();
@@ -106,7 +116,7 @@ public:
     ~SuperResolutionFilter();
 
     /** Method called for compute the SuperResolution pipeline */
-    void Update();
+    int Update();
 
     /** Method who return the High Resolution image  */
     itkImage::Pointer GetOutput();
@@ -115,16 +125,22 @@ public:
 
     // GETTER/SETTER :
 
-    btkGetMacro(TransformsLR,std::vector< itkTransformBase::Pointer >);// To remove
+    btkGetMacro(TransformsLR,std::vector< itkTransformBase::Pointer >);
     btkSetMacro(TransformsLR,std::vector< itkTransformBase::Pointer >);
 
 
-    btkGetMacro(TransformsLRSbS,std::vector< btkSliceBySliceTransform::Pointer >);
-    btkSetMacro(TransformsLRSbS,std::vector< btkSliceBySliceTransform::Pointer >);
+    btkGetMacro(TransformsLRSbS,std::vector< btkSliceBySliceTransformBase::Pointer>);
+    btkSetMacro(TransformsLRSbS,std::vector< btkSliceBySliceTransformBase::Pointer>);
 
-    btkGetMacro(TransformsLRAffine,std::vector< itkAffineTransform::Pointer >);
-    btkSetMacro(TransformsLRAffine,std::vector< itkAffineTransform::Pointer >);
+//    btkGetMacro(TransformsLRAffine,std::vector< itkAffineTransform::Pointer >);
+//    btkSetMacro(TransformsLRAffine,std::vector< itkAffineTransform::Pointer >);
 
+//    btkGetMacro(TransformsLRAffine,std::vector< itkTransformBase::Pointer >);
+//    btkSetMacro(TransformsLRAffine,std::vector< itkTransformBase::Pointer >);
+
+
+//    btkGetMacro(TransformsLR,std::vector< itkAffineTransform::Pointer >);
+//    btkSetMacro(TransformsLR,std::vector< itkAffineTransform::Pointer >);
 
     btkGetMacro(ImagesLR,std::vector< itkImage::Pointer > );
     btkSetMacro(ImagesLR,std::vector< itkImage::Pointer > );
@@ -173,14 +189,29 @@ public:
     btkGetMacro(ReconstructionType,RECONSTRUCTION_TYPE);
     btkSetMacro(ReconstructionType,RECONSTRUCTION_TYPE);
 
+    btkGetMacro(RoisLR, std::vector< itkRegion >);
+    btkSetMacro(RoisLR, std::vector< itkRegion >);
+
+    btkGetMacro(IterMax, unsigned int);
+    btkSetMacro(IterMax, unsigned int);
+
+    btkGetMacro(Lambda, float );
+    btkSetMacro(Lambda, float );
 
 
-    void SetParameters(int Nlm, float Beta, int Loop, int MedianIBP, int PsfType, int InterpolationOrderIBP, int InterpolationOrderPSF);
+
+
+    void SetParameters(int Nlm, float Beta, int Loop, int MedianIBP, int PsfType,float lambda,int iterMax, int InterpolationOrderIBP, int InterpolationOrderPSF);
     void SetDefaultParameters();
 
 protected:
 
     void InverseTransforms();
+    void Initialize();
+    void ComputeHRImage();
+    void MotionCorrection();
+    void ResampleByInjection();
+
 private:
 
     // !! Since use of btkMacro for get/set use a Capital letter after the m_ (ex : m_MyVariable) !!
@@ -199,17 +230,25 @@ private:
 
 
     std::vector< itkImage::Pointer >         m_ImagesLR;
-    std::vector< itkTransformBase::Pointer  >   m_TransformsLR;
+    //Use ::Pointer instead ...
+    std::vector< itkTransformBase::Pointer >   m_TransformsLR;
     std::vector< itkTransformBase::Pointer >    m_InverseTransformsLR;
 
-    std::vector< btkSliceBySliceTransform::Pointer  >   m_TransformsLRSbS;
-    std::vector< btkSliceBySliceTransform::Pointer >    m_InverseTransformsLRSbS;
+//    std::vector< itkAffineTransform::Pointer  >   m_TransformsLR;
+//    std::vector< itkAffineTransform::Pointer >    m_InverseTransformsLR;
 
-    std::vector< itkAffineTransform::Pointer  >   m_TransformsLRAffine;
-    std::vector< itkAffineTransform::Pointer >    m_InverseTransformsLRAffine;
+    std::vector< btkSliceBySliceTransformBase::Pointer  >   m_TransformsLRSbS;
+    std::vector< btkSliceBySliceTransformBase::Pointer >    m_InverseTransformsLRSbS;
+
+//    std::vector< itkAffineTransform::Pointer  >   m_TransformsLRAffine;
+//    std::vector< itkAffineTransform::Pointer >    m_InverseTransformsLRAffine;
+
+    std::vector< itkTransformBase::Pointer >   m_TransformsLRAffine;
+    std::vector< itkTransformBase::Pointer >    m_InverseTransformsLRAffine;
 
     std::vector< itkImageMask::Pointer >     m_ImagesMaskLR;
     std::vector< itkMask::Pointer >          m_MasksLR;
+    std::vector< itkRegion >                 m_RoisLR;
     itkImage::Pointer                        m_ImageHR;
     itkImage::Pointer                        m_OutputHRImage;
     itkImageMask::Pointer                    m_ImageMaskHR;
@@ -221,6 +260,8 @@ private:
     float m_Beta;
     int m_Loop;
     int m_MedianIBP;
+    unsigned int m_IterMax;
+    float m_Lambda;
 
     //Image information (size, spacing etc.)
     itkImage::SpacingType m_Spacing;
@@ -232,6 +273,13 @@ private:
     btk::BiasCorrectionFilter *   m_BiasCorrectionFilter;
     btk::HighResolutionReconstructionFilter * m_HighResolutionReconstructionFilter;
     btk::SliceRejectionFilter * m_SliceRejectionFilter;
+    btk::LowToHighResFilterRigid::Pointer m_CreateRigidHighResolutionImage;
+    btk::LowToHighResFilterAffine::Pointer m_CreateAffineHighResolutionImage;
+    ResamplerByInjectionType::Pointer   m_ResampleByInjectionFilter;
+
+
+    bool       m_ComputeRegistration;
+
 
 
 

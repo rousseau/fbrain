@@ -52,7 +52,17 @@ SliceBySliceTransform<TScalarType,NDimensions>
   OutputPointType Tp( p );
   typename ImageType::IndexType index;
   m_Image -> TransformPhysicalPointToIndex( Tp , index);
+//  std::cout<<"Physical Point : "<<Tp<<std::endl;
+//  std::cout<<"Index : "<<index[0]<<" ; "<<index[1]<<" ; "<<index[2]<<std::endl;
+//  std::cout<<"transform slice n :"<<index[2]<<"/"<<m_TransformList.size()<<std::endl<<std::endl;
+  int a, b,c, d;
+  a = index[0];
+  b = index[1];
+  c = index[2];
+  index[2] = index[2] < 0 ? 0 : index[2];
+  index[2] = index[2] > m_TransformList.size()-1 ? m_TransformList.size()-1 : index[2];
 
+  d = index[2];
   Tp = m_TransformList[ index[2] ] -> TransformPoint( Tp );
 
   return Tp;
@@ -192,7 +202,7 @@ Initialize()
 template <class TScalarType,unsigned int NDimensions>
 void
 SliceBySliceTransform<TScalarType,NDimensions>::
-Initialize( TransformType * t )
+Initialize( TransformBase * t )
 {
   typename ImageType::SizeType size = m_Image -> GetLargestPossibleRegion().GetSize();
 
@@ -216,8 +226,10 @@ Initialize( TransformType * t )
 
     m_TransformList[i] = TransformType::New();
     m_TransformList[i] -> SetIdentity();
-    m_TransformList[i] -> SetCenter(centerPoint);
-    t -> SetCenter( m_TransformList[i] -> GetCenter() );
+    //FIXME : if we set the center the transformation is not exactly the same as a global transform
+    //I don't know the reason why
+//    m_TransformList[i] -> SetCenter(centerPoint);
+//    t -> SetCenter( m_TransformList[i] -> GetCenter() );
 
     m_TransformList[i] -> SetParameters( t -> GetParameters() );
   }

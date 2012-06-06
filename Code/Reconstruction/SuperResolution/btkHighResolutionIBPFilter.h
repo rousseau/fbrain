@@ -39,8 +39,8 @@
 
 
 /* BTK */
-#include "btkMacro.h"
 #include "btkHighResolutionReconstructionFilter.h"
+#include "btkMacro.h"
 #include "btkCreateHRMaskFilter.h"
 #include "btkSimulateLRImageFilter.h"
 
@@ -58,6 +58,8 @@ class HighResolutionIBPFilter : public HighResolutionReconstructionFilter
 public:
 
 
+
+    typedef HighResolutionReconstructionFilter SuperClass;
 
     HighResolutionIBPFilter();
     ~HighResolutionIBPFilter();
@@ -97,5 +99,6 @@ private:
 
 };
 }
+
 
 #endif

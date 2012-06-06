@@ -1,13 +1,10 @@
 #include "btkSuperResolutionFilter.h"
 
-#include "btkHighResolutionIBPFilter.h"
-#include "btkHighResolutionSRFilter.h"
-#include "btkMotionCorrectionAffine3DFilter.h"
-#include "btkMotionCorrectionSliceBySliceFilter.h"
+
 
 namespace btk
 {
-
+//-----------------------------------------------------------------------------------------------------------
 SuperResolutionFilter::SuperResolutionFilter()
 {
     m_PSFEstimationFilter = NULL;
@@ -16,11 +13,15 @@ SuperResolutionFilter::SuperResolutionFilter()
     m_HighResolutionReconstructionFilter = NULL;
     m_SliceRejectionFilter = NULL;
 
-    m_ReconstructionType = IBP;
+    m_ReconstructionType = SR;
 
     m_TransformationType = AFFINE;
 
     btkCoutMacro(SuperResolutionFilter : Constructor );
+
+    m_PSFEstimationFilter = new btk::PSFEstimationFilter();
+    m_SliceRejectionFilter = new btk::SliceRejectionFilter();
+    m_BiasCorrectionFilter = new btk::BiasCorrectionFilter();
 
 
 
@@ -29,11 +30,18 @@ SuperResolutionFilter::SuperResolutionFilter()
 //-----------------------------------------------------------------------------------------------------------
 SuperResolutionFilter::SuperResolutionFilter(int loop, float beta, int nlm)
 {
+    m_PSFEstimationFilter = new btk::PSFEstimationFilter();
+    m_SliceRejectionFilter = new btk::SliceRejectionFilter();
+    m_BiasCorrectionFilter = new btk::BiasCorrectionFilter();
 
 }
 //-----------------------------------------------------------------------------------------------------------
 SuperResolutionFilter::SuperResolutionFilter(int loop, float beta, int nlm, TRANSFORMATION_TYPE transfoType)
 {
+    m_PSFEstimationFilter = new btk::PSFEstimationFilter();
+    m_SliceRejectionFilter = new btk::SliceRejectionFilter();
+    m_BiasCorrectionFilter = new btk::BiasCorrectionFilter();
+
 }
 //-----------------------------------------------------------------------------------------------------------
 SuperResolutionFilter::~SuperResolutionFilter()
@@ -72,77 +80,87 @@ SuperResolutionFilter::~SuperResolutionFilter()
     }
 }
 //-----------------------------------------------------------------------------------------------------------
-void SuperResolutionFilter::Update()
+int SuperResolutionFilter::Update()
 {
     btkCoutMacro(SuperResolutionFilter : Update Method );
 
+    if(m_ImagesLR.empty() || m_ImagesMaskLR.empty() )
+    {
+        throw std::string("No Low Resolution Images or Masks ! Super Resolution can not be performed !");
+    }
+
+    //
+
+    this->Initialize();
+
+    this->ComputeHRImage();
+
+    if(m_ImageHR.IsNull())
+    {
+        this->ComputeHRImage();
+    }
+
+    this->MotionCorrection();
     this->InverseTransforms();
 
-    m_PSFEstimationFilter = new btk::PSFEstimationFilter();
-    m_PSFEstimationFilter->Update();
+
+     m_HighResolutionReconstructionFilter = new btk::HighResolutionSRFilter;
+     m_HighResolutionReconstructionFilter->SetTransformsLR(m_TransformsLR);
+     std::vector<itkTransformBase*> transfos;
+     transfos.resize(m_TransformsLR.size());
+
+     for(int i =0; i<transfos.size(); i++)
+     {
+         switch(m_TransformationType)
+         {
+
+             case SLICE_BY_SLICE :
+
+                 break;
+
+             case SLICE_BY_SLICE_AFFINE:
+
+                 break;
+
+             case SLICE_BY_SLICE_EULER:
 
 
-    if(m_TransformationType == AFFINE)
-    {
-        m_MotionCorrectionFilter = new btk::MotionCorrectionAffine3DFilter();
-    }
-    else
-    {
-        m_MotionCorrectionFilter = new btk::MotionCorrectionSliceBySliceFilter();
-    }
+                 break;
 
-    m_MotionCorrectionFilter->Update();
-
-    m_BiasCorrectionFilter = new btk::BiasCorrectionFilter();
-    m_BiasCorrectionFilter->Update();
+             case EULER_3D:
 
 
+                 break;
+
+             case AFFINE:
+
+                 break;
+
+             default:
+                 break;
 
 
-    if(m_ReconstructionType == IBP)
-    {
+         }
+     }
 
-         m_HighResolutionReconstructionFilter = new btk::HighResolutionIBPFilter();
-
-         dynamic_cast< btk::HighResolutionIBPFilter* >(m_HighResolutionReconstructionFilter)->SetNloops(m_Loop);
-         dynamic_cast< btk::HighResolutionIBPFilter* >(m_HighResolutionReconstructionFilter)->SetNlm(m_Nlm);
-         dynamic_cast< btk::HighResolutionIBPFilter* >(m_HighResolutionReconstructionFilter)->SetBeta(m_Beta);
-         dynamic_cast< btk::HighResolutionIBPFilter* >(m_HighResolutionReconstructionFilter)->SetMedianIBP(m_MedianIBP);
-         m_HighResolutionReconstructionFilter->SetInterpolationOrderIBP(m_InterpolationOrderIBP);
-
-    }
-    else
-    {
-
-        m_HighResolutionReconstructionFilter = new btk::HighResolutionSRFilter();     
-        m_HighResolutionReconstructionFilter->SetInterpolationOrderPSF(m_InterpolationOrderPSF);
-    }
-
+     m_HighResolutionReconstructionFilter->SetPsfType(m_Psftype);
+     m_HighResolutionReconstructionFilter->SetNloops(m_Loop);
      m_HighResolutionReconstructionFilter->SetImagesLR(m_ImagesLR);
+     m_HighResolutionReconstructionFilter->SetMasksLR(m_MasksLR);
      m_HighResolutionReconstructionFilter->SetImagesMaskLR(m_ImagesMaskLR);
      m_HighResolutionReconstructionFilter->SetImageHR(m_ImageHR);
 
 
-     if(m_TransformationType == AFFINE)
-     {
-         m_HighResolutionReconstructionFilter->SetTransformsLRAffine(m_TransformsLRAffine);
-         m_HighResolutionReconstructionFilter->SetTransformType(AFFINE);
-         m_HighResolutionReconstructionFilter->SetInverseTransformsLRAffine(m_InverseTransformsLRAffine);
-     }
-     else
-     {
-         m_HighResolutionReconstructionFilter->SetTransformsLRSbS(m_TransformsLRSbS);
-         m_HighResolutionReconstructionFilter->SetTransformType(SLICE_BY_SLICE);
-         m_HighResolutionReconstructionFilter->SetInverseTransformsLRSbS(m_InverseTransformsLRSbS);
-     }
+     m_HighResolutionReconstructionFilter->SetTransformType(m_TransformationType);
+
+
 
 
      m_HighResolutionReconstructionFilter->Update();
 
 
 
-    m_SliceRejectionFilter = new btk::SliceRejectionFilter();
-    m_SliceRejectionFilter->Update();
+
 
     m_OutputHRImage = m_HighResolutionReconstructionFilter->GetOutput();
 
@@ -161,43 +179,251 @@ void SuperResolutionFilter::SetDefaultParameters()
     m_Loop = 50;
     m_MedianIBP = 0;
     m_Psftype = 1;
-    m_InterpolationOrderPSF = 5;
+    m_InterpolationOrderPSF = 1;
     m_InterpolationOrderIBP = 5;
+    m_IterMax = 5;
+    m_ComputeRegistration = true;
 }
 //-----------------------------------------------------------------------------------------------------------
-void SuperResolutionFilter::SetParameters(int Nlm, float Beta, int Loop, int MedianIBP, int PsfType, int InterpolationOrderIBP, int InterpolationOrderPSF)
+void SuperResolutionFilter::SetParameters(int Nlm, float Beta, int Loop, int MedianIBP, int PsfType,float lambda,int iterMax, int InterpolationOrderIBP, int InterpolationOrderPSF)
 {
     m_Nlm = Nlm;
     m_Beta = Beta;
     m_Loop = Loop;
     m_MedianIBP = MedianIBP;
     m_Psftype = PsfType;
+    m_Lambda = lambda;
     m_InterpolationOrderPSF = InterpolationOrderPSF;
     m_InterpolationOrderIBP = InterpolationOrderIBP;
+    m_IterMax = iterMax;
 }
 //-----------------------------------------------------------------------------------------------------------
 void SuperResolutionFilter::InverseTransforms()
 {
 
 
-    m_InverseTransformsLRAffine.resize(m_TransformsLRAffine.size());
-    m_InverseTransformsLRSbS.resize(m_TransformsLRSbS.size());
-    for(int i = 0; i < m_ImagesLR.size(); i++)
+}
+//-----------------------------------------------------------------------------------------------------------
+void SuperResolutionFilter::Initialize()
+{
+    //TODO: Analyse the inputs for knowing what we should compute !
+    //ex: if transfos are set we don't have to compute registration...
+    switch(m_TransformationType)
     {
-        if(m_TransformationType == AFFINE)
-        {
-            m_TransformsLRAffine[i]->GetInverse( m_InverseTransformsLRAffine[i]);
-        }
-        else
-        {
-            m_TransformsLRSbS[i]->GetInverse(m_InverseTransformsLRSbS[i]);
-        }
+        case SLICE_BY_SLICE :
+            m_MotionCorrectionFilter = new btk::MotionCorrectionSliceBySliceAffineFilter();
+            break;
+
+        case SLICE_BY_SLICE_AFFINE:
+            m_MotionCorrectionFilter = new btk::MotionCorrectionSliceBySliceAffineFilter();
+            break;
+
+        case SLICE_BY_SLICE_EULER:
+            m_MotionCorrectionFilter = new btk::MotionCorrectionSliceBySliceEulerFilter();
+            break;
+
+        case EULER_3D:
+            m_MotionCorrectionFilter = new btk::MotionCorrection3DEulerFilter();
+            break;
+
+        case AFFINE:
+            m_MotionCorrectionFilter = new btk::MotionCorrection3DAffineFilter();
+            break;
+
+        default:
+            btkException("Wrong type of Transformation !")
+            break;
+    }
+
+    if(m_TransformsLR.empty())
+    {
+        m_ComputeRegistration = true;
+    }
+    else
+    {
+        m_ComputeRegistration = false;
+    }
 
 
+
+    m_MasksLR.resize(m_ImagesLR.size());
+
+    if(m_RoisLR.empty())
+    {
+        m_RoisLR.resize(m_ImagesLR.size());
+        for(int i = 0; i < m_ImagesMaskLR.size(); i++ )
+        {
+            m_MasksLR[i] = itkMask::New();
+            m_MasksLR[i]->SetImage(m_ImagesMaskLR[i]);
+            m_RoisLR[i] = m_MasksLR[i]->GetAxisAlignedBoundingBoxRegion();
+        }
     }
 
 }
 //-----------------------------------------------------------------------------------------------------------
+void SuperResolutionFilter::ComputeHRImage()
+{
+
+
+
+
+    // std::string e("testHr3.nii.gz");
+    // btk::ImageHelper< itkImage >::WriteImage(m_ImageHR,e);
+
+
+    if(m_ComputeRegistration)
+    {
+        int numberOfImages = m_ImagesLR.size();
+
+        if(m_TransformationType == SLICE_BY_SLICE ||
+           m_TransformationType == SLICE_BY_SLICE_EULER ||
+           m_TransformationType == EULER_3D)
+        {
+            m_CreateRigidHighResolutionImage = btk::LowToHighResFilterRigid::New();
+            m_CreateRigidHighResolutionImage -> SetNumberOfImages(numberOfImages);
+            m_CreateRigidHighResolutionImage -> SetTargetImage( 0 );
+            m_CreateRigidHighResolutionImage -> SetMargin( 0 );
+
+            for(int i = 0; i < m_ImagesLR.size(); i++)
+            {
+                m_CreateRigidHighResolutionImage->SetImageArray(i, m_ImagesLR[i]);
+                m_CreateRigidHighResolutionImage->SetRegionArray(i, m_RoisLR[i]);
+                m_CreateRigidHighResolutionImage->SetImageMaskArray(i, m_ImagesMaskLR[i]);
+
+            }
+
+            try
+            {
+                m_CreateRigidHighResolutionImage->StartRegistration();
+            }
+            catch(itk::ExceptionObject & excpt)
+            {
+                throw excpt;
+            }
+
+            m_ImageHR = m_CreateRigidHighResolutionImage->GetHighResolutionImage();
+            m_ImageMaskHR = m_CreateRigidHighResolutionImage->GetImageMaskCombination();
+            m_TransformsLR.resize(m_ImagesLR.size());
+            m_TransformsLRSbS.resize(m_ImagesLR.size());
+        }
+        else
+        {
+            m_CreateAffineHighResolutionImage = btk::LowToHighResFilterAffine::New();
+            //m_CreateHighResolutionImage = btk::LowToHighResFilterAffine::New();
+            m_CreateAffineHighResolutionImage -> SetNumberOfImages(numberOfImages);
+            m_CreateAffineHighResolutionImage -> SetTargetImage( 0 );
+            m_CreateAffineHighResolutionImage -> SetMargin( 0 );
+
+            for(int i = 0; i < m_ImagesLR.size(); i++)
+            {
+                m_CreateAffineHighResolutionImage->SetImageArray(i, m_ImagesLR[i]);
+                m_CreateAffineHighResolutionImage->SetRegionArray(i, m_RoisLR[i]);
+                m_CreateAffineHighResolutionImage->SetImageMaskArray(i, m_ImagesMaskLR[i]);
+
+            }
+
+            try
+            {
+                m_CreateAffineHighResolutionImage->StartRegistration();
+            }
+            catch(itk::ExceptionObject & excpt)
+            {
+                throw excpt;
+            }
+
+            m_ImageHR = m_CreateAffineHighResolutionImage->GetHighResolutionImage();
+            m_ImageMaskHR = m_CreateAffineHighResolutionImage->GetImageMaskCombination();
+            m_TransformsLR.resize(m_ImagesLR.size());
+            m_TransformsLRSbS.resize(m_ImagesLR.size());
+        }
+
+
+        for(unsigned int i=0; i<m_ImagesLR.size(); i++)
+        {
+
+            //TODO : New method, use a vector of itkTransform
+            // Add .GetPointer() for casting
+
+            switch(m_TransformationType)
+            {
+                default:
+                    break;
+
+                case SLICE_BY_SLICE_EULER:
+                    m_TransformsLR[i] = btkEulerSliceBySliceTransform::New();
+
+                    dynamic_cast<btkEulerSliceBySliceTransform*>(m_TransformsLR[i].GetPointer())->SetImage(m_ImagesLR[i]);
+                    //TODO: Inverse ?
+                    dynamic_cast<btkEulerSliceBySliceTransform*>(m_TransformsLR[i].GetPointer())->Initialize(m_CreateRigidHighResolutionImage->GetInverseTransformArray(i));
+                    break;
+
+                case SLICE_BY_SLICE:
+                    m_TransformsLR[i] = btkEulerSliceBySliceTransform::New();
+                    dynamic_cast<btkEulerSliceBySliceTransform*>(m_TransformsLR[i].GetPointer())->SetImage(m_ImagesLR[i]);
+                    //TODO: Inverse ?
+                    dynamic_cast<btkEulerSliceBySliceTransform*>(m_TransformsLR[i].GetPointer())->Initialize(m_CreateRigidHighResolutionImage->GetInverseTransformArray(i));
+                    break;
+
+
+                case SLICE_BY_SLICE_AFFINE:
+                    m_TransformsLR[i] = btkAffineSliceBySliceTransform::New();
+                    dynamic_cast<btkAffineSliceBySliceTransform*>(m_TransformsLR[i].GetPointer())->SetImage(m_ImagesLR[i]);
+                    //m_TransformsLR[i]->SetImage(m_ImagesLR[i]);
+                    //TODO: Inverse ?
+                    dynamic_cast<btkAffineSliceBySliceTransform*>(m_TransformsLR[i].GetPointer())->Initialize(m_CreateAffineHighResolutionImage->GetInverseTransformArray(i));
+                    break;
+
+
+                case EULER_3D:
+                    m_TransformsLR[i] = itkEulerTransform::New();
+                    m_TransformsLR[i] = m_CreateRigidHighResolutionImage->GetTransformArray(i);
+                    break;
+
+                case AFFINE:
+                    m_TransformsLR[i] = itkAffineTransform::New();
+                    m_TransformsLR[i] = m_CreateAffineHighResolutionImage->GetTransformArray(i);
+                    break;
+
+            }
+
+        }
+
+    }
+}
+//-----------------------------------------------------------------------------------------------------------
+void SuperResolutionFilter::MotionCorrection()
+{
+
+    m_MotionCorrectionFilter->SetReferenceImage(m_ImageHR);
+    m_MotionCorrectionFilter->SetImagesLR(m_ImagesLR);
+    m_MotionCorrectionFilter->SetMasksLR(m_MasksLR);
+    m_MotionCorrectionFilter->SetImageMaskHR(m_ImageMaskHR);
+    m_MotionCorrectionFilter->SetImagesMaskLR(m_ImagesMaskLR);
+    m_MotionCorrectionFilter->SetTransformsLR(m_TransformsLR);
+
+    m_MotionCorrectionFilter->Update();
+
+
+
+
+
+
+
+
+}
+//-----------------------------------------------------------------------------------------------------------
+void SuperResolutionFilter::ResampleByInjection()
+{
+    m_ResampleByInjectionFilter = ResamplerByInjectionType::New();
+
+
+
+}
+
+//-----------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------------
+
 
 
 }

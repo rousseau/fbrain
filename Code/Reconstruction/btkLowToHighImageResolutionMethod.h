@@ -40,7 +40,10 @@
 #include "itkEuler3DTransform.h"
 #include "itkResampleImageFilter.h"
 #include "itkImageRegionIteratorWithIndex.h"
+#include "itkImageRegistrationMethod.h"
+
 #include "btkRigidRegistration.h"
+#include "btkAffineRegistration.h"
 
 #include "itkImageFileWriter.h"
 #include "itkTransformFileWriter.h"
@@ -72,7 +75,7 @@ using namespace itk;
 
 // TODO Change the template to provide two types of images (Low and High resolution)
 
-template <typename TImage>
+template <typename TImage,typename TTransform>
 class LowToHighImageResolutionMethod : public ProcessObject
 {
 public:
@@ -117,7 +120,10 @@ public:
   typedef ImageRegionIteratorWithIndex< ImageMaskType >  ImageMaskIteratorType;
 
   /**  Type of the Transform . */
-  typedef Euler3DTransform< double >             				TransformType;
+  typedef TTransform                                   TransformType;
+  //typedef MatrixOffsetTransformBase< double, 3 >                TransformType;
+  //typedef AffineTransform<double,3>                             TransformType;
+  //typedef Euler3DTransform< double >             				TransformType;
   typedef typename TransformType::Pointer               TransformPointer;
   typedef  std::vector<TransformPointer>                TransformPointerArray;
 
@@ -134,14 +140,23 @@ public:
   typedef typename ImageMaskInterpolatorType::Pointer   ImageMaskInterpolatorPointer;
 
    /**  Type of the registration method. */
+  typedef btk::Registration<ImageType>   RegistrationBase;
+  typedef typename RegistrationBase::Pointer             RegistrationPointerBase;
+
   typedef RigidRegistration<ImageType>  				 RegistrationType;
+  //typedef itk::ImageRegistrationMethod<ImageType, ImageType> RegistrationType;
   typedef typename RegistrationType::Pointer     RegistrationPointer;
+
+  typedef btk::AffineRegistration< ImageType >          AffineRegistrationType;
+  typedef typename AffineRegistrationType::Pointer      AffineRegistrationPointer;
+
+
 
   typedef ResampleImageFilter< ImageType, ImageType >    ResampleType;
   typedef typename ResampleType::Pointer 								 ResamplePointer;
 
 
-  typedef  TransformType::ParametersType    ParametersType;
+  typedef  typename TransformType::ParametersType    ParametersType;
   typedef  std::vector<ParametersType>      ParametersArrayType;
 
   typedef TransformFileWriter TransformWriterType;
@@ -250,9 +265,10 @@ private:
   TransformPointerArray            m_InverseTransformArray;
   ImageArrayPointer 			         m_ImageArray;
   RegionArray                      m_RegionArray;
-  RegionType                       m_ReferenceRegion;
 
+  RegionType                       m_ReferenceRegion;
   ImageMaskPointer                 m_ReferenceMask;
+  ImagePointer										 m_ReferenceImage;
 
   ImageMaskArray                   m_ImageMaskArray;
 
@@ -266,7 +282,7 @@ private:
   InterpolatorPointer              m_Interpolator;
 
   ImagePointer										 m_HighResolutionImage;
-  ImagePointer										 m_ReferenceImage;
+
   ImageMaskPointer					 			 m_ImageMaskCombination;
 
   ParametersType                   m_InitialTransformParameters;

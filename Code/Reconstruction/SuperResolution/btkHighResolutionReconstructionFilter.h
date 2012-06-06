@@ -68,6 +68,7 @@ class HighResolutionReconstructionFilter
 public:
 
 
+
     HighResolutionReconstructionFilter();
     ~HighResolutionReconstructionFilter();
 
@@ -82,11 +83,17 @@ public:
 
 
     //TODO:Remove useless GET/SET or getter/setter for parameters which are compute and used  only in this class
-    btkGetMacro(TransformsLR,std::vector< itkTransformBase::Pointer >);
+    btkGetMacro(TransformsLR,std::vector< itkTransformBase::Pointer>);
     btkSetMacro(TransformsLR,std::vector< itkTransformBase::Pointer >);
 
     btkGetMacro(InverseTransformsLR,std::vector< itkTransformBase::Pointer >);
     btkSetMacro(InverseTransformsLR,std::vector< itkTransformBase::Pointer >);
+
+//    btkGetMacro(TransformsLR,std::vector< itkAffineTransform::Pointer >);
+//    btkSetMacro(TransformsLR,std::vector< itkAffineTransform::Pointer >);
+
+//    btkGetMacro(InverseTransformsLR,std::vector< itkAffineTransform::Pointer >);
+//    btkSetMacro(InverseTransformsLR,std::vector< itkAffineTransform::Pointer >);
 
     btkGetMacro(TransformsLRAffine,std::vector< itkAffineTransform::Pointer >);
     btkSetMacro(TransformsLRAffine,std::vector< itkAffineTransform::Pointer >);
@@ -94,11 +101,12 @@ public:
     btkGetMacro(InverseTransformsLRAffine,std::vector< itkAffineTransform::Pointer >);
     btkSetMacro(InverseTransformsLRAffine,std::vector< itkAffineTransform::Pointer >);
 
-    btkGetMacro(TransformsLRSbS,std::vector< btkSliceBySliceTransform::Pointer >);
-    btkSetMacro(TransformsLRSbS,std::vector< btkSliceBySliceTransform::Pointer >);
 
-    btkGetMacro(InverseTransformsLRSbS,std::vector< btkSliceBySliceTransform::Pointer >);
-    btkSetMacro(InverseTransformsLRSbS,std::vector< btkSliceBySliceTransform::Pointer >);
+    btkGetMacro(TransformsLRSbS,std::vector< btkSliceBySliceTransformBase::Pointer >);
+    btkSetMacro(TransformsLRSbS,std::vector< btkSliceBySliceTransformBase::Pointer >);
+
+    btkGetMacro(InverseTransformsLRSbS,std::vector< btkSliceBySliceTransformBase::Pointer >);
+    btkSetMacro(InverseTransformsLRSbS,std::vector< btkSliceBySliceTransformBase::Pointer >);
 
     btkGetMacro(ImagesLR,std::vector< itkImage::Pointer > );
     btkSetMacro(ImagesLR,std::vector< itkImage::Pointer > );
@@ -162,14 +170,24 @@ protected:
     // accessible for subclasses
     std::vector< itkImage::Pointer >         m_ImagesLR;
     std::vector< itkImage::Pointer >         m_SimulatedImagesLR;
+
     std::vector< itkTransformBase::Pointer  >   m_TransformsLR;
     std::vector< itkTransformBase::Pointer >    m_InverseTransformsLR;
+
+//    std::vector< itkAffineTransform::Pointer  >   m_TransformsLR;
+//    std::vector< itkAffineTransform::Pointer >    m_InverseTransformsLR;
 
     std::vector< itkAffineTransform::Pointer  >   m_TransformsLRAffine;
     std::vector< itkAffineTransform::Pointer >    m_InverseTransformsLRAffine;
 
-    std::vector< btkSliceBySliceTransform::Pointer  >   m_TransformsLRSbS;
-    std::vector< btkSliceBySliceTransform::Pointer >    m_InverseTransformsLRSbS;
+//    std::vector< itkTransformBase::Pointer >   m_TransformsLRAffine;
+//    std::vector< itkTransformBase::Pointer >    m_InverseTransformsLRAffine;
+
+    // Mirror of the position pos. abs(pos) must not be > 2*(size-1)
+    //template <class TImage>
+
+    std::vector< btkSliceBySliceTransformBase::Pointer  >   m_TransformsLRSbS;
+    std::vector< btkSliceBySliceTransformBase::Pointer >    m_InverseTransformsLRSbS;
 
     std::vector< itkImageMask::Pointer >     m_ImagesMaskLR;
     std::vector< itkMask::Pointer >          m_MasksLR;
@@ -199,5 +217,6 @@ private:
 
 };
 }
+
 
 #endif

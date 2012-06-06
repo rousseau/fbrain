@@ -40,13 +40,15 @@ void CreateHRMaskFilter::Update()
 
       //interpolate the LR mask
       itkResampleFilter::Pointer resample = itkResampleFilter::New();
-      if(m_TransformType ==  AFFINE)
+      if(m_TransformType ==  SLICE_BY_SLICE)
       {
-          resample->SetTransform(m_TransformsAffine[i]);
+
+          resample->SetTransform(m_TransformsSbS[i]);
+         // resample->SetNumberOfThreads(1);
       }
       else
       {
-          resample->SetTransform(m_TransformsSbS[i]);
+          resample->SetTransform(m_Transforms[i]);
       }
 
       resample->SetInterpolator(bsInterpolator);

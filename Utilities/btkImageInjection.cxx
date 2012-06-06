@@ -107,7 +107,7 @@ int main( int argc, char *argv[] )
   // typedefs
 
   const    unsigned int    Dimension = 3;
-  typedef  short           PixelType;
+  typedef  float           PixelType;
 
   typedef itk::Image< PixelType, Dimension >  ImageType;
   typedef ImageType::Pointer                  ImagePointer;
@@ -124,13 +124,12 @@ int main( int argc, char *argv[] )
   typedef itk::ImageMaskSpatialObject< Dimension >  MaskType;
   typedef MaskType::Pointer  MaskPointer;
 
-  typedef btk::LowToHighImageResolutionMethod<ImageType> LowToHighResFilterType;
-  LowToHighResFilterType::Pointer lowToHighResFilter = LowToHighResFilterType::New();
 
   typedef btk::ResampleImageByInjectionFilter< ImageType, ImageType >  ResamplerType;
 
   typedef btk::SliceBySliceTransform< double, Dimension > TransformType;
   typedef TransformType::Pointer                          TransformPointer;
+
 
   typedef btk::Euler3DTransform< double > Euler3DTransformType;
   typedef Euler3DTransformType::Pointer   Euler3DTransformPointer;
@@ -140,6 +139,9 @@ int main( int argc, char *argv[] )
 
   typedef btk::ImageIntersectionCalculator<ImageType> IntersectionCalculatorType;
   IntersectionCalculatorType::Pointer intersectionCalculator = IntersectionCalculatorType::New();
+
+  typedef btk::LowToHighImageResolutionMethod<ImageType, Euler3DTransformType> LowToHighResFilterType;
+  LowToHighResFilterType::Pointer lowToHighResFilter = LowToHighResFilterType::New();
 
   // Filter setup
   unsigned int numberOfImages = input.size();

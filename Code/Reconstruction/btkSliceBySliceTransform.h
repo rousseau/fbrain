@@ -46,20 +46,24 @@
 #include "itkContinuousIndex.h"
 #include "list"
 
+#include "../Transformations/btkSliceBySliceTransformBase.h"
+
 namespace btk
 {
 using namespace itk;
 
 template <class TScalarType,unsigned int NDimensions=3>
-class SliceBySliceTransform  : public Transform<TScalarType,NDimensions,NDimensions>
+class SliceBySliceTransform  : public SliceBySliceTransformBase<TScalarType,NDimensions>
 {
 public:
   /** Standard class typedefs. */
   typedef SliceBySliceTransform  Self;
-  typedef Transform<TScalarType,NDimensions,NDimensions> Superclass;
+  typedef SliceBySliceTransformBase<TScalarType,NDimensions> Superclass;
+  typedef typename Superclass::TransformType TransformBase;
+  //typedef itk::MatrixOffsetTransformBase<TScalarType, NDimensions> TransformBase;
   typedef Euler3DTransform< TScalarType > TransformType;
 
-  typedef Image< short,NDimensions > ImageType;
+  typedef Image< float,NDimensions > ImageType;
   typedef typename ImageType::Pointer ImagePointerType;
 
   typedef ContinuousIndex<double, NDimensions > ContinuousIndexType;
@@ -70,7 +74,7 @@ public:
   typedef SmartPointer<TransformType> TransformPointer;
   typedef std::vector<TransformPointer> TransformPointerList;
   typedef typename TransformPointerList::const_iterator TransformPointerListConstIterator;
-  typedef std::vector<TransformBase::Pointer> TransformBasePointerList;
+  //typedef std::vector<TransformType::Pointer> TransformBasePointerList;
 
   typedef typename Superclass::InputPointType InputPointType;
   typedef typename Superclass::OutputPointType OutputPointType;
@@ -153,7 +157,7 @@ public:
   void Initialize();
 
   /** Initialize with a transformation. */
-  void Initialize( TransformType * t );
+  void Initialize( TransformBase * t );
 
   /** Set the Fixed Parameters. */
   void SetFixedParameters( const ParametersType & fp );
@@ -167,7 +171,7 @@ public:
 
 protected:
     /** Default constructor. Otherwise we get a run time warning from itkTransform. */
-  SliceBySliceTransform() : Superclass( 0 ) {}
+  SliceBySliceTransform() : Superclass(  ) {}
 
 private:
   /** List of transforms. */

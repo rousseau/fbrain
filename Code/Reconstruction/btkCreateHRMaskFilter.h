@@ -94,11 +94,14 @@ public :
     btkGetMacro(Transforms, std::vector< itkTransformBase::Pointer >);
     btkSetMacro(Transforms, std::vector< itkTransformBase::Pointer >);
 
+//    btkGetMacro(Transforms, std::vector< itkAffineTransform::Pointer >);
+//    btkSetMacro(Transforms, std::vector< itkAffineTransform::Pointer >);
+
     btkGetMacro(TransformsAffine, std::vector< itkAffineTransform::Pointer >);
     btkSetMacro(TransformsAffine, std::vector< itkAffineTransform::Pointer >);
 
-    btkGetMacro(TransformsSbS, std::vector< btkSliceBySliceTransform::Pointer >);
-    btkSetMacro(TransformsSbS, std::vector< btkSliceBySliceTransform::Pointer >);
+    btkGetMacro(TransformsSbS, std::vector< btkEulerSliceBySliceTransform::Pointer >);
+    btkSetMacro(TransformsSbS, std::vector< btkEulerSliceBySliceTransform::Pointer >);
 
     btkGetMacro(HRImage,itkImage::Pointer);
     btkSetMacro(HRImage, itkImage::Pointer);
@@ -116,8 +119,10 @@ protected:
 private:
 
     std::vector< itkTransformBase::Pointer > m_Transforms;
+//    std::vector< itkAffineTransform::Pointer > m_Transforms;
+
     std::vector< itkAffineTransform::Pointer > m_TransformsAffine;
-    std::vector< btkSliceBySliceTransform::Pointer > m_TransformsSbS;
+    std::vector< btkEulerSliceBySliceTransform::Pointer > m_TransformsSbS;
 
     std::vector< itkImage::Pointer > m_InputLRImages;
     itkImage::Pointer m_MaskHRImage;

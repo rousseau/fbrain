@@ -50,6 +50,9 @@
 #include "btkUserMacro.h"
 #include "itkImageMaskSpatialObject.h"
 
+//FIXME : remove absolute path
+#include "../Transformations/btkSliceBySliceTransformBase.h"
+
 namespace btk
 {
 
@@ -102,7 +105,7 @@ public:
   typedef typename OutputImageType::Pointer       OutputImagePointer;
 
   /** Type of the slice by slice transform. */
-  typedef SliceBySliceTransform< double, ImageDimension > TransformType;
+  typedef SliceBySliceTransformBase< double, ImageDimension > TransformType;
   typedef typename TransformType::Pointer TransformPointer;
 
   typedef Image<float,ImageDimension>    FloatImageType;

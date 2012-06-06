@@ -686,7 +686,7 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
       
   //std::string s2 = "switch_in.nii.gz";
 
-  //TO FIX : switch for filtering choice runs under MacOSX but not under Debian !!!  
+  //FIXME : switch for filtering choice runs under MacOSX but not under Debian !!!
   /*        
   switch(medianIBP)
   {

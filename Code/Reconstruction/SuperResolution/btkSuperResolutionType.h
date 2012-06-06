@@ -27,8 +27,11 @@
 
 
 /* BTK */
+#include "btkLowToHighImageResolutionMethod.h"
 #include "btkSliceBySliceTransform.h"
-
+#include "btkSliceBySliceTransformBase.h"
+#include "btkAffineSliceBySliceTransform.h"
+#include "btkEulerSliceBySliceTransform.h"
 
 namespace btk
 {
@@ -36,44 +39,61 @@ namespace btk
 
 
 typedef float PixelType;
-typedef itk::Image< PixelType, 3>         itkImage;
+typedef double TScalarType;
+const unsigned int Dimension = 3;
+typedef itk::Image< PixelType, Dimension>         itkImage;
 typedef itk::Image< PixelType, 2>         itkSlice;
 
 typedef itk::ImageDuplicator< itkImage >  itkDuplicator;
 typedef itk::ImageRegionIterator< itkImage > itkIterator;
 typedef itk::ImageRegionIteratorWithIndex< itkImage > itkIteratorWithIndex;
-typedef itk::ContinuousIndex<double,3>     itkContinuousIndex;
+typedef itk::ContinuousIndex<TScalarType,Dimension>     itkContinuousIndex;
 
 
 typedef itk::ResampleImageFilter<itkImage, itkImage>                    itkResampleFilter;
-typedef itk::IdentityTransform<double, 3>                               itkIdentityTransform;
-typedef itk::LinearInterpolateImageFunction<itkImage, double>           itkLinearInterpolator;
-typedef itk::BSplineInterpolateImageFunction<itkImage, double, double>  itkBSplineInterpolator;
+typedef itk::ImageToImageFilter< itkImage, itkImage >                   itkFilter;
+typedef itk::IdentityTransform<TScalarType, Dimension>                               itkIdentityTransform;
+typedef itk::LinearInterpolateImageFunction<itkImage, TScalarType>           itkLinearInterpolator;
+typedef itk::BSplineInterpolateImageFunction<itkImage, TScalarType, TScalarType>  itkBSplineInterpolator;
 typedef itk::SubtractImageFilter <itkImage, itkImage >                  itkSubtractImageFilter;
 typedef itk::AddImageFilter <itkImage, itkImage >                       itkAddImageFilter;
 typedef itk::BinaryThresholdImageFilter <itkImage, itkImage>            itkBinaryThresholdImageFilter;
 typedef itk::AbsoluteValueDifferenceImageFilter <itkImage, itkImage, itkImage>  itkAbsoluteValueDifferenceImageFilter;
 typedef itk::StatisticsImageFilter<itkImage>    itkStatisticsImageFilter;
 
-typedef itk::Image< unsigned char, 3 >     itkImageMask;
-typedef itk::ImageMaskSpatialObject< 3 >   itkMask;
+typedef itk::Image< unsigned char, Dimension >     itkImageMask;
+typedef itk::ImageMaskSpatialObject< Dimension >   itkMask;
 
-typedef itk::AffineTransform<double,3>     itkAffineTransform;
+typedef itkImage::RegionType               itkRegion;
 
-typedef btk::SliceBySliceTransform<double,3> btkSliceBySliceTransform;
+typedef itk::AffineTransform<TScalarType,Dimension>     itkAffineTransform;
+
+typedef itk::Euler3DTransform<TScalarType>      itkEulerTransform;
+
+typedef btk::EulerSliceBySliceTransform<TScalarType,Dimension> btkEulerSliceBySliceTransform;
+
+typedef btk::AffineSliceBySliceTransform< TScalarType, Dimension> btkAffineSliceBySliceTransform;
+
+typedef btk::SliceBySliceTransform<TScalarType,Dimension> btkSliceBySliceTransform;
+
+typedef btk::SliceBySliceTransformBase<TScalarType,Dimension> btkSliceBySliceTransformBase;
 
 
-typedef itk::Euler3DTransform<double> itkEulerTransform;
+typedef itk::Euler3DTransform<TScalarType> itkEulerTransform;
 
 
-typedef itk::MatrixOffsetTransformBase<double,3,3> itkMatrixTransform;
+typedef itk::MatrixOffsetTransformBase<TScalarType,Dimension,Dimension> itkMatrixTransform;
 
-typedef itk::Transform<double, 3> itkTransformBase;
+typedef itk::Transform<TScalarType, Dimension> itkTransformBase;
 
+typedef btk::LowToHighImageResolutionMethod<itkImage, itkEulerTransform> LowToHighResFilterRigid;
+typedef btk::LowToHighImageResolutionMethod<itkImage, itkAffineTransform> LowToHighResFilterAffine;
 enum TRANSFORMATION_TYPE
 {
     AFFINE = 0,
     EULER_3D,
+    SLICE_BY_SLICE_AFFINE,
+    SLICE_BY_SLICE_EULER,
     SLICE_BY_SLICE,
     ANTS
 };
@@ -81,8 +101,13 @@ enum TRANSFORMATION_TYPE
 // Example of reconstruction type :
 enum RECONSTRUCTION_TYPE
 {
-    IBP = 0,
-    SR
+    SR = 0,
+    IBP
+};
+enum PSF_TYPE
+{
+    BOXCAR = 0,
+    GAUSSIAN
 };
 }
 

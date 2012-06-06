@@ -16,21 +16,23 @@
 
 namespace btk
 {
-
 HighResolutionIBPFilter::HighResolutionIBPFilter()
 {
     btkCoutMacro(HighResolutionIBPFilter : Constructor );
 
-    m_ImageHR = NULL;
+    SuperClass::m_ImageHR = NULL;
 
     m_HRMaskFilter = NULL;
     m_SimuLRImagesFilter = NULL;
-    m_PaddingValue = 0;
+    SuperClass::m_PaddingValue = 0;
     m_HRMaskFilter = new btk::CreateHRMaskFilter();
     m_SimuLRImagesFilter = new btk::SimulateLRImageFilter();
+    SuperClass::m_InterpolationOrderPSF = 1;
+
 
 }
 //-----------------------------------------------------------------------------------------------------------
+
 HighResolutionIBPFilter::~HighResolutionIBPFilter()
 {
     btkCoutMacro(HighResolutionIBPFilter : Destructor );
@@ -50,29 +52,30 @@ void HighResolutionIBPFilter::Update()
     btkCoutMacro(HighResolutionIBPFilter : Update Method );
 
     this->Initialize();
+    this->InitializePSF();
 
-
-    if(m_TransformType == AFFINE)
+    if(SuperClass::m_TransformType == SLICE_BY_SLICE)
     {
-        m_HRMaskFilter->SetTransformsAffine(m_TransformsLRAffine);
-        m_HRMaskFilter->SetTransformType(m_TransformType);
+        //m_HRMaskFilter->SetTransformsSbS(m_TransformsLRSbS);
+       m_HRMaskFilter->SetTransformType(SuperClass::m_TransformType);
     }
     else
     {
-        m_HRMaskFilter->SetTransformsSbS(m_TransformsLRSbS);
-        m_HRMaskFilter->SetTransformType(m_TransformType);
+
+       // m_HRMaskFilter->SetTransforms(m_TransformsLR);
+        m_HRMaskFilter->SetTransformType(SuperClass::m_TransformType);
     }
 
-    m_HRMaskFilter->SetHRImage(m_ImageHR);
-    m_HRMaskFilter->SetInputLRImages(m_ImagesLR);
+    m_HRMaskFilter->SetHRImage(SuperClass::m_ImageHR);
+    m_HRMaskFilter->SetInputLRImages(SuperClass::m_ImagesLR);
     m_HRMaskFilter->Update();
 
-    m_ImageMaskHR = m_HRMaskFilter->GetOutput();
+    SuperClass::m_ImageMaskHR = m_HRMaskFilter->GetOutput();
 
 
 
 
-    this->InitializePSF();
+
     this->HComputation();
 
 
@@ -83,7 +86,7 @@ void HighResolutionIBPFilter::Update()
     double e = 0.1; //current change between two consecutive estimate.
     int i = 0;
 
-    while( (e>0) && (i<m_Nloops) )
+    while( (e>0) && (i<SuperClass::m_Nloops) )
     {
       e = ComputeIterativeBackProjection(m_Nlm,m_Beta,m_MedianIBP);
       i++;
@@ -92,9 +95,9 @@ void HighResolutionIBPFilter::Update()
 
     //Copy current estimate to the output HR image
     itkDuplicator::Pointer duplicator = itkDuplicator::New();
-    duplicator->SetInputImage( m_CurrentImageHR );
+    duplicator->SetInputImage( SuperClass::m_CurrentImageHR );
     duplicator->Update();
-    m_OutputHRImage = duplicator->GetOutput();
+    SuperClass::m_OutputHRImage = duplicator->GetOutput();
 
 
 }
@@ -109,23 +112,23 @@ void HighResolutionIBPFilter::HComputation()
       //Principle: for each voxel of the LR images, we compute the influence of each voxel of the PSF (centered at the current LR voxel) and add the corresponding influence value (PSF value * interpolation weight) in the matrix H
 
       // Set size of matrices
-      unsigned int ncols = m_ImageHR->GetLargestPossibleRegion().GetNumberOfPixels();
+      unsigned int ncols = SuperClass::m_ImageHR->GetLargestPossibleRegion().GetNumberOfPixels();
 
       //m_offset is used to fill correctly the vector m_Y with the input LR image values (offset for the linear index)
-      m_Offset.resize(m_ImagesLR.size());
+      SuperClass::m_Offset.resize(SuperClass::m_ImagesLR.size());
       unsigned int nrows = 0;
 
-      for(unsigned int im = 0; im < m_ImagesLR.size(); im++)
+      for(unsigned int im = 0; im < SuperClass::m_ImagesLR.size(); im++)
       {
-        m_Offset[im] = nrows;
-        nrows += m_ImagesLR[im]->GetLargestPossibleRegion().GetNumberOfPixels();
+        SuperClass::m_Offset[im] = nrows;
+        nrows += SuperClass::m_ImagesLR[im]->GetLargestPossibleRegion().GetNumberOfPixels();
       }
 
-      m_H.set_size(nrows, ncols);
-      m_Y.set_size(nrows);
-      m_Y.fill(0.0);
-      m_X.set_size(ncols);
-      m_X.fill(0.0);
+      SuperClass::m_H.set_size(nrows, ncols);
+      SuperClass::m_Y.set_size(nrows);
+      SuperClass::m_Y.fill(0.0);
+      SuperClass::m_X.set_size(ncols);
+      SuperClass::m_X.fill(0.0);
 
       //linear index : an integer value corresponding to (x,y,z) triplet coordinates (ITK index)
       unsigned int lrLinearIndex = 0;
@@ -152,33 +155,33 @@ void HighResolutionIBPFilter::HComputation()
       itkImage::RegionType            bsplineRegion;
 
       //Get the size of the HR image
-      itkImage::SizeType  hrSize  = m_ImageHR->GetLargestPossibleRegion().GetSize();
+      itkImage::SizeType  hrSize  = SuperClass::m_ImageHR->GetLargestPossibleRegion().GetSize();
 
       std::cout<<"loop over LR images\n";
-      for(unsigned int i=0; i<m_ImagesLR.size(); i++)
+      for(unsigned int i=0; i<SuperClass::m_ImagesLR.size(); i++)
       {
         std::cout<<"Adding image "<<i+1<<"\n";
 
         //Get the size of the current LR image
-        itkImage::SizeType  lrSize  = m_ImagesLR[i]->GetLargestPossibleRegion().GetSize();
+        itkImage::SizeType  lrSize  = SuperClass::m_ImagesLR[i]->GetLargestPossibleRegion().GetSize();
 
         //Instantiate an iterator over the current LR image
-        itkIteratorWithIndex itLRImage(m_ImagesLR[i],m_ImagesLR[i]->GetLargestPossibleRegion());
+        itkIteratorWithIndex itLRImage(SuperClass::m_ImagesLR[i],SuperClass::m_ImagesLR[i]->GetLargestPossibleRegion());
 
         //Instantiate an iterator over the current PSF
-        itkIteratorWithIndex itPSF(m_PSF[i],m_PSF[i]->GetLargestPossibleRegion());
+        itkIteratorWithIndex itPSF(SuperClass::m_PSF[i],SuperClass::m_PSF[i]->GetLargestPossibleRegion());
 
         //Set the correct direction for the PSF of the current image
-        m_PSF[i]->SetDirection(m_ImagesLR[i]->GetDirection());
+        SuperClass::m_PSF[i]->SetDirection(SuperClass::m_ImagesLR[i]->GetDirection());
 
         //Compute temporary variables for setting the correct origin of the PSF for every voxel of the LR image
-        itkImage::SizeType psfSize = m_PSF[i]->GetLargestPossibleRegion().GetSize();
+        itkImage::SizeType psfSize = SuperClass::m_PSF[i]->GetLargestPossibleRegion().GetSize();
         itkContinuousIndex psfIndexCenter;
         psfIndexCenter[0] = (psfSize[0]-1)/2.0;
         psfIndexCenter[1] = (psfSize[1]-1)/2.0;
         psfIndexCenter[2] = (psfSize[2]-1)/2.0;
         itkImage::PointType psfPointCenter;
-        m_PSF[i]->TransformContinuousIndexToPhysicalPoint(psfIndexCenter,psfPointCenter);
+        SuperClass::m_PSF[i]->TransformContinuousIndexToPhysicalPoint(psfIndexCenter,psfPointCenter);
         itkImage::PointType psfOrigin;
 
         //Loop over the voxels of the current LR image
@@ -186,7 +189,7 @@ void HighResolutionIBPFilter::HComputation()
         {
 
           //Test on padding value (speed-up and keep H as sparse as possible)
-          if(itLRImage.Get() > m_PaddingValue)
+          if(itLRImage.Get() > SuperClass::m_PaddingValue)
           {
 
             //Coordinate in the current LR image
@@ -195,17 +198,17 @@ void HighResolutionIBPFilter::HComputation()
             //std::cout<<"current LR index:"<<lrIndex[0]<<" "<<lrIndex[1]<<" "<<lrIndex[2]<<" -------------- \n";
 
             //Compute the corresponding linear index of lrIndex
-            lrLinearIndex = m_Offset[i] + lrIndex[0] + lrIndex[1]*lrSize[0] + lrIndex[2]*lrSize[0]*lrSize[1];
+            lrLinearIndex = SuperClass::m_Offset[i] + lrIndex[0] + lrIndex[1]*lrSize[0] + lrIndex[2]*lrSize[0]*lrSize[1];
 
             //Fill m_Y
-            m_Y[lrLinearIndex] = itLRImage.Get();
+            SuperClass::m_Y[lrLinearIndex] = itLRImage.Get();
 
             //Change the origin of the PSF so that itLRImage location corresponds to the center of the PSF
-            m_ImagesLR[i]->TransformIndexToPhysicalPoint(lrIndex,lrPoint);
+            SuperClass::m_ImagesLR[i]->TransformIndexToPhysicalPoint(lrIndex,lrPoint);
             psfOrigin[0] = lrPoint[0] - psfPointCenter[0];
             psfOrigin[1] = lrPoint[1] - psfPointCenter[1];
             psfOrigin[2] = lrPoint[2] - psfPointCenter[2];
-            m_PSF[i]->SetOrigin(psfOrigin);
+            SuperClass::m_PSF[i]->SetOrigin(psfOrigin);
 
             //std::cout<<"current lr point:"<<lrPoint[0]<<" "<<lrPoint[1]<<" "<<lrPoint[2]<<" \n";
             //std::cout<<"psfSize:"<<psfSize[0]<<" "<<psfSize[1]<<" "<<psfSize[2]<<" \n";
@@ -224,25 +227,27 @@ void HighResolutionIBPFilter::HComputation()
                 psfIndex = itPSF.GetIndex();
 
                 //Compute the physical point of psfIndex
-                m_PSF[i]->TransformIndexToPhysicalPoint(psfIndex,psfPoint);
+                SuperClass::m_PSF[i]->TransformIndexToPhysicalPoint(psfIndex,psfPoint);
 
                 //Apply estimated affine transform to psfPoint (need to apply the inverse since the transform goes from the HR image to the LR image)
-                if(m_TransformType == AFFINE)
+                if(SuperClass::m_TransformType == SLICE_BY_SLICE)
                 {
-                    transformedPoint = m_InverseTransformsLRAffine[i]->TransformPoint(psfPoint);
+                    transformedPoint = SuperClass::m_InverseTransformsLRSbS[i]->TransformPoint(psfPoint);
                 }
                 else
                 {
-                    transformedPoint = m_InverseTransformsLRSbS[i]->TransformPoint(psfPoint);
+                    // TODO : Check if we must use the inverse for Affine too
+                    //transformedPoint = m_TransformsLR[i]->TransformPoint(psfPoint);
+                    transformedPoint = SuperClass::m_InverseTransformsLR[i]->TransformPoint(psfPoint);
                 }
 
 
                 //Get back to the index in the HR image
-                m_ImageHR->TransformPhysicalPointToContinuousIndex(transformedPoint,hrContIndex);
+               SuperClass::m_ImageHR->TransformPhysicalPointToContinuousIndex(transformedPoint,hrContIndex);
                 //std::cout<<"hrContIndex no check: "<<hrContIndex[0]<<" "<<hrContIndex[1]<<" "<<hrContIndex[2]<<" \n ";
 
                 //Check if the continuous index hrContIndex is inside the HR image
-                if (m_ImageHR->GetLargestPossibleRegion().IsInside(hrContIndex))
+                if (SuperClass::m_ImageHR->GetLargestPossibleRegion().IsInside(hrContIndex))
                 {
 
                   //std::cout<<"hrContIndex: "<<hrContIndex[0]<<" "<<hrContIndex[1]<<" "<<hrContIndex[2]<<" \n ";
@@ -258,7 +263,7 @@ void HighResolutionIBPFilter::HComputation()
                   bsplineEndIndex[1] = bsplineStartIndex[1] + bsplineSize[1];
                   bsplineEndIndex[2] = bsplineStartIndex[2] + bsplineSize[2];
 
-                  if( (m_ImageHR->GetLargestPossibleRegion().IsInside(bsplineStartIndex)) && (m_ImageHR->GetLargestPossibleRegion().IsInside(bsplineEndIndex)) )
+                  if( (SuperClass::m_ImageHR->GetLargestPossibleRegion().IsInside(bsplineStartIndex)) && (SuperClass::m_ImageHR->GetLargestPossibleRegion().IsInside(bsplineEndIndex)) )
                   {
 
                     //Set the support region
@@ -266,7 +271,7 @@ void HighResolutionIBPFilter::HComputation()
                     bsplineRegion.SetIndex(bsplineStartIndex);
 
                     //Instantiate an iterator on HR image over the bspline region
-                    itkIteratorWithIndex itHRImage(m_ImageHR,bsplineRegion);
+                    itkIteratorWithIndex itHRImage(SuperClass::m_ImageHR,bsplineRegion);
 
                     //linear index of bspline weights
                     unsigned int weightLinearIndex = 0;
@@ -282,7 +287,7 @@ void HighResolutionIBPFilter::HComputation()
                       hrLinearIndex = hrIndex[0] + hrIndex[1]*hrSize[0] + hrIndex[2]*hrSize[0]*hrSize[1];
 
                       //Add weight*PSFValue to the corresponding element in H
-                      m_H(lrLinearIndex,hrLinearIndex) += itPSF.Get() * bsplineWeights[weightLinearIndex];
+                      SuperClass::m_H(lrLinearIndex,hrLinearIndex) += itPSF.Get() * bsplineWeights[weightLinearIndex];
                       weightLinearIndex += 1;
                       //std::cout<<"HR point:"<<hrIndex[0]<<" "<<hrIndex[1]<<" "<<hrIndex[2]<<", weight:"<<m_H(lrLinearIndex,hrLinearIndex)<<"\n";
 
@@ -303,12 +308,12 @@ void HighResolutionIBPFilter::HComputation()
       } //end of loop over the set of LR images
 
       // Normalize m_H
-      for(unsigned int i = 0; i < m_H.rows(); i++)
+      for(unsigned int i = 0; i < SuperClass::m_H.rows(); i++)
       {
 
-        double sum = m_H.sum_row(i);
+        double sum = SuperClass::m_H.sum_row(i);
 
-        vnl_sparse_matrix<float>::row & r = m_H.get_row(i);
+        vnl_sparse_matrix<float>::row & r = SuperClass::m_H.get_row(i);
         vnl_sparse_matrix<float>::row::iterator col_iter;
 
         for (col_iter = r.begin(); col_iter != r.end(); ++col_iter)
@@ -317,68 +322,71 @@ void HighResolutionIBPFilter::HComputation()
 
       //Fill m_X
       //Instantiate an iterator on HR image
-      itkIteratorWithIndex itHRImage(m_ImageHR,m_ImageHR->GetLargestPossibleRegion());
+      itkIteratorWithIndex itHRImage(SuperClass::m_ImageHR,SuperClass::m_ImageHR->GetLargestPossibleRegion());
       for(itHRImage.GoToBegin(); !itHRImage.IsAtEnd(); ++itHRImage){
         hrIndex = itHRImage.GetIndex();
         hrLinearIndex = hrIndex[0] + hrIndex[1]*hrSize[0] + hrIndex[2]*hrSize[0]*hrSize[1];
-        m_X[hrLinearIndex] = itHRImage.Get();
+        SuperClass::m_X[hrLinearIndex] = itHRImage.Get();
       }
 }
 //-----------------------------------------------------------------------------------------------------------
 void HighResolutionIBPFilter::Initialize()
 {
-    m_SimulatedImagesLR.resize(m_ImagesLR.size());
-    if(m_TransformType == AFFINE)
-    {
-        m_InverseTransformsLRAffine.resize(m_TransformsLRAffine.size());
-    }
-    else
-    {
-        m_InverseTransformsLRSbS.resize(m_TransformsLRSbS.size());
-    }
+    SuperClass::m_SimulatedImagesLR.resize(SuperClass::m_ImagesLR.size());
+
+
+
+//    if(m_TransformType == SLICE_BY_SLICE)
+//    {
+
+//        m_InverseTransformsLRSbS.resize(m_TransformsLRSbS.size());
+//    }
+//    else
+//    {
+//        m_InverseTransformsLR.resize(m_TransformsLR.size());
+//    }
    // m_InverseTransformsLR.resize(m_TransformsLR.size());
 
     typedef itk::ImageDuplicator< itkImage >   itkDuplicator;
     //duplicate the input image into the output images to keep all header information
     itkDuplicator::Pointer duplicator = itkDuplicator::New();
-    duplicator->SetInputImage( m_ImageHR );
+    duplicator->SetInputImage( SuperClass::m_ImageHR );
     duplicator->Update();
-    m_OutputHRImage = duplicator->GetOutput();
-    m_OutputHRImage->FillBuffer(0);
+    SuperClass::m_OutputHRImage = duplicator->GetOutput();
+    SuperClass::m_OutputHRImage->FillBuffer(0);
 
     itkDuplicator::Pointer duplicator2 = itkDuplicator::New();
-    duplicator2->SetInputImage( m_ImageHR );
+    duplicator2->SetInputImage( SuperClass::m_ImageHR );
     duplicator2->Update();
-    m_CurrentImageHR = duplicator2->GetOutput();
+    SuperClass::m_CurrentImageHR = duplicator2->GetOutput();
 
     itkDuplicator::Pointer duplicator3 = itkDuplicator::New();
-    duplicator3->SetInputImage( m_ImageHR );
+    duplicator3->SetInputImage( SuperClass::m_ImageHR );
     duplicator3->Update();
-    m_ImageMaskHR = duplicator3->GetOutput();
+    SuperClass::m_ImageMaskHR = duplicator3->GetOutput();
 
-    for(unsigned int i=0;i<m_ImagesLR.size();i++)
+    for(unsigned int i=0;i<SuperClass::m_ImagesLR.size();i++)
     {
 
       //duplicate the input LR image into the output simulated image to keep all header information
       itkDuplicator::Pointer duplicator = itkDuplicator::New();
-      duplicator->SetInputImage( m_ImagesLR[i] );
+      duplicator->SetInputImage( SuperClass::m_ImagesLR[i] );
       duplicator->Update();
-      m_SimulatedImagesLR[i] = duplicator->GetOutput();
-      m_SimulatedImagesLR[i]->FillBuffer(0);
+      SuperClass::m_SimulatedImagesLR[i] = duplicator->GetOutput();
+      SuperClass::m_SimulatedImagesLR[i]->FillBuffer(0);
+
       //m_TransformsLR[i]->GetInverse(m_InverseTransformsLR[i]);
 
-      if(m_TransformType == AFFINE)
+      if(SuperClass::m_TransformType == SLICE_BY_SLICE)
       {
-          m_InverseTransformsLRAffine[i] = itkAffineTransform::New();
-          m_InverseTransformsLRAffine[i]->SetCenter( m_TransformsLRAffine[i]->GetCenter());
-          m_TransformsLRAffine[i]->GetInverse(m_InverseTransformsLRAffine[i]);
-
+//          m_InverseTransformsLRSbS[i] =  btkSliceBySliceTransform::New();
+//          m_InverseTransformsLRSbS[i]->SetFixedParameters( m_TransformsLRSbS[i]->GetFixedParameters());
+//          m_TransformsLRSbS[i]->GetInverse(m_InverseTransformsLRSbS[i]);
       }
       else
       {
-          m_InverseTransformsLRSbS[i] =  btkSliceBySliceTransform::New();
-          m_InverseTransformsLRSbS[i]->SetFixedParameters( m_TransformsLRSbS[i]->GetFixedParameters());
-          m_TransformsLRSbS[i]->GetInverse(m_InverseTransformsLRSbS[i]);
+          std::cout<<"Transform :"<< SuperClass::m_TransformsLR[i]->GetNameOfClass()<<std::endl;
+          std::cout<<"Inverse Transform :"<<SuperClass::m_InverseTransformsLR[i]->GetNameOfClass()<<std::endl;
       }
     }
 
@@ -393,231 +401,221 @@ void HighResolutionIBPFilter::InitializePSF()
   typedef itk::ContinuousIndex< double, 3 > itkContinuousIndex;
   typedef itk::ImageRegionIteratorWithIndex< itkImage > itkIteratorWithIndex;
 
-  std::cout<<"Initializing the PSF\n";
 
-  //set the correct number of PSF (one PSF for one LR image -> this allows us to use images with different LR resolution)
-  m_PSF.resize(m_ImagesLR.size());
+    std::cout<<"Initializing the PSF\n";
 
-  for(unsigned int i=0; i != m_PSF.size(); i++)
-  {
+    //set the correct number of PSF (one PSF for one LR image -> this allows us to use images with different LR resolution)
+    SuperClass::m_PSF.resize(SuperClass::m_ImagesLR.size());
 
-    // 1- build the boxcar PSF in LR space (one anisotropic voxel)
-    itkImage::Pointer LRPSF = itkImage::New();
-    itkImage::IndexType lrIndex;
-    itkImage::SizeType lrSize;
-    //We enlarge by 1 voxel the LR PSF by null voxel for proper interpolated values.
-    int border = 1; //to get proper interpolated value when close to the image boundary
-    lrIndex[0] = 0;  lrIndex[1] = 0;  lrIndex[2] = 0;
-    lrSize[0] = 1+2*border;   lrSize[1] = 1+2*border;   lrSize[2] = 1+2*border;
-    itkImage::SpacingType lrSpacing = m_ImagesLR[i]->GetSpacing();
+    for(uint i=0; i != SuperClass::m_PSF.size(); i++){
 
-    //Allocate the LR PSF
-    itkImage::RegionType lrRegion;
-    lrRegion.SetSize(lrSize);
-    lrRegion.SetIndex(lrIndex);
-    LRPSF->SetRegions(lrRegion);
-    LRPSF->SetSpacing(lrSpacing);
-    LRPSF->Allocate();
-    LRPSF->FillBuffer(0);
-    std::cout<<"LRPSF size : "   <<lrSize[0]   <<" "<<lrSize[1]   <<" "<<lrSize[2]<<"\n";
-    std::cout<<"LRPSF spacing : "<<lrSpacing[0]<<" "<<lrSpacing[1]<<" "<<lrSpacing[2]<<"\n";
+      // 1- build the boxcar PSF in LR space (one anisotropic voxel)
+      itkImage::Pointer LRPSF = itkImage::New();
+      itkImage::IndexType lrIndex;
+      itkImage::SizeType lrSize;
+      //We enlarge by 1 voxel the LR PSF by null voxel for proper interpolated values.
+      int border = 1; //to get proper interpolated value when close to the image boundary
+      lrIndex[0] = 0;  lrIndex[1] = 0;  lrIndex[2] = 0;
+      lrSize[0] = 1+2*border;   lrSize[1] = 1+2*border;   lrSize[2] = 1+2*border;
+      itkImage::SpacingType lrSpacing = SuperClass::m_ImagesLR[i]->GetSpacing();
 
-    itkImage::IndexType lrIndexCenter;
-    lrIndexCenter[0] = (lrSize[0]-1)/2.0;
-    lrIndexCenter[1] = (lrSize[1]-1)/2.0;
-    lrIndexCenter[2] = (lrSize[2]-1)/2.0;
-    itkImage::PointType lrPointCenter;
-    LRPSF->TransformIndexToPhysicalPoint(lrIndexCenter,lrPointCenter);
-    std::cout<<"LRPSF index center : "<<lrIndexCenter[0]<<" "<<lrIndexCenter[1]<<" "<<lrIndexCenter[2]<<"\n";
-    std::cout<<"LRPSF physical center : "<<lrPointCenter[0]<<" "<<lrPointCenter[1]<<" "<<lrPointCenter[2]<<"\n";
-    LRPSF->SetPixel(lrIndexCenter,1.0);
+      //Allocate the LR PSF
+      itkImage::RegionType lrRegion;
+      lrRegion.SetSize(lrSize);
+      lrRegion.SetIndex(lrIndex);
+      LRPSF->SetRegions(lrRegion);
+      LRPSF->SetSpacing(lrSpacing);
+      LRPSF->Allocate();
+      LRPSF->FillBuffer(0);
+      std::cout<<"LRPSF size : "   <<lrSize[0]   <<" "<<lrSize[1]   <<" "<<lrSize[2]<<"\n";
+      std::cout<<"LRPSF spacing : "<<lrSpacing[0]<<" "<<lrSpacing[1]<<" "<<lrSpacing[2]<<"\n";
+
+      itkImage::IndexType lrIndexCenter;
+      lrIndexCenter[0] = (lrSize[0]-1)/2.0;
+      lrIndexCenter[1] = (lrSize[1]-1)/2.0;
+      lrIndexCenter[2] = (lrSize[2]-1)/2.0;
+      itkImage::PointType lrPointCenter;
+      LRPSF->TransformIndexToPhysicalPoint(lrIndexCenter,lrPointCenter);
+      std::cout<<"LRPSF index center : "<<lrIndexCenter[0]<<" "<<lrIndexCenter[1]<<" "<<lrIndexCenter[2]<<"\n";
+      std::cout<<"LRPSF physical center : "<<lrPointCenter[0]<<" "<<lrPointCenter[1]<<" "<<lrPointCenter[2]<<"\n";
+      LRPSF->SetPixel(lrIndexCenter,1.0);
 
 
-    // 2- Allocate the corresponding HR PSF
-    itkImage::IndexType hrIndex;
-    itkImage::SizeType hrSize;
-    hrSize[0] = (int)ceil(lrSpacing[0] / m_ImageHR->GetSpacing()[0]) + 2;
-    hrSize[1] = (int)ceil(lrSpacing[1] / m_ImageHR->GetSpacing()[1]) + 2;
-    hrSize[2] = (int)ceil(lrSpacing[2] / m_ImageHR->GetSpacing()[2]) + 2;
-    hrIndex[0] = 0;  hrIndex[1] = 0;  hrIndex[2] = 0;
+      // 2- Allocate the corresponding HR PSF
+      itkImage::IndexType hrIndex;
+      itkImage::SizeType hrSize;
+      hrSize[0] = (int)ceil(lrSpacing[0] / SuperClass::m_ImageHR->GetSpacing()[0]) + 2;
+      hrSize[1] = (int)ceil(lrSpacing[1] / SuperClass::m_ImageHR->GetSpacing()[1]) + 2;
+      hrSize[2] = (int)ceil(lrSpacing[2] / SuperClass::m_ImageHR->GetSpacing()[2]) + 2;
+      hrIndex[0] = 0;  hrIndex[1] = 0;  hrIndex[2] = 0;
 
-    std::cout<<"HR PSF spacing : "<<m_ImageHR->GetSpacing()[0]<<" "<<m_ImageHR->GetSpacing()[1]<<" "<<m_ImageHR->GetSpacing()[2]<<std::endl;
-    std::cout<<"HR PSF size : "<<hrSize[0]<<" "<<hrSize[1]<<" "<<hrSize[2]<<std::endl;
+      std::cout<<"HR PSF spacing : "<<SuperClass::m_ImageHR->GetSpacing()[0]<<" "<<SuperClass::m_ImageHR->GetSpacing()[1]<<" "<<SuperClass::m_ImageHR->GetSpacing()[2]<<"\n";
+      std::cout<<"HR PSF size : "<<hrSize[0]<<" "<<hrSize[1]<<" "<<hrSize[2]<<"\n";
 
-    itkImage::RegionType hrRegion;
-    hrRegion.SetSize(hrSize);
-    hrRegion.SetIndex(hrIndex);
-    m_PSF[i] = itkImage::New();
-    m_PSF[i]->SetRegions(hrRegion);
-    m_PSF[i]->SetSpacing(m_ImageHR->GetSpacing());
-    m_PSF[i]->Allocate();
-    m_PSF[i]->FillBuffer(0.0);
-    itkContinuousIndex hrIndexCenter;
-    hrIndexCenter[0] = (hrSize[0]-1)/2.0;
-    hrIndexCenter[1] = (hrSize[1]-1)/2.0;
-    hrIndexCenter[2] = (hrSize[2]-1)/2.0;
-    itkImage::PointType hrPointCenter;
-    m_PSF[i]->TransformContinuousIndexToPhysicalPoint(hrIndexCenter,hrPointCenter);
+      itkImage::RegionType hrRegion;
+      hrRegion.SetSize(hrSize);
+      hrRegion.SetIndex(hrIndex);
+      SuperClass::m_PSF[i] = itkImage::New();
+      SuperClass::m_PSF[i]->SetRegions(hrRegion);
+      SuperClass::m_PSF[i]->SetSpacing(SuperClass::m_ImageHR->GetSpacing());
+      SuperClass::m_PSF[i]->Allocate();
+      SuperClass::m_PSF[i]->FillBuffer(0.0);
+      itkContinuousIndex hrIndexCenter;
+      hrIndexCenter[0] = (hrSize[0]-1)/2.0;
+      hrIndexCenter[1] = (hrSize[1]-1)/2.0;
+      hrIndexCenter[2] = (hrSize[2]-1)/2.0;
+      itkImage::PointType hrPointCenter;
+      SuperClass::m_PSF[i]->TransformContinuousIndexToPhysicalPoint(hrIndexCenter,hrPointCenter);
 
-    std::cout<<"modification of the origin of m_PSF so that LRPSF and m_PSF are centered.\n";
-    itkImage::PointType hrOrigin;
-    hrOrigin[0] = lrPointCenter[0] - hrPointCenter[0];
-    hrOrigin[1] = lrPointCenter[1] - hrPointCenter[1];
-    hrOrigin[2] = lrPointCenter[2] - hrPointCenter[2];
-    m_PSF[i]->SetOrigin(hrOrigin);
-    m_PSF[i]->TransformContinuousIndexToPhysicalPoint(hrIndexCenter,hrPointCenter);
-    std::cout<<"HRPSF origin : "<<hrOrigin[0]<<" "<<hrOrigin[1]<<" "<<hrOrigin[2]<<std::endl;
-    std::cout<<"HRPSF physical center : "<<hrPointCenter[0]<<" "<<hrPointCenter[1]<<" "<<hrPointCenter[2]<<std::endl;
+      std::cout<<"modification of the origin of m_PSF so that LRPSF and m_PSF are centered.\n";
+      itkImage::PointType hrOrigin;
+      hrOrigin[0] = lrPointCenter[0] - hrPointCenter[0];
+      hrOrigin[1] = lrPointCenter[1] - hrPointCenter[1];
+      hrOrigin[2] = lrPointCenter[2] - hrPointCenter[2];
+      SuperClass::m_PSF[i]->SetOrigin(hrOrigin);
+      SuperClass::m_PSF[i]->TransformContinuousIndexToPhysicalPoint(hrIndexCenter,hrPointCenter);
+      std::cout<<"HRPSF origin : "<<hrOrigin[0]<<" "<<hrOrigin[1]<<" "<<hrOrigin[2]<<"\n";
+      std::cout<<"HRPSF physical center : "<<hrPointCenter[0]<<" "<<hrPointCenter[1]<<" "<<hrPointCenter[2]<<"\n";
 
-    itkBSplineInterpolator::Pointer bsInterpolator = itkBSplineInterpolator::New();
-    bsInterpolator->SetSplineOrder(m_InterpolationOrderPSF);
-    bsInterpolator->SetInputImage(LRPSF);
+      itkBSplineInterpolator::Pointer bsInterpolator = itkBSplineInterpolator::New();
+      bsInterpolator->SetSplineOrder(SuperClass::m_InterpolationOrderPSF);
+      bsInterpolator->SetInputImage(LRPSF);
 
-    itkIteratorWithIndex itPSF(m_PSF[i],m_PSF[i]->GetLargestPossibleRegion());
-    double nbSamples = 20; //parameter for oversampled HR PSF.
-    std::vector<float> sigma(3); //parameter for 3D Gaussian PSF
+      itkIteratorWithIndex itPSF(SuperClass::m_PSF[i],SuperClass::m_PSF[i]->GetLargestPossibleRegion());
+      double nbSamples = 20; //parameter for oversampled HR PSF.
+      std::vector<float> sigma(3); //parameter for 3D Gaussian PSF
 
-    switch (m_PsfType)
-    {
-      case 0:
-        std::cout<<"3D interpolated boxcar using "<<m_InterpolationOrderPSF<<" order B-Spline."<<std::endl;
-        //Loop over voxels of HR PSF
-        for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF)
-        {
+      switch (SuperClass::m_PsfType) {
+        case 0:
+          std::cout<<"3D interpolated boxcar using "<<SuperClass::m_InterpolationOrderPSF<<" order B-Spline.\n";
+          //Loop over voxels of HR PSF
+          for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF){
 
-          //Coordinate in HR image
-          hrIndex = itPSF.GetIndex();
-
-          //Coordinate in physical space
-          itkImage::PointType hrPoint;
-          m_PSF[i]->TransformIndexToPhysicalPoint(hrIndex,hrPoint);
-
-          //Continuous coordinate in LR image
-          itkContinuousIndex lrContIndex;
-          LRPSF->TransformPhysicalPointToContinuousIndex(hrPoint,lrContIndex);
-
-          //Set interpolated value to m_PSF
-          itPSF.Set(bsInterpolator->EvaluateAtContinuousIndex(lrContIndex));
-        }
-        break;
-
-      case 1:
-        std::cout<<"3D oversampled boxcar using nearest neighbour interpolation.\n";
-        //set nearest neighbour interpolation mode
-        bsInterpolator->SetSplineOrder(0);
-
-        //Loop over voxels of HR PSF
-        for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF)
-        {
-
-          double sum = 0;
-          int x,y,z;
-          //Coordinate in HR image
-          hrIndex = itPSF.GetIndex();
-          itkContinuousIndex hrContIndex;
-          itkImage::PointType hrPoint;
-          itkContinuousIndex lrContIndex;
-
-          //Coordinate in physical space
-          m_PSF[i]->TransformIndexToPhysicalPoint(hrIndex,hrPoint);
-          //Continuous coordinate in LR image
-          LRPSF->TransformPhysicalPointToContinuousIndex(hrPoint,lrContIndex);
-
-          for(z=0; z<nbSamples; z++)
-            for(y=0; y<nbSamples; y++)
-              for(x=0; x<nbSamples; x++)
-              {
-
-                hrContIndex[0] = hrIndex[0] - 0.5 + 1.0*x/nbSamples;
-                hrContIndex[1] = hrIndex[1] - 0.5 + 1.0*y/nbSamples;
-                hrContIndex[2] = hrIndex[2] - 0.5 + 1.0*z/nbSamples;
-
-                //Coordinate in physical space
-                m_PSF[i]->TransformContinuousIndexToPhysicalPoint(hrContIndex,hrPoint);
-
-                //Continuous coordinate in LR image
-                LRPSF->TransformPhysicalPointToContinuousIndex(hrPoint,lrContIndex);
-
-                sum += bsInterpolator->EvaluateAtContinuousIndex(lrContIndex);
-              }
-
-          //Set oversampled value to m_PSF
-          itPSF.Set(sum);
-        }
-        break;
-
-        case 2:
-          std::cout<<"Compute a 3D Gaussian PSF.\n";
-          //Note that we should also do oversampling to obtain a more accurate estimate of the PSF
-          //Here, we use a piecewise constant approximation
-          //Set the FWHM equal to the voxel size
-          //FWHM = 2.3548 sigma
-          sigma[0] = lrSpacing[0] / 2.3548;
-          sigma[1] = lrSpacing[1] / 2.3548;
-          sigma[2] = lrSpacing[2] / 2.3548;
-          std::cout<<"Sigma :"<<sigma[0]<<" "<<sigma[1]<<" "<<sigma[2]<<"\n";
-          for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF)
-          {
+            //Coordinate in HR image
             hrIndex = itPSF.GetIndex();
-            float x = hrIndex[0] - hrIndexCenter[0];
-            float y = hrIndex[1] - hrIndexCenter[1];
-            float z = hrIndex[2] - hrIndexCenter[2];
-            float value = (x*x)/(2*sigma[0]*sigma[0]) + (y*y)/(2*sigma[1]*sigma[1]) + (z*z)/(2*sigma[2]*sigma[2]);
-            itPSF.Set(exp(-value));
+
+            //Coordinate in physical space
+            itkImage::PointType hrPoint;
+            SuperClass::m_PSF[i]->TransformIndexToPhysicalPoint(hrIndex,hrPoint);
+
+            //Continuous coordinate in LR image
+            itkContinuousIndex lrContIndex;
+            LRPSF->TransformPhysicalPointToContinuousIndex(hrPoint,lrContIndex);
+
+            //Set interpolated value to m_PSF
+            itPSF.Set(bsInterpolator->EvaluateAtContinuousIndex(lrContIndex));
           }
           break;
+        case 1:
+          std::cout<<"3D oversampled boxcar using nearest neighbour interpolation.\n";
+          //set nearest neighbour interpolation mode
+          bsInterpolator->SetSplineOrder(0);
 
-      default:
-        std::cout<<"Invalid choice for the psf building"<<std::endl;
-        break;
-    }
+          //Loop over voxels of HR PSF
+          for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF){
 
-    //for memory saving, we limit the number of non-null voxels
-    for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF)
-    {
-      if(itPSF.Get() < 0.01)
-        itPSF.Set(0);
-    }
+            double sum = 0;
+            int x,y,z;
+            //Coordinate in HR image
+            hrIndex = itPSF.GetIndex();
+            itkContinuousIndex hrContIndex;
+            itkImage::PointType hrPoint;
+            itkContinuousIndex lrContIndex;
 
-    //Normalization of the PSF
-    double sum = 0;
-    for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF) sum += itPSF.Get();
-    if(sum>0)
-      for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF)
-        itPSF.Set( itPSF.Get() / sum );
+            //Coordinate in physical space
+            SuperClass::m_PSF[i]->TransformIndexToPhysicalPoint(hrIndex,hrPoint);
+            //Continuous coordinate in LR image
+            LRPSF->TransformPhysicalPointToContinuousIndex(hrPoint,lrContIndex);
 
-    std::cout<<"Positive values of the PSF for the "<<i+1<<"th LR image : \n";
-    for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF)
-      if(itPSF.Get()>0)
-      {
-        hrIndex = itPSF.GetIndex();
-        std::cout<<itPSF.Get()<<" ("<<hrIndex[0]<<", "<<hrIndex[1]<<", "<<hrIndex[2]<<") "<<std::endl;
+            for(z=0; z<nbSamples; z++)
+              for(y=0; y<nbSamples; y++)
+                for(x=0; x<nbSamples; x++){
+
+                  hrContIndex[0] = hrIndex[0] - 0.5 + 1.0*x/nbSamples;
+                  hrContIndex[1] = hrIndex[1] - 0.5 + 1.0*y/nbSamples;
+                  hrContIndex[2] = hrIndex[2] - 0.5 + 1.0*z/nbSamples;
+
+                  //Coordinate in physical space
+                  SuperClass::m_PSF[i]->TransformContinuousIndexToPhysicalPoint(hrContIndex,hrPoint);
+
+                  //Continuous coordinate in LR image
+                  LRPSF->TransformPhysicalPointToContinuousIndex(hrPoint,lrContIndex);
+
+                  sum += bsInterpolator->EvaluateAtContinuousIndex(lrContIndex);
+                }
+
+            //Set oversampled value to m_PSF
+            itPSF.Set(sum);
+          }
+          break;
+          case 2:
+            std::cout<<"Compute a 3D Gaussian PSF.\n";
+            //Note that we should also do oversampling to obtain a more accurate estimate of the PSF
+            //Here, we use a piecewise constant approximation
+            //Set the FWHM equal to the voxel size
+            //FWHM = 2.3548 sigma
+            sigma[0] = lrSpacing[0] / 2.3548;
+            sigma[1] = lrSpacing[1] / 2.3548;
+            sigma[2] = lrSpacing[2] / 2.3548;
+            std::cout<<"Sigma :"<<sigma[0]<<" "<<sigma[1]<<" "<<sigma[2]<<"\n";
+            for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF){
+              hrIndex = itPSF.GetIndex();
+              float x = hrIndex[0] - hrIndexCenter[0];
+              float y = hrIndex[1] - hrIndexCenter[1];
+              float z = hrIndex[2] - hrIndexCenter[2];
+              float value = (x*x)/(2*sigma[0]*sigma[0]) + (y*y)/(2*sigma[1]*sigma[1]) + (z*z)/(2*sigma[2]*sigma[2]);
+              itPSF.Set(exp(-value));
+            }
+            break;
+        default:
+          std::cout<<"Invalid choice for the psf building\n";
+          break;
       }
 
-    std::cout<<"Set the HR origin to 0 since the PSF now should be centered with image voxels"<<std::endl<<std::endl;
-    hrOrigin[0] = 0;
-    hrOrigin[1] = 0;
-    hrOrigin[2] = 0;
-    m_PSF[i]->SetOrigin(hrOrigin);
+      //for memory saving, we limit the number of non-null voxels
+      for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF){
+        if(itPSF.Get() < 0.01)
+          itPSF.Set(0);
+      }
+
+      //Normalization of the PSF
+      double sum = 0;
+      for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF) sum += itPSF.Get();
+      if(sum>0)
+        for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF)
+          itPSF.Set( itPSF.Get() / sum );
+
+      std::cout<<"Positive values of the PSF for the "<<i+1<<"th LR image : \n";
+      for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF)
+        if(itPSF.Get()>0){
+          hrIndex = itPSF.GetIndex();
+          std::cout<<itPSF.Get()<<" ("<<hrIndex[0]<<", "<<hrIndex[1]<<", "<<hrIndex[2]<<") \n";
+        }
+
+      std::cout<<"Set the HR origin to 0 since the PSF now should be centered with image voxels\n\n";
+      hrOrigin[0] = 0;
+      hrOrigin[1] = 0;
+      hrOrigin[2] = 0;
+      SuperClass::m_PSF[i]->SetOrigin(hrOrigin);
+    }
   }
-}
 //-----------------------------------------------------------------------------------------------------------
 void HighResolutionIBPFilter::UpdateX()
 {
   typedef itk::ImageRegionIteratorWithIndex< itkImage > itkIteratorWithIndex;
   std::cout<<"Update x"<<std::endl;
-  m_X.fill(0.0);
+  SuperClass::m_X.fill(0.0);
   itkImage::IndexType hrIndex;
   unsigned int hrLinearIndex = 0;
 
-  itkImage::SizeType  hrSize  = m_CurrentImageHR->GetLargestPossibleRegion().GetSize();
+  itkImage::SizeType  hrSize  = SuperClass::m_CurrentImageHR->GetLargestPossibleRegion().GetSize();
 
-  itkIteratorWithIndex itHRImage(m_CurrentImageHR,m_CurrentImageHR->GetLargestPossibleRegion());
+  itkIteratorWithIndex itHRImage(SuperClass::m_CurrentImageHR,SuperClass::m_CurrentImageHR->GetLargestPossibleRegion());
   for(itHRImage.GoToBegin(); !itHRImage.IsAtEnd(); ++itHRImage)
   {
     hrIndex = itHRImage.GetIndex();
     hrLinearIndex = hrIndex[0] + hrIndex[1]*hrSize[0] + hrIndex[2]*hrSize[0]*hrSize[1];
-    m_X[hrLinearIndex] = itHRImage.Get();
+    SuperClass::m_X[hrLinearIndex] = itHRImage.Get();
   }
 }
 //-----------------------------------------------------------------------------------------------------------
@@ -638,34 +636,34 @@ double HighResolutionIBPFilter::ComputeIterativeBackProjection( int & nlm, float
 
     std::cout<<"Compute y-Hx"<<std::endl;
     this->UpdateX();
-    m_SimuLRImagesFilter->SetH(m_H);
-    m_SimuLRImagesFilter->SetLRImages(m_ImagesLR);
-    m_SimuLRImagesFilter->SetX(m_X);
-    m_SimuLRImagesFilter->SetOffset(m_Offset);
+    m_SimuLRImagesFilter->SetH(SuperClass::m_H);
+    m_SimuLRImagesFilter->SetLRImages(SuperClass::m_ImagesLR);
+    m_SimuLRImagesFilter->SetX(SuperClass::m_X);
+    m_SimuLRImagesFilter->SetOffset(SuperClass::m_Offset);
     m_SimuLRImagesFilter->Update();
 
-    m_SimulatedImagesLR = m_SimuLRImagesFilter->GetOutput();
+    SuperClass::m_SimulatedImagesLR = m_SimuLRImagesFilter->GetOutput();
 
     std::cout<<"Update the current HR image"<<std::endl;
     //Initialize to 0 the output HR image
-    m_OutputHRImage->FillBuffer(0);
+    SuperClass::m_OutputHRImage->FillBuffer(0);
 
 
     //parameters for interpolation (bspline interpolator)
     itkBSplineInterpolator::Pointer bsInterpolator = itkBSplineInterpolator::New();
-    bsInterpolator->SetSplineOrder(m_InterpolationOrderIBP);
+    bsInterpolator->SetSplineOrder(SuperClass::m_InterpolationOrderIBP);
 
     std::string s = ""; // ? UseLess ?
     std::vector< itkImage::Pointer >   errorImages;            //difference image between simulated images and observed images.
-    errorImages.resize(m_ImagesLR.size());
+    errorImages.resize(SuperClass::m_ImagesLR.size());
 
-    for(unsigned int i=0; i< m_ImagesLR.size(); i++)
+    for(unsigned int i=0; i< SuperClass::m_ImagesLR.size(); i++)
     {
 
       //compute the difference between LR input and the simulated LR image
       itkSubtractImageFilter::Pointer subtractFilter = itkSubtractImageFilter::New ();
-      subtractFilter->SetInput1(m_ImagesLR[i]);
-      subtractFilter->SetInput2(m_SimulatedImagesLR[i]); //TODO: Before perform this be sure that you compute the simulateLRImage
+      subtractFilter->SetInput1(SuperClass::m_ImagesLR[i]);
+      subtractFilter->SetInput2(SuperClass::m_SimulatedImagesLR[i]); //TODO: Before perform this be sure that you compute the simulateLRImage
       subtractFilter->Update();
 
       std::ostringstream oss ;
@@ -675,18 +673,19 @@ double HighResolutionIBPFilter::ComputeIterativeBackProjection( int & nlm, float
 
       //interpolate the LR difference
       itkResampleFilter::Pointer resample = itkResampleFilter::New();
-      if(m_TransformType == AFFINE)
+      if(SuperClass::m_TransformType == SLICE_BY_SLICE)
       {
-          resample->SetTransform(m_TransformsLRAffine[i]);
+          resample->SetTransform(SuperClass::m_TransformsLRSbS[i]);
+
       }
       else
       {
-          resample->SetTransform(m_TransformsLRSbS[i]);
+          resample->SetTransform(SuperClass::m_TransformsLR[i]);
       }
 
       resample->SetInterpolator(bsInterpolator);
       resample->UseReferenceImageOn();
-      resample->SetReferenceImage(m_CurrentImageHR);
+      resample->SetReferenceImage(SuperClass::m_CurrentImageHR);
       resample->SetInput(subtractFilter->GetOutput());
       resample->Update();
 
@@ -699,11 +698,11 @@ double HighResolutionIBPFilter::ComputeIterativeBackProjection( int & nlm, float
 
       //Add the interpolated differences
       itkAddImageFilter::Pointer addFilter = itkAddImageFilter::New ();
-      addFilter->SetInput1(m_OutputHRImage);
+      addFilter->SetInput1(SuperClass::m_OutputHRImage);
       addFilter->SetInput2(resample->GetOutput());
       addFilter->Update();
 
-     m_OutputHRImage = addFilter->GetOutput();
+     SuperClass::m_OutputHRImage = addFilter->GetOutput();
    /*    std::string s1 = "switch_out.nii.gz";
         data.WriteOneImage(data.m_outputHRImage, s1);
         */
@@ -714,7 +713,7 @@ double HighResolutionIBPFilter::ComputeIterativeBackProjection( int & nlm, float
     }
 
     //Iterator over the output image filled with backprojected error.
-    itkIteratorWithIndex itImage(m_OutputHRImage,m_OutputHRImage->GetLargestPossibleRegion());
+    itkIteratorWithIndex itImage(SuperClass::m_OutputHRImage,SuperClass::m_OutputHRImage->GetLargestPossibleRegion());
 
     /*
         //Normalize the resampled difference image
@@ -768,7 +767,7 @@ double HighResolutionIBPFilter::ComputeIterativeBackProjection( int & nlm, float
             //Normalize the resampled difference image
             for(itImage.GoToBegin(); !itImage.IsAtEnd(); ++itImage)
             {
-              double value = itImage.Get() / m_ImagesLR.size();
+              double value = itImage.Get() / SuperClass::m_ImagesLR.size();
               itImage.Set( value );
             }
 
@@ -776,28 +775,28 @@ double HighResolutionIBPFilter::ComputeIterativeBackProjection( int & nlm, float
     if(nlm==1)
     {
       std::cout<<"Smooth the error map using the current reconstructed image as reference for NLM filter --------------------------"<<std::endl;
-      btkNLMTool<float> myTool;
-      myTool.SetInput(m_OutputHRImage);
-      myTool.SetMaskImage(m_ImageMaskHR);
+      btkNLMTool<btk::PixelType> myTool;
+      myTool.SetInput(SuperClass::m_OutputHRImage);
+      myTool.SetMaskImage(SuperClass::m_ImageMaskHR);
       myTool.SetDefaultParameters();
-      myTool.SetReferenceImage(m_CurrentImageHR);
+      myTool.SetReferenceImage(SuperClass::m_CurrentImageHR);
       myTool.SetSmoothing(beta);
       myTool.SetBlockwiseStrategy(1); //0 pointwise, 1 block, 2 fast block
 
 
       myTool.ComputeOutput();
-      myTool.GetOutput(m_OutputHRImage);
+      myTool.GetOutput(SuperClass::m_OutputHRImage);
       //s = "ibp_nlm_error.nii.gz";
       //data.WriteOneImage(data.m_outputHRImage, s);
     }
 
     //Update the HR image correspondly
     itkAddImageFilter::Pointer addFilter2 = itkAddImageFilter::New ();
-    addFilter2->SetInput1(m_OutputHRImage);
-    addFilter2->SetInput2(m_CurrentImageHR);
+    addFilter2->SetInput1(SuperClass::m_OutputHRImage);
+    addFilter2->SetInput2(SuperClass::m_CurrentImageHR);
     addFilter2->Update();
 
-    m_OutputHRImage = addFilter2->GetOutput();
+    SuperClass::m_OutputHRImage = addFilter2->GetOutput();
     //s = "ibp_updated.nii.gz";
     //data.WriteOneImage(data.m_currentHRImage, s);
 
@@ -805,28 +804,28 @@ double HighResolutionIBPFilter::ComputeIterativeBackProjection( int & nlm, float
     {
       std::cout<<"Smooth the current reconstructed image ------------------ \n";
       btkNLMTool<float> myTool;
-      myTool.SetInput(m_OutputHRImage);
-      myTool.SetMaskImage(m_ImageMaskHR);
+      myTool.SetInput(SuperClass::m_OutputHRImage);
+      myTool.SetMaskImage(SuperClass::m_ImageMaskHR);
       myTool.SetDefaultParameters();
       myTool.SetSmoothing(beta);
       myTool.SetBlockwiseStrategy(1); //0 pointwise, 1 block, 2 fast block
       myTool.ComputeOutput();
-      myTool.GetOutput(m_OutputHRImage);
+      myTool.GetOutput(SuperClass::m_OutputHRImage);
       //s = "ibp_nlm_smooth.nii.gz";
       //data.WriteOneImage(data.m_currentHRImage, s);
     }
 
     std::cout<<"Compute the changes between the two consecutive estimates\n";
     itkAbsoluteValueDifferenceImageFilter::Pointer absoluteValueDifferenceFilter = itkAbsoluteValueDifferenceImageFilter::New ();
-    absoluteValueDifferenceFilter->SetInput1(m_OutputHRImage);
-    absoluteValueDifferenceFilter->SetInput2(m_CurrentImageHR);
+    absoluteValueDifferenceFilter->SetInput1(SuperClass::m_OutputHRImage);
+    absoluteValueDifferenceFilter->SetInput2(SuperClass::m_CurrentImageHR);
     absoluteValueDifferenceFilter->Update();
 
     double magnitude       = 0.0;
     double numberOfPoints  = 0.0;
     itkImage::Pointer  tmpImage = absoluteValueDifferenceFilter->GetOutput();
     itkIterator itTmpImage(tmpImage, tmpImage->GetLargestPossibleRegion());
-    itkIterator itMaskHRImage(m_ImageMaskHR,m_ImageMaskHR->GetLargestPossibleRegion());
+    itkIterator itMaskHRImage(SuperClass::m_ImageMaskHR,SuperClass::m_ImageMaskHR->GetLargestPossibleRegion());
 
     for(itMaskHRImage.GoToBegin(),itTmpImage.GoToBegin(); !itMaskHRImage.IsAtEnd(); ++itMaskHRImage, ++itTmpImage)
     {
@@ -843,12 +842,12 @@ double HighResolutionIBPFilter::ComputeIterativeBackProjection( int & nlm, float
     std::cout<<"Copying new estimate to current estimate HR image"<<std::endl;
     //Not efficient strategy but clearer to understand the code
     itkDuplicator::Pointer duplicator = itkDuplicator::New();
-    duplicator->SetInputImage( m_OutputHRImage );
+    duplicator->SetInputImage( SuperClass::m_OutputHRImage );
     duplicator->Update();
-    m_CurrentImageHR = duplicator->GetOutput();
+    SuperClass::m_CurrentImageHR = duplicator->GetOutput();
 
     itkStatisticsImageFilter::Pointer statisticsImageFilter = itkStatisticsImageFilter::New ();
-    statisticsImageFilter->SetInput(m_CurrentImageHR);
+    statisticsImageFilter->SetInput(SuperClass::m_CurrentImageHR);
     statisticsImageFilter->Update();
     std::cout << "Stat of the current HR estimate: "<<std::endl<<"Mean: " << statisticsImageFilter->GetMean() << std::endl;
     std::cout << "Std.: " << statisticsImageFilter->GetSigma() << std::endl;

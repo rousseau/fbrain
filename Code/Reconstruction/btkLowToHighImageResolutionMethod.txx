@@ -9,8 +9,8 @@ namespace btk
 /*
  * Constructor
  */
-template < typename ImageType >
-LowToHighImageResolutionMethod<ImageType>
+template < typename ImageType, typename TransformType >
+LowToHighImageResolutionMethod<ImageType, TransformType >
 ::LowToHighImageResolutionMethod()
 {
   m_TransformArray.resize(0);
@@ -24,8 +24,9 @@ LowToHighImageResolutionMethod<ImageType>
   m_UseReference = false;
 }
 
-template < typename ImageType >
-void LowToHighImageResolutionMethod<ImageType>
+template < typename ImageType, typename TransformType >
+void
+LowToHighImageResolutionMethod<ImageType, TransformType >
 ::SetNumberOfImages(int N)
 {
 
@@ -48,9 +49,9 @@ void LowToHighImageResolutionMethod<ImageType>
 /*
  * Initialize by setting the interconnects between components.
  */
-template < typename ImageType >
+template < typename ImageType, typename TransformType >
 void
-LowToHighImageResolutionMethod<ImageType>
+LowToHighImageResolutionMethod<ImageType, TransformType >
 ::Initialize() throw (ExceptionObject)
 {
     // if we don't use a reference we use a LR image as a reference (set by int TargetImage)
@@ -59,6 +60,22 @@ LowToHighImageResolutionMethod<ImageType>
         m_ReferenceImage = m_ImageArray[m_TargetImage];
         m_ReferenceRegion = m_RegionArray[m_TargetImage];
         m_ReferenceMask = m_ImageMaskArray[m_TargetImage];
+    }
+    else
+    {
+
+         if((m_ReferenceImage.GetPointer()) == NULL
+                 || (m_ReferenceMask.GetPointer()) == NULL)
+         {
+            btkWarningMacro("You must Set a Reference Image, mask and Region");
+
+            btkException("ReferenceImage, Mask or region is not Set !");
+
+         }
+
+
+
+
     }
 
   /* Create interpolator */
@@ -90,6 +107,7 @@ LowToHighImageResolutionMethod<ImageType>
       IteratorType regionIt(m_ImageArray[i],m_RegionArray[i]);
       for(regionIt.GoToBegin(); !regionIt.IsAtEnd(); ++regionIt )
       {
+
         index = regionIt.GetIndex();
         m_ImageArray[i] -> TransformIndexToPhysicalPoint(index,point);
         m_ReferenceImage -> TransformPhysicalPointToIndex(point,targetIndex);
@@ -149,9 +167,9 @@ LowToHighImageResolutionMethod<ImageType>
 /*
  * Starts the Registration Process
  */
-template < typename ImageType >
+template < typename ImageType, typename TransformType >
 void
-LowToHighImageResolutionMethod<ImageType>
+LowToHighImageResolutionMethod<ImageType, TransformType >
 ::StartRegistration( void )
 {
 
@@ -166,18 +184,33 @@ LowToHighImageResolutionMethod<ImageType>
     throw err;
   }
 
-  RegistrationPointer m_Registration = RegistrationType::New();
-  m_Registration -> SetFixedImage(  m_ReferenceImage  );
-  m_Registration -> SetFixedImageRegion( m_ReferenceRegion );
+  typename RegistrationBase::Pointer registration;
+  //typename RegistrationType::Pointer registration;
+  typename TransformType::Pointer myTransform = TransformType::New();
+  if(std::string(myTransform->GetNameOfClass()) == "Euler3DTransform")
+  {
+     registration = RegistrationType::New();
+  }
+  else if(std::string(myTransform->GetNameOfClass()) == "AffineTransform")
+  {
+     registration = AffineRegistrationType::New();
+  }
+  else
+  {
+      throw(std::string("Wrong Type of Transform . Only Euler3DTransform and AffineTransform can be used !"));
+  }
+
+  registration -> SetFixedImage(  m_ReferenceImage  );
+  registration -> SetFixedImageRegion( m_ReferenceRegion );
 
   if ( m_InitializeWithMask )
   {
-    m_Registration -> SetFixedImageMask( m_ReferenceMask );
-    m_Registration -> InitializeWithMask();
+    registration -> SetFixedImageMask( m_ReferenceMask );
+    registration -> InitializeWithMask();
   }
 
-  m_Registration -> SetEnableObserver( false );
-  m_Registration -> SetIterations( m_Iterations );
+  registration -> SetEnableObserver( false );
+  registration -> SetIterations( m_Iterations );
 
   m_ResamplingStatus.resize( m_NumberOfImages );
   for (unsigned int i=0; i < m_ResamplingStatus.size(); i++)
@@ -185,16 +218,16 @@ LowToHighImageResolutionMethod<ImageType>
 
   for (unsigned int i=0; i < m_NumberOfImages; i++)
   {
-      m_Registration->SetMovingImage( m_ImageArray[i] );
-      m_Registration->SetMovingImageMask( m_ImageMaskArray[i] );
-      //      m_Registration->SetInitialTransformParameters( m_InitialRigidParameters[i] );
+
+      registration->SetMovingImage( m_ImageArray[i] );
+      registration->SetMovingImageMask( m_ImageMaskArray[i] );
+      //registration->SetInitialTransformParameters( m_InitialRigidParameters[i] );
 
       if (i != m_TargetImage || m_UseReference == true )
       {
           try
-          {
-              //m_Registration->StartRegistration();// FIXME : in ITK4 StartRegistration() is replaced by Update()
-              m_Registration->Update();
+          {              
+              registration->Update();
           }
           catch( itk::ExceptionObject & err )
           {
@@ -202,16 +235,34 @@ LowToHighImageResolutionMethod<ImageType>
               std::cerr << err << std::endl;
               throw err;
           }
-          m_TransformArray[i] = m_Registration->GetTransform();
+
+          m_TransformArray[i] = reinterpret_cast<TransformType*>(registration->GetTransform());
+
+//          if(std::string(m_TransformArray[0]->GetNameOfClass()) == "Euler3DTransform")
+//          {
+//              m_TransformArray[i] = dynamic_cast< RegistrationType* >(registration)->GetTransform();
+//          }
+//          else if(std::string(m_TransformArray[0]->GetNameOfClass()) == "AffineTransform")
+//          {
+//             m_TransformArray[i] = dynamic_cast< AffineRegistrationType* >(registration)->GetTransform();;
+//          }
+//          else
+//          {
+//              throw(std::string("Wrong Type of Transform . Only Euler3DTransform and AffineTransform can be used !"));
+//          }
+
+
       }
       else
       {
           m_TransformArray[i] = TransformType::New();
           m_TransformArray[i] -> SetIdentity();
-          //        m_TransformArray[i] -> SetCenter( m_Registration -> GetTransformCenter() );
+          //m_TransformArray[i] -> SetCenter( registration -> GetTransformCenter() );
       }
 
   }
+
+  //std::cout<<"Inverse the Transform : "<<std::endl;
 
   // Calculate inverse transform array
   for (unsigned int i=0; i < m_NumberOfImages; i++)
@@ -220,7 +271,19 @@ LowToHighImageResolutionMethod<ImageType>
     m_InverseTransformArray[i] -> SetIdentity();
     m_InverseTransformArray[i] -> SetCenter( m_TransformArray[i] -> GetCenter() );
     m_InverseTransformArray[i] -> SetParameters( m_TransformArray[i] -> GetParameters() );
+
+    //FIXME : When using AffineTransform VNL matrix produce error :
+    //00 suspicious return value (3) from SVDC
+    // When SetParameters is comment the error disapear !
+    // No error when using Euler3DTransform...
+
+    m_InverseTransformArray[i]->SetMatrix(m_TransformArray[i]->GetMatrix());
     m_InverseTransformArray[i] -> GetInverse( m_InverseTransformArray[i] );
+    // NOTE : use this GetInverse
+     //m_TransformArray[i] -> GetInverse( m_InverseTransformArray[i] );
+
+
+    //std::cout<<"Inverse transform "<<i<<" : "<<m_InverseTransformArray[i]<<std::endl;
   }
 
   // Create combination of masks
@@ -306,9 +369,9 @@ LowToHighImageResolutionMethod<ImageType>
 /*
  * Writes transforms to file
  */
-template < typename ImageType >
+template < typename ImageType, typename TransformType >
 void
-LowToHighImageResolutionMethod<ImageType>
+LowToHighImageResolutionMethod<ImageType, TransformType >
 ::WriteTransforms( const char *folder )
 {
 
@@ -348,9 +411,9 @@ LowToHighImageResolutionMethod<ImageType>
 /*
  * Writes a specific transform to file
  */
-template < typename ImageType >
+template < typename ImageType, typename TransformType >
 void
-LowToHighImageResolutionMethod<ImageType>
+LowToHighImageResolutionMethod<ImageType, TransformType >
 ::WriteTransforms( unsigned int i, const char *filename )
 {
 
@@ -377,9 +440,9 @@ LowToHighImageResolutionMethod<ImageType>
 /*
  * Writes resampled images to disk
  */
-template < typename ImageType >
+template < typename ImageType, typename TransformType >
 void
-LowToHighImageResolutionMethod<ImageType>
+LowToHighImageResolutionMethod<ImageType, TransformType >
 ::WriteResampledImages( const char *folder )
 {
 
@@ -431,9 +494,9 @@ LowToHighImageResolutionMethod<ImageType>
 /*
  * Writes a specific resampled image to disk
  */
-template < typename ImageType >
+template < typename ImageType, typename TransformType >
 void
-LowToHighImageResolutionMethod<ImageType>
+LowToHighImageResolutionMethod<ImageType, TransformType >
 ::WriteResampledImages( unsigned int i, const char *filename )
 {
 
@@ -475,9 +538,9 @@ LowToHighImageResolutionMethod<ImageType>
 /*
  * PrintSelf
  */
-template < typename ImageType >
+template < typename ImageType, typename TransformType >
 void
-LowToHighImageResolutionMethod<ImageType>
+LowToHighImageResolutionMethod<ImageType, TransformType>
 ::PrintSelf(std::ostream& os, Indent indent) const
 {
   Superclass::PrintSelf( os, indent );
