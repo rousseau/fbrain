@@ -407,7 +407,7 @@ void HighResolutionIBPFilter::InitializePSF()
     //set the correct number of PSF (one PSF for one LR image -> this allows us to use images with different LR resolution)
     SuperClass::m_PSF.resize(SuperClass::m_ImagesLR.size());
 
-    for(uint i=0; i != SuperClass::m_PSF.size(); i++){
+    for(unsigned int i=0; i != SuperClass::m_PSF.size(); i++){
 
       // 1- build the boxcar PSF in LR space (one anisotropic voxel)
       itkImage::Pointer LRPSF = itkImage::New();
