@@ -192,8 +192,8 @@ int main(int argc, char * argv[])
     if(SuperResolutionFilter != NULL)
     {
 
-        btk::ImageHelper< itkImage >::ReadImageArray(inputsLRImages,input);
-        btk::ImageHelper< ImageMaskType >::ReadImageArray(inputsLRMasks, mask);
+        inputsLRImages = btk::ImageHelper< itkImage >::ReadImageArray(input);
+       inputsLRMasks = btk::ImageHelper< ImageMaskType >::ReadImageArray(mask);
 
 
         //std::vector<btkOldSliceBySliceTransform::Pointer> tr = btk::IOTransformHelper< btkOldSliceBySliceTransform >::ReadTransformArray(transform);
