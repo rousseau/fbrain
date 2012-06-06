@@ -101,9 +101,14 @@ namespace btk
              * @param image Image of which physical space will be used for creation.
              * @return New image in the same physical space.
              */
-            static typename TImageOutput::Pointer CreateNewFromSpaceOf(typename TImageInput::Pointer image);
+            static typename TImageOutput::Pointer CreateNewFromPhysicalSpaceOf(typename TImageInput::Pointer image);
 
-            static std::vector< typename TImageOutput::Pointer > &CreateNewFromSpaceOf(std::vector< typename TImageInput::Pointer > &images);
+            /**
+             * @brief Create new images in the same physical space of current images.
+             * @param images Vector of images of which physical space will be used for creation.
+             * @return Vector of new images in the same physical space.
+             */
+            static std::vector< typename TImageOutput::Pointer > &CreateNewFromPhysicalSpaceOf(std::vector< typename TImageInput::Pointer > &images);
     };
 
 } // namespace btk
