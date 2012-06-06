@@ -41,6 +41,7 @@
 #include "btkLinearInterpolateImageFunctionWithWeights.h"
 #include "btkOrientedSpatialFunction.h"
 #include "itkImageRegionConstIteratorWithIndex.h"
+#include "itkTransform.h"
 
 namespace btk
 {
@@ -71,7 +72,9 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
   typedef ImageMaskSpatialObject< TImage::ImageDimension > MaskType;
   typedef typename MaskType::Pointer   MaskPointer;
 
-  typedef Euler3DTransform<double> TransformType;
+
+  typedef itk::Transform<double>    TransformType;
+  //typedef Euler3DTransform<double> TransformType;
   typedef typename TransformType::Pointer TransformPointerType;
 
   typedef LinearInterpolateImageFunctionWithWeights<ImageType, double> InterpolatorType;
@@ -140,6 +143,7 @@ class LeastSquaresVnlCostFunction : public vnl_cost_function
   /** Gets the type of PSF (Boxcar, Gaussian). */
   itkGetMacro(PSF, unsigned int);
 
+  vnl_sparse_matrix<float> GetHMatrix();
 
   private:
 

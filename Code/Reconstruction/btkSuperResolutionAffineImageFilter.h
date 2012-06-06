@@ -2,7 +2,7 @@
 
   © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-  Date: 14/05/2010
+  Date: 02/12/2010
   Author(s): Estanislao Oubel (oubel@unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
@@ -33,70 +33,60 @@
 
 ==========================================================================*/
 
-#ifndef __btkResampleImageByInjectionFilter_h
-#define __btkResampleImageByInjectionFilter_h
+#ifndef __btkSuperResolutionAffineImageFilter_h
+#define __btkSuperResolutionAffineImageFilter_h
 
 #include "itkFixedArray.h"
 #include "itkTransform.h"
 #include "itkEuler3DTransform.h"
-#include "btkSliceBySliceTransform.h"
-#include "itkImageFunction.h"
-#include "itkImageRegionIteratorWithIndex.h"
-#include "itkImageRegionConstIteratorWithIndex.h"
+#include "itkAffineTransform.h"
 #include "itkImageToImageFilter.h"
-#include "itkInterpolateImageFunction.h"
-#include "itkNeighborhoodAlgorithm.h"
 #include "itkSize.h"
 #include "btkUserMacro.h"
-#include "itkImageMaskSpatialObject.h"
+#include "vnl/vnl_sparse_matrix.h"
+#include "vnl/algo/vnl_conjugate_gradient.h"
+#include "btkLeastSquaresVnlCostFunction.h"
 
-//FIXME : remove absolute path
-#include "../Transformations/btkSliceBySliceTransformBase.h"
 
 namespace btk
 {
 
 using namespace itk;
 
-/** \class ResampleImageByInjectionFilter
- * \brief Resample an image via a coordinate transform
+/** \class SuperResolutionAffineImageFilter
+ * \brief Super-resolution by using a set of low resolution images.and the
+ * reconstructed image.
  *
- * ResampleImageByInjectionFilter resamples an existing image through some coordinate
- * transform, interpolating via some image function.  The class is templated
+ * SuperResolutionAffineImageFilter allows to obtain a super-resolution image from a
+ * set of low-resolution images and the reconstructed image. The class is templated
  * over the types of the input and output images.
  *
- * Output information (spacing, size and direction) for the output
- * image should be set. This information has the normal defaults of
- * unit spacing, zero origin and identity direction. Optionally, the
- * output information can be obtained from a reference image. If the
- * reference image is provided and UseReferenceImage is On, then the
- * spacing, origin and direction of the reference image will be used.
+ * The implemented method is similar to the one described in:
  *
- * Since this filter produces an image which is a different size than
- * its input, it needs to override several of the methods defined
- * in ProcessObject in order to properly manage the pipeline execution model.
- * In particular, this filter overrides
- * ProcessObject::GenerateInputRequestedRegion() and
- * ProcessObject::GenerateOutputInformation().
- *: 105
+ * F. Rousseau,  K. Kim,  C. Studholme,  M. Koob,  J.-L. Dietemann
+ * On Super-Resolution for Fetal Brain MRI, Medical Image Computing and Computer
+ * Assisted Intervention Pékin, Chine, pp. 355--362, Springer-Verlag, Lecture
+ * Notes in Computer Science, Vol. 6362, doi:10.1007/978-3-642-15745-5, 2010
  *
- * \ingroup GeometricTransforms
+ * \ingroup Reconstruction
  */
-template <class TInputImage, class TOutputImage,
-          class TInterpolatorPrecisionType=double>
-class ResampleImageByInjectionFilter:
+
+template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType=double>
+class SuperResolutionAffineImageFilter:
     public ImageToImageFilter<TInputImage, TOutputImage>
 {
 public:
+
+  typedef enum {
+    BOXCAR=0,
+    GAUSSIAN=1
+  } PSF_type;
+
   /** Standard class typedefs. */
-  typedef ResampleImageByInjectionFilter                Self;
+  typedef SuperResolutionAffineImageFilter                Self;
   typedef ImageToImageFilter<TInputImage,TOutputImage>  Superclass;
   typedef SmartPointer<Self>                            Pointer;
   typedef SmartPointer<const Self>                      ConstPointer;
-
-  /** Number of dimensions. */
-  itkStaticConstMacro(ImageDimension, unsigned int, TOutputImage::ImageDimension);
-  itkStaticConstMacro(InputImageDimension, unsigned int, TInputImage::ImageDimension);
 
   typedef TInputImage                             InputImageType;
   typedef TOutputImage                            OutputImageType;
@@ -104,101 +94,77 @@ public:
   typedef typename InputImageType::ConstPointer   InputImageConstPointer;
   typedef typename OutputImageType::Pointer       OutputImagePointer;
 
-  /** Type of the slice by slice transform. */
-  typedef SliceBySliceTransformBase< double, ImageDimension > TransformType;
-  typedef typename TransformType::Pointer TransformPointer;
-
-  typedef Image<float,ImageDimension>    FloatImageType;
-  typedef typename FloatImageType::Pointer FloatImagePointer;
-
-  /** Type of the image mask. */
-  typedef Image< unsigned char, ImageDimension >    ImageMaskType;
-  typedef typename ImageMaskType::Pointer ImageMaskPointer;
-
-  /** Type of the mask. */
-  typedef ImageMaskSpatialObject< ImageDimension >  MaskType;
-
   typedef typename InputImageType::RegionType     InputImageRegionType;
   typedef std::vector<InputImageRegionType>       InputImageRegionVectorType;
+
+  typedef ImageMaskSpatialObject< TInputImage::ImageDimension > MaskType;
+  typedef typename MaskType::Pointer   MaskPointer;
 
   /** Method for creation through the object factory. */
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(ResampleImageByInjectionFilter, ImageToImageFilter);
+  itkTypeMacro(SuperResolutionAffineImageFilter, ImageToImageFilter);
 
-  typedef std::vector< TransformPointer > TransformPointerArrayType;
+  /** Number of dimensions. */
+  itkStaticConstMacro(ImageDimension, unsigned int,
+                      TInputImage::ImageDimension);
+
+  /** Transform typedef. */
+  //typedef TTransform    TransformType;
+  typedef itk::AffineTransform<TScalarType,Dimension> TransformType;
+  //typedef Euler3DTransform<TInterpolatorPrecisionType> TransformType;
+  typedef typename TransformType::Pointer TransformPointerType;
+
+  //TODO This should be replaced by a std::vector of btkSliceBySliceTransform.
+  /** Type of the transform list. */
+  typedef std::vector< std::vector<TransformPointerType> > TransformPointerArrayType;
 
   /** Image size typedef. */
   typedef Size<itkGetStaticConstMacro(ImageDimension)> SizeType;
 
-  /** Image index typedef. */
+  /** Image index typedef support. */
   typedef typename TOutputImage::IndexType IndexType;
 
-  /** Image point typedef. */
+  /** Image point typedef support. */
   typedef typename TOutputImage::PointType    PointType;
 
-  /** Image pixel value typedef. */
+  /** Image pixel typedef support. */
   typedef typename TOutputImage::PixelType   PixelType;
+
+  /** Input image pixel typedef support. */
   typedef typename TInputImage::PixelType    InputPixelType;
 
   /** Typedef to describe the output image region type. */
   typedef typename TOutputImage::RegionType OutputImageRegionType;
 
-  /** Image spacing, origin and direction typedef */
+  /** Image spacing typedef support. */
   typedef typename TOutputImage::SpacingType   SpacingType;
-  typedef typename TOutputImage::PointType     OriginPointType;
+
+  /** Image direction typedef support. */
   typedef typename TOutputImage::DirectionType DirectionType;
 
   /** base type for images of the current ImageDimension */
   typedef ImageBase<itkGetStaticConstMacro(ImageDimension)> ImageBaseType;
 
-  /**Iterator typedef. */
-  typedef ImageRegionIteratorWithIndex< InputImageType >  IteratorType;
-
   /**Const iterator typedef. */
-  typedef ImageRegionConstIteratorWithIndex< InputImageType >  ConstIteratorType;
+  typedef ImageRegionConstIteratorWithIndex< OutputImageType >  OutputIteratorType;
 
-  /**Const float iterator typedef. */
-  typedef ImageRegionConstIteratorWithIndex< FloatImageType >  ConstFloatIteratorType;
-
-  /**Neighborhood iterator typedef. */
-  typedef NeighborhoodIterator< OutputImageType >  NeighborhoodIteratorType;
-
-  /**Float neighborhood iterator typedef. */
-  typedef NeighborhoodIterator< FloatImageType >   FloatNeighborhoodIteratorType;
-
-  /**Face calculator typedef. */
-  typedef NeighborhoodAlgorithm
-  ::ImageBoundaryFacesCalculator< FloatImageType > FaceCalculatorType;
-  typedef typename FaceCalculatorType::FaceListType FaceListType;
-
-  typedef vnl_matrix<double> VnlMatrixType;
-  typedef itk::Matrix<double,3,3> MatrixType;
+  /**VnlVectorType typedef. */
   typedef vnl_vector<double> VnlVectorType;
 
-  // Overrides SetInput to resize the transform
+  /** Overrides SetInput to resize the transform. */
+  void AddInput(InputImageType* _arg);
 
-  void AddInput(InputImageType* _arg)
+  /** Set the transform array. */
+  void SetTransform( int i, int j, TransformType* transform )
   {
-    m_ImageArray.push_back(_arg);
-
-    this -> SetInput(_arg);
-
-    m_Transform.resize( m_Transform.size() + 1 );
+    m_Transform[i][j] = transform;
   }
 
-  /** Set a the transform for the image i. */
-  void SetTransform( int i, TransformType* transform )
-  {
-    m_Transform[i] = transform;
-  }
-
-  /** Get a the transform for the image i. */
-  TransformType* GetTransform( int i)
-  {
-    return this -> m_Transform[i].GetPointer();
-  }
+  /** Converts from a linear index (li = i+i*x_size+k*x_size*y_size) to an absolute
+   * index (ai = [i j k]). */
+  IndexType LinearToAbsoluteIndex( unsigned int linearIndex, InputImageRegionType region );
 
   /** Set the size of the output image. */
   itkSetMacro( Size, SizeType );
@@ -215,17 +181,21 @@ public:
 
   /** Set the output image spacing. */
   itkSetMacro( OutputSpacing, SpacingType );
+
+  /** Set the output image spacing as a const array of values. */
   virtual void SetOutputSpacing( const double* values );
 
   /** Get the output image spacing. */
   itkGetConstReferenceMacro( OutputSpacing, SpacingType );
 
   /** Set the output image origin. */
-  itkSetMacro( OutputOrigin, OriginPointType );
+  itkSetMacro( OutputOrigin, PointType );
+
+  /** Set the output image origin as a const array of values. */
   virtual void SetOutputOrigin( const double* values);
 
   /** Get the output image origin. */
-  itkGetConstReferenceMacro( OutputOrigin, OriginPointType );
+  itkGetConstReferenceMacro( OutputOrigin, PointType );
 
   /** Set the output direciton cosine matrix. */
   itkSetMacro( OutputDirection, DirectionType );
@@ -244,25 +214,32 @@ public:
   /** Copy the output information from another Image.  By default,
    *  the information is specified with the SetOutputSpacing, Origin,
    *  and Direction methods. UseReferenceImage must be On and a
-   *  Reference image must be present to override the defaul behavior.
+   *  Reference image must be present to override the default behavior.
    *  NOTE: This function seems redundant with the
    *  SetOutputParametersFromImage( image ) function */
   void SetReferenceImage ( const TOutputImage *image );
+
+  /** Gets the reference image. */
   const TOutputImage * GetReferenceImage( void ) const;
 
+  /** Sets the use of a reference image to true/false. */
   itkSetMacro( UseReferenceImage, bool );
+
+  /** Adds UseReferenceImageOff/On. */
   itkBooleanMacro( UseReferenceImage );
+
+  /** Gets the status of the UseReferenceImage variable. */
   itkGetConstMacro( UseReferenceImage, bool );
 
-  /** ResampleImageByInjectionFilter produces an image which is a different size
+  /** SuperResolutionAffineImageFilter produces an image which is a different size
    * than its input.  As such, it needs to provide an implementation
    * for GenerateOutputInformation() in order to inform the pipeline
    * execution model.  The original documentation of this method is
    * below. \sa ProcessObject::GenerateOutputInformaton() */
   virtual void GenerateOutputInformation( void );
 
-  /** ResampleImageByInjectionFilter needs a different input requested region than
-   * the output requested region.  As such, ResampleImageByInjectionFilter needs
+  /** SuperResolutionAffineImageFilter needs a different input requested region than
+   * the output requested region.  As such, SuperResolutionAffineImageFilter needs
    * to provide an implementation for GenerateInputRequestedRegion()
    * in order to inform the pipeline execution model.
    * \sa ProcessObject::GenerateInputRequestedRegion() */
@@ -271,13 +248,43 @@ public:
   /** Method Compute the Modified Time based on changed to the components. */
   unsigned long GetMTime( void ) const;
 
+  /** Adds an image region. The regions must be added in the same order than the
+   * input images.*/
   void AddRegion(InputImageRegionType _arg)
   {
     m_InputImageRegion.push_back(_arg);
   }
 
-  /** Sets the mask where to perform the injection. */
-  itkSetObjectMacro(ImageMask, ImageMaskType);
+  /** Adds an image mask. Masks must be added in the same order than the
+   * input images.*/
+  void AddMask(MaskType *mask)
+  {
+    m_MaskArray.push_back( mask );
+  }
+
+  /** Sets the output image region.*/
+  itkSetMacro(OutputImageRegion, OutputImageRegionType);
+
+  /** Gets the output image region.*/
+  itkGetMacro(OutputImageRegion, OutputImageRegionType);
+
+  /** Sets the number of iterations.*/
+  itkSetMacro(Iterations, unsigned int);
+
+  /** Gets the number of iterations.*/
+  itkGetMacro(Iterations, unsigned int);
+
+  /** Sets the lambda value for regularization.*/
+  itkSetMacro(Lambda, float);
+
+  /** Gets the lambda value for regularization.*/
+  itkGetMacro(Lambda, float);
+
+  /** Sets the type of PSF (Boxcar/Gaussian).*/
+  itkSetMacro(PSF, unsigned int);
+
+  /** Gets the type of PSF (Boxcar/Gaussian).*/
+  itkGetMacro(PSF, unsigned int);
 
 
 #ifdef ITK_USE_CONCEPT_CHECKING
@@ -288,8 +295,8 @@ public:
 #endif
 
 protected:
-  ResampleImageByInjectionFilter( void );
-  ~ResampleImageByInjectionFilter( void ) {};
+  SuperResolutionAffineImageFilter( void );
+  ~SuperResolutionAffineImageFilter( void ) {};
 
   void PrintSelf( std::ostream& os, Indent indent ) const;
 
@@ -299,38 +306,47 @@ protected:
    * */
   void GenerateData();
 
-  /** This method overrides the itkImageToImageFilter's
-   *  This method do nothing, we don't want to verify if inputs are in the same physical space
-   * */
   virtual void VerifyInputInformation() {};
 
 private:
-  ResampleImageByInjectionFilter( const Self& ); //purposely not implemented
+
+  SuperResolutionAffineImageFilter( const Self& ); //purposely not implemented
   void operator=( const Self& ); //purposely not implemented
 
-  SizeType                    m_Size;              // Size of the output image
-  TransformPointerArrayType   m_Transform;         // Coordinate transform to use
+  void OptimizeByLeastSquares();
+
+  SizeType                    m_Size;         /**< Size of the output image. */
+  TransformPointerArrayType   m_Transform;
   InputImageRegionVectorType  m_InputImageRegion;
 
-  std::vector<InputImagePointer> m_ImageArray;
-  ImageMaskPointer 							 m_ImageMask;
+  OutputImageRegionType       m_OutputImageRegion;
 
-  PixelType                   m_DefaultPixelValue; // default pixel value
-                                                     // if the point is
-                                                     // outside the image
-  SpacingType                 m_OutputSpacing;     // output image spacing
-  OriginPointType             m_OutputOrigin;      // output image origin
-  DirectionType               m_OutputDirection;   // output image direction cosines
-  IndexType                   m_OutputStartIndex;  // output image start index
-  bool                        m_UseReferenceImage;
+  std::vector<InputImagePointer>  m_ImageArray;
+  std::vector<MaskPointer>  			m_MaskArray;
+
+  VnlVectorType     m_x;
+
+  float m_Lambda;
+
+  unsigned int 			m_Iterations;
+
+  PixelType         m_DefaultPixelValue; /**< Default pixel value if the point
+                                              falls outside the image. */
+  SpacingType       m_OutputSpacing;     /**< Spacing of the output image. */
+  PointType   			m_OutputOrigin;      /**< Origin of the output image. */
+  DirectionType     m_OutputDirection;   /**< Direction of the output image. */
+  IndexType         m_OutputStartIndex;  /**< Start index of the output image.*/
+  bool              m_UseReferenceImage;
+
+  unsigned int m_PSF;
 
 };
 
 
-} // end namespace itk
+} // end namespace btk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "btkResampleImageByInjectionFilter.txx"
+#include "btkSuperResolutionAffineImageFilter.txx"
 #endif
 
 #endif

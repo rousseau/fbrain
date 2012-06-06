@@ -2,8 +2,8 @@
 
   © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-  Date: 16/08/2011
-  Author(s): Estanislao Oubel (oubel@unistra.fr)
+  Date: 17/04/2012
+  Author(s):  Marc Schweitzer (marc.schweitzer(at)unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -37,44 +37,44 @@
 // image (origin, direction, and spacing) in the fixed parameters. This would
 // allow to load a specific transformation needless to set the image.
 
-#ifndef __btkSliceBySliceTransform_h
-#define __btkSliceBySliceTransform_h
+#ifndef __BTK_AFFINESLICEBYSLICETRANSFORM_H__
+#define __BTK_AFFINESLICEBYSLICETRANSFORM_H__
+
+#include "btkSliceBySliceTransformBase.h"
 
 #include "itkTransform.h"
-#include "itkEuler3DTransform.h"
+#include "itkAffineTransform.h"
 #include "itkImage.h"
 #include "itkContinuousIndex.h"
-#include "list"
+#include "itkMatrixOffsetTransformBase.h"
 
-#include "../Transformations/btkSliceBySliceTransformBase.h"
 
 namespace btk
 {
-using namespace itk;
+
 
 template <class TScalarType,unsigned int NDimensions=3>
-class SliceBySliceTransform  : public SliceBySliceTransformBase<TScalarType,NDimensions>
+class AffineSliceBySliceTransform  : public SliceBySliceTransformBase<TScalarType,NDimensions>
 {
 public:
   /** Standard class typedefs. */
-  typedef SliceBySliceTransform  Self;
+  typedef AffineSliceBySliceTransform  Self;
   typedef SliceBySliceTransformBase<TScalarType,NDimensions> Superclass;
-  typedef typename Superclass::TransformType TransformBase;
-  //typedef itk::MatrixOffsetTransformBase<TScalarType, NDimensions> TransformBase;
-  typedef Euler3DTransform< TScalarType > TransformType;
+  typedef itk::MatrixOffsetTransformBase<TScalarType, NDimensions> TransformBase;
+  typedef itk::AffineTransform< TScalarType, NDimensions > TransformType;
 
-  typedef Image< float,NDimensions > ImageType;
+  typedef itk::Image< float,NDimensions > ImageType;
   typedef typename ImageType::Pointer ImagePointerType;
 
-  typedef ContinuousIndex<double, NDimensions > ContinuousIndexType;
+  typedef itk::ContinuousIndex<double, NDimensions > ContinuousIndexType;
 
-  typedef SmartPointer< Self >   Pointer;
-  typedef SmartPointer< const Self >  ConstPointer;
+  typedef itk::SmartPointer< Self >   Pointer;
+  typedef itk::SmartPointer< const Self >  ConstPointer;
 
-  typedef SmartPointer<TransformType> TransformPointer;
+  typedef itk::SmartPointer<TransformType> TransformPointer;
   typedef std::vector<TransformPointer> TransformPointerList;
   typedef typename TransformPointerList::const_iterator TransformPointerListConstIterator;
-  //typedef std::vector<TransformType::Pointer> TransformBasePointerList;
+  typedef std::vector<itk::TransformBase::Pointer> TransformBasePointerList;
 
   typedef typename Superclass::InputPointType InputPointType;
   typedef typename Superclass::OutputPointType OutputPointType;
@@ -135,7 +135,7 @@ public:
   void SetParameters( const ParametersType & parameters );
 
   /** Print self */
-  void PrintSelf(std::ostream &os, Indent indent) const
+  void PrintSelf(std::ostream &os, itk::Indent indent) const
   {
     Superclass::PrintSelf(os,indent);
   }
@@ -166,17 +166,22 @@ public:
   const ParametersType & GetFixedParameters(void) const;
 
   /** Get the number of slices (transforms). */
-  itkGetMacro( NumberOfSlices, unsigned int);
+  virtual unsigned int GetNumberOfSlices()
+  {
+      return m_NumberOfSlices;
+  }
+
+  //itkGetMacro( NumberOfSlices, unsigned int);
 
 
 protected:
     /** Default constructor. Otherwise we get a run time warning from itkTransform. */
-  SliceBySliceTransform() : Superclass(  ) {}
+  AffineSliceBySliceTransform() : Superclass(  ) {}
 
 private:
   /** List of transforms. */
-  TransformPointerList m_TransformList;
-  ImagePointerType 		 m_Image;
+  TransformPointerList       m_TransformList;
+  ImagePointerType           m_Image;
   unsigned int 				 m_NumberOfSlices;
   unsigned int 				 m_ParametersPerSlice;
 
@@ -186,6 +191,6 @@ private:
 
 }
 
-# include "btkSliceBySliceTransform.txx"
+# include "btkAffineSliceBySliceTransform.txx"
 
 #endif /* __btkSliceBySliceTransform_h */

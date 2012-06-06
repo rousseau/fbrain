@@ -1,7 +1,7 @@
-#ifndef _btkSliceBySliceRigidRegistration_txx
-#define _btkSliceBySliceRigidRegistration_txx
+#ifndef __BTKSLICEBYSLICEAFFINEREGISTRATION_TXX__
+#define __BTKSLICEBYSLICEAFFINEREGISTRATION_TXX__
 
-#include "btkSliceBySliceRigidRegistration.h"
+#include "btkSliceBySliceAffineRegistration.h"
 
 namespace btk
 {
@@ -10,8 +10,8 @@ namespace btk
  * Constructor
  */
 template < typename ImageType >
-SliceBySliceRigidRegistration<ImageType>
-::SliceBySliceRigidRegistration()
+SliceBySliceAffineRegistration<ImageType>
+::SliceBySliceAffineRegistration()
 {
   m_Interpolator = 0;
   m_ImageMask = 0;
@@ -24,7 +24,7 @@ SliceBySliceRigidRegistration<ImageType>
  */
 template < typename ImageType >
 void
-SliceBySliceRigidRegistration<ImageType>
+SliceBySliceAffineRegistration<ImageType>
 ::Initialize() throw (ExceptionObject)
 {
   // Configure registration
@@ -48,7 +48,8 @@ SliceBySliceRigidRegistration<ImageType>
 //      std::cout << "image mask IS defined" << std::endl;
       typename MaskType::Pointer mask = MaskType::New();
       mask -> SetImage( m_ImageMask );
-      m_Registration -> SetFixedImageMask( m_ImageMask );
+      //m_Registration -> SetFixedImageMask( m_ImageMask );
+      m_Registration -> SetFixedMask( mask );
       m_ROI = mask -> GetAxisAlignedBoundingBoxRegion();
     }
     
@@ -66,7 +67,7 @@ SliceBySliceRigidRegistration<ImageType>
  */
 template < typename ImageType >
 void
-SliceBySliceRigidRegistration<ImageType>
+SliceBySliceAffineRegistration<ImageType>
 ::StartRegistration( void )
 {
 
@@ -143,7 +144,7 @@ SliceBySliceRigidRegistration<ImageType>
  */
 template < typename ImageType >
 void
-SliceBySliceRigidRegistration<ImageType>
+SliceBySliceAffineRegistration<ImageType>
 ::PrintSelf(std::ostream& os, Indent indent) const
 {
   Superclass::PrintSelf( os, indent );

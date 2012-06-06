@@ -33,8 +33,8 @@
 
 ==========================================================================*/
 
-#ifndef __btkSuperResolutionImageFilter_h
-#define __btkSuperResolutionImageFilter_h
+#ifndef __btkSuperResolutionRigidImageFilter_h
+#define __btkSuperResolutionRigidImageFilter_h
 
 #include "itkFixedArray.h"
 #include "itkTransform.h"
@@ -52,11 +52,11 @@ namespace btk
 
 using namespace itk;
 
-/** \class SuperResolutionImageFilter
+/** \class SuperResolutionRigidImageFilter
  * \brief Super-resolution by using a set of low resolution images.and the
  * reconstructed image.
  *
- * SuperResolutionImageFilter allows to obtain a super-resolution image from a
+ * SuperResolutionRigidImageFilter allows to obtain a super-resolution image from a
  * set of low-resolution images and the reconstructed image. The class is templated
  * over the types of the input and output images.
  *
@@ -70,20 +70,19 @@ using namespace itk;
  * \ingroup Reconstruction
  */
 
-template <class TInputImage, class TOutputImage,
-          class TInterpolatorPrecisionType=double>
-class SuperResolutionImageFilter:
+template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType=double>
+class SuperResolutionRigidImageFilter:
     public ImageToImageFilter<TInputImage, TOutputImage>
 {
 public:
 
   typedef enum {
     BOXCAR=0,
-    GAUSSIAN=1,
+    GAUSSIAN=1
   } PSF_type;
 
   /** Standard class typedefs. */
-  typedef SuperResolutionImageFilter                Self;
+  typedef SuperResolutionRigidImageFilter                Self;
   typedef ImageToImageFilter<TInputImage,TOutputImage>  Superclass;
   typedef SmartPointer<Self>                            Pointer;
   typedef SmartPointer<const Self>                      ConstPointer;
@@ -104,13 +103,14 @@ public:
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(SuperResolutionImageFilter, ImageToImageFilter);
+  itkTypeMacro(SuperResolutionRigidImageFilter, ImageToImageFilter);
 
   /** Number of dimensions. */
   itkStaticConstMacro(ImageDimension, unsigned int,
                       TInputImage::ImageDimension);
 
   /** Transform typedef. */
+  //typedef TTransform    TransformType;
   typedef Euler3DTransform<TInterpolatorPrecisionType> TransformType;
   typedef typename TransformType::Pointer TransformPointerType;
 
@@ -229,15 +229,15 @@ public:
   /** Gets the status of the UseReferenceImage variable. */
   itkGetConstMacro( UseReferenceImage, bool );
 
-  /** SuperResolutionImageFilter produces an image which is a different size
+  /** SuperResolutionRigidImageFilter produces an image which is a different size
    * than its input.  As such, it needs to provide an implementation
    * for GenerateOutputInformation() in order to inform the pipeline
    * execution model.  The original documentation of this method is
    * below. \sa ProcessObject::GenerateOutputInformaton() */
   virtual void GenerateOutputInformation( void );
 
-  /** SuperResolutionImageFilter needs a different input requested region than
-   * the output requested region.  As such, SuperResolutionImageFilter needs
+  /** SuperResolutionRigidImageFilter needs a different input requested region than
+   * the output requested region.  As such, SuperResolutionRigidImageFilter needs
    * to provide an implementation for GenerateInputRequestedRegion()
    * in order to inform the pipeline execution model.
    * \sa ProcessObject::GenerateInputRequestedRegion() */
@@ -293,8 +293,8 @@ public:
 #endif
 
 protected:
-  SuperResolutionImageFilter( void );
-  ~SuperResolutionImageFilter( void ) {};
+  SuperResolutionRigidImageFilter( void );
+  ~SuperResolutionRigidImageFilter( void ) {};
 
   void PrintSelf( std::ostream& os, Indent indent ) const;
 
@@ -308,7 +308,7 @@ protected:
 
 private:
 
-  SuperResolutionImageFilter( const Self& ); //purposely not implemented
+  SuperResolutionRigidImageFilter( const Self& ); //purposely not implemented
   void operator=( const Self& ); //purposely not implemented
 
   void OptimizeByLeastSquares();
@@ -344,7 +344,7 @@ private:
 } // end namespace btk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "btkSuperResolutionImageFilter.txx"
+#include "btkSuperResolutionRigidImageFilter.txx"
 #endif
 
 #endif

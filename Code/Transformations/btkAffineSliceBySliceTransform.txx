@@ -2,8 +2,8 @@
 
   © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-  Date: 16/08/2011
-  Author(s): Estanislao Oubel (oubel@unistra.fr)
+  Date: 17/04/2012
+  Author(s): Marc Schweitzer (marc.schweitzer(at)unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -33,11 +33,11 @@
 
 ==========================================================================*/
 
-#ifndef __SliceBySliceTransform_txx
-#define __SliceBySliceTransform_txx
+#ifndef __BTK_AFFINESLICEBYSLICETRANSFORM_TXX__
+#define __BTK_AFFINELICEBYSLICETRANSFORM_TXX__
 
 #include "itkNumericTraits.h"
-#include "btkSliceBySliceTransform.h"
+#include "btkAffineSliceBySliceTransform.h"
 #include "vnl/algo/vnl_matrix_inverse.h"
 
 
@@ -45,8 +45,8 @@ namespace btk
 {
 
 template <class TScalarType,unsigned int NDimensions>
-typename SliceBySliceTransform<TScalarType,NDimensions>::OutputPointType
-SliceBySliceTransform<TScalarType,NDimensions>
+typename AffineSliceBySliceTransform<TScalarType,NDimensions>::OutputPointType
+AffineSliceBySliceTransform<TScalarType,NDimensions>
 ::TransformPoint(const InputPointType& p ) const
 {
   OutputPointType Tp( p );
@@ -69,8 +69,8 @@ SliceBySliceTransform<TScalarType,NDimensions>
 }
 
 template <class TScalarType,unsigned int NDimensions>
-typename SliceBySliceTransform<TScalarType,NDimensions>::OutputVectorType
-SliceBySliceTransform<TScalarType,NDimensions>::
+typename AffineSliceBySliceTransform<TScalarType,NDimensions>::OutputVectorType
+AffineSliceBySliceTransform<TScalarType,NDimensions>::
 TransformVector(const InputVectorType& p) const
 {
   OutputVectorType Tp( p );
@@ -83,8 +83,8 @@ TransformVector(const InputVectorType& p) const
 }
 
 template <class TScalarType,unsigned int NDimensions>
-typename SliceBySliceTransform<TScalarType,NDimensions>::OutputVnlVectorType
-SliceBySliceTransform<TScalarType,NDimensions>::
+typename AffineSliceBySliceTransform<TScalarType,NDimensions>::OutputVnlVectorType
+AffineSliceBySliceTransform<TScalarType,NDimensions>::
 TransformVector(const InputVnlVectorType &p ) const
 {
   OutputVnlVectorType Tp( p );
@@ -97,8 +97,8 @@ TransformVector(const InputVnlVectorType &p ) const
 }
 
 template <class TScalarType,unsigned int NDimensions>
-typename SliceBySliceTransform<TScalarType,NDimensions>::OutputCovariantVectorType
-SliceBySliceTransform<TScalarType,NDimensions>::
+typename AffineSliceBySliceTransform<TScalarType,NDimensions>::OutputCovariantVectorType
+AffineSliceBySliceTransform<TScalarType,NDimensions>::
 TransformCovariantVector( const InputCovariantVectorType &p ) const
 {
   OutputCovariantVectorType Tp( p );
@@ -111,8 +111,8 @@ TransformCovariantVector( const InputCovariantVectorType &p ) const
 }
 
 template <class TScalarType,unsigned int NDimensions>
-const typename SliceBySliceTransform<TScalarType,NDimensions>::JacobianType&
-SliceBySliceTransform<TScalarType,NDimensions>::
+const typename AffineSliceBySliceTransform<TScalarType,NDimensions>::JacobianType&
+AffineSliceBySliceTransform<TScalarType,NDimensions>::
 GetJacobian(const InputPointType &p ) const
 {
 
@@ -136,7 +136,7 @@ GetJacobian(const InputPointType &p ) const
 
 }
 template <class TScalarType,unsigned int NDimensions>
-void SliceBySliceTransform<TScalarType,NDimensions>::
+void AffineSliceBySliceTransform<TScalarType,NDimensions>::
 ComputeJacobianWithRespectToParameters( const InputPointType & p, JacobianType &_jacobian ) const
 {
 
@@ -160,7 +160,7 @@ ComputeJacobianWithRespectToParameters( const InputPointType & p, JacobianType &
 }
 template <class TScalarType,unsigned int NDimensions>
 void
-SliceBySliceTransform<TScalarType,NDimensions>::
+AffineSliceBySliceTransform<TScalarType,NDimensions>::
 SetImage( ImageType * image)
 {
   m_Image = image;
@@ -168,7 +168,7 @@ SetImage( ImageType * image)
 
 template <class TScalarType,unsigned int NDimensions>
 void
-SliceBySliceTransform<TScalarType,NDimensions>::
+AffineSliceBySliceTransform<TScalarType,NDimensions>::
 Initialize()
 {
   typename ImageType::SizeType size = m_Image -> GetLargestPossibleRegion().GetSize();
@@ -201,7 +201,7 @@ Initialize()
 
 template <class TScalarType,unsigned int NDimensions>
 void
-SliceBySliceTransform<TScalarType,NDimensions>::
+AffineSliceBySliceTransform<TScalarType,NDimensions>::
 Initialize( TransformBase * t )
 {
   typename ImageType::SizeType size = m_Image -> GetLargestPossibleRegion().GetSize();
@@ -226,10 +226,8 @@ Initialize( TransformBase * t )
 
     m_TransformList[i] = TransformType::New();
     m_TransformList[i] -> SetIdentity();
-    //FIXME : if we set the center the transformation is not exactly the same as a global transform
-    //I don't know the reason why
-//    m_TransformList[i] -> SetCenter(centerPoint);
-//    t -> SetCenter( m_TransformList[i] -> GetCenter() );
+    m_TransformList[i] -> SetCenter(centerPoint);
+    t -> SetCenter( m_TransformList[i] -> GetCenter() );
 
     m_TransformList[i] -> SetParameters( t -> GetParameters() );
   }
@@ -238,8 +236,8 @@ Initialize( TransformBase * t )
 }
 
 template <class TScalarType,unsigned int NDimensions>
-const typename SliceBySliceTransform<TScalarType,NDimensions>::ParametersType&
-SliceBySliceTransform<TScalarType,NDimensions>::GetParameters(void) const
+const typename AffineSliceBySliceTransform<TScalarType,NDimensions>::ParametersType&
+AffineSliceBySliceTransform<TScalarType,NDimensions>::GetParameters(void) const
 {
   for(unsigned int i=0; i<m_NumberOfSlices; i++)
   {
@@ -257,7 +255,7 @@ SliceBySliceTransform<TScalarType,NDimensions>::GetParameters(void) const
 
 template <class TScalarType,unsigned int NDimensions>
 void
-SliceBySliceTransform<TScalarType,NDimensions>::
+AffineSliceBySliceTransform<TScalarType,NDimensions>::
 SetParameters( const ParametersType & parameters )
 {
 
@@ -279,7 +277,7 @@ SetParameters( const ParametersType & parameters )
 
 template <class TScalarType,unsigned int NDimensions>
 void
-SliceBySliceTransform<TScalarType,NDimensions>::
+AffineSliceBySliceTransform<TScalarType,NDimensions>::
 SetFixedParameters( const ParametersType & fp )
 {
   this -> m_FixedParameters = fp;
@@ -319,8 +317,8 @@ SetFixedParameters( const ParametersType & fp )
 }
 
 template <class TScalarType,unsigned int NDimensions>
-const typename SliceBySliceTransform<TScalarType,NDimensions>::ParametersType&
-SliceBySliceTransform<TScalarType,NDimensions>::
+const typename AffineSliceBySliceTransform<TScalarType,NDimensions>::ParametersType&
+AffineSliceBySliceTransform<TScalarType,NDimensions>::
 GetFixedParameters(void) const
 {
   this->m_FixedParameters.SetSize ( NDimensions * m_NumberOfSlices + 1 );

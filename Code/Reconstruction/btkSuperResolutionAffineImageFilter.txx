@@ -33,10 +33,10 @@
 
 ==========================================================================*/
 
-#ifndef __SuperResolutionImageFilter_txx
-#define __SuperResolutionImageFilter_txx
+#ifndef __SuperResolutionAffineImageFilter_txx
+#define __SuperResolutionAffineImageFilter_txx
 
-#include "btkSuperResolutionImageFilter.h"
+#include "btkSuperResolutionAffineImageFilter.h"
 
 namespace btk
 {
@@ -44,9 +44,9 @@ namespace btk
 /**
  * Initialize new instance
  */
-template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
-SuperResolutionImageFilter<TInputImage, TOutputImage,TInterpolatorPrecisionType>
-::SuperResolutionImageFilter()
+template <class TInputImage, class TOutputImage , class TInterpolatorPrecisionType>
+SuperResolutionAffineImageFilter<TInputImage, TOutputImage ,TInterpolatorPrecisionType>
+::SuperResolutionAffineImageFilter()
 {
   m_OutputSpacing.Fill(1.0);
   m_OutputOrigin.Fill(0.0);
@@ -69,9 +69,9 @@ SuperResolutionImageFilter<TInputImage, TOutputImage,TInterpolatorPrecisionType>
  *
  * \todo Add details about this class
  */
-template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
+template <class TInputImage, class TOutputImage , class TInterpolatorPrecisionType>
 void
-SuperResolutionImageFilter<TInputImage, TOutputImage,TInterpolatorPrecisionType>
+SuperResolutionAffineImageFilter<TInputImage, TOutputImage ,TInterpolatorPrecisionType>
 ::PrintSelf(std::ostream& os, Indent indent) const
 {
   Superclass::PrintSelf(os,indent);
@@ -88,9 +88,9 @@ SuperResolutionImageFilter<TInputImage, TOutputImage,TInterpolatorPrecisionType>
   return;
 }
 
-template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
+template <class TInputImage, class TOutputImage , class TInterpolatorPrecisionType>
 void
-SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
+SuperResolutionAffineImageFilter<TInputImage,TOutputImage ,TInterpolatorPrecisionType>
 ::SetOutputSpacing(
   const double* spacing)
 {
@@ -98,9 +98,9 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   this->SetOutputSpacing( s );
 }
 
-template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
+template <class TInputImage, class TOutputImage , class TInterpolatorPrecisionType>
 void
-SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
+SuperResolutionAffineImageFilter<TInputImage,TOutputImage ,TInterpolatorPrecisionType>
 ::AddInput(InputImageType* _arg)
 {
   m_ImageArray.push_back(_arg);
@@ -117,9 +117,9 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
     m_Transform[m_Transform.size()-1][i] = TransformType::New();
 }
 
-template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
-typename SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>::IndexType
-SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
+template <class TInputImage, class TOutputImage , class TInterpolatorPrecisionType>
+typename SuperResolutionAffineImageFilter<TInputImage,TOutputImage ,TInterpolatorPrecisionType>::IndexType
+SuperResolutionAffineImageFilter<TInputImage,TOutputImage ,TInterpolatorPrecisionType>
 ::LinearToAbsoluteIndex(
   unsigned int linearIndex, InputImageRegionType region)
 {
@@ -143,9 +143,9 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
   return absIndex;
 }
 
-template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
+template <class TInputImage, class TOutputImage , class TInterpolatorPrecisionType>
 void
-SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
+SuperResolutionAffineImageFilter<TInputImage,TOutputImage ,TInterpolatorPrecisionType>
 ::OptimizeByLeastSquares()
 {
   // Fill x
@@ -195,9 +195,9 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 
 }
 
-template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
+template <class TInputImage, class TOutputImage , class TInterpolatorPrecisionType>
 void
-SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
+SuperResolutionAffineImageFilter<TInputImage,TOutputImage ,TInterpolatorPrecisionType>
 ::SetOutputOrigin(
   const double* origin)
 {
@@ -206,9 +206,9 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 }
 
 
-template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
+template <class TInputImage, class TOutputImage , class TInterpolatorPrecisionType>
 void
-SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
+SuperResolutionAffineImageFilter<TInputImage,TOutputImage ,TInterpolatorPrecisionType>
 ::GenerateData()
 {
   OptimizeByLeastSquares();
@@ -277,9 +277,9 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
  * when we cannot assume anything about the transform being used.
  * So we do the easy thing and request the entire input image.
  */
-template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
+template <class TInputImage, class TOutputImage , class TInterpolatorPrecisionType>
 void
-SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
+SuperResolutionAffineImageFilter<TInputImage,TOutputImage ,TInterpolatorPrecisionType>
 ::GenerateInputRequestedRegion()
 {
   // call the superclass's implementation of this method
@@ -306,9 +306,9 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
  * Get the smart pointer to the reference image that will provide
  * the grid parameters for the output image.
  */
-template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
-const typename SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>::OutputImageType *
-SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
+template <class TInputImage, class TOutputImage , class TInterpolatorPrecisionType>
+const typename SuperResolutionAffineImageFilter<TInputImage,TOutputImage ,TInterpolatorPrecisionType>::OutputImageType *
+SuperResolutionAffineImageFilter<TInputImage,TOutputImage ,TInterpolatorPrecisionType>
 ::GetReferenceImage() const
 {
   Self * surrogate = const_cast< Self * >( this );
@@ -321,9 +321,9 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
  * Set the smart pointer to the reference image that will provide
  * the grid parameters for the output image.
  */
-template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
+template <class TInputImage, class TOutputImage , class TInterpolatorPrecisionType>
 void
-SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
+SuperResolutionAffineImageFilter<TInputImage,TOutputImage ,TInterpolatorPrecisionType>
 ::SetReferenceImage( const TOutputImage *image )
 {
   itkDebugMacro("setting input ReferenceImage to " << image);
@@ -335,9 +335,9 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 }
 
 /** Helper method to set the output parameters based on this image */
-template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
+template <class TInputImage, class TOutputImage , class TInterpolatorPrecisionType>
 void
-SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
+SuperResolutionAffineImageFilter<TInputImage,TOutputImage ,TInterpolatorPrecisionType>
 ::SetOutputParametersFromImage ( const ImageBaseType * image )
 {
   this->SetOutputOrigin ( image->GetOrigin() );
@@ -350,9 +350,9 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 /**
  * Inform pipeline of required output region
  */
-template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
+template <class TInputImage, class TOutputImage , class TInterpolatorPrecisionType>
 void
-SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
+SuperResolutionAffineImageFilter<TInputImage,TOutputImage ,TInterpolatorPrecisionType>
 ::GenerateOutputInformation()
 {
   // call the superclass' implementation of this method
@@ -399,9 +399,9 @@ SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
 /**
  * Verify if any of the components has been modified.
  */
-template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType>
+template <class TInputImage, class TOutputImage , class TInterpolatorPrecisionType>
 unsigned long
-SuperResolutionImageFilter<TInputImage,TOutputImage,TInterpolatorPrecisionType>
+SuperResolutionAffineImageFilter<TInputImage,TOutputImage ,TInterpolatorPrecisionType>
 ::GetMTime( void ) const
 {
   unsigned long latestTime = Object::GetMTime();

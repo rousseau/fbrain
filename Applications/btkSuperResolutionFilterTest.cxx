@@ -33,11 +33,7 @@
 
 ==========================================================================*/
 
-/* BTK */
-#include "btkSuperResolutionFilter.h"
-#include "btkMacro.h"
-#include "btkSliceBySliceTransform.h"
-#include "btkSuperResolutionType.h"
+
 
 /* ITK */
 #include "itkImage.h"
@@ -50,12 +46,26 @@
 #include "itkMatrixOffsetTransformBase.h"
 #include "itkAffineTransform.h"
 
+/* BTK */
+
+#include "btkMacro.h"
+#include "btkSliceBySliceTransform.h"
+#include "btkSuperResolutionType.h"
+#include "btkImageHelper.h"
+#include "btkFileHelper.h"
+#include "btkSliceBySliceTransformBase.h"
+#include "btkAffineSliceBySliceTransform.h"
+#include "btkEulerSliceBySliceTransform.h"
+#include "btkSuperResolutionFilter.h"
+#include "btkIOTransformHelper.h"
+
 /* OTHERS */
 #include "iostream"
-#include "tclap/CmdLine.h"
+#include <tclap/CmdLine.h>
 
 int main(int argc, char * argv[])
 {
+
     /* Typedefs */
 
     const   unsigned int    Dimension = 3;
@@ -79,10 +89,15 @@ int main(int argc, char * argv[])
     typedef itk::TransformFileReader     TransformReaderType;
     typedef TransformReaderType::TransformListType* TransformListType;
 
-
+    typedef itk::Transform<double, Dimension> itkTransformBase;
     typedef itk::MatrixOffsetTransformBase<double,Dimension,Dimension> MatrixTransformType;
     typedef itk::AffineTransform<double,Dimension>     itkAffineTransformation;
-    typedef btk::SliceBySliceTransform< double, Dimension>  SliceBySliceTransfomType;
+    typedef itk::Euler3DTransform<double>              itkEulerTransformation;
+    typedef btk::SliceBySliceTransformBase< double, Dimension>  SliceBySliceTransfomType;
+    typedef btk::AffineSliceBySliceTransform< double, Dimension>  btkAffineSliceBySliceTransform;
+    typedef btk::EulerSliceBySliceTransform< double, Dimension>  btkEulerSliceBySliceTransform;
+    typedef btk::SliceBySliceTransform<double, Dimension>   btkOldSliceBySliceTransform;
+
 
     // TCLAP :
     TCLAP::CmdLine cmd("Apply the new Super-Resolution pipeline. Testing Version!", ' ', "Unversioned");
@@ -91,9 +106,13 @@ int main(int argc, char * argv[])
     TCLAP::MultiArg<std::string> maskArg("m","mask","low-resolution image mask file",false,"string",cmd);
     TCLAP::MultiArg<std::string> transArg("t","transform","transform file",false,"string",cmd);
     TCLAP::ValueArg<std::string> refArg  ("r","reconstructed","Reconstructed image for initialization. "
-                                          "Typically the output of btkImageReconstruction is used." ,true,"","string",cmd);
+                                          "Typically the output of btkImageReconstruction is used." ,false,"","string",cmd);
     TCLAP::ValueArg<int> loopArg  ("","loop","Number of loops (SR/denoising) (default = 5)",false, 5,"int",cmd);
     TCLAP::ValueArg<std::string> outArg  ("o","output","Super resolution output image",true,"","string",cmd);
+
+    TCLAP::SwitchArg    ComputeRegSwitchArg("","noReco","No Reconstruction is performed, the reference 3D image and the transforms files must be set", cmd, false);
+    TCLAP::ValueArg<int>    TransfosTypeSwitchArg("","transfos","Type of Transformation to perform (0: Affine 3D, 1: Euler3D, 2: Affine SliceBySlice, 3: Euler SliceBySlice... ).",false,2,"int",cmd);
+    TCLAP::ValueArg<int>    ReconTypeSwitchArg("","RecoType","Type of reconstruction to perform (0: SR 3D, 1: IBP, 2:... ).",false,0,"int",cmd);
 
     TCLAP::ValueArg<int> nlmArg           ("n","nlm","Type of filtering during IBP process (0: no filtering (default), 1: error map filtering, 2: current HR image filtering).", false,0,"int",cmd);
     TCLAP::ValueArg<float> betaArg        ("b","beta","Smoothing parameter for NLM filtering (default = 1).", false,1,"float",cmd);
@@ -111,18 +130,19 @@ int main(int argc, char * argv[])
 
 
 
-    btk::TRANSFORMATION_TYPE transfoType;
-    btk::RECONSTRUCTION_TYPE reconstructionType= btk::IBP;
+    btk::TRANSFORMATION_TYPE transfosType;
+    btk::RECONSTRUCTION_TYPE recoType;
 
-    bool computeTransfo = false;
+
+
 
     //std::vector< TransformReaderType > transforms;
 
     std::vector< itkImage::Pointer > inputsLRImages;
     std::vector< ImageMaskType::Pointer >          inputsLRMasks;
-    std::vector< itkAffineTransformation::Pointer >     inputsLRAffineTransfos;
-    std::vector< SliceBySliceTransfomType::Pointer >     inputsLRSbSTransfos;
-
+    std::vector< itkTransformBase::Pointer >     inputsLRTransfos;
+    std::vector< btkAffineSliceBySliceTransform::Pointer >    inputsLRAffineTransfos;
+    std::vector< btkEulerSliceBySliceTransform::Pointer >     inputsLREulerTransfos;
     std::string refImage;
     std::string outImage;
 
@@ -145,19 +165,25 @@ int main(int argc, char * argv[])
     int ibpOrder                 = ibpOrderArg.getValue();
     int psftype                  = psfArg.getValue();
     int medianIBP                = medArg.getValue();
+    transfosType = (btk::TRANSFORMATION_TYPE)TransfosTypeSwitchArg.getValue();
+    recoType = (btk::RECONSTRUCTION_TYPE)ReconTypeSwitchArg.getValue();
+
 
     int numberOfImages = input.size();
+
+    bool computeTransfo = ComputeRegSwitchArg.getValue();
 
     inputsLRImages.resize(numberOfImages);
     inputsLRMasks.resize(numberOfImages);
     inputsLRAffineTransfos.resize(numberOfImages);
-    inputsLRSbSTransfos.resize(numberOfImages);
-    //transforms.resize(numberOfImages);
+    inputsLREulerTransfos.resize(numberOfImages);
+    inputsLRTransfos.resize(numberOfImages);
 
 
 
     itk::TransformFactory< MatrixTransformType >::RegisterTransform();
-    itk::TransformFactory< SliceBySliceTransfomType >::RegisterTransform();
+    itk::TransformFactory< btkAffineSliceBySliceTransform >::RegisterTransform();
+    itk::TransformFactory< btkEulerSliceBySliceTransform >::RegisterTransform();
 
     std::cout<<"Testing SuperResolution Pipeline :"<<std::endl;
 
@@ -165,125 +191,167 @@ int main(int argc, char * argv[])
     SuperResolutionFilter =  new btk::SuperResolutionFilter();
     if(SuperResolutionFilter != NULL)
     {
+
+        btk::ImageHelper< itkImage >::ReadImageArray(inputsLRImages,input);
+        btk::ImageHelper< ImageMaskType >::ReadImageArray(inputsLRMasks, mask);
+
+
+        //std::vector<btkOldSliceBySliceTransform::Pointer> tr = btk::IOTransformHelper< btkOldSliceBySliceTransform >::ReadTransformArray(transform);
         for(int i=0; i<numberOfImages; i++)
         {
-            // Reading input images :
-            std::cout<<"Reading image : "<<input[i].c_str()<<std::endl;
-            ImageReaderType::Pointer imageReader = ImageReaderType::New();
-            imageReader -> SetFileName( input[i].c_str() );
-            imageReader -> Update();
-            inputsLRImages[i] = imageReader->GetOutput();
-
-            // Reading input Masks :
-            // add region
-            if ( mask.size() > 0 )
-            {
-              std::cout<<"Reading mask image : "<<mask[i].c_str()<<std::endl;
-              MaskReaderType::Pointer maskReader = MaskReaderType::New();
-              maskReader -> SetFileName( mask[i].c_str() );
-              maskReader -> Update();
-              inputsLRMasks[i] = maskReader->GetOutput();
-
-
-            }
             if(transform.size() > 0)
             {
+               bool TExist = btk::FileHelper::FileExist(transform[i]);
+
+               if(!TExist)
+               {
+                   // If transfo doesn't exist we must compute them and write them
+                   computeTransfo = true;
+//                   itkAffineTransformation::Pointer affine = itkAffineTransformation::New();
+//                   affine->SetIdentity();
+//                   itkEulerTransformation::Pointer euler = itkEulerTransformation::New();
+//                   euler->SetIdentity();
+
+                   switch(transfosType)
+                   {
+                   case btk::AFFINE:
+                       inputsLRTransfos[i] = itkAffineTransformation::New();
+
+                       break;
+
+                   case btk::EULER_3D:
+                       inputsLRTransfos[i] = itkEulerTransformation::New();
+
+                       break;
+
+                   case btk::SLICE_BY_SLICE_AFFINE:
+                       inputsLRTransfos[i] = btkAffineSliceBySliceTransform::New();
+                       reinterpret_cast< btkAffineSliceBySliceTransform*>(inputsLRTransfos[i].GetPointer())->SetImage(inputsLRImages[i]);
+                       reinterpret_cast<btkAffineSliceBySliceTransform* >(inputsLRTransfos[i].GetPointer())->Initialize();
+                       break;
+
+                   case btk::SLICE_BY_SLICE_EULER:
+                       inputsLRTransfos[i] = btkEulerSliceBySliceTransform::New();
+                       reinterpret_cast<btkEulerSliceBySliceTransform* >(inputsLRTransfos[i].GetPointer())->SetImage(inputsLRImages[i]);
+                       reinterpret_cast<btkEulerSliceBySliceTransform* >(inputsLRTransfos[i].GetPointer())->Initialize();
+                       break;
+
+                   default:
+                       inputsLRTransfos[i] = btkEulerSliceBySliceTransform::New();
+                       reinterpret_cast<btkEulerSliceBySliceTransform* >(inputsLRTransfos[i].GetPointer())->SetImage(inputsLRImages[i]);
+                       reinterpret_cast<btkEulerSliceBySliceTransform*>(inputsLRTransfos[i].GetPointer())->Initialize();
+                      break;
 
 
+                   }
+               }
+               else
+               {
+                   // Transfos are set we should read them
+                   computeTransfo = false;
+                   // test transfoHelper:
+                   //inputsLRTransfos[i]=btk::IOTransformHelper< btkOldSliceBySliceTransform >::ReadTransform(transform[i]);
+                   std::cout<<"Reading transform:"<<transform[i]<<std::endl;
+                   TransformReaderType::Pointer transformReader = TransformReaderType::New();
+                   transformReader -> SetFileName( transform[i] );
+                   transformReader -> Update();
+                   TransformListType transforms = transformReader->GetTransformList();
+                   TransformReaderType::TransformListType::const_iterator titr = transforms->begin();
 
-                std::cout<<"Reading Affine Transform : "<<transform[i]<<std::endl;
-                TransformReaderType::Pointer reader = TransformReaderType::New();
-                reader->SetFileName( transform[i].c_str() );
-                reader->Update();
-                TransformListType transformList = reader->GetTransformList();
-                TransformReaderType::TransformListType::const_iterator titr = transformList->begin();
+                   const char * className = titr->GetPointer()->GetNameOfClass();
 
-                const char * className = titr -> GetPointer() -> GetNameOfClass();
+                   if(strcmp(className,"MatrixOffsetTransformBase") == 0 || strcmp(className,"AffineTransform") == 0)
+                   {
+                       inputsLRTransfos[i] = static_cast<itkAffineTransformation*>(titr->GetPointer());
+                       //inputsLRTransfos[i]->SetImage(inputsLRImages[i]);
+                       //inputsLRTransfos[i]->Initialize(static_cast<itkAffineTransformation*>(titr->GetPointer()));
+                   }
 
-                btkCoutVariable(className);
-                //TODO: Add two vector of transfo (one for Affine, and the other for SbS)
-                if(strcmp(className,"MatrixOffsetTransformBase") == 0)
-                {
-                    SuperResolutionFilter->SetTransformationType(btk::AFFINE);
-                    inputsLRAffineTransfos[i] = static_cast< itkAffineTransformation* >( titr->GetPointer() );
-                    transfoType = btk::AFFINE ;
+                   if(strcmp(className,"Euler3DTransform") == 0)
+                   {
+                       inputsLRTransfos[i] = static_cast<itkEulerTransformation*>(titr->GetPointer());
+                       //inputsLRTransfos[i]->SetImage(inputsLRImages[i]);
+                       //inputsLRTransfos[i]->Initialize(static_cast<itkEulerTransformation*>(titr->GetPointer()));
 
+                   }
 
+                   if(strcmp(className,"AffineSliceBySliceTransform") == 0)
+                   {
+                       inputsLRTransfos[i] = btkAffineSliceBySliceTransform::New();
+                       reinterpret_cast<btkAffineSliceBySliceTransform* >(inputsLRTransfos[i].GetPointer())->SetImage(inputsLRImages[i]);
+                       inputsLRTransfos[i] = dynamic_cast< btkAffineSliceBySliceTransform* >(titr->GetPointer());
 
-                }
-                else
-                {
-                    if(strcmp(className,"SliceBySliceTransform") == 0)
-                    {
+                   }
 
-                        SuperResolutionFilter->SetTransformationType(btk::SLICE_BY_SLICE);
-                        inputsLRSbSTransfos[i] = static_cast< SliceBySliceTransfomType* >( titr->GetPointer() );
-                        transfoType = btk::SLICE_BY_SLICE;
-
-                    }
-                    else
-                    {
-                        std::cout << className << " is not a valid transform. SuperResolution only take MatrixOffsetTransformBase and SliceBySlice transforms" << std::endl;
-                        return EXIT_FAILURE;
-                    }
-                }
-
-
-
+                   if(strcmp(className,"EulerSliceBySliceTransform") == 0)
+                   {
+                       inputsLRTransfos[i] = btkEulerSliceBySliceTransform::New();
+                       reinterpret_cast<btkEulerSliceBySliceTransform* >(inputsLRTransfos[i].GetPointer())->SetImage(inputsLRImages[i]);
+                       inputsLRTransfos[i] = dynamic_cast< btkEulerSliceBySliceTransform* >(titr->GetPointer());
+                   }
+               }
             }
             else
             {
-                // If there are no transform : do the identity and let the algorithm compute them :
-                inputsLRAffineTransfos[i] = itkAffineTransformation::New();
-                inputsLRSbSTransfos[i] = SliceBySliceTransfomType::New();
-                computeTransfo = true;
+
             }
-
-
-
-
         }
 
-        ImageReaderType::Pointer imageReader = ImageReaderType::New();
-        imageReader -> SetFileName( refImage.c_str() );
-        imageReader -> Update();
 
 
+        bool srImExist = btk::FileHelper::FileExist(refImage);
+        if(srImExist)
+        {
+            SuperResolutionImage = btk::ImageHelper< itkImage >::ReadImage(refImage);
+            SuperResolutionFilter->SetImageHR(SuperResolutionImage);
+        }
         SuperResolutionFilter->SetImagesLR(inputsLRImages);
         SuperResolutionFilter->SetImagesMaskLR(inputsLRMasks);
-        SuperResolutionFilter->SetTransformationType(transfoType);
-        //SuperResolutionFilter->SetReconstructionType(reconstructionType);
+        SuperResolutionFilter->SetTransformationType(transfosType);
+        SuperResolutionFilter->SetTransformsLR(inputsLRTransfos);
+        //SuperResolutionFilter->SetTransformsLRSbS(inputsLRTransfos);
 
-        if(transfoType == btk::AFFINE)
+
+        if(transfosType == btk::SLICE_BY_SLICE)
         {
-            SuperResolutionFilter->SetTransformsLRAffine(inputsLRAffineTransfos);
-
+            // Since IBP only works with affine transform :
+            SuperResolutionFilter->SetReconstructionType(btk::SR);
         }
         else
         {
-            SuperResolutionFilter->SetTransformsLRSbS(inputsLRSbSTransfos);
+            // Since IBP only works with affine transform :
+            SuperResolutionFilter->SetReconstructionType(btk::SR);//(btk::IBP);
         }
 
-        SuperResolutionFilter->SetImageHR(imageReader->GetOutput());
-        SuperResolutionFilter->SetParameters(nlm,beta,loops,medianIBP,psftype,1,5);
-        SuperResolutionFilter->Update();
+        SuperResolutionFilter->SetParameters(nlm,beta,loops,medianIBP,psftype, 0.1,5,1,1);
+        try
+        {
+            SuperResolutionFilter->Update();
+        }
+        catch(std::string &exception)
+        {
+            std::cerr << "Error : "<< exception <<std::endl;
+            return EXIT_FAILURE;
+
+
+        }
+
 
         SuperResolutionImage = SuperResolutionFilter->GetOutput();
+
+        std::vector<TransformType::Pointer> transfos = SuperResolutionFilter->GetTransformsLR();
+
+        btk::IOTransformHelper< TransformType >::WriteTransformArray(transfos,transform);
 
 
     }
 
     // Write HR image
-    btkCoutMacro(Writing Output image);
-    typedef itk::ImageFileWriter< itkImage >  WriterType;
+    btk::ImageHelper<itkImage>::WriteImage(SuperResolutionImage, outImage);
 
-    WriterType::Pointer writer =  WriterType::New();
-    writer-> SetFileName( outImage );
-    writer-> SetInput( SuperResolutionImage );
-    writer-> Update();
 
     delete SuperResolutionFilter;
 
-    return 0;
+    return EXIT_SUCCESS;
 
 }

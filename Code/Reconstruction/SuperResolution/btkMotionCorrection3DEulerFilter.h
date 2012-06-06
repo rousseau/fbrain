@@ -2,7 +2,7 @@
 
   © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-  Date: 22/03/2012
+  Date: 30/05/2012
   Author(s): Schweitzer Marc (marc.schweitzer@unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
@@ -33,8 +33,8 @@
 
 ==========================================================================*/
 
-#ifndef __BTK_MOTIONCORRECTIONAFFINE3DFILTER_H__
-#define __BTK_MOTIONCORRECTIONAFFINE3DFILTER_H__
+#ifndef __BTK_MOTIONCORRECTION3DEULERFILTER_H__
+#define __BTK_MOTIONCORRECTION3DEULERFILTER_H__
 
 /* ITK */
 #include "itkImage.h"
@@ -45,8 +45,11 @@
 #include "itkEuler3DTransform.h"
 
 /* BTK */
+//#include "btkAffineRegistration.h"
 #include "btkMacro.h"
 #include "btkMotionCorrectionFilter.h"
+#include "btkSuperResolutionType.h"
+
 
 /* OTHERS */
 #include "iostream"
@@ -54,23 +57,32 @@
 
 namespace btk
 {
-class MotionCorrectionAffine3DFilter: public MotionCorrectionFilter
+class MotionCorrection3DEulerFilter: public MotionCorrectionFilter
 {
+
 public:
 
-    /* Typedefs */
-    typedef float PixelType;
-    typedef itk::Image< PixelType, 3>         itkImage;
-    typedef itk::Image< PixelType, 2>         SliceType;
-    typedef itk::Transform<double, 3> TransformType;
-    typedef itk::Image< unsigned char, 3 >     itkImageMask;
-    typedef itk::ImageMaskSpatialObject< 3 >   itkMask;
+    typedef btk::RigidRegistration< itkImage >     Rigid3DRegistration;
 
-    MotionCorrectionAffine3DFilter();
-    ~MotionCorrectionAffine3DFilter();
+
+    typedef MotionCorrection3DEulerFilter  Self;
+    typedef MotionCorrectionFilter         SuperClass;
+
+
+    MotionCorrection3DEulerFilter();
+    ~MotionCorrection3DEulerFilter();
 
     virtual void Update();
 
+    virtual void DoRegistration();
+
+   // btkGetMacro(TransformsLR,std::vector< itkTransformBase::Pointer >);
+    //btkSetMacro(TransformsLR, std::vector< itkTransformBase::Pointer >);
+
+    virtual std::vector<itkEulerTransform::Pointer> GetOutputTransformsLR()
+    {
+        return m_OutputTransformsLR;
+    }
 
 
 
@@ -79,11 +91,21 @@ public:
 
 protected:
 
+    virtual void Initialize();
+
 
 private:
 
+    std::vector< Rigid3DRegistration::Pointer > m_Rigid3DRegistration;
+    //std::vector< itkEulerTransform::Pointer > m_TransformsLR;
+    std::vector< itkEulerTransform::Pointer > m_OutputTransformsLR;
+
+
+    bool    m_UseAffine;
+    bool    m_UseEuler;
 
 };
 }
+
 
 #endif

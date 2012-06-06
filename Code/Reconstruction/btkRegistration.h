@@ -2,8 +2,8 @@
 
   © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-  Date: 14/04/2010
-  Author(s): Estanislao Oubel (oubel@unistra.fr)
+  Date: 09/05/2012
+  Author(s): Marc Schweitzer (marc.schweitzer(at)unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -33,19 +33,19 @@
 
 ==========================================================================*/
 
-#ifndef __BTK_AFFINEREGISTRATION_H__
-#define __BTK_AFFINEREGISTRATION_H__
+#ifndef __BTK_REGISTRATION_H__
+#define __BTK_REGISTRATION_H__
 
-#include "btkRegistration.h"
-
+#include "itkImageRegistrationMethod.h"
 #include "itkRegularStepGradientDescentOptimizer.h"
 #include "itkLinearInterpolateImageFunction.h"
 #include "itkAffineTransform.h"
 #include "itkMattesMutualInformationImageToImageMetric.h"
-#include "itkImageMaskSpatialObject.h"
 
 #include "itkNumericTraits.h"
-#include "btkUserMacro.h"
+#include "btkMacro.h"
+#include "btkCommandIterationUpdate.h"
+
 
 
 namespace btk
@@ -53,7 +53,7 @@ namespace btk
 
 using namespace itk;
 
-/** \class AffineRegistration
+/** \class Registration
  * \brief Describe the class briefly here.
  *
  * Full class description
@@ -65,20 +65,20 @@ using namespace itk;
  */
 
 template <typename TImage>
-class AffineRegistration :public btk::Registration <TImage >
+class Registration :public ImageRegistrationMethod <TImage,TImage>
 {
 public:
   /** Standard class typedefs. */
-  typedef AffineRegistration  Self;
-  typedef btk::Registration<TImage>   Superclass;
+  typedef Registration  Self;
+  typedef ImageRegistrationMethod<TImage,TImage>       Superclass;
   typedef SmartPointer<Self>                           Pointer;
   typedef SmartPointer<const Self>                     ConstPointer;
 
   /** Method for creation through the object factory. */
-  itkNewMacro(Self);
+  //itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(AffineRegistration, ImageRegistrationMethod);
+  itkTypeMacro(Registration, ImageRegistrationMethod);
 
   /**  Type of the Fixed image. */
   typedef          TImage                               ImageType;
@@ -93,11 +93,6 @@ public:
   typedef typename MaskType::Pointer                    MaskPointer;
 
   typedef typename ImageType::PointType                 PointType;
-  typedef typename ImageType::SizeType               		SizeType;
-  typedef typename ImageType::IndexType               	IndexType;
-
-  typedef typename ImageType::RegionType                RegionType;
-
 
 
   /**  Type of the metric. */
@@ -106,103 +101,71 @@ public:
                                           ImageType >   MetricType;
   typedef typename MetricType::Pointer                  MetricPointer;
 
-  typedef typename MetricType::FixedImageMaskType   FixedImageMaskType;
-  typedef typename FixedImageMaskType::Pointer     FixedImageMaskPointer;
 
   /**  Type of the Transform . */
-  typedef AffineTransform<
-                          double,
-                          ImageType::ImageDimension >   TransformType;
+  typedef MatrixOffsetTransformBase<double, ImageType::ImageDimension> TransformType;
+  //typedef AffineTransform< double,ImageType::ImageDimension >   TransformType;
+
   typedef typename TransformType::Pointer               TransformPointer;
   typedef typename TransformType::ParametersType        ParametersType;
 
-  /**  Type of the Interpolator. */
-  typedef LinearInterpolateImageFunction<
-                                    ImageType,
-                                    double>             InterpolatorType;
-  typedef typename InterpolatorType::Pointer            InterpolatorPointer;
-
   /**  Type of the optimizer. */
   typedef RegularStepGradientDescentOptimizer           OptimizerType;
-  typedef typename OptimizerType::Pointer               OptimizerPointer;
-  typedef OptimizerType::ScalesType 					OptimizerScalesType;
 
   /** Method that initiates the registration. */
-
-  /** Set/Get transform center. */
-  itkSetMacro(TransformCenter, PointType);
-
-  virtual PointType GetTransformCenter() const
-    { return m_Transform -> GetCenter(); }
-
-  //itkGetObjectMacro(Transform, TransformType);
-
-  virtual TransformType* GetTransform()
-  {
-      return static_cast<TransformType*>(m_Transform);
-  }
+  virtual PointType GetTransformCenter() const {};
 
 
-  itkSetObjectMacro(FixedImageMask, FixedImageMaskType);
+  //virtual TransformType* GetTransform(){};
 
-  /** Set/Get iterations. */
-  itkSetMacro(Iterations, unsigned int);
-  itkGetMacro(Iterations, unsigned int);
+  virtual void SetFixedImageMask(ImageMaskType *imMask){};
+  virtual ImageMaskType* GetFixedImageMask(){};
 
-  /** Set/Get observer status. */
-  itkSetMacro(EnableObserver, bool);
-  itkGetMacro(EnableObserver, bool);
+  virtual void SetIterations(const unsigned int it){};
+  virtual unsigned int GetIterations(){};
 
-  itkSetObjectMacro(FixedMask,MaskType);
-  itkGetObjectMacro(FixedMask,MaskType);
+  virtual void SetEnableObserver(const bool arg){};
+  virtual bool GetEnableObserver(){};
 
-  itkGetObjectMacro(Optimizer, OptimizerType);
+  virtual OptimizerType* GetOptimizer(){};
+
+  virtual void SetMovingImageMask(ImageMaskType* imMask){};
+  virtual ImageMaskType* GetMovingImageMask(){};
 
   /** Initialization is performed with the provided transform. */
-  virtual void InitializeWithTransform(){};
+  virtual void InitializeWithTransform() = 0;
 
 
   /** Initialization is performed with the provided image masks. */
-  virtual void InitializeWithMask(){};
-
+  virtual void InitializeWithMask() = 0;
 
 
 protected:
-  AffineRegistration();
-  virtual ~AffineRegistration() {};
-  virtual void PrintSelf(std::ostream& os, Indent indent) const;
+  Registration(){};
+  virtual ~Registration() {};
+
+  virtual void PrintSelf(std::ostream& os, Indent indent) const
+  {
+      Superclass::PrintSelf( os, indent );
+  }
+
 
   /** Initialize by setting the interconnects between the components.
    */
-  virtual void Initialize() throw (ExceptionObject);
+  virtual void Initialize() throw (ExceptionObject)
+  {
+      Superclass::Initialize();
+  }
+
 
 private:
-  AffineRegistration(const Self&); //purposely not implemented
+  Registration(const Self&); //purposely not implemented
   void operator=(const Self&); //purposely not implemented
 
-  MetricPointer        m_Metric;
-  OptimizerPointer     m_Optimizer;
-  TransformPointer     m_Transform;
-  InterpolatorPointer  m_Interpolator;
-
-  unsigned int m_Iterations;
-  bool m_EnableObserver;
-
-  FixedImageMaskPointer m_FixedImageMask;
-
-  MaskPointer          m_FixedMask;
-
-  CommandIterationUpdate::Pointer  m_Observer;
-
-  PointType                 m_TransformCenter;
 };
 
 
 } // end namespace itk
 
-
-#ifndef ITK_MANUAL_INSTANTIATION
-#include "btkAffineRegistration.txx"
-#endif
 
 #endif

@@ -33,8 +33,8 @@
 
 ==========================================================================*/
 
-#ifndef __BTK_MOTIONCORRECTIONSLICEBYSLICEFILTER_H__
-#define __BTK_MOTIONCORRECTIONSLICEBYSLICEFILTER_H__
+#ifndef __BTK_MOTIONCORRECTIONSLICEBYSLICEAFFINEFILTER_H__
+#define __BTK_MOTIONCORRECTIONSLICEBYSLICEAFFINEFILTER_H__
 
 /* ITK */
 #include "itkImage.h"
@@ -45,8 +45,12 @@
 #include "itkEuler3DTransform.h"
 
 /* BTK */
+#include "btkSliceBySliceRigidRegistration.h"
+#include "btkSliceBySliceAffineRegistration.h"
 #include "btkMacro.h"
 #include "btkMotionCorrectionFilter.h"
+#include "btkSuperResolutionType.h"
+
 
 /* OTHERS */
 #include "iostream"
@@ -54,26 +58,47 @@
 
 namespace btk
 {
-class MotionCorrectionSliceBySliceFilter : public MotionCorrectionFilter
+class MotionCorrectionSliceBySliceAffineFilter : public MotionCorrectionFilter
 {
 public:
 
-    /* Typedefs */
-    typedef float PixelType;
-    typedef itk::Image< PixelType, 3>         itkImage;
-    typedef itk::Image< PixelType, 2>         SliceType;
-    typedef itk::Transform<double, 3> TransformType;
-    typedef itk::Image< unsigned char, 3 >     itkImageMask;
-    typedef itk::ImageMaskSpatialObject< 3 >   itkMask;
+    typedef btk::SliceBySliceAffineRegistration< itkImage > SliceBySliceRegistration;
 
-    MotionCorrectionSliceBySliceFilter();
-    ~MotionCorrectionSliceBySliceFilter();
+    typedef MotionCorrectionSliceBySliceAffineFilter   Self;
+    typedef MotionCorrectionFilter             SuperClass;
+
+    MotionCorrectionSliceBySliceAffineFilter();
+    ~MotionCorrectionSliceBySliceAffineFilter();
 
      virtual void Update();
 
 
+
+
+    //btkSetMacro(TransformsLR,std::vector< btkSliceBySliceTransformBase::Pointer >);
+    //btkGetMacro(TransformsLR, std::vector< btkSliceBySliceTransformBase::Pointer >);
+
+    virtual std::vector< btkSliceBySliceTransformBase::Pointer> GetOutputTransformsLR()
+    {
+        return m_OutputTransformsLR;
+    }
+
+
+
 protected:
+
+     virtual void Initialize();
+     virtual void DoRegistration();
+
+
 private:
+
+    std::vector< SliceBySliceRegistration::Pointer>     m_SliceBySliceRegistration;
+    //std::vector< btkSliceBySliceTransformBase::Pointer >    m_TransformsLR;
+    std::vector< btkSliceBySliceTransformBase::Pointer >    m_OutputTransformsLR;
+
+    bool    m_UseAffine;
+    bool    m_UseEuler;
 
 
 };

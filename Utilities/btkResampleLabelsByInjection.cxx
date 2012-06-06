@@ -113,7 +113,7 @@ int main( int argc, char *argv[] )
   typedef ImageType::Pointer                  ImagePointer;
   typedef std::vector<ImagePointer>           ImagePointerArray;
 
-  typedef itk::Image< short, Dimension >  ShortImageType;
+  typedef itk::Image< PixelType, Dimension >  ShortImageType;
 
   typedef itk::CastImageFilter<ImageType,ShortImageType> CasterType;
 

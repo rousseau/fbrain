@@ -301,10 +301,15 @@ LeastSquaresVnlCostFunction<TImage>::f(const vnl_vector<double>& x)
 
   vnl_vector<float> HxMinusY;
   HxMinusY = Hx - Y;
+  //HxMinusY = Y - Hx;
 
   Hx.clear();
 
-  double mse = HxMinusY.squared_magnitude() / HxMinusY.size();
+  double mse = HxMinusY.squared_magnitude()/ HxMinusY.size();
+  //double mse = HxMinusY.magnitude()/ HxMinusY.size();
+  //double mse = HxMinusY.two_norm()/ HxMinusY.size();
+  //double mse = HxMinusY.one_norm()/ HxMinusY.size();
+  //double mse = HxMinusY.rms()/ HxMinusY.size();
 
   HxMinusY.clear();
 
@@ -313,6 +318,9 @@ LeastSquaresVnlCostFunction<TImage>::f(const vnl_vector<double>& x)
 
   float* kernel = new float[2];
   kernel[0] = -1; kernel[1] = 1;
+
+  //float* kernel = new float[3];
+  //kernel[0] = 1; kernel[1] = 2; kernel[2] = 1;
 
   vnl_vector<float> DxX;
   DxX.set_size( x_float.size() );
@@ -593,6 +601,8 @@ LeastSquaresVnlCostFunction<TImage>::Initialize()
                 //Index in the SR image
                 hrIndex = interpolator -> GetIndex(n);
 
+
+
                 //Index in the ROI of the SR index
                 hrDiffIndex[0] = hrIndex[0] - start_hr[0];
                 hrDiffIndex[1] = hrIndex[1] - start_hr[1];
@@ -605,6 +615,8 @@ LeastSquaresVnlCostFunction<TImage>::Initialize()
                 //Add the correct value in H !
                 H(lrLinearIndex + offset, hrLinearIndex) +=
                     interpolator -> GetOverlap(n)* lrValue;
+
+
               }
 
             }
@@ -659,8 +671,8 @@ LeastSquaresVnlCostFunction<TImage>::AddImage( ImageType* image )
   m_Transforms[m_Transforms.size()-1].resize( imageSize[2]);
 
   // Initialize transforms
-  for (unsigned int i=0; i<imageSize[2]; i++)
-    m_Transforms[m_Transforms.size()-1][i] = TransformType::New();
+//  for (unsigned int i=0; i<imageSize[2]; i++)
+//    m_Transforms[m_Transforms.size()-1][i] = TransformType::New();
 
 }
 
@@ -689,7 +701,12 @@ template <class TImage>
 void
 LeastSquaresVnlCostFunction<TImage>::SetTransform( int i, int j, TransformType* transform )
 {
-  m_Transforms[i][j] = transform;
+    m_Transforms[i][j] = transform;
+}
+template <class TImage>
+vnl_sparse_matrix<float> LeastSquaresVnlCostFunction<TImage>::GetHMatrix()
+{
+    return H;
 }
 
 } // namespace btk

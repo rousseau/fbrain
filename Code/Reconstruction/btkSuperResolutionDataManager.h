@@ -43,6 +43,7 @@
 #include "itkTransformFactory.h"
 
 #include "itkAffineTransform.h"
+#include "itkRigid3DTransform.h"
 #include "itkEuler3DTransform.h"
 #include "itkTransformFileReader.h"
 #include "itkImageMaskSpatialObject.h"
@@ -63,7 +64,8 @@ public:
   typedef itk::ImageMaskSpatialObject< 3 >   itkMask;
   typedef itkMask::Pointer                   itkMaskPointer;
 
-  typedef itk::AffineTransform<double,3>     itkAffineDeformation;
+  typedef itk::Rigid3DTransform<double>     itkAffineDeformation;
+  //typedef itk::AffineTransform<double,3>     itkAffineDeformation;
   typedef itk::TransformFileReader           itkTransformReader;
   typedef itk::MatrixOffsetTransformBase<double,3,3> TransformType;
   
@@ -210,7 +212,13 @@ void SuperResolutionDataManager::ReadAffineTransform(std::vector<std::string> & 
       m_inverseAffineTransform[i] = itkAffineDeformation::New(); 
       m_inverseAffineTransform[i]->SetCenter( m_affineTransform[i]->GetCenter() );   
       m_affineTransform[i]->GetInverse(m_inverseAffineTransform[i]); 
-      std::cout<<"affine transform:"<<m_affineTransform[i]<<"\n---------------\n";
+      //std::cout<<"affine transform:"<<m_affineTransform[i]<<"\n---------------\n";
+      //--------
+      std::cout<<"Transform :"<<m_affineTransform[i]->GetNameOfClass()<<std::endl;
+      std::cout<<"Inverse Transform :"<<m_inverseAffineTransform[i]->GetNameOfClass()<<std::endl;
+
+      //--------
+
     }
   }
   //else set the transforms with identity 
