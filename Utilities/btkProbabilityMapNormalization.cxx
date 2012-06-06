@@ -34,109 +34,114 @@
  ==========================================================================*/
 
 
+// STL includes
+#include "string"
+#include "iomanip"
+
+// ITK includes
 #include "itkImage.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 
-#include <string>
-#include <iomanip>
-
+// TCLAP includes
 #include <tclap/CmdLine.h>
+
+// Local includes
+#include "btkImageHelper.h"
+
+
+// Type definitions
+typedef float PixelType;
+const unsigned int Dimension = 3;
+
+typedef itk::Image< PixelType,Dimension >          Image;
+typedef itk::ImageRegionIteratorWithIndex< Image > ImageIterator;
 
 
 int main(int argc, char *argv[])
 {
-  
-  try{
-
-    TCLAP::CmdLine cmd("Normalize in a voxelwise manner a set of (positive) probability maps", ' ', "1.0", true);
-    
-    TCLAP::MultiArg<std::string> inputImageArg("i","input_image","input images",true,"string",cmd);
-    TCLAP::MultiArg<std::string> outputImageArg("o","output_image","output images",true,"string",cmd);
-    TCLAP::ValueArg<float> thresholdArg  ("t","threshold","Threshold on the sum (for each voxel) to avoid calculation error) (default = 0.00001)",false, 0.00001,"float",cmd);
-    
-    // Parse the args.
-    cmd.parse( argc, argv );
-
-    // Get the value parsed by each arg.
-    std::vector<std::string> input_file  = inputImageArg.getValue();
-    std::vector<std::string> output_file = outputImageArg.getValue();
-    float threshold = thresholdArg.getValue();
-    
-  
-    //ITK declaration
-    typedef float PixelType;
-    const   unsigned int        Dimension = 3;
-    
-    typedef itk::Image< PixelType, Dimension >    ImageType;
-    typedef itk::ImageFileReader< ImageType >     ReaderType;
-    typedef itk::ImageFileWriter< ImageType >     WriterType;
-    typedef ImageType::Pointer itkPointer;
-    typedef itk::ImageRegionIteratorWithIndex< ImageType > itkIteratorWithIndex;
-        
-    //Set image pointers
-    std::vector<itkPointer>     inputImages;
-    std::vector<itkPointer>     outputImages;
-    
-    inputImages.resize(input_file.size());
-    outputImages.resize(output_file.size());
-    
-    std::cout<<"Reading the input files\n";
-    for(int i=0; i<input_file.size(); i++){
-      std::cout<<input_file[i]<<"\n";
-      ReaderType::Pointer reader = ReaderType::New();
-      reader->SetFileName( input_file[i]  );
-      reader->Update();
-      inputImages[i] = reader->GetOutput();     
-    }
-    
-    std::cout<<"Initialize the output images\n";
-    for(int i=0; i<output_file.size(); i++)
+    try
     {
-      outputImages[i] = ImageType::New();
-      outputImages[i]->SetRegions( inputImages[i]->GetLargestPossibleRegion() );
-      outputImages[i]->SetSpacing( inputImages[i]->GetSpacing() );
-      outputImages[i]->SetOrigin( inputImages[i]->GetOrigin() );
-      outputImages[i]->SetDirection( inputImages[i]->GetDirection() );
-      outputImages[i]->Allocate();
-      outputImages[i]->FillBuffer(0);       
-    }
+        //
+        // Command line processing
+        //
+
+        TCLAP::CmdLine cmd("Normalize in a voxelwise manner a set of (positive) probability maps", ' ', "1.0", true);
     
+        TCLAP::MultiArg<std::string> inputImageArg("i", "input_image", "Input images' filenames", true, "string", cmd);
+        TCLAP::MultiArg<std::string> outputImageArg("o", "output_image"," Output images' filenames", true, "string", cmd);
+        TCLAP::ValueArg<float> thresholdArg  ("t", "threshold", "Threshold on the sum (for each voxel) to avoid calculation error) (default = 0.00001)", false, 0.00001, "float", cmd);
     
-    itkIteratorWithIndex it( inputImages[0], inputImages[0]->GetLargestPossibleRegion());
+        // Parse the args.
+        cmd.parse( argc, argv );
+
+        // Get the value parsed by each arg.
+        std::vector<std::string> inputFileNames  = inputImageArg.getValue();
+        std::vector<std::string> outputFileNames = outputImageArg.getValue();
+        float threshold                          = thresholdArg.getValue();
+
+        // Verify data
+        if(inputFileNames.size() != outputFileNames.size())
+            throw(std::string("Error: the number of input filenames is not the same as the number of output filenames !"));
+     
+
+        //
+        // Reading images
+        //
+
+        std::vector< Image::Pointer > inputImages  = btk::ImageHelper< Image >::ReadImageArray(inputFileNames);
+        std::vector< Image::Pointer > outputImages = btk::ImageHelper< Image >::CreateNewFromSpaceOf(inputImages);
     
-    for ( it.GoToBegin(); !it.IsAtEnd(); ++it){
-      double sum = 0;
-      ImageType::IndexType index = it.GetIndex();
-      for(int i=0; i<input_file.size(); i++){
-        if(inputImages[i]->GetPixel(index) > 0)
-          sum += inputImages[i]->GetPixel(index);  
-      }  
-      
-      if(sum > threshold)
-        for(int i=0; i<output_file.size(); i++)
+
+        //
+        // Processing
+        //
+
+        ImageIterator it(inputImages[0], inputImages[0]->GetLargestPossibleRegion());
+
+        for ( it.GoToBegin(); !it.IsAtEnd(); ++it)
         {
-          if(inputImages[i]->GetPixel(index) > 0)
-            outputImages[i]->SetPixel(index,inputImages[i]->GetPixel(index) / sum); 
-        }
-    }
+            double sum = 0;
+            Image::IndexType index = it.GetIndex();
 
-    std::cout<<"Writing the output images\n";
-    for(int i=0; i<output_file.size(); i++)
-    {
-      std::cout<<output_file[i]<<"\n";
-      WriterType::Pointer writer = WriterType::New();  
-      writer->SetFileName( output_file[i] );
-      writer->SetInput( outputImages[i] );
-      writer->Update();      
+            for(int i=0; i<inputFileNames.size(); i++)
+            {
+                if(inputImages[i]->GetPixel(index) > 0)
+                {
+                    sum += inputImages[i]->GetPixel(index);
+                }
+            }
+
+            if(sum > threshold)
+            {
+                for(int i=0; i<outputFileNames.size(); i++)
+                {
+                    if(inputImages[i]->GetPixel(index) > 0)
+                    {
+                        outputImages[i]->SetPixel(index,inputImages[i]->GetPixel(index) / sum);
+                    }
+                }
+            }
+        }
+
+
+        //
+        // Write images
+        //
+
+        btk::ImageHelper< Image >::WriteImageArray(outputImages, outputFileNames);
     }
-    
- 
-  } catch (TCLAP::ArgException &e)  // catch any exceptions
-  { std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; }
+    catch (TCLAP::ArgException &e)
+    {
+        std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;
+    }
+    catch(std::string &err)
+    {
+        std::cerr << err << std::endl;
+    }
   
-  return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
 
 
