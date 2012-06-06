@@ -185,8 +185,6 @@ RigidRegistration<ImageType>
   }
 
 
-  m_Optimizer->SetScales( optimizerScales );
-
   m_Observer = CommandIterationUpdate::New();
 
   if (m_EnableObserver)
