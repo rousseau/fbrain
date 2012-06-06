@@ -71,26 +71,6 @@ RigidRegistration<ImageType>
 
   // Configure transform
   m_Transform = TransformType::New();
-//  ParametersType initialTransformParameters( m_Transform->GetNumberOfParameters() );
-//  //rotation matrix 3D
-//  initialTransformParameters[0] = 1.0;
-//  initialTransformParameters[1] = 0.0;
-//  initialTransformParameters[2] = 0.0;
-
-//  initialTransformParameters[3] = 0.0;
-//  initialTransformParameters[4] = 1.0;
-//  initialTransformParameters[5] = 0.0;
-
-//  initialTransformParameters[6] = 0.0;
-//  initialTransformParameters[7] = 0.0;
-//  initialTransformParameters[8] = 1.0;
-
-//  //translation vector
-//  initialTransformParameters[9] = 0.0;
-//  initialTransformParameters[10] = 0.0;
-//  initialTransformParameters[11] = 0.0;
-
-  //this->SetInitialTransformParameters( initialTransformParameters );
 
   if (m_InitializeWithMask)
   {
@@ -136,7 +116,6 @@ RigidRegistration<ImageType>
 
 
   m_Interpolator = InterpolatorType::New();
-  //m_Interpolator->SetMovingImage(this->GetMovingImage());
   m_Metric = MetricType::New();
   m_Optimizer = OptimizerType::New();
 
@@ -153,11 +132,6 @@ RigidRegistration<ImageType>
   //m_Metric -> UseAllPixelsOn();
   m_Metric -> SetNumberOfSpatialSamples(0.2*this -> GetFixedImageRegion().GetNumberOfPixels());
 
-
-  //std::cout<<"NameOfClass : "<<m_Transform->GetNameOfClass()<<std::endl;
-
- // std::cout<<(m_Transform->GetNameOfClass() == "Euler3DTransform")<<std::endl;
-  //std::cout<<(m_Transform->GetNameOfClass() == "AffineTransform")<<std::endl;
 
   if(std::string(m_Transform->GetNameOfClass()) == "Euler3DTransform")
   {
@@ -211,11 +185,9 @@ RigidRegistration<ImageType>
   }
 
 
-  //m_Optimizer->SetScales( optimizerScales );
+  m_Optimizer->SetScales( optimizerScales );
 
   m_Observer = CommandIterationUpdate::New();
-
-  m_EnableObserver = true;
 
   if (m_EnableObserver)
   {
@@ -233,9 +205,6 @@ RigidRegistration<ImageType>
 
   Superclass::Initialize();
 
-
-  //std::cout<<"Transform Parameters "<<m_Transform -> GetParameters()<<std::endl;
-  //std::cout<<"Transform "<<m_Transform<<std::endl;
 }
 
 /*
