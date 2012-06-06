@@ -264,13 +264,6 @@ void SuperResolutionFilter::Initialize()
 void SuperResolutionFilter::ComputeHRImage()
 {
 
-
-
-
-    // std::string e("testHr3.nii.gz");
-    // btk::ImageHelper< itkImage >::WriteImage(m_ImageHR,e);
-
-
     if(m_ComputeRegistration)
     {
         int numberOfImages = m_ImagesLR.size();
