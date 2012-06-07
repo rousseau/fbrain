@@ -198,6 +198,7 @@ public:
     btkGetMacro(Lambda, float );
     btkSetMacro(Lambda, float );
 
+    btkSetMacro(ComputeRegistration,bool);
 
 
 
@@ -262,6 +263,8 @@ private:
     int m_MedianIBP;
     unsigned int m_IterMax;
     float m_Lambda;
+    double m_Epsilon;
+
 
     //Image information (size, spacing etc.)
     itkImage::SpacingType m_Spacing;
