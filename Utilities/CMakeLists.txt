@@ -141,6 +141,10 @@ ADD_EXECUTABLE(btkImageGaussianFilter btkImageGaussianFilter.cxx
     ${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
 TARGET_LINK_LIBRARIES(btkImageGaussianFilter ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkBinarizeTissueProbabilityMaps btkBinarizeTissueProbabilityMaps.cxx
+    ${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+TARGET_LINK_LIBRARIES(btkBinarizeTissueProbabilityMaps ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -168,4 +172,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkMajorityVoting
                 btkProbabilityMapNormalization
                 btkImageGaussianFilter
+                btkBinarizeTissueProbabilityMaps
         DESTINATION bin)
