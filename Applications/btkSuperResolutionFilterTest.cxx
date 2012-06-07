@@ -111,7 +111,7 @@ int main(int argc, char * argv[])
     TCLAP::ValueArg<std::string> outArg  ("o","output","Super resolution output image",true,"","string",cmd);
 
     TCLAP::SwitchArg    ComputeRegSwitchArg("","noReco","No Reconstruction is performed, the reference 3D image and the transforms files must be set", cmd, false);
-    TCLAP::ValueArg<int>    TransfosTypeSwitchArg("","transfos","Type of Transformation to perform (0: Affine 3D, 1: Euler3D, 2: Affine SliceBySlice, 3: Euler SliceBySlice... ).",false,2,"int",cmd);
+    TCLAP::ValueArg<int>    TransfosTypeSwitchArg("","transfos","Type of Transformation to perform (0: Affine 3D, 1: Euler3D, 2: Affine SliceBySlice, 3: Euler SliceBySlice... ).",false,3,"int",cmd);
     TCLAP::ValueArg<int>    ReconTypeSwitchArg("","RecoType","Type of reconstruction to perform (0: SR 3D, 1: IBP, 2:... ).",false,0,"int",cmd);
 
     TCLAP::ValueArg<int> nlmArg           ("n","nlm","Type of filtering during IBP process (0: no filtering (default), 1: error map filtering, 2: current HR image filtering).", false,0,"int",cmd);
@@ -192,7 +192,7 @@ int main(int argc, char * argv[])
     if(SuperResolutionFilter != NULL)
     {
 
-        inputsLRImages = btk::ImageHelper< itkImage >::ReadImageArray(input);
+       inputsLRImages = btk::ImageHelper< itkImage >::ReadImageArray(input);
        inputsLRMasks = btk::ImageHelper< ImageMaskType >::ReadImageArray(mask);
 
 
@@ -304,6 +304,12 @@ int main(int argc, char * argv[])
         {
             SuperResolutionImage = btk::ImageHelper< itkImage >::ReadImage(refImage);
             SuperResolutionFilter->SetImageHR(SuperResolutionImage);
+            SuperResolutionFilter->SetComputeRegistration(false);
+            //TODO: Verify that transforms are set !
+        }
+        else
+        {
+            SuperResolutionFilter->SetComputeRegistration(true);
         }
         SuperResolutionFilter->SetImagesLR(inputsLRImages);
         SuperResolutionFilter->SetImagesMaskLR(inputsLRMasks);
