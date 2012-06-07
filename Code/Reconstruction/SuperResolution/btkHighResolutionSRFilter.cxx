@@ -28,6 +28,8 @@ void HighResolutionSRFilter::Update()
 
     std::cout<<"Performing super resolution"<<std::endl;
 
+    this->Initialize();
+
     if(m_UseAffineFilter && !m_UseEulerFilter)
     {
         this->DoAffineReconstruction();
