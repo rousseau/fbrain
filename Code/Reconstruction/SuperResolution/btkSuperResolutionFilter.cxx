@@ -93,7 +93,7 @@ int SuperResolutionFilter::Update()
 
     this->Initialize();
 
-    this->ComputeHRImage();
+    //this->ComputeHRImage();
 
     if(m_ImageHR.IsNull())
     {
@@ -183,6 +183,7 @@ void SuperResolutionFilter::SetDefaultParameters()
     m_InterpolationOrderIBP = 5;
     m_IterMax = 5;
     m_ComputeRegistration = true;
+    m_Epsilon = 1e-4;
 }
 //-----------------------------------------------------------------------------------------------------------
 void SuperResolutionFilter::SetParameters(int Nlm, float Beta, int Loop, int MedianIBP, int PsfType,float lambda,int iterMax, int InterpolationOrderIBP, int InterpolationOrderPSF)
@@ -235,15 +236,16 @@ void SuperResolutionFilter::Initialize()
             break;
     }
 
-    if(m_TransformsLR.empty())
-    {
-        m_ComputeRegistration = true;
-    }
-    else
+
+
+    if(m_ImageHR.IsNotNull())
     {
         m_ComputeRegistration = false;
     }
-
+    else
+    {
+        m_ComputeRegistration = true;
+    }
 
 
     m_MasksLR.resize(m_ImagesLR.size());
@@ -266,6 +268,9 @@ void SuperResolutionFilter::ComputeHRImage()
 
     if(m_ComputeRegistration)
     {
+
+        std::cout<<"Compute HR Image with the "<< m_ImagesLR.size() <<" LR Images "<<std::endl;
+
         int numberOfImages = m_ImagesLR.size();
 
         if(m_TransformationType == SLICE_BY_SLICE ||
@@ -324,6 +329,7 @@ void SuperResolutionFilter::ComputeHRImage()
                 throw excpt;
             }
 
+            std::cout<<" Done. "<<std::endl;
             m_ImageHR = m_CreateAffineHighResolutionImage->GetHighResolutionImage();
             m_ImageMaskHR = m_CreateAffineHighResolutionImage->GetImageMaskCombination();
             m_TransformsLR.resize(m_ImagesLR.size());
@@ -387,14 +393,113 @@ void SuperResolutionFilter::ComputeHRImage()
 void SuperResolutionFilter::MotionCorrection()
 {
 
-    m_MotionCorrectionFilter->SetReferenceImage(m_ImageHR);
-    m_MotionCorrectionFilter->SetImagesLR(m_ImagesLR);
-    m_MotionCorrectionFilter->SetMasksLR(m_MasksLR);
-    m_MotionCorrectionFilter->SetImageMaskHR(m_ImageMaskHR);
-    m_MotionCorrectionFilter->SetImagesMaskLR(m_ImagesMaskLR);
-    m_MotionCorrectionFilter->SetTransformsLR(m_TransformsLR);
+    //TODO: Simply this
+    itkImage::Pointer HRold = itkImage::New();
+    itkImage::Pointer HRini = m_ImageHR;
 
-    m_MotionCorrectionFilter->Update();
+    float previousMetric = 0.0;
+    float currentMetric = 0.0;
+
+    for(unsigned int it=1; it<= m_IterMax; it++)
+    {
+
+        std::cout << "Iteration : " << it <<" / "<<m_IterMax<< std::endl; std::cout.flush();
+
+        m_MotionCorrectionFilter->SetReferenceImage(m_ImageHR);
+        m_MotionCorrectionFilter->SetImagesLR(m_ImagesLR);
+        m_MotionCorrectionFilter->SetMasksLR(m_MasksLR);
+        m_MotionCorrectionFilter->SetImageMaskHR(m_ImageMaskHR);
+        m_MotionCorrectionFilter->SetImagesMaskLR(m_ImagesMaskLR);
+        m_MotionCorrectionFilter->SetTransformsLR(m_TransformsLR);
+
+        m_MotionCorrectionFilter->Update();
+
+        // Inject images
+
+        std::cout << "Injecting images ... "; std::cout.flush();
+
+        m_ResampleByInjectionFilter = ResamplerByInjectionType::New();
+
+        for(unsigned int i = 0; i< m_ImagesLR.size(); i++)
+        {
+            m_ResampleByInjectionFilter->AddInput(m_ImagesLR[i]);
+            m_ResampleByInjectionFilter->AddRegion(m_RoisLR[i]);
+
+            //NOTE : Since ResampleByInjection use only SliceBySliceTransform we should do that this way :
+            if(m_TransformationType == AFFINE)
+            {
+                btkAffineSliceBySliceTransform::Pointer transfo = btkAffineSliceBySliceTransform::New();
+                transfo->SetImage(m_ImagesLR[i]);
+                transfo->Initialize(static_cast< itkAffineTransform* >(m_TransformsLR[i].GetPointer()));
+                m_ResampleByInjectionFilter->SetTransform(i, transfo);
+            }
+            else if(m_TransformationType == EULER_3D)
+            {
+                btkEulerSliceBySliceTransform::Pointer transfo = btkEulerSliceBySliceTransform::New();
+                transfo->SetImage(m_ImagesLR[i]);
+                transfo->Initialize(static_cast< itkEulerTransform* >(m_TransformsLR[i].GetPointer()));
+                m_ResampleByInjectionFilter->SetTransform(i, transfo);
+            }
+            else
+            {
+                m_ResampleByInjectionFilter->SetTransform(i,static_cast<btkSliceBySliceTransformBase*>(m_TransformsLR[i].GetPointer()));
+            }
+
+        }
+
+        m_ResampleByInjectionFilter->UseReferenceImageOn();
+        m_ResampleByInjectionFilter->SetReferenceImage(m_ImageHR);
+        m_ResampleByInjectionFilter->SetImageMask(m_ImageMaskHR);
+        m_ResampleByInjectionFilter->Update();
+
+        if(it == 1)
+        {
+            HRold = HRini;
+        }
+        else
+        {
+            HRold = m_ImageHR;
+        }
+
+        m_ImageHR = m_ResampleByInjectionFilter->GetOutput();
+
+        std::cout<<" Done. "<<std::endl;
+
+        //compute error
+
+        typedef itk::Euler3DTransform< double > EulerTransformType;
+        EulerTransformType::Pointer identity = EulerTransformType::New();
+        identity -> SetIdentity();
+
+        typedef itk::LinearInterpolateImageFunction<itkImage,double>     InterpolatorType;
+        typedef itk::NormalizedCorrelationImageToImageMetric< itkImage,itkImage > NCMetricType;
+
+        InterpolatorType::Pointer interpolator = InterpolatorType::New();
+
+        NCMetricType::Pointer nc = NCMetricType::New();
+        nc -> SetFixedImage(  HRold );
+        nc -> SetMovingImage( m_ImageHR );
+        nc -> SetFixedImageRegion( HRold -> GetLargestPossibleRegion() );
+        nc -> SetTransform( identity );
+        nc -> SetInterpolator( interpolator );
+        nc -> Initialize();
+
+        previousMetric = currentMetric;
+        currentMetric = - nc -> GetValue( identity -> GetParameters() );
+        std::cout<<"previousMetric: "<<previousMetric<<", currentMetric: "<<currentMetric<<"\n";
+        double delta = 0.0;
+
+        if (it >= 2)
+          delta = (currentMetric - previousMetric) / previousMetric;
+        else
+          delta = 1;
+
+        if (delta < m_Epsilon) break;
+
+
+    }
+
+
 
 
 

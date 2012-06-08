@@ -60,17 +60,18 @@ public:
 
   void Execute(const itk::Object * object, const itk::EventObject & event)
     {
-      OptimizerPointer optimizer =
-        dynamic_cast< OptimizerPointer >( object );
-      if( ! itk::IterationEvent().CheckEvent( &event ) )
-        {
-        return;
-        }
-      std::cout << optimizer->GetCurrentIteration() << "   ";
-      std::cout << optimizer -> GetCurrentStepLength() << "   ";
-      std::cout << optimizer->GetValue() << "   ";
+      OptimizerPointer optimizer = dynamic_cast< OptimizerPointer >( object );
 
-      std::cout << optimizer->GetCurrentPosition() << std::endl;
+      if( ! itk::IterationEvent().CheckEvent( &event ) )
+      {
+        return;
+      }
+
+      std::cout <<"Iteration : "<< optimizer->GetCurrentIteration() << " |  ";
+      std::cout <<"Step : " << optimizer -> GetCurrentStepLength() << "  | ";
+      std::cout << "Value :" << optimizer->GetValue() << "  | ";
+
+      std::cout <<"Position : "<< optimizer->GetCurrentPosition() << std::endl;
     }
 };
 
