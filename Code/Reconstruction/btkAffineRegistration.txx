@@ -69,18 +69,15 @@ AffineRegistration<ImageType>
 
   // Configure metric
 
-  if (!m_FixedImageMask)
+
+  if (m_FixedImageMask)
   {
-      m_FixedMask = MaskType::New();
-      m_FixedMask -> SetImage(m_FixedImageMask );
-      m_Metric->SetFixedImageMask(m_FixedMask);
+    m_FixedMask = MaskType::New();
+    m_FixedMask -> SetImage( this -> GetFixedImageMask() );
+    m_Metric -> SetFixedImageMask( m_FixedMask );
   }
-  else
-  {
-      m_FixedMask = MaskType::New();
-      m_FixedMask -> SetImage( this -> GetFixedImageMask() );
-      m_Metric -> SetFixedImageMask( m_FixedMask );
-  }
+
+
   m_Metric->SetNumberOfHistogramBins( 24 );
   m_Metric->UseAllPixelsOn();
 

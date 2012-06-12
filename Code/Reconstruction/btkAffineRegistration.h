@@ -144,6 +144,7 @@ public:
 
 
   itkSetObjectMacro(FixedImageMask, ImageMaskType);
+  itkGetObjectMacro(FixedImageMask, ImageMaskType);
 
   /** Set/Get iterations. */
   itkSetMacro(Iterations, unsigned int);
