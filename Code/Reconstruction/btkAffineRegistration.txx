@@ -71,7 +71,9 @@ AffineRegistration<ImageType>
 
   if (!m_FixedImageMask)
   {
-    m_Metric->SetFixedImageMask(m_FixedImageMask);
+      m_FixedMask = MaskType::New();
+      m_FixedMask -> SetImage(m_FixedImageMask );
+      m_Metric->SetFixedImageMask(m_FixedMask);
   }
   else
   {
