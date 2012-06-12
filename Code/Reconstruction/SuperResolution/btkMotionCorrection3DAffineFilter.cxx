@@ -63,7 +63,8 @@ void MotionCorrection3DAffineFilter::DoRegistration()
         m_Affine3DRegistration[im] = Affine3DRegistration::New();
         m_Affine3DRegistration[im]->SetFixedImage(SuperClass::m_ImagesLR[im]);
         m_Affine3DRegistration[im]->SetMovingImage(SuperClass::m_ReferenceImage);
-        m_Affine3DRegistration[im]->SetFixedImageMask(SuperClass::m_MasksLR[im]);
+        //m_Affine3DRegistration[im]->SetFixedImageMask(SuperClass::m_MasksLR[im]);
+        m_Affine3DRegistration[im]->SetFixedImageMask(SuperClass::m_ImagesMaskLR[im]);
         m_Affine3DRegistration[im]->SetTransform(SuperClass::m_TransformsLR[im]);
 
         try

@@ -162,6 +162,7 @@ int main( int argc, char * argv[] )
   typedef MaskType::Pointer  MaskPointer;
 
   MaskPointer mask = MaskType::New();
+  ImageMaskPointer imageMask  = ImageMaskType::New();
 
   if (strcmp(maskFile,"") != 0)
   {
@@ -170,6 +171,8 @@ int main( int argc, char * argv[] )
     maskReader -> Update();
 
     mask -> SetImage( maskReader -> GetOutput() );
+    //FIXME : Due to new affine Registration we must set mask as an image
+    imageMask = maskReader->GetOutput();
   }
 
 
@@ -219,8 +222,12 @@ int main( int argc, char * argv[] )
 
     if (strcmp(maskFile,"") != 0)
     {
-      registration -> SetFixedImageMask( mask );
-      registration -> SetFixedImageRegion( mask -> GetAxisAlignedBoundingBoxRegion() );
+       //FIXME : Set a ImageMask not a mask
+      //registration -> SetFixedImageMask( mask );
+      //registration -> SetFixedImageRegion( mask -> GetAxisAlignedBoundingBoxRegion() );
+
+       registration -> SetFixedImageMask( imageMask );
+       registration -> SetFixedImageRegion( mask -> GetAxisAlignedBoundingBoxRegion() );
     } else
       {
         registration -> SetFixedImageRegion( b0[0] -> GetLargestPossibleRegion() );
