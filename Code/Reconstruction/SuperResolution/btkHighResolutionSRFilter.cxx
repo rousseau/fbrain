@@ -52,6 +52,7 @@ void HighResolutionSRFilter::Initialize()
     if(!m_TransformsLR.empty())
     {
         NameOfTransforms = m_TransformsLR[0]->GetNameOfClass();
+        //std::cout<<NameOfTransforms<<std::endl;
 
         if(NameOfTransforms == "SliceBySliceTransform" ||
            NameOfTransforms == "EulerSliceBySliceTransform")
@@ -72,7 +73,7 @@ void HighResolutionSRFilter::Initialize()
                 m_UseEulerFilter = false;
                 m_UseSliceBySlice = false;
         }
-        else if(NameOfTransforms == "EulerTransform")
+        else if(NameOfTransforms == "Euler3DTransform")
         {
                 m_UseAffineFilter = false;
                 m_UseEulerFilter = true;
