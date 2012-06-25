@@ -1,7 +1,7 @@
     \section{Development}
     This part contain all informations needed to develop new programs in BTK.
 
-    \subsection{Btk tree}
+    \subsection{BTK tree}
     BTK is build using a tree.
     The source code is contained into the \textit{Code} folder.
     Programs are respectively into \textit{Applications} and \textit{Utilities}.
@@ -10,7 +10,7 @@
     \begin{figure}[H]
      \centering
       \includegraphics[height=0.5\textwidth]{Btk_tree.eps}
-      \caption{Tree of Btk.}
+      \caption{Tree of BTK.}
     \end{figure}
 
     \subsection{Standards}
@@ -79,9 +79,9 @@
                  
       typedef itk::Image<short, 3> itkImage;
       itkImage::Pointer image = itkImage::New();
-      std::string name("MyImage");
+      std::string filename("MyImage.nii.gz");
 
-      btk::ImageHelper<itkImage>::WriteImage(image, name);
+      btk::ImageHelper<itkImage>::WriteImage(image, filename);
 
       \end{verbatim}
     \end{itemize}
@@ -94,8 +94,8 @@
       \begin{verbatim}
       #include "btkFileHelper.h"
 
-      std::string name("MyName");
-      bool fileExist = btk::FileHelper::FileExist(name);
+      std::string filename("MyName");
+      bool fileExist = btk::FileHelper::FileExist(filename);
       \end{verbatim}
 
     \end{itemize}
@@ -112,9 +112,9 @@
      Transform::Pointer transform = Transform::New();
      transform->SetIdentity();
 
-     std string name e("MyName");
+     std string filename("MyName");
 
-     btk::IOTransformHelper<Transform>::WriteTransform(transform,name);
+     btk::IOTransformHelper<Transform>::WriteTransform(transform,filename);
       
       \end{verbatim}
 
@@ -225,8 +225,8 @@ namespace btk
 
 \subsection{Create a new program}
 First of all, you should know that in Btk we have two kind of programs, the first is the \textit{Application} programs which contain the importants programs (for the research project)
-and the second is \textit{Utilities} which contain tools and Helpfull programs.\\
-Creating a new executable program is separated into two step.
+and the second is \textit{Utilities} which contain tools and Helpful programs.\\
+Creating a new executable program is separated into two steps.
 In first you should create a file.cxx which will contained your main
 Next you should add your program (and the nessesary includes ) in the corresponding CMake file.\\
 
