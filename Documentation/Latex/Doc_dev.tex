@@ -1,0 +1,156 @@
+  \documentclass[a4paper,10pt]{article}
+
+  \usepackage{fullpage}
+  \usepackage{xcolor}
+  \usepackage{graphicx}
+  \usepackage{amsmath}
+  \usepackage{amssymb}
+  \usepackage{hyperref}
+  \usepackage{float}
+  \hypersetup{
+      colorlinks=true,       % false: boxed links; true: colored links
+      linkcolor=blue,          % color of internal links
+      citecolor=green,        % color of links to bibliography
+      filecolor=magenta,      % color of file links
+      urlcolor=cyan           % color of external links
+  }
+
+  % Title Page
+  \title{BTK developers documentation}
+  \author{Fbrain ERC project: Computational Anatomy of Fetal Brain}
+
+
+  \begin{document}
+  \maketitle
+  \tableofcontents
+  %\begin{abstract}
+  %\end{abstract}
+
+  \section{Introduction}
+
+  BTK stands for Baby Brain Toolkit. This toolkit is developed in the context of
+  the Fbrain ERC project: ``Computational Anatomy of Fetal
+  Brain''\footnote{http://lsiit-miv.u-strasbg.fr/miv/index.php?contenu=erc}. 
+  Studies about brain maturation aim at providing a better understanding of brain
+  development and links between brain changes and cognitive development. Such
+  studies are of great interest for diagnosis help and clinical course of
+  development and treatment of illnesses. Several teams have begun to make 3D maps
+  of developing brain structures from children to young adults. However, working
+  out the development of fetal and neonatal brain remains an open issue. This
+  project aims at jumping over several theoretical and practical barriers and at
+  going beyond the formal description of the brain maturation thanks to the
+  development of a realistic numerical model of brain aging.
+
+  \subsection{Copyright}
+  This software is governed by the CeCILL-B license under French law and
+  abiding by the rules of distribution of free software.  You can  use, 
+  modify and/ or redistribute the software under the terms of the CeCILL-B
+  license as circulated by CEA, CNRS and INRIA at the following URL: \url{http://www.cecill.info}. 
+
+  As a counterpart to the access to the source code and rights to copy,
+  modify and redistribute granted by the license, users are provided only
+  with a limited warranty  and the software's author,  the holder of the
+  economic rights,  and the successive licensors  have only  limited
+  liability. 
+
+  In this respect, the user's attention is drawn to the risks associated
+  with loading,  using,  modifying and/or developing or reproducing the
+  software by the user in light of its specific status of free software,
+  that may mean  that it is complicated to manipulate,  and  that  also
+  therefore means  that it is reserved for developers  and  experienced
+  professionals having in-depth computer knowledge. Users are therefore
+  encouraged to load and test the software's suitability as regards their
+  requirements in conditions enabling the security of their systems and/or 
+  data to be ensured and,  more generally, to use and operate it in the 
+  same conditions as regards security. 
+
+  Any researcher reporting results using BTK should acknowledge this software by citing the following article:
+  \begin{enumerate}
+  \item F. Rousseau, E. Oubel, J. Pontabry, C. Studholme, M. Koob, J.-L. Dietemann: BTK: An Open-Source Toolkit for Fetal Brain MR Image Processing. Research Report, October 2011, available on \href{http://hal.archives-ouvertes.fr/index.php?halsid=d0mrvug09qhhou49vgaqc6ogd3&view_this_doc=hal-00671183&version=1}{HAL}.
+  \end{enumerate}
+
+  \subsection{Installation}
+
+  \subsubsection{Dependencies}
+
+  Baby Brain Toolkit (BTK) is written in C++ and needs the following packages\footnote{BTK has been tested under Debian 5.0 and MacOSX 10.6.8}:
+  \begin{itemize}
+  \item \href{http://www.cmake.org}{CMake}, \href{http://tclap.sourceforge.net}{Tclap}, \href{http://openmp.org}{OpenMP}, \href{http://www.vtk.org}{VTK}, ANN (www.cs.umd.edu/\string~mount/ANN) and Doxygen. These
+  libraries can be installed using the following command line: 
+  \begin{itemize}
+  \item for debian-based distributions: \texttt{apt-get install cmake
+  cmake-curses-gui libtclap-dev libgomp1 libvtk5-dev libann-dev doxygen}
+  \item for MacOSX using macports\footnote{When configuring in cmake, please use /opt/local/include for TCLAP\_DIRECTORY}: \texttt{port install cmake tclap vtk5 libANN doxygen}
+  \end{itemize}
+  \item Install Git: this library can be installed using the following command line : 
+  \begin{itemize}
+  \item for debian-based distribution: \texttt{apt-get install git-core}
+  \item for MacOSX using macports: \texttt{port install git-core}
+  \end{itemize}
+  \item \href{http://www.itk.org/ITK/resources/software.html}{Insight Toolkit (ITK) version 4}
+  \begin{itemize}
+  \item Download the tar.gz archive of ITK v4.0
+  \item Extract the archive 
+  \item Then open a terminal and type :
+  \end{itemize}
+  \begin{verbatim}
+  mkdir ITK-build
+  cd ITK-build
+  ccmake ../(your-ITK-Source-folder)/
+  \end{verbatim}
+  This will bring up the CMake configuration screen. Press \texttt{[c]} for
+  configure and then use \texttt{[t]} to toggle the advanced mode. Make the
+  following changes:
+  \begin{verbatim}
+  BUILD_TESTING = OFF
+  CMAKE_BUILD_TYPE = Release
+  ITK_USE_REVIEW = ON
+  ITK_BUILD_ALL_MODULES = ON
+  ITKV3_COMPATIBILITY = ON
+  BUILD_DOCUMENTATION = OFF
+  \end{verbatim}
+  Then press \texttt{[c]} to configure and \texttt{[g]} to generate the make file.
+  Finally, go to the build folder of ITK (ITK-build) and type \texttt{make} at the prompt to obtain the final build of ITK.
+
+  \end{itemize}
+
+  \subsubsection{Download the BTK sources}
+
+  \begin{itemize}
+  \item Get the BTK sources:
+    \begin{itemize}
+    \item For the Latest stable version :
+    \begin{verbatim}
+    git clone https://github.com/rousseau/fbrain.git
+    git checkout Btk_1.0 
+    \end{verbatim}
+    \item For the current development version :
+    \begin{verbatim}
+    git clone https://github.com/rousseau/fbrain.git
+    \end{verbatim}  
+    \end{itemize}
+  \item Then for compiling:
+  \begin{verbatim}
+  mkdir fbrain-build
+  cd fbrain-build
+  ccmake ../fbrain
+  make
+  \end{verbatim}
+
+  \end{itemize}
+
+  Most of the programs of the BTK suite use the OpenMP library for multi-threading
+  purpose. The number of cores used can be tuned using the following command line
+  (in this example, 4 cores will be used): \texttt{export OMP\_NUM\_THREADS=4}
+
+
+  \input{development}
+
+
+  \section*{Acknowledgment}
+  \small{The research leading to these results has received funding from the
+  European Research Council under the European Community’s Seventh Framework
+  Programme (FP7/2007-2013 Grant Agreement no. 207667).}
+
+
+  \end{document}

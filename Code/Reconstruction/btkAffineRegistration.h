@@ -143,7 +143,8 @@ public:
   }
 
 
-  itkSetObjectMacro(FixedImageMask, FixedImageMaskType);
+  itkSetObjectMacro(FixedImageMask, ImageMaskType);
+  itkGetObjectMacro(FixedImageMask, ImageMaskType);
 
   /** Set/Get iterations. */
   itkSetMacro(Iterations, unsigned int);
@@ -188,7 +189,7 @@ private:
   unsigned int m_Iterations;
   bool m_EnableObserver;
 
-  FixedImageMaskPointer m_FixedImageMask;
+  ImageMaskPointer m_FixedImageMask;
 
   MaskPointer          m_FixedMask;
 

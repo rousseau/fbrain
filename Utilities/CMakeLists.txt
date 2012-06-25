@@ -6,6 +6,7 @@ INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Reconstruction)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/DTI)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/InputOutput)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Tools)
+INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Transformations)
 
 ADD_EXECUTABLE(btkModifyImageUsingLookUpTable btkModifyImageUsingLookUpTable.cxx )
 TARGET_LINK_LIBRARIES(btkModifyImageUsingLookUpTable ${ITK_LIBRARIES} )
@@ -145,6 +146,12 @@ ADD_EXECUTABLE(btkBinarizeTissueProbabilityMaps btkBinarizeTissueProbabilityMaps
     ${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
 TARGET_LINK_LIBRARIES(btkBinarizeTissueProbabilityMaps ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkSimulateMotionSliceBySlice btkSimulateMotionSliceBySlice.cxx
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceRigidRegistration.h
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceAffineRegistration.h
+${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+TARGET_LINK_LIBRARIES(btkSimulateMotionSliceBySlice ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -173,4 +180,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkProbabilityMapNormalization
                 btkImageGaussianFilter
                 btkBinarizeTissueProbabilityMaps
+                btkSimulateMotionSliceBySlice
         DESTINATION bin)
