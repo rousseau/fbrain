@@ -42,126 +42,132 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "itkImage.h"
 #include "itkCropImageFilter.h"
 
+/* Btk includes */
+#include "btkImageHelper.h"
+
 
 
 template<unsigned int imageDimension>
-int CropImageUsingMask(std::string input_file, std::string output_file, std::string mask_file)
+void CropImageUsingMask(std::string input_file, std::string output_file, std::string mask_file)
 {
-  //ITK declaration
-  typedef short PixelType;
-  typedef itk::Image< PixelType, imageDimension > ImageType;
-  typedef itk::ImageFileReader< ImageType >  ReaderType;
-  typedef itk::ImageFileWriter< ImageType >  WriterType;
+    //ITK declaration
+    typedef short PixelType;
+    typedef itk::Image< PixelType, imageDimension > ImageType;
+    typedef itk::ImageFileReader< ImageType >  ReaderType;
+    typedef itk::ImageFileWriter< ImageType >  WriterType;
 
-  typedef itk::Image< PixelType, 3 >         MaskType;
-  typedef itk::ImageFileReader< MaskType >  MaskReaderType;
+    typedef itk::Image< PixelType, 3 >         MaskType;
+    typedef itk::ImageFileReader< MaskType >  MaskReaderType;
 
-  
-  //Reading the input image
-  typename ReaderType::Pointer input_reader = ReaderType::New();
-  input_reader->SetFileName( input_file  );
-  input_reader->Update();
 
-  //Reading the mask
-  typename MaskReaderType::Pointer mask_reader = MaskReaderType::New();
-  mask_reader->SetFileName( mask_file  );
-  mask_reader->Update();
+    //Reading the input image
+    typename ImageType::Pointer image = btk::ImageHelper<ImageType>::ReadImage(input_file);
 
-  
-  typedef itk::CropImageFilter< ImageType, ImageType >  CropImageFilterType;
-  typename CropImageFilterType::Pointer cropFilter = CropImageFilterType::New();
 
-  //find bounding box using the mask image
-  typename ImageType::RegionType region;
-  region.SetSize(input_reader->GetOutput()->GetLargestPossibleRegion().GetSize());
-  typename ImageType::SizeType imageSize = region.GetSize();  
-  typename MaskType::IndexType pixelIndex;	
-  typename ImageType::SizeType downSize, upSize;
+    //Reading the mask
+    MaskType::Pointer mask = btk::ImageHelper<MaskType>::ReadImage(mask_file);
 
-  for(uint i=0; i<imageDimension; i++){
-    downSize[i] = imageSize[i]-1;
-    upSize[i] = 0;
-  }
-  
-  //Looking for the size of the bounding box using the mask
-  for(uint k=0;k<imageSize[2];k++)
-    for(uint j=0;j<imageSize[1];j++)
-      for(uint i=0;i<imageSize[0];i++)
-      {
-	pixelIndex[0] = i;
-	pixelIndex[1] = j;
-	pixelIndex[2] = k;
-        if(mask_reader->GetOutput()->GetPixel(pixelIndex) != 0)
-        {
-          if(i<downSize[0]) downSize[0] = i;
-          if(j<downSize[1]) downSize[1] = j;
-          if(k<downSize[2]) downSize[2] = k;
-          if(i>upSize[0]) upSize[0] = i;
-          if(j>upSize[1]) upSize[1] = j;
-          if(k>upSize[2]) upSize[2] = k;
-        }
-      }
-  if(imageDimension == 4){
-    downSize[3]= 0;
-    upSize[3]  = imageSize[3]-1;
-  }
-  std::cout<<"Bounding box : ("<<downSize[0]<<","<<downSize[1]<<","<<downSize[2]<<") (";
-  std::cout<<upSize[0]<<","<<upSize[1]<<","<<upSize[2]<<")\n";
 
-  for(uint i=0; i<imageDimension; i++)
-    upSize[i] = imageSize[i] -1 - upSize[i];
+    typedef itk::CropImageFilter< ImageType, ImageType >  CropImageFilterType;
+    typename CropImageFilterType::Pointer cropFilter = CropImageFilterType::New();
 
-  cropFilter->SetInput( input_reader->GetOutput() );
-  cropFilter->SetLowerBoundaryCropSize( downSize );
-  cropFilter->SetUpperBoundaryCropSize( upSize );
-  cropFilter->UpdateLargestPossibleRegion();      
+    //find bounding box using the mask image
+    typename ImageType::RegionType region;
+    region.SetSize(image->GetLargestPossibleRegion().GetSize());
+    typename ImageType::SizeType imageSize = region.GetSize();
+    typename MaskType::IndexType pixelIndex;
+    typename ImageType::SizeType downSize, upSize;
 
-  typename WriterType::Pointer writer = WriterType::New();
-  writer->SetFileName( output_file ); 
-  writer->SetInput( cropFilter->GetOutput() ); 
-  writer->Update();
-  
-  return 0;
-  
+    for(unsigned int i=0; i<imageDimension; i++)
+    {
+        downSize[i] = imageSize[i]-1;
+        upSize[i] = 0;
+    }
+
+    //Looking for the size of the bounding box using the mask
+    for(unsigned int k=0;k<imageSize[2];k++)
+        for(unsigned int j=0;j<imageSize[1];j++)
+            for(unsigned int i=0;i<imageSize[0];i++)
+            {
+                pixelIndex[0] = i;
+                pixelIndex[1] = j;
+                pixelIndex[2] = k;
+                if(mask->GetPixel(pixelIndex) != 0)
+                {
+                    if(i<downSize[0]) downSize[0] = i;
+                    if(j<downSize[1]) downSize[1] = j;
+                    if(k<downSize[2]) downSize[2] = k;
+                    if(i>upSize[0]) upSize[0] = i;
+                    if(j>upSize[1]) upSize[1] = j;
+                    if(k>upSize[2]) upSize[2] = k;
+                }
+            }
+
+    if(imageDimension == 4)
+    {
+        downSize[3]= 0;
+        upSize[3]  = imageSize[3]-1;
+    }
+
+    std::cout<<"Bounding box : ("<<downSize[0]<<","<<downSize[1]<<","<<downSize[2]<<") (";
+    std::cout<<upSize[0]<<","<<upSize[1]<<","<<upSize[2]<<")"<<std::endl;
+
+    for(unsigned int i=0; i<imageDimension; i++)
+    {
+        upSize[i] = imageSize[i] -1 - upSize[i];
+    }
+
+    cropFilter->SetInput( image );
+    cropFilter->SetLowerBoundaryCropSize( downSize );
+    cropFilter->SetUpperBoundaryCropSize( upSize );
+    cropFilter->UpdateLargestPossibleRegion();
+
+    btk::ImageHelper<ImageType>::WriteImage(cropFilter->GetOutput(),output_file);
+
 }
 
 
 int main(int argc, char** argv)
 {
-  try {  
+    try {
 
-  TCLAP::CmdLine cmd("btkCropImageUsingMask: Crop an image (3D or 4D) using a 3D mask (non-zero values)", ' ', "1.0", true);
+        TCLAP::CmdLine cmd("btkCropImageUsingMask: Crop an image (3D or 4D) using a 3D mask (non-zero values)", ' ', "1.0", true);
 
-  TCLAP::ValueArg<std::string> inputImageArg("i","image_file","input image file (short)",true,"","string", cmd);
-  TCLAP::ValueArg<std::string> outputImageArg("o","output_file","output image file (short)",true,"","string", cmd);
-  TCLAP::ValueArg<std::string> inputMaskArg("m","mask_file","filename of the mask image (dimension = 3)",false,"","string", cmd);
-  TCLAP::ValueArg< int > dimArg("d","dim","image dimension of the input image (default is 3)",false,3,"int", cmd);
-  
-  // Parse the args.
-  cmd.parse( argc, argv );
-  
-  // Get the value parsed by each arg. 
-  std::string input_file       = inputImageArg.getValue();
-  std::string output_file      = outputImageArg.getValue();
-  std::string mask_file        = inputMaskArg.getValue();
-  unsigned int dim             = (uint) dimArg.getValue();  
-    
-  switch (dim){
-    case 3:  
-      CropImageUsingMask<3>(input_file, output_file, mask_file);
-      break;
-    case 4:  
-      CropImageUsingMask<4>(input_file, output_file, mask_file);
-      break;
-    default:
-      std::cerr << "unsupported dimension" << std::endl;
-      exit( EXIT_FAILURE );
-  }
-  
-  return 0;
-  
-  } catch (TCLAP::ArgException &e)  // catch any exceptions
-  { std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; }
+        TCLAP::ValueArg<std::string> inputImageArg("i","image_file","input image file (short)",true,"","string", cmd);
+        TCLAP::ValueArg<std::string> outputImageArg("o","output_file","output image file (short)",true,"","string", cmd);
+        TCLAP::ValueArg<std::string> inputMaskArg("m","mask_file","filename of the mask image (dimension = 3)",false,"","string", cmd);
+        TCLAP::ValueArg< int > dimArg("d","dim","image dimension of the input image (default is 3)",false,3,"int", cmd);
+
+        // Parse the args.
+        cmd.parse( argc, argv );
+
+        // Get the value parsed by each arg.
+        std::string input_file       = inputImageArg.getValue();
+        std::string output_file      = outputImageArg.getValue();
+        std::string mask_file        = inputMaskArg.getValue();
+        unsigned int dim             = (unsigned int) dimArg.getValue();
+
+        switch (dim)
+        {
+        case 3:
+            CropImageUsingMask<3>(input_file, output_file, mask_file);
+            break;
+        case 4:
+            CropImageUsingMask<4>(input_file, output_file, mask_file);
+            break;
+        default:
+            std::cerr << "unsupported dimension" << std::endl;
+            exit( EXIT_FAILURE );
+        }
+
+        return EXIT_SUCCESS;
+
+    }
+
+    catch (TCLAP::ArgException &e)  // catch any exceptions
+    {
+        std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;
+    }
 }
 
 
