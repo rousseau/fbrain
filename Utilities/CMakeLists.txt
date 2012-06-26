@@ -152,6 +152,10 @@ ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceAffineRegistration.h
 ${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
 TARGET_LINK_LIBRARIES(btkSimulateMotionSliceBySlice ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkImageSubtract btkImageSubtract.cxx
+${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+TARGET_LINK_LIBRARIES(btkImageSubtract ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -181,4 +185,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkImageGaussianFilter
                 btkBinarizeTissueProbabilityMaps
                 btkSimulateMotionSliceBySlice
+                btkImageSubtract
         DESTINATION bin)
