@@ -156,6 +156,11 @@ ADD_EXECUTABLE(btkImageSubtract btkImageSubtract.cxx
 ${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
 TARGET_LINK_LIBRARIES(btkImageSubtract ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkApplyMaskToImage btkApplyMaskToImage.cxx
+${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+
+TARGET_LINK_LIBRARIES(btkApplyMaskToImage ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -186,4 +191,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkBinarizeTissueProbabilityMaps
                 btkSimulateMotionSliceBySlice
                 btkImageSubtract
+                btkApplyMaskToImage
         DESTINATION bin)
