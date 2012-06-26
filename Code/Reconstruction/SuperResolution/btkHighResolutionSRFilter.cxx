@@ -49,42 +49,91 @@ void HighResolutionSRFilter::Initialize()
 {
     std::string NameOfTransforms;
 
+
+
     if(!m_TransformsLR.empty())
     {
-        NameOfTransforms = m_TransformsLR[0]->GetNameOfClass();
-        //std::cout<<NameOfTransforms<<std::endl;
-
-        if(NameOfTransforms == "SliceBySliceTransform" ||
-           NameOfTransforms == "EulerSliceBySliceTransform")
+        switch(SuperClass::m_TransformType)
         {
+        default:
             m_UseEulerFilter = true;
             m_UseAffineFilter = false;
             m_UseSliceBySlice = true;
-        }
-        else if(NameOfTransforms == "AffineSliceBySliceTransform" )
-        {
+            break;
+
+        case AFFINE:
+            m_UseAffineFilter = true;
+            m_UseEulerFilter = false;
+            m_UseSliceBySlice = false;
+            break;
+
+        case EULER_3D:
+            m_UseAffineFilter = false;
+            m_UseEulerFilter = true;
+            m_UseSliceBySlice = false;
+            break;
+
+        case SLICE_BY_SLICE:
+            m_UseEulerFilter = true;
+            m_UseAffineFilter = false;
+            m_UseSliceBySlice = true;
+            break;
+
+        case SLICE_BY_SLICE_AFFINE:
             m_UseAffineFilter = true;
             m_UseEulerFilter = false;
             m_UseSliceBySlice = true;
-        }
-        else if(NameOfTransforms == "AffineTransform")
-        {
-                m_UseAffineFilter = true;
-                m_UseEulerFilter = false;
-                m_UseSliceBySlice = false;
-        }
-        else if(NameOfTransforms == "Euler3DTransform")
-        {
-                m_UseAffineFilter = false;
-                m_UseEulerFilter = true;
-                m_UseSliceBySlice = false;
-        }
+            break;
 
-        else
-        {
-            btkException("Wrong type of Transformation !");
+        case SLICE_BY_SLICE_EULER:
+            m_UseEulerFilter = true;
+            m_UseAffineFilter = false;
+            m_UseSliceBySlice = true;
+            break;
+
+
+
         }
     }
+
+
+//Old Version
+//FIXME : When affine the name is SliceBySlice
+
+//        NameOfTransforms = m_TransformsLR[0]->GetNameOfClass();
+//        std::cout<<NameOfTransforms<<std::endl;
+
+//        if(NameOfTransforms == "SliceBySliceTransform" ||
+//           NameOfTransforms == "EulerSliceBySliceTransform")
+//        {
+//            m_UseEulerFilter = true;
+//            m_UseAffineFilter = false;
+//            m_UseSliceBySlice = true;
+//        }
+//        else if(NameOfTransforms == "AffineSliceBySliceTransform" )
+//        {
+//            m_UseAffineFilter = true;
+//            m_UseEulerFilter = false;
+//            m_UseSliceBySlice = true;
+//        }
+//        else if(NameOfTransforms == "AffineTransform")
+//        {
+//                m_UseAffineFilter = true;
+//                m_UseEulerFilter = false;
+//                m_UseSliceBySlice = false;
+//        }
+//        else if(NameOfTransforms == "Euler3DTransform")
+//        {
+//                m_UseAffineFilter = false;
+//                m_UseEulerFilter = true;
+//                m_UseSliceBySlice = false;
+//        }
+
+//        else
+//        {
+//            btkException("Wrong type of Transformation !");
+//        }
+//    }
     else
     {
         btkException("Transforms are not set !");
@@ -225,11 +274,11 @@ void HighResolutionSRFilter::DoRigidReconstruction()
         {
             if(m_UseSliceBySlice)
             {
-                resampler -> SetTransform(i, j, dynamic_cast<btkEulerSliceBySliceTransform*>(SuperClass::m_TransformsLR[i].GetPointer())-> GetSliceTransform(j) ) ;
+                resampler -> SetTransform(i, j, static_cast<btkEulerSliceBySliceTransform*>(SuperClass::m_TransformsLR[i].GetPointer())-> GetSliceTransform(j) ) ;
             }
             else
             {
-                resampler -> SetTransform(i, j, dynamic_cast<itkEulerTransform*>(SuperClass::m_TransformsLR[i].GetPointer()) ) ;
+                resampler -> SetTransform(i, j, static_cast<itkEulerTransform*>(SuperClass::m_TransformsLR[i].GetPointer()) ) ;
             }
 
 

@@ -26,7 +26,13 @@ void  MotionCorrectionSliceBySliceEulerFilter::Update()
     }
 
     this->Initialize();
+
+
+
     this->DoRegistration();
+
+
+
 
 }
 //-----------------------------------------------------------------------------------------------------------
@@ -41,7 +47,7 @@ void  MotionCorrectionSliceBySliceEulerFilter::Initialize()
 void  MotionCorrectionSliceBySliceEulerFilter::DoRegistration()
 {
 
-    unsigned int im = 0;
+   unsigned int im;
     #pragma omp parallel for private(im) schedule(dynamic)
 
     for(im = 0; im< SuperClass::m_ImagesLR.size(); im++)
@@ -52,6 +58,7 @@ void  MotionCorrectionSliceBySliceEulerFilter::DoRegistration()
         m_SliceBySliceRegistration[im]->SetImageMask(SuperClass::m_ImagesMaskLR[im]);
         btkSliceBySliceTransformBase* transfo = reinterpret_cast<btkSliceBySliceTransformBase*>(m_TransformsLR[im].GetPointer());
         m_SliceBySliceRegistration[im]->SetTransform(transfo);
+
 
         try
         {

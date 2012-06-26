@@ -48,7 +48,6 @@
 #include "btkMacro.h"
 #include "btkSuperResolutionType.h"
 
-
 /* OTHERS */
 #include "iostream"
 
@@ -64,8 +63,6 @@ public:
     ~MotionCorrectionFilter(){};
 
      virtual void Update() = 0;
-
-
 
 
     // GETTER/SETTER :

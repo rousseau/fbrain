@@ -258,6 +258,7 @@ ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecision
     IndexType inputIndex = m_InputImageRegion[im].GetIndex();
     SizeType  inputSize  = m_InputImageRegion[im].GetSize();
 
+    //TODO: Can we parallelize this ?
     //Iteration over the slices of the LR images
     for ( unsigned int i=inputIndex[2]; i < inputIndex[2] + inputSize[2]; i++ )
     {
@@ -325,6 +326,7 @@ ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecision
 
               value = gaussian->Evaluate( rotPoint );
 
+              //TODO: check if this is fast
               nbIt.SetPixel(i, fixedIt.Get() *value + nbIt.GetPixel(i) );
               nbWtIt.SetPixel(i, value + nbWtIt.GetPixel(i) );
             }
@@ -350,6 +352,7 @@ ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecision
 
                 value = gaussian->Evaluate( rotPoint );
 
+                //TODO: check if this is fast
                 nbIt.SetPixel(i, fixedIt.Get() *value + nbIt.GetPixel(i) );
                 nbWtIt.SetPixel(i, value + nbWtIt.GetPixel(i) );
               }

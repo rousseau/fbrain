@@ -73,6 +73,7 @@ int main(int argc, char * argv[])
 
 
     typedef float  PixelType;
+    //typedef short  PixelType;
 
     typedef itk::Image< PixelType, Dimension >  itkImage;
 
@@ -184,6 +185,7 @@ int main(int argc, char * argv[])
     itk::TransformFactory< MatrixTransformType >::RegisterTransform();
     itk::TransformFactory< btkAffineSliceBySliceTransform >::RegisterTransform();
     itk::TransformFactory< btkEulerSliceBySliceTransform >::RegisterTransform();
+    itk::TransformFactory< btkOldSliceBySliceTransform >::RegisterTransform();
 
     std::cout<<"Testing SuperResolution Pipeline :"<<std::endl;
 
@@ -278,22 +280,61 @@ int main(int argc, char * argv[])
                    if(strcmp(className,"AffineSliceBySliceTransform") == 0)
                    {
                        inputsLRTransfos[i] = btkAffineSliceBySliceTransform::New();
-                       reinterpret_cast<btkAffineSliceBySliceTransform* >(inputsLRTransfos[i].GetPointer())->SetImage(inputsLRImages[i]);
                        inputsLRTransfos[i] = dynamic_cast< btkAffineSliceBySliceTransform* >(titr->GetPointer());
-
+                       reinterpret_cast<btkAffineSliceBySliceTransform* >(inputsLRTransfos[i].GetPointer())->SetImage(inputsLRImages[i]);
                    }
 
-                   if(strcmp(className,"EulerSliceBySliceTransform") == 0)
+                   if(strcmp(className,"EulerSliceBySliceTransform") == 0 || strcmp(className,"SliceBySliceTransform") == 0)
                    {
                        inputsLRTransfos[i] = btkEulerSliceBySliceTransform::New();
-                       reinterpret_cast<btkEulerSliceBySliceTransform* >(inputsLRTransfos[i].GetPointer())->SetImage(inputsLRImages[i]);
-                       inputsLRTransfos[i] = dynamic_cast< btkEulerSliceBySliceTransform* >(titr->GetPointer());
+                       inputsLRTransfos[i] = static_cast< btkEulerSliceBySliceTransform* >(titr->GetPointer());
+                       static_cast<btkEulerSliceBySliceTransform* >(inputsLRTransfos[i].GetPointer())->SetImage(inputsLRImages[i]);
+                       std::cout<<inputsLRTransfos[i]<<std::endl;
+
                    }
                }
             }
             else
             {
+                // If transfo doesn't exist we must compute them and write them
+                computeTransfo = true;
+//                   itkAffineTransformation::Pointer affine = itkAffineTransformation::New();
+//                   affine->SetIdentity();
+//                   itkEulerTransformation::Pointer euler = itkEulerTransformation::New();
+//                   euler->SetIdentity();
 
+                switch(transfosType)
+                {
+                case btk::AFFINE:
+                    inputsLRTransfos[i] = itkAffineTransformation::New();
+
+                    break;
+
+                case btk::EULER_3D:
+                    inputsLRTransfos[i] = itkEulerTransformation::New();
+
+                    break;
+
+                case btk::SLICE_BY_SLICE_AFFINE:
+                    inputsLRTransfos[i] = btkAffineSliceBySliceTransform::New();
+                    reinterpret_cast< btkAffineSliceBySliceTransform*>(inputsLRTransfos[i].GetPointer())->SetImage(inputsLRImages[i]);
+                    reinterpret_cast<btkAffineSliceBySliceTransform* >(inputsLRTransfos[i].GetPointer())->Initialize();
+                    break;
+
+                case btk::SLICE_BY_SLICE_EULER:
+                    inputsLRTransfos[i] = btkEulerSliceBySliceTransform::New();
+                    reinterpret_cast<btkEulerSliceBySliceTransform* >(inputsLRTransfos[i].GetPointer())->SetImage(inputsLRImages[i]);
+                    reinterpret_cast<btkEulerSliceBySliceTransform* >(inputsLRTransfos[i].GetPointer())->Initialize();
+                    break;
+
+                default:
+                    inputsLRTransfos[i] = btkEulerSliceBySliceTransform::New();
+                    reinterpret_cast<btkEulerSliceBySliceTransform* >(inputsLRTransfos[i].GetPointer())->SetImage(inputsLRImages[i]);
+                    reinterpret_cast<btkEulerSliceBySliceTransform*>(inputsLRTransfos[i].GetPointer())->Initialize();
+                   break;
+
+
+                }
             }
         }
 
@@ -311,9 +352,18 @@ int main(int argc, char * argv[])
         {
             SuperResolutionFilter->SetComputeRegistration(true);
         }
+
+
+
+        if(!computeTransfo)
+        {
+           SuperResolutionFilter->SetUseMotionCorrection(false);
+        }
+
         SuperResolutionFilter->SetImagesLR(inputsLRImages);
         SuperResolutionFilter->SetImagesMaskLR(inputsLRMasks);
         SuperResolutionFilter->SetTransformationType(transfosType);
+        std::cout<<inputsLRTransfos[0]<<std::endl;
         SuperResolutionFilter->SetTransformsLR(inputsLRTransfos);
         //SuperResolutionFilter->SetTransformsLRSbS(inputsLRTransfos);
 
@@ -347,7 +397,12 @@ int main(int argc, char * argv[])
 
         std::vector<TransformType::Pointer> transfos = SuperResolutionFilter->GetTransformsLR();
 
-        btk::IOTransformHelper< TransformType >::WriteTransformArray(transfos,transform);
+        std::cout<<transfos[0]<<std::endl;
+
+        if(computeTransfo)
+        {
+            btk::IOTransformHelper< TransformType >::WriteTransformArray(transfos,transform);
+        }
 
 
     }

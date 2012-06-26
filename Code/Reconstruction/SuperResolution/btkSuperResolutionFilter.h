@@ -200,6 +200,8 @@ public:
 
     btkSetMacro(ComputeRegistration,bool);
 
+    btkSetMacro(UseMotionCorrection,bool);
+
 
 
     void SetParameters(int Nlm, float Beta, int Loop, int MedianIBP, int PsfType,float lambda,int iterMax, int InterpolationOrderIBP, int InterpolationOrderPSF);
@@ -282,6 +284,7 @@ private:
 
 
     bool       m_ComputeRegistration;
+    bool       m_UseMotionCorrection;
 
 
 

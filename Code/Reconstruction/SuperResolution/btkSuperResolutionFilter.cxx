@@ -17,6 +17,8 @@ SuperResolutionFilter::SuperResolutionFilter()
 
     m_TransformationType = AFFINE;
 
+    m_UseMotionCorrection = true;
+
     btkCoutMacro(SuperResolutionFilter : Constructor );
 
     m_PSFEstimationFilter = new btk::PSFEstimationFilter();
@@ -93,14 +95,18 @@ int SuperResolutionFilter::Update()
 
     this->Initialize();
 
-    //this->ComputeHRImage();
-
     if(m_ImageHR.IsNull())
     {
         this->ComputeHRImage();
+        std::string name("tmp_reconstruct3D.nii.gz");
+        btk::ImageHelper< itkImage >::WriteImage(m_ImageHR,name);
     }
 
-    this->MotionCorrection();
+    if(m_UseMotionCorrection)
+    {
+        this->MotionCorrection();
+    }
+
     this->InverseTransforms();
 
 
@@ -155,13 +161,16 @@ int SuperResolutionFilter::Update()
 
 
 
+     std::cout<<"Performing Super-Resolution with the previous computed HR image..."<<std::endl;
 
      m_HighResolutionReconstructionFilter->Update();
 
+     std::cout<<"Done !"<<std::endl;
 
 
 
 
+    //m_OutputHRImage = m_ImageHR;//m_HighResolutionReconstructionFilter->GetOutput();
     m_OutputHRImage = m_HighResolutionReconstructionFilter->GetOutput();
 
 }
@@ -307,7 +316,6 @@ void SuperResolutionFilter::ComputeHRImage()
         else
         {
             m_CreateAffineHighResolutionImage = btk::LowToHighResFilterAffine::New();
-            //m_CreateHighResolutionImage = btk::LowToHighResFilterAffine::New();
             m_CreateAffineHighResolutionImage -> SetNumberOfImages(numberOfImages);
             m_CreateAffineHighResolutionImage -> SetTargetImage( 0 );
             m_CreateAffineHighResolutionImage -> SetMargin( 0 );
@@ -400,17 +408,18 @@ void SuperResolutionFilter::MotionCorrection()
     float previousMetric = 0.0;
     float currentMetric = 0.0;
 
+    m_MotionCorrectionFilter->SetReferenceImage(m_ImageHR);
+    m_MotionCorrectionFilter->SetImagesLR(m_ImagesLR);
+    m_MotionCorrectionFilter->SetMasksLR(m_MasksLR);
+    m_MotionCorrectionFilter->SetImageMaskHR(m_ImageMaskHR);
+    m_MotionCorrectionFilter->SetImagesMaskLR(m_ImagesMaskLR);
+    m_MotionCorrectionFilter->SetTransformsLR(m_TransformsLR);
+
     for(unsigned int it=1; it<= m_IterMax; it++)
     {
 
         std::cout << "Iteration : " << it <<" / "<<m_IterMax<< std::endl; std::cout.flush();
 
-        m_MotionCorrectionFilter->SetReferenceImage(m_ImageHR);
-        m_MotionCorrectionFilter->SetImagesLR(m_ImagesLR);
-        m_MotionCorrectionFilter->SetMasksLR(m_MasksLR);
-        m_MotionCorrectionFilter->SetImageMaskHR(m_ImageMaskHR);
-        m_MotionCorrectionFilter->SetImagesMaskLR(m_ImagesMaskLR);
-        m_MotionCorrectionFilter->SetTransformsLR(m_TransformsLR);
 
         m_MotionCorrectionFilter->Update();
 
