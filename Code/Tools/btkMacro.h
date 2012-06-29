@@ -69,17 +69,17 @@ virtual type Get##name () = 0
 #define btkPureVirtualSetMacro(name, type)                         \
 virtual void Set##name (const type _arg)  = 0
 //-------------------------------------------------------------------------------------------------------------------
-#define btkCoutMacro(string)        std::cout<<#string<<std::endl;
+#define btkCoutMacro(string)        std::cout << string << std::endl;
 //-------------------------------------------------------------------------------------------------------------------
-#define btkCoutVariable(variable)   std::cout<<#variable<<" : "<<variable<<" "<<std::endl;
+#define btkCoutVariable(variable)   std::cout << #variable << ": " << variable <<std::endl;
 //-------------------------------------------------------------------------------------------------------------------
-#define btkCerrMacro(string)        std::cerr<<"On file : "<<__FILE__<<" line : "<<__LINE__<<" "<<#string<<std::endl;
+#define btkCerrMacro(string)        std::cerr << "(" << __FILE__ << ":" << __LINE__ << ") " << string << std::endl;
 //-------------------------------------------------------------------------------------------------------------------
-#define btkWarningMacro(string)     std::cerr<<" Btk Warning : "<<#string<<"  On file : "<<__FILE__<<" line : "<<__LINE__<<" "<<std::endl;
+#define btkWarningMacro(string)     std::cerr << "(" << __FILE__ << ":" << __LINE__ << ")" << "Btk Warning: " << string << std::endl;
 //-------------------------------------------------------------------------------------------------------------------
 #define btkException(string)        \
     itk::ExceptionObject error;     \
-    error.SetDescription(#string);  \
+    error.SetDescription(string);   \
     throw(error);                   \
 //-------------------------------------------------------------------------------------------------------------------
 //TODO: To be continued with const, pointer, string, vector...etc.
