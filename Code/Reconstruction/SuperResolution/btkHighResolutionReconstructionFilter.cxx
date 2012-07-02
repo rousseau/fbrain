@@ -5,7 +5,7 @@ namespace btk
 {
 HighResolutionReconstructionFilter::HighResolutionReconstructionFilter()
 {
-    btkCoutMacro(HighResolutionReconstructionFilter : Constructor );
+    btkCoutMacro("HighResolutionReconstructionFilter : Constructor");
     //TODO: Default parameters
     m_InterpolationOrderPSF = 5;
     m_InterpolationOrderIBP = 1;
@@ -14,7 +14,7 @@ HighResolutionReconstructionFilter::HighResolutionReconstructionFilter()
 //-----------------------------------------------------------------------------------------------------------
 HighResolutionReconstructionFilter::~HighResolutionReconstructionFilter()
 {
-    btkCoutMacro(HighResolutionReconstructionFilter : Destructor );
+    btkCoutMacro("HighResolutionReconstructionFilter : Destructor");
 }
 //-----------------------------------------------------------------------------------------------------------
 }

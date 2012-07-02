@@ -18,7 +18,7 @@ namespace btk
 {
 HighResolutionIBPFilter::HighResolutionIBPFilter()
 {
-    btkCoutMacro(HighResolutionIBPFilter : Constructor );
+    btkCoutMacro("HighResolutionIBPFilter : Constructor");
 
     SuperClass::m_ImageHR = NULL;
 
@@ -35,7 +35,7 @@ HighResolutionIBPFilter::HighResolutionIBPFilter()
 
 HighResolutionIBPFilter::~HighResolutionIBPFilter()
 {
-    btkCoutMacro(HighResolutionIBPFilter : Destructor );
+    btkCoutMacro("HighResolutionIBPFilter : Destructor");
 
     if(m_HRMaskFilter != NULL)
     {
@@ -49,7 +49,7 @@ HighResolutionIBPFilter::~HighResolutionIBPFilter()
 //-----------------------------------------------------------------------------------------------------------
 void HighResolutionIBPFilter::Update()
 {
-    btkCoutMacro(HighResolutionIBPFilter : Update Method );
+    btkCoutMacro("HighResolutionIBPFilter : Update Method");
 
     this->Initialize();
     this->InitializePSF();

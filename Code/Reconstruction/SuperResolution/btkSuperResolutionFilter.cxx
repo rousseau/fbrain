@@ -19,7 +19,7 @@ SuperResolutionFilter::SuperResolutionFilter()
 
     m_UseMotionCorrection = true;
 
-    btkCoutMacro(SuperResolutionFilter : Constructor );
+    btkCoutMacro("SuperResolutionFilter : Constructor");
 
     m_PSFEstimationFilter = new btk::PSFEstimationFilter();
     m_SliceRejectionFilter = new btk::SliceRejectionFilter();
@@ -48,7 +48,7 @@ SuperResolutionFilter::SuperResolutionFilter(int loop, float beta, int nlm, TRAN
 //-----------------------------------------------------------------------------------------------------------
 SuperResolutionFilter::~SuperResolutionFilter()
 {
-    btkCoutMacro(SuperResolutionFilter : Destructor );
+    btkCoutMacro("SuperResolutionFilter : Destructor");
 
     if(m_PSFEstimationFilter != NULL)
     {
@@ -84,7 +84,7 @@ SuperResolutionFilter::~SuperResolutionFilter()
 //-----------------------------------------------------------------------------------------------------------
 int SuperResolutionFilter::Update()
 {
-    btkCoutMacro(SuperResolutionFilter : Update Method );
+    btkCoutMacro("SuperResolutionFilter : Update Method");
 
     if(m_ImagesLR.empty() || m_ImagesMaskLR.empty() )
     {

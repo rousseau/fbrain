@@ -5,17 +5,17 @@ namespace btk
 
 BiasCorrectionFilter::BiasCorrectionFilter()
 {
-    btkCoutMacro(BiasCorrectionFilter : Constructor );
+    btkCoutMacro("BiasCorrectionFilter : Constructor");
 }
 //--------------------------------------------------------------------------------------------
 BiasCorrectionFilter::~BiasCorrectionFilter()
 {
-    btkCoutMacro(BiasCorrectionFilter : Destructor );
+    btkCoutMacro("BiasCorrectionFilter : Destructor");
 }
 //--------------------------------------------------------------------------------------------
 void BiasCorrectionFilter::Update()
 {
-    btkCoutMacro(BiasCorrectionFilter : Update Method );
+    btkCoutMacro("BiasCorrectionFilter : Update Method");
 }
 //--------------------------------------------------------------------------------------------
 }

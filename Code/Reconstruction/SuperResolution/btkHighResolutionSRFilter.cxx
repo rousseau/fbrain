@@ -5,14 +5,14 @@ namespace btk
 {
 HighResolutionSRFilter::HighResolutionSRFilter()
 {
-    btkCoutMacro(HighResolutionSRFilter : Constructor );
+    btkCoutMacro("HighResolutionSRFilter : Constructor");
     //resampler = Resampler::New();
     m_NlmTools = new btkNLMTool<float>;
 }
 //-----------------------------------------------------------------------------------------------------------
 HighResolutionSRFilter::~HighResolutionSRFilter()
 {
-    btkCoutMacro(HighResolutionSRFilter : Destructor );
+    btkCoutMacro("HighResolutionSRFilter : Destructor");
 
     if(m_NlmTools != NULL)
     {
@@ -23,7 +23,7 @@ HighResolutionSRFilter::~HighResolutionSRFilter()
 //-----------------------------------------------------------------------------------------------------------
 void HighResolutionSRFilter::Update()
 {
-    btkCoutMacro(HighResolutionSRFilter : Update Method );
+    btkCoutMacro("HighResolutionSRFilter : Update Method");
 
 
     std::cout<<"Performing super resolution"<<std::endl;

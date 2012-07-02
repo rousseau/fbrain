@@ -7,7 +7,7 @@ namespace btk
 
 MotionCorrection3DEulerFilter::MotionCorrection3DEulerFilter()
 {
-    btkCoutMacro(MotionCorrection3DEulerFilter : Constructor );
+    btkCoutMacro("MotionCorrection3DEulerFilter : Constructor");
     m_UseAffine = false;
     m_UseEuler = false;
 }
@@ -15,13 +15,13 @@ MotionCorrection3DEulerFilter::MotionCorrection3DEulerFilter()
 
 MotionCorrection3DEulerFilter::~MotionCorrection3DEulerFilter()
 {
-    btkCoutMacro(MotionCorrection3DEulerFilter : Destructor );
+    btkCoutMacro("MotionCorrection3DEulerFilter : Destructor");
 }
 //-----------------------------------------------------------------------------------------------------------
 
 void MotionCorrection3DEulerFilter::Update()
 {
-    btkCoutMacro(MotionCorrection3DEulerFilter : Update Method );
+    btkCoutMacro("MotionCorrection3DEulerFilter : Update Method");
     if(SuperClass::m_ImagesLR.empty() || SuperClass::m_MasksLR.empty() || SuperClass::m_ReferenceImage.IsNull() || SuperClass::m_TransformsLR.empty())
     {
         std::cout<<"Images LR "<<SuperClass::m_ImagesLR.empty()<<std::endl;

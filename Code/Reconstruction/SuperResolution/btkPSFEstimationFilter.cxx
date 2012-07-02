@@ -5,17 +5,17 @@ namespace btk
 
 PSFEstimationFilter::PSFEstimationFilter()
 {
-    btkCoutMacro(PSFEstimationFilter : Constructor );
+    btkCoutMacro("PSFEstimationFilter : Constructor");
 }
 //-----------------------------------------------------------------------------------------------------------
 PSFEstimationFilter::~PSFEstimationFilter()
 {
-    btkCoutMacro(PSFEstimationFilter : Destructor );
+    btkCoutMacro("PSFEstimationFilter : Destructor");
 }
 //-----------------------------------------------------------------------------------------------------------
 void PSFEstimationFilter::Update()
 {
-    btkCoutMacro(PSFEstimationFilter : Update Method );
+    btkCoutMacro("PSFEstimationFilter : Update Method");
 }
 //-----------------------------------------------------------------------------------------------------------
 }

@@ -5,17 +5,17 @@ namespace btk
 
 SliceRejectionFilter::SliceRejectionFilter()
 {
-    btkCoutMacro(SliceRejectionFilter : Constructor );
+    btkCoutMacro("SliceRejectionFilter : Constructor");
 }
 
 SliceRejectionFilter::~SliceRejectionFilter()
 {
-    btkCoutMacro(SliceRejectionFilter : Destructor );
+    btkCoutMacro("SliceRejectionFilter : Destructor");
 }
 
 void SliceRejectionFilter::Update()
 {
-    btkCoutMacro(SliceRejectionFilter : Update Method );
+    btkCoutMacro("SliceRejectionFilter : Update Method");
 }
 
 }

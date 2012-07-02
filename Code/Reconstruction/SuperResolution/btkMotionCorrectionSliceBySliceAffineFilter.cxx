@@ -7,19 +7,19 @@ namespace btk
 
 MotionCorrectionSliceBySliceAffineFilter::MotionCorrectionSliceBySliceAffineFilter()
 {
-    btkCoutMacro(MotionCorrectionSliceBySliceAffineFilter : Constructor );
+    btkCoutMacro("MotionCorrectionSliceBySliceAffineFilter : Constructor");
 }
 //-----------------------------------------------------------------------------------------------------------
 
  MotionCorrectionSliceBySliceAffineFilter::~MotionCorrectionSliceBySliceAffineFilter()
 {
-    btkCoutMacro(MotionCorrectionSliceBySliceAffineFilter : Destructor );
+    btkCoutMacro("MotionCorrectionSliceBySliceAffineFilter : Destructor");
 }
 //-----------------------------------------------------------------------------------------------------------
 
 void  MotionCorrectionSliceBySliceAffineFilter::Update()
 {
-    btkCoutMacro(MotionCorrectionSliceBySliceAffineFilter : Update Method );
+    btkCoutMacro("MotionCorrectionSliceBySliceAffineFilter : Update Method");
 
     if(SuperClass::m_ImagesLR.empty() || SuperClass::m_ImagesMaskLR.empty() || SuperClass::m_ReferenceImage.IsNull() || SuperClass::m_TransformsLR.empty())
     {

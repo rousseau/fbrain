@@ -7,19 +7,19 @@ namespace btk
 
 MotionCorrectionSliceBySliceEulerFilter::MotionCorrectionSliceBySliceEulerFilter()
 {
-    btkCoutMacro(MotionCorrectionSliceBySliceEulerFilter : Constructor );
+    btkCoutMacro("MotionCorrectionSliceBySliceEulerFilter : Constructor");
 }
 //-----------------------------------------------------------------------------------------------------------
 
  MotionCorrectionSliceBySliceEulerFilter::~MotionCorrectionSliceBySliceEulerFilter()
 {
-    btkCoutMacro(MotionCorrectionSliceBySliceEulerFilter : Destructor );
+    btkCoutMacro("MotionCorrectionSliceBySliceEulerFilter : Destructor");
 }
 //-----------------------------------------------------------------------------------------------------------
 
 void  MotionCorrectionSliceBySliceEulerFilter::Update()
 {
-    btkCoutMacro(MotionCorrectionSliceBySliceEulerFilter : Update Method );
+    btkCoutMacro("MotionCorrectionSliceBySliceEulerFilter : Update Method");
     if(SuperClass::m_ImagesLR.empty() || SuperClass::m_ImagesMaskLR.empty() || SuperClass::m_ReferenceImage.IsNull() || SuperClass::m_TransformsLR.empty())
     {
         throw std::string("Missing input arguments (LR images, LR Masks, Ref images, LR Transfos) ");
