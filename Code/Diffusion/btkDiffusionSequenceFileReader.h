@@ -71,12 +71,6 @@ class DiffusionSequenceFileReader : public itk::ImageFileReader< DiffusionSequen
          */
         virtual void Update();
 
-        /**
-         * @brief Get the output diffusion sequence.
-         * @return A pointer to the output diffusion sequence.
-         */
-        virtual DiffusionSequence *GetOutput();
-
     protected:
         /**
          * @brief Constructor.
@@ -94,13 +88,6 @@ class DiffusionSequenceFileReader : public itk::ImageFileReader< DiffusionSequen
          * @param indent Indentation.
          */
         virtual void PrintSelf(std::ostream &os, itk::Indent indent) const;
-
-    private:
-        /** Gradient table of the diffusion sequence to be red. */
-        std::vector< GradientDirection > m_GradientTable;
-
-        /** B-values of the diffusion sequence to be red. */
-        std::vector< unsigned short > m_BValues;
 };
 
 } // namespace btk

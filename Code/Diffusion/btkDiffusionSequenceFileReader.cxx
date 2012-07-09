@@ -72,22 +72,15 @@ void DiffusionSequenceFileReader::Update()
 {
     std::string radix =  btk::FileHelper::GetRadixOf(Superclass::GetFileName());
 
-    Self::m_GradientTable = btk::DiffusionSequenceFileHelper::ReadGradientTable(radix+".bvec");
-    Self::m_BValues       = btk::DiffusionSequenceFileHelper::ReadBValues(radix+".bval");
+    std::vector< btk::GradientDirection > gradientTable = btk::DiffusionSequenceFileHelper::ReadGradientTable(radix+".bvec");
+    std::vector< unsigned short >               bValues = btk::DiffusionSequenceFileHelper::ReadBValues(radix+".bval");
 
     Superclass::Update();
-}
 
-//----------------------------------------------------------------------------------------
+    DiffusionSequence *output = Superclass::GetOutput();
 
-DiffusionSequence *DiffusionSequenceFileReader::GetOutput()
-{
-    DiffusionSequence *pointer = Superclass::GetOutput();
-
-    pointer->SetGradientTable(Self::m_GradientTable);
-    pointer->SetBValues(Self::m_BValues);
-
-    return pointer;
+    output->SetGradientTable(gradientTable);
+    output->SetBValues(bValues);
 }
 
 } // namespace btk

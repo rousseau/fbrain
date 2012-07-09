@@ -67,22 +67,17 @@ void DiffusionSequenceFileWriter::PrintSelf(std::ostream &os, itk::Indent indent
 
 void DiffusionSequenceFileWriter::Update()
 {
+    const btk::DiffusionSequence *input = Superclass::GetInput();
+
+    std::vector< btk::GradientDirection > gradientTable = input->GetGradientTable();
+    std::vector< unsigned short >               bValues = input->GetBValues();
+
     std::string radix = btk::FileHelper::GetRadixOf(Superclass::GetFileName());
 
-    btk::DiffusionSequenceFileHelper::WriteGradientTable(Self::m_GradientTable, radix+".bvec");
-    btk::DiffusionSequenceFileHelper::WriteBValues(Self::m_BValues, radix+".bval");
+    btk::DiffusionSequenceFileHelper::WriteGradientTable(gradientTable, radix+".bvec");
+    btk::DiffusionSequenceFileHelper::WriteBValues(bValues, radix+".bval");
 
     Superclass::Update();
-}
-
-//----------------------------------------------------------------------------------------
-
-void DiffusionSequenceFileWriter::SetInput(DiffusionSequence *input)
-{
-    Self::m_GradientTable = input->GetGradientTable();
-          Self::m_BValues = input->GetBValues();
-
-    Superclass::SetInput(input);
 }
 
 } // namespace btk

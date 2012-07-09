@@ -71,12 +71,6 @@ class DiffusionSequenceFileWriter : public itk::ImageFileWriter< DiffusionSequen
          */
         virtual void Update();
 
-        /**
-         * @brief Set the input diffusion sequence.
-         * @param input A pointer to the input diffusion sequence.
-         */
-        virtual void SetInput(DiffusionSequence *input);
-
     protected:
         /**
          * @brief Constructor.
@@ -94,13 +88,6 @@ class DiffusionSequenceFileWriter : public itk::ImageFileWriter< DiffusionSequen
          * @param indent Indentation.
          */
         virtual void PrintSelf(std::ostream &os, itk::Indent indent) const;
-
-    private:
-        /** Gradient table of the diffusion sequence to be written. */
-        std::vector< GradientDirection > m_GradientTable;
-
-        /** B-values of the diffusion sequence to be written. */
-        std::vector< unsigned short > m_BValues;
 };
 
 } // namespace btk
