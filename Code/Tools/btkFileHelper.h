@@ -4,6 +4,7 @@
 
   Date: 16/04/2012
   Author(s): Marc Schweitzer (marc.schweitzer(at)unistra.fr)
+             Julien Pontabry (pontabry@unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -33,8 +34,8 @@
 
 ==========================================================================*/
 
-#ifndef __BTK_FILEHELPER_H__
-#define __BTK_FILEHELPER_H__
+#ifndef BTK_FILE_HELPER_H
+#define BTK_FILE_HELPER_H
 
 #include "iostream"
 #include "vector"
@@ -42,22 +43,69 @@
 
 namespace btk
 {
+
 class FileHelper
 {
-public:
+    public:
 
-    FileHelper();
-    ~FileHelper();
+        /**
+         * @brief FileExist
+         * @param file
+         * @return
+         */
+        static bool FileExist(std::string &file);
 
-    static bool FileExist(std::string &file);
-    static bool FileExistPrintIt(std::string &file);
-    static void FilesExist(std::vector< std::string > &files, std::vector< bool > &result);
-    static void FilesExistPrintIt(std::vector< std::string > &files, std::vector< bool > &result);
+        /**
+         * @brief FileExistPrintIt
+         * @param file
+         * @return
+         */
+        static bool FileExistPrintIt(std::string &file);
 
+        /**
+         * @brief FilesExist
+         * @param files
+         * @param result
+         */
+        static void FilesExist(std::vector< std::string > &files, std::vector< bool > &result);
 
+        /**
+         * @brief FilesExistPrintIt
+         * @param files
+         * @param result
+         */
+        static void FilesExistPrintIt(std::vector< std::string > &files, std::vector< bool > &result);
 
+        /**
+         * @brief Extract the radix filename.
+         * Exemple: With filename equal to "xxx.yy.zz" or "xxx.yy", this function returns "xxx".
+         * @param filename Filename
+         * @return Radix of the filename
+         * @ingroup InputOutput
+         */
+        static std::string GetRadixOf(std::string filename);
+
+        /**
+         * @brief Extract the extension of the filename.
+         * Exemple: With filename equal to "xxx.yy.zz" or "xxx.yy", this function returns ".yy.zz" or ".yy".
+         * @param filename Filename
+         * @return Extension of the filename
+         * @ingroup InputOutput
+         */
+        static std::string GetExtensionOf(std::string filename);
+
+    private:
+
+        /**
+         * @brief Get the position of the first point of the extension
+         * @param filename Filename
+         * @return Positopn of the first point of the extension
+         * @ingroup InputOutput
+         */
+        static unsigned int GetExtensionPosition(std::string filename);
 };
-}
+
+} // namespace btk
 
 
-#endif
+#endif // BTK_FILE_HELPER_H
