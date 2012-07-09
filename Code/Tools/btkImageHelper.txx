@@ -10,7 +10,7 @@ namespace btk
 {
 
 template < class TImageInput, class TImageOutput >
-void ImageHelper< TImageInput, TImageOutput >::WriteImage(typename TImageInput::Pointer image, std::string &fileName)
+void ImageHelper< TImageInput, TImageOutput >::WriteImage(typename TImageInput::Pointer image, const std::string &fileName)
 {
     std::cout << "Writing \"" << fileName << "\"... " << std::flush;
 
@@ -54,7 +54,7 @@ void ImageHelper< TImageInput, TImageOutput >::WriteImageArray(std::vector< type
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
-typename TImageInput::Pointer ImageHelper< TImageInput, TImageOutput >::ReadImage(std::string &fileName)
+typename TImageInput::Pointer ImageHelper< TImageInput, TImageOutput >::ReadImage(const std::string &fileName)
 {
     std::cout << "Reading image \"" << fileName << "\"... " << std::flush;
 

@@ -73,7 +73,7 @@ namespace btk
              * @param image Image to write.
              * @param fileName File name of the image to write.
              */
-            static void WriteImage(typename TImageInput::Pointer image, std::string &fileName);
+            static void WriteImage(typename TImageInput::Pointer image, const std::string &fileName);
 
             /**
              * @brief Write a vector of images.
@@ -87,7 +87,7 @@ namespace btk
              * @param fileName File name of the image to read.
              * @return A pointer to the image that have been red.
              */
-            static typename TImageInput::Pointer ReadImage(std::string &fileName);
+            static typename TImageInput::Pointer ReadImage(const std::string &fileName);
 
             /**
              * @brief Read a vector of images.
