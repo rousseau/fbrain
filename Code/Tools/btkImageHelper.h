@@ -4,6 +4,7 @@
 
   Date: 11/04/2012
   Author(s): Marc Schweitzer (marc.schweitzer(at)unistra.fr)
+             Julien Pontabry (pontabry@unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -34,8 +35,8 @@
 ==========================================================================*/
 
 
-#ifndef __BTK_IMAGEHELPER_H__
-#define __BTK_IMAGEHELPER_H__
+#ifndef BTK_IMAGEHELPER_H
+#define BTK_IMAGEHELPER_H
 
 // STL includes
 #include "string"
@@ -44,7 +45,6 @@
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
-
 
 namespace btk
 {
@@ -115,4 +115,4 @@ namespace btk
 
 #include "btkImageHelper.txx"
 
-#endif // __BTK_IMAGEHELPER_H__
+#endif // BTK_IMAGEHELPER_H
