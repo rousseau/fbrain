@@ -43,11 +43,6 @@
 // STL includes
 #include "iostream"
 
-// Local includes
-#include "btkDiffusionSequence.h"
-#include "btkDiffusionSequenceFileReader.h"
-#include "btkDiffusionSequenceFileWriter.h"
-
 
 namespace btk
 {
