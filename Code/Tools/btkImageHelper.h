@@ -35,8 +35,8 @@
 ==========================================================================*/
 
 
-#ifndef BTK_IMAGEHELPER_H
-#define BTK_IMAGEHELPER_H
+#ifndef BTK_IMAGE_HELPER_H
+#define BTK_IMAGE_HELPER_H
 
 // STL includes
 #include "string"
@@ -101,18 +101,18 @@ namespace btk
              * @param image Image of which physical space will be used for creation.
              * @return New image in the same physical space.
              */
-            static typename TImageOutput::Pointer CreateNewFromPhysicalSpaceOf(typename TImageInput::Pointer image);
+            static typename TImageOutput::Pointer CreateNewImageFromPhysicalSpaceOf(typename TImageInput::Pointer image);
 
             /**
              * @brief Create new images in the same physical space of current images.
              * @param images Vector of images of which physical space will be used for creation.
              * @return Vector of new images in the same physical space.
              */
-            static std::vector< typename TImageOutput::Pointer > &CreateNewFromPhysicalSpaceOf(std::vector< typename TImageInput::Pointer > &images);
+            static std::vector< typename TImageOutput::Pointer > &CreateNewImageFromPhysicalSpaceOf(std::vector< typename TImageInput::Pointer > &images);
     };
 
 } // namespace btk
 
 #include "btkImageHelper.txx"
 
-#endif // BTK_IMAGEHELPER_H
+#endif // BTK_IMAGE_HELPER_H

@@ -34,8 +34,8 @@
 
 ==========================================================================*/
 
-#ifndef BTK_IMAGEHELPER_TXX
-#define BTK_IMAGEHELPER_TXX
+#ifndef BTK_IMAGE_HELPER_TXX
+#define BTK_IMAGE_HELPER_TXX
 
 #include "btkImageHelper.h"
 
@@ -57,17 +57,7 @@ void ImageHelper< TImageInput, TImageOutput >::WriteImage(typename TImageInput::
 {
     std::cout << "Writing \"" << fileName << "\"... " << std::flush;
 
-    typename ImageWriter::Pointer writer = NULL;
-
-    if(typeid(TImageInput) == typeid(btk::DiffusionSequence))
-    {
-        writer = btk::DiffusionSequenceFileWriter::New();
-    }
-    else
-    {
-        writer = ImageWriter::New();
-    }
-
+    typename ImageWriter::Pointer writer = ImageWriter::New();
     writer->SetFileName(fileName);
     writer->SetInput(image);
     writer->Update();
@@ -80,31 +70,12 @@ void ImageHelper< TImageInput, TImageOutput >::WriteImage(typename TImageInput::
 template < class TImageInput, class TImageOutput >
 void ImageHelper< TImageInput, TImageOutput >::WriteImageArray(std::vector< typename TImageInput::Pointer > &images, std::vector<std::string> &fileNames)
 {
-    int i = images.size();
 
     if(images.size() == fileNames.size())
     {
-        for(i = 0; i < images.size(); i++)
+        for(int i = 0; i < images.size(); i++)
         {
-            std::cout << "Writing \"" << fileNames[i] << "\"... " << std::flush;
-
-            // TODO : test this
-            typename ImageWriter::Pointer writer = NULL;
-
-            if(typeid(TImageInput) == typeid(btk::DiffusionSequence))
-            {
-                writer = btk::DiffusionSequenceFileWriter::New();
-            }
-            else
-            {
-                writer = ImageWriter::New();
-            }
-
-            writer->SetFileName(fileNames[i]);
-            writer->SetInput(images[i]);
-            writer->Update();
-
-            std::cout << "done." << std::endl;
+            WriteImage(images[i], fileNames[i]);
         }
     }
     else
@@ -122,17 +93,7 @@ typename TImageInput::Pointer ImageHelper< TImageInput, TImageOutput >::ReadImag
 {
     std::cout << "Reading image \"" << fileName << "\"... " << std::flush;
 
-    typename ImageReader::Pointer reader = NULL;
-
-    if(typeid(TImageInput) == typeid(btk::DiffusionSequence))
-    {
-        reader = btk::DiffusionSequenceFileReader::New();
-    }
-    else
-    {
-        reader = ImageReader::New();
-    }
-
+    typename ImageReader::Pointer reader = ImageReader::New();
     reader->SetFileName(fileName);
     reader->Update();
 
@@ -146,33 +107,13 @@ typename TImageInput::Pointer ImageHelper< TImageInput, TImageOutput >::ReadImag
 template < class TImageInput, class TImageOutput >
 std::vector< typename TImageInput::Pointer > &ImageHelper< TImageInput, TImageOutput >::ReadImageArray(std::vector<std::string> &fileNames)
 {
-    int i = fileNames.size();
     std::vector< typename TImageInput::Pointer > *ptrImages = new std::vector< typename TImageInput::Pointer >;
     std::vector< typename TImageInput::Pointer > &images = *ptrImages;
-    images.resize(i);
+    images.resize(fileNames.size());
 
-    for(i = 0; i < fileNames.size(); i++)
+    for(int i = 0; i < fileNames.size(); i++)
     {
-        std::cout << "Reading image \"" << fileNames[i] << "\"... " << std::flush;
-
-        // TODO : test this
-        typename ImageReader::Pointer reader = NULL;
-
-        if(typeid(TImageInput) == typeid(btk::DiffusionSequence))
-        {
-            reader = btk::DiffusionSequenceFileReader::New();
-        }
-        else
-        {
-            reader = ImageReader::New();
-        }
-
-        reader->SetFileName(fileNames[i]);
-        reader->Update();
-
-        std::cout << "done." << std::endl;
-
-        images[i] = reader->GetOutput();
+        images[i] = ReadImage(fileNames[i]);
     }
 
     return images;
@@ -181,21 +122,13 @@ std::vector< typename TImageInput::Pointer > &ImageHelper< TImageInput, TImageOu
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
-typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::CreateNewFromPhysicalSpaceOf(typename TImageInput::Pointer image)
+typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::CreateNewImageFromPhysicalSpaceOf(typename TImageInput::Pointer image)
 {
     typename TImageOutput::Pointer newImage = TImageOutput::New();
     newImage->SetRegions(image->GetLargestPossibleRegion());
     newImage->SetOrigin(image->GetOrigin());
     newImage->SetSpacing(image->GetSpacing());
     newImage->SetDirection(image->GetDirection());
-
-    // TODO : test this
-    if(typeid(TImageInput) == typeid(btk::DiffusionSequence) && typeid(TImageOutput) == typeid(btk::DiffusionSequence))
-    {
-        newImage->SetGradientTable(image->GetGradientTable);
-        newImage->SetBValues(image->GetBValues);
-    }
-
     newImage->Allocate();
     newImage->FillBuffer(0);
 
@@ -205,14 +138,14 @@ typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::CreateN
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
-std::vector< typename TImageOutput::Pointer > &ImageHelper< TImageInput, TImageOutput >::CreateNewFromPhysicalSpaceOf(std::vector< typename TImageInput::Pointer > &images)
+std::vector< typename TImageOutput::Pointer > &ImageHelper< TImageInput, TImageOutput >::CreateNewImageFromPhysicalSpaceOf(std::vector< typename TImageInput::Pointer > &images)
 {
     std::vector< typename TImageOutput::Pointer > *ptrNewImages = new std::vector< typename TImageOutput::Pointer >;
     std::vector< typename TImageOutput::Pointer > &newImages = *ptrNewImages;
 
     for(typename std::vector< typename TImageInput::Pointer >::iterator it = images.begin(); it != images.end(); it++)
     {
-        newImages.push_back(CreateNewFromPhysicalSpaceOf(*it));
+        newImages.push_back(CreateNewImageFromPhysicalSpaceOf(*it));
     }
 
     return newImages;
@@ -220,4 +153,4 @@ std::vector< typename TImageOutput::Pointer > &ImageHelper< TImageInput, TImageO
 
 } // namespace btk
 
-#endif // BTK_IMAGEHELPER_TXX
+#endif // BTK_IMAGE_HELPER_TXX
