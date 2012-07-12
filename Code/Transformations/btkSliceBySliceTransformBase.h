@@ -176,6 +176,8 @@ public:
 
     virtual unsigned int GetNumberOfSlices() = 0;
 
+   // virtual void GetInverse(Self *) const = 0;
+
 
 
   protected:

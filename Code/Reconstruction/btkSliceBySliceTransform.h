@@ -168,6 +168,9 @@ public:
   /** Get the number of slices (transforms). */
   itkGetMacro( NumberOfSlices, unsigned int);
 
+  /** Get the inverse transform */
+  virtual void GetInverse(Self*) const;
+
 
 protected:
     /** Default constructor. Otherwise we get a run time warning from itkTransform. */
