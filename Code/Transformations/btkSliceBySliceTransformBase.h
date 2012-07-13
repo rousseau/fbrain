@@ -45,12 +45,13 @@
 namespace btk
 {
 template < class TScalarType, unsigned int NDimensions=3 >
-class SliceBySliceTransformBase : public itk::Transform<TScalarType,NDimensions,NDimensions>
+class SliceBySliceTransformBase : public itk::MatrixOffsetTransformBase<TScalarType,NDimensions, NDimensions> //public itk::Transform<TScalarType,NDimensions,NDimensions>
 {
 public:
     /** Standard class typedefs. */
     typedef SliceBySliceTransformBase  Self;
-    typedef itk::Transform<TScalarType,NDimensions,NDimensions> Superclass;
+    //typedef itk::Transform<TScalarType,NDimensions,NDimensions> Superclass;
+    typedef itk::MatrixOffsetTransformBase<TScalarType,NDimensions, NDimensions> Superclass;
 
     typedef itk::MatrixOffsetTransformBase<TScalarType,NDimensions,NDimensions> TransformType;
     typedef typename TransformType::Pointer TransformPointerType;
