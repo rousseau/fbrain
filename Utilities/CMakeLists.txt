@@ -161,6 +161,13 @@ ${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
 
 TARGET_LINK_LIBRARIES(btkApplyMaskToImage ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkWarpTransformationToImage btkWarpTransformationToImage.cxx
+${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
+${fbrain_SOURCE_DIR}/Code/Transformations/btkWarpTransformToImageFilter.h)
+
+TARGET_LINK_LIBRARIES(btkWarpTransformationToImage ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -192,4 +199,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkSimulateMotionSliceBySlice
                 btkImageSubtract
                 btkApplyMaskToImage
+                btkWarpTransformationToImage
         DESTINATION bin)
