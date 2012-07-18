@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
         std::cout << "Processing images..." << std::endl;
 
         // Create a new tissue map
-        TissueSegmentation::Pointer outputTissues = btk::ImageHelper< ProbabilityMap,TissueSegmentation >::CreateNewFromPhysicalSpaceOf(inputGM);
+        TissueSegmentation::Pointer outputTissues = btk::ImageHelper< ProbabilityMap,TissueSegmentation >::CreateNewImageFromPhysicalSpaceOf(inputGM);
 
         // Iterators
         ProbabilityMapIterator     inputGMIterator(inputGM, inputGM->GetLargestPossibleRegion());

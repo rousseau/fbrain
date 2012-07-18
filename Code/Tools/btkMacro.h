@@ -49,7 +49,7 @@ namespace btk
 {
 //-------------------------------------------------------------------------------------------------------------------
 #define btkGetMacro(name, type)                                   \
-virtual type Get##name ()                                         \
+virtual type Get##name () const                                   \
 {                                                                 \
     return this->m_##name;                                        \
 }

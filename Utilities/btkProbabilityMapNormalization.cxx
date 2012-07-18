@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
         //
 
         std::vector< Image::Pointer > inputImages  = btk::ImageHelper< Image >::ReadImageArray(inputFileNames);
-        std::vector< Image::Pointer > outputImages = btk::ImageHelper< Image >::CreateNewFromPhysicalSpaceOf(inputImages);
+        std::vector< Image::Pointer > outputImages = btk::ImageHelper< Image >::CreateNewImageFromPhysicalSpaceOf(inputImages);
     
 
         //

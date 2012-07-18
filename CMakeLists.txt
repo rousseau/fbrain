@@ -1,11 +1,22 @@
 PROJECT(fbrain)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
-cmake_minimum_required(VERSION 2.6)
+#---- Options --------------------------------------------------------------------------
 
+# Parallel computing
 OPTION(USE_OMP "Use OpenMP" ON)
 IF(USE_OMP)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp  ")
 ENDIF(USE_OMP)
+
+# Testing
+OPTION(BUILD_TESTING "Build testing applications" OFF)
+
+# Doxygen documentation
+INCLUDE(${CMAKE_ROOT}/Modules/Documentation.cmake)
+OPTION(BUILD_DOCUMENTATION "Build the doxygen documentation" OFF)
+
+#---- Dependancies ---------------------------------------------------------------------
 
 # Find ITK
 MESSAGE(STATUS "Check for ITK package")
@@ -36,10 +47,17 @@ IF(TCLAP_DIRECTORY-NOTFOUND)
   MESSAGE(FATAL_ERROR "TCLAP not found !")
 ENDIF(TCLAP_DIRECTORY-NOTFOUND)
 
-# Build documentation
-INCLUDE(${CMAKE_ROOT}/Modules/Documentation.cmake)
-MARK_AS_ADVANCED(CLEAR BUILD_DOCUMENTATION)
+#---- Operations -----------------------------------------------------------------------
 
+# Testing
+IF(BUILD_TESTING)
+    ENABLE_TESTING()
+    SUBDIRS(
+        Tests
+    )
+ENDIF(BUILD_TESTING)
+
+# Documentation
 IF(BUILD_DOCUMENTATION)
     FIND_PACKAGE(Doxygen)
     IF(DOXYGEN_FOUND)
@@ -50,11 +68,8 @@ IF(BUILD_DOCUMENTATION)
     ENDIF(DOXYGEN_FOUND)
 ENDIF(BUILD_DOCUMENTATION)
 
-#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-
+# Executables
 SUBDIRS(
-  Utilities
-  Applications
+    Utilities
+    Applications
 )
-
-

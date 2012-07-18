@@ -4,6 +4,7 @@
 
   Date: 11/04/2012
   Author(s): Marc Schweitzer (marc.schweitzer(at)unistra.fr)
+             Julien Pontabry (pontabry@unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -34,8 +35,8 @@
 ==========================================================================*/
 
 
-#ifndef __BTK_IMAGEHELPER_H__
-#define __BTK_IMAGEHELPER_H__
+#ifndef BTK_IMAGE_HELPER_H
+#define BTK_IMAGE_HELPER_H
 
 // STL includes
 #include "string"
@@ -44,7 +45,6 @@
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
-
 
 namespace btk
 {
@@ -73,7 +73,7 @@ namespace btk
              * @param image Image to write.
              * @param fileName File name of the image to write.
              */
-            static void WriteImage(typename TImageInput::Pointer image, std::string &fileName);
+            static void WriteImage(typename TImageInput::Pointer image, const std::string &fileName);
 
             /**
              * @brief Write a vector of images.
@@ -87,7 +87,7 @@ namespace btk
              * @param fileName File name of the image to read.
              * @return A pointer to the image that have been red.
              */
-            static typename TImageInput::Pointer ReadImage(std::string &fileName);
+            static typename TImageInput::Pointer ReadImage(const std::string &fileName);
 
             /**
              * @brief Read a vector of images.
@@ -101,18 +101,18 @@ namespace btk
              * @param image Image of which physical space will be used for creation.
              * @return New image in the same physical space.
              */
-            static typename TImageOutput::Pointer CreateNewFromPhysicalSpaceOf(typename TImageInput::Pointer image);
+            static typename TImageOutput::Pointer CreateNewImageFromPhysicalSpaceOf(typename TImageInput::Pointer image);
 
             /**
              * @brief Create new images in the same physical space of current images.
              * @param images Vector of images of which physical space will be used for creation.
              * @return Vector of new images in the same physical space.
              */
-            static std::vector< typename TImageOutput::Pointer > &CreateNewFromPhysicalSpaceOf(std::vector< typename TImageInput::Pointer > &images);
+            static std::vector< typename TImageOutput::Pointer > &CreateNewImageFromPhysicalSpaceOf(std::vector< typename TImageInput::Pointer > &images);
     };
 
 } // namespace btk
 
 #include "btkImageHelper.txx"
 
-#endif // __BTK_IMAGEHELPER_H__
+#endif // BTK_IMAGE_HELPER_H
