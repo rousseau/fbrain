@@ -152,7 +152,7 @@ namespace btk
 					if(fuzzyImageIterator.Get()[i] > max)
 					{
 						max = fuzzyImageIterator.Get()[i];
-						labelImageIterator.Set(i);
+						labelImageIterator.Set(i+1);
 					}
 				}
 			}

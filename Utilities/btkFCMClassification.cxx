@@ -89,10 +89,10 @@ int main(int argc, char **argv)
 		cmd.parse( argc, argv );
 		
 		//Get Arguments
-		std::string input_file = inputImageArg.getValue();
-		std::string label_file = labelImageArg.getValue();
-		std::string mask_file = maskImageArg.getValue();
-		std::string fuzzy_files = fuzzyImageArg.getValue();
+		std::string inputFile = inputImageArg.getValue();
+		std::string labelFile = labelImageArg.getValue();
+		std::string maskFile = maskImageArg.getValue();
+		std::string fuzzyFiles = fuzzyImageArg.getValue();
 		unsigned int classNumber = classNumberArg.getValue();
 		
 // 		for(unsigned int i=0; i<classNumber; i++)
@@ -105,8 +105,8 @@ int main(int argc, char **argv)
 // 		}
 		
 		//Read Grey and Mask Images
-		GreyImagePointer greyImage = GreyHelperType::ReadImage(input_file);
-		LabelImagePointer maskImage = LabelHelperType::ReadImage(mask_file);
+		GreyImagePointer greyImage = GreyHelperType::ReadImage(inputFile);
+		LabelImagePointer maskImage = LabelHelperType::ReadImage(maskFile);
 		
 		//Set FCMClassifier parameters
 		FCMClassifierType::Pointer fcmClassifier = FCMClassifierType::New();
@@ -115,18 +115,21 @@ int main(int argc, char **argv)
 		fcmClassifier->SetClassNumber(classNumber);
 		fcmClassifier->Update();
 		
-		//Write Ouputs
+		//Write Fuzzy Maps
 		FuzzyImageType::Pointer fuzzyMaps = fcmClassifier->GetFuzzyMaps();
 		AdaptorType::Pointer adaptor = AdaptorType::New();
 		adaptor->SetInput(fuzzyMaps);
 		for(unsigned int i=0; i<classNumber; i++)
 		{
 			adaptor->SetIndex(i);
-			std::string fuzzyFile = fuzzy_files;
+			std::string fuzzyFile = fuzzyFiles;
 			std::stringstream fileNumber; fileNumber<<(i+1);
 			fuzzyFile.insert(fuzzyFile.find_first_of('.'), fileNumber.str());
 			btk::ImageHelper< FuzzyScalarType >::WriteImage(adaptor->GetOutput(),fuzzyFile);
 		}
+		
+		//Write Label Map
+		LabelHelperType::WriteImage(fcmClassifier->GetLabelSegmentation(), labelFile);
 		
 		return 0;
 	}
