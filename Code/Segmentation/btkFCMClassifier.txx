@@ -184,7 +184,6 @@ namespace btk
 			{
 				if(maskImageIterator.Get() > 0)
 				{
-// 					std::cout<<"Get in there 2"<<std::endl;
 					FuzzyPixelType currentFuzzyPixel(m_ClassNumber);
 					float total = 0;
 					bool isAtOne = 0;
