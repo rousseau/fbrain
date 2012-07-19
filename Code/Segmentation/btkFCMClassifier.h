@@ -98,6 +98,8 @@ namespace btk
 		private:
 			FCMClassifier(const Self &); //purposely not implemented
 			void operator=(const Self &);  //purposely not implemented
+			
+			/** Intern functions to run FCM Algorithm */
 			void InitialiseCentroids(typename TGreyImage::Pointer inputImage, typename TLabelImage::Pointer maskImage);
 			void FCMOptimisation(typename TGreyImage::Pointer inputImage, typename TLabelImage::Pointer maskImage, typename TFuzzyImage::Pointer fuzzyMaps);
 			void MakeLabelImage(typename TLabelImage::Pointer maskImage, typename TLabelImage::Pointer labelImage, typename TFuzzyImage::Pointer fuzzyMaps);
@@ -106,10 +108,6 @@ namespace btk
 			
 			unsigned int m_ClassNumber;
 			CentroidsVectorType m_Centroids;
-// 			typename TGreyImage::Pointer m_Input;
-// 			typename TLabelImage::Pointer m_Mask;
-// 			typename TLabelImage::Pointer m_LabelSegmentation;
-// 			typename TFuzzyImage::Pointer m_FuzzySegmentation; //Number of fuzzy maps depends on the number of reasearched clusters
 		
 	};
 	

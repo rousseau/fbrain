@@ -63,10 +63,11 @@ namespace btk
 		m_ClassNumber=2; //Default Value to avoid a crash
 	}
 	
-	/* --------------------------------------Main function------------------------------------- */
+	/* --------------------------------------FCM running functions------------------------------------- */
 	template< typename TGreyImage, typename TLabelImage, typename TFuzzyImage>
 	void FCMClassifier<TGreyImage, TLabelImage, TFuzzyImage>::GenerateData()
 	{
+		//Get Inputs
 		typename TGreyImage::Pointer inputImage = this->GetGreyImage();
 		typename TLabelImage::Pointer maskImage = this->GetMaskImage();
 		
@@ -93,7 +94,6 @@ namespace btk
 		
 		//Build LabelSegmentation
 		MakeLabelImage(maskImage, labelSegmentation, fuzzyMaps);
-		
 	}
 	
 	template< typename TGreyImage, typename TLabelImage, typename TFuzzyImage>
@@ -115,7 +115,6 @@ namespace btk
 		{
 			if(maskImageIterator.Get() > 0)
 			{
-// 				std::cout<<"passe dans le if pour min et max"<<std::endl;
 				if(greyImageIterator.Get() > max)
 				{
 					max = (float) greyImageIterator.Get();
@@ -127,6 +126,7 @@ namespace btk
 			}
 		}
 		
+		//Initialisation
 		m_Centroids[0] = max;
 		m_Centroids[m_ClassNumber] = min;
 		for(unsigned int i=1; i<m_ClassNumber-1; i++)
@@ -142,6 +142,7 @@ namespace btk
 		itk::ImageRegionIterator<TLabelImage> labelImageIterator(labelImage, labelImage->GetLargestPossibleRegion());
 		itk::ImageRegionIterator<TFuzzyImage> fuzzyImageIterator(fuzzyMaps, fuzzyMaps->GetLargestPossibleRegion());
 		
+		//Maximum fuzzy value in fuzzyMaps settles the sharp label
 		for(maskImageIterator.GoToBegin(), labelImageIterator.GoToBegin(), fuzzyImageIterator.GoToBegin(); !maskImageIterator.IsAtEnd(); ++maskImageIterator, ++labelImageIterator, ++fuzzyImageIterator)
 		{
 			if(maskImageIterator.Get() > 0)
@@ -190,6 +191,7 @@ namespace btk
 					
 					for(unsigned int i=0; i<m_ClassNumber; i++)
 					{
+						//In case centroids and greyvalue are the same => impossible to divide by zero
 						if((float)greyImageIterator.Get() - m_Centroids[i] != 0)
 						{
 							currentFuzzyPixel[i] = 1/pow((float)greyImageIterator.Get() - m_Centroids[i], 2.0);
@@ -212,6 +214,7 @@ namespace btk
 					}
 					else
 					{
+						//If the current grey value is equal to one centroids
 						for(unsigned int i=0; i<m_ClassNumber; i++)
 						{
 							if(currentFuzzyPixel[i] == -1.0)

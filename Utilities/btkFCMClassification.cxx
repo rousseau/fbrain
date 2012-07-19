@@ -95,15 +95,6 @@ int main(int argc, char **argv)
 		std::string fuzzyFiles = fuzzyImageArg.getValue();
 		unsigned int classNumber = classNumberArg.getValue();
 		
-// 		for(unsigned int i=0; i<classNumber; i++)
-// 		{
-// 			std::string fuzzyFile = fuzzy_files;
-// 			std::stringstream fileNumber; fileNumber<<i;
-// 			std::cout<<fuzzyFile<<" "<<fileNumber.str()<<std::endl;
-// 			fuzzyFile.insert(fuzzyFile.find_first_of('.'), fileNumber.str());
-// 			std::cout<<fuzzyFile<<std::endl;
-// 		}
-		
 		//Read Grey and Mask Images
 		GreyImagePointer greyImage = GreyHelperType::ReadImage(inputFile);
 		LabelImagePointer maskImage = LabelHelperType::ReadImage(maskFile);
@@ -130,11 +121,11 @@ int main(int argc, char **argv)
 		
 		//Write Label Map
 		LabelHelperType::WriteImage(fcmClassifier->GetLabelSegmentation(), labelFile);
-		
-		return 0;
 	}
 	catch (TCLAP::ArgException &e)  // catch any exceptions
 	{ 
 		std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; 
 	}
+	
+	return 0;
 }
