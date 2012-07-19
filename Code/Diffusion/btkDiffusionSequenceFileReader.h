@@ -67,7 +67,7 @@ class DiffusionSequenceFileReader : public itk::ImageFileReader< DiffusionSequen
 
         /**
          * @brief Update the process (read the diffusion weighted intensities, the gradient table and the b-values).
-         * The radix of the name of the trhee files are supposed to be the same.
+         * The radix of the name of the three files are supposed to be the same.
          */
         virtual void Update();
 
