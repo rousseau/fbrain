@@ -91,6 +91,9 @@ namespace btk
 		//FCM Optimization
 		FCMOptimisation(inputImage, maskImage, fuzzyMaps);
 		
+		//Build LabelSegmentation
+		MakeLabelImage(maskImage, labelSegmentation, fuzzyMaps);
+		
 	}
 	
 	template< typename TGreyImage, typename TLabelImage, typename TFuzzyImage>
@@ -108,10 +111,11 @@ namespace btk
 		float max = (float) minMaxCalculator->GetMinimum();
 		float min = (float) minMaxCalculator->GetMaximum();
 		
-		for(greyImageIterator.Begin(), maskImageIterator.Begin(); !greyImageIterator.IsAtEnd(); ++greyImageIterator, ++maskImageIterator)
+		for(greyImageIterator.GoToBegin(), maskImageIterator.GoToBegin(); !greyImageIterator.IsAtEnd(); ++greyImageIterator, ++maskImageIterator)
 		{
-			if(maskImageIterator.Value() > 0)
+			if(maskImageIterator.Get() > 0)
 			{
+// 				std::cout<<"passe dans le if pour min et max"<<std::endl;
 				if(greyImageIterator.Get() > max)
 				{
 					max = (float) greyImageIterator.Get();
@@ -129,8 +133,34 @@ namespace btk
 		{
 			m_Centroids[i] = m_Centroids[0] + i*(max-min)/(m_ClassNumber-1);
 		}
+	}
+	
+	template< typename TGreyImage, typename TLabelImage, typename TFuzzyImage>
+	void FCMClassifier<TGreyImage, TLabelImage, TFuzzyImage>::MakeLabelImage(typename TLabelImage::Pointer maskImage, typename TLabelImage::Pointer labelImage, typename TFuzzyImage::Pointer fuzzyMaps)
+	{
+		itk::ImageRegionConstIterator<TLabelImage> maskImageIterator(maskImage, maskImage->GetLargestPossibleRegion());
+		itk::ImageRegionIterator<TLabelImage> labelImageIterator(labelImage, labelImage->GetLargestPossibleRegion());
+		itk::ImageRegionIterator<TFuzzyImage> fuzzyImageIterator(fuzzyMaps, fuzzyMaps->GetLargestPossibleRegion());
 		
-		std::cout<<"Actual Centroids : "<<m_Centroids[0]<<" "<<m_Centroids[1]<<std::endl;
+		for(maskImageIterator.GoToBegin(), labelImageIterator.GoToBegin(), fuzzyImageIterator.GoToBegin(); !maskImageIterator.IsAtEnd(); ++maskImageIterator, ++labelImageIterator, ++fuzzyImageIterator)
+		{
+			if(maskImageIterator.Get() > 0)
+			{
+				float max = 0;
+				for(unsigned int i=0; i<m_ClassNumber; i++)
+				{
+					if(fuzzyImageIterator.Get()[i] > max)
+					{
+						max = fuzzyImageIterator.Get()[i];
+						labelImageIterator.Set(i);
+					}
+				}
+			}
+			else
+			{
+				labelImageIterator.Set(0);
+			}
+		}
 	}
 	
 	template< typename TGreyImage, typename TLabelImage, typename TFuzzyImage>
@@ -144,17 +174,16 @@ namespace btk
 		float J=1;
 		float J_Old=0;
 		
-		while(fabs(J-J_Old) > 0.01)
+		while(fabs(J-J_Old)/J > 0.01)
 		{
 			J_Old = J;
 			
 			//Compute Fuzzy Maps
-			for(greyImageIterator.GoToBegin(), maskImageIterator.GoToBegin(), fuzzyImageIterator.GoToBegin(); fuzzyImageIterator.IsAtEnd(); ++greyImageIterator, ++maskImageIterator, ++fuzzyImageIterator)
+			for(greyImageIterator.GoToBegin(), maskImageIterator.GoToBegin(), fuzzyImageIterator.GoToBegin(); !greyImageIterator.IsAtEnd(); ++greyImageIterator, ++maskImageIterator, ++fuzzyImageIterator)
 			{
-				std::cout<<"Value of mask : "<<maskImageIterator.Get()<<std::endl;
 				if(maskImageIterator.Get() > 0)
 				{
-					std::cout<<"Get in there"<<std::endl;
+// 					std::cout<<"Get in there 2"<<std::endl;
 					FuzzyPixelType currentFuzzyPixel(m_ClassNumber);
 					float total = 0;
 					bool isAtOne = 0;
@@ -196,14 +225,13 @@ namespace btk
 				}
 			}
 			
+			
 			//Compute Centroids
 			itk::VariableLengthVector<float> total(m_ClassNumber);
 			total.Fill(0);
 			m_Centroids.Fill(0);
 			
-			std::cout<<"Actual Centroids : "<<m_Centroids[0]<<" "<<m_Centroids[1]<<std::endl;
-			
-			for(greyImageIterator.Begin(), maskImageIterator.Begin(), fuzzyImageIterator.Begin(); fuzzyImageIterator.IsAtEnd(); ++greyImageIterator, ++maskImageIterator, ++fuzzyImageIterator)
+			for(greyImageIterator.GoToBegin(), maskImageIterator.GoToBegin(), fuzzyImageIterator.GoToBegin(); !fuzzyImageIterator.IsAtEnd(); ++greyImageIterator, ++maskImageIterator, ++fuzzyImageIterator)
 			{
 				if(maskImageIterator.Get() > 0)
 				{
@@ -218,12 +246,11 @@ namespace btk
 			for(unsigned int i=0; i<m_ClassNumber; i++)
 				m_Centroids[i] = m_Centroids[i]/total[i];
 			
-			std::cout<<"Actual Centroids : "<<m_Centroids[0]<<" "<<m_Centroids[1]<<std::endl;
 			
 			//Compute J
 			J=0;
 			
-			for(greyImageIterator.Begin(), maskImageIterator.Begin(), fuzzyImageIterator.Begin(); fuzzyImageIterator.IsAtEnd(); ++greyImageIterator, ++maskImageIterator, ++fuzzyImageIterator)
+			for(greyImageIterator.GoToBegin(), maskImageIterator.GoToBegin(), fuzzyImageIterator.GoToBegin(); !fuzzyImageIterator.IsAtEnd(); ++greyImageIterator, ++maskImageIterator, ++fuzzyImageIterator)
 			{
 				if(maskImageIterator.Get() > 0)
 				{

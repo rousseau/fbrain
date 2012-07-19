@@ -100,6 +100,7 @@ namespace btk
 			void operator=(const Self &);  //purposely not implemented
 			void InitialiseCentroids(typename TGreyImage::Pointer inputImage, typename TLabelImage::Pointer maskImage);
 			void FCMOptimisation(typename TGreyImage::Pointer inputImage, typename TLabelImage::Pointer maskImage, typename TFuzzyImage::Pointer fuzzyMaps);
+			void MakeLabelImage(typename TLabelImage::Pointer maskImage, typename TLabelImage::Pointer labelImage, typename TFuzzyImage::Pointer fuzzyMaps);
 		
 		private :
 			

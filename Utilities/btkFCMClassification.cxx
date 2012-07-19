@@ -80,7 +80,7 @@ int main(int argc, char **argv)
 		cmd.add( maskImageArg );
 		TCLAP::ValueArg<std::string> labelImageArg("l","label_file","label image file (short)",true,"","string");
 		cmd.add( labelImageArg );
-		TCLAP::ValueArg<std::string> fuzzyImageArg("f","fuzzy_files","prefix of fuzzy maps files (short)",true,"","string");
+		TCLAP::ValueArg<std::string> fuzzyImageArg("f","fuzzy_files","fuzzy maps files pattern (for example : fuzzyMaps.nii will turn to fuzzyMaps1.nii, fuzzyMaps2.nii and fuzzyMaps3.nii for a 3 class clustering)(short)",true,"","string");
 		cmd.add( fuzzyImageArg );
 		TCLAP::ValueArg<int> classNumberArg("n","class_number","number of class to be looked for",true,0,"int");
 		cmd.add( classNumberArg );
@@ -95,36 +95,38 @@ int main(int argc, char **argv)
 		std::string fuzzy_files = fuzzyImageArg.getValue();
 		unsigned int classNumber = classNumberArg.getValue();
 		
-		std::string tmp = "passage_input.gipl";
+// 		for(unsigned int i=0; i<classNumber; i++)
+// 		{
+// 			std::string fuzzyFile = fuzzy_files;
+// 			std::stringstream fileNumber; fileNumber<<i;
+// 			std::cout<<fuzzyFile<<" "<<fileNumber.str()<<std::endl;
+// 			fuzzyFile.insert(fuzzyFile.find_first_of('.'), fileNumber.str());
+// 			std::cout<<fuzzyFile<<std::endl;
+// 		}
 		
 		//Read Grey and Mask Images
-// 		GreyImagePointer greyImage = GreyHelperType::ReadImage(input_file);
-		GreyReaderType::Pointer greyReader = GreyReaderType::New();
-		greyReader->SetFileName(input_file);
-		greyReader->Update();
+		GreyImagePointer greyImage = GreyHelperType::ReadImage(input_file);
 		LabelImagePointer maskImage = LabelHelperType::ReadImage(mask_file);
-		
-		GreyWriterType::Pointer greyWriter = GreyWriterType::New();
-		greyWriter->SetFileName(tmp);
-		greyWriter->SetInput(greyReader->GetOutput());
-		greyWriter->Update();
-// 		GreyHelperType::WriteImage(greyReader->GetOutput(),tmp);
 		
 		//Set FCMClassifier parameters
 		FCMClassifierType::Pointer fcmClassifier = FCMClassifierType::New();
-		fcmClassifier->SetGreyImage(greyReader->GetOutput());
+		fcmClassifier->SetGreyImage(greyImage);
 		fcmClassifier->SetMaskImage(maskImage);
 		fcmClassifier->SetClassNumber(classNumber);
 		fcmClassifier->Update();
 		
+		//Write Ouputs
 		FuzzyImageType::Pointer fuzzyMaps = fcmClassifier->GetFuzzyMaps();
 		AdaptorType::Pointer adaptor = AdaptorType::New();
-		adaptor->SetIndex(0);
 		adaptor->SetInput(fuzzyMaps);
-		
-		btk::ImageHelper< FuzzyScalarType >::WriteImage(adaptor->GetOutput(),"essai_fuzzy.gipl");
-		
-// 		std::cout<<"Number of class parameter : "<<fcmClassifier.GetClassNumber()<<std::endl;
+		for(unsigned int i=0; i<classNumber; i++)
+		{
+			adaptor->SetIndex(i);
+			std::string fuzzyFile = fuzzy_files;
+			std::stringstream fileNumber; fileNumber<<(i+1);
+			fuzzyFile.insert(fuzzyFile.find_first_of('.'), fileNumber.str());
+			btk::ImageHelper< FuzzyScalarType >::WriteImage(adaptor->GetOutput(),fuzzyFile);
+		}
 		
 		return 0;
 	}
