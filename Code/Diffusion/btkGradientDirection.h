@@ -39,6 +39,12 @@
 // ITK includes
 #include "itkSmartPointer.h"
 #include "itkVector.h"
+#include "vnl/vnl_vector_fixed.h"
+
+// Local includes
+#include "btkMacro.h"
+#include "btkSphericalDirection.h"
+
 
 namespace btk
 {
@@ -66,6 +72,28 @@ class GradientDirection : public itk::Vector< float,3 >
          * @param z Z coordinate.
          */
         GradientDirection(float x, float y, float z);
+
+        /**
+         * @brief Get the gradient direction in a vnl fixed structure for vector.
+         * @return A vnl fixed vector representing the gradient direction.
+         */
+        virtual vnl_vector_fixed< double,3 > GetVnlVectorFixed();
+
+        /**
+         * @brief Update the cartesian coordinates using the spherical ones.
+         */
+        void UpdateCartesianCoordinates();
+
+        /**
+         * @brief Update the sperical coordintes using the cartesian ones.
+         */
+        void UpdateSphericalCoordinates();
+
+        btkGetMacro(SphericalDirection, btk::SphericalDirection);
+
+    protected:
+        /** Gradient direction in spherical coordinates system. */
+        btk::SphericalDirection m_SphericalDirection;
 };
 
 } // namespace btk
