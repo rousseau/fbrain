@@ -170,6 +170,10 @@ ADD_EXECUTABLE(btkImageMorphologicalClosing btkImageMorphologicalClosing.cxx
 ${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
 TARGET_LINK_LIBRARIES(btkImageMorphologicalClosing ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkImageMorphologicalTopHat btkImageMorphologicalTopHat.cxx
+${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+TARGET_LINK_LIBRARIES(btkImageMorphologicalTopHat ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -203,4 +207,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkApplyMaskToImage
                 btkFCMClassification
                 btkImageMorphologicalClosing
+                btkImageMorphologicalTopHat
         DESTINATION bin)
