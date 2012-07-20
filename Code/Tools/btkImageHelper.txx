@@ -125,7 +125,7 @@ typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::CreateN
     newImage->SetSpacing(image->GetSpacing());
     newImage->SetDirection(image->GetDirection());
     newImage->Allocate();
-    newImage->FillBuffer(0);
+//    newImage->FillBuffer(0);
 
     return newImage;
 }
