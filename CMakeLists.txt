@@ -47,14 +47,33 @@ IF(TCLAP_DIRECTORY-NOTFOUND)
   MESSAGE(FATAL_ERROR "TCLAP not found !")
 ENDIF(TCLAP_DIRECTORY-NOTFOUND)
 
+# Find CPPunit (Optionnal)
+IF(BUILD_TESTING)
+    MESSAGE(STATUS "Check for CppUnit")
+
+    FIND_PATH(CPPUNIT_INCLUDE_DIR NAMES TestSuite.h PATHS /usr/include/cppunit /usr/local/include/cppunit ~/.local/include/cppunit)
+    IF(CPPUNIT_INCLUDE_DIR-NOTFOUND)
+        MESSAGE(FATAL_ERROR "CppUnit include directory not found !")
+    ELSE(CPPUNIT_INCLUDE_DIR-NOTFOUND)
+        INCLUDE_DIRECTORIES(${CPPUNIT_INCLUDE_DIR})
+    ENDIF(CPPUNIT_INCLUDE_DIR-NOTFOUND)
+
+    FIND_PATH(CPPUNIT_LIBRARY NAMES libcppunit.a PATHS /usr/lib /usr/local/lib ~/.local/lib)
+    IF(CPPUNIT_LIBRARY-NOTFOUND)
+        MESSAGE(FATAL_ERROR "CppUnit library not found !")
+    ELSE(CPPUNIT_LIBRARY-NOTFOUND)
+        SET(CPPUNIT_LIBRARY ${CPPUNIT_LIBRARY}/libcppunit.a)
+    ENDIF(CPPUNIT_LIBRARY-NOTFOUND)
+ENDIF(BUILD_TESTING)
+
 #---- Operations -----------------------------------------------------------------------
 
 # Testing
 IF(BUILD_TESTING)
     ENABLE_TESTING()
-    SUBDIRS(
-        Tests
-    )
+#    SUBDIRS(
+#        Tests
+#    )
 ENDIF(BUILD_TESTING)
 
 # Documentation

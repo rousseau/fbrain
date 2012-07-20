@@ -6,6 +6,10 @@ INCLUDE_REGULAR_EXPRESSION("^.*$")
 SET(TOOLS_LIBRARY_SOURCE_DIR ${Code_SOURCE_DIR}/Tools)
 SET(MATHS_LIBRARY_SOURCE_DIR ${Code_SOURCE_DIR}/Maths)
 
+IF(BUILD_TESTING)
+    SET(MATHS_TESTS_SOURCE_DIR ${MATHS_LIBRARY_SOURCE_DIR}/Tests)
+ENDIF(BUILD_TESTING)
+
 INCLUDE_DIRECTORIES(${MATHS_LIBRARY_SOURCE_DIR} ${TOOLS_LIBRARY_SOURCE_DIR})
 
 #---- Maths library ---------------------------------------------------------------------
@@ -18,4 +22,9 @@ ADD_LIBRARY(btkMathsLibrary STATIC
     ${MATHS_LIBRARY_SOURCE_DIR}/btkSphericalHarmonics.cxx ${MATHS_LIBRARY_SOURCE_DIR}/btkSphericalHarmonics.h
     ${MATHS_LIBRARY_SOURCE_DIR}/btkMatrixOperations.cxx ${MATHS_LIBRARY_SOURCE_DIR}/btkMatrixOperations.h
 )
-#TARGET_LINK_LIBRARIES
+
+IF(BUILD_TESTING)
+    ADD_EXECUTABLE(btkMathsLibraryTestsApp ${MATHS_TESTS_SOURCE_DIR}/btkMathsLibraryTestsApp.cxx)
+    TARGET_LINK_LIBRARIES(btkMathsLibraryTestsApp btkMathsLibrary ${CPPUNIT_LIBRARY})
+    ADD_TEST(btkMathsLibraryTests btkMathsLibraryTestsApp)
+ENDIF(BUILD_TESTING)
