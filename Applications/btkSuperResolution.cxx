@@ -215,7 +215,7 @@ int main( int argc, char *argv[] )
   for (int i=0; i<numberOfLoops; i++){
     std::cout<<"Loop : "<<i+1<<std::endl;
        
-    btkNLMTool<float> myTool;
+    btk::NLMTool<float> myTool;
     myTool.SetInput(resampler -> GetOutput());
     myTool.SetPaddingValue(0);
     myTool.SetDefaultParameters();
@@ -230,7 +230,7 @@ int main( int argc, char *argv[] )
   //NLM denoising desired at the last step if number of loops > 0
   if(numberOfLoops>0){
       
-    btkNLMTool<float> myTool;
+    btk::NLMTool<float> myTool;
     myTool.SetInput(resampler -> GetOutput());
     myTool.SetPaddingValue(0);
     myTool.SetDefaultParameters();

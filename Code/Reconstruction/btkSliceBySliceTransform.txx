@@ -337,6 +337,22 @@ GetFixedParameters(void) const
   return this->m_FixedParameters;
 }
 
+template <class TScalarType,unsigned int NDimensions>
+void
+SliceBySliceTransform<TScalarType,NDimensions>::
+GetInverse(Self* inverse) const
+{
+    inverse->SetFixedParameters(this->GetFixedParameters());
+    inverse->SetImage(this->m_Image.GetPointer());
+
+    for(int i = 0; i< m_NumberOfSlices; i++)
+    {
+        typename TransformType::Pointer t = TransformType::New();
+        m_TransformList[i]->GetInverse(t);
+        inverse->SetSliceParameters(i,t->GetParameters());
+    }
+
+}
 
 } // namespace
 
