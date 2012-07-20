@@ -37,6 +37,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 #include "itkGrayscaleMorphologicalClosingImageFilter.h"
 #include "itkBinaryBallStructuringElement.h"
+#include "itkSubtractImageFilter.h"
 
 #include <tclap/CmdLine.h>
 #include <string>
@@ -47,6 +48,7 @@ typedef int 	VoxelType;
 typedef itk::Image <VoxelType,Dimension>		ImageType;
 typedef itk::BinaryBallStructuringElement<VoxelType,Dimension>	StructuringElementType;
 typedef itk::GrayscaleMorphologicalClosingImageFilter <ImageType, ImageType, StructuringElementType> ClosingFilterType;
+typedef itk::SubtractImageFilter <ImageType, ImageType, ImageType> SubtractFilterType;
 
 typedef ImageType::Pointer 	ImagePointer;
 
@@ -57,7 +59,7 @@ int main(int argc, char **argv)
 	try
 	{
 		//TCLAP Command Line Parser
-		TCLAP::CmdLine cmd("Greyscale Morphological Closing by a ball structuring element", ' ', "0.1");
+		TCLAP::CmdLine cmd("Greyscale Morphological Top Hat by a ball structuring element", ' ', "0.1");
 		
 		//TCLAP Arguments
 		TCLAP::ValueArg<std::string> inputImageArg("i","image_file","input image file (short)",true,"","string");
@@ -88,8 +90,14 @@ int main(int argc, char **argv)
 		closingFilter->SetInput(image);
 		closingFilter->SetKernel(structElement);
 		
+		//Create and Run Subtract Filter
+		SubtractFilterType::Pointer subtractFilter = SubtractFilterType::New();
+		subtractFilter->SetInput1(closingFilter->GetOutput());
+		subtractFilter->SetInput2(image);
+		subtractFilter->Update();
+		
 		//Write Ouput
-		HelperType::WriteImage(closingFilter->GetOutput(), outputFile);
+		HelperType::WriteImage(subtractFilter->GetOutput(), outputFile);
 	}
 	catch (TCLAP::ArgException &e)  // catch any exceptions
 	{ 
