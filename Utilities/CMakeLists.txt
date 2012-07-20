@@ -166,6 +166,10 @@ ${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h
 ${fbrain_SOURCE_DIR}/Code/Segmentation/btkFCMClassifier.h)
 TARGET_LINK_LIBRARIES(btkFCMClassification ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkImageMorphologicalClosing btkImageMorphologicalClosing.cxx
+${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+TARGET_LINK_LIBRARIES(btkImageMorphologicalClosing ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -198,4 +202,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkImageSubtract
                 btkApplyMaskToImage
                 btkFCMClassification
+                btkImageMorphologicalClosing
         DESTINATION bin)
