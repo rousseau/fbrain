@@ -1,5 +1,6 @@
 
 #include "btkHighResolutionSRFilter.h"
+#include "sstream"
 
 namespace btk
 {
@@ -7,7 +8,7 @@ HighResolutionSRFilter::HighResolutionSRFilter()
 {
     btkCoutMacro("HighResolutionSRFilter : Constructor");
     //resampler = Resampler::New();
-    m_NlmTools = new btkNLMTool<float>;
+    m_NlmTools = new NLMTool<float>;
 }
 //-----------------------------------------------------------------------------------------------------------
 HighResolutionSRFilter::~HighResolutionSRFilter()
@@ -306,6 +307,13 @@ void HighResolutionSRFilter::DoRigidReconstruction()
     for (int i=0; i< SuperClass::m_Nloops; i++)
     {
       std::cout<<"Loop : "<<i+1<<std::endl;
+
+//      //TODO: Write image at each iteration :
+//      std::stringstream NameStream;
+//      NameStream<<"Tmp_SR_"<<i<<".nii.gz";
+//      std::string name =  NameStream.str();
+//      btk::ImageHelper<itkImage>::WriteImage(resampler->GetOutput(),name);
+//      //************
 
       m_NlmTools->SetInput(resampler -> GetOutput());
       m_NlmTools->SetPaddingValue(0);

@@ -50,6 +50,7 @@
 #include "btkSuperResolutionRigidImageFilter.h"
 #include "btkSuperResolutionAffineImageFilter.h"
 #include "btkNLMTool.h"
+#include "btkImageHelper.h"
 
 /* OTHERS */
 #include "iostream"
@@ -89,7 +90,7 @@ protected:
 private:
 
    //Resampler::Pointer  m_Resampler;
-    btkNLMTool<float>*   m_NlmTools;
+    NLMTool<float>*   m_NlmTools;
 
     float               m_Lambda;
     unsigned int        m_Iter;
