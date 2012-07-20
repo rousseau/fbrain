@@ -70,6 +70,7 @@ ENDIF(BUILD_DOCUMENTATION)
 
 # Executables
 SUBDIRS(
-    Utilities
+    Code
     Applications
+    Utilities
 )
