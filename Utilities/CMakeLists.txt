@@ -41,6 +41,7 @@ TARGET_LINK_LIBRARIES(btkPrintImageInfo ${ITK_LIBRARIES} )
 ADD_EXECUTABLE(btkRegisterDiffusionToAnatomicalData btkRegisterDiffusionToAnatomicalData.cxx
         ${fbrain_SOURCE_DIR}/Code/DTI/btkDiffusionGradientTable.h
         ${fbrain_SOURCE_DIR}/Code/InputOutput/btkFileNameTools.h
+        ${fbrain_SOURCE_DIR}/Code/Tools/btkFileHelper.h ${fbrain_SOURCE_DIR}/Code/Tools/btkFileHelper.cxx
  )
 TARGET_LINK_LIBRARIES(btkRegisterDiffusionToAnatomicalData ${ITK_LIBRARIES})
 
