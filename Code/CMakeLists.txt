@@ -24,7 +24,9 @@ ADD_LIBRARY(btkMathsLibrary STATIC
 )
 
 IF(BUILD_TESTING)
-    ADD_EXECUTABLE(btkMathsLibraryTestsApp ${MATHS_TESTS_SOURCE_DIR}/btkMathsLibraryTestsApp.cxx)
-    TARGET_LINK_LIBRARIES(btkMathsLibraryTestsApp btkMathsLibrary ${CPPUNIT_LIBRARY})
+    ADD_EXECUTABLE(btkMathsLibraryTestsApp ${MATHS_TESTS_SOURCE_DIR}/btkMathsLibraryTestsApp.cxx
+        ${MATHS_TESTS_SOURCE_DIR}/btkMatrixOperationsTest.cxx ${MATHS_TESTS_SOURCE_DIR}/btkMatrixOperationsTest.h
+    )
+    TARGET_LINK_LIBRARIES(btkMathsLibraryTestsApp btkMathsLibrary ${CPPUNIT_LIBRARY} ${ITK_LIBRARIES})
     ADD_TEST(btkMathsLibraryTests btkMathsLibraryTestsApp)
 ENDIF(BUILD_TESTING)

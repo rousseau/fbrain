@@ -41,10 +41,14 @@
 #include "ui/text/TestRunner.h"
 #include "CompilerOutputter.h"
 
+// Local includes
+#include "btkMatrixOperationsTest.h"
+
 
 int main(int argc, char *argv[])
 {
     CppUnit::TextUi::TestRunner runner;
+    runner.addTest(btk::MatrixOperationsTest::suite());
     runner.setOutputter(new CppUnit::CompilerOutputter(&runner.result(), std::cerr));
 
     return runner.run() ? EXIT_SUCCESS : EXIT_FAILURE;

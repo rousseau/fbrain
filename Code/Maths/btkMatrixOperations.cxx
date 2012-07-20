@@ -56,19 +56,7 @@ double MatrixOperations::Norm(Self::Matrix &matrix)
     matrixT = matrix.GetTranspose();
     matrixTmatrix = matrixT * matrix;
 
-//    // Create vnl matrix for eigen decomposition
-//    vnl_matrix<double> M(Self::Matrix::RowDimensions, Self::Matrix::ColumnDimensions);
-
-//    for(unsigned int i = 0; i < Self::Matrix::RowDimensions; i++)
-//    {
-//        for(unsigned int j = 0; j < Self::Matrix::ColumnDimensions; j++)
-//        {
-//            M(i,j) = matrixTmatrix(i,j);
-//        }
-//    }
-
     // Compute eigen decomposition
-//    vnl_real_eigensystem eig(M);
     vnl_real_eigensystem eig(matrixTmatrix.GetVnlMatrix());
 
     // Search maximal eigen value
@@ -92,7 +80,7 @@ MatrixOperations::Matrix MatrixOperations::Exponential(Self::Matrix &matrix, uns
     float j = std::max( 0.0, 1.0 + std::floor(std::log(MatrixOperations::Norm(matrix))/std::log(2)) );
     Self::Matrix A = matrix * std::pow(2,-j);
 
-    Self::Matrix D, N, X;
+    Self::Matrix D(matrix.Rows(),matrix.Cols()), N(matrix.Rows(),matrix.Cols()), X(matrix.Rows(),matrix.Cols());
     D.SetIdentity(); N.SetIdentity(); X.SetIdentity();
     float c = 1;
 
@@ -106,18 +94,6 @@ MatrixOperations::Matrix MatrixOperations::Exponential(Self::Matrix &matrix, uns
 
     X = D.GetInverse() * N.GetVnlMatrix();
 
-//    // Create vnl matrix for power
-//    vnl_matrix<float> M(Self::Matrix::RowDimensions, Self::Matrix::ColumnDimensions);
-
-//    for(unsigned int i = 0; i < Self::Matrix::RowDimensions; i++)
-//    {
-//        for(unsigned int j = 0; j < Self::Matrix::ColumnDimensions; j++)
-//        {
-//            M(i,j) = X(i,j);
-//        }
-//    }
-
-//    Self::Matrix expM(vnl_power(M,(std::pow(2,j))));
     Self::Matrix expM;
     expM = vnl_power(X.GetVnlMatrix(),(std::pow(2,j)));
 
@@ -129,7 +105,7 @@ MatrixOperations::Matrix MatrixOperations::Exponential(Self::Matrix &matrix, uns
 MatrixOperations::Matrix MatrixOperations::Logarithm(Self::Matrix &matrix, double epsilon, unsigned int maxNbOfIterations)
 {
     unsigned int   k = 0;
-    Self::Matrix I; I.SetIdentity();
+    Self::Matrix I(matrix.Rows(),matrix.Cols()); I.SetIdentity();
     Self::Matrix   A = matrix;
     Self::Matrix AmI = A - I;
 
@@ -172,11 +148,11 @@ MatrixOperations::Matrix MatrixOperations::Logarithm(Self::Matrix &matrix, doubl
 MatrixOperations::Matrix MatrixOperations::Sqrt(Self::Matrix &matrix, double epsilon, unsigned int maxNbOfIterations)
 {
     Self::Matrix X = matrix;
-    Self::Matrix Y; Y.SetIdentity();
+    Self::Matrix Y(matrix.Rows(),matrix.Cols()); Y.SetIdentity();
 
     unsigned int nbOfIterations = 0;
     Self::Matrix X2mMatrix = X * X - matrix;
-    Self::Matrix iX, iY;
+    Self::Matrix iX(X.Rows(),X.Cols()), iY(Y.Rows(),Y.Cols());
 
     while(MatrixOperations::Norm(X2mMatrix) > epsilon  && nbOfIterations <= maxNbOfIterations)
     {
