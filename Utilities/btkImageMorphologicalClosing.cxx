@@ -33,20 +33,24 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 ==========================================================================*/
 
-#include "btkFCMClassifier.h"
 #include "btkImageHelper.h"
+
+#include "itkGrayscaleMorphologicalClosingImageFilter.h"
+#include "itkBinaryBallStructuringElement.h"
 
 #include <tclap/CmdLine.h>
 #include <string>
 
 const unsigned int Dimension = 3;
-typedef int 	GreyVoxelType;
+typedef int 	VoxelType;
 
-typedef itk::Image <GreyVoxelType,Dimension>		GreyImageType;
+typedef itk::Image <VoxelType,Dimension>		ImageType;
+typedef itk::BinaryBallStructuringElement<VoxelType,Dimension>	StructuringElementType;
+typedef itk::GrayscaleMorphologicalClosingImageFilter <ImageType, ImageType, StructuringElementType> ClosingFilterType;
 
-typedef GreyImageType::Pointer 	GreyImagePointer;
+typedef ImageType::Pointer 	ImagePointer;
 
-typedef btk::ImageHelper<GreyImageType> GreyHelperType;
+typedef btk::ImageHelper<ImageType> HelperType;
 
 int main(int argc, char **argv)
 {
@@ -71,10 +75,18 @@ int main(int argc, char **argv)
 		std::string outputFile = outputImageArg.getValue();
 		unsigned int radius = radiusArg.getValue();
 		
-		//Read Grey and Mask Images
-		GreyImagePointer greyImage = GreyHelperType::ReadImage(inputFile);
+		//Read image
+		ImagePointer image = HelperType::ReadImage(inputFile);
 		
+		//Set Structuring Element
+		StructuringElementType structElement;
+		structElement.SetRadius(radius);
+		structElement.CreateStructuringElement();
 		
+		//Create and Run Closing Filter
+		ClosingFilterType::Pointer closingFilter = ClosingFilterType::New();
+		closingFilter->SetInput(image);
+		closingFilter->SetKernel(structElement);
 	}
 	catch (TCLAP::ArgException &e)  // catch any exceptions
 	{ 
