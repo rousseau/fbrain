@@ -87,6 +87,9 @@ int main(int argc, char **argv)
 		ClosingFilterType::Pointer closingFilter = ClosingFilterType::New();
 		closingFilter->SetInput(image);
 		closingFilter->SetKernel(structElement);
+		
+		//Write Ouput
+		HelperType::WriteImage(closingFilter->GetOutput(), outputFile);
 	}
 	catch (TCLAP::ArgException &e)  // catch any exceptions
 	{ 
