@@ -138,7 +138,7 @@ MatrixOperations::Matrix MatrixOperations::Logarithm(Self::Matrix &matrix, doubl
         nbOfIterations++;
     }
 
-    X = X * std::pow(2.0,(float)k);
+    X = X * std::pow(2.0f,(float)k);
 
     return X*(-1);
 }
