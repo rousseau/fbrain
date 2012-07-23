@@ -33,3 +33,67 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 ==========================================================================*/
 
+#ifndef BTK_TOPOLOGICAL_KMEANS_H
+#define BTK_TOPOLOGICAL_KMEANS_H
+
+//ITK Includes
+#include "itkImageToImageFilter.h"
+
+//WARNING
+//Type TGreyImage shall be a vector Image
+//Type TLabelImage shall be a scalar Image
+
+namespace btk
+{
+	/**
+	* FCM class for fuzzy classification
+	* @author Benoit Caldairou
+	*/
+	
+	template <class TGreyImage, class TLabelImage>
+	class TopologicalKMeans : public itk::ImageToImageFilter< TGreyImage, TLabelImage >
+	{
+		public :
+			/** Standard class typedefs. */
+			typedef TopologicalKMeans 	Self;
+			typedef itk::ImageToImageFilter< TGreyImage, TLabelImage > 	Superclass;
+			typedef itk::SmartPointer < Self > 				Pointer;
+			
+			/** Method for creation through the object factory. */
+			itkNewMacro(Self);
+			
+			/** Run-time type information (and related methods). */
+			itkTypeMacro(TopologicalKMeans, itk::ImageToImageFilter);
+			
+			/** Constructor and destructor */
+			TopologicalKMeans();
+			~TopologicalKMeans(){}
+			
+			/** Acces Functions */
+			TLabelImage* GetLabelSegmentation();
+			
+			void SetGreyImage(const TGreyImage* input);
+			void SetMaskImage(const TLabelImage* mask);
+			
+		protected:
+			
+			/** Does the real work. */
+			virtual void GenerateData();
+			
+			/**  Create the Output */
+			itk::DataObject::Pointer MakeOutput(unsigned int idx);
+			
+			/** Get Functions */
+			typename TGreyImage::Pointer GetGreyImage();
+			typename TLabelImage::Pointer GetMaskImage();
+			
+		private:
+			TopologicalKMeans(const Self &); //purposely not implemented
+			void operator=(const Self &);  //purposely not implemented
+	};
+	
+}
+
+#include "btkTopologicalKMeans.txx"
+
+#endif // BTK_TOPOLOGICAL_KMEANS_H

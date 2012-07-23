@@ -33,3 +33,9 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 ==========================================================================*/
 
+#ifndef BTK_TOPOLOGICAL_KMEANS_TXX
+#define BTK_TOPOLOGICAL_KMEANS_TXX
+
+#include "btkTopologicalKMeans.h"
+
+#endif // BTK_TOPOLOGICAL_KMEANS_TXX

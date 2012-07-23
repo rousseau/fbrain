@@ -75,7 +75,6 @@ namespace btk
 			
 			/** Acces Functions */
 			TLabelImage* GetLabelSegmentation();
-			TFuzzyImage* GetFuzzyMaps();
 			
 			void SetGreyImage(const TGreyImage* input);
 			void SetMaskImage(const TLabelImage* mask);
