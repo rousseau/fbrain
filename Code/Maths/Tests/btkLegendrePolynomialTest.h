@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 20/07/2012
+  Date: 24/07/2012
   Author(s): Julien Pontabry (pontabry@unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -33,25 +33,30 @@
   
 ==========================================================================*/
 
-
-// STL includes
-#include "cstdlib"
+#ifndef BTK_LEGENDRE_POLYNOMIAL_TEST_H
+#define BTK_LEGENDRE_POLYNOMIAL_TEST_H
 
 // CppUnit includes
-#include "ui/text/TestRunner.h"
-#include "CompilerOutputter.h"
+#include "extensions/HelperMacros.h"
 
-// Local includes
-#include "btkMatrixOperationsTest.h"
-#include "btkLegendrePolynomialTest.h"
-
-
-int main(int argc, char *argv[])
+namespace btk
 {
-    CppUnit::TextUi::TestRunner runner;
-    runner.addTest(btk::MatrixOperationsTest::suite());
-    runner.addTest(btk::LegendrePolynomialTest::suite());
-    runner.setOutputter(new CppUnit::CompilerOutputter(&runner.result(), std::cerr));
 
-    return runner.run() ? EXIT_SUCCESS : EXIT_FAILURE;
-}
+class LegendrePolynomialTest : public CppUnit::TestFixture
+{
+        CPPUNIT_TEST_SUITE(LegendrePolynomialTest);
+        CPPUNIT_TEST(testComputeInZero);
+        CPPUNIT_TEST(testCompute);
+        CPPUNIT_TEST_SUITE_END();
+
+    public:
+        void setUp();
+        void tearDown();
+
+        void testComputeInZero();
+        void testCompute();
+};
+
+} // namespace btk
+
+#endif // BTK_LEGENDRE_POLYNOMIAL_TEST_H
