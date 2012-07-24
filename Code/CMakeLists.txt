@@ -27,6 +27,7 @@ IF(BUILD_TESTING)
     ADD_EXECUTABLE(btkMathsLibraryTestsApp ${MATHS_TESTS_SOURCE_DIR}/btkMathsLibraryTestsApp.cxx
         ${MATHS_TESTS_SOURCE_DIR}/btkMatrixOperationsTest.cxx ${MATHS_TESTS_SOURCE_DIR}/btkMatrixOperationsTest.h
         ${MATHS_TESTS_SOURCE_DIR}/btkLegendrePolynomialTest.cxx ${MATHS_TESTS_SOURCE_DIR}/btkLegendrePolynomialTest.h
+        ${MATHS_TESTS_SOURCE_DIR}/btkMathFunctionsTest.cxx ${MATHS_TESTS_SOURCE_DIR}/btkMathFunctionsTest.h
     )
     TARGET_LINK_LIBRARIES(btkMathsLibraryTestsApp btkMathsLibrary ${CPPUNIT_LIBRARY} ${ITK_LIBRARIES})
     ADD_TEST(btkMathsLibraryTests btkMathsLibraryTestsApp)

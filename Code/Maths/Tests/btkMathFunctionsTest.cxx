@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 20/07/2012
+  Date: 24/07/2012
   Author(s): Julien Pontabry (pontabry@unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -33,27 +33,33 @@
   
 ==========================================================================*/
 
-
-// STL includes
-#include "cstdlib"
-
-// CppUnit includes
-#include "ui/text/TestRunner.h"
-#include "CompilerOutputter.h"
-
-// Local includes
-#include "btkMatrixOperationsTest.h"
-#include "btkLegendrePolynomialTest.h"
 #include "btkMathFunctionsTest.h"
 
 
-int main(int argc, char *argv[])
-{
-    CppUnit::TextUi::TestRunner runner;
-    runner.addTest(btk::MatrixOperationsTest::suite());
-    runner.addTest(btk::LegendrePolynomialTest::suite());
-    runner.addTest(btk::MathFunctionsTest::suite());
-    runner.setOutputter(new CppUnit::CompilerOutputter(&runner.result(), std::cerr));
+// Local includes
+#include "btkMathFunctions.h"
 
-    return runner.run() ? EXIT_SUCCESS : EXIT_FAILURE;
+
+namespace btk
+{
+
+void MathFunctionsTest::setUp()
+{
+    // ----
 }
+
+//-----------------------------------------------------------------------------------------------------------
+
+void MathFunctionsTest::tearDown()
+{
+    // ----
+}
+
+//-----------------------------------------------------------------------------------------------------------
+
+void MathFunctionsTest::testFactorial()
+{
+    CPPUNIT_ASSERT_EQUAL(1u, btk::MathFunctions::factorial(0));
+}
+
+} // namespace btk

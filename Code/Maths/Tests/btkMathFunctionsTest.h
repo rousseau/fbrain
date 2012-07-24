@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 20/07/2012
+  Date: 24/07/2012
   Author(s): Julien Pontabry (pontabry@unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -33,27 +33,28 @@
   
 ==========================================================================*/
 
-
-// STL includes
-#include "cstdlib"
+#ifndef BTK_MATH_FUNCTIONS_TEST_H
+#define BTK_MATH_FUNCTIONS_TEST_H
 
 // CppUnit includes
-#include "ui/text/TestRunner.h"
-#include "CompilerOutputter.h"
+#include "extensions/HelperMacros.h"
 
-// Local includes
-#include "btkMatrixOperationsTest.h"
-#include "btkLegendrePolynomialTest.h"
-#include "btkMathFunctionsTest.h"
-
-
-int main(int argc, char *argv[])
+namespace btk
 {
-    CppUnit::TextUi::TestRunner runner;
-    runner.addTest(btk::MatrixOperationsTest::suite());
-    runner.addTest(btk::LegendrePolynomialTest::suite());
-    runner.addTest(btk::MathFunctionsTest::suite());
-    runner.setOutputter(new CppUnit::CompilerOutputter(&runner.result(), std::cerr));
 
-    return runner.run() ? EXIT_SUCCESS : EXIT_FAILURE;
-}
+class MathFunctionsTest : public CppUnit::TestFixture
+{
+        CPPUNIT_TEST_SUITE(MathFunctionsTest);
+        CPPUNIT_TEST(testFactorial);
+        CPPUNIT_TEST_SUITE_END();
+
+    public:
+        void setUp();
+        void tearDown();
+
+        void testFactorial();
+};
+
+} // namespace btk
+
+#endif // BTK_MATH_FUNCTIONS_TEST_H
