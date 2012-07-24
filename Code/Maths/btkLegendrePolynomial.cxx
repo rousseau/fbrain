@@ -43,21 +43,24 @@
 namespace btk
 {
 
-float LegendrePolynomial::ComputeInZero(unsigned int l)
+double LegendrePolynomial::ComputeInZero(unsigned int l)
 {
-    float odd = 1;
+    double odd = 1;
 
     for(unsigned int k=1; k<l; k+=2)
         odd *= k;
 
 
-    float even = 2;
+    // FIXME : I have a doubt about this
+    // The Legendre polynomial definition says that it should be 1...
+//    double even = 2;
+    double even = 1;
 
     for(unsigned int k=2; k<=l; k+=2)
         even *= k;
 
 
-    float frac = odd / even;
+    double frac = odd / even;
 
     if((l/2)%2 != 0) // l/2 is odd
         return -frac;
@@ -67,12 +70,12 @@ float LegendrePolynomial::ComputeInZero(unsigned int l)
 
 //----------------------------------------------------------------------------------------
 
-float LegendrePolynomial::Compute(unsigned int l, unsigned int m, float theta)
+double LegendrePolynomial::Compute(unsigned int l, unsigned int m, double theta)
 {
-    float pmm   = 1;
-    float x     = std::cos(theta);
-    float somx2 = std::sin(theta);
-    float fact  = 1;
+    double pmm   = 1;
+    double x     = std::cos(theta);
+    double somx2 = std::sin(theta);
+    double fact  = 1;
 
     // pmm(n) = pmm(n-1) * -fact * sin(theta)
     for(unsigned int i=1; i<=m; i++)
@@ -81,20 +84,20 @@ float LegendrePolynomial::Compute(unsigned int l, unsigned int m, float theta)
         fact += 2;
     } // for i
 
-    float Plm;
+    double Plm;
 
     if(l == m)
         Plm = pmm;
     else // l <> m
     {
-        float pmmp1 = x * (2. * m + 1.) * pmm;
+        double pmmp1 = x * (2. * m + 1.) * pmm;
 
         if(l == m+1)
             Plm = pmmp1;
 
         else // l < m OR l > m+1
         {
-            float pk = 0;
+            double pk = 0;
 
             for(unsigned int k=m+2; k<=l; k++)
             {
