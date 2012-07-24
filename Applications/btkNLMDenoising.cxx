@@ -133,7 +133,7 @@ int main(int argc, char** argv)
     ImagePointer maskImage;
     ImagePointer refImage;
 
-    btkNLMTool<PixelType> myTool;
+    btk::NLMTool<PixelType> myTool;
 
     myTool.SetInput(inputImage);
 

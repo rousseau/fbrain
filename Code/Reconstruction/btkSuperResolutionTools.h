@@ -739,7 +739,7 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
   
   if(nlm==1){
     std::cout<<"Smooth the error map using the current reconstructed image as reference for NLM filter --------------------------\n";
-    btkNLMTool<float> myTool;
+    btk::NLMTool<float> myTool;
     myTool.SetInput(data.m_outputHRImage);
     myTool.SetMaskImage(data.m_maskHRImage);
     myTool.SetDefaultParameters();
@@ -766,7 +766,7 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
   
   if(nlm==2){
     std::cout<<"Smooth the current reconstructed image ------------------ \n";
-    btkNLMTool<float> myTool;
+    btk::NLMTool<float> myTool;
     myTool.SetInput(data.m_outputHRImage);
     myTool.SetMaskImage(data.m_maskHRImage);
     myTool.SetDefaultParameters();

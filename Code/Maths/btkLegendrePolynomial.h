@@ -2,8 +2,8 @@
 
   © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-  Date: 22/03/2012
-  Author(s): Schweitzer Marc (marc.schweitzer@unistra.fr)
+  Date: 12/02/2010
+  Author(s): Julien Pontabry (pontabry@unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -32,79 +32,40 @@
   knowledge of the CeCILL-B license and that you accept its terms.
 
 ==========================================================================*/
-#ifndef __BTK_HIGHRESOLUTIONSRFILTER_H__
-#define __BTK_HIGHRESOLUTIONSRFILTER_H__
 
-/* ITK */
-#include "itkImage.h"
-#include "itkImageMaskSpatialObject.h"
-#include "itkIdentityTransform.h"
-#include "itkTransformFactory.h"
-#include "itkAffineTransform.h"
-#include "itkEuler3DTransform.h"
-
-/* BTK */
-#include "btkMacro.h"
-#include "btkHighResolutionReconstructionFilter.h"
-#include "btkSuperResolutionType.h"
-#include "btkSuperResolutionRigidImageFilter.h"
-#include "btkSuperResolutionAffineImageFilter.h"
-#include "btkNLMTool.h"
-#include "btkImageHelper.h"
-
-/* OTHERS */
-#include "iostream"
+#ifndef LEGENDRE_POLYNOMIAL_H
+#define LEGENDRE_POLYNOMIAL_H
 
 namespace btk
 {
 
-class HighResolutionSRFilter : public HighResolutionReconstructionFilter
+/**
+ * @brief Legendre polynomial.
+ * @author Julien Pontabry
+ * @ingroup Maths
+ */
+class LegendrePolynomial
 {
+    public:
+        /**
+         * @brief Legendre polynom in zero
+         * Compute Legendre polynom in zero at given order
+         * @param l Order
+         * @return Value of Legendre polynom at order l for parameter x
+         */
+        static float ComputeInZero(unsigned int l);
 
-
-public:
-
-    typedef btk::HighResolutionReconstructionFilter     SuperClass;
-
-    //typedef btk::SuperResolutionRigidImageFilter< itkImage, itkImage, itkEulerTransform >   Resampler;
-
-
-    HighResolutionSRFilter();
-    ~HighResolutionSRFilter();
-
-    virtual void Update();
-
-    btkSetMacro(Lambda,float);
-    btkGetMacro(Lambda,float);
-
-    btkSetMacro(Iter,unsigned int);
-    btkGetMacro(Iter, unsigned int);
-
-
-
-
-protected:
-    virtual void Initialize();
-    virtual void DoAffineReconstruction();
-    virtual void DoRigidReconstruction();
-private:
-
-   //Resampler::Pointer  m_Resampler;
-    NLMTool<float>*   m_NlmTools;
-
-    float               m_Lambda;
-    unsigned int        m_Iter;
-    bool                m_UseAffineFilter;
-    bool                m_UseEulerFilter;
-    bool                m_UseSliceBySlice;
-
-
-
-
-
-
+        /**
+         * @brief Associated Legendre polynom
+         * Compute associated Legendre polynom with given order and degree
+         * @param l Order
+         * @param m Degree
+         * @param theta Parameters of Legendre polynomial (x = cos(theta))
+         * @return Value of associated Legendre polynomial for cos(theta) at order l and degree m
+         */
+        static float Compute(unsigned int l, unsigned int m, float theta);
 };
-}
 
+} // namespace btk
 
-#endif
+#endif // LEGENDRE_POLYNOMIAL_H

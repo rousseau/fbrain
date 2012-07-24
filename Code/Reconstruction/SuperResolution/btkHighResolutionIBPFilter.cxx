@@ -775,7 +775,7 @@ double HighResolutionIBPFilter::ComputeIterativeBackProjection( int & nlm, float
     if(nlm==1)
     {
       std::cout<<"Smooth the error map using the current reconstructed image as reference for NLM filter --------------------------"<<std::endl;
-      btkNLMTool<btk::PixelType> myTool;
+      NLMTool<btk::PixelType> myTool;
       myTool.SetInput(SuperClass::m_OutputHRImage);
       myTool.SetMaskImage(SuperClass::m_ImageMaskHR);
       myTool.SetDefaultParameters();
@@ -803,7 +803,7 @@ double HighResolutionIBPFilter::ComputeIterativeBackProjection( int & nlm, float
     if(nlm==2)
     {
       std::cout<<"Smooth the current reconstructed image ------------------ \n";
-      btkNLMTool<float> myTool;
+      NLMTool<float> myTool;
       myTool.SetInput(SuperClass::m_OutputHRImage);
       myTool.SetMaskImage(SuperClass::m_ImageMaskHR);
       myTool.SetDefaultParameters();

@@ -167,7 +167,7 @@ int main(int argc, char** argv)
       Image3DPointer maskImage = Image3DType::New();
       Image3DPointer refImage = Image3DType::New();
 
-      btkNLMTool<PixelType> myTool;
+      btk::NLMTool<PixelType> myTool;
 
       myTool.SetInput(input3DImage);
 

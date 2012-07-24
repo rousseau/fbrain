@@ -7,6 +7,7 @@ INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/DTI)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/InputOutput)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Tools)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Transformations)
+INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Segmentation)
 
 ADD_EXECUTABLE(btkModifyImageUsingLookUpTable btkModifyImageUsingLookUpTable.cxx )
 TARGET_LINK_LIBRARIES(btkModifyImageUsingLookUpTable ${ITK_LIBRARIES} )
@@ -159,8 +160,27 @@ TARGET_LINK_LIBRARIES(btkImageSubtract ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkApplyMaskToImage btkApplyMaskToImage.cxx
 ${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
-
 TARGET_LINK_LIBRARIES(btkApplyMaskToImage ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkWarpTransformationToImage btkWarpTransformationToImage.cxx
+${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
+${fbrain_SOURCE_DIR}/Code/Transformations/btkWarpTransformToImageFilter.h)
+TARGET_LINK_LIBRARIES(btkWarpTransformationToImage ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkFCMClassification btkFCMClassification.cxx
+${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h
+${fbrain_SOURCE_DIR}/Code/Segmentation/btkFCMClassifier.h)
+TARGET_LINK_LIBRARIES(btkFCMClassification ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkImageMorphologicalClosing btkImageMorphologicalClosing.cxx
+${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+TARGET_LINK_LIBRARIES(btkImageMorphologicalClosing ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkImageMorphologicalTopHat btkImageMorphologicalTopHat.cxx
+${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+TARGET_LINK_LIBRARIES(btkImageMorphologicalTopHat ${ITK_LIBRARIES})
+
 
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
@@ -193,4 +213,9 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkSimulateMotionSliceBySlice
                 btkImageSubtract
                 btkApplyMaskToImage
+                btkWarpTransformationToImage
+                btkFCMClassification
+                btkImageMorphologicalClosing
+                btkImageMorphologicalTopHat
+
         DESTINATION bin)

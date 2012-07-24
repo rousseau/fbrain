@@ -1,4 +1,8 @@
 /**
+ * @defgroup Maths Basic mathematical operations.
+ */
+
+/**
  * @defgroup Tractography Tractography
  */
 

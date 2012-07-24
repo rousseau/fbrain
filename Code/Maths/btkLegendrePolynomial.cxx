@@ -2,8 +2,8 @@
 
   © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-  Date: 22/03/2012
-  Author(s): Schweitzer Marc (marc.schweitzer@unistra.fr)
+  Date: 12/02/2010
+  Author(s): Julien Pontabry (pontabry@unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -32,79 +32,82 @@
   knowledge of the CeCILL-B license and that you accept its terms.
 
 ==========================================================================*/
-#ifndef __BTK_HIGHRESOLUTIONSRFILTER_H__
-#define __BTK_HIGHRESOLUTIONSRFILTER_H__
 
-/* ITK */
-#include "itkImage.h"
-#include "itkImageMaskSpatialObject.h"
-#include "itkIdentityTransform.h"
-#include "itkTransformFactory.h"
-#include "itkAffineTransform.h"
-#include "itkEuler3DTransform.h"
+#include "btkLegendrePolynomial.h"
 
-/* BTK */
-#include "btkMacro.h"
-#include "btkHighResolutionReconstructionFilter.h"
-#include "btkSuperResolutionType.h"
-#include "btkSuperResolutionRigidImageFilter.h"
-#include "btkSuperResolutionAffineImageFilter.h"
-#include "btkNLMTool.h"
-#include "btkImageHelper.h"
 
-/* OTHERS */
-#include "iostream"
+// STL includes
+#include "cmath"
+
 
 namespace btk
 {
 
-class HighResolutionSRFilter : public HighResolutionReconstructionFilter
+float LegendrePolynomial::ComputeInZero(unsigned int l)
 {
+    float odd = 1;
+
+    for(unsigned int k=1; k<l; k+=2)
+        odd *= k;
 
 
-public:
+    float even = 2;
 
-    typedef btk::HighResolutionReconstructionFilter     SuperClass;
-
-    //typedef btk::SuperResolutionRigidImageFilter< itkImage, itkImage, itkEulerTransform >   Resampler;
-
-
-    HighResolutionSRFilter();
-    ~HighResolutionSRFilter();
-
-    virtual void Update();
-
-    btkSetMacro(Lambda,float);
-    btkGetMacro(Lambda,float);
-
-    btkSetMacro(Iter,unsigned int);
-    btkGetMacro(Iter, unsigned int);
+    for(unsigned int k=2; k<=l; k+=2)
+        even *= k;
 
 
+    float frac = odd / even;
 
-
-protected:
-    virtual void Initialize();
-    virtual void DoAffineReconstruction();
-    virtual void DoRigidReconstruction();
-private:
-
-   //Resampler::Pointer  m_Resampler;
-    NLMTool<float>*   m_NlmTools;
-
-    float               m_Lambda;
-    unsigned int        m_Iter;
-    bool                m_UseAffineFilter;
-    bool                m_UseEulerFilter;
-    bool                m_UseSliceBySlice;
-
-
-
-
-
-
-};
+    if((l/2)%2 != 0) // l/2 is odd
+        return -frac;
+    else // l/2 is even
+        return frac;
 }
 
+//----------------------------------------------------------------------------------------
 
-#endif
+float LegendrePolynomial::Compute(unsigned int l, unsigned int m, float theta)
+{
+    float pmm   = 1;
+    float x     = std::cos(theta);
+    float somx2 = std::sin(theta);
+    float fact  = 1;
+
+    // pmm(n) = pmm(n-1) * -fact * sin(theta)
+    for(unsigned int i=1; i<=m; i++)
+    {
+        pmm   = pmm * (-fact * somx2);
+        fact += 2;
+    } // for i
+
+    float Plm;
+
+    if(l == m)
+        Plm = pmm;
+    else // l <> m
+    {
+        float pmmp1 = x * (2. * m + 1.) * pmm;
+
+        if(l == m+1)
+            Plm = pmmp1;
+
+        else // l < m OR l > m+1
+        {
+            float pk = 0;
+
+            for(unsigned int k=m+2; k<=l; k++)
+            {
+                pk   = (x * (2. * k - 1.) * pmmp1 - (k + m - 1.) * pmm) / (k - m);
+                pmm   = pmmp1;
+                pmmp1 = pk;
+            } // for k
+
+            Plm = pk;
+        } // else l < m OR l > m+1
+    } // else l <> m
+
+    return Plm;
+}
+
+} // namespace btk

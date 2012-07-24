@@ -2,8 +2,8 @@
 
   © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-  Date: 22/03/2012
-  Author(s): Schweitzer Marc (marc.schweitzer@unistra.fr)
+  Date: 02/04/2012
+  Author(s): Marc Schweitzer (marc.schweitzer@unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -32,79 +32,70 @@
   knowledge of the CeCILL-B license and that you accept its terms.
 
 ==========================================================================*/
-#ifndef __BTK_HIGHRESOLUTIONSRFILTER_H__
-#define __BTK_HIGHRESOLUTIONSRFILTER_H__
+
+#ifndef __BTK_WARPTRANSFORMTOIMAGEFILTER_H__
+#define __BTK_WARPTRANSFORMTOIMAGEFILTER_H__
 
 /* ITK */
+#include "itkObject.h"
 #include "itkImage.h"
-#include "itkImageMaskSpatialObject.h"
-#include "itkIdentityTransform.h"
-#include "itkTransformFactory.h"
-#include "itkAffineTransform.h"
-#include "itkEuler3DTransform.h"
+#include "itkResampleImageFilter.h"
+#include "itkMatrixOffsetTransformBase.h"
+#include "itkSmartPointer.h"
 
 /* BTK */
-#include "btkMacro.h"
-#include "btkHighResolutionReconstructionFilter.h"
-#include "btkSuperResolutionType.h"
-#include "btkSuperResolutionRigidImageFilter.h"
-#include "btkSuperResolutionAffineImageFilter.h"
-#include "btkNLMTool.h"
-#include "btkImageHelper.h"
 
-/* OTHERS */
-#include "iostream"
+#include "btkMacro.h"
 
 namespace btk
 {
-
-class HighResolutionSRFilter : public HighResolutionReconstructionFilter
+template <typename TImageIn, typename TImageOut>
+class WarpTransformToImageFilter : public itk::Object
 {
 
-
 public:
+    typedef TImageIn itkImage;
+    typedef typename itkImage::Pointer itkImagePointer;
+    typedef TImageOut itkImageOut;
+    typedef typename itkImageOut::Pointer itkImageOutPointer;
+    typedef itk::MatrixOffsetTransformBase<double,3,3> itkTransform;
+    typedef itk::ResampleImageFilter<itkImage,itkImageOut> Resampler;
 
-    typedef btk::HighResolutionReconstructionFilter     SuperClass;
+    typedef WarpTransformToImageFilter Self;
+    typedef itk::SmartPointer<Self>         Pointer;
+    typedef itk::SmartPointer<const Self>     ConstPointer;
 
-    //typedef btk::SuperResolutionRigidImageFilter< itkImage, itkImage, itkEulerTransform >   Resampler;
-
-
-    HighResolutionSRFilter();
-    ~HighResolutionSRFilter();
+    /** Method for creation through the object factory. */
+    itkNewMacro(Self);
 
     virtual void Update();
+    virtual void Initialize();
 
-    btkSetMacro(Lambda,float);
-    btkGetMacro(Lambda,float);
+    btkSetMacro(InputImage,itkImagePointer);
+    btkGetMacro(InputImage,itkImagePointer);
 
-    btkSetMacro(Iter,unsigned int);
-    btkGetMacro(Iter, unsigned int);
+    btkGetMacro(OutputImage,itkImageOut*);
 
-
+    btkSetMacro(Transform, itkTransform::Pointer);
 
 
 protected:
-    virtual void Initialize();
-    virtual void DoAffineReconstruction();
-    virtual void DoRigidReconstruction();
+    WarpTransformToImageFilter();
+    virtual ~WarpTransformToImageFilter();
+
 private:
-
-   //Resampler::Pointer  m_Resampler;
-    NLMTool<float>*   m_NlmTools;
-
-    float               m_Lambda;
-    unsigned int        m_Iter;
-    bool                m_UseAffineFilter;
-    bool                m_UseEulerFilter;
-    bool                m_UseSliceBySlice;
-
-
+    itkImagePointer m_InputImage;
+    itkImageOut* m_OutputImage;
+    itkTransform::Pointer m_Transform;
+    typename Resampler::Pointer m_Resampler;
 
 
 
 
 };
+
 }
 
+#include "btkWarpTransformToImageFilter.txx"
 
-#endif
+#endif // BTKWarpTRANSFORMTOIMAGEFILTER_H

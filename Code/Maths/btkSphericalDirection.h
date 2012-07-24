@@ -2,8 +2,8 @@
 
   © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-  Date: 22/03/2012
-  Author(s): Schweitzer Marc (marc.schweitzer@unistra.fr)
+  Date: 12/02/2010
+  Author(s): Julien Pontabry (pontabry@unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -32,79 +32,42 @@
   knowledge of the CeCILL-B license and that you accept its terms.
 
 ==========================================================================*/
-#ifndef __BTK_HIGHRESOLUTIONSRFILTER_H__
-#define __BTK_HIGHRESOLUTIONSRFILTER_H__
 
-/* ITK */
-#include "itkImage.h"
-#include "itkImageMaskSpatialObject.h"
-#include "itkIdentityTransform.h"
-#include "itkTransformFactory.h"
-#include "itkAffineTransform.h"
-#include "itkEuler3DTransform.h"
+#ifndef BTK_SPHERICAL_DIRECTION_H
+#define BTK_SPHERICAL_DIRECTION_H
 
-/* BTK */
+// ITK includes
+#include "itkFixedArray.h"
 #include "btkMacro.h"
-#include "btkHighResolutionReconstructionFilter.h"
-#include "btkSuperResolutionType.h"
-#include "btkSuperResolutionRigidImageFilter.h"
-#include "btkSuperResolutionAffineImageFilter.h"
-#include "btkNLMTool.h"
-#include "btkImageHelper.h"
-
-/* OTHERS */
-#include "iostream"
 
 namespace btk
 {
 
-class HighResolutionSRFilter : public HighResolutionReconstructionFilter
+/**
+ * @brief Represent a vector in spherical coordinates system.
+ * @author Julien Pontabry
+ * @ingroup Maths
+ */
+class SphericalDirection : public itk::FixedArray< float,3 >
 {
+    public:
+        typedef SphericalDirection Self;
+        typedef itk::FixedArray< float,3 > Superclass;
 
+        /**
+         * @brief Construct a null spherical direction.
+         */
+        SphericalDirection();
 
-public:
-
-    typedef btk::HighResolutionReconstructionFilter     SuperClass;
-
-    //typedef btk::SuperResolutionRigidImageFilter< itkImage, itkImage, itkEulerTransform >   Resampler;
-
-
-    HighResolutionSRFilter();
-    ~HighResolutionSRFilter();
-
-    virtual void Update();
-
-    btkSetMacro(Lambda,float);
-    btkGetMacro(Lambda,float);
-
-    btkSetMacro(Iter,unsigned int);
-    btkGetMacro(Iter, unsigned int);
-
-
-
-
-protected:
-    virtual void Initialize();
-    virtual void DoAffineReconstruction();
-    virtual void DoRigidReconstruction();
-private:
-
-   //Resampler::Pointer  m_Resampler;
-    NLMTool<float>*   m_NlmTools;
-
-    float               m_Lambda;
-    unsigned int        m_Iter;
-    bool                m_UseAffineFilter;
-    bool                m_UseEulerFilter;
-    bool                m_UseSliceBySlice;
-
-
-
-
-
-
+        /**
+         * @brief Constructor.
+         * @param theta Elevation (in spherical coordinates).
+         * @param phi Azimuth (in spherical coordinates).
+         * @param rau Radius (in spherical coordinates).
+         */
+        SphericalDirection(float theta, float phi, float rau=1);
 };
-}
 
+} // namespace btk
 
-#endif
+#endif // BTK_SPHERICAL_DIRECTION_H
