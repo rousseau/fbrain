@@ -40,6 +40,7 @@
 #include "itkObject.h"
 #include "itkImage.h"
 #include "itkResampleImageFilter.h"
+#include "itkTransform.h"
 #include "itkMatrixOffsetTransformBase.h"
 #include "itkSmartPointer.h"
 
@@ -58,7 +59,7 @@ public:
     typedef typename itkImage::Pointer itkImagePointer;
     typedef TImageOut itkImageOut;
     typedef typename itkImageOut::Pointer itkImageOutPointer;
-    typedef itk::MatrixOffsetTransformBase<double,3,3> itkTransform;
+    typedef itk::Transform<double, 3,3> itkTransform;
     typedef itk::ResampleImageFilter<itkImage,itkImageOut> Resampler;
 
     typedef WarpTransformToImageFilter Self;
@@ -76,7 +77,8 @@ public:
 
     btkGetMacro(OutputImage,itkImageOut*);
 
-    btkSetMacro(Transform, itkTransform::Pointer);
+
+    btkSetMacro(Transform, itkTransform*);
 
 
 protected:
@@ -86,7 +88,7 @@ protected:
 private:
     itkImagePointer m_InputImage;
     itkImageOut* m_OutputImage;
-    itkTransform::Pointer m_Transform;
+    itkTransform* m_Transform;
     typename Resampler::Pointer m_Resampler;
 
 
