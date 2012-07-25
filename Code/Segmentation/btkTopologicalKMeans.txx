@@ -69,6 +69,8 @@ namespace btk
 	void TopologicalKMeans<TInputImage, TLabelImage>::SetInputImage(const TInputImage* image)
 	{
 		SetNthInput(0, const_cast<TInputImage*>(image));
+		
+		m_Centroids.SetSize(image->GetNumberOfComponentsPerPixel(),3); // 3 because there is three labels
 	}
 	
 	template< typename TInputImage, typename TLabelImage>

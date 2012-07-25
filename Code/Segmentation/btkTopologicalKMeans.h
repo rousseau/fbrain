@@ -59,7 +59,7 @@ namespace btk
 			typedef itk::ImageToImageFilter< TInputImage, TLabelImage > 	Superclass;
 			typedef itk::SmartPointer < Self > 				Pointer;
 			/** Centroids Type */
-			typedef itk::VariableLengthVector < float > 	CentroidsVectorType;
+			typedef itk::VariableSizeMatrix < float > 	CentroidsVectorType; //If there is several images
 			
 			/** Method for creation through the object factory. */
 			itkNewMacro(Self);
