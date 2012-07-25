@@ -110,6 +110,9 @@ double LegendrePolynomial::Compute(unsigned int l, unsigned int m, double theta)
         } // else l < m OR l > m+1
     } // else l <> m
 
+    if(m%2 != 0)
+        Plm = -Plm;
+
     return Plm;
 }
 

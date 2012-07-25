@@ -84,31 +84,31 @@ void LegendrePolynomialTest::testCompute()
     CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0, btk::LegendrePolynomial::Compute(0, 0, theta), EPSILON);
 
     CPPUNIT_ASSERT_DOUBLES_EQUAL(0.5 * (3.0*x2 - 1.0), btk::LegendrePolynomial::Compute(2, 0, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(3.0*x*s), btk::LegendrePolynomial::Compute(2, 1, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(3.0*x*s, btk::LegendrePolynomial::Compute(2, 1, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(3.0 * (1.0-x2), btk::LegendrePolynomial::Compute(2, 2, theta), EPSILON);
 
     CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0/8.0 * (35.0*x2*x2 - 30.0*x2 + 3.0), btk::LegendrePolynomial::Compute(4, 0, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(5.0/2.0 * (7.0*x2*x - 3.0*x)*s), btk::LegendrePolynomial::Compute(4, 1, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(5.0/2.0 * (7.0*x2*x - 3.0*x)*s, btk::LegendrePolynomial::Compute(4, 1, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(15.0/2.0 * (7.0*x2 - 1.0) * (1.0 - x2), btk::LegendrePolynomial::Compute(4, 2, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(105.0*x*s*s*s), btk::LegendrePolynomial::Compute(4, 3, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(105.0*x*s*s*s, btk::LegendrePolynomial::Compute(4, 3, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(105.0 * s*s*s*s, btk::LegendrePolynomial::Compute(4, 4, theta), EPSILON);
 
     CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0/16.0 * (231.0*x2*x2*x2 - 315.0*x2*x2 + 105.0*x2 - 5), btk::LegendrePolynomial::Compute(6, 0, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(21.0/8.0 * x * (33.0*x2*x2 - 30.0*x2 + 5.0)*s), btk::LegendrePolynomial::Compute(6, 1, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(21.0/8.0 * x * (33.0*x2*x2 - 30.0*x2 + 5.0)*s, btk::LegendrePolynomial::Compute(6, 1, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(105.0/8.0 * s*s * (33.0*x2*x2 - 18.0*x2 + 1.0), btk::LegendrePolynomial::Compute(6, 2, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(315.0/2.0 * (11.0*x2 - 3.0)*x*s*s*s), btk::LegendrePolynomial::Compute(6, 3, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(315.0/2.0 * (11.0*x2 - 3.0)*x*s*s*s, btk::LegendrePolynomial::Compute(6, 3, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(945.0/2.0 * s*s*s*s * (11.0 * x2 - 1.0), btk::LegendrePolynomial::Compute(6, 4, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(10395*x*s*s*s*s*s), btk::LegendrePolynomial::Compute(6, 5, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(10395.0*x*s*s*s*s*s, btk::LegendrePolynomial::Compute(6, 5, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(10395.0 * s*s*s*s*s*s, btk::LegendrePolynomial::Compute(6, 6, theta), EPSILON);
 
     CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0/128.0 * (6435.0*x2*x2*x2*x2 - 12012*x2*x2*x2 + 6930*x2*x2 -1260*x2 + 35), btk::LegendrePolynomial::Compute(8, 0, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(9.0/16.0 *x*s * (715*x2*x2*x2 - 1001*x2*x2 + 385*x2 - 35)), btk::LegendrePolynomial::Compute(8, 1, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(9.0/16.0 *x*s * (715*x2*x2*x2 - 1001*x2*x2 + 385*x2 - 35), btk::LegendrePolynomial::Compute(8, 1, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(315.0/16.0 * s*s * (143.0*x2*x2*x2 - 143.0*x2*x2 + 33.0*x2 - 1.0), btk::LegendrePolynomial::Compute(8, 2, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(3465.0/8.0 * x*s*s*s * (39*x2*x2 - 26.0*x2 + 3.0)), btk::LegendrePolynomial::Compute(8, 3, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(3465.0/8.0 * x*s*s*s * (39*x2*x2 - 26.0*x2 + 3.0), btk::LegendrePolynomial::Compute(8, 3, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(10395.0/8.0 * s*s*s*s * (65.0*x2*x2 - 26.0*x2 + 1.0), btk::LegendrePolynomial::Compute(8, 4, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(135135.0/2.0 * x*s*s*s*s*s * (5.0*x2 - 1.0)), btk::LegendrePolynomial::Compute(8, 5, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(135135.0/2.0 * x*s*s*s*s*s * (5.0*x2 - 1.0), btk::LegendrePolynomial::Compute(8, 5, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(135135.0/2.0 * s*s*s*s*s*s * (15.0*x2 - 1.0), btk::LegendrePolynomial::Compute(8, 6, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(2027025.0 *x*s*s*s*s*s*s*s), btk::LegendrePolynomial::Compute(8, 7, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(2027025.0 *x*s*s*s*s*s*s*s, btk::LegendrePolynomial::Compute(8, 7, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(2027025.0 *s*s*s*s*s*s*s*s, btk::LegendrePolynomial::Compute(8, 8, theta), EPSILON);
 
 
@@ -120,31 +120,31 @@ void LegendrePolynomialTest::testCompute()
     CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0, btk::LegendrePolynomial::Compute(0, 0, theta), EPSILON);
 
     CPPUNIT_ASSERT_DOUBLES_EQUAL(0.5 * (3.0*x2 - 1.0), btk::LegendrePolynomial::Compute(2, 0, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(3.0*x*s), btk::LegendrePolynomial::Compute(2, 1, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(3.0*x*s, btk::LegendrePolynomial::Compute(2, 1, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(3.0 * (1.0-x2), btk::LegendrePolynomial::Compute(2, 2, theta), EPSILON);
 
     CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0/8.0 * (35.0*x2*x2 - 30.0*x2 + 3.0), btk::LegendrePolynomial::Compute(4, 0, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(5.0/2.0 * (7.0*x2*x - 3.0*x)*s), btk::LegendrePolynomial::Compute(4, 1, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(5.0/2.0 * (7.0*x2*x - 3.0*x)*s, btk::LegendrePolynomial::Compute(4, 1, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(15.0/2.0 * (7.0*x2 - 1.0) * (1.0 - x2), btk::LegendrePolynomial::Compute(4, 2, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(105.0*x*s*s*s), btk::LegendrePolynomial::Compute(4, 3, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(105.0*x*s*s*s, btk::LegendrePolynomial::Compute(4, 3, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(105.0 * s*s*s*s, btk::LegendrePolynomial::Compute(4, 4, theta), EPSILON);
 
     CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0/16.0 * (231.0*x2*x2*x2 - 315.0*x2*x2 + 105.0*x2 - 5), btk::LegendrePolynomial::Compute(6, 0, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(21.0/8.0 * x * (33.0*x2*x2 - 30.0*x2 + 5.0)*s), btk::LegendrePolynomial::Compute(6, 1, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(21.0/8.0 * x * (33.0*x2*x2 - 30.0*x2 + 5.0)*s, btk::LegendrePolynomial::Compute(6, 1, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(105.0/8.0 * s*s * (33.0*x2*x2 - 18.0*x2 + 1.0), btk::LegendrePolynomial::Compute(6, 2, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(315.0/2.0 * (11.0*x2 - 3.0)*x*s*s*s), btk::LegendrePolynomial::Compute(6, 3, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(315.0/2.0 * (11.0*x2 - 3.0)*x*s*s*s, btk::LegendrePolynomial::Compute(6, 3, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(945.0/2.0 * s*s*s*s * (11.0 * x2 - 1.0), btk::LegendrePolynomial::Compute(6, 4, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(10395*x*s*s*s*s*s), btk::LegendrePolynomial::Compute(6, 5, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(10395.0*x*s*s*s*s*s, btk::LegendrePolynomial::Compute(6, 5, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(10395.0 * s*s*s*s*s*s, btk::LegendrePolynomial::Compute(6, 6, theta), EPSILON);
 
     CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0/128.0 * (6435.0*x2*x2*x2*x2 - 12012*x2*x2*x2 + 6930*x2*x2 -1260*x2 + 35), btk::LegendrePolynomial::Compute(8, 0, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(9.0/16.0 *x*s * (715*x2*x2*x2 - 1001*x2*x2 + 385*x2 - 35)), btk::LegendrePolynomial::Compute(8, 1, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(9.0/16.0 *x*s * (715*x2*x2*x2 - 1001*x2*x2 + 385*x2 - 35), btk::LegendrePolynomial::Compute(8, 1, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(315.0/16.0 * s*s * (143.0*x2*x2*x2 - 143.0*x2*x2 + 33.0*x2 - 1.0), btk::LegendrePolynomial::Compute(8, 2, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(3465.0/8.0 * x*s*s*s * (39*x2*x2 - 26.0*x2 + 3.0)), btk::LegendrePolynomial::Compute(8, 3, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(3465.0/8.0 * x*s*s*s * (39*x2*x2 - 26.0*x2 + 3.0), btk::LegendrePolynomial::Compute(8, 3, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(10395.0/8.0 * s*s*s*s * (65.0*x2*x2 - 26.0*x2 + 1.0), btk::LegendrePolynomial::Compute(8, 4, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(135135.0/2.0 * x*s*s*s*s*s * (5.0*x2 - 1.0)), btk::LegendrePolynomial::Compute(8, 5, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(135135.0/2.0 * x*s*s*s*s*s * (5.0*x2 - 1.0), btk::LegendrePolynomial::Compute(8, 5, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(135135.0/2.0 * s*s*s*s*s*s * (15.0*x2 - 1.0), btk::LegendrePolynomial::Compute(8, 6, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(2027025.0 *x*s*s*s*s*s*s*s), btk::LegendrePolynomial::Compute(8, 7, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(2027025.0 *x*s*s*s*s*s*s*s, btk::LegendrePolynomial::Compute(8, 7, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(2027025.0 *s*s*s*s*s*s*s*s, btk::LegendrePolynomial::Compute(8, 8, theta), EPSILON);
 
 
@@ -156,31 +156,31 @@ void LegendrePolynomialTest::testCompute()
     CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0, btk::LegendrePolynomial::Compute(0, 0, theta), EPSILON);
 
     CPPUNIT_ASSERT_DOUBLES_EQUAL(0.5 * (3.0*x2 - 1.0), btk::LegendrePolynomial::Compute(2, 0, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(3.0*x*s), btk::LegendrePolynomial::Compute(2, 1, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(3.0*x*s, btk::LegendrePolynomial::Compute(2, 1, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(3.0 * (1.0-x2), btk::LegendrePolynomial::Compute(2, 2, theta), EPSILON);
 
     CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0/8.0 * (35.0*x2*x2 - 30.0*x2 + 3.0), btk::LegendrePolynomial::Compute(4, 0, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(5.0/2.0 * (7.0*x2*x - 3.0*x)*s), btk::LegendrePolynomial::Compute(4, 1, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(5.0/2.0 * (7.0*x2*x - 3.0*x)*s, btk::LegendrePolynomial::Compute(4, 1, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(15.0/2.0 * (7.0*x2 - 1.0) * (1.0 - x2), btk::LegendrePolynomial::Compute(4, 2, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(105.0*x*s*s*s), btk::LegendrePolynomial::Compute(4, 3, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(105.0*x*s*s*s, btk::LegendrePolynomial::Compute(4, 3, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(105.0 * s*s*s*s, btk::LegendrePolynomial::Compute(4, 4, theta), EPSILON);
 
     CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0/16.0 * (231.0*x2*x2*x2 - 315.0*x2*x2 + 105.0*x2 - 5), btk::LegendrePolynomial::Compute(6, 0, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(21.0/8.0 * x * (33.0*x2*x2 - 30.0*x2 + 5.0)*s), btk::LegendrePolynomial::Compute(6, 1, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(21.0/8.0 * x * (33.0*x2*x2 - 30.0*x2 + 5.0)*s, btk::LegendrePolynomial::Compute(6, 1, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(105.0/8.0 * s*s * (33.0*x2*x2 - 18.0*x2 + 1.0), btk::LegendrePolynomial::Compute(6, 2, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(315.0/2.0 * (11.0*x2 - 3.0)*x*s*s*s), btk::LegendrePolynomial::Compute(6, 3, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(315.0/2.0 * (11.0*x2 - 3.0)*x*s*s*s, btk::LegendrePolynomial::Compute(6, 3, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(945.0/2.0 * s*s*s*s * (11.0 * x2 - 1.0), btk::LegendrePolynomial::Compute(6, 4, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(10395*x*s*s*s*s*s), btk::LegendrePolynomial::Compute(6, 5, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(10395.0*x*s*s*s*s*s, btk::LegendrePolynomial::Compute(6, 5, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(10395.0 * s*s*s*s*s*s, btk::LegendrePolynomial::Compute(6, 6, theta), EPSILON);
 
     CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0/128.0 * (6435.0*x2*x2*x2*x2 - 12012*x2*x2*x2 + 6930*x2*x2 -1260*x2 + 35), btk::LegendrePolynomial::Compute(8, 0, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(9.0/16.0 *x*s * (715*x2*x2*x2 - 1001*x2*x2 + 385*x2 - 35)), btk::LegendrePolynomial::Compute(8, 1, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(9.0/16.0 *x*s * (715*x2*x2*x2 - 1001*x2*x2 + 385*x2 - 35), btk::LegendrePolynomial::Compute(8, 1, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(315.0/16.0 * s*s * (143.0*x2*x2*x2 - 143.0*x2*x2 + 33.0*x2 - 1.0), btk::LegendrePolynomial::Compute(8, 2, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(3465.0/8.0 * x*s*s*s * (39*x2*x2 - 26.0*x2 + 3.0)), btk::LegendrePolynomial::Compute(8, 3, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(3465.0/8.0 * x*s*s*s * (39*x2*x2 - 26.0*x2 + 3.0), btk::LegendrePolynomial::Compute(8, 3, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(10395.0/8.0 * s*s*s*s * (65.0*x2*x2 - 26.0*x2 + 1.0), btk::LegendrePolynomial::Compute(8, 4, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(135135.0/2.0 * x*s*s*s*s*s * (5.0*x2 - 1.0)), btk::LegendrePolynomial::Compute(8, 5, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(135135.0/2.0 * x*s*s*s*s*s * (5.0*x2 - 1.0), btk::LegendrePolynomial::Compute(8, 5, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(135135.0/2.0 * s*s*s*s*s*s * (15.0*x2 - 1.0), btk::LegendrePolynomial::Compute(8, 6, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(2027025.0 *x*s*s*s*s*s*s*s), btk::LegendrePolynomial::Compute(8, 7, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(2027025.0 *x*s*s*s*s*s*s*s, btk::LegendrePolynomial::Compute(8, 7, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(2027025.0 *s*s*s*s*s*s*s*s, btk::LegendrePolynomial::Compute(8, 8, theta), EPSILON);
 
 
@@ -192,31 +192,31 @@ void LegendrePolynomialTest::testCompute()
     CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0, btk::LegendrePolynomial::Compute(0, 0, theta), EPSILON);
 
     CPPUNIT_ASSERT_DOUBLES_EQUAL(0.5 * (3.0*x2 - 1.0), btk::LegendrePolynomial::Compute(2, 0, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(3.0*x*s), btk::LegendrePolynomial::Compute(2, 1, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(3.0*x*s, btk::LegendrePolynomial::Compute(2, 1, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(3.0 * (1.0-x2), btk::LegendrePolynomial::Compute(2, 2, theta), EPSILON);
 
     CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0/8.0 * (35.0*x2*x2 - 30.0*x2 + 3.0), btk::LegendrePolynomial::Compute(4, 0, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(5.0/2.0 * (7.0*x2*x - 3.0*x)*s), btk::LegendrePolynomial::Compute(4, 1, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(5.0/2.0 * (7.0*x2*x - 3.0*x)*s, btk::LegendrePolynomial::Compute(4, 1, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(15.0/2.0 * (7.0*x2 - 1.0) * (1.0 - x2), btk::LegendrePolynomial::Compute(4, 2, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(105.0*x*s*s*s), btk::LegendrePolynomial::Compute(4, 3, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(105.0*x*s*s*s, btk::LegendrePolynomial::Compute(4, 3, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(105.0 * s*s*s*s, btk::LegendrePolynomial::Compute(4, 4, theta), EPSILON);
 
     CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0/16.0 * (231.0*x2*x2*x2 - 315.0*x2*x2 + 105.0*x2 - 5), btk::LegendrePolynomial::Compute(6, 0, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(21.0/8.0 * x * (33.0*x2*x2 - 30.0*x2 + 5.0)*s), btk::LegendrePolynomial::Compute(6, 1, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(21.0/8.0 * x * (33.0*x2*x2 - 30.0*x2 + 5.0)*s, btk::LegendrePolynomial::Compute(6, 1, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(105.0/8.0 * s*s * (33.0*x2*x2 - 18.0*x2 + 1.0), btk::LegendrePolynomial::Compute(6, 2, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(315.0/2.0 * (11.0*x2 - 3.0)*x*s*s*s), btk::LegendrePolynomial::Compute(6, 3, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(315.0/2.0 * (11.0*x2 - 3.0)*x*s*s*s, btk::LegendrePolynomial::Compute(6, 3, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(945.0/2.0 * s*s*s*s * (11.0 * x2 - 1.0), btk::LegendrePolynomial::Compute(6, 4, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(10395*x*s*s*s*s*s), btk::LegendrePolynomial::Compute(6, 5, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(10395.0*x*s*s*s*s*s, btk::LegendrePolynomial::Compute(6, 5, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(10395.0 * s*s*s*s*s*s, btk::LegendrePolynomial::Compute(6, 6, theta), EPSILON);
 
     CPPUNIT_ASSERT_DOUBLES_EQUAL(1.0/128.0 * (6435.0*x2*x2*x2*x2 - 12012*x2*x2*x2 + 6930*x2*x2 -1260*x2 + 35), btk::LegendrePolynomial::Compute(8, 0, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(9.0/16.0 *x*s * (715*x2*x2*x2 - 1001*x2*x2 + 385*x2 - 35)), btk::LegendrePolynomial::Compute(8, 1, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(9.0/16.0 *x*s * (715*x2*x2*x2 - 1001*x2*x2 + 385*x2 - 35), btk::LegendrePolynomial::Compute(8, 1, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(315.0/16.0 * s*s * (143.0*x2*x2*x2 - 143.0*x2*x2 + 33.0*x2 - 1.0), btk::LegendrePolynomial::Compute(8, 2, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(3465.0/8.0 * x*s*s*s * (39*x2*x2 - 26.0*x2 + 3.0)), btk::LegendrePolynomial::Compute(8, 3, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(3465.0/8.0 * x*s*s*s * (39*x2*x2 - 26.0*x2 + 3.0), btk::LegendrePolynomial::Compute(8, 3, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(10395.0/8.0 * s*s*s*s * (65.0*x2*x2 - 26.0*x2 + 1.0), btk::LegendrePolynomial::Compute(8, 4, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(135135.0/2.0 * x*s*s*s*s*s * (5.0*x2 - 1.0)), btk::LegendrePolynomial::Compute(8, 5, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(135135.0/2.0 * x*s*s*s*s*s * (5.0*x2 - 1.0), btk::LegendrePolynomial::Compute(8, 5, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(135135.0/2.0 * s*s*s*s*s*s * (15.0*x2 - 1.0), btk::LegendrePolynomial::Compute(8, 6, theta), EPSILON);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(-(2027025.0 *x*s*s*s*s*s*s*s), btk::LegendrePolynomial::Compute(8, 7, theta), EPSILON);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(2027025.0 *x*s*s*s*s*s*s*s, btk::LegendrePolynomial::Compute(8, 7, theta), EPSILON);
     CPPUNIT_ASSERT_DOUBLES_EQUAL(2027025.0 *s*s*s*s*s*s*s*s, btk::LegendrePolynomial::Compute(8, 8, theta), EPSILON);
 }
 

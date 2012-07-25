@@ -62,7 +62,14 @@ class SphericalHarmonics
          * @param m Degree of spherical harmonic
          * @return Spherical harmonic basis' coefficient
          */
-        static float ComputeBasis(btk::SphericalDirection u, unsigned int l, int m);
+        static double ComputeBasis(btk::SphericalDirection u, unsigned int l, int m);
+
+    private:
+        static const double m_CoefficientOrder0 = 0.282094791773878;
+        static const double m_CoefficientOrder2 = 0.630783130505040;
+        static const double m_CoefficientOrder4 = 0.846284375321634;
+        static const double m_CoefficientOrder6 = 1.01710723628205;
+        static const double m_CoefficientOrder8 = 1.16310662292032;
 };
 
 } // namespace btk
