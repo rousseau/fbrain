@@ -37,6 +37,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #define BTK_TOPOLOGICAL_KMEANS_TXX
 
 #include "btkTopologicalKMeans.h"
+#include "itkImageDuplicator.h"
 
 namespace btk
 {
@@ -56,12 +57,21 @@ namespace btk
 	{
 		//Get Inputs
 		typename TInputImage::Pointer inputImage = this->GetInputImage();
-		typename TLabelImage::Pointer maskImage = this->GetMaskImage();
+		typename TLabelImage::Pointer initSeg = this->GetInitialSegmentation();
 		
 		// Setup output
-		typename TLabelImage::Pointer labelSegmentation = this->GetOutput();
-		labelSegmentation->SetRegions(inputImage->GetLargestPossibleRegion());
-		labelSegmentation->Allocate();
+		typename TLabelImage::Pointer finalSeg = this->GetOutput();
+		typename itk::ImageDuplicator<TLabelImage>::Pointer duplicator = itk::ImageDuplicator<TLabelImage>::New();
+		duplicator->SetInputImage(initSeg);
+		finalSeg = duplicator->GetOutput();
+// 		finalSeg->SetRegions(initSeg->GetLargestPossibleRegion());
+// 		finalSeg->Allocate();
+		
+		itk::ImageRegionConstIterator<TInputImage> greyImageIterator(inputImage, inputImage->GetLargestPossibleRegion());
+		itk::ImageRegionConstIterator<TLabelImage> initSegIterator(initSeg, initSeg->GetLargestPossibleRegion());
+		itk::ImageRegionIterator<TLabelImage> finalSegIterator(finalSeg, finalSeg->GetLargestPossibleRegion());
+		
+		
 	}
 	
 	/* ----------------------------------------------Input Acces-------------------------------------------- */
@@ -71,12 +81,13 @@ namespace btk
 		SetNthInput(0, const_cast<TInputImage*>(image));
 		
 		m_Centroids.SetSize(image->GetNumberOfComponentsPerPixel(),3); // 3 because there is three labels
+		m_Centroids.Fill(0);
 	}
 	
 	template< typename TInputImage, typename TLabelImage>
-	void TopologicalKMeans<TInputImage, TLabelImage>::SetMaskImage(const TLabelImage* mask)
+	void TopologicalKMeans<TInputImage, TLabelImage>::SetInitialSegmentation(const TLabelImage* initSeg)
 	{
-		SetNthInput(1, const_cast<TLabelImage*>(mask));
+		SetNthInput(1, const_cast<TLabelImage*>(initSeg));
 	}
 	
 	template< typename TInputImage, typename TLabelImage>
@@ -87,7 +98,7 @@ namespace btk
 	}
 	
 	template< typename TInputImage, typename TLabelImage>
-	typename TLabelImage::Pointer TopologicalKMeans<TInputImage, TLabelImage>::GetMaskImage()
+	typename TLabelImage::Pointer TopologicalKMeans<TInputImage, TLabelImage>::GetInitialSegmentation()
 	{
 		return static_cast< const TLabelImage * >
 		( this->itk::ProcessObject::GetInput(1) );

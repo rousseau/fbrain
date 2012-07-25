@@ -38,6 +38,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 //ITK Includes
 #include "itkImageToImageFilter.h"
+#include "itkVariableSizeMatrix.h"
 
 //WARNING
 //Type TInputImage shall be a vector Image
@@ -72,7 +73,7 @@ namespace btk
 			~TopologicalKMeans(){}
 			
 			void SetInputImage(const TInputImage* input);
-			void SetMaskImage(const TLabelImage* mask);
+			void SetInitialSegmentation(const TLabelImage* initSeg);
 			
 		protected:
 			
@@ -84,7 +85,7 @@ namespace btk
 			
 			/** Get Functions */
 			typename TInputImage::Pointer GetInputImage();
-			typename TLabelImage::Pointer GetMaskImage();
+			typename TLabelImage::Pointer GetInitialSegmentation();
 			
 		private:
 			TopologicalKMeans(const Self &); //purposely not implemented
