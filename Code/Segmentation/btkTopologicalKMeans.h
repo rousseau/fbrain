@@ -40,7 +40,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "itkImageToImageFilter.h"
 
 //WARNING
-//Type TGreyImage shall be a vector Image
+//Type TInputImage shall be a vector Image
 //Type TLabelImage shall be a scalar Image
 
 namespace btk
@@ -50,14 +50,16 @@ namespace btk
 	* @author Benoit Caldairou
 	*/
 	
-	template <class TGreyImage, class TLabelImage>
-	class TopologicalKMeans : public itk::ImageToImageFilter< TGreyImage, TLabelImage >
+	template <class TInputImage, class TLabelImage>
+	class TopologicalKMeans : public itk::ImageToImageFilter< TInputImage, TLabelImage >
 	{
 		public :
 			/** Standard class typedefs. */
 			typedef TopologicalKMeans 	Self;
-			typedef itk::ImageToImageFilter< TGreyImage, TLabelImage > 	Superclass;
+			typedef itk::ImageToImageFilter< TInputImage, TLabelImage > 	Superclass;
 			typedef itk::SmartPointer < Self > 				Pointer;
+			/** Centroids Type */
+			typedef itk::VariableLengthVector < float > 	CentroidsVectorType;
 			
 			/** Method for creation through the object factory. */
 			itkNewMacro(Self);
@@ -69,10 +71,7 @@ namespace btk
 			TopologicalKMeans();
 			~TopologicalKMeans(){}
 			
-			/** Acces Functions */
-			TLabelImage* GetLabelSegmentation();
-			
-			void SetGreyImage(const TGreyImage* input);
+			void SetInputImage(const TInputImage* input);
 			void SetMaskImage(const TLabelImage* mask);
 			
 		protected:
@@ -84,12 +83,15 @@ namespace btk
 			itk::DataObject::Pointer MakeOutput(unsigned int idx);
 			
 			/** Get Functions */
-			typename TGreyImage::Pointer GetGreyImage();
+			typename TInputImage::Pointer GetInputImage();
 			typename TLabelImage::Pointer GetMaskImage();
 			
 		private:
 			TopologicalKMeans(const Self &); //purposely not implemented
 			void operator=(const Self &);  //purposely not implemented
+			
+		private :
+			CentroidsVectorType m_Centroids;
 	};
 	
 }

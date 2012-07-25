@@ -38,4 +38,58 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 #include "btkTopologicalKMeans.h"
 
+namespace btk
+{
+	/* --------------------------Constructor------------------------------------------------- */
+	template< typename TInputImage, typename TLabelImage>
+	TopologicalKMeans<TInputImage, TLabelImage>::TopologicalKMeans()
+	{
+		//Two Outputs : Fuzzy Maps (as a vectorImage) and LabelSegmentation
+		this->SetNumberOfRequiredOutputs(1);
+		//Two Intputs : Original Image and Mask Image
+		this->SetNumberOfRequiredInputs(2);
+	}
+	
+	/* --------------------------------------FCM running functions------------------------------------- */
+	template< typename TInputImage, typename TLabelImage>
+	void TopologicalKMeans<TInputImage, TLabelImage>::GenerateData()
+	{
+		//Get Inputs
+		typename TInputImage::Pointer inputImage = this->GetInputImage();
+		typename TLabelImage::Pointer maskImage = this->GetMaskImage();
+		
+		// Setup output
+		typename TLabelImage::Pointer labelSegmentation = this->GetOutput();
+		labelSegmentation->SetRegions(inputImage->GetLargestPossibleRegion());
+		labelSegmentation->Allocate();
+	}
+	
+	/* ----------------------------------------------Input Acces-------------------------------------------- */
+	template< typename TInputImage, typename TLabelImage>
+	void TopologicalKMeans<TInputImage, TLabelImage>::SetInputImage(const TInputImage* image)
+	{
+		SetNthInput(0, const_cast<TInputImage*>(image));
+	}
+	
+	template< typename TInputImage, typename TLabelImage>
+	void TopologicalKMeans<TInputImage, TLabelImage>::SetMaskImage(const TLabelImage* mask)
+	{
+		SetNthInput(1, const_cast<TLabelImage*>(mask));
+	}
+	
+	template< typename TInputImage, typename TLabelImage>
+	typename TInputImage::Pointer TopologicalKMeans<TInputImage, TLabelImage>::GetInputImage()
+	{
+		return static_cast< const TInputImage * >
+		( this->itk::ProcessObject::GetInput(0) );
+	}
+	
+	template< typename TInputImage, typename TLabelImage>
+	typename TLabelImage::Pointer TopologicalKMeans<TInputImage, TLabelImage>::GetMaskImage()
+	{
+		return static_cast< const TLabelImage * >
+		( this->itk::ProcessObject::GetInput(1) );
+	}
+}
+
 #endif // BTK_TOPOLOGICAL_KMEANS_TXX
