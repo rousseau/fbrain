@@ -96,9 +96,6 @@ void SphericalHarmonicsDiffusionDecompositionReconstructionFilter::ComputeSpheri
     // Resize the matrix (rows: number of gradient directions, columns: number of SH coefficients).
     this->m_SphericalHarmonicsBasis = Matrix(gradientTable.size() - 1, this->m_NumberOfSHCoefficients);
 
-    // Pre-compute a constant
-    float _4PI = 4.0 * M_PI;
-
     // Compute the basis
     for(unsigned int u = 0; u < gradientTable.size()-1; u++)
     {
@@ -106,8 +103,6 @@ void SphericalHarmonicsDiffusionDecompositionReconstructionFilter::ComputeSpheri
 
         for(unsigned int l = 0; l <= this->m_SphericalHarmonicsOrder; l += 2)
         {
-            float coefficient = std::sqrt((2.0*(float)l + 1.0) / _4PI);
-
             for(int m = -(int)l; m <= (int)l; m++)
             {
                 this->m_SphericalHarmonicsBasis(u,j++) = btk::SphericalHarmonics::ComputeBasis(gradientTable[u+1].GetSphericalDirection(), l, m);
