@@ -28,6 +28,7 @@ IF(BUILD_TESTING)
         ${MATHS_TESTS_SOURCE_DIR}/btkMatrixOperationsTest.cxx ${MATHS_TESTS_SOURCE_DIR}/btkMatrixOperationsTest.h
         ${MATHS_TESTS_SOURCE_DIR}/btkLegendrePolynomialTest.cxx ${MATHS_TESTS_SOURCE_DIR}/btkLegendrePolynomialTest.h
         ${MATHS_TESTS_SOURCE_DIR}/btkMathFunctionsTest.cxx ${MATHS_TESTS_SOURCE_DIR}/btkMathFunctionsTest.h
+        ${MATHS_TESTS_SOURCE_DIR}/btkSphericalHarmonicsTest.cxx ${MATHS_TESTS_SOURCE_DIR}/btkSphericalHarmonicsTest.h
     )
     TARGET_LINK_LIBRARIES(btkMathsLibraryTestsApp btkMathsLibrary ${CPPUNIT_LIBRARY} ${ITK_LIBRARIES})
     ADD_TEST(btkMathsLibraryTests btkMathsLibraryTestsApp)
