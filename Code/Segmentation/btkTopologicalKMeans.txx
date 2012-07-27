@@ -40,6 +40,10 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "itkImageDuplicator.h"
 #include "itkShapedNeighborhoodIterator.h"
 #include "itkVariableLengthVector.h"
+#include "itkBinaryThresholdImageFilter.h"
+#include "itkBinaryDilateImageFilter.h"
+#include "itkBinaryErodeImageFilter.h"
+#include "itkFlatStructuringElement.h"
 
 namespace btk
 {
@@ -71,10 +75,8 @@ namespace btk
 		std::cout<<"Output Set"<<std::endl;
 		
 		//Algorithm
-		
 		InitialiseCentroids(inputImage, finalSeg);
-		
-// 		RunSegmentation(inputImage, finalSeg, m_Centroids);
+		RunSegmentation(inputImage, finalSeg);
 		
 // 		//Setup Iterator over input Image
 // 		itk::ImageRegionConstIterator<TInputImage> greyImageIterator(inputImage, inputImage->GetLargestPossibleRegion());
@@ -103,10 +105,6 @@ namespace btk
 		itk::ImageRegionConstIterator<TInputImage> inputImageIterator(inputImage, inputImage->GetLargestPossibleRegion());
 		itk::ImageRegionConstIterator<TLabelImage> segImageIterator(segImage, segImage->GetLargestPossibleRegion());
 		
-// 		itk::VariableSizeMatrix<float> sum_grey;
-// 		sum_grey.SetSize(inputImage->GetNumberOfComponentsPerPixel(),3);
-// 		sum_grey.Fill(0);
-		
 		itk::VariableLengthVector<unsigned int> sum_voxel;
 		sum_voxel.SetSize(inputImage->GetNumberOfComponentsPerPixel());
 		sum_voxel.Fill(0);
@@ -134,6 +132,14 @@ namespace btk
 				std::cout<<m_Centroids(i,j)<<" "<<std::flush;
 			std::cout<<std::endl;
 		}
+		
+		return;
+	}
+	
+	template< typename TInputImage, typename TLabelImage>
+	void TopologicalKMeans<TInputImage, TLabelImage>::RunSegmentation(typename TInputImage::Pointer inputImage, typename TLabelImage::Pointer segImage)
+	{
+		
 	}
 	
 	/* ----------------------------------------------Input Acces-------------------------------------------- */

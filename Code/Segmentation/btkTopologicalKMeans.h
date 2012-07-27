@@ -92,6 +92,7 @@ namespace btk
 			void operator=(const Self &);  //purposely not implemented
 			
 			void InitialiseCentroids(typename TInputImage::Pointer inputImage, typename TLabelImage::Pointer segImage);
+			void RunSegmentation(typename TInputImage::Pointer inputImage, typename TLabelImage::Pointer segImage);
 			
 		private :
 			CentroidsVectorType m_Centroids;
