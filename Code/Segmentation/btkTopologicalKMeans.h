@@ -91,6 +91,8 @@ namespace btk
 			TopologicalKMeans(const Self &); //purposely not implemented
 			void operator=(const Self &);  //purposely not implemented
 			
+			void InitialiseCentroids(typename TInputImage::Pointer inputImage, typename TLabelImage::Pointer segImage);
+			
 		private :
 			CentroidsVectorType m_Centroids;
 	};

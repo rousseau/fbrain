@@ -38,6 +38,8 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 #include "btkTopologicalKMeans.h"
 #include "itkImageDuplicator.h"
+#include "itkShapedNeighborhoodIterator.h"
+#include "itkVariableLengthVector.h"
 
 namespace btk
 {
@@ -51,27 +53,87 @@ namespace btk
 		this->SetNumberOfRequiredInputs(2);
 	}
 	
-	/* --------------------------------------FCM running functions------------------------------------- */
+	/* --------------------------------------Topological K-Means running functions------------------------------------- */
 	template< typename TInputImage, typename TLabelImage>
 	void TopologicalKMeans<TInputImage, TLabelImage>::GenerateData()
 	{
 		//Get Inputs
 		typename TInputImage::Pointer inputImage = this->GetInputImage();
 		typename TLabelImage::Pointer initSeg = this->GetInitialSegmentation();
+		std::cout<<"Got Inputs"<<std::endl;
 		
-		// Setup output
+		// Setup output (first a copy of the initial Segmentation)
 		typename TLabelImage::Pointer finalSeg = this->GetOutput();
 		typename itk::ImageDuplicator<TLabelImage>::Pointer duplicator = itk::ImageDuplicator<TLabelImage>::New();
 		duplicator->SetInputImage(initSeg);
+		duplicator->Update();
 		finalSeg = duplicator->GetOutput();
-// 		finalSeg->SetRegions(initSeg->GetLargestPossibleRegion());
-// 		finalSeg->Allocate();
+		std::cout<<"Output Set"<<std::endl;
 		
-		itk::ImageRegionConstIterator<TInputImage> greyImageIterator(inputImage, inputImage->GetLargestPossibleRegion());
-		itk::ImageRegionConstIterator<TLabelImage> initSegIterator(initSeg, initSeg->GetLargestPossibleRegion());
-		itk::ImageRegionIterator<TLabelImage> finalSegIterator(finalSeg, finalSeg->GetLargestPossibleRegion());
+		//Algorithm
 		
+		InitialiseCentroids(inputImage, finalSeg);
 		
+// 		RunSegmentation(inputImage, finalSeg, m_Centroids);
+		
+// 		//Setup Iterator over input Image
+// 		itk::ImageRegionConstIterator<TInputImage> greyImageIterator(inputImage, inputImage->GetLargestPossibleRegion());
+// 		std::cout<<"greyImageIterator Set"<<std::endl;
+// 		
+// 		//Setup neighborhood radius
+// 		typename TLabelImage::SizeType neighborRadius;
+// 		neighborRadius[0] = 1;
+// 		neighborRadius[1] = 1;
+// 		neighborRadius[2] = 1;
+// 		std::cout<<"neighbor Radius Set"<<std::endl;
+// 		
+// 		//Setup neighborhood Iterator
+// 		itk::ShapedNeighborhoodIterator<TLabelImage> iterator(neighborRadius, finalSeg, finalSeg->GetLargestPossibleRegion());
+// 		std::cout<<"neighborIterator Set"<<std::endl;
+		
+	}
+	
+	template< typename TInputImage, typename TLabelImage>
+	void TopologicalKMeans<TInputImage, TLabelImage>::InitialiseCentroids(typename TInputImage::Pointer inputImage, typename TLabelImage::Pointer segImage)
+	{
+		// 3 because there is three spheres in this model
+		m_Centroids.SetSize(inputImage->GetNumberOfComponentsPerPixel(),3);
+		m_Centroids.Fill(0);
+		
+		itk::ImageRegionConstIterator<TInputImage> inputImageIterator(inputImage, inputImage->GetLargestPossibleRegion());
+		itk::ImageRegionConstIterator<TLabelImage> segImageIterator(segImage, segImage->GetLargestPossibleRegion());
+		
+// 		itk::VariableSizeMatrix<float> sum_grey;
+// 		sum_grey.SetSize(inputImage->GetNumberOfComponentsPerPixel(),3);
+// 		sum_grey.Fill(0);
+		
+		itk::VariableLengthVector<unsigned int> sum_voxel;
+		sum_voxel.SetSize(inputImage->GetNumberOfComponentsPerPixel());
+		sum_voxel.Fill(0);
+		
+		for(inputImageIterator.GoToBegin(), segImageIterator.GoToBegin(); !inputImageIterator.IsAtEnd(); ++inputImageIterator, ++segImageIterator)
+		{
+			if(segImageIterator.Get() != 0)
+			{
+				for(unsigned int i=0; i<m_Centroids.Rows(); i++)
+					m_Centroids(i,segImageIterator.Get()-1) += inputImageIterator.Get()[i];
+				sum_voxel[segImageIterator.Get()-1]++;
+			}
+		}
+		
+		std::cout<<"Nombre de lignes : "<<m_Centroids.Rows()<<std::endl;
+		std::cout<<"Nombre de collonnes : "<<m_Centroids.Cols()<<std::endl;
+		
+		for(unsigned int i=0; i<m_Centroids.Rows(); i++)
+			for(unsigned int j=0; j<m_Centroids.Cols(); j++)
+				m_Centroids(i,j) = m_Centroids(i,j)/sum_voxel[j];
+			
+		for(unsigned int i=0; i<m_Centroids.Rows(); i++)
+		{
+			for(unsigned int j=0; j<m_Centroids.Cols(); j++)
+				std::cout<<m_Centroids(i,j)<<" "<<std::flush;
+			std::cout<<std::endl;
+		}
 	}
 	
 	/* ----------------------------------------------Input Acces-------------------------------------------- */
