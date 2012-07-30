@@ -37,13 +37,18 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #define BTK_TOPOLOGICAL_KMEANS_TXX
 
 #include "btkTopologicalKMeans.h"
+#include "btkImageHelper.h"
+
 #include "itkImageDuplicator.h"
 #include "itkShapedNeighborhoodIterator.h"
 #include "itkVariableLengthVector.h"
 #include "itkBinaryThresholdImageFilter.h"
-#include "itkBinaryDilateImageFilter.h"
+#include "itkGrayscaleDilateImageFilter.h"
 #include "itkBinaryErodeImageFilter.h"
 #include "itkFlatStructuringElement.h"
+#include "itkBinaryBallStructuringElement.h"
+#include "itkMaskImageFilter.h"
+#include "itkSubtractImageFilter.h"
 
 namespace btk
 {
@@ -78,21 +83,7 @@ namespace btk
 		InitialiseCentroids(inputImage, finalSeg);
 		RunSegmentation(inputImage, finalSeg);
 		
-// 		//Setup Iterator over input Image
-// 		itk::ImageRegionConstIterator<TInputImage> greyImageIterator(inputImage, inputImage->GetLargestPossibleRegion());
-// 		std::cout<<"greyImageIterator Set"<<std::endl;
-// 		
-// 		//Setup neighborhood radius
-// 		typename TLabelImage::SizeType neighborRadius;
-// 		neighborRadius[0] = 1;
-// 		neighborRadius[1] = 1;
-// 		neighborRadius[2] = 1;
-// 		std::cout<<"neighbor Radius Set"<<std::endl;
-// 		
-// 		//Setup neighborhood Iterator
-// 		itk::ShapedNeighborhoodIterator<TLabelImage> iterator(neighborRadius, finalSeg, finalSeg->GetLargestPossibleRegion());
-// 		std::cout<<"neighborIterator Set"<<std::endl;
-		
+		return;
 	}
 	
 	template< typename TInputImage, typename TLabelImage>
@@ -139,7 +130,108 @@ namespace btk
 	template< typename TInputImage, typename TLabelImage>
 	void TopologicalKMeans<TInputImage, TLabelImage>::RunSegmentation(typename TInputImage::Pointer inputImage, typename TLabelImage::Pointer segImage)
 	{
+		typename TLabelImage::Pointer borderImage;
 		
+		unsigned int numLabelChange = 1;
+		while(numLabelChange != 0)
+		{
+			numLabelChange = 0;
+			borderImage = GetBorderImageByDilation(segImage,1);
+		}
+		
+		return;
+	}
+	
+	template< typename TInputImage, typename TLabelImage>
+	typename TLabelImage::Pointer TopologicalKMeans<TInputImage, TLabelImage>::GetBorderImageByDilation(typename TLabelImage::Pointer segImage, typename TLabelImage::PixelType label)
+	{
+		//Gets one label
+		typename TLabelImage::Pointer labelImage = NULL;
+		labelImage = GetOneLabel(segImage, label);
+		ImageHelper<TLabelImage>::WriteImage(labelImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Essai_Label1.nii");
+		
+		//Dilate this label
+		typename TLabelImage::Pointer dilateImage = NULL;
+		dilateImage = DilateOneLabel(labelImage);
+		ImageHelper<TLabelImage>::WriteImage(dilateImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Essai_DilateLabel1.nii");
+		
+		//Get the border by substracting previous images
+		typename TLabelImage::Pointer diffImage = NULL;
+		diffImage = SubtractImage(labelImage, dilateImage);
+		ImageHelper<TLabelImage>::WriteImage(diffImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Essai_DiffLabel1.nii");
+		
+		//Mask this diffImage to eliminate voxel out of intracranial volume
+		typename TLabelImage::Pointer borderImage = NULL;
+		borderImage = MaskImage(diffImage, segImage);
+		ImageHelper<TLabelImage>::WriteImage(borderImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Essai_DiffMaskLabel1.nii");
+		
+		//Check if these border voxels are eligible for a label change
+		
+		return borderImage;
+	}
+	
+	/* ----------------------------------------------------- Base functions to get, dilate, erode a label and select the right border voxel ----------------------------------- */
+	template< typename TInputImage, typename TLabelImage>
+	typename TLabelImage::Pointer TopologicalKMeans<TInputImage, TLabelImage>::GetOneLabel(typename TLabelImage::Pointer segImage, typename TLabelImage::PixelType label)
+	{
+		//Set threshold Filter
+		typedef itk::BinaryThresholdImageFilter<TLabelImage, TLabelImage> ThresholdFilterType;
+		typename ThresholdFilterType::Pointer thresholdFilter = ThresholdFilterType::New();
+		thresholdFilter->SetLowerThreshold(label);
+		thresholdFilter->SetUpperThreshold(label);
+		thresholdFilter->SetInsideValue(1);
+		thresholdFilter->SetOutsideValue(0);
+		thresholdFilter->SetInput(segImage);
+		thresholdFilter->Update();
+		
+		return thresholdFilter->GetOutput();
+	}
+	
+	template< typename TInputImage, typename TLabelImage>
+	typename TLabelImage::Pointer TopologicalKMeans<TInputImage, TLabelImage>::DilateOneLabel(typename TLabelImage::Pointer labelImage)
+	{
+		//Sets structuring element
+		typedef itk::FlatStructuringElement<3> StructuringElementType;
+		typename StructuringElementType::RadiusType elementRadius;
+		elementRadius.Fill(1);
+		StructuringElementType structElement = StructuringElementType::Ball(elementRadius);
+		std::cout<<"Structuring Element built"<<std::endl;
+		
+		//Sets Dilate Filter
+		typedef itk::GrayscaleDilateImageFilter<TLabelImage, TLabelImage, StructuringElementType> DilateFilterType;
+		typename DilateFilterType::Pointer dilateFilter = DilateFilterType::New();
+		dilateFilter->SetInput(labelImage);
+		dilateFilter->SetKernel(structElement);
+		dilateFilter->Update();
+		ImageHelper<TLabelImage>::WriteImage(dilateFilter->GetOutput(),"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Essai_DilateLabel1_DilateFunction.nii");
+		
+		return dilateFilter->GetOutput();
+	}
+	
+	template< typename TInputImage, typename TLabelImage>
+	typename TLabelImage::Pointer TopologicalKMeans<TInputImage, TLabelImage>::SubtractImage(typename TLabelImage::Pointer labelImage, typename TLabelImage::Pointer dilateImage)
+	{
+		//Set Subtract Filter
+		typedef itk::SubtractImageFilter<TLabelImage, TLabelImage, TLabelImage> SubtractFilterType;
+		typename SubtractFilterType::Pointer subtractFilter = SubtractFilterType::New();
+		subtractFilter->SetInput1(dilateImage);
+		subtractFilter->SetInput2(labelImage);
+		subtractFilter->Update();
+		
+		return subtractFilter->GetOutput();
+	}
+	
+	template< typename TInputImage, typename TLabelImage>
+	typename TLabelImage::Pointer TopologicalKMeans<TInputImage, TLabelImage>::MaskImage(typename TLabelImage::Pointer diffImage, typename TLabelImage::Pointer segImage)
+	{
+		//Set Mask Filter
+		typedef itk::MaskImageFilter<TLabelImage, TLabelImage, TLabelImage> MaskFilterType;
+		typename MaskFilterType::Pointer maskFilter = MaskFilterType::New();
+		maskFilter->SetInput(diffImage);
+		maskFilter->SetMaskImage(segImage);
+		maskFilter->Update();
+		
+		return maskFilter->GetOutput();
 	}
 	
 	/* ----------------------------------------------Input Acces-------------------------------------------- */
