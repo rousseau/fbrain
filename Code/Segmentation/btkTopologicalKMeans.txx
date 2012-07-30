@@ -137,9 +137,20 @@ namespace btk
 		while(numLabelChange != 0)
 		{
 			numLabelChange = 0;
-			borderImage = GetBorderImage(segImage,1,1);
+			
+			borderImage = GetBorderImage(segImage,1,1); //Dilation
 			numLabelChange += ClassifyBorderVoxel(inputImage, segImage, borderImage, 1);
-			ImageHelper<TLabelImage>::WriteImage(borderImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Classification_Change.nii");
+			
+			borderImage = GetBorderImage(segImage,1,0); //Erosion
+			numLabelChange += ClassifyBorderVoxel(inputImage, segImage, borderImage, 1);
+			
+			borderImage = GetBorderImage(segImage,3,1); //Dilation
+			numLabelChange += ClassifyBorderVoxel(inputImage, segImage, borderImage, 3);
+			
+			borderImage = GetBorderImage(segImage,3,0); //Erosion
+			numLabelChange += ClassifyBorderVoxel(inputImage, segImage, borderImage, 3);
+			
+			ImageHelper<TLabelImage>::WriteImage(segImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Classification_Change.nii");
 			
 			break;
 		}
