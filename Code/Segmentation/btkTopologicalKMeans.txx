@@ -41,10 +41,11 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 #include "itkImageDuplicator.h"
 #include "itkShapedNeighborhoodIterator.h"
+#include "itkImageRegionIterator.h"
 #include "itkVariableLengthVector.h"
 #include "itkBinaryThresholdImageFilter.h"
 #include "itkGrayscaleDilateImageFilter.h"
-#include "itkBinaryErodeImageFilter.h"
+#include "itkGrayscaleErodeImageFilter.h"
 #include "itkFlatStructuringElement.h"
 #include "itkBinaryBallStructuringElement.h"
 #include "itkMaskImageFilter.h"
@@ -136,41 +137,146 @@ namespace btk
 		while(numLabelChange != 0)
 		{
 			numLabelChange = 0;
-			borderImage = GetBorderImageByDilation(segImage,1);
+			borderImage = GetBorderImage(segImage,1,1);
+			numLabelChange += ClassifyBorderVoxel(inputImage, segImage, borderImage, 1);
 		}
 		
 		return;
 	}
 	
 	template< typename TInputImage, typename TLabelImage>
-	typename TLabelImage::Pointer TopologicalKMeans<TInputImage, TLabelImage>::GetBorderImageByDilation(typename TLabelImage::Pointer segImage, typename TLabelImage::PixelType label)
+	typename TLabelImage::Pointer TopologicalKMeans<TInputImage, TLabelImage>::GetBorderImage(typename TLabelImage::Pointer segImage, typename TLabelImage::PixelType label, bool erodeOrDilate)
 	{
 		//Gets one label
 		typename TLabelImage::Pointer labelImage = NULL;
 		labelImage = GetOneLabel(segImage, label);
-		ImageHelper<TLabelImage>::WriteImage(labelImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Essai_Label1.nii");
+// 		ImageHelper<TLabelImage>::WriteImage(labelImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Essai_Label1.nii");
 		
-		//Dilate this label
-		typename TLabelImage::Pointer dilateImage = NULL;
-		dilateImage = DilateOneLabel(labelImage);
-		ImageHelper<TLabelImage>::WriteImage(dilateImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Essai_DilateLabel1.nii");
+		//Dilate or erode this label
+		typename TLabelImage::Pointer morphoImage = NULL;
+		if(erodeOrDilate) morphoImage = DilateOneLabel(labelImage);
+		else morphoImage = ErodeOneLabel(labelImage);
+// 		ImageHelper<TLabelImage>::WriteImage(dilateImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Essai_DilateLabel1.nii");
 		
-		//Get the border by substracting previous images
+		//Get the border by substracting morphology label and original label
 		typename TLabelImage::Pointer diffImage = NULL;
-		diffImage = SubtractImage(labelImage, dilateImage);
-		ImageHelper<TLabelImage>::WriteImage(diffImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Essai_DiffLabel1.nii");
+		if(erodeOrDilate) diffImage = SubtractImage(labelImage, morphoImage);
+		else diffImage = SubtractImage(morphoImage, labelImage);
+// 		ImageHelper<TLabelImage>::WriteImage(diffImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Essai_DiffLabel1.nii");
 		
 		//Mask this diffImage to eliminate voxel out of intracranial volume
 		typename TLabelImage::Pointer borderImage = NULL;
 		borderImage = MaskImage(diffImage, segImage);
-		ImageHelper<TLabelImage>::WriteImage(borderImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Essai_DiffMaskLabel1.nii");
+// 		ImageHelper<TLabelImage>::WriteImage(borderImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Essai_DiffMaskLabel1.nii");
 		
 		//Check if these border voxels are eligible for a label change
+		CheckBorderVoxel(borderImage, segImage, label);
+// 		ImageHelper<TLabelImage>::WriteImage(borderImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Essai_DiffMaskCorrectionLabel1.nii");
 		
 		return borderImage;
 	}
 	
+	template< typename TInputImage, typename TLabelImage>
+	unsigned int TopologicalKMeans<TInputImage, TLabelImage>::ClassifyBorderVoxel(typename TInputImage::Pointer inputImage, typename TLabelImage::Pointer segImage, typename TLabelImage::Pointer borderImage, typename TLabelImage::PixelType label)
+	{
+		itk::ImageRegionConstIterator<TInputImage> inputImageIterator(inputImage, inputImage->GetLargestPossibleRegion());
+		itk::ImageRegionIterator<TLabelImage> segImageIterator(segImage, segImage->GetLargestPossibleRegion());
+		itk::ImageRegionConstIterator<TLabelImage> borderImageIterator(borderImage, borderImage->GetLargestPossibleRegion());
+		
+		unsigned int pixelChange = 0;
+		
+		for(inputImageIterator.GoToBegin(), segImageIterator.GoToBegin(), borderImageIterator.GoToBegin(); !inputImageIterator.IsAtEnd(); ++inputImageIterator, ++segImageIterator, ++borderImageIterator)
+		{
+			if(borderImageIterator.Get() != 0)
+			{
+				//Vector to compare distance from label 2 and current label centroids
+				itk::Vector<float, 2> distanceVector;
+				distanceVector.Fill(0);
+				
+				//Compute distances
+				typename TInputImage::PixelType currentPixel = inputImageIterator.Get();
+				for(unsigned int i=0; i<currentPixel.GetNumberOfElements(); i++)
+				{
+					//Distance from label 2 centroids
+					distanceVector[0] += pow(currentPixel[i] - m_Centroids(1, i), 2);
+					//Distance from voxel to changed
+					distanceVector[1] += pow(currentPixel[i] - m_Centroids(label-1, i),2);
+				}
+				
+				//Set Label
+				//If it changes to label 2
+				if(distanceVector[0] < distanceVector[1] && segImageIterator.Get() == label)
+				{
+					segImageIterator.Set(2);
+					pixelChange++;
+				}
+				//If it changes to current label
+				if(distanceVector[0] > distanceVector[1] && segImageIterator.Get() != label)
+				{
+					segImageIterator.Set(label);
+					pixelChange++;
+				}
+			}
+		}
+		
+		return pixelChange;
+	}
+	
 	/* ----------------------------------------------------- Base functions to get, dilate, erode a label and select the right border voxel ----------------------------------- */
+	template< typename TInputImage, typename TLabelImage>
+	void TopologicalKMeans<TInputImage, TLabelImage>::CheckBorderVoxel(typename TLabelImage::Pointer borderImage, typename TLabelImage::Pointer segImage, typename TLabelImage::PixelType label)
+	{
+		typedef itk::ShapedNeighborhoodIterator<TLabelImage> NeighborIteratorType;
+		
+		//Sets Radius of Neighborhood
+		itk::Size<3> radius;
+		radius.Fill(1);
+		
+		//Declares Iterators
+		itk::ImageRegionIterator<TLabelImage> borderImageIterator(borderImage, borderImage->GetLargestPossibleRegion());
+		NeighborIteratorType segImageNeighborIterator(radius, segImage, segImage->GetLargestPossibleRegion());
+		
+		//Sets a Cross Neighborhood
+		segImageNeighborIterator.ClearActiveList();
+		typename NeighborIteratorType::OffsetType top = {{0,0,1}};
+		segImageNeighborIterator.ActivateOffset(top);
+		typename NeighborIteratorType::OffsetType bottom = {{0,0,-1}};
+		segImageNeighborIterator.ActivateOffset(bottom);
+		typename NeighborIteratorType::OffsetType left = {{-1,0,0}};
+		segImageNeighborIterator.ActivateOffset(left);
+		typename NeighborIteratorType::OffsetType right = {{1,0,0}};
+		segImageNeighborIterator.ActivateOffset(right);
+		typename NeighborIteratorType::OffsetType front = {{0,1,0}};
+		segImageNeighborIterator.ActivateOffset(front);
+		typename NeighborIteratorType::OffsetType back = {{0,-1,0}};
+		segImageNeighborIterator.ActivateOffset(back);
+		
+		//Sets the opposite label 
+		typename TLabelImage::PixelType oppositeLabel = 0;
+		if(label == 1) oppositeLabel = 3;
+		else oppositeLabel = 1;
+		
+		//Check border voxel wether it meets conditions to be eligible for label change
+		for(borderImageIterator.GoToBegin(), segImageNeighborIterator.GoToBegin(); !borderImageIterator.IsAtEnd(); ++borderImageIterator, ++segImageNeighborIterator)
+		{
+			if(borderImageIterator.Get() == 1)
+			{
+				//Gets the list of active neighbors
+				typename NeighborIteratorType::IndexListType indexList = segImageNeighborIterator.GetActiveIndexList();
+				typename NeighborIteratorType::IndexListType::size_type indexListSize = segImageNeighborIterator.GetActiveIndexListSize();
+				typename NeighborIteratorType::IndexListType::iterator indexListIterator;
+				
+				for(indexListIterator = indexList.begin(); indexListIterator != indexList.end(); indexListIterator++)
+				{
+					bool isInBound;
+					typename TLabelImage::PixelType neighborValue = segImageNeighborIterator.GetPixel(*indexListIterator, isInBound);
+					if(!isInBound || neighborValue == 0 || neighborValue == oppositeLabel)
+						borderImageIterator.Set(0);
+				}
+			}
+		}
+	}
+	
 	template< typename TInputImage, typename TLabelImage>
 	typename TLabelImage::Pointer TopologicalKMeans<TInputImage, TLabelImage>::GetOneLabel(typename TLabelImage::Pointer segImage, typename TLabelImage::PixelType label)
 	{
@@ -203,9 +309,30 @@ namespace btk
 		dilateFilter->SetInput(labelImage);
 		dilateFilter->SetKernel(structElement);
 		dilateFilter->Update();
-		ImageHelper<TLabelImage>::WriteImage(dilateFilter->GetOutput(),"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Essai_DilateLabel1_DilateFunction.nii");
+// 		ImageHelper<TLabelImage>::WriteImage(dilateFilter->GetOutput(),"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Essai_DilateLabel1_DilateFunction.nii");
 		
 		return dilateFilter->GetOutput();
+	}
+	
+	template< typename TInputImage, typename TLabelImage>
+	typename TLabelImage::Pointer TopologicalKMeans<TInputImage, TLabelImage>::ErodeOneLabel(typename TLabelImage::Pointer labelImage)
+	{
+		//Sets structuring element
+		typedef itk::FlatStructuringElement<3> StructuringElementType;
+		typename StructuringElementType::RadiusType elementRadius;
+		elementRadius.Fill(1);
+		StructuringElementType structElement = StructuringElementType::Ball(elementRadius);
+		std::cout<<"Structuring Element built"<<std::endl;
+		
+		//Sets Dilate Filter
+		typedef itk::GrayscaleErodeImageFilter<TLabelImage, TLabelImage, StructuringElementType> ErodeFilterType;
+		typename ErodeFilterType::Pointer erodeFilter = ErodeFilterType::New();
+		erodeFilter->SetInput(labelImage);
+		erodeFilter->SetKernel(structElement);
+		erodeFilter->Update();
+// 		ImageHelper<TLabelImage>::WriteImage(erodeFilter->GetOutput(),"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Essai_DilateLabel1_DilateFunction.nii");
+		
+		return erodeFilter->GetOutput();
 	}
 	
 	template< typename TInputImage, typename TLabelImage>

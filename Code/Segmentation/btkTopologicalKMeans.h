@@ -93,11 +93,14 @@ namespace btk
 			
 			void InitialiseCentroids(typename TInputImage::Pointer inputImage, typename TLabelImage::Pointer segImage);
 			void RunSegmentation(typename TInputImage::Pointer inputImage, typename TLabelImage::Pointer segImage);
-			typename TLabelImage::Pointer GetBorderImageByDilation(typename TLabelImage::Pointer segImage, typename TLabelImage::PixelType label);
+			unsigned int ClassifyBorderVoxel(typename TInputImage::Pointer inputImage, typename TLabelImage::Pointer segImage, typename TLabelImage::Pointer borderImage, typename TLabelImage::PixelType label);
+			typename TLabelImage::Pointer GetBorderImage(typename TLabelImage::Pointer segImage, typename TLabelImage::PixelType label, bool erodeOrDilate);
 			typename TLabelImage::Pointer GetOneLabel(typename TLabelImage::Pointer segImage, typename TLabelImage::PixelType label);
 			typename TLabelImage::Pointer DilateOneLabel(typename TLabelImage::Pointer labelImage);
+			typename TLabelImage::Pointer ErodeOneLabel(typename TLabelImage::Pointer labelImage);
 			typename TLabelImage::Pointer SubtractImage(typename TLabelImage::Pointer labelImage, typename TLabelImage::Pointer dilateImage);
 			typename TLabelImage::Pointer MaskImage(typename TLabelImage::Pointer diffImage, typename TLabelImage::Pointer segImage);
+			void CheckBorderVoxel(typename TLabelImage::Pointer borderImage, typename TLabelImage::Pointer segImage, typename TLabelImage::PixelType label);
 			
 		private :
 			CentroidsVectorType m_Centroids;
