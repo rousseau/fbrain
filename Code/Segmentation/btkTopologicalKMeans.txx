@@ -139,6 +139,9 @@ namespace btk
 			numLabelChange = 0;
 			borderImage = GetBorderImage(segImage,1,1);
 			numLabelChange += ClassifyBorderVoxel(inputImage, segImage, borderImage, 1);
+			ImageHelper<TLabelImage>::WriteImage(borderImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Classification_Change.nii");
+			
+			break;
 		}
 		
 		return;
@@ -198,9 +201,9 @@ namespace btk
 				for(unsigned int i=0; i<currentPixel.GetNumberOfElements(); i++)
 				{
 					//Distance from label 2 centroids
-					distanceVector[0] += pow(currentPixel[i] - m_Centroids(1, i), 2);
+					distanceVector[0] += pow(currentPixel[i] - m_Centroids(i, 1), 2);
 					//Distance from voxel to changed
-					distanceVector[1] += pow(currentPixel[i] - m_Centroids(label-1, i),2);
+					distanceVector[1] += pow(currentPixel[i] - m_Centroids(i, label-1), 2);
 				}
 				
 				//Set Label
