@@ -50,6 +50,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "itkBinaryBallStructuringElement.h"
 #include "itkMaskImageFilter.h"
 #include "itkSubtractImageFilter.h"
+#include "itkDanielssonDistanceMapImageFilter.h"
 
 namespace btk
 {
@@ -61,6 +62,8 @@ namespace btk
 		this->SetNumberOfRequiredOutputs(1);
 		//Two Intputs : Original Image and Mask Image
 		this->SetNumberOfRequiredInputs(2);
+		
+		m_LcrOrCortex = 0;
 	}
 	
 	/* --------------------------------------Topological K-Means running functions------------------------------------- */
@@ -74,25 +77,50 @@ namespace btk
 		
 		// Setup output (first a copy of the initial Segmentation)
 		typename TLabelImage::Pointer finalSeg = this->GetOutput();
-		typename itk::ImageDuplicator<TLabelImage>::Pointer duplicator = itk::ImageDuplicator<TLabelImage>::New();
-		duplicator->SetInputImage(initSeg);
-		duplicator->Update();
-		finalSeg = duplicator->GetOutput();
+		finalSeg->SetRegions(initSeg->GetLargestPossibleRegion());
+		finalSeg->Allocate();
+		
+// 		itk::ImageRegionConstIterator<TLabelImage> initSegIterator(initSeg, initSeg->GetLargestPossibleRegion());
+// 		itk::ImageRegionIterator<TLabelImage> finalSegIterator(finalSeg, finalSeg->GetLargestPossibleRegion());
+// 		for(initSegIterator.GoToBegin(), finalSegIterator.GoToBegin(); !initSegIterator.IsAtEnd(); ++initSegIterator, ++finalSegIterator)
+// 			finalSegIterator.Set(initSegIterator.Get());
 		std::cout<<"Output Set"<<std::endl;
 		
 		//Algorithm
-		InitialiseCentroids(inputImage, finalSeg);
+		
+		ImageHelper<TLabelImage>::WriteImage(initSeg, "/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_intracranien.nii");
+		
+		if(m_LcrOrCortex)
+		{
+			ComputeCentroids(inputImage, initSeg, 1);
+			std::cout<<"Init Brain Segmentation"<<std::endl;
+			InitBrainSegmentation(initSeg, finalSeg);
+		}
+		else
+		{
+			std::cout<<"Init Cortex Segmentation"<<std::endl;
+			InitCortexSegmentation(initSeg, finalSeg);
+			ComputeCentroids(inputImage, finalSeg);
+		}
+		ImageHelper<TLabelImage>::WriteImage(finalSeg, "/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_InitSegmentation.nii");
+		
 		RunSegmentation(inputImage, finalSeg);
+		
+		ImageHelper<TLabelImage>::WriteImage(finalSeg,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_FinalSegInClass.nii");
 		
 		return;
 	}
 	
 	template< typename TInputImage, typename TLabelImage>
-	void TopologicalKMeans<TInputImage, TLabelImage>::InitialiseCentroids(typename TInputImage::Pointer inputImage, typename TLabelImage::Pointer segImage)
+	void TopologicalKMeans<TInputImage, TLabelImage>::ComputeCentroids(typename TInputImage::Pointer inputImage, typename TLabelImage::Pointer segImage, bool initLCRCentroids)
 	{
-		// 3 because there is three spheres in this model
-		m_Centroids.SetSize(inputImage->GetNumberOfComponentsPerPixel(),3);
-		m_Centroids.Fill(0);
+		//In case it is the first time this function is run
+// 		if(initCentroids)
+// 		{
+			// 3 because there is three spheres in this model
+			m_Centroids.SetSize(inputImage->GetNumberOfComponentsPerPixel(),3);
+			m_Centroids.Fill(0);
+// 		}
 		
 		itk::ImageRegionConstIterator<TInputImage> inputImageIterator(inputImage, inputImage->GetLargestPossibleRegion());
 		itk::ImageRegionConstIterator<TLabelImage> segImageIterator(segImage, segImage->GetLargestPossibleRegion());
@@ -110,14 +138,20 @@ namespace btk
 				sum_voxel[segImageIterator.Get()-1]++;
 			}
 		}
-		
+	
 		std::cout<<"Nombre de lignes : "<<m_Centroids.Rows()<<std::endl;
 		std::cout<<"Nombre de collonnes : "<<m_Centroids.Cols()<<std::endl;
-		
+	
 		for(unsigned int i=0; i<m_Centroids.Rows(); i++)
 			for(unsigned int j=0; j<m_Centroids.Cols(); j++)
 				m_Centroids(i,j) = m_Centroids(i,j)/sum_voxel[j];
-			
+		
+		if(initLCRCentroids)
+		{
+			for(unsigned int i=0; i<m_Centroids.Rows(); i++)
+				m_Centroids(i,2) = m_Centroids(i,0);
+		}
+		
 		for(unsigned int i=0; i<m_Centroids.Rows(); i++)
 		{
 			for(unsigned int j=0; j<m_Centroids.Cols(); j++)
@@ -129,30 +163,121 @@ namespace btk
 	}
 	
 	template< typename TInputImage, typename TLabelImage>
+	void TopologicalKMeans<TInputImage, TLabelImage>::InitBrainSegmentation(typename TLabelImage::Pointer intracranianVolume, typename TLabelImage::Pointer brainSegmentationInitialisation)
+	{
+		typedef itk::Image<float, 3> 	DistanceImageType;
+		
+		DistanceImageType::Pointer distanceImage = DistanceImageType::New();
+		distanceImage = GetDistanceImage(intracranianVolume);
+		ImageHelper<DistanceImageType>::WriteImage(distanceImage, "/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_DistanceMap.nii");
+		
+		itk::ImageRegionConstIterator<DistanceImageType> distanceImageIterator(distanceImage, distanceImage->GetLargestPossibleRegion());
+		itk::ImageRegionIterator<TLabelImage> intracranianVolumeIterator(intracranianVolume, intracranianVolume->GetLargestPossibleRegion());
+		itk::ImageRegionIterator<TLabelImage> brainSegmentationInitialisationIterator(brainSegmentationInitialisation, brainSegmentationInitialisation->GetLargestPossibleRegion());
+		
+		for(intracranianVolumeIterator.GoToBegin(), distanceImageIterator.GoToBegin(), brainSegmentationInitialisationIterator.GoToBegin(); !intracranianVolumeIterator.IsAtEnd(); ++intracranianVolumeIterator, ++distanceImageIterator, ++brainSegmentationInitialisationIterator)
+		{
+			if(intracranianVolumeIterator.Get() != 0)
+			{
+				if(distanceImageIterator.Get() > 18.0)
+					brainSegmentationInitialisationIterator.Set(3);
+				else if(distanceImageIterator.Get() > 1.0)
+					brainSegmentationInitialisationIterator.Set(2);
+				else
+					brainSegmentationInitialisationIterator.Set(1);
+			}
+			else
+				brainSegmentationInitialisationIterator.Set(0);
+		}
+		ImageHelper<TLabelImage>::WriteImage(brainSegmentationInitialisation, "/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_InitSegmentation_InFunction.nii");
+		
+		return;
+	}
+	
+	template< typename TInputImage, typename TLabelImage>
+	void TopologicalKMeans<TInputImage, TLabelImage>::InitCortexSegmentation(typename TLabelImage::Pointer brainSegmentation, typename TLabelImage::Pointer cortexSegmentationInitialisation)
+	{
+		typedef itk::Image<float, 3>								DistanceImageType;
+		typedef itk::DanielssonDistanceMapImageFilter<TLabelImage, DistanceImageType>		DistanceMapFilterType;
+		typedef itk::ImageDuplicator <TLabelImage> 						DuplicatorType;
+		
+		typename TLabelImage::Pointer psrLabel = TLabelImage::New();
+		psrLabel = GetOneLabel(brainSegmentation, 1);
+		
+		ImageHelper<TLabelImage>::WriteImage(psrLabel,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_psrLabel.nii");
+		
+		DistanceImageType::Pointer distanceImage = DistanceImageType::New();
+		distanceImage = GetDistanceImage(psrLabel);
+		
+		ImageHelper<itk::Image<float, 3> >::WriteImage(distanceImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_lcrDistanceMap.nii");
+		
+		itk::ImageRegionConstIterator<DistanceImageType> distanceImageIterator(distanceImage, distanceImage->GetLargestPossibleRegion());
+		itk::ImageRegionIterator<TLabelImage> cortexSegmentationInitialisationIterator(cortexSegmentationInitialisation, cortexSegmentationInitialisation->GetLargestPossibleRegion());
+		itk::ImageRegionConstIterator<TLabelImage> brainSegmentationIterator(brainSegmentation, brainSegmentation->GetLargestPossibleRegion());
+		
+		for(brainSegmentationIterator.GoToBegin(), distanceImageIterator.GoToBegin(), cortexSegmentationInitialisationIterator.GoToBegin(); !brainSegmentationIterator.IsAtEnd(); ++brainSegmentationIterator, ++distanceImageIterator, ++cortexSegmentationInitialisationIterator)
+		{
+			if(brainSegmentationIterator.Get() != 0)
+			{
+				if(brainSegmentationIterator.Get() == 1)
+					cortexSegmentationInitialisationIterator.Set(1);
+				else if(distanceImageIterator.Get() < 5)
+					cortexSegmentationInitialisationIterator.Set(2);
+				else if(distanceImageIterator.Get() < 7)
+					cortexSegmentationInitialisationIterator.Set(3);
+			}
+		}
+		
+		ImageHelper<TLabelImage>::WriteImage(cortexSegmentationInitialisation,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_CortexInitialisation.nii");
+	}
+	
+	template< typename TInputImage, typename TLabelImage>
 	void TopologicalKMeans<TInputImage, TLabelImage>::RunSegmentation(typename TInputImage::Pointer inputImage, typename TLabelImage::Pointer segImage)
 	{
 		typename TLabelImage::Pointer borderImage;
 		
-		unsigned int numLabelChange = 1;
-		while(numLabelChange != 0)
+		std::cout<<"Enters the loop..."<<std::endl;
+		
+		unsigned int numLabelChange2 = 1;
+		
+		while(numLabelChange2 != 0)
 		{
-			numLabelChange = 0;
+			numLabelChange2 = 0;
 			
-			borderImage = GetBorderImage(segImage,1,1); //Dilation
-			numLabelChange += ClassifyBorderVoxel(inputImage, segImage, borderImage, 1);
+			unsigned int numLabelChange = 1;
+			while(numLabelChange != 0)
+			{
+				numLabelChange = 0;
+				
+				borderImage = GetBorderImage(segImage,1,1); //Dilation
+				numLabelChange += ClassifyBorderVoxel(inputImage, segImage, borderImage, 1);
+				
+				std::cout<<"Nombre de chgt : "<<numLabelChange<<std::endl;
+				
+				borderImage = GetBorderImage(segImage,1,0); //Erosion
+				numLabelChange += ClassifyBorderVoxel(inputImage, segImage, borderImage, 1);
+				
+				std::cout<<"Nombre de chgt : "<<numLabelChange<<std::endl;
+				ImageHelper<TLabelImage>::WriteImage(segImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Classification_Change_Label1.nii");
+				
+				borderImage = GetBorderImage(segImage,3,1); //Dilation
+				numLabelChange += ClassifyBorderVoxel(inputImage, segImage, borderImage, 3);
+				
+				std::cout<<"Nombre de chgt : "<<numLabelChange<<std::endl;
+				
+				borderImage = GetBorderImage(segImage,3,0); //Erosion
+				numLabelChange += ClassifyBorderVoxel(inputImage, segImage, borderImage, 3);
+				
+				std::cout<<"Nombre de chgt : "<<numLabelChange<<std::endl;
+				
+				numLabelChange2 += numLabelChange;
+				ImageHelper<TLabelImage>::WriteImage(segImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Classification_Change_Label3.nii");
+			}
 			
-			borderImage = GetBorderImage(segImage,1,0); //Erosion
-			numLabelChange += ClassifyBorderVoxel(inputImage, segImage, borderImage, 1);
+			if(m_LcrOrCortex) {std::cout<<"m_LcrOrCortex is set at 1 and should break"<<std::endl; break;}
+			else {std::cout<<"m8_OneLoop is set to 0 and should not break"<<std::endl; ComputeCentroids(inputImage, segImage);}
 			
-			borderImage = GetBorderImage(segImage,3,1); //Dilation
-			numLabelChange += ClassifyBorderVoxel(inputImage, segImage, borderImage, 3);
-			
-			borderImage = GetBorderImage(segImage,3,0); //Erosion
-			numLabelChange += ClassifyBorderVoxel(inputImage, segImage, borderImage, 3);
-			
-			ImageHelper<TLabelImage>::WriteImage(segImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Classification_Change.nii");
-			
-			break;
+			std::cout<<"Didn't break"<<std::endl;
 		}
 		
 		return;
@@ -238,6 +363,38 @@ namespace btk
 	
 	/* ----------------------------------------------------- Base functions to get, dilate, erode a label and select the right border voxel ----------------------------------- */
 	template< typename TInputImage, typename TLabelImage>
+	itk::Image<float, 3>::Pointer TopologicalKMeans<TInputImage, TLabelImage>::GetDistanceImage(typename TLabelImage::Pointer volumeImage)
+	{
+		typedef itk::Image<float, 3> 								DistanceImageType;
+		typedef itk::DanielssonDistanceMapImageFilter <TLabelImage, DistanceImageType > 	DistanceMapFilterType;
+		typedef itk::ImageDuplicator <TLabelImage> 						DuplicatorType;
+		
+		typename DuplicatorType::Pointer duplicator = DuplicatorType::New();
+		duplicator->SetInputImage(volumeImage);
+		duplicator->Update();
+		typename TLabelImage::Pointer distanceMapComputationInitialisation = duplicator->GetOutput();
+		
+		if(m_LcrOrCortex)
+		{
+			itk::ImageRegionIterator<TLabelImage> distanceMapComputationInitialisationIterator(distanceMapComputationInitialisation, distanceMapComputationInitialisation->GetLargestPossibleRegion());
+			for(distanceMapComputationInitialisationIterator.GoToBegin(); !distanceMapComputationInitialisationIterator.IsAtEnd(); ++distanceMapComputationInitialisationIterator)
+			{
+				if(distanceMapComputationInitialisationIterator.Get() == 0) distanceMapComputationInitialisationIterator.Set(1);
+				else distanceMapComputationInitialisationIterator.Set(0);
+			}
+		}
+		
+		ImageHelper<TLabelImage>::WriteImage(distanceMapComputationInitialisation, "/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Negatif_Cortex.nii");
+		
+		typename DistanceMapFilterType::Pointer distanceMapFilter = DistanceMapFilterType::New();
+		distanceMapFilter->UseImageSpacingOn();
+		distanceMapFilter->SquaredDistanceOff();
+		distanceMapFilter->SetInput(distanceMapComputationInitialisation);
+		distanceMapFilter->Update();
+		return distanceMapFilter->GetDistanceMap();
+	}
+	
+	template< typename TInputImage, typename TLabelImage>
 	void TopologicalKMeans<TInputImage, TLabelImage>::CheckBorderVoxel(typename TLabelImage::Pointer borderImage, typename TLabelImage::Pointer segImage, typename TLabelImage::PixelType label)
 	{
 		typedef itk::ShapedNeighborhoodIterator<TLabelImage> NeighborIteratorType;
@@ -314,8 +471,8 @@ namespace btk
 		typedef itk::FlatStructuringElement<3> StructuringElementType;
 		typename StructuringElementType::RadiusType elementRadius;
 		elementRadius.Fill(1);
-		StructuringElementType structElement = StructuringElementType::Ball(elementRadius);
-		std::cout<<"Structuring Element built"<<std::endl;
+		StructuringElementType structElement = StructuringElementType::Cross(elementRadius);
+// 		std::cout<<"Structuring Element built"<<std::endl;
 		
 		//Sets Dilate Filter
 		typedef itk::GrayscaleDilateImageFilter<TLabelImage, TLabelImage, StructuringElementType> DilateFilterType;
@@ -335,8 +492,8 @@ namespace btk
 		typedef itk::FlatStructuringElement<3> StructuringElementType;
 		typename StructuringElementType::RadiusType elementRadius;
 		elementRadius.Fill(1);
-		StructuringElementType structElement = StructuringElementType::Ball(elementRadius);
-		std::cout<<"Structuring Element built"<<std::endl;
+		StructuringElementType structElement = StructuringElementType::Cross(elementRadius);
+// 		std::cout<<"Structuring Element built"<<std::endl;
 		
 		//Sets Dilate Filter
 		typedef itk::GrayscaleErodeImageFilter<TLabelImage, TLabelImage, StructuringElementType> ErodeFilterType;

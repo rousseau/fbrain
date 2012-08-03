@@ -74,6 +74,8 @@ namespace btk
 			
 			void SetInputImage(const TInputImage* input);
 			void SetInitialSegmentation(const TLabelImage* initSeg);
+			void SetLCR(){m_LcrOrCortex = 1;}
+			void SetCortex(){m_LcrOrCortex = 0;}
 			
 		protected:
 			
@@ -91,8 +93,8 @@ namespace btk
 			TopologicalKMeans(const Self &); //purposely not implemented
 			void operator=(const Self &);  //purposely not implemented
 			
-			void InitialiseCentroids(typename TInputImage::Pointer inputImage, typename TLabelImage::Pointer segImage);
 			void RunSegmentation(typename TInputImage::Pointer inputImage, typename TLabelImage::Pointer segImage);
+			void ComputeCentroids(typename TInputImage::Pointer inputImage, typename TLabelImage::Pointer segImage, bool initLCRCentroids = 0);
 			unsigned int ClassifyBorderVoxel(typename TInputImage::Pointer inputImage, typename TLabelImage::Pointer segImage, typename TLabelImage::Pointer borderImage, typename TLabelImage::PixelType label);
 			typename TLabelImage::Pointer GetBorderImage(typename TLabelImage::Pointer segImage, typename TLabelImage::PixelType label, bool erodeOrDilate);
 			typename TLabelImage::Pointer GetOneLabel(typename TLabelImage::Pointer segImage, typename TLabelImage::PixelType label);
@@ -100,10 +102,14 @@ namespace btk
 			typename TLabelImage::Pointer ErodeOneLabel(typename TLabelImage::Pointer labelImage);
 			typename TLabelImage::Pointer SubtractImage(typename TLabelImage::Pointer labelImage, typename TLabelImage::Pointer dilateImage);
 			typename TLabelImage::Pointer MaskImage(typename TLabelImage::Pointer diffImage, typename TLabelImage::Pointer segImage);
+			itk::Image<float, 3>::Pointer GetDistanceImage(typename TLabelImage::Pointer volumeImage);
+			void InitBrainSegmentation(typename TLabelImage::Pointer intracranianVolume, typename TLabelImage::Pointer brainSegmentationInitialisation);
+			void InitCortexSegmentation(typename TLabelImage::Pointer brainSegmentation, typename TLabelImage::Pointer cortexSegmentationInitialisation);
 			void CheckBorderVoxel(typename TLabelImage::Pointer borderImage, typename TLabelImage::Pointer segImage, typename TLabelImage::PixelType label);
 			
 		private :
 			CentroidsVectorType m_Centroids;
+			bool m_LcrOrCortex;
 	};
 	
 }
