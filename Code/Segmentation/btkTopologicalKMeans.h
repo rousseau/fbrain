@@ -77,6 +77,11 @@ namespace btk
 			void SetLCR(){m_LcrOrCortex = 1;}
 			void SetCortex(){m_LcrOrCortex = 0;}
 			
+			void SetBrainstemImage(typename TLabelImage::Pointer brainstemImage){m_BrainstemImage = brainstemImage;}
+			void SetCerebellumImage(typename TLabelImage::Pointer cerebellumImage){m_CerebellumImage = cerebellumImage;}
+			
+			static typename TLabelImage::Pointer GetOneLabel(typename TLabelImage::Pointer segImage, typename TLabelImage::PixelType label);
+			
 		protected:
 			
 			/** Does the real work. */
@@ -97,7 +102,6 @@ namespace btk
 			void ComputeCentroids(typename TInputImage::Pointer inputImage, typename TLabelImage::Pointer segImage, bool initLCRCentroids = 0);
 			unsigned int ClassifyBorderVoxel(typename TInputImage::Pointer inputImage, typename TLabelImage::Pointer segImage, typename TLabelImage::Pointer borderImage, typename TLabelImage::PixelType label);
 			typename TLabelImage::Pointer GetBorderImage(typename TLabelImage::Pointer segImage, typename TLabelImage::PixelType label, bool erodeOrDilate);
-			typename TLabelImage::Pointer GetOneLabel(typename TLabelImage::Pointer segImage, typename TLabelImage::PixelType label);
 			typename TLabelImage::Pointer DilateOneLabel(typename TLabelImage::Pointer labelImage);
 			typename TLabelImage::Pointer ErodeOneLabel(typename TLabelImage::Pointer labelImage);
 			typename TLabelImage::Pointer SubtractImage(typename TLabelImage::Pointer labelImage, typename TLabelImage::Pointer dilateImage);
@@ -110,6 +114,8 @@ namespace btk
 		private :
 			CentroidsVectorType m_Centroids;
 			bool m_LcrOrCortex;
+			typename TLabelImage::Pointer m_BrainstemImage;
+			typename TLabelImage::Pointer m_CerebellumImage;
 	};
 	
 }

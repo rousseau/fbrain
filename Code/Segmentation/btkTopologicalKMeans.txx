@@ -51,6 +51,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "itkMaskImageFilter.h"
 #include "itkSubtractImageFilter.h"
 #include "itkDanielssonDistanceMapImageFilter.h"
+#include "itkAddImageFilter.h"
 
 namespace btk
 {
@@ -64,6 +65,8 @@ namespace btk
 		this->SetNumberOfRequiredInputs(2);
 		
 		m_LcrOrCortex = 0;
+		m_CerebellumImage = 0;
+		m_BrainstemImage = 0;
 	}
 	
 	/* --------------------------------------Topological K-Means running functions------------------------------------- */
@@ -87,7 +90,6 @@ namespace btk
 		std::cout<<"Output Set"<<std::endl;
 		
 		//Algorithm
-		
 		ImageHelper<TLabelImage>::WriteImage(initSeg, "/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_intracranien.nii");
 		
 		if(m_LcrOrCortex)
@@ -225,6 +227,25 @@ namespace btk
 					cortexSegmentationInitialisationIterator.Set(2);
 				else if(distanceImageIterator.Get() < 7)
 					cortexSegmentationInitialisationIterator.Set(3);
+			}
+		}
+		
+		if(m_BrainstemImage.IsNotNull() && m_CerebellumImage.IsNotNull() )
+		{
+// 			itk::ImageRegionConstIterator<TLabelImage> brainstemImageIterator(m_BrainstemImage, m_BrainstemImage->GetLargestPossibleRegion());
+// 			itk::ImageRegionConstIterator<TLabelImage> cerebellumImageIterator(m_CerebellumImage, m_CerebellumImage->GetLargestPossibleRegion());
+			
+			typename itk::AddImageFilter<TLabelImage, TLabelImage, TLabelImage>::Pointer addImageFilter = itk::AddImageFilter<TLabelImage, TLabelImage, TLabelImage>::New();
+			addImageFilter->SetInput1(m_BrainstemImage);
+			addImageFilter->SetInput2(m_CerebellumImage);
+			addImageFilter->Update();
+			
+			typename TLabelImage::Pointer comboBrainCerebellumImage = addImageFilter->GetOutput();
+			itk::ImageRegionConstIterator<TLabelImage> comboBrainCerebellumImageIterator(comboBrainCerebellumImage, comboBrainCerebellumImage->GetLargestPossibleRegion());
+			for(cortexSegmentationInitialisationIterator.GoToBegin(), comboBrainCerebellumImageIterator.GoToBegin(); !comboBrainCerebellumImageIterator.IsAtEnd(); ++cortexSegmentationInitialisationIterator, ++comboBrainCerebellumImageIterator)
+			{
+				if(comboBrainCerebellumImageIterator.Get() != 0)
+					cortexSegmentationInitialisationIterator.Set(0);
 			}
 		}
 		
