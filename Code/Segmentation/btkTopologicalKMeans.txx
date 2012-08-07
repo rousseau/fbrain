@@ -52,6 +52,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "itkSubtractImageFilter.h"
 #include "itkDanielssonDistanceMapImageFilter.h"
 #include "itkAddImageFilter.h"
+#include "itkMinimumMaximumImageFilter.h"
 
 namespace btk
 {
@@ -169,9 +170,15 @@ namespace btk
 	{
 		typedef itk::Image<float, 3> 	DistanceImageType;
 		
+		//Get Intracranian Distance Map
 		DistanceImageType::Pointer distanceImage = DistanceImageType::New();
 		distanceImage = GetDistanceImage(intracranianVolume);
 		ImageHelper<DistanceImageType>::WriteImage(distanceImage, "/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_DistanceMap.nii");
+		
+		//Get Maximum of Intracranian Distance Map
+		itk::MinimumMaximumImageFilter<DistanceImageType>::Pointer minMaxFilter = itk::MinimumMaximumImageFilter<DistanceImageType>::New();
+		minMaxFilter->SetInput(distanceImage);
+		minMaxFilter->Update();
 		
 		itk::ImageRegionConstIterator<DistanceImageType> distanceImageIterator(distanceImage, distanceImage->GetLargestPossibleRegion());
 		itk::ImageRegionIterator<TLabelImage> intracranianVolumeIterator(intracranianVolume, intracranianVolume->GetLargestPossibleRegion());
@@ -181,7 +188,7 @@ namespace btk
 		{
 			if(intracranianVolumeIterator.Get() != 0)
 			{
-				if(distanceImageIterator.Get() > 18.0)
+				if(distanceImageIterator.Get() > 0.8*minMaxFilter->GetMaximum())
 					brainSegmentationInitialisationIterator.Set(3);
 				else if(distanceImageIterator.Get() > 1.0)
 					brainSegmentationInitialisationIterator.Set(2);
@@ -223,13 +230,14 @@ namespace btk
 			{
 				if(brainSegmentationIterator.Get() == 1)
 					cortexSegmentationInitialisationIterator.Set(1);
-				else if(distanceImageIterator.Get() < 5)
+				else if(distanceImageIterator.Get() < 4)
 					cortexSegmentationInitialisationIterator.Set(2);
-				else if(distanceImageIterator.Get() < 7)
+				else if(distanceImageIterator.Get() < 6)
 					cortexSegmentationInitialisationIterator.Set(3);
 			}
 		}
 		
+		// Takes voxels from cerebellum and brainstem off + a little dilation
 		if(m_BrainstemImage.IsNotNull() && m_CerebellumImage.IsNotNull() )
 		{
 // 			itk::ImageRegionConstIterator<TLabelImage> brainstemImageIterator(m_BrainstemImage, m_BrainstemImage->GetLargestPossibleRegion());
@@ -240,7 +248,17 @@ namespace btk
 			addImageFilter->SetInput2(m_CerebellumImage);
 			addImageFilter->Update();
 			
-			typename TLabelImage::Pointer comboBrainCerebellumImage = addImageFilter->GetOutput();
+			typedef itk::BinaryBallStructuringElement<typename TLabelImage::PixelType,3> StructuringElementType;
+			StructuringElementType structuringElement;
+			structuringElement.SetRadius(2);
+			structuringElement.CreateStructuringElement();
+			
+			typename itk::GrayscaleDilateImageFilter<TLabelImage, TLabelImage, StructuringElementType>::Pointer dilateFilter = itk::GrayscaleDilateImageFilter<TLabelImage, TLabelImage, StructuringElementType>::New();
+			dilateFilter->SetInput(addImageFilter->GetOutput());
+			dilateFilter->SetKernel(structuringElement);
+			dilateFilter->Update();
+			
+			typename TLabelImage::Pointer comboBrainCerebellumImage = dilateFilter->GetOutput();
 			itk::ImageRegionConstIterator<TLabelImage> comboBrainCerebellumImageIterator(comboBrainCerebellumImage, comboBrainCerebellumImage->GetLargestPossibleRegion());
 			for(cortexSegmentationInitialisationIterator.GoToBegin(), comboBrainCerebellumImageIterator.GoToBegin(); !comboBrainCerebellumImageIterator.IsAtEnd(); ++cortexSegmentationInitialisationIterator, ++comboBrainCerebellumImageIterator)
 			{
