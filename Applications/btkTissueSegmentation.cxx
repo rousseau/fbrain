@@ -191,7 +191,15 @@ int main(int argc, char **argv)
 		
 		VectorNormaliseImageType::Pointer normaliseInput = normaliseImageToVectorImageFilter->GetOutput();
 		
-		
+		//Run Topological K-Means for Cortex
+		NormaliseTopologicalKMeansType::Pointer normaliseTopologicalKMeansFilter = NormaliseTopologicalKMeansType::New();
+		normaliseTopologicalKMeansFilter->SetInputImage(normaliseInput);
+		normaliseTopologicalKMeansFilter->SetInitialSegmentation(brainSegmentation);
+		normaliseTopologicalKMeansFilter->SetBrainstemImage(brainstemImage);
+		normaliseTopologicalKMeansFilter->SetCerebellumImage(cerebellumImage);
+		normaliseTopologicalKMeansFilter->SetCortex();
+		normaliseTopologicalKMeansFilter->Update();
+		LabelImageType::Pointer cortexSegmentation = normaliseTopologicalKMeansFilter->GetOutput();
 		
 		//Write outputs
 		LabelHelperType::WriteImage(brainSegmentation, brainSegmentationFile);
