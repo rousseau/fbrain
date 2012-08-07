@@ -160,22 +160,21 @@ int main(int argc, char **argv)
 		GreyImageType::Pointer blackTopHatImage = topHatFilter->GetOutput();
 		
 		//Normalise Grey and Top-Hat Images
-		NormaliseFilterType::Pointer normaliseFilter = NormaliseFilterType::New();
+		NormaliseFilterType::Pointer normaliseFilter1 = NormaliseFilterType::New();
+		NormaliseFilterType::Pointer normaliseFilter2 = NormaliseFilterType::New();
 		
-		normaliseFilter->SetInput(greyImage);
-		normaliseFilter->Update();
-		NormaliseImageType::Pointer normaliseGreyImage = normaliseFilter->GetOutput();
-// 		btk::ImageHelper<NormaliseImageType>::WriteImage(normaliseGreyImage, "/home/caldairou/Tools/FBrain/test_fbrain/normaliseGreyImage.nii");
-		
-		normaliseFilter->SetInput(blackTopHatImage);
-		normaliseFilter->Update();
-		NormaliseImageType::Pointer normaliseBlackTopHatImage = normaliseFilter->GetOutput();
-// 		btk::ImageHelper<NormaliseImageType>::WriteImage(normaliseBlackTopHatImage, "/home/caldairou/Tools/FBrain/test_fbrain/normaliseTopHatImage.nii");
+		normaliseFilter1->SetInput(greyImage);
+		normaliseFilter1->Update();
+// 		NormaliseImageType::Pointer normaliseGreyImage = normaliseFilter->GetOutput();
+
+		normaliseFilter2->SetInput(blackTopHatImage);
+		normaliseFilter2->Update();
+// 		NormaliseImageType::Pointer normaliseBlackTopHatImage = normaliseFilter->GetOutput();
 		
 		//Builds Vector Image
 		NormaliseImageToVectorImageFilterType::Pointer normaliseImageToVectorImageFilter = NormaliseImageToVectorImageFilterType::New();
-		normaliseImageToVectorImageFilter->SetInput(0, normaliseGreyImage);
-		normaliseImageToVectorImageFilter->SetInput(1, normaliseBlackTopHatImage);
+		normaliseImageToVectorImageFilter->SetInput(0, normaliseFilter1->GetOutput());
+		normaliseImageToVectorImageFilter->SetInput(1, normaliseFilter2->GetOutput());
 		normaliseImageToVectorImageFilter->Update();
 		
 		VectorNormaliseImageType::Pointer normaliseInput = normaliseImageToVectorImageFilter->GetOutput();
