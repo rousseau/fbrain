@@ -89,6 +89,8 @@ int main(int argc, char **argv)
 		typedef itk::VectorImage <NormaliseVoxelType, Dimension> 	VectorNormaliseImageType;
 		typedef itk::Image <LabelVoxelType,Dimension>			LabelImageType;
 		
+		typedef itk::ImageRegionIterator <LabelImageType>		LabelImageIteratorType;
+		
 		typedef btk::ImageHelper <GreyImageType> 			GreyHelperType;
 		typedef btk::ImageHelper <LabelImageType> 			LabelHelperType; 
 		
@@ -135,10 +137,33 @@ int main(int argc, char **argv)
 		
 		LabelImageType::Pointer brainSegmentation = greyTopologicalKMeansFilter->GetOutput();
 		
+		//Closing of the LCR to fill the holes
+		LabelImageType::Pointer lcr = GreyTopologicalKMeansType::GetOneLabel(brainSegmentation, 1);
+		
+		FlatStructuringElementType::RadiusType radius;
+		radius.Fill(3);
+		FlatStructuringElementType structElement = FlatStructuringElementType::Ball(radius);
+		
+		ClosingFilterType::Pointer closingFilter = ClosingFilterType::New();
+		closingFilter->SetInput(lcr);
+		closingFilter->SetKernel(structElement);
+		closingFilter->Update();
+		LabelImageType::Pointer lcrCorrected = closingFilter->GetOutput();
+		
+		LabelImageIteratorType brainSegmentationIterator(brainSegmentation, brainSegmentation->GetLargestPossibleRegion());
+		LabelImageIteratorType lcrCorrectedIterator(lcrCorrected, lcrCorrected->GetLargestPossibleRegion());
+		
+		for(brainSegmentationIterator.GoToBegin(), lcrCorrectedIterator.GoToBegin(); !brainSegmentationIterator.IsAtEnd(); ++brainSegmentationIterator, ++lcrCorrectedIterator)
+		{
+			if(brainSegmentationIterator.Get() != 0 && lcrCorrectedIterator.Get() == 1)
+				brainSegmentationIterator.Set(1);
+		}
+		
 		/* --------------------------------------------------- Cortex Segmentation --------------------------------------------------*/
 		//Create Black Top Hat Image
-		FlatStructuringElementType::RadiusType radius = {2/greyImage->GetSpacing()[0], 2/greyImage->GetSpacing()[1], 2/greyImage->GetSpacing()[2]};
-		FlatStructuringElementType structElement = FlatStructuringElementType::Ball(radius);
+		for(unsigned int i=0; i<3; i++)
+			radius.SetElement(0, 2/greyImage->GetSpacing()[0]);
+		structElement = FlatStructuringElementType::Ball(radius);
 		
 		TopHatFilterType::Pointer topHatFilter = TopHatFilterType::New();
 		topHatFilter->SetInput(greyImage);
@@ -165,6 +190,8 @@ int main(int argc, char **argv)
 		normaliseImageToVectorImageFilter->Update();
 		
 		VectorNormaliseImageType::Pointer normaliseInput = normaliseImageToVectorImageFilter->GetOutput();
+		
+		
 		
 		//Write outputs
 		LabelHelperType::WriteImage(brainSegmentation, brainSegmentationFile);
