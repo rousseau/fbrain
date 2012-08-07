@@ -33,3 +33,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 ==========================================================================*/
 
+int main(int argc, char **argv)
+{
+	return 0;
+}
