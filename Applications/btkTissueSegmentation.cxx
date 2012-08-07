@@ -117,7 +117,38 @@ int main(int argc, char **argv)
 		LabelImageType::Pointer cerebellumImage;
 		cerebellumImage = LabelHelperType::ReadImage(cerebellumFile);
 		
+		/* ------------------------------------------------- Brain Segmentation -------------------------------------------------*/
+		//Create Vector Image for Topological K-Means Input
+		GreyImageToVectorImageFilterType::Pointer greyImageToVectorImageFilter = GreyImageToVectorImageFilterType::New();
+		greyImageToVectorImageFilter->SetInput(0, greyImage);
+		greyImageToVectorImageFilter->Update();
 		
+		VectorGreyImageType::Pointer greyInput;
+		greyInput = greyImageToVectorImageFilter->GetOutput();
+		
+		//Run Topological K-Means
+		GreyTopologicalKMeansType::Pointer greyTopologicalKMeansFilter = GreyTopologicalKMeansType::New();
+		greyTopologicalKMeansFilter->SetInputImage(greyInput);
+		greyTopologicalKMeansFilter->SetInitialSegmentation(initSegmentation);
+		greyTopologicalKMeansFilter->SetLCR();
+		greyTopologicalKMeansFilter->Update();
+		
+		LabelImageType::Pointer brainSegmentation = greyTopologicalKMeansFilter->GetOutput();
+		
+		/* --------------------------------------------------- Cortex Segmentation --------------------------------------------------*/
+		//Create Black Top Hat Image
+		FlatStructuringElementType::RadiusType radius = {2/greyImage->GetSpacing()[0], 2/greyImage->GetSpacing()[1], 2/greyImage->GetSpacing()[2]};
+		FlatStructuringElementType structElement = FlatStructuringElementType::Ball(radius);
+		
+		TopHatFilterType::Pointer topHatFilter = TopHatFilterType::New();
+		topHatFilter->SetInput(greyImage);
+		topHatFilter->SetKernel(structElement);
+		topHatFilter->Update();
+		
+		GreyImageType::Pointer blackTopHatImage = topHatFilter->GetOutput();
+		
+		//Write outputs
+		LabelHelperType::WriteImage(brainSegmentation, brainSegmentationFile);
 	}
 	catch (TCLAP::ArgException &e)  // catch any exceptions
 	{
