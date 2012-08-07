@@ -44,6 +44,37 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 #include <tclap/CmdLine.h>
 
+//typedef
+const unsigned int Dimension = 3;
+typedef int 	GreyVoxelType;
+typedef float	NormaliseVoxelType;
+typedef int 	LabelVoxelType;
+
+typedef itk::Image <GreyVoxelType,Dimension>			GreyImageType;
+typedef itk::Image <NormaliseVoxelType, Dimension>		NormaliseImageType;
+typedef itk::VectorImage <GreyVoxelType,Dimension>		VectorGreyImageType;
+typedef itk::VectorImage <NormaliseVoxelType, Dimension> 	VectorNormaliseImageType;
+typedef itk::Image <LabelVoxelType,Dimension>			LabelImageType;
+
+typedef itk::ImageRegionIterator <LabelImageType>		LabelImageIteratorType;
+
+typedef btk::ImageHelper <GreyImageType> 			GreyHelperType;
+typedef btk::ImageHelper <LabelImageType> 			LabelHelperType; 
+
+typedef itk::ComposeImageFilter <GreyImageType> 		GreyImageToVectorImageFilterType;
+typedef itk::ComposeImageFilter <NormaliseImageType> 		NormaliseImageToVectorImageFilterType;
+
+typedef itk::NormalizeImageFilter<GreyImageType, NormaliseImageType> 	NormaliseFilterType;
+
+typedef itk::FlatStructuringElement<Dimension>										FlatStructuringElementType;
+typedef itk::BlackTopHatImageFilter<GreyImageType, GreyImageType, FlatStructuringElementType>				TopHatFilterType;
+typedef itk::GrayscaleMorphologicalClosingImageFilter<LabelImageType, LabelImageType, FlatStructuringElementType>	ClosingFilterType;
+
+typedef btk::TopologicalKMeans <VectorGreyImageType, LabelImageType> 		GreyTopologicalKMeansType;
+typedef btk::TopologicalKMeans <VectorNormaliseImageType, LabelImageType> 	NormaliseTopologicalKMeansType;
+
+void lcrClosing(LabelImageType::Pointer segmentation);
+
 int main(int argc, char **argv)
 {
 	try
@@ -79,34 +110,6 @@ int main(int argc, char **argv)
 		std::string cortexSegmentationFile = outputImageArg.getValue()[1];
 		
 		/* ------------------------------------------------------------------ Sets typedef and gets input images ------------------------------------------------- */
-		//typedef
-		const unsigned int Dimension = 3;
-		typedef int 	GreyVoxelType;
-		typedef float	NormaliseVoxelType;
-		typedef int 	LabelVoxelType;
-		
-		typedef itk::Image <GreyVoxelType,Dimension>			GreyImageType;
-		typedef itk::Image <NormaliseVoxelType, Dimension>		NormaliseImageType;
-		typedef itk::VectorImage <GreyVoxelType,Dimension>		VectorGreyImageType;
-		typedef itk::VectorImage <NormaliseVoxelType, Dimension> 	VectorNormaliseImageType;
-		typedef itk::Image <LabelVoxelType,Dimension>			LabelImageType;
-		
-		typedef itk::ImageRegionIterator <LabelImageType>		LabelImageIteratorType;
-		
-		typedef btk::ImageHelper <GreyImageType> 			GreyHelperType;
-		typedef btk::ImageHelper <LabelImageType> 			LabelHelperType; 
-		
-		typedef itk::ComposeImageFilter <GreyImageType> 		GreyImageToVectorImageFilterType;
-		typedef itk::ComposeImageFilter <NormaliseImageType> 		NormaliseImageToVectorImageFilterType;
-		
-		typedef itk::NormalizeImageFilter<GreyImageType, NormaliseImageType> 	NormaliseFilterType;
-		
-		typedef itk::FlatStructuringElement<Dimension>										FlatStructuringElementType;
-		typedef itk::BlackTopHatImageFilter<GreyImageType, GreyImageType, FlatStructuringElementType>				TopHatFilterType;
-		typedef itk::GrayscaleMorphologicalClosingImageFilter<LabelImageType, LabelImageType, FlatStructuringElementType>	ClosingFilterType;
-		
-		typedef btk::TopologicalKMeans <VectorGreyImageType, LabelImageType> 		GreyTopologicalKMeansType;
-		typedef btk::TopologicalKMeans <VectorNormaliseImageType, LabelImageType> 	NormaliseTopologicalKMeansType;
 		
 		//Get Input images
 		GreyImageType::Pointer greyImage;
@@ -140,32 +143,14 @@ int main(int argc, char **argv)
 		LabelImageType::Pointer brainSegmentation = greyTopologicalKMeansFilter->GetOutput();
 		
 		//Closing of the LCR to fill the holes
-		LabelImageType::Pointer lcr = GreyTopologicalKMeansType::GetOneLabel(brainSegmentation, 1);
-		
-		FlatStructuringElementType::RadiusType radius;
-		radius.Fill(3);
-		FlatStructuringElementType structElement = FlatStructuringElementType::Ball(radius);
-		
-		ClosingFilterType::Pointer closingFilter = ClosingFilterType::New();
-		closingFilter->SetInput(lcr);
-		closingFilter->SetKernel(structElement);
-		closingFilter->Update();
-		LabelImageType::Pointer lcrCorrected = closingFilter->GetOutput();
-		
-		LabelImageIteratorType brainSegmentationIterator(brainSegmentation, brainSegmentation->GetLargestPossibleRegion());
-		LabelImageIteratorType lcrCorrectedIterator(lcrCorrected, lcrCorrected->GetLargestPossibleRegion());
-		
-		for(brainSegmentationIterator.GoToBegin(), lcrCorrectedIterator.GoToBegin(); !brainSegmentationIterator.IsAtEnd(); ++brainSegmentationIterator, ++lcrCorrectedIterator)
-		{
-			if(brainSegmentationIterator.Get() != 0 && lcrCorrectedIterator.Get() == 1)
-				brainSegmentationIterator.Set(1);
-		}
+		lcrClosing(brainSegmentation);
 		
 		/* ---------------------------------------------------------------------------------- Cortex Segmentation -------------------------------------------------------------------------------*/
 		//Create Black Top Hat Image
+		FlatStructuringElementType::RadiusType radius;
 		for(unsigned int i=0; i<3; i++)
 			radius.SetElement(0, 2/greyImage->GetSpacing()[0]);
-		structElement = FlatStructuringElementType::Ball(radius);
+		FlatStructuringElementType structElement = FlatStructuringElementType::Ball(radius);
 		
 		TopHatFilterType::Pointer topHatFilter = TopHatFilterType::New();
 		topHatFilter->SetInput(greyImage);
@@ -186,7 +171,7 @@ int main(int argc, char **argv)
 		NormaliseImageType::Pointer normaliseBlackTopHatImage = normaliseFilter->GetOutput();
 		
 		//Builds Vector Image
-		NormaliseImageToVectorImageFilterType::Pointer normaliseImageToVectorImageFilter = NormaliseImageToVectorImageFilterType::New(); std::cout<<"Update sur le vecteur d'image fait"<<std::endl;
+		NormaliseImageToVectorImageFilterType::Pointer normaliseImageToVectorImageFilter = NormaliseImageToVectorImageFilterType::New();
 		normaliseImageToVectorImageFilter->SetInput(0, normaliseGreyImage);
 		normaliseImageToVectorImageFilter->SetInput(1, normaliseBlackTopHatImage);
 		normaliseImageToVectorImageFilter->Update();
@@ -204,20 +189,7 @@ int main(int argc, char **argv)
 		LabelImageType::Pointer cortexSegmentation = normaliseTopologicalKMeansFilter->GetOutput();
 		
 		//Closing of the LCR to fill the holes
-		lcr = GreyTopologicalKMeansType::GetOneLabel(cortexSegmentation, 1);
-		
-		closingFilter->SetInput(lcr);
-		closingFilter->SetKernel(structElement);
-		closingFilter->Update();
-		lcrCorrected = closingFilter->GetOutput();
-		
-		LabelImageIteratorType cortexSegmentationIterator(cortexSegmentation, cortexSegmentation->GetLargestPossibleRegion());
-		
-		for(cortexSegmentationIterator.GoToBegin(), lcrCorrectedIterator.GoToBegin(); !cortexSegmentationIterator.IsAtEnd(); ++cortexSegmentationIterator, ++lcrCorrectedIterator)
-		{
-			if(cortexSegmentationIterator.Get() != 0 && lcrCorrectedIterator.Get() == 1)
-				cortexSegmentationIterator.Set(1);
-		}
+		lcrClosing(cortexSegmentation);
 		
 		/* ------------------------------------------------------------------------- Outputs Writing ---------------------------------------------------------------------------------------------*/
 		LabelHelperType::WriteImage(brainSegmentation, brainSegmentationFile);
@@ -229,4 +201,29 @@ int main(int argc, char **argv)
 	}
 	
 	return 0;
+}
+
+void lcrClosing(LabelImageType::Pointer segmentation)
+{
+	LabelImageType::Pointer lcr = GreyTopologicalKMeansType::GetOneLabel(segmentation, 1);
+	
+	FlatStructuringElementType::RadiusType radius;
+	for(unsigned int i=0; i<3; i++)
+		radius.SetElement(0, 2/segmentation->GetSpacing()[0]);
+	FlatStructuringElementType structElement = FlatStructuringElementType::Ball(radius);
+	
+	ClosingFilterType::Pointer closingFilter = ClosingFilterType::New();
+	closingFilter->SetInput(lcr);
+	closingFilter->SetKernel(structElement);
+	closingFilter->Update();
+	LabelImageType::Pointer lcrCorrected = closingFilter->GetOutput();
+	
+	LabelImageIteratorType segmentationIterator(segmentation, segmentation->GetLargestPossibleRegion());
+	LabelImageIteratorType lcrCorrectedIterator(lcrCorrected, lcrCorrected->GetLargestPossibleRegion());
+	
+	for(segmentationIterator.GoToBegin(), lcrCorrectedIterator.GoToBegin(); !segmentationIterator.IsAtEnd(); ++segmentationIterator, ++lcrCorrectedIterator)
+	{
+		if(segmentationIterator.Get() != 0 && lcrCorrectedIterator.Get() == 1)
+			segmentationIterator.Set(1);
+	}
 }
