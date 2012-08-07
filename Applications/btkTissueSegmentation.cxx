@@ -33,7 +33,96 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 ==========================================================================*/
 
+#include "btkTopologicalKMeans.h"
+#include "btkImageHelper.h"
+
+#include "itkBlackTopHatImageFilter.h"
+#include "itkNormalizeImageFilter.h"
+#include "itkGrayscaleMorphologicalClosingImageFilter.h"
+#include "itkComposeImageFilter.h"
+#include "itkFlatStructuringElement.h"
+
+#include <tclap/CmdLine.h>
+
 int main(int argc, char **argv)
 {
+	try
+	{
+		//TCLAP Command Line Parser
+		TCLAP::CmdLine cmd("Tissue Classification to retrieve the cortex of a fetal brain MRI", ' ', "0.1");
+		
+		//TCLAP Arguments
+		TCLAP::ValueArg<std::string> inputImageArg("i","image_file","input image file (short)",true,"","string");
+		cmd.add( inputImageArg );
+		TCLAP::ValueArg<std::string> initSegArg("s","init_seg","2 Class FCM classification of the intracranian volume (short)",true,"","string");
+		cmd.add( initSegArg );
+		TCLAP::MultiArg<std::string> manualSegArg("l","brainstem_cerebellum","manual segmentation of brainstem and cerebellum (short)",true,"",cmd);
+		TCLAP::MultiArg<std::string> outputImageArg("o","output_files","Sets output files : one for brain segmentation, the other for cortex segmentation (short)",true,"",cmd);
+		
+		//Parse command line
+		cmd.parse(argc, argv);
+		
+		//Check how many outputs were set
+		if(outputImageArg.getValue().size() != 2 || manualSegArg.getValue().size() != 2)
+		{
+			std::cout<<"There should be 2 outputs, one file for brainstem segmentation and one file for cerebellum segmentation"<<std::endl;
+			return 1;
+		}
+		
+		//Get arguments
+		std::string inputFile = inputImageArg.getValue();
+		std::string initSegFile = initSegArg.getValue();
+		std::string brainstemFile = manualSegArg.getValue()[0];
+		std::string cerebellumFile = manualSegArg.getValue()[1];
+		std::string brainSegmentationFile = outputImageArg.getValue()[0];
+		std::string cortexSegmentationFile = outputImageArg.getValue()[1];
+		
+		//typedef
+		const unsigned int Dimension = 3;
+		typedef int 	GreyVoxelType;
+		typedef float	NormaliseVoxelType;
+		typedef int 	LabelVoxelType;
+		
+		typedef itk::Image <GreyVoxelType,Dimension>			GreyImageType;
+		typedef itk::Image <NormaliseVoxelType, Dimension>		NormaliseImageType;
+		typedef itk::VectorImage <GreyVoxelType,Dimension>		VectorGreyImageType;
+		typedef itk::VectorImage <NormaliseVoxelType, Dimension> 	VectorNormaliseImageType;
+		typedef itk::Image <LabelVoxelType,Dimension>			LabelImageType;
+		
+		typedef btk::ImageHelper <GreyImageType> 			GreyHelperType;
+		typedef btk::ImageHelper <LabelImageType> 			LabelHelperType; 
+		
+		typedef itk::ComposeImageFilter <GreyImageType> 		GreyImageToVectorImageFilterType;
+		typedef itk::ComposeImageFilter <NormaliseImageType> 		NormaliseImageToVectorImageFilterType;
+		
+		typedef itk::NormalizeImageFilter<GreyImageType, NormaliseImageType> 	NormaliseFilterType;
+		
+		typedef itk::FlatStructuringElement<Dimension>										FlatStructuringElementType;
+		typedef itk::BlackTopHatImageFilter<GreyImageType, GreyImageType, FlatStructuringElementType>				TopHatFilterType;
+		typedef itk::GrayscaleMorphologicalClosingImageFilter<LabelImageType, LabelImageType, FlatStructuringElementType>	ClosingFilterType;
+		
+		typedef btk::TopologicalKMeans <VectorGreyImageType, LabelImageType> 		GreyTopologicalKMeansType;
+		typedef btk::TopologicalKMeans <VectorNormaliseImageType, LabelImageType> 	NormaliseTopologicalKMeansType;
+		
+		//Get Input images
+		GreyImageType::Pointer greyImage;
+		greyImage = GreyHelperType::ReadImage(inputFile);
+		
+		LabelImageType::Pointer initSegmentation;
+		initSegmentation = LabelHelperType::ReadImage(initSegFile);
+		
+		LabelImageType::Pointer brainstemImage;
+		brainstemImage = LabelHelperType::ReadImage(brainstemFile);
+		
+		LabelImageType::Pointer cerebellumImage;
+		cerebellumImage = LabelHelperType::ReadImage(cerebellumFile);
+		
+		
+	}
+	catch (TCLAP::ArgException &e)  // catch any exceptions
+	{
+		std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; 
+	}
+	
 	return 0;
 }

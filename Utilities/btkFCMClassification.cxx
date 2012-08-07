@@ -2,7 +2,7 @@
 
 © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-Date: 19/07/2012
+Date: 07/08/2012
 Author(s): Benoit Caldairou (benoit.caldairou@unistra.fr)
 
 This software is governed by the CeCILL-B license under French law and
