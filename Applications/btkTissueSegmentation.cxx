@@ -2,7 +2,7 @@
 
 © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-Date: 19/07/2012
+Date: 07/08/2012
 Author(s): Benoit Caldairou (benoit.caldairou@unistra.fr)
 
 This software is governed by the CeCILL-B license under French law and
@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 {
 	try
 	{
-		/* ------------------------------------------------------------- Sets TCLAP ----------------------------------------------------------------------------- */
+		/* ------------------------------------------------------------- Sets TCLAP and get input images ----------------------------------------------------------------------------- */
 		//TCLAP Command Line Parser
 		TCLAP::CmdLine cmd("Tissue Classification to retrieve the cortex of a fetal brain MRI", ' ', "0.1");
 		
@@ -108,8 +108,6 @@ int main(int argc, char **argv)
 		std::string cerebellumFile = manualSegArg.getValue()[1];
 		std::string brainSegmentationFile = outputImageArg.getValue()[0];
 		std::string cortexSegmentationFile = outputImageArg.getValue()[1];
-		
-		/* ------------------------------------------------------------------ Sets typedef and gets input images ------------------------------------------------- */
 		
 		//Get Input images
 		GreyImageType::Pointer greyImage;
