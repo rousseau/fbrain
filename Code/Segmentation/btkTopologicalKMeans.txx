@@ -77,39 +77,25 @@ namespace btk
 		//Get Inputs
 		typename TInputImage::Pointer inputImage = this->GetInputImage();
 		typename TLabelImage::Pointer initSeg = this->GetInitialSegmentation();
-		std::cout<<"Got Inputs"<<std::endl;
 		
 		// Setup output (first a copy of the initial Segmentation)
 		typename TLabelImage::Pointer finalSeg = this->GetOutput();
 		finalSeg->SetRegions(initSeg->GetLargestPossibleRegion());
 		finalSeg->Allocate();
 		
-// 		itk::ImageRegionConstIterator<TLabelImage> initSegIterator(initSeg, initSeg->GetLargestPossibleRegion());
-// 		itk::ImageRegionIterator<TLabelImage> finalSegIterator(finalSeg, finalSeg->GetLargestPossibleRegion());
-// 		for(initSegIterator.GoToBegin(), finalSegIterator.GoToBegin(); !initSegIterator.IsAtEnd(); ++initSegIterator, ++finalSegIterator)
-// 			finalSegIterator.Set(initSegIterator.Get());
-		std::cout<<"Output Set"<<std::endl;
-		
 		//Algorithm
-		ImageHelper<TLabelImage>::WriteImage(initSeg, "/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_intracranien.nii");
-		
 		if(m_LcrOrCortex)
 		{
 			ComputeCentroids(inputImage, initSeg, 1);
-			std::cout<<"Init Brain Segmentation"<<std::endl;
 			InitBrainSegmentation(initSeg, finalSeg);
 		}
 		else
 		{
-			std::cout<<"Init Cortex Segmentation"<<std::endl;
 			InitCortexSegmentation(initSeg, finalSeg);
 			ComputeCentroids(inputImage, finalSeg);
 		}
-		ImageHelper<TLabelImage>::WriteImage(finalSeg, "/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_InitSegmentation.nii");
 		
 		RunSegmentation(inputImage, finalSeg);
-		
-		ImageHelper<TLabelImage>::WriteImage(finalSeg,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_FinalSegInClass.nii");
 		
 		return;
 	}
@@ -117,13 +103,9 @@ namespace btk
 	template< typename TInputImage, typename TLabelImage>
 	void TopologicalKMeans<TInputImage, TLabelImage>::ComputeCentroids(typename TInputImage::Pointer inputImage, typename TLabelImage::Pointer segImage, bool initLCRCentroids)
 	{
-		//In case it is the first time this function is run
-// 		if(initCentroids)
-// 		{
-			// 3 because there is three spheres in this model
-			m_Centroids.SetSize(inputImage->GetNumberOfComponentsPerPixel(),3);
-			m_Centroids.Fill(0);
-// 		}
+		// 3 because there is three spheres in this model
+		m_Centroids.SetSize(inputImage->GetNumberOfComponentsPerPixel(),3);
+		m_Centroids.Fill(0);
 		
 		itk::ImageRegionConstIterator<TInputImage> inputImageIterator(inputImage, inputImage->GetLargestPossibleRegion());
 		itk::ImageRegionConstIterator<TLabelImage> segImageIterator(segImage, segImage->GetLargestPossibleRegion());
@@ -141,10 +123,7 @@ namespace btk
 				sum_voxel[segImageIterator.Get()-1]++;
 			}
 		}
-	
-		std::cout<<"Nombre de lignes : "<<m_Centroids.Rows()<<std::endl;
-		std::cout<<"Nombre de collonnes : "<<m_Centroids.Cols()<<std::endl;
-	
+		
 		for(unsigned int i=0; i<m_Centroids.Rows(); i++)
 			for(unsigned int j=0; j<m_Centroids.Cols(); j++)
 				m_Centroids(i,j) = m_Centroids(i,j)/sum_voxel[j];
@@ -153,13 +132,6 @@ namespace btk
 		{
 			for(unsigned int i=0; i<m_Centroids.Rows(); i++)
 				m_Centroids(i,2) = m_Centroids(i,0);
-		}
-		
-		for(unsigned int i=0; i<m_Centroids.Rows(); i++)
-		{
-			for(unsigned int j=0; j<m_Centroids.Cols(); j++)
-				std::cout<<m_Centroids(i,j)<<" "<<std::flush;
-			std::cout<<std::endl;
 		}
 		
 		return;
@@ -173,7 +145,6 @@ namespace btk
 		//Get Intracranian Distance Map
 		DistanceImageType::Pointer distanceImage = DistanceImageType::New();
 		distanceImage = GetDistanceImage(intracranianVolume);
-		ImageHelper<DistanceImageType>::WriteImage(distanceImage, "/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_DistanceMap.nii");
 		
 		//Get Maximum of Intracranian Distance Map
 		itk::MinimumMaximumImageFilter<DistanceImageType>::Pointer minMaxFilter = itk::MinimumMaximumImageFilter<DistanceImageType>::New();
@@ -198,7 +169,6 @@ namespace btk
 			else
 				brainSegmentationInitialisationIterator.Set(0);
 		}
-		ImageHelper<TLabelImage>::WriteImage(brainSegmentationInitialisation, "/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_InitSegmentation_InFunction.nii");
 		
 		return;
 	}
@@ -213,12 +183,8 @@ namespace btk
 		typename TLabelImage::Pointer psrLabel = TLabelImage::New();
 		psrLabel = GetOneLabel(brainSegmentation, 1);
 		
-		ImageHelper<TLabelImage>::WriteImage(psrLabel,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_psrLabel.nii");
-		
 		DistanceImageType::Pointer distanceImage = DistanceImageType::New();
 		distanceImage = GetDistanceImage(psrLabel);
-		
-		ImageHelper<itk::Image<float, 3> >::WriteImage(distanceImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_lcrDistanceMap.nii");
 		
 		itk::ImageRegionConstIterator<DistanceImageType> distanceImageIterator(distanceImage, distanceImage->GetLargestPossibleRegion());
 		itk::ImageRegionIterator<TLabelImage> cortexSegmentationInitialisationIterator(cortexSegmentationInitialisation, cortexSegmentationInitialisation->GetLargestPossibleRegion());
@@ -240,9 +206,6 @@ namespace btk
 		// Takes voxels from cerebellum and brainstem off + a little dilation
 		if(m_BrainstemImage.IsNotNull() && m_CerebellumImage.IsNotNull() )
 		{
-// 			itk::ImageRegionConstIterator<TLabelImage> brainstemImageIterator(m_BrainstemImage, m_BrainstemImage->GetLargestPossibleRegion());
-// 			itk::ImageRegionConstIterator<TLabelImage> cerebellumImageIterator(m_CerebellumImage, m_CerebellumImage->GetLargestPossibleRegion());
-			
 			typename itk::AddImageFilter<TLabelImage, TLabelImage, TLabelImage>::Pointer addImageFilter = itk::AddImageFilter<TLabelImage, TLabelImage, TLabelImage>::New();
 			addImageFilter->SetInput1(m_BrainstemImage);
 			addImageFilter->SetInput2(m_CerebellumImage);
@@ -266,16 +229,12 @@ namespace btk
 					cortexSegmentationInitialisationIterator.Set(0);
 			}
 		}
-		
-		ImageHelper<TLabelImage>::WriteImage(cortexSegmentationInitialisation,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_CortexInitialisation.nii");
 	}
 	
 	template< typename TInputImage, typename TLabelImage>
 	void TopologicalKMeans<TInputImage, TLabelImage>::RunSegmentation(typename TInputImage::Pointer inputImage, typename TLabelImage::Pointer segImage)
 	{
 		typename TLabelImage::Pointer borderImage;
-		
-		std::cout<<"Enters the loop..."<<std::endl;
 		
 		unsigned int numLabelChange2 = 1;
 		
@@ -291,32 +250,20 @@ namespace btk
 				borderImage = GetBorderImage(segImage,1,1); //Dilation
 				numLabelChange += ClassifyBorderVoxel(inputImage, segImage, borderImage, 1);
 				
-				std::cout<<"Nombre de chgt : "<<numLabelChange<<std::endl;
-				
 				borderImage = GetBorderImage(segImage,1,0); //Erosion
 				numLabelChange += ClassifyBorderVoxel(inputImage, segImage, borderImage, 1);
-				
-				std::cout<<"Nombre de chgt : "<<numLabelChange<<std::endl;
-				ImageHelper<TLabelImage>::WriteImage(segImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Classification_Change_Label1.nii");
 				
 				borderImage = GetBorderImage(segImage,3,1); //Dilation
 				numLabelChange += ClassifyBorderVoxel(inputImage, segImage, borderImage, 3);
 				
-				std::cout<<"Nombre de chgt : "<<numLabelChange<<std::endl;
-				
 				borderImage = GetBorderImage(segImage,3,0); //Erosion
 				numLabelChange += ClassifyBorderVoxel(inputImage, segImage, borderImage, 3);
 				
-				std::cout<<"Nombre de chgt : "<<numLabelChange<<std::endl;
-				
 				numLabelChange2 += numLabelChange;
-				ImageHelper<TLabelImage>::WriteImage(segImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Classification_Change_Label3.nii");
 			}
 			
-			if(m_LcrOrCortex) {std::cout<<"m_LcrOrCortex is set at 1 and should break"<<std::endl; break;}
-			else {std::cout<<"m8_OneLoop is set to 0 and should not break"<<std::endl; ComputeCentroids(inputImage, segImage);}
-			
-			std::cout<<"Didn't break"<<std::endl;
+			if(m_LcrOrCortex) {break;}
+			else {ComputeCentroids(inputImage, segImage);}
 		}
 		
 		return;
@@ -328,28 +275,23 @@ namespace btk
 		//Gets one label
 		typename TLabelImage::Pointer labelImage = NULL;
 		labelImage = GetOneLabel(segImage, label);
-// 		ImageHelper<TLabelImage>::WriteImage(labelImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Essai_Label1.nii");
 		
 		//Dilate or erode this label
 		typename TLabelImage::Pointer morphoImage = NULL;
 		if(erodeOrDilate) morphoImage = DilateOneLabel(labelImage);
 		else morphoImage = ErodeOneLabel(labelImage);
-// 		ImageHelper<TLabelImage>::WriteImage(dilateImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Essai_DilateLabel1.nii");
 		
 		//Get the border by substracting morphology label and original label
 		typename TLabelImage::Pointer diffImage = NULL;
 		if(erodeOrDilate) diffImage = SubtractImage(labelImage, morphoImage);
 		else diffImage = SubtractImage(morphoImage, labelImage);
-// 		ImageHelper<TLabelImage>::WriteImage(diffImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Essai_DiffLabel1.nii");
 		
 		//Mask this diffImage to eliminate voxel out of intracranial volume
 		typename TLabelImage::Pointer borderImage = NULL;
 		borderImage = MaskImage(diffImage, segImage);
-// 		ImageHelper<TLabelImage>::WriteImage(borderImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Essai_DiffMaskLabel1.nii");
 		
 		//Check if these border voxels are eligible for a label change
 		CheckBorderVoxel(borderImage, segImage, label);
-// 		ImageHelper<TLabelImage>::WriteImage(borderImage,"/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Essai_DiffMaskCorrectionLabel1.nii");
 		
 		return borderImage;
 	}
@@ -422,8 +364,6 @@ namespace btk
 				else distanceMapComputationInitialisationIterator.Set(0);
 			}
 		}
-		
-		ImageHelper<TLabelImage>::WriteImage(distanceMapComputationInitialisation, "/home/caldairou/Tools/FBrain/test_fbrain/LEI_El_Negatif_Cortex.nii");
 		
 		typename DistanceMapFilterType::Pointer distanceMapFilter = DistanceMapFilterType::New();
 		distanceMapFilter->UseImageSpacingOn();

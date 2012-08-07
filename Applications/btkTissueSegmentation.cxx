@@ -42,6 +42,8 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "itkComposeImageFilter.h"
 #include "itkFlatStructuringElement.h"
 
+#include "itkVectorIndexSelectionCastImageFilter.h"
+
 #include <tclap/CmdLine.h>
 
 //typedef
@@ -147,7 +149,7 @@ int main(int argc, char **argv)
 		//Create Black Top Hat Image
 		FlatStructuringElementType::RadiusType radius;
 		for(unsigned int i=0; i<3; i++)
-			radius.SetElement(0, 2/greyImage->GetSpacing()[0]);
+			radius.SetElement(i, 2/greyImage->GetSpacing()[i]);
 		FlatStructuringElementType structElement = FlatStructuringElementType::Ball(radius);
 		
 		TopHatFilterType::Pointer topHatFilter = TopHatFilterType::New();
@@ -163,10 +165,12 @@ int main(int argc, char **argv)
 		normaliseFilter->SetInput(greyImage);
 		normaliseFilter->Update();
 		NormaliseImageType::Pointer normaliseGreyImage = normaliseFilter->GetOutput();
+// 		btk::ImageHelper<NormaliseImageType>::WriteImage(normaliseGreyImage, "/home/caldairou/Tools/FBrain/test_fbrain/normaliseGreyImage.nii");
 		
 		normaliseFilter->SetInput(blackTopHatImage);
 		normaliseFilter->Update();
 		NormaliseImageType::Pointer normaliseBlackTopHatImage = normaliseFilter->GetOutput();
+// 		btk::ImageHelper<NormaliseImageType>::WriteImage(normaliseBlackTopHatImage, "/home/caldairou/Tools/FBrain/test_fbrain/normaliseTopHatImage.nii");
 		
 		//Builds Vector Image
 		NormaliseImageToVectorImageFilterType::Pointer normaliseImageToVectorImageFilter = NormaliseImageToVectorImageFilterType::New();
@@ -206,8 +210,10 @@ void lcrClosing(LabelImageType::Pointer segmentation)
 	LabelImageType::Pointer lcr = GreyTopologicalKMeansType::GetOneLabel(segmentation, 1);
 	
 	FlatStructuringElementType::RadiusType radius;
-	for(unsigned int i=0; i<3; i++)
-		radius.SetElement(0, 2/segmentation->GetSpacing()[0]);
+	for(unsigned int i=0; i<Dimension; i++)
+	{
+		radius.SetElement(i, 2/segmentation->GetSpacing()[i]);
+	}
 	FlatStructuringElementType structElement = FlatStructuringElementType::Ball(radius);
 	
 	ClosingFilterType::Pointer closingFilter = ClosingFilterType::New();
