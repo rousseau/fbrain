@@ -48,6 +48,7 @@ int main(int argc, char **argv)
 {
 	try
 	{
+		/* ------------------------------------------------------------- Sets TCLAP ----------------------------------------------------------------------------- */
 		//TCLAP Command Line Parser
 		TCLAP::CmdLine cmd("Tissue Classification to retrieve the cortex of a fetal brain MRI", ' ', "0.1");
 		
@@ -77,6 +78,7 @@ int main(int argc, char **argv)
 		std::string brainSegmentationFile = outputImageArg.getValue()[0];
 		std::string cortexSegmentationFile = outputImageArg.getValue()[1];
 		
+		/* ------------------------------------------------------------------ Sets typedef and gets input images ------------------------------------------------- */
 		//typedef
 		const unsigned int Dimension = 3;
 		typedef int 	GreyVoxelType;
@@ -119,7 +121,7 @@ int main(int argc, char **argv)
 		LabelImageType::Pointer cerebellumImage;
 		cerebellumImage = LabelHelperType::ReadImage(cerebellumFile);
 		
-		/* ------------------------------------------------- Brain Segmentation -------------------------------------------------*/
+		/* --------------------------------------------------------------------------------- Brain Segmentation ---------------------------------------------------------------------------*/
 		//Create Vector Image for Topological K-Means Input
 		GreyImageToVectorImageFilterType::Pointer greyImageToVectorImageFilter = GreyImageToVectorImageFilterType::New();
 		greyImageToVectorImageFilter->SetInput(0, greyImage);
@@ -159,7 +161,7 @@ int main(int argc, char **argv)
 				brainSegmentationIterator.Set(1);
 		}
 		
-		/* --------------------------------------------------- Cortex Segmentation --------------------------------------------------*/
+		/* ---------------------------------------------------------------------------------- Cortex Segmentation -------------------------------------------------------------------------------*/
 		//Create Black Top Hat Image
 		for(unsigned int i=0; i<3; i++)
 			radius.SetElement(0, 2/greyImage->GetSpacing()[0]);
@@ -201,8 +203,25 @@ int main(int argc, char **argv)
 		normaliseTopologicalKMeansFilter->Update();
 		LabelImageType::Pointer cortexSegmentation = normaliseTopologicalKMeansFilter->GetOutput();
 		
-		//Write outputs
+		//Closing of the LCR to fill the holes
+		lcr = GreyTopologicalKMeansType::GetOneLabel(cortexSegmentation, 1);
+		
+		closingFilter->SetInput(lcr);
+		closingFilter->SetKernel(structElement);
+		closingFilter->Update();
+		lcrCorrected = closingFilter->GetOutput();
+		
+		LabelImageIteratorType cortexSegmentationIterator(cortexSegmentation, cortexSegmentation->GetLargestPossibleRegion());
+		
+		for(cortexSegmentationIterator.GoToBegin(), lcrCorrectedIterator.GoToBegin(); !cortexSegmentationIterator.IsAtEnd(); ++cortexSegmentationIterator, ++lcrCorrectedIterator)
+		{
+			if(cortexSegmentationIterator.Get() != 0 && lcrCorrectedIterator.Get() == 1)
+				cortexSegmentationIterator.Set(1);
+		}
+		
+		/* ------------------------------------------------------------------------- Outputs Writing ---------------------------------------------------------------------------------------------*/
 		LabelHelperType::WriteImage(brainSegmentation, brainSegmentationFile);
+		LabelHelperType::WriteImage(cortexSegmentation, cortexSegmentationFile);
 	}
 	catch (TCLAP::ArgException &e)  // catch any exceptions
 	{
