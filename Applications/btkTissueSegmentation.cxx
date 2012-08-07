@@ -147,6 +147,25 @@ int main(int argc, char **argv)
 		
 		GreyImageType::Pointer blackTopHatImage = topHatFilter->GetOutput();
 		
+		//Normalise Grey and Top-Hat Images
+		NormaliseFilterType::Pointer normaliseFilter = NormaliseFilterType::New();
+		
+		normaliseFilter->SetInput(greyImage);
+		normaliseFilter->Update();
+		NormaliseImageType::Pointer normaliseGreyImage = normaliseFilter->GetOutput();
+		
+		normaliseFilter->SetInput(blackTopHatImage);
+		normaliseFilter->Update();
+		NormaliseImageType::Pointer normaliseBlackTopHatImage = normaliseFilter->GetOutput();
+		
+		//Builds Vector Image
+		NormaliseImageToVectorImageFilterType::Pointer normaliseImageToVectorImageFilter = NormaliseImageToVectorImageFilterType::New(); std::cout<<"Update sur le vecteur d'image fait"<<std::endl;
+		normaliseImageToVectorImageFilter->SetInput(0, normaliseGreyImage);
+		normaliseImageToVectorImageFilter->SetInput(1, normaliseBlackTopHatImage);
+		normaliseImageToVectorImageFilter->Update();
+		
+		VectorNormaliseImageType::Pointer normaliseInput = normaliseImageToVectorImageFilter->GetOutput();
+		
 		//Write outputs
 		LabelHelperType::WriteImage(brainSegmentation, brainSegmentationFile);
 	}
