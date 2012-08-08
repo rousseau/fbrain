@@ -34,6 +34,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 ==========================================================================*/
 
 #include "btkTopologicalKMeans.h"
+#include "btkFCMClassifier.h"
 #include "btkImageHelper.h"
 
 #include "itkBlackTopHatImageFilter.h"
@@ -77,6 +78,8 @@ typedef itk::GrayscaleMorphologicalClosingImageFilter<LabelImageType, LabelImage
 typedef btk::TopologicalKMeans <VectorGreyImageType, LabelImageType> 		GreyTopologicalKMeansType;
 typedef btk::TopologicalKMeans <VectorNormaliseImageType, LabelImageType> 	NormaliseTopologicalKMeansType;
 
+typedef btk::FCMClassifier<GreyImageType, LabelImageType, VectorNormaliseImageType> FCMClassifierType;
+
 void lcrClosing(LabelImageType::Pointer segmentation);
 
 int main(int argc, char **argv)
@@ -90,7 +93,7 @@ int main(int argc, char **argv)
 		//TCLAP Arguments
 		TCLAP::ValueArg<std::string> inputImageArg("i","image_file","input image file (short)",true,"","string");
 		cmd.add( inputImageArg );
-		TCLAP::ValueArg<std::string> initSegArg("s","init_seg","2 Class FCM classification of the intracranian volume (short)",true,"","string");
+		TCLAP::ValueArg<std::string> initSegArg("s","intra_vol","segmentation of the intracranian volume (short)",true,"","string");
 		cmd.add( initSegArg );
 		TCLAP::MultiArg<std::string> manualSegArg("l","brainstem_cerebellum","manual segmentation of brainstem and cerebellum (short)",true,"",cmd);
 		TCLAP::MultiArg<std::string> outputImageArg("o","output_files","Sets output files : one for brain segmentation, the other for cortex segmentation (short)",true,"",cmd);
@@ -128,7 +131,19 @@ int main(int argc, char **argv)
 		LabelImageType::Pointer cerebellumImage;
 		cerebellumImage = LabelHelperType::ReadImage(cerebellumFile);
 		
-		std::cout<<"Input Images Loaded"<<std::endl;
+		std::cout<<"Input Images Loaded"<<std::endl<<std::endl;
+		
+		/* ----------------------------------------------------------------------------------FCM Classification -------------------------------------------------------------------------- */
+		std::cout<<"2 class fcm classification..."<<std::endl;
+		FCMClassifierType::Pointer fcmClassifier = FCMClassifierType::New();
+		fcmClassifier->SetGreyImage(greyImage);
+		fcmClassifier->SetMaskImage(initSegmentation);
+		fcmClassifier->SetClassNumber(2);
+		fcmClassifier->Update();
+		
+		LabelImageType::Pointer fcmSegmentation = fcmClassifier->GetLabelSegmentation();
+		
+		std::cout<<"fcm classification done"<<std::endl<<std::endl;
 		
 		/* --------------------------------------------------------------------------------- Brain Segmentation ---------------------------------------------------------------------------*/
 		//Create Vector Image for Topological K-Means Input
@@ -141,25 +156,25 @@ int main(int argc, char **argv)
 		VectorGreyImageType::Pointer greyInput;
 		greyInput = greyImageToVectorImageFilter->GetOutput();
 		
-		std::cout<<"Vector Image created"<<std::endl;
+		std::cout<<"Vector Image created"<<std::endl<<std::endl;
 		
 		//Run Topological K-Means
-		std::cout<<"Segmentation a the brain..."<<std::endl;
+		std::cout<<"Segmentation of the brain..."<<std::endl;
 		
 		GreyTopologicalKMeansType::Pointer greyTopologicalKMeansFilter = GreyTopologicalKMeansType::New();
 		greyTopologicalKMeansFilter->SetInputImage(greyInput);
-		greyTopologicalKMeansFilter->SetInitialSegmentation(initSegmentation);
+		greyTopologicalKMeansFilter->SetInitialSegmentation(fcmSegmentation);
 		greyTopologicalKMeansFilter->SetLCR();
 		greyTopologicalKMeansFilter->Update();
 		
 		LabelImageType::Pointer brainSegmentation = greyTopologicalKMeansFilter->GetOutput();
 		
-		std::cout<<"Brain Segmented"<<std::endl;
+		std::cout<<"Brain Segmented"<<std::endl<<std::endl;
 		
 		//Closing of the LCR to fill the holes
 		std::cout<<"Fills holes in LCR..."<<std::endl;
 		lcrClosing(brainSegmentation);
-		std::cout<<"Holes filed"<<std::endl;
+		std::cout<<"Holes filed"<<std::endl<<std::endl;
 		
 		/* ---------------------------------------------------------------------------------- Cortex Segmentation -------------------------------------------------------------------------------*/
 		//Create Black Top Hat Image
@@ -177,7 +192,7 @@ int main(int argc, char **argv)
 		
 		GreyImageType::Pointer blackTopHatImage = topHatFilter->GetOutput();
 		
-		std::cout<<"Black top hat image created"<<std::endl;
+		std::cout<<"Black top hat image created"<<std::endl<<std::endl;
 		
 		//Mask Images by intracranian volume to get a better normalisation
 		std::cout<<"Normalisation of grey and top hat images..."<<std::endl;
@@ -202,7 +217,7 @@ int main(int argc, char **argv)
 		normaliseFilter2->SetInput(maskFilter2->GetOutput());
 		normaliseFilter2->Update();
 		
-		std::cout<<"Normalisation done"<<std::endl;
+		std::cout<<"Normalisation done"<<std::endl<<std::endl;
 		
 		//Builds Vector Image
 		std::cout<<"Creates Vector Image..."<<std::endl;
@@ -214,7 +229,7 @@ int main(int argc, char **argv)
 		
 		VectorNormaliseImageType::Pointer normaliseInput = normaliseImageToVectorImageFilter->GetOutput();
 		
-		std::cout<<"Vector Image created"<<std::endl;
+		std::cout<<"Vector Image created"<<std::endl<<std::endl;
 		
 		//Run Topological K-Means for Cortex
 		std::cout<<"Segmentation of the cortex..."<<std::endl;
@@ -228,18 +243,18 @@ int main(int argc, char **argv)
 		normaliseTopologicalKMeansFilter->Update();
 		LabelImageType::Pointer cortexSegmentation = normaliseTopologicalKMeansFilter->GetOutput();
 		
-		std::cout<<"Cortex segmented"<<std::endl;
+		std::cout<<"Cortex segmented"<<std::endl<<std::endl;
 		
 		//Closing of the LCR to fill the holes
 		std::cout<<"Fills holes in LCR..."<<std::endl;
 		lcrClosing(cortexSegmentation);
-		std::cout<<"Holes filed"<<std::endl;
+		std::cout<<"Holes filed"<<std::endl<<std::endl;
 		
 		/* ------------------------------------------------------------------------- Outputs Writing ---------------------------------------------------------------------------------------------*/
 		std::cout<<"Saves output images..."<<std::endl;
 		LabelHelperType::WriteImage(brainSegmentation, brainSegmentationFile);
 		LabelHelperType::WriteImage(cortexSegmentation, cortexSegmentationFile);
-		std::cout<<"Output images saved"<<std::endl;
+		std::cout<<"Output images saved"<<std::endl<<std::endl;
 	}
 	catch (TCLAP::ArgException &e)  // catch any exceptions
 	{
