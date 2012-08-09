@@ -180,6 +180,9 @@ ADD_EXECUTABLE(btkImageMorphologicalTopHat btkImageMorphologicalTopHat.cxx
 ${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
 TARGET_LINK_LIBRARIES(btkImageMorphologicalTopHat ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkAverage3DImages btkAverage3DImages.cxx
+${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+TARGET_LINK_LIBRARIES(btkAverage3DImages ${ITK_LIBRARIES})
 
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
@@ -216,5 +219,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkFCMClassification
                 btkImageMorphologicalClosing
                 btkImageMorphologicalTopHat
-
+                btkAverage3DImages
         DESTINATION bin)
