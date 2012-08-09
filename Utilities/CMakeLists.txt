@@ -188,6 +188,10 @@ ADD_EXECUTABLE(btkComputeOverlap btkComputeOverlap.cxx
 ${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
 TARGET_LINK_LIBRARIES(btkComputeOverlap ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkComputeChamferDistance btkComputeChamferDistance.cxx
+${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+TARGET_LINK_LIBRARIES(btkComputeChamferDistance ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -225,4 +229,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkImageMorphologicalTopHat
                 btkAverage3DImages
                 btkComputeOverlap
+                btkComputeChamferDistance
         DESTINATION bin)
