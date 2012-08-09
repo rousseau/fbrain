@@ -184,6 +184,10 @@ ADD_EXECUTABLE(btkAverage3DImages btkAverage3DImages.cxx
 ${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
 TARGET_LINK_LIBRARIES(btkAverage3DImages ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkComputeOverlap btkComputeOverlap.cxx
+${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+TARGET_LINK_LIBRARIES(btkComputeOverlap ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -220,4 +224,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkImageMorphologicalClosing
                 btkImageMorphologicalTopHat
                 btkAverage3DImages
+                btkComputeOverlap
         DESTINATION bin)
