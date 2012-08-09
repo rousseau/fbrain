@@ -78,10 +78,12 @@
       #include "btkImageHelper.h"
                  
       typedef itk::Image<short, 3> itkImage;
-      itkImage::Pointer image = itkImage::New();
-      std::string filename("MyImage.nii.gz");
-
-      btk::ImageHelper<itkImage>::WriteImage(image, filename);
+      
+      std::string inputFileName = "inputImage.nii.gz";      
+      itkImage::Pointer image = btk::ImageHelper<itkImage>::ReadImage(inputFileName);
+      
+      std::string outputFileName = "outputImage.nii.gz";
+      btk::ImageHelper<itkImage>::WriteImage(image, outputFileName);
 
       \end{verbatim}
     \end{itemize}
