@@ -33,7 +33,7 @@
   
 ==========================================================================*/
 
-#include "btkSphericalHarmonicsDiffusionDecompositionReconstructionFilter.h"
+#include "btkSphericalHarmonicsDiffusionDecompositionFilter.h"
 
 
 // Local includes
@@ -54,7 +54,7 @@ typedef itk::ImageRegionIterator< VectorImage > VectorImageIterator;
 namespace btk
 {
 
-SphericalHarmonicsDiffusionDecompositionReconstructionFilter::SphericalHarmonicsDiffusionDecompositionReconstructionFilter() : Superclass()
+SphericalHarmonicsDiffusionDecompositionFilter::SphericalHarmonicsDiffusionDecompositionFilter() : Superclass()
 {
     this->m_SphericalHarmonicsOrder = 4;
     this->m_RegularizationParameter = 0.006;
@@ -62,21 +62,21 @@ SphericalHarmonicsDiffusionDecompositionReconstructionFilter::SphericalHarmonics
 
 //----------------------------------------------------------------------------------------
 
-SphericalHarmonicsDiffusionDecompositionReconstructionFilter::~SphericalHarmonicsDiffusionDecompositionReconstructionFilter()
+SphericalHarmonicsDiffusionDecompositionFilter::~SphericalHarmonicsDiffusionDecompositionFilter()
 {
     // ----
 }
 
 //----------------------------------------------------------------------------------------
 
-void SphericalHarmonicsDiffusionDecompositionReconstructionFilter::PrintSelf(std::ostream &os, itk::Indent indent) const
+void SphericalHarmonicsDiffusionDecompositionFilter::PrintSelf(std::ostream &os, itk::Indent indent) const
 {
     Superclass::PrintSelf(os, indent);
 }
 
 //----------------------------------------------------------------------------------------
 
-void SphericalHarmonicsDiffusionDecompositionReconstructionFilter::SetInput(const DiffusionSequence::Pointer input)
+void SphericalHarmonicsDiffusionDecompositionFilter::SetInput(const DiffusionSequence::Pointer input)
 {
     // FIX : We have to do this turnover to overcome the problem of dimension 4 of diffusion sequence.
     // The solution is to go to vector image for diffusion sequence storage.
@@ -86,9 +86,9 @@ void SphericalHarmonicsDiffusionDecompositionReconstructionFilter::SetInput(cons
 
 //----------------------------------------------------------------------------------------
 
-void SphericalHarmonicsDiffusionDecompositionReconstructionFilter::ComputeSphericalHarmonicsBasisMatrix()
+void SphericalHarmonicsDiffusionDecompositionFilter::ComputeSphericalHarmonicsBasisMatrix()
 {
-    btkCoutMacro("SphericalHarmonicsDiffusionDecompositionReconstructionFilter::ComputeSphericalHarmonicsBasisMatrix()");
+    btkCoutMacro("SphericalHarmonicsDiffusionDecompositionFilter::ComputeSphericalHarmonicsBasisMatrix()");
 
     // This assume that the sequence has only one B0 image at first.
     btk::DiffusionSequence::GradientTable gradientTable = this->m_InputDiffusionSequence->GetGradientTable();
@@ -113,9 +113,9 @@ void SphericalHarmonicsDiffusionDecompositionReconstructionFilter::ComputeSpheri
 
 //----------------------------------------------------------------------------------------
 
-void SphericalHarmonicsDiffusionDecompositionReconstructionFilter::ComputeRegularizationMatrix()
+void SphericalHarmonicsDiffusionDecompositionFilter::ComputeRegularizationMatrix()
 {
-    btkCoutMacro("SphericalHarmonicsDiffusionDecompositionReconstructionFilter::ComputeRegularizationMatrix()");
+    btkCoutMacro("SphericalHarmonicsDiffusionDecompositionFilter::ComputeRegularizationMatrix()");
 
     // Resize the matrix (rows: number of SH coefficients, columns: number of SH coefficients).
     this->m_RegularizationMatrix = Matrix(this->m_NumberOfSHCoefficients, this->m_NumberOfSHCoefficients);
@@ -141,9 +141,9 @@ void SphericalHarmonicsDiffusionDecompositionReconstructionFilter::ComputeRegula
 
 //----------------------------------------------------------------------------------------
 
-void SphericalHarmonicsDiffusionDecompositionReconstructionFilter::ComputeTransitionMatrix()
+void SphericalHarmonicsDiffusionDecompositionFilter::ComputeTransitionMatrix()
 {
-    btkCoutMacro("SphericalHarmonicsDiffusionDecompositionReconstructionFilter::ComputeTransitionMatrix()");
+    btkCoutMacro("SphericalHarmonicsDiffusionDecompositionFilter::ComputeTransitionMatrix()");
 
     // This assume that the sequence has only one B0 image at first.
     btk::DiffusionSequence::GradientTable gradientTable = this->m_InputDiffusionSequence->GetGradientTable();
@@ -166,9 +166,9 @@ void SphericalHarmonicsDiffusionDecompositionReconstructionFilter::ComputeTransi
 
 //----------------------------------------------------------------------------------------
 
-void SphericalHarmonicsDiffusionDecompositionReconstructionFilter::GenerateData()
+void SphericalHarmonicsDiffusionDecompositionFilter::GenerateData()
 {
-    btkCoutMacro("SphericalHarmonicsDiffusionDecompositionReconstructionFilter::GenerateData()"); // DEBUG
+    btkCoutMacro("SphericalHarmonicsDiffusionDecompositionFilter::GenerateData()"); // DEBUG
 
     // Compute the number of coefficients
     this->m_NumberOfSHCoefficients = 0.5 * (this->m_SphericalHarmonicsOrder+1) * (this->m_SphericalHarmonicsOrder+2);
@@ -199,6 +199,7 @@ void SphericalHarmonicsDiffusionDecompositionReconstructionFilter::GenerateData(
     output->SetSpacing(outputSpacing);
     output->SetOrigin(outputOrigin);
     output->SetDirection(outputDirection);
+    output->SetVectorLength(this->m_NumberOfSHCoefficients);
     output->Allocate();
     btkCoutVariable(output); // DEBUG
 
@@ -225,7 +226,6 @@ void SphericalHarmonicsDiffusionDecompositionReconstructionFilter::GenerateData(
 
     // Build a vector image from the diffusion sequence
     // TODO : store diffusion sequence as vector image
-    // But test first if linear interpolation is ok
     VectorImage::Pointer vectorImage = VectorImage::New();
     vectorImage->SetRegions(extract->GetOutput()->GetLargestPossibleRegion());
     vectorImage->SetSpacing(extract->GetOutput()->GetSpacing());
@@ -261,7 +261,7 @@ void SphericalHarmonicsDiffusionDecompositionReconstructionFilter::GenerateData(
 
     for(it.GoToBegin(), outIt.GoToBegin(); !it.IsAtEnd() && !outIt.IsAtEnd(); ++it, ++outIt)
     {
-        VectorImage::PixelType                              signal = it.Get();
+        VectorImage::PixelType signal = it.Get();
 
         // Get signal matrix
         Self::Matrix signalMatrix(gradientTable.size()-1, 1);
@@ -276,7 +276,7 @@ void SphericalHarmonicsDiffusionDecompositionReconstructionFilter::GenerateData(
         coefficientsMatrix = this->m_TransitionMatrix * signalMatrix;
 
         // Set coefficients in pixel
-        btk::SphericalHarmonicsDiffusionDecomposition coefficients(this->m_NumberOfSHCoefficients);
+        Self::OutputImagePixelType coefficients(this->m_NumberOfSHCoefficients);
 
         for(unsigned int i = 0; i < coefficientsMatrix.Rows(); i++)
         {

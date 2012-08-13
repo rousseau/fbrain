@@ -33,16 +33,16 @@
   
 ==========================================================================*/
 
-#ifndef BTK_SPHERICAL_HARMONICS_DIFFUSION_DECOMPOSITION_RECONSTRUCTION_FILTER_H
-#define BTK_SPHERICAL_HARMONICS_DIFFUSION_DECOMPOSITION_RECONSTRUCTION_FILTER_H
+#ifndef BTK_SPHERICAL_HARMONICS_DIFFUSION_DECOMPOSITION_FILTER_H
+#define BTK_SPHERICAL_HARMONICS_DIFFUSION_DECOMPOSITION_FILTER_H
 
 // ITK includes
 #include "itkImageToImageFilter.h"
 #include "itkVariableSizeMatrix.h"
+#include "itkVectorImage.h"
 
 // Local includes
 #include "btkMacro.h"
-#include "btkSphericalHarmonicsDiffusionDecomposition.h"
 #include "btkDiffusionSequence.h"
 
 namespace btk
@@ -53,19 +53,19 @@ namespace btk
  * @author Julien Pontabry
  * @ingroup Diffusion
  */
-class SphericalHarmonicsDiffusionDecompositionReconstructionFilter : public itk::ImageToImageFilter< btk::DiffusionSequence,itk::Image< btk::SphericalHarmonicsDiffusionDecomposition,3 > >
+class SphericalHarmonicsDiffusionDecompositionFilter : public itk::ImageToImageFilter< btk::DiffusionSequence,itk::VectorImage< float,3 > >
 {
     public:
-        typedef SphericalHarmonicsDiffusionDecompositionReconstructionFilter                                                    Self;
-        typedef itk::ImageToImageFilter< btk::DiffusionSequence,itk::Image< btk::SphericalHarmonicsDiffusionDecomposition,3 > > Superclass;
-        typedef itk::SmartPointer< Self >                                                                                       Pointer;
-        typedef itk::SmartPointer< const Self >                                                                                 ConstPointer;
+        typedef SphericalHarmonicsDiffusionDecompositionFilter                                Self;
+        typedef itk::ImageToImageFilter< btk::DiffusionSequence,itk::VectorImage< float,3 > > Superclass;
+        typedef itk::SmartPointer< Self >                                                     Pointer;
+        typedef itk::SmartPointer< const Self >                                               ConstPointer;
 
         typedef itk::VariableSizeMatrix< float > Matrix;
 
         itkNewMacro(Self);
 
-        itkTypeMacro(SphericalHarmonicsDiffusionDecompositionReconstructionFilter,itk::ImageToImageFilter);
+        itkTypeMacro(SphericalHarmonicsDiffusionDecompositionFilter,itk::ImageToImageFilter);
 
         /**
          * @brief Set input diffusion sequence.
@@ -83,12 +83,12 @@ class SphericalHarmonicsDiffusionDecompositionReconstructionFilter : public itk:
         /**
          * @brief Constructor.
          */
-        SphericalHarmonicsDiffusionDecompositionReconstructionFilter();
+        SphericalHarmonicsDiffusionDecompositionFilter();
 
         /**
          * @brief Destructor.
          */
-        virtual ~SphericalHarmonicsDiffusionDecompositionReconstructionFilter();
+        virtual ~SphericalHarmonicsDiffusionDecompositionFilter();
 
         /**
          * @brief Run the filter and generate output data.
@@ -143,4 +143,4 @@ class SphericalHarmonicsDiffusionDecompositionReconstructionFilter : public itk:
 
 } // namespace btk
 
-#endif // BTK_SPHERICAL_HARMONICS_DIFFUSION_DECOMPOSITION_RECONSTRUCTION_FILTER_H
+#endif // BTK_SPHERICAL_HARMONICS_DIFFUSION_DECOMPOSITION_FILTER_H
