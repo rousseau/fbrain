@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 12/07/2012
+  Date: 13/08/2012
   Author(s): Julien Pontabry (pontabry@unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -33,11 +33,8 @@
   
 ==========================================================================*/
 
-#ifndef BTK_DIFFUSION_TENSOR_H
-#define BTK_DIFFUSION_TENSOR_H
-
-// ITK includes
-#include "itkDiffusionTensor3D.h"
+#ifndef BTK_TENSOR_MODEL_H
+#define BTK_TENSOR_MODEL_H
 
 // Local includes
 #include "btkDiffusionModel.h"
@@ -45,16 +42,12 @@
 namespace btk
 {
 
-/**
- * @brief Diffusion tensor modelization of MRI diffusion.
- * @author Julien Pontabry
- * @ingroup Diffusion
- */
-class DiffusionTensor : public itk::DiffusionTensor3D< float >, public btk::DiffusionModel
+class TensorModel : public btk::DiffusionModel
 {
-    // ----
+    public:
+        // ----
 };
 
 } // namespace btk
 
-#endif // BTK_DIFFUSION_TENSOR_H
+#endif // BTK_TENSOR_MODEL_H
