@@ -38,6 +38,101 @@
 namespace btk
 {
 
-// ----
+TensorModel::TensorModel() : m_BValue(1500)
+{
+    // ----
+}
+
+//----------------------------------------------------------------------------------------
+
+TensorModel::~TensorModel()
+{
+    // ----
+}
+
+//----------------------------------------------------------------------------------------
+
+void TensorModel::Update()
+{
+    // Create interpolate function on model image
+    m_ModelImageFunction = InterpolateModelFunction::New();
+    m_ModelImageFunction->SetInputImage(m_InputModelImage);
+}
+
+//----------------------------------------------------------------------------------------
+
+float TensorModel::ModelAt(ContinuousIndex cindex, GradientDirection direction)
+{
+    ModelImage::PixelType tensor = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
+
+    ModelImage::PixelType::EigenValuesArrayType   eigenValues;
+    ModelImage::PixelType::EigenVectorsMatrixType eigenVectors;
+    tensor.ComputeEigenAnalysis(eigenValues, eigenVectors);
+
+    // TO TEST
+    float coeffx = std::sqrt( 2.0 * eigenValues[2] );
+    float coeffy = std::sqrt( 2.0 * eigenValues[1] );
+    float coeffz = std::sqrt( 2.0 * eigenValues[0] );
+
+    btkCoutVariable(eigenValues);
+    btkCoutVariable(eigenVectors);
+    btkCoutVariable(coeffx);
+    btkCoutVariable(coeffy);
+    btkCoutVariable(coeffz);
+    btkCoutVariable(coeffx*direction[0]*eigenVectors(2,0) + coeffy*direction[1]*eigenVectors(1,0) + coeffz*direction[2]*eigenVectors(0,0));
+    btkCoutVariable(coeffx*direction[0]*eigenVectors(2,1) + coeffy*direction[1]*eigenVectors(1,1) + coeffz*direction[2]*eigenVectors(0,1));
+    btkCoutVariable(coeffx*direction[0]*eigenVectors(2,2) + coeffy*direction[1]*eigenVectors(1,2) + coeffz*direction[2]*eigenVectors(0,2));
+
+    // tmp = uTEe
+    btk::GradientDirection tmp(
+                    coeffx*direction[0]*eigenVectors(2,0) + coeffy*direction[1]*eigenVectors(1,0) + coeffz*direction[2]*eigenVectors(0,0),
+                    coeffx*direction[0]*eigenVectors(2,1) + coeffy*direction[1]*eigenVectors(1,1) + coeffz*direction[2]*eigenVectors(0,1),
+                    coeffx*direction[0]*eigenVectors(2,2) + coeffy*direction[1]*eigenVectors(1,2) + coeffz*direction[2]*eigenVectors(0,2)
+                );
+
+    // Return the rau parameter of corresponding spherical harmonics direction
+    return tmp.GetSphericalDirection()[2];
+}
+
+//----------------------------------------------------------------------------------------
+
+float TensorModel::ModelAt(PhysicalPoint point, GradientDirection direction)
+{
+    ContinuousIndex cindex;
+    m_InputModelImage->TransformPhysicalPointToContinuousIndex(point, cindex);
+
+    return ModelAt(cindex, direction);
+}
+
+//----------------------------------------------------------------------------------------
+
+float TensorModel::SignalAt(ContinuousIndex cindex, GradientDirection direction)
+{
+    ModelImage::PixelType tensor = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
+
+    // s = exp[ -b uTDu ]
+    return std::exp( -static_cast< float >(m_BValue) * (
+                         (direction[0]*tensor(0,0) + direction[1]*tensor(1,0) + direction[2]*tensor(2,0))*direction[0] +
+                         (direction[0]*tensor(0,1) + direction[1]*tensor(1,1) + direction[2]*tensor(2,1))*direction[1] +
+                         (direction[0]*tensor(0,2) + direction[1]*tensor(1,2) + direction[2]*tensor(2,2))*direction[2]
+                         ) );
+}
+
+//----------------------------------------------------------------------------------------
+
+float TensorModel::SignalAt(PhysicalPoint point, GradientDirection direction)
+{
+    ContinuousIndex cindex;
+    m_InputModelImage->TransformPhysicalPointToContinuousIndex(point, cindex);
+
+    return SignalAt(cindex, direction);
+}
+
+//----------------------------------------------------------------------------------------
+
+void TensorModel::PrintSelf(std::ostream &os, itk::Indent indent) const
+{
+    Superclass::PrintSelf(os, indent);
+}
 
 } // namespace btk

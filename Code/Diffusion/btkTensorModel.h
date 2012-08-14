@@ -36,16 +36,86 @@
 #ifndef BTK_TENSOR_MODEL_H
 #define BTK_TENSOR_MODEL_H
 
+// ITK includes
+#include "itkSmartPointer.h"
+#include "itkMacro.h"
+#include "itkLinearInterpolateImageFunction.h"
+
 // Local includes
 #include "btkDiffusionModel.h"
+#include "btkDiffusionTensorReconstructionFilter.h"
 
 namespace btk
 {
 
+/**
+ * @brief Tensor diffusion model computed by least square fitting.
+ * @author Julien Pontabry
+ * @ingroup Diffusion
+ */
 class TensorModel : public btk::DiffusionModel
 {
     public:
-        // ----
+        typedef TensorModel                     Self;
+        typedef btk::DiffusionModel             Superclass;
+        typedef itk::SmartPointer< Self >       Pointer;
+        typedef itk::SmartPointer< const Self > ConstPointer;
+
+        typedef btk::DiffusionTensorReconstructionFilter::OutputImageType ModelImage;
+        typedef itk::LinearInterpolateImageFunction< ModelImage,float >   InterpolateModelFunction;
+        typedef Superclass::PhysicalPoint                                 PhysicalPoint;
+        typedef Superclass::ContinuousIndex                               ContinuousIndex;
+
+        itkNewMacro(Self);
+
+        itkTypeMacro(TensorModel,btk::DiffusionModel);
+
+        btkSetMacro(BValue, unsigned int);
+        btkGetMacro(BValue, unsigned int);
+
+        btkSetMacro(InputModelImage, ModelImage::Pointer);
+        btkGetMacro(InputModelImage, ModelImage::Pointer);
+
+        virtual void Update();
+
+        virtual float ModelAt(ContinuousIndex cindex, btk::GradientDirection direction);
+        virtual float ModelAt(PhysicalPoint point, btk::GradientDirection direction);
+        virtual float SignalAt(ContinuousIndex cindex, btk::GradientDirection direction);
+        virtual float SignalAt(PhysicalPoint point, btk::GradientDirection direction);
+
+    protected:
+        /**
+         * @brief Constructor.
+         */
+        TensorModel();
+
+        /**
+         * @brief Destructor.
+         */
+        virtual ~TensorModel();
+
+        /**
+         * @brief Print a message on output stream.
+         * @param os Output stream where the message is printed.
+         * @param indent Indentation.
+         */
+        virtual void PrintSelf(std::ostream &os, itk::Indent indent) const;
+
+    private:
+        /**
+         * @brief B-value used during the data acquisition.
+         */
+        unsigned int m_BValue;
+
+        /**
+         * @brief Tensor image estimated by reconstruction filter.
+         */
+        ModelImage::Pointer m_InputModelImage;
+
+        /**
+         * @brief Interpolation function (linear).
+         */
+        InterpolateModelFunction::Pointer m_ModelImageFunction;
 };
 
 } // namespace btk
