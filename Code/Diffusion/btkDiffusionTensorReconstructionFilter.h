@@ -43,7 +43,6 @@
 
 // Local includes
 #include "btkDiffusionSequence.h"
-#include "btkDiffusionTensor.h"
 
 namespace btk
 {
@@ -60,8 +59,6 @@ class DiffusionTensorReconstructionFilter : public itk::DiffusionTensor3DReconst
         typedef itk::DiffusionTensor3DReconstructionImageFilter< short,short,float > Superclass;
         typedef itk::SmartPointer< Self >                                            Pointer;
         typedef itk::SmartPointer< const Self >                                      ConstPointer;
-
-        typedef itk::Image< btk::DiffusionTensor,3 > DiffusionTensorImage;
 
         itkNewMacro(Self);
 
