@@ -8,6 +8,7 @@ INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/InputOutput)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Tools)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Transformations)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Segmentation)
+INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Maths)
 
 ADD_EXECUTABLE(btkModifyImageUsingLookUpTable btkModifyImageUsingLookUpTable.cxx )
 TARGET_LINK_LIBRARIES(btkModifyImageUsingLookUpTable ${ITK_LIBRARIES} )
@@ -192,6 +193,10 @@ ADD_EXECUTABLE(btkComputeChamferDistance btkComputeChamferDistance.cxx
 ${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
 TARGET_LINK_LIBRARIES(btkComputeChamferDistance ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkMidwayHistogramEqualization btkMidwayHistogramEqualization.cxx
+${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+TARGET_LINK_LIBRARIES(btkMidwayHistogramEqualization ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -230,4 +235,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkAverage3DImages
                 btkComputeOverlap
                 btkComputeChamferDistance
+                btkMidwayHistogramEqualization
         DESTINATION bin)
