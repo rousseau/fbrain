@@ -36,16 +36,64 @@
 #ifndef BTK_ORIENTATION_DIFFUSION_FUNCTION_MODEL_H
 #define BTK_ORIENTATION_DIFFUSION_FUNCTION_MODEL_H
 
+// ITK includes
+#include "itkSmartPointer.h"
+#include "itkMacro.h"
+#include "itkLinearInterpolateImageFunction.h"
+
 // Local includes
 #include "btkDiffusionModel.h"
+#include "btkSphericalHarmonicsDiffusionDecompositionFilter.h"
 
 namespace btk
 {
 
+/**
+ * @brief Orientation diffusion function computed by using spherical harmonics coefficients.
+ * @author Julien Pontabry
+ * @ingroup Diffusion
+ */
 class OrientationDiffusionFunctionModel : public btk::DiffusionModel
 {
     public:
-        // ----
+        typedef OrientationDiffusionFunctionModel Self;
+        typedef btk::DiffusionModel               Superclass;
+        typedef itk::SmartPointer< Self >         Pointer;
+        typedef itk::SmartPointer< const Self >   ConstPointer;
+
+        typedef btk::SphericalHarmonicsDiffusionDecompositionFilter::OutputImageType ModelImage;
+        typedef itk::LinearInterpolateImageFunction< ModelImage,float >              InterpolateModelFunction;
+        typedef Superclass::PhysicalPoint                                            PhysicalPoint;
+        typedef Superclass::ContinuousIndex                                          ContinuousIndex;
+
+        itkNewMacro(Self);
+
+        itkTypeMacro(OrientationDiffusionFunctionModel,btk::DiffusionModel);
+
+        virtual void Update();
+
+        virtual float ModelAt(ContinuousIndex cindex, btk::GradientDirection direction) { }
+        virtual float ModelAt(PhysicalPoint point, btk::GradientDirection direction) { }
+        virtual float SignalAt(ContinuousIndex cindex, btk::GradientDirection direction) { }
+        virtual float SignalAt(PhysicalPoint point, btk::GradientDirection direction) { }
+
+    protected:
+        /**
+         * @brief Constructor.
+         */
+        OrientationDiffusionFunctionModel();
+
+        /**
+         * @brief Destructor.
+         */
+        virtual ~OrientationDiffusionFunctionModel();
+
+        /**
+         * @brief Print a message on output stream.
+         * @param os Output stream where the message is printed.
+         * @param indent Indentation.
+         */
+        virtual void PrintSelf(std::ostream &os, itk::Indent indent) const;
 };
 
 } // namespace btk

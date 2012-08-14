@@ -38,6 +38,30 @@
 namespace btk
 {
 
-// ----
+OrientationDiffusionFunctionModel::OrientationDiffusionFunctionModel()
+{
+    // ----
+}
+
+//----------------------------------------------------------------------------------------
+
+OrientationDiffusionFunctionModel::~OrientationDiffusionFunctionModel()
+{
+    // ----
+}
+
+//----------------------------------------------------------------------------------------
+
+void OrientationDiffusionFunctionModel::Update()
+{
+
+}
+
+//----------------------------------------------------------------------------------------
+
+void OrientationDiffusionFunctionModel::PrintSelf(std::ostream &os, itk::Indent indent) const
+{
+    Superclass::PrintSelf(os, indent);
+}
 
 } // namespace btk
