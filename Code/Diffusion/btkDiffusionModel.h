@@ -36,8 +36,15 @@
 #ifndef BTK_DIFFUSION_MODEL_H
 #define BTK_DIFFUSION_MODEL_H
 
+// ITK includes
+#include "itkSmartPointer.h"
+#include "itkMacro.h"
+#include "itkProcessObject.h"
+#include "itkContinuousIndex.h"
+#include "itkPoint.h"
+
 // Local includes
-//#include "btkPoint.h"
+#include "btkGradientDirection.h"
 
 namespace btk
 {
@@ -47,15 +54,60 @@ namespace btk
  * @author Julien Pontabry
  * @ingroup Diffusion
  */
-class DiffusionModel
+class DiffusionModel : public itk::ProcessObject
 {
     public:
+        typedef DiffusionModel                  Self;
+        typedef itk::ProcessObject              Superclass;
+        typedef itk::SmartPointer< Self >       Pointer;
+        typedef itk::SmartPointer< const Self > ConstPointer;
 
-//        virtual void SignalAt(Point &p) = 0;
-//        virtual void ModelAt(Point &p) = 0;
-//        virtual void MainDirectionsAt(Point &p) = 0;
+        typedef itk::ContinuousIndex< float,3 > ContinuousIndex;
+        typedef itk::Point< float,3 >           PhysicalPoint;
 
-//        unsigned short GetSphericalResolution() const;
+        itkTypeMacro(DiffusionModel,itk::ProcessObject);
+
+        //        virtual void MainDirectionsAt(Point &p) = 0;
+
+        /**
+         * @brief Get modeling at continuous index and gradient direction.
+         * @param cindex Location in the image space.
+         * @param direction Gradient direction were the model response is wanted.
+         * @return Model response in direction direction at cindex in image space.
+         */
+        virtual float ModelAt(ContinuousIndex cindex, btk::GradientDirection direction) = 0;
+
+        /**
+         * @brief Get modeling at physical point and gradient direction.
+         * @param point Point in the physical space.
+         * @param direction Gradient direction were the model response is wanted.
+         * @return Model response in direction direction at point in physical space.
+         */
+        virtual float ModelAt(PhysicalPoint point, btk::GradientDirection direction) = 0;
+
+        /**
+         * @brief Get signal at continuous index and gradient direction.
+         * @param cindex Location in the image space.
+         * @param direction Gradient direction were the model response is wanted.
+         * @return Signal response in direction direction at cindex in image space.
+         */
+        virtual float SignalAt(ContinuousIndex cindex, btk::GradientDirection direction) = 0;
+
+        /**
+         * @brief Get signal at physical point and gradient direction.
+         * @param point Point in the physical space.
+         * @param direction Gradient direction were the model response is wanted.
+         * @return Signal response in direction direction at point in physical space.
+         */
+        virtual float SignalAt(PhysicalPoint point, btk::GradientDirection direction) = 0;
+
+    protected:
+        /**
+         * @brief Print a message on output stream.
+         * @param os Output stream where the message is printed.
+         * @param indent Indentation.
+         */
+        virtual void PrintSelf(std::ostream &os, itk::Indent indent) const;
 };
 
 } // namespace btk
