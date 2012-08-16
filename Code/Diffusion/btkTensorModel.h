@@ -79,9 +79,13 @@ class TensorModel : public btk::DiffusionModel
         virtual void Update();
 
         virtual float ModelAt(ContinuousIndex cindex, btk::GradientDirection direction);
+        virtual std::vector< float > ModelAt(ContinuousIndex cindex);
         virtual float ModelAt(PhysicalPoint point, btk::GradientDirection direction);
+        virtual std::vector< float > ModelAt(PhysicalPoint point);
         virtual float SignalAt(ContinuousIndex cindex, btk::GradientDirection direction);
+        virtual std::vector< float > SignalAt(ContinuousIndex cindex);
         virtual float SignalAt(PhysicalPoint point, btk::GradientDirection direction);
+        virtual std::vector< float > SignalAt(PhysicalPoint point);
         virtual std::vector< btk::GradientDirection > MeanDirectionsAt(ContinuousIndex cindex);
         virtual std::vector< btk::GradientDirection > MeanDirectionsAt(PhysicalPoint point);
 
@@ -102,6 +106,12 @@ class TensorModel : public btk::DiffusionModel
          * @param indent Indentation.
          */
         virtual void PrintSelf(std::ostream &os, itk::Indent indent) const;
+
+        virtual float ModelAt(ModelImage::PixelType tensor, btk::GradientDirection direction);
+
+        virtual float SignalAt(ModelImage::PixelType tensor, btk::GradientDirection direction);
+
+        virtual ContinuousIndex TransformPhysicalPointToContinuousIndex(PhysicalPoint point);
 
     private:
         /**

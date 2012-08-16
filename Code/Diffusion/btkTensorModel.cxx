@@ -38,7 +38,7 @@
 namespace btk
 {
 
-TensorModel::TensorModel() : m_BValue(1500)
+TensorModel::TensorModel() : m_BValue(1500), Self::Superclass()
 {
     // ----
 }
@@ -54,6 +54,8 @@ TensorModel::~TensorModel()
 
 void TensorModel::Update()
 {
+    Self::Superclass::Update();
+
     // Create interpolate function on model image
     m_ModelImageFunction = InterpolateModelFunction::New();
     m_ModelImageFunction->SetInputImage(m_InputModelImage);
@@ -61,10 +63,18 @@ void TensorModel::Update()
 
 //----------------------------------------------------------------------------------------
 
-float TensorModel::ModelAt(ContinuousIndex cindex, GradientDirection direction)
+inline TensorModel::ContinuousIndex TensorModel::TransformPhysicalPointToContinuousIndex(PhysicalPoint point)
 {
-    ModelImage::PixelType tensor = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
+    ContinuousIndex cindex;
+    m_InputModelImage->TransformPhysicalPointToContinuousIndex(point, cindex);
 
+    return cindex;
+}
+
+//----------------------------------------------------------------------------------------
+
+float TensorModel::ModelAt(ModelImage::PixelType tensor, btk::GradientDirection direction)
+{
     ModelImage::PixelType::EigenValuesArrayType   eigenValues;
     ModelImage::PixelType::EigenVectorsMatrixType eigenVectors;
     tensor.ComputeEigenAnalysis(eigenValues, eigenVectors);
@@ -89,20 +99,47 @@ float TensorModel::ModelAt(ContinuousIndex cindex, GradientDirection direction)
 
 //----------------------------------------------------------------------------------------
 
-float TensorModel::ModelAt(PhysicalPoint point, GradientDirection direction)
+float TensorModel::ModelAt(ContinuousIndex cindex, GradientDirection direction)
 {
-    ContinuousIndex cindex;
-    m_InputModelImage->TransformPhysicalPointToContinuousIndex(point, cindex);
+    ModelImage::PixelType tensor = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
 
-    return ModelAt(cindex, direction);
+    return Self::ModelAt(tensor, direction);
 }
 
 //----------------------------------------------------------------------------------------
 
-float TensorModel::SignalAt(ContinuousIndex cindex, GradientDirection direction)
+float TensorModel::ModelAt(PhysicalPoint point, GradientDirection direction)
+{
+    return Self::ModelAt(Self::TransformPhysicalPointToContinuousIndex(point), direction);
+}
+
+//----------------------------------------------------------------------------------------
+
+std::vector< float > TensorModel::ModelAt(ContinuousIndex cindex)
 {
     ModelImage::PixelType tensor = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
 
+    std::vector< float > response;
+
+    for(unsigned int i = 0; i < m_Directions.size(); i++)
+    {
+        response.push_back(Self::ModelAt(tensor,m_Directions[i]));
+    }
+
+    return response;
+}
+
+//----------------------------------------------------------------------------------------
+
+std::vector< float > TensorModel::ModelAt(PhysicalPoint point)
+{
+    return Self::ModelAt(Self::TransformPhysicalPointToContinuousIndex(point));
+}
+
+//----------------------------------------------------------------------------------------
+
+inline float TensorModel::SignalAt(ModelImage::PixelType tensor, btk::GradientDirection direction)
+{
     // s = exp[ -b uTDu ]
     return std::exp( -static_cast< float >(m_BValue) * (
                             (direction[0]*tensor(0,0) + direction[1]*tensor(1,0) + direction[2]*tensor(2,0))*direction[0] +
@@ -113,12 +150,41 @@ float TensorModel::SignalAt(ContinuousIndex cindex, GradientDirection direction)
 
 //----------------------------------------------------------------------------------------
 
+float TensorModel::SignalAt(ContinuousIndex cindex, GradientDirection direction)
+{
+    ModelImage::PixelType tensor = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
+
+    return Self::SignalAt(tensor, direction);
+}
+
+//----------------------------------------------------------------------------------------
+
 float TensorModel::SignalAt(PhysicalPoint point, GradientDirection direction)
 {
-    ContinuousIndex cindex;
-    m_InputModelImage->TransformPhysicalPointToContinuousIndex(point, cindex);
+    return Self::SignalAt(Self::TransformPhysicalPointToContinuousIndex(point), direction);
+}
 
-    return SignalAt(cindex, direction);
+//----------------------------------------------------------------------------------------
+
+std::vector< float > TensorModel::SignalAt(ContinuousIndex cindex)
+{
+    ModelImage::PixelType tensor = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
+
+    std::vector< float > response;
+
+    for(unsigned int i = 0; i < m_Directions.size(); i++)
+    {
+        response.push_back(Self::SignalAt(tensor,m_Directions[i]));
+    }
+
+    return response;
+}
+
+//----------------------------------------------------------------------------------------
+
+std::vector< float > TensorModel::SignalAt(PhysicalPoint point)
+{
+    return Self::SignalAt(Self::TransformPhysicalPointToContinuousIndex(point));
 }
 
 //----------------------------------------------------------------------------------------
@@ -141,10 +207,7 @@ std::vector< btk::GradientDirection > TensorModel::MeanDirectionsAt(ContinuousIn
 
 std::vector< btk::GradientDirection > TensorModel::MeanDirectionsAt(PhysicalPoint point)
 {
-    ContinuousIndex cindex;
-    m_InputModelImage->TransformPhysicalPointToContinuousIndex(point, cindex);
-
-    return MeanDirectionsAt(cindex);
+    return MeanDirectionsAt(Self::TransformPhysicalPointToContinuousIndex(point));
 }
 
 //----------------------------------------------------------------------------------------

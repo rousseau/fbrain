@@ -38,7 +38,7 @@
 namespace btk
 {
 
-DiffusionModel::DiffusionModel() : m_SphericalResolution(1000)
+DiffusionModel::DiffusionModel() : m_SphericalResolution(100)
 {
     // ----
 }
