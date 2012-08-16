@@ -54,7 +54,169 @@ OrientationDiffusionFunctionModel::~OrientationDiffusionFunctionModel()
 
 void OrientationDiffusionFunctionModel::Update()
 {
+    Self::Superclass::Update();
 
+    // Create interpolate function on model image
+    m_ModelImageFunction = InterpolateModelFunction::New();
+    m_ModelImageFunction->SetInputImage(m_InputModelImage);
+}
+
+//----------------------------------------------------------------------------------------
+
+inline OrientationDiffusionFunctionModel::ContinuousIndex OrientationDiffusionFunctionModel::TransformPhysicalPointToContinuousIndex(PhysicalPoint point)
+{
+    ContinuousIndex cindex;
+    m_InputModelImage->TransformPhysicalPointToContinuousIndex(point, cindex);
+
+    return cindex;
+}
+
+//----------------------------------------------------------------------------------------
+
+float OrientationDiffusionFunctionModel::ModelAt(ModelImage::PixelType shCoefficients, btk::GradientDirection direction)
+{
+    // TODO
+    /*
+    ModelImage::PixelType::EigenValuesArrayType   eigenValues;
+    ModelImage::PixelType::EigenVectorsMatrixType eigenVectors;
+    tensor.ComputeEigenAnalysis(eigenValues, eigenVectors);
+
+    float coeffx = (eigenValues[2] > 0.f) ? std::sqrt( 2.0 * eigenValues[2] ) : 0.f; // FIXME ?
+    float coeffy = (eigenValues[1] > 0.f) ? std::sqrt( 2.0 * eigenValues[1] ) : 0.f; // FIXME ?
+    float coeffz = (eigenValues[0] > 0.f) ? std::sqrt( 2.0 * eigenValues[0] ) : 0.f; // FIXME ?
+
+    // tmp = uTEe
+    float x = coeffx * direction[0];
+    float y = coeffy * direction[1];
+    float z = coeffz * direction[2];
+    btk::GradientDirection tmp(
+                    x*eigenVectors(2,0) + y*eigenVectors(1,0) + z*eigenVectors(0,0),
+                    x*eigenVectors(2,1) + y*eigenVectors(1,1) + z*eigenVectors(0,1),
+                    x*eigenVectors(2,2) + y*eigenVectors(1,2) + z*eigenVectors(0,2)
+                );
+
+    // Return the rau parameter of corresponding spherical harmonics direction
+    return std::sqrt(tmp[0]*tmp[0] + tmp[1]*tmp[1] + tmp[2]*tmp[2]);
+    */
+    return 0.f;
+}
+
+//----------------------------------------------------------------------------------------
+
+float OrientationDiffusionFunctionModel::ModelAt(ContinuousIndex cindex, GradientDirection direction)
+{
+    ModelImage::PixelType shCoefficients = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
+
+    return Self::ModelAt(shCoefficients, direction);
+}
+
+//----------------------------------------------------------------------------------------
+
+float OrientationDiffusionFunctionModel::ModelAt(PhysicalPoint point, GradientDirection direction)
+{
+    return Self::ModelAt(Self::TransformPhysicalPointToContinuousIndex(point), direction);
+}
+
+//----------------------------------------------------------------------------------------
+
+std::vector< float > OrientationDiffusionFunctionModel::ModelAt(ContinuousIndex cindex)
+{
+    ModelImage::PixelType shCoefficients = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
+
+    std::vector< float > response;
+
+    for(unsigned int i = 0; i < m_Directions.size(); i++)
+    {
+        response.push_back(Self::ModelAt(shCoefficients,m_Directions[i]));
+    }
+
+    return response;
+}
+
+//----------------------------------------------------------------------------------------
+
+std::vector< float > OrientationDiffusionFunctionModel::ModelAt(PhysicalPoint point)
+{
+    return Self::ModelAt(Self::TransformPhysicalPointToContinuousIndex(point));
+}
+
+//----------------------------------------------------------------------------------------
+
+inline float OrientationDiffusionFunctionModel::SignalAt(ModelImage::PixelType shCoefficients, btk::GradientDirection direction)
+{
+    // TODO
+    /*
+    // s = exp[ -b uTDu ]
+    return std::exp( -static_cast< float >(m_BValue) * (
+                            (direction[0]*tensor(0,0) + direction[1]*tensor(1,0) + direction[2]*tensor(2,0))*direction[0] +
+                            (direction[0]*tensor(0,1) + direction[1]*tensor(1,1) + direction[2]*tensor(2,1))*direction[1] +
+                            (direction[0]*tensor(0,2) + direction[1]*tensor(1,2) + direction[2]*tensor(2,2))*direction[2]
+                         ) );
+    */
+
+    return 0.f;
+}
+
+//----------------------------------------------------------------------------------------
+
+float OrientationDiffusionFunctionModel::SignalAt(ContinuousIndex cindex, GradientDirection direction)
+{
+    ModelImage::PixelType shCoefficients = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
+
+    return Self::SignalAt(shCoefficients, direction);
+}
+
+//----------------------------------------------------------------------------------------
+
+float OrientationDiffusionFunctionModel::SignalAt(PhysicalPoint point, GradientDirection direction)
+{
+    return Self::SignalAt(Self::TransformPhysicalPointToContinuousIndex(point), direction);
+}
+
+//----------------------------------------------------------------------------------------
+
+std::vector< float > OrientationDiffusionFunctionModel::SignalAt(ContinuousIndex cindex)
+{
+    ModelImage::PixelType shCoefficients = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
+
+    std::vector< float > response;
+
+    for(unsigned int i = 0; i < m_Directions.size(); i++)
+    {
+        response.push_back(Self::SignalAt(shCoefficients,m_Directions[i]));
+    }
+
+    return response;
+}
+
+//----------------------------------------------------------------------------------------
+
+std::vector< float > OrientationDiffusionFunctionModel::SignalAt(PhysicalPoint point)
+{
+    return Self::SignalAt(Self::TransformPhysicalPointToContinuousIndex(point));
+}
+
+//----------------------------------------------------------------------------------------
+
+std::vector< btk::GradientDirection > OrientationDiffusionFunctionModel::MeanDirectionsAt(ContinuousIndex cindex)
+{
+    ModelImage::PixelType shCoefficients = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
+/*
+    ModelImage::PixelType::EigenValuesArrayType   eigenValues;
+    ModelImage::PixelType::EigenVectorsMatrixType eigenVectors;
+    tensor.ComputeEigenAnalysis(eigenValues, eigenVectors);
+*/
+    std::vector< btk::GradientDirection > meanDirections;
+/*    meanDirections.push_back(btk::GradientDirection(eigenVectors(2,0), eigenVectors(2,1), eigenVectors(2,2)));
+*/
+    return meanDirections;
+}
+
+//----------------------------------------------------------------------------------------
+
+std::vector< btk::GradientDirection > OrientationDiffusionFunctionModel::MeanDirectionsAt(PhysicalPoint point)
+{
+    return Self::MeanDirectionsAt(Self::TransformPhysicalPointToContinuousIndex(point));
 }
 
 //----------------------------------------------------------------------------------------
