@@ -38,9 +38,40 @@
 namespace btk
 {
 
+DiffusionModel::DiffusionModel() : m_SphericalResolution(1000)
+{
+    // ----
+}
+
+//----------------------------------------------------------------------------------------
+
 void DiffusionModel::PrintSelf(std::ostream &os, itk::Indent indent) const
 {
     Superclass::PrintSelf(os, indent);
+}
+
+//----------------------------------------------------------------------------------------
+
+void DiffusionModel::Update()
+{
+    // Compute the regular step on the unit sphere
+    unsigned int elevationResolution = static_cast< unsigned int >(std::ceil( std::sqrt(static_cast< float >(m_SphericalResolution)/2.f) ));
+    float                       step = M_PI / static_cast< float >(elevationResolution);
+
+    const float M_2MPI = 2.0f * M_PI;
+
+    // Sample the unit sphere with the given spherical resolution.
+    m_Directions.push_back(btk::GradientDirection(0.f,0.f));
+
+    for(float theta = step; theta < M_PI; theta += step)
+    {
+        for(float phi = 0.f; phi < M_2MPI; phi += step)
+        {
+            m_Directions.push_back(btk::GradientDirection(theta,phi));
+        } // for phi
+    } // for theta
+
+    m_Directions.push_back(btk::GradientDirection(M_PI,0.f));
 }
 
 } // namespace btk

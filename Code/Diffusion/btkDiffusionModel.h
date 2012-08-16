@@ -70,6 +70,11 @@ class DiffusionModel : public itk::ProcessObject
 
         itkTypeMacro(DiffusionModel,itk::ProcessObject);
 
+        btkGetMacro(Directions, std::vector< btk::GradientDirection >);
+
+        btkSetMacro(SphericalResolution, unsigned int);
+        btkGetMacro(SphericalResolution, unsigned int);
+
         /**
          * @brief Get modeling at continuous index and gradient direction.
          * @param cindex Location in the image space.
@@ -77,6 +82,13 @@ class DiffusionModel : public itk::ProcessObject
          * @return Model response in direction direction at cindex in image space.
          */
         virtual float ModelAt(ContinuousIndex cindex, btk::GradientDirection direction) = 0;
+
+        /**
+         * @brief Get modeling at continuous index.
+         * @param cindex Location in the image space.
+         * @return Model response at cindex in image space.
+         */
+        virtual std::vector< float > ModelAt(ContinuousIndex cindex) = 0;
 
         /**
          * @brief Get modeling at physical point and gradient direction.
@@ -87,6 +99,13 @@ class DiffusionModel : public itk::ProcessObject
         virtual float ModelAt(PhysicalPoint point, btk::GradientDirection direction) = 0;
 
         /**
+         * @brief Get modeling at physical point.
+         * @param point Point in the physical space.
+         * @return Model response at point in physical space.
+         */
+        virtual std::vector< float > ModelAt(PhysicalPoint point) = 0;
+
+        /**
          * @brief Get signal at continuous index and gradient direction.
          * @param cindex Location in the image space.
          * @param direction Gradient direction were the model response is wanted.
@@ -95,12 +114,26 @@ class DiffusionModel : public itk::ProcessObject
         virtual float SignalAt(ContinuousIndex cindex, btk::GradientDirection direction) = 0;
 
         /**
+         * @brief Get signal at continuous index.
+         * @param cindex Location in the image space.
+         * @return Signal response at cindex in image space.
+         */
+        virtual std::vector< float > SignalAt(ContinuousIndex cindex) = 0;
+
+        /**
          * @brief Get signal at physical point and gradient direction.
          * @param point Point in the physical space.
          * @param direction Gradient direction were the model response is wanted.
          * @return Signal response in direction direction at point in physical space.
          */
         virtual float SignalAt(PhysicalPoint point, btk::GradientDirection direction) = 0;
+
+        /**
+         * @brief Get signal at physical point.
+         * @param point Point in the physical space.
+         * @return Signal response at point in physical space.
+         */
+        virtual std::vector< float > SignalAt(PhysicalPoint point) = 0;
 
         /**
          * @brief Get mean directions at a location in the physical space.
@@ -116,13 +149,33 @@ class DiffusionModel : public itk::ProcessObject
          */
         virtual std::vector< btk::GradientDirection > MeanDirectionsAt(ContinuousIndex cindex) = 0;
 
+        /**
+         * @brief Update the parameters of the function (precompute some variables).
+         */
+        virtual void Update();
+
     protected:
+        /**
+         * @brief Constructor.
+         */
+        DiffusionModel();
+
         /**
          * @brief Print a message on output stream.
          * @param os Output stream where the message is printed.
          * @param indent Indentation.
          */
         virtual void PrintSelf(std::ostream &os, itk::Indent indent) const;
+
+        /**
+         * @brief Sampled directions on the unit sphere used by modeling reconstruction.
+         */
+        std::vector< btk::GradientDirection > m_Directions;
+
+        /**
+         * @brief Spherical resolution of the modeling reconstruction (number of point on the unit sphere).
+         */
+        unsigned int m_SphericalResolution;
 };
 
 } // namespace btk
