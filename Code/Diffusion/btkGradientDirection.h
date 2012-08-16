@@ -74,6 +74,13 @@ class GradientDirection : public itk::Vector< float,3 >
         GradientDirection(float x, float y, float z);
 
         /**
+         * @brief Constructor.
+         * @param theta Elevation (in spherical coordinates).
+         * @param phi Azimuth (in spherical coordinates).
+         */
+        GradientDirection(float theta, float phi);
+
+        /**
          * @brief Get the gradient direction in a vnl fixed structure for vector.
          * @return A vnl fixed vector representing the gradient direction.
          */

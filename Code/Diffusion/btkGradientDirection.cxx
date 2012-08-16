@@ -61,6 +61,13 @@ GradientDirection::GradientDirection()
 
 //----------------------------------------------------------------------------------------
 
+GradientDirection::GradientDirection(float theta, float phi) : m_SphericalDirection(theta, phi, 1.0f)
+{
+    Self::UpdateCartesianCoordinates();
+}
+
+//----------------------------------------------------------------------------------------
+
 vnl_vector_fixed< double,3 > GradientDirection::GetVnlVectorFixed()
 {
     vnl_vector_fixed< double,3 > v;
