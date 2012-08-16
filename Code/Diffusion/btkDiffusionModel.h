@@ -36,6 +36,9 @@
 #ifndef BTK_DIFFUSION_MODEL_H
 #define BTK_DIFFUSION_MODEL_H
 
+// STL includes
+#include "vector"
+
 // ITK includes
 #include "itkSmartPointer.h"
 #include "itkMacro.h"
@@ -66,8 +69,6 @@ class DiffusionModel : public itk::ProcessObject
         typedef itk::Point< float,3 >           PhysicalPoint;
 
         itkTypeMacro(DiffusionModel,itk::ProcessObject);
-
-        //        virtual void MainDirectionsAt(Point &p) = 0;
 
         /**
          * @brief Get modeling at continuous index and gradient direction.
@@ -100,6 +101,20 @@ class DiffusionModel : public itk::ProcessObject
          * @return Signal response in direction direction at point in physical space.
          */
         virtual float SignalAt(PhysicalPoint point, btk::GradientDirection direction) = 0;
+
+        /**
+         * @brief Get mean directions at a location in the physical space.
+         * @param point Point in the physical space.
+         * @return Vector of mean directions of local model at a physical location point.
+         */
+        virtual std::vector< btk::GradientDirection > MeanDirectionsAt(PhysicalPoint point) = 0;
+
+        /**
+         * @brief Get mean directions at a location in the image space.
+         * @param cindex Continuous index in the image space.
+         * @return Vector of mean directions of local model at a location in image space.
+         */
+        virtual std::vector< btk::GradientDirection > MeanDirectionsAt(ContinuousIndex cindex) = 0;
 
     protected:
         /**

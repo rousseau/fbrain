@@ -82,6 +82,8 @@ class TensorModel : public btk::DiffusionModel
         virtual float ModelAt(PhysicalPoint point, btk::GradientDirection direction);
         virtual float SignalAt(ContinuousIndex cindex, btk::GradientDirection direction);
         virtual float SignalAt(PhysicalPoint point, btk::GradientDirection direction);
+        virtual std::vector< btk::GradientDirection > MeanDirectionsAt(ContinuousIndex cindex);
+        virtual std::vector< btk::GradientDirection > MeanDirectionsAt(PhysicalPoint point);
 
     protected:
         /**

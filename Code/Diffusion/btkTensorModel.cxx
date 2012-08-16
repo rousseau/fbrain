@@ -69,29 +69,22 @@ float TensorModel::ModelAt(ContinuousIndex cindex, GradientDirection direction)
     ModelImage::PixelType::EigenVectorsMatrixType eigenVectors;
     tensor.ComputeEigenAnalysis(eigenValues, eigenVectors);
 
-    // TO TEST
-    float coeffx = std::sqrt( 2.0 * eigenValues[2] );
-    float coeffy = std::sqrt( 2.0 * eigenValues[1] );
-    float coeffz = std::sqrt( 2.0 * eigenValues[0] );
-
-    btkCoutVariable(eigenValues);
-    btkCoutVariable(eigenVectors);
-    btkCoutVariable(coeffx);
-    btkCoutVariable(coeffy);
-    btkCoutVariable(coeffz);
-    btkCoutVariable(coeffx*direction[0]*eigenVectors(2,0) + coeffy*direction[1]*eigenVectors(1,0) + coeffz*direction[2]*eigenVectors(0,0));
-    btkCoutVariable(coeffx*direction[0]*eigenVectors(2,1) + coeffy*direction[1]*eigenVectors(1,1) + coeffz*direction[2]*eigenVectors(0,1));
-    btkCoutVariable(coeffx*direction[0]*eigenVectors(2,2) + coeffy*direction[1]*eigenVectors(1,2) + coeffz*direction[2]*eigenVectors(0,2));
+    float coeffx = (eigenValues[2] > 0.f) ? std::sqrt( 2.0 * eigenValues[2] ) : 0.f; // FIXME ?
+    float coeffy = (eigenValues[1] > 0.f) ? std::sqrt( 2.0 * eigenValues[1] ) : 0.f; // FIXME ?
+    float coeffz = (eigenValues[0] > 0.f) ? std::sqrt( 2.0 * eigenValues[0] ) : 0.f; // FIXME ?
 
     // tmp = uTEe
+    float x = coeffx * direction[0];
+    float y = coeffy * direction[1];
+    float z = coeffz * direction[2];
     btk::GradientDirection tmp(
-                    coeffx*direction[0]*eigenVectors(2,0) + coeffy*direction[1]*eigenVectors(1,0) + coeffz*direction[2]*eigenVectors(0,0),
-                    coeffx*direction[0]*eigenVectors(2,1) + coeffy*direction[1]*eigenVectors(1,1) + coeffz*direction[2]*eigenVectors(0,1),
-                    coeffx*direction[0]*eigenVectors(2,2) + coeffy*direction[1]*eigenVectors(1,2) + coeffz*direction[2]*eigenVectors(0,2)
+                    x*eigenVectors(2,0) + y*eigenVectors(1,0) + z*eigenVectors(0,0),
+                    x*eigenVectors(2,1) + y*eigenVectors(1,1) + z*eigenVectors(0,1),
+                    x*eigenVectors(2,2) + y*eigenVectors(1,2) + z*eigenVectors(0,2)
                 );
 
     // Return the rau parameter of corresponding spherical harmonics direction
-    return tmp.GetSphericalDirection()[2];
+    return std::sqrt(tmp[0]*tmp[0] + tmp[1]*tmp[1] + tmp[2]*tmp[2]);
 }
 
 //----------------------------------------------------------------------------------------
@@ -112,9 +105,9 @@ float TensorModel::SignalAt(ContinuousIndex cindex, GradientDirection direction)
 
     // s = exp[ -b uTDu ]
     return std::exp( -static_cast< float >(m_BValue) * (
-                         (direction[0]*tensor(0,0) + direction[1]*tensor(1,0) + direction[2]*tensor(2,0))*direction[0] +
-                         (direction[0]*tensor(0,1) + direction[1]*tensor(1,1) + direction[2]*tensor(2,1))*direction[1] +
-                         (direction[0]*tensor(0,2) + direction[1]*tensor(1,2) + direction[2]*tensor(2,2))*direction[2]
+                            (direction[0]*tensor(0,0) + direction[1]*tensor(1,0) + direction[2]*tensor(2,0))*direction[0] +
+                            (direction[0]*tensor(0,1) + direction[1]*tensor(1,1) + direction[2]*tensor(2,1))*direction[1] +
+                            (direction[0]*tensor(0,2) + direction[1]*tensor(1,2) + direction[2]*tensor(2,2))*direction[2]
                          ) );
 }
 
@@ -126,6 +119,32 @@ float TensorModel::SignalAt(PhysicalPoint point, GradientDirection direction)
     m_InputModelImage->TransformPhysicalPointToContinuousIndex(point, cindex);
 
     return SignalAt(cindex, direction);
+}
+
+//----------------------------------------------------------------------------------------
+
+std::vector< btk::GradientDirection > TensorModel::MeanDirectionsAt(ContinuousIndex cindex)
+{
+    ModelImage::PixelType tensor = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
+
+    ModelImage::PixelType::EigenValuesArrayType   eigenValues;
+    ModelImage::PixelType::EigenVectorsMatrixType eigenVectors;
+    tensor.ComputeEigenAnalysis(eigenValues, eigenVectors);
+
+    std::vector< btk::GradientDirection > meanDirections;
+    meanDirections.push_back(btk::GradientDirection(eigenVectors(2,0), eigenVectors(2,1), eigenVectors(2,2)));
+
+    return meanDirections;
+}
+
+//----------------------------------------------------------------------------------------
+
+std::vector< btk::GradientDirection > TensorModel::MeanDirectionsAt(PhysicalPoint point)
+{
+    ContinuousIndex cindex;
+    m_InputModelImage->TransformPhysicalPointToContinuousIndex(point, cindex);
+
+    return MeanDirectionsAt(cindex);
 }
 
 //----------------------------------------------------------------------------------------
