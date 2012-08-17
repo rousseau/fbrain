@@ -76,17 +76,83 @@ class TensorModel : public btk::DiffusionModel
         btkSetMacro(InputModelImage, ModelImage::Pointer);
         btkGetMacro(InputModelImage, ModelImage::Pointer);
 
+        /**
+         * @brief Update the process.
+         */
         virtual void Update();
 
+        /**
+         * @brief Get modeling at continuous index and gradient direction.
+         * @param cindex Location in the image space.
+         * @param direction Gradient direction were the model response is wanted.
+         * @return Model response in direction direction at cindex in image space.
+         */
         virtual float ModelAt(ContinuousIndex cindex, btk::GradientDirection direction);
+
+        /**
+         * @brief Get modeling at continuous index.
+         * @param cindex Location in the image space.
+         * @return Model response at cindex in image space.
+         */
         virtual std::vector< float > ModelAt(ContinuousIndex cindex);
+
+        /**
+         * @brief Get modeling at physical point and gradient direction.
+         * @param point Point in the physical space.
+         * @param direction Gradient direction were the model response is wanted.
+         * @return Model response in direction direction at point in physical space.
+         */
         virtual float ModelAt(PhysicalPoint point, btk::GradientDirection direction);
+
+        /**
+         * @brief Get modeling at physical point.
+         * @param point Point in the physical space.
+         * @return Model response at point in physical space.
+         */
         virtual std::vector< float > ModelAt(PhysicalPoint point);
+
+        /**
+         * @brief Get signal at continuous index and gradient direction.
+         * @param cindex Location in the image space.
+         * @param direction Gradient direction were the model response is wanted.
+         * @return Signal response in direction direction at cindex in image space.
+         */
         virtual float SignalAt(ContinuousIndex cindex, btk::GradientDirection direction);
+
+        /**
+         * @brief Get signal at continuous index.
+         * @param cindex Location in the image space.
+         * @return Signal response at cindex in image space.
+         */
         virtual std::vector< float > SignalAt(ContinuousIndex cindex);
+
+        /**
+         * @brief Get signal at physical point and gradient direction.
+         * @param point Point in the physical space.
+         * @param direction Gradient direction were the model response is wanted.
+         * @return Signal response in direction direction at point in physical space.
+         */
         virtual float SignalAt(PhysicalPoint point, btk::GradientDirection direction);
+
+        /**
+         * @brief Get signal at physical point.
+         * @param point Point in the physical space.
+         * @return Signal response at point in physical space.
+         */
         virtual std::vector< float > SignalAt(PhysicalPoint point);
+
+        /**
+         * @brief Get mean directions at a location in the physical space.
+         * @param point Point in the physical space.
+         * @return Vector of mean directions of local model at a physical location point.
+         */
         virtual std::vector< btk::GradientDirection > MeanDirectionsAt(ContinuousIndex cindex);
+
+        /**
+         * @brief Get mean directions at a location in the image space.
+         * @param cindex Continuous index in the image space.
+         * @return Vector of mean directions of local model at a location in image space.
+         */
         virtual std::vector< btk::GradientDirection > MeanDirectionsAt(PhysicalPoint point);
 
     protected:
@@ -107,10 +173,27 @@ class TensorModel : public btk::DiffusionModel
          */
         virtual void PrintSelf(std::ostream &os, itk::Indent indent) const;
 
+        /**
+         * @brief Compute model from a diffusion tensor in a particular direction.
+         * @param tensor Diffusion tensor.
+         * @param direction Gradient direction.
+         * @return Model response in direction direction computed from diffusion tensor tensor.
+         */
         virtual float ModelAt(ModelImage::PixelType tensor, btk::GradientDirection direction);
 
+        /**
+         * @brief Compute signal from a diffusion tensor in a particular direction.
+         * @param tensor Diffusion tensor.
+         * @param direction Gradient direction.
+         * @return Signal response in direction direction computed from diffusion tensor tensor.
+         */
         virtual float SignalAt(ModelImage::PixelType tensor, btk::GradientDirection direction);
 
+        /**
+         * @brief Convert a point in physical space of input model image to a continuous index.
+         * @param point Point in physical space.
+         * @return Point in image space (continuous index).
+         */
         virtual ContinuousIndex TransformPhysicalPointToContinuousIndex(PhysicalPoint point);
 
     private:
