@@ -132,7 +132,7 @@ class SphericalHarmonicsDiffusionDecompositionFilter : public itk::ImageToImageF
         unsigned short m_NumberOfSHCoefficients;
 
         /** Spherical harmonics basis matrix. */
-        Self::Matrix m_SphericalHarmonicsBasis;
+        Self::Matrix m_SphericalHarmonicsBasisMatrix;
 
         /** Regularization matrix (Laplace-Beltrami matrix). */
         Self::Matrix m_RegularizationMatrix;
