@@ -35,10 +35,16 @@
 
 #include "btkOrientationDiffusionFunctionModel.h"
 
+
+// Local includes
+#include "btkSphericalHarmonics.h"
+#include "btkLegendrePolynomial.h"
+
+
 namespace btk
 {
 
-OrientationDiffusionFunctionModel::OrientationDiffusionFunctionModel()
+OrientationDiffusionFunctionModel::OrientationDiffusionFunctionModel() : m_UseSharpModel(false)
 {
     // ----
 }
@@ -59,6 +65,19 @@ void OrientationDiffusionFunctionModel::Update()
     // Create interpolate function on model image
     m_ModelImageFunction = InterpolateModelFunction::New();
     m_ModelImageFunction->SetInputImage(m_InputModelImage);
+
+    // Set up variables
+    m_NumberOfSHCoefficients  = m_InputModelImage->GetVectorLength();
+    m_SphericalHarmonicsOrder = -1.5 + std::sqrt( 2.25 - 2.*(1. - m_NumberOfSHCoefficients) );
+
+    // Compute matrices
+    Self::ComputeLegendreMatrix();
+    Self::ComputeSphericalHarmonicsMatrix();
+
+    if(m_UseSharpModel)
+    {
+        Self::ComputeModelSharpMatrix();
+    }
 }
 
 //----------------------------------------------------------------------------------------
@@ -75,30 +94,72 @@ inline OrientationDiffusionFunctionModel::ContinuousIndex OrientationDiffusionFu
 
 float OrientationDiffusionFunctionModel::ModelAt(ModelImage::PixelType shCoefficients, btk::GradientDirection direction)
 {
-    // TODO
-    /*
-    ModelImage::PixelType::EigenValuesArrayType   eigenValues;
-    ModelImage::PixelType::EigenVectorsMatrixType eigenVectors;
-    tensor.ComputeEigenAnalysis(eigenValues, eigenVectors);
+    // TODO : this code use the analytical form to compute exact signal in direction.
+    // We may use interpolation to improve computation speed...
 
-    float coeffx = (eigenValues[2] > 0.f) ? std::sqrt( 2.0 * eigenValues[2] ) : 0.f; // FIXME ?
-    float coeffy = (eigenValues[1] > 0.f) ? std::sqrt( 2.0 * eigenValues[1] ) : 0.f; // FIXME ?
-    float coeffz = (eigenValues[0] > 0.f) ? std::sqrt( 2.0 * eigenValues[0] ) : 0.f; // FIXME ?
 
-    // tmp = uTEe
-    float x = coeffx * direction[0];
-    float y = coeffy * direction[1];
-    float z = coeffz * direction[2];
-    btk::GradientDirection tmp(
-                    x*eigenVectors(2,0) + y*eigenVectors(1,0) + z*eigenVectors(0,0),
-                    x*eigenVectors(2,1) + y*eigenVectors(1,1) + z*eigenVectors(0,1),
-                    x*eigenVectors(2,2) + y*eigenVectors(1,2) + z*eigenVectors(0,2)
-                );
+    /*/ Matrix form
+    Self::Matrix Y(1, m_NumberOfSHCoefficients);
 
-    // Return the rau parameter of corresponding spherical harmonics direction
-    return std::sqrt(tmp[0]*tmp[0] + tmp[1]*tmp[1] + tmp[2]*tmp[2]);
-    */
-    return 0.f;
+    btk::SphericalDirection u = direction.GetSphericalDirection();
+    unsigned int            j = 0;
+
+    for(unsigned int l = 0; l <= m_SphericalHarmonicsOrder; l += 2)
+    {
+        for(int m = -(int)l; m <= (int)l; m++)
+        {
+            Y(0,j++) = btk::SphericalHarmonics::ComputeBasis(u,l,m);
+        } // for m
+    } // for l
+
+    Matrix C(m_NumberOfSHCoefficients, 1);
+
+    for(unsigned int i = 0; i < m_NumberOfSHCoefficients; i++)
+    {
+        C(i,0) = shCoefficients[i];
+    }
+
+    float response = 0.f;
+
+    if(m_UseSharpModel)
+    {
+        response = (Y * (m_LegendreMatrix * (m_ModelSharpMatrix * C)))(0,0);
+    }
+    else // m_UseSharpModel = false
+    {
+        response = (Y * (m_LegendreMatrix * C))(0,0);
+    }
+
+    return response;//*/
+
+
+    // Direct form
+    btk::SphericalDirection u = direction.GetSphericalDirection();
+    float            response = 0.f;
+    unsigned int            i = 0;
+
+    if(m_UseSharpModel)
+    {
+        for(unsigned int l = 0; l <= m_SphericalHarmonicsOrder; l += 2)
+        {
+            for(int m = -(int)l; m <= (int)l; m++)
+            {
+                response += btk::SphericalHarmonics::ComputeBasis(u,l,m) * m_LegendreMatrix(i,i) * m_ModelSharpMatrix(i,i) * shCoefficients[i++];
+            } // for m
+        } // for l
+    }
+    else // m_UseSharpModel = false
+    {
+        for(unsigned int l = 0; l <= m_SphericalHarmonicsOrder; l += 2)
+        {
+            for(int m = -(int)l; m <= (int)l; m++)
+            {
+                response += btk::SphericalHarmonics::ComputeBasis(u,l,m) * m_LegendreMatrix(i,i) * shCoefficients[i++];
+            } // for m
+        } // for l
+    }
+
+    return response;//*/
 }
 
 //----------------------------------------------------------------------------------------
@@ -121,16 +182,82 @@ float OrientationDiffusionFunctionModel::ModelAt(PhysicalPoint point, GradientDi
 
 std::vector< float > OrientationDiffusionFunctionModel::ModelAt(ContinuousIndex cindex)
 {
-    ModelImage::PixelType shCoefficients = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
-
+    /*/ Reuse form
     std::vector< float > response;
 
     for(unsigned int i = 0; i < m_Directions.size(); i++)
     {
-        response.push_back(Self::ModelAt(shCoefficients,m_Directions[i]));
+        response.push_back(Self::ModelAt(cindex, m_Directions[i]));
     }
 
-    return response;
+    return response;//*/
+
+    /*/ Matrix form
+    ModelImage::PixelType shCoefficients = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
+
+    Self::Matrix C(m_NumberOfSHCoefficients, 1);
+
+    for(unsigned int i = 0; i < m_NumberOfSHCoefficients; i++)
+    {
+        C(i,0) = shCoefficients[i];
+    }
+
+    Self::Matrix Psi;
+
+    if(m_UseSharpModel)
+    {
+        Psi = m_SphericalHarmonicsBasisMatrix * (m_LegendreMatrix * (m_ModelSharpMatrix * C));
+    }
+    else // m_UseSharpModel = false
+    {
+        Psi = m_SphericalHarmonicsBasisMatrix * (m_LegendreMatrix * C);
+    }
+
+    std::vector< float > response;
+
+    for(unsigned int i = 0; i < Psi.Rows(); i++)
+    {
+        response.push_back(Psi(i,0));
+    }
+
+    return response;//*/
+
+    // Direct form
+    ModelImage::PixelType shCoefficients = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
+
+    std::vector< float > response;
+    unsigned int numberOfDirections = m_Directions.size();
+
+    if(m_UseSharpModel)
+    {
+        for(unsigned int i = 0; i < numberOfDirections; i++)
+        {
+            float value = 0.f;
+
+            for(unsigned int j = 0; j < m_NumberOfSHCoefficients; j++)
+            {
+                value += m_SphericalHarmonicsBasisMatrix(i,j) * m_ModelSharpMatrix(j,j) * m_LegendreMatrix(j,j) * shCoefficients[j];
+            }
+
+            response.push_back(value);
+        }
+    }
+    else // m_UseSharpModel = false
+    {
+        for(unsigned int i = 0; i < numberOfDirections; i++)
+        {
+            float value = 0.f;
+
+            for(unsigned int j = 0; j < m_NumberOfSHCoefficients; j++)
+            {
+                value += m_SphericalHarmonicsBasisMatrix(i,j) * m_LegendreMatrix(j,j) * shCoefficients[j];
+            }
+
+            response.push_back(value);
+        }
+    }
+
+    return response;//*/
 }
 
 //----------------------------------------------------------------------------------------
@@ -142,19 +269,51 @@ std::vector< float > OrientationDiffusionFunctionModel::ModelAt(PhysicalPoint po
 
 //----------------------------------------------------------------------------------------
 
-inline float OrientationDiffusionFunctionModel::SignalAt(ModelImage::PixelType shCoefficients, btk::GradientDirection direction)
+float OrientationDiffusionFunctionModel::SignalAt(ModelImage::PixelType shCoefficients, btk::GradientDirection direction)
 {
-    // TODO
-    /*
-    // s = exp[ -b uTDu ]
-    return std::exp( -static_cast< float >(m_BValue) * (
-                            (direction[0]*tensor(0,0) + direction[1]*tensor(1,0) + direction[2]*tensor(2,0))*direction[0] +
-                            (direction[0]*tensor(0,1) + direction[1]*tensor(1,1) + direction[2]*tensor(2,1))*direction[1] +
-                            (direction[0]*tensor(0,2) + direction[1]*tensor(1,2) + direction[2]*tensor(2,2))*direction[2]
-                         ) );
-    */
+    // TODO : this code use the analytical form to compute exact signal in direction.
+    // We may use interpolation to improve computation speed...
 
-    return 0.f;
+
+    /*/ Matrix form
+    Self::Matrix Y(1,m_NumberOfSHCoefficients);
+
+    btk::SphericalDirection u = direction.GetSphericalDirection();
+    unsigned int            j = 0;
+
+    for(unsigned int l = 0; l <= m_SphericalHarmonicsOrder; l += 2)
+    {
+
+        for(int m = -(int)l; m <= (int)l; m++)
+        {
+            Y(0,j++) = btk::SphericalHarmonics::ComputeBasis(u,l,m);
+        } // for m
+    } // for l
+
+    Self::Matrix C(m_NumberOfSHCoefficients, 1);
+
+    for(unsigned int i = 0; i < m_NumberOfSHCoefficients; i++)
+    {
+        C(i,0) = shCoefficients[i];
+    }
+
+    return (Y * C)(0,0);//*/
+
+
+    // Direct form
+    btk::SphericalDirection u = direction.GetSphericalDirection();
+    float            response = 0.f;
+    unsigned int            i = 0;
+
+    for(unsigned int l = 0; l <= m_SphericalHarmonicsOrder; l += 2)
+    {
+        for(int m = -(int)l; m <= (int)l; m++)
+        {
+            response += btk::SphericalHarmonics::ComputeBasis(u,l,m) * shCoefficients[i++];
+        } // for m
+    } // for l
+
+    return response;//*/
 }
 
 //----------------------------------------------------------------------------------------
@@ -177,16 +336,56 @@ float OrientationDiffusionFunctionModel::SignalAt(PhysicalPoint point, GradientD
 
 std::vector< float > OrientationDiffusionFunctionModel::SignalAt(ContinuousIndex cindex)
 {
-    ModelImage::PixelType shCoefficients = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
-
+    /*/ Reuse form
     std::vector< float > response;
 
     for(unsigned int i = 0; i < m_Directions.size(); i++)
     {
-        response.push_back(Self::SignalAt(shCoefficients,m_Directions[i]));
+        response.push_back(Self::SignalAt(cindex, m_Directions[i]));
     }
 
-    return response;
+    return response;//*/
+
+    /*/ Matrix form
+    ModelImage::PixelType shCoefficients = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
+
+    Self::Matrix C(m_NumberOfSHCoefficients, 1);
+
+    for(unsigned int i = 0; i < m_NumberOfSHCoefficients; i++)
+    {
+        C(i,0) = shCoefficients[i];
+    }
+
+    Self::Matrix S = m_SphericalHarmonicsBasisMatrix * C;
+
+    std::vector< float > response;
+
+    for(unsigned int i = 0; i < S.Rows(); i++)
+    {
+        response.push_back(S(i,0));
+    }
+
+    return response;//*/
+
+    // Direct form
+    ModelImage::PixelType shCoefficients = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
+
+    std::vector< float > response;
+    unsigned int numberOfDirections = m_Directions.size();
+
+    for(unsigned int i = 0; i < numberOfDirections; i++)
+    {
+        float value = 0.f;
+
+        for(unsigned int j = 0; j < m_NumberOfSHCoefficients; j++)
+        {
+            value += m_SphericalHarmonicsBasisMatrix(i,j) * shCoefficients[j];
+        }
+
+        response.push_back(value);
+    }
+
+    return response;//*/
 }
 
 //----------------------------------------------------------------------------------------
@@ -200,15 +399,78 @@ std::vector< float > OrientationDiffusionFunctionModel::SignalAt(PhysicalPoint p
 
 std::vector< btk::GradientDirection > OrientationDiffusionFunctionModel::MeanDirectionsAt(ContinuousIndex cindex)
 {
-    ModelImage::PixelType shCoefficients = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
-/*
-    ModelImage::PixelType::EigenValuesArrayType   eigenValues;
-    ModelImage::PixelType::EigenVectorsMatrixType eigenVectors;
-    tensor.ComputeEigenAnalysis(eigenValues, eigenVectors);
-*/
+    // TODO : test
+    std::vector< float > Psi = Self::ModelAt(cindex);
+
+    float min = Psi[0], max = Psi[0];
+    for(unsigned int i = 1; i < Psi.size(); i++)
+    {
+        if(min > Psi[i])
+            min = Psi[i];
+
+        if(max < Psi[i])
+            max = Psi[i];
+    }
+
+    // Compute the regular step on the unit sphere
+    unsigned int elevationResolution = static_cast< unsigned int >(std::ceil( std::sqrt(static_cast< float >(m_SphericalResolution)/2.f) ));
+    float                       step = M_PI / static_cast< float >(elevationResolution);
+
     std::vector< btk::GradientDirection > meanDirections;
-/*    meanDirections.push_back(btk::GradientDirection(eigenVectors(2,0), eigenVectors(2,1), eigenVectors(2,2)));
-*/
+
+    unsigned int thetaRes = step+1;
+    unsigned int phiRes   = step;
+
+
+    for(unsigned int i = 1; i < thetaRes-1; i++)
+    {
+        for(unsigned int j = 0; j < phiRes; j++)
+        {
+            float odf1, odf2, odf3, odf4, odf5, odf6, odf7, odf8;
+            float odf = Psi[phiRes*i + j];
+
+            if(j == 0)
+            {
+                odf1 = Psi[phiRes*(i-1)+(phiRes-1)];
+                odf2 = Psi[phiRes*(i-1)+j];
+                odf3 = Psi[phiRes*(i-1)+(j+1)];
+                odf4 = Psi[phiRes*i+(phiRes-1)];
+                odf5 = Psi[phiRes*i+(j+1)];
+                odf6 = Psi[phiRes*(i+1)+(phiRes-1)];
+                odf7 = Psi[phiRes*(i+1)+j];
+                odf8 = Psi[phiRes*(i+1)+(j+1)];
+            }
+            else if(j == phiRes-1)
+            {
+                odf1 = Psi[phiRes*(i-1)+(j-1)];
+                odf2 = Psi[phiRes*(i-1)+j];
+                odf3 = Psi[phiRes*(i-1)+(0)];
+                odf4 = Psi[phiRes*i+(j-1)];
+                odf5 = Psi[phiRes*i+(0)];
+                odf6 = Psi[phiRes*(i+1)+(j-1)];
+                odf7 = Psi[phiRes*(i+1)+j];
+                odf8 = Psi[phiRes*(i+1)+(0)];
+            }
+            else // j != 0 && j != phiRes-1
+            {
+                odf1 = Psi[phiRes*(i-1)+(j-1)];
+                odf2 = Psi[phiRes*(i-1)+j];
+                odf3 = Psi[phiRes*(i-1)+(j+1)];
+                odf4 = Psi[phiRes*i+(j-1)];
+                odf5 = Psi[phiRes*i+(j+1)];
+                odf6 = Psi[phiRes*(i+1)+(j-1)];
+                odf7 = Psi[phiRes*(i+1)+j];
+                odf8 = Psi[phiRes*(i+1)+(j+1)];
+            }
+
+            if(odf > odf1 && odf > odf2 && odf > odf3 && odf > odf4 && odf > odf5 && odf > odf6 && odf > odf7 && odf > odf8)
+            {
+                if((Psi[phiRes*i+j]-min)/(max-min) > 0.9)
+                    meanDirections.push_back(btk::GradientDirection(i*step,j*step));
+            }
+        } // for each phi
+    } // for each theta
+
     return meanDirections;
 }
 
@@ -224,6 +486,154 @@ std::vector< btk::GradientDirection > OrientationDiffusionFunctionModel::MeanDir
 void OrientationDiffusionFunctionModel::PrintSelf(std::ostream &os, itk::Indent indent) const
 {
     Superclass::PrintSelf(os, indent);
+}
+
+//----------------------------------------------------------------------------------------
+
+void OrientationDiffusionFunctionModel::UseSharpModelOn()
+{
+    if(m_SphericalHarmonicsOrder <= 8)
+    {
+        m_UseSharpModel = true;
+    }
+    else
+    {
+        m_UseSharpModel = false;
+    }
+}
+
+//----------------------------------------------------------------------------------------
+
+void OrientationDiffusionFunctionModel::UseSharpModelOff()
+{
+    m_UseSharpModel = false;
+}
+
+//----------------------------------------------------------------------------------------
+
+void OrientationDiffusionFunctionModel::ComputeLegendreMatrix()
+{
+    // Resize the matrix (rows: number of SH coefficients, columns: number of SH coefficients).
+    m_LegendreMatrix = Self::Matrix(m_NumberOfSHCoefficients, m_NumberOfSHCoefficients);
+
+    // This matrix is diagonal, so we fill the other coefficients with 0.
+    m_LegendreMatrix.Fill(0);
+
+    // Compute the diagonal coefficients.
+    unsigned int i = 0;
+
+    for(unsigned int l = 0; l <= m_SphericalHarmonicsOrder; l += 2)
+    {
+        for(int m = -(int)l; m <= (int)l; m++)
+        {
+            m_LegendreMatrix(i,i) = 2.0 * M_PI * btk::LegendrePolynomial::ComputeInZero(l);
+            i++;
+        } // for m
+    } // for l
+}
+
+//----------------------------------------------------------------------------------------
+
+void OrientationDiffusionFunctionModel::ComputeSphericalHarmonicsMatrix()
+{
+    // Resize the matrix (rows: number of gradient directions, columns: number of SH coefficients).
+    m_SphericalHarmonicsBasisMatrix = Self::Matrix(m_Directions.size(), m_NumberOfSHCoefficients);
+
+    // Compute the basis
+    for(unsigned int u = 0; u < m_Directions.size(); u++)
+    {
+        unsigned int j = 0;
+
+        for(unsigned int l = 0; l <= m_SphericalHarmonicsOrder; l += 2)
+        {
+            for(int m = -(int)l; m <= (int)l; m++)
+            {
+                m_SphericalHarmonicsBasisMatrix(u,j++) = btk::SphericalHarmonics::ComputeBasis(m_Directions[u].GetSphericalDirection(), l, m);
+            } // for each m
+        } // for each even order
+    } // for each gradient direction
+}
+
+//----------------------------------------------------------------------------------------
+
+void OrientationDiffusionFunctionModel::ComputeModelSharpMatrix()
+{
+    m_ModelSharpMatrix = Self::Matrix(m_NumberOfSHCoefficients,m_NumberOfSHCoefficients);
+    m_ModelSharpMatrix.Fill(0);
+
+    double lambda1 = 1.0;
+    double lambda2 = 0.1;
+
+    double alpha = 1.0 - lambda2/lambda1;
+
+    double alpha_2 = alpha * alpha;
+    double alpha_3 = alpha_2 * alpha;
+    double alpha_4 = alpha_3 * alpha;
+
+    double sqrtAlpha                  = std::sqrt(alpha);
+    double asinSqrtAlpha              = std::asin(sqrtAlpha);
+    double sqrtOneMinusAlpha          = std::sqrt(1.0 - alpha);
+    double sqrtOneMinusAlphaSqrtAlpha = sqrtOneMinusAlpha * sqrtAlpha;
+
+    double coefficient = 4.0 * m_BValue * std::sqrt(lambda2 * lambda1);
+
+    if(m_SphericalHarmonicsOrder >= 0)
+    {
+        double coefficientOfOrder = (1.0 / std::pow(alpha,0.5)) * 2.0 * asinSqrtAlpha;
+        m_ModelSharpMatrix(0,0) = coefficient / coefficientOfOrder;
+    }
+
+    if(m_SphericalHarmonicsOrder >= 2)
+    {
+        double coefficientOfOrder = (-1.0 / ( 2.0 * std::pow(alpha,1.5) )) *
+                             (
+                                 (-3.0 + 2.0 * alpha) * asinSqrtAlpha + 3.0 * sqrtOneMinusAlphaSqrtAlpha
+                             );
+
+        for(unsigned int i = 1; i < 6; i++)
+        {
+            m_ModelSharpMatrix(i,i) = coefficient / coefficientOfOrder;
+        }
+    }
+
+    if(m_SphericalHarmonicsOrder >= 4)
+    {
+        double coefficientOfOrder = (1.0 / ( 32.0 * std::pow(alpha,2.5) )) *
+                             (
+                                 (105.0 - 102.0 * alpha + 24.0 * alpha_2) * asinSqrtAlpha + (-105.0 + 50.0 * alpha) * sqrtOneMinusAlphaSqrtAlpha
+                             );
+
+        for(unsigned int i = 6; i < 15; i++)
+        {
+            m_ModelSharpMatrix(i,i) = coefficient / coefficientOfOrder;
+        }
+    }
+
+    if(m_SphericalHarmonicsOrder >= 6)
+    {
+        double coefficientOfOrder = (-1.0 / ( 128.0 * std::pow(alpha,3.5) )) *
+                             (
+                                 (-1155.0 + 1890.0 * alpha - 840.0 * alpha_2 + 80.0 * alpha_3) * asinSqrtAlpha + (1155.0 - 1120.0 * alpha + 196.0 * alpha_2) * sqrtOneMinusAlphaSqrtAlpha
+                             );
+
+        for(unsigned int i = 15; i < 28; i++)
+        {
+            m_ModelSharpMatrix(i,i) = coefficient / coefficientOfOrder;
+        }
+    }
+
+    if(m_SphericalHarmonicsOrder >= 8)
+    {
+        double coefficientOfOrder = (1.0 / ( 8192.0 * std::pow(alpha,4.5) )) *
+                             (
+                                 (225225.0 - 480480.0 * alpha + 332640.0 * alpha_2 - 80640.0 * alpha_3 + 4480.0 * alpha_4) * asinSqrtAlpha + (-225225.0 + 330330.0 * alpha - 132440.0 * alpha_2 + 12176.0 * alpha_3) * sqrtOneMinusAlphaSqrtAlpha
+                             );
+
+        for(unsigned int i = 28; i < 45; i++)
+        {
+            m_ModelSharpMatrix(i,i) = coefficient / coefficientOfOrder;
+        }
+    }
 }
 
 } // namespace btk
