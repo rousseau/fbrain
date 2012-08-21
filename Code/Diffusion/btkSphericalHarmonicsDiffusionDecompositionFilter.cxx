@@ -93,10 +93,10 @@ void SphericalHarmonicsDiffusionDecompositionFilter::ComputeSphericalHarmonicsBa
     unsigned int             numberOfGradientDirections = gradientTable.size() - 1;
 
     // Resize the matrix (rows: number of gradient directions, columns: number of SH coefficients).
-    m_SphericalHarmonicsBasisMatrix = Self::Matrix(numberOfGradients, m_NumberOfSHCoefficients);
+    m_SphericalHarmonicsBasisMatrix = Self::Matrix(numberOfGradientDirections, m_NumberOfSHCoefficients);
 
     // Compute the basis
-    for(unsigned int u = 0; u < numberOfGradients; u++)
+    for(unsigned int u = 0; u < numberOfGradientDirections; u++)
     {
         unsigned int j = 0;
 
