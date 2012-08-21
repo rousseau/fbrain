@@ -163,6 +163,13 @@ INSTALL(TARGETS btkImageReconstruction
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Tractography)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/InputOutput)
 
+INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Maths)
+INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Diffusion)
+INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Tools)
+
+ADD_EXECUTABLE(btkTractography btkTractography.cxx)
+TARGET_LINK_LIBRARIES(btkTractography ${ITK_LIBRARIES} btkToolsLibrary btkMathsLibrary btkDiffusionLibrary)
+
 ADD_EXECUTABLE(btkODFParticleFilterTractography
         btkODFParticleFilterTractography.cxx
         ${fbrain_SOURCE_DIR}/Code/Tractography/btkTypes.h

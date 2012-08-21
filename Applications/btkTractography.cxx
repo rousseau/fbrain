@@ -44,6 +44,13 @@
 
 // Local includes
 #include "btkMacro.h"
+#include "btkDiffusionSequence.h"
+#include "btkDiffusionSequenceHelper.h"
+#include "btkDiffusionTensorReconstructionFilter.h"
+#include "btkSphericalHarmonicsDiffusionDecompositionFilter.h"
+#include "btkDiffusionModel.h"
+#include "btkTensorModel.h"
+#include "btkOrientationDiffusionFunctionModel.h"
 
 
 int main(int argc, char *argv[])
@@ -89,6 +96,50 @@ int main(int argc, char *argv[])
             throw std::string("ODF modeling not yet implemented !");
 
 
+        //
+        // Estimate diffusion modeling
+        //
+
+        btk::DiffusionSequence::Pointer dwiSequence = btk::DiffusionSequenceHelper::ReadSequence(dwiSequenceFileName);
+
+        btk::DiffusionModel::Pointer model = NULL;
+
+        if(tensorModeling)
+        {
+            btkCoutMacro("Estimating tensor modeling...");
+
+            btk::DiffusionTensorReconstructionFilter::Pointer reconstructionFilter = btk::DiffusionTensorReconstructionFilter::New();
+            reconstructionFilter->SetInput(dwiSequence);
+            reconstructionFilter->SetThreshold(0);
+            reconstructionFilter->Update();
+
+            btk::TensorModel::Pointer tensorModel = btk::TensorModel::New();
+            tensorModel->SetInputModelImage(reconstructionFilter->GetOutput());
+            tensorModel->SetBValue(dwiSequence->GetBValues()[1]);
+            tensorModel->SetSphericalResolution(300);
+
+            model = tensorModel;
+
+            btkCoutMacro("done");
+        }
+        else // ODF modeling
+        {
+            btkCoutMacro("Estimating spherical harmonics Q-Ball modeling...");
+
+            btk::SphericalHarmonicsDiffusionDecompositionFilter::Pointer decompositionFilter = btk::SphericalHarmonicsDiffusionDecompositionFilter::New();
+            decompositionFilter->SetInput(dwiSequence);
+            decompositionFilter->Update();
+
+            btk::OrientationDiffusionFunctionModel::Pointer odfModel = btk::OrientationDiffusionFunctionModel::New();
+            odfModel->SetInputModelImage(decompositionFilter->GetOutput());
+            odfModel->SetBValue(dwiSequence->GetBValues()[1]);
+            odfModel->SetSphericalResolution(300);
+            odfModel->Update();
+
+            model = odfModel;
+
+            btkCoutMacro("done.");
+        }
     }
     catch(TCLAP::ArgException &exception)
     {
