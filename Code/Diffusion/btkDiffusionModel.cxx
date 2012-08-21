@@ -58,7 +58,7 @@ void DiffusionModel::Update()
     unsigned int elevationResolution = static_cast< unsigned int >(std::ceil( std::sqrt(static_cast< float >(m_SphericalResolution)/2.f) ));
     float                       step = M_PI / static_cast< float >(elevationResolution);
 
-    const float M_2MPI = 2.0f * M_PI;
+    const double M_2MPI = 2.0 * M_PI;
 
     // Sample the unit sphere with the given spherical resolution.
     m_Directions.push_back(btk::GradientDirection(0.f,0.f));

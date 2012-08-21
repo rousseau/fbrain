@@ -75,6 +75,9 @@ inline TensorModel::ContinuousIndex TensorModel::TransformPhysicalPointToContinu
 
 float TensorModel::ModelAt(ModelImage::PixelType tensor, btk::GradientDirection direction)
 {
+    // FIXME : With some data, this seems to produce ADC instead of tensor...
+    // We may use the parametric representation of the ellipsoid...
+
     ModelImage::PixelType::EigenValuesArrayType   eigenValues;
     ModelImage::PixelType::EigenVectorsMatrixType eigenVectors;
     tensor.ComputeEigenAnalysis(eigenValues, eigenVectors);
@@ -83,7 +86,7 @@ float TensorModel::ModelAt(ModelImage::PixelType tensor, btk::GradientDirection 
     float coeffy = (eigenValues[1] > 0.f) ? std::sqrt( 2.0 * eigenValues[1] ) : 0.f; // FIXME ?
     float coeffz = (eigenValues[0] > 0.f) ? std::sqrt( 2.0 * eigenValues[0] ) : 0.f; // FIXME ?
 
-    // tmp = uTEe
+    // tmp = Lambda.u.E
     float x = coeffx * direction[0];
     float y = coeffy * direction[1];
     float z = coeffz * direction[2];
@@ -140,7 +143,9 @@ std::vector< float > TensorModel::ModelAt(PhysicalPoint point)
 
 inline float TensorModel::SignalAt(ModelImage::PixelType tensor, btk::GradientDirection direction)
 {
-    // s = exp[ -b uTDu ]
+    // FIXME : With some data, this seems to produce tensor instead of DWI signal...
+
+    // s = exp[ -b.uT.D.u ]
     return std::exp( -static_cast< float >(m_BValue) * (
                             (direction[0]*tensor(0,0) + direction[1]*tensor(1,0) + direction[2]*tensor(2,0))*direction[0] +
                             (direction[0]*tensor(0,1) + direction[1]*tensor(1,1) + direction[2]*tensor(2,1))*direction[1] +
