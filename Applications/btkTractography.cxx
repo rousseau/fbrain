@@ -51,6 +51,8 @@
 #include "btkDiffusionModel.h"
 #include "btkTensorModel.h"
 #include "btkOrientationDiffusionFunctionModel.h"
+#include "btkTractographyAlgorithm.h"
+#include "btkStreamlineTractographyAlgorithm.h"
 
 
 int main(int argc, char *argv[])
@@ -88,6 +90,11 @@ int main(int argc, char *argv[])
         bool     streamlineAlgorithm = streamlineAlgorithmArg.getValue();
         bool             odfModeling = odfModelingArg.getValue();
         bool          tensorModeling = tensorModelingArg.getValue();
+
+
+        //
+        // Checking
+        //
 
         if(particleFilterAlgorithm)
             throw std::string("Particle filter algorithm not yet implemented !");
@@ -140,6 +147,30 @@ int main(int argc, char *argv[])
 
             btkCoutMacro("done.");
         }
+
+
+        //
+        // Tractography
+        //
+
+        btk::TractographyAlgorithm::Pointer algorithm = NULL;
+
+        if(streamlineAlgorithm)
+        {
+            btk::StreamlineTractographyAlgorithm::Pointer strAlgorithm = btk::StreamlineTractographyAlgorithm::New();
+
+            algorithm = strAlgorithm;
+        }
+        else // Particle filtering algorithm
+        {
+
+        }
+
+        algorithm->SetDiffusionSequence(dwiSequence);
+        algorithm->SetDiffusionModel(model);
+        algorithm->Update();
+
+        // Output ?
     }
     catch(TCLAP::ArgException &exception)
     {
