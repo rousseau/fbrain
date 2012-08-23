@@ -168,7 +168,7 @@ INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Diffusion)
 INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Tools)
 
 ADD_EXECUTABLE(btkTractography btkTractography.cxx)
-TARGET_LINK_LIBRARIES(btkTractography btkToolsLibrary btkMathsLibrary btkDiffusionLibrary btkTractographyLibrary ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkTractography btkToolsLibrary btkMathsLibrary btkDiffusionLibrary btkTractographyLibrary ${ITK_LIBRARIES} vtkHybrid)
 
 ADD_EXECUTABLE(btkODFParticleFilterTractography
         btkODFParticleFilterTractography.cxx

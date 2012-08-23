@@ -42,10 +42,17 @@
 #include "iostream"
 #include "string"
 
+// VTK includes
+#include "vtkSmartPointer.h"
+#include "vtkAppendPolyData.h"
+#include "vtkPolyDataWriter.h"
+
 // Local includes
 #include "btkMacro.h"
+#include "btkFileHelper.h"
 #include "btkDiffusionSequence.h"
 #include "btkDiffusionSequenceHelper.h"
+#include "btkImageHelper.h"
 #include "btkDiffusionTensorReconstructionFilter.h"
 #include "btkSphericalHarmonicsDiffusionDecompositionFilter.h"
 #include "btkDiffusionModel.h"
@@ -70,83 +77,139 @@ int main(int argc, char *argv[])
         TCLAP::ValueArg< std::string > dwiSequenceFileNameArg("d", "dwi_sequence", "DWI Sequence", true, "", "string", cmd);
         TCLAP::ValueArg< std::string >        maskFileNameArg("m", "mask", "Propagation ROI", true, "", "string", cmd);
         TCLAP::ValueArg< std::string >         roiFileNameArg("r", "roi_image", "ROI image", true, "", "string", cmd);
-        TCLAP::MultiArg< unsigned int >             labelsArg("l", "label", "Label selection in ROI image", false, "int", cmd);
+        TCLAP::MultiArg< unsigned short >           labelsArg("l", "label", "Label selection in ROI image", false, "int", cmd);
 
-        TCLAP::SwitchArg particleFilterAlgorithmArg("", "particle_filter", "Use particle filtering algorithm for tractography", true);
-        TCLAP::SwitchArg     streamlineAlgorithmArg("", "streamline", "Use streamline algorithm for tractography", false);
-        TCLAP::SwitchArg             odfModelingArg("", "odf", "Use ODF modeling for diffusion", true);
-        TCLAP::SwitchArg          tensorModelingArg("", "tensor", "Use tensor modeling for diffusion", false);
+        TCLAP::SwitchArg particleFilterAlgorithmArg("", "particle_filter", "Use particle filtering algorithm for tractography", cmd, true);
+        TCLAP::SwitchArg     streamlineAlgorithmArg("", "streamline", "Use streamline algorithm for tractography", cmd, false);
+        TCLAP::SwitchArg             odfModelingArg("", "odf", "Use ODF modeling for diffusion", cmd, true);
+        TCLAP::SwitchArg          tensorModelingArg("", "tensor", "Use tensor modeling for diffusion", cmd, false);
+
+        TCLAP::ValueArg< std::string >        modelFileNameArg("", "model", "Model image", false, "", "string", cmd);
+        TCLAP::ValueArg< std::string > outputFileNamePrefixArg("o", "output", "Prefix of the filenames of the outputs", false, "tractography", "string", cmd);
+
+        TCLAP::ValueArg< float > stepSizeArg("", "step_size", "Step size between two points of the solution", false, 0.5, "positive real", cmd);
+        TCLAP::SwitchArg           useRK4Arg("", "RK4", "Use the Runge-Kutta method at order 4 instead of Euler's methods for path computing in streamline algorithm", cmd, false);
 
         // Parsing arguments
         cmd.parse(argc, argv);
 
         // Get back arguments' values
-        std::string    dwiSequenceFileName = dwiSequenceFileNameArg.getValue();
-        std::string           maskFileName = maskFileNameArg.getValue();
-        std::string            roiFileName = roiFileNameArg.getValue();
-        std::vector< unsigned int > labels = labelsArg.getValue();
+        std::string      dwiSequenceFileName = dwiSequenceFileNameArg.getValue();
+        std::string             maskFileName = maskFileNameArg.getValue();
+        std::string              roiFileName = roiFileNameArg.getValue();
+        std::vector< unsigned short > labels = labelsArg.getValue();
 
         bool particleFilterAlgorithm = particleFilterAlgorithmArg.getValue();
         bool     streamlineAlgorithm = streamlineAlgorithmArg.getValue();
         bool             odfModeling = odfModelingArg.getValue();
         bool          tensorModeling = tensorModelingArg.getValue();
 
+        std::string        modelFileName = modelFileNameArg.getValue();
+        std::string outputFileNamePrefix = outputFileNamePrefixArg.getValue();
+
+        float stepSize = stepSizeArg.getValue();
+        bool    useRK4 = useRK4Arg.getValue();
+
 
         //
         // Checking
         //
 
-        if(particleFilterAlgorithm)
-            throw std::string("Particle filter algorithm not yet implemented !");
+//        if(particleFilterAlgorithm)
+//            throw std::string("Particle filter algorithm not yet implemented !");
 
-        if(odfModeling)
-            throw std::string("ODF modeling not yet implemented !");
+//        if(odfModeling)
+//            throw std::string("ODF modeling not yet implemented !");
+
+
+        //
+        // Read input files
+        //
+
+        btk::DiffusionSequence::Pointer         dwiSequence = btk::DiffusionSequenceHelper::ReadSequence(dwiSequenceFileName);
+        btk::TractographyAlgorithm::MaskImage::Pointer mask = btk::ImageHelper< btk::TractographyAlgorithm::MaskImage >::ReadImage(maskFileName);
+        btk::TractographyAlgorithm::LabelImage::Pointer roi = btk::ImageHelper< btk::TractographyAlgorithm::LabelImage >::ReadImage(roiFileName);
 
 
         //
         // Estimate diffusion modeling
         //
 
-        btk::DiffusionSequence::Pointer dwiSequence = btk::DiffusionSequenceHelper::ReadSequence(dwiSequenceFileName);
-
         btk::DiffusionModel::Pointer model = NULL;
 
-        if(tensorModeling)
+//        if(tensorModeling)
         {
-            btkCoutMacro("Estimating tensor modeling...");
+            btk::DiffusionTensorReconstructionFilter::OutputImageType::Pointer tensorImage = NULL;
 
-            btk::DiffusionTensorReconstructionFilter::Pointer reconstructionFilter = btk::DiffusionTensorReconstructionFilter::New();
-            reconstructionFilter->SetInput(dwiSequence);
-            reconstructionFilter->SetThreshold(0);
-            reconstructionFilter->Update();
+            if(modelFileName.empty() || !btk::FileHelper::FileExist(modelFileName))
+            {
+                btkCoutMacro("Estimating tensor modeling...");
+
+                btk::DiffusionTensorReconstructionFilter::Pointer reconstructionFilter = btk::DiffusionTensorReconstructionFilter::New();
+                reconstructionFilter->SetInput(dwiSequence);
+                reconstructionFilter->SetThreshold(0);
+                reconstructionFilter->Update();
+
+                tensorImage = reconstructionFilter->GetOutput();
+
+                if(!modelFileName.empty())
+                {
+                    btk::ImageHelper< btk::DiffusionTensorReconstructionFilter::OutputImageType >::WriteImage(tensorImage, modelFileName);
+                }
+            }
+            else // There is an existant model image and we load it.
+            {
+                btkCoutMacro("Loading tensor image...");
+
+                tensorImage = btk::ImageHelper< btk::DiffusionTensorReconstructionFilter::OutputImageType >::ReadImage(modelFileName);
+            }
 
             btk::TensorModel::Pointer tensorModel = btk::TensorModel::New();
-            tensorModel->SetInputModelImage(reconstructionFilter->GetOutput());
+            tensorModel->SetInputModelImage(tensorImage);
             tensorModel->SetBValue(dwiSequence->GetBValues()[1]);
             tensorModel->SetSphericalResolution(300);
+            tensorModel->Update();
 
             model = tensorModel;
 
-            btkCoutMacro("done");
-        }
-        else // ODF modeling
-        {
-            btkCoutMacro("Estimating spherical harmonics Q-Ball modeling...");
-
-            btk::SphericalHarmonicsDiffusionDecompositionFilter::Pointer decompositionFilter = btk::SphericalHarmonicsDiffusionDecompositionFilter::New();
-            decompositionFilter->SetInput(dwiSequence);
-            decompositionFilter->Update();
-
-            btk::OrientationDiffusionFunctionModel::Pointer odfModel = btk::OrientationDiffusionFunctionModel::New();
-            odfModel->SetInputModelImage(decompositionFilter->GetOutput());
-            odfModel->SetBValue(dwiSequence->GetBValues()[1]);
-            odfModel->SetSphericalResolution(300);
-            odfModel->Update();
-
-            model = odfModel;
-
             btkCoutMacro("done.");
         }
+//        else // ODF modeling
+//        {
+//            btk::SphericalHarmonicsDiffusionDecompositionFilter::OutputImageType::Pointer shCoefficientsImage = NULL;
+
+//            if(modelFileName.empty() || !btk::FileHelper::FileExist(modelFileName))
+//            {
+//                btkCoutMacro("Estimating spherical harmonics Q-Ball modeling...");
+
+//                btk::SphericalHarmonicsDiffusionDecompositionFilter::Pointer decompositionFilter = btk::SphericalHarmonicsDiffusionDecompositionFilter::New();
+//                decompositionFilter->SetInput(dwiSequence);
+//                decompositionFilter->Update();
+
+//                shCoefficientsImage = decompositionFilter->GetOutput();
+
+//                if(!modelFileName.empty())
+//                {
+//                    btk::ImageHelper< btk::SphericalHarmonicsDiffusionDecompositionFilter::OutputImageType >::WriteImage(shCoefficientsImage, modelFileName);
+//                }
+//            }
+//            else // There is an existant model image and we load it.
+//            {
+//                btkCoutMacro("Loading spherical harmonics coefficients image...");
+
+//                shCoefficientsImage = btk::ImageHelper< btk::SphericalHarmonicsDiffusionDecompositionFilter::OutputImageType >::ReadImage(modelFileName);
+//            }
+
+//            btk::OrientationDiffusionFunctionModel::Pointer odfModel = btk::OrientationDiffusionFunctionModel::New();
+//            odfModel->SetInputModelImage(shCoefficientsImage);
+//            odfModel->SetBValue(dwiSequence->GetBValues()[1]);
+//            odfModel->SetSphericalResolution(300);
+//            odfModel->Update();
+
+//            model = odfModel;
+
+//            btkCoutMacro("done.");
+//        }
 
 
         //
@@ -155,22 +218,63 @@ int main(int argc, char *argv[])
 
         btk::TractographyAlgorithm::Pointer algorithm = NULL;
 
-        if(streamlineAlgorithm)
+//        if(streamlineAlgorithm)
         {
+            btkCoutMacro("Setting up streamline algorithm...");
+
             btk::StreamlineTractographyAlgorithm::Pointer strAlgorithm = btk::StreamlineTractographyAlgorithm::New();
+            strAlgorithm->SetStepSize(stepSize);
+            strAlgorithm->UseRungeKuttaOrder4(useRK4);
 
             algorithm = strAlgorithm;
-        }
-        else // Particle filtering algorithm
-        {
 
+            btkCoutMacro("done.");
         }
+//        else // Particle filtering algorithm
+//        {
+//            btkCoutMacro("Setting up particle filtering algorithm...");
+
+//            btkCoutMacro("done.");
+//        }
+
+        btkCoutMacro("Processing...");
 
         algorithm->SetDiffusionSequence(dwiSequence);
         algorithm->SetDiffusionModel(model);
+        algorithm->SetMask(mask);
+        algorithm->SetRegionsOfInterest(roi);
+        algorithm->SetSeedLabels(labels);
         algorithm->Update();
 
-        // Output ?
+        btkCoutMacro("done.");
+
+
+        //
+        // Write output
+        //
+
+        btkCoutMacro("Writing outputs...");
+
+        // Write each fibers corresponding to labels
+        std::vector< vtkSmartPointer< vtkAppendPolyData > > fibers = algorithm->GetOutputFiber();
+
+        for(unsigned int i = 0; i < fibers.size(); i++)
+        {
+            if(fibers[i] != NULL && fibers[i]->GetNumberOfInputPorts() > 0)
+            {
+                std::stringstream filename;
+                filename << outputFileNamePrefix << "-" << i+1 << ".vtk";
+
+                fibers[i]->Update();
+
+                vtkSmartPointer< vtkPolyDataWriter > writer = vtkSmartPointer< vtkPolyDataWriter >::New();
+                writer->SetInput(fibers[i]->GetOutput());
+                writer->SetFileName(filename.str().c_str());
+                writer->Write();
+            }
+        }
+
+        btkCoutMacro("done.");
     }
     catch(TCLAP::ArgException &exception)
     {
