@@ -59,22 +59,22 @@ knowledge of the CeCILL-B license and that you accept its terms.
 typedef short PixelType;
 
 // Input sequence (Nrrd -- nhdr)
-typedef itk::VectorImage<PixelType,3>           InputSequence;
-typedef itk::ImageFileReader<InputSequence>     InputSequenceFileReader;
-typedef itk::ImageFileWriter<InputSequence>     InputSequenceFileWriter;
-typedef itk::ImageRegionIterator<InputSequence> InputSequenceIterator;
+typedef itk::VectorImage< PixelType,3 >           InputSequence;
+typedef itk::ImageFileReader< InputSequence >     InputSequenceFileReader;
+typedef itk::ImageFileWriter< InputSequence >     InputSequenceFileWriter;
+typedef itk::ImageRegionIterator< InputSequence > InputSequenceIterator;
 
 // Output sequence (Nifti -- .nii.gz)
-typedef itk::Image<PixelType,4>                  OutputSequence;
-typedef itk::ImageFileReader<OutputSequence>     OutputSequenceFileReader;
-typedef itk::ImageFileWriter<OutputSequence>     OutputSequenceFileWriter;
-typedef itk::ImageRegionIterator<OutputSequence> OutputSequenceIterator;
+typedef itk::Image< PixelType,4 >                  OutputSequence;
+typedef itk::ImageFileReader< OutputSequence >     OutputSequenceFileReader;
+typedef itk::ImageFileWriter< OutputSequence >     OutputSequenceFileWriter;
+typedef itk::ImageRegionIterator< OutputSequence > OutputSequenceIterator;
 
 // Anatomical volume (3D)
-typedef itk::Image<PixelType,3>         Image;
-typedef itk::ImageFileReader<Image>     ImageFileReader;
-typedef itk::ImageFileWriter<Image>     ImageFileWriter;
-typedef itk::ImageRegionIterator<Image> ImageIterator;
+typedef itk::Image< PixelType,3 >         Image;
+typedef itk::ImageFileReader< Image >     ImageFileReader;
+typedef itk::ImageFileWriter< Image >     ImageFileWriter;
+typedef itk::ImageRegionIterator< Image > ImageIterator;
 
 
 int main(int argc, char *argv[])
@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
 
             while(!vectorFound && !headerFile.eof() && !headerFile.fail() && !headerFile.bad() && !token.empty())
             {
-                btk::btkNrrdField currentField(token);
+                btk::NrrdField currentField(token);
                 key   = currentField.GetKey();
                 value = currentField.GetValue();
 
@@ -214,7 +214,7 @@ int main(int argc, char *argv[])
 
                 while(!headerFile.eof() && !headerFile.fail() && !headerFile.bad() && !token.empty())
                 {
-                    btk::btkNrrdField field(token);
+                    btk::NrrdField field(token);
                     key   = field.GetKey();
                     value = field.GetValue();
 

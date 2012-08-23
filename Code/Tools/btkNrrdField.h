@@ -32,50 +32,61 @@ knowledge of the CeCILL-B license and that you accept its terms.
 */
 
 
-#ifndef __BTK_NRRD_FIELD_H__
-#define __BTK_NRRD_FIELD_H__
+#ifndef BTK_NRRD_FIELD_H
+#define BTK_NRRD_FIELD_H
 
-    // STL includes
-    #include "string"
+// STL includes
+#include "string"
+
+// Local includes
+#include "btkMacro.h"
 
 namespace btk
 {
 
-    /**
-     * @class btkNrrdField
-     * @ingroup InputOutput
-     */
-    class btkNrrdField
-    {
-        public:
-            /**
-             * @brief Constructor
-             * @param field Field in Nrrd format (key:=value)
-             */
-            btkNrrdField(std::string field);
+/**
+ * @class NrrdField
+ * @author Julien Pontabry
+ * @ingroup Tools
+ */
+class NrrdField
+{
+    public:
+        /**
+         * @brief Constructor
+         * @param field Field in Nrrd format (key:=value)
+         */
+        NrrdField(std::string field);
 
-            /**
-             * @brief Destructor
-             */
-            ~btkNrrdField();
+        typedef NrrdField Self;
 
-            /**
-             * @brief Accessor
-             * @return The string corresponding to the key of the field
-             */
-            std::string GetKey() const;
+        btkGetMacro(Key, std::string);
 
-            /**
-             * @brief Accessor
-             * @return The string corresponding to the value of the field
-             */
-            std::string GetValue() const;
+        btkGetMacro(Value, std::string);
 
-        private:
-            class btkNrrdFieldPriv;
-            btkNrrdFieldPriv* const m;
-    };
+    private:
+        /**
+         * @brief Analyze the field and extract the key and the value.
+         */
+        void Analyze();
+
+    private:
+        /**
+         * @brief Field of NRRD file containing a key and a value.
+         */
+        std::string m_Field;
+
+        /**
+         * @brief Key of a NRRD file field.
+         */
+        std::string   m_Key;
+
+        /**
+         * @brief Value of a NRRD file field.
+         */
+        std::string m_Value;
+};
 
 } // namespace btk
 
-#endif /* __BTK_NRRD_FIELD_H__ */
+#endif // BTK_NRRD_FIELD_H

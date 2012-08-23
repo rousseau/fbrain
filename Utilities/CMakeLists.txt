@@ -48,10 +48,8 @@ TARGET_LINK_LIBRARIES(btkRegisterDiffusionToAnatomicalData ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkNrrdToNifti btkNrrdToNifti.cxx
         ${fbrain_SOURCE_DIR}/Code/InputOutput/btkFileNameTools.h
-        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkNrrdField.cxx
-        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkNrrdField.h
 )
-TARGET_LINK_LIBRARIES(btkNrrdToNifti ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkNrrdToNifti btkToolsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkNiftiToNrrd btkNiftiToNrrd.cxx
         ${fbrain_SOURCE_DIR}/Code/InputOutput/btkFileNameTools.h
@@ -217,5 +215,4 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkFCMClassification
                 btkImageMorphologicalClosing
                 btkImageMorphologicalTopHat
-
         DESTINATION bin)
