@@ -3,9 +3,10 @@ INCLUDE_REGULAR_EXPRESSION("^.*$")
 
 #---- Directories -----------------------------------------------------------------------
 
-SET(TOOLS_LIBRARY_SOURCE_DIR     ${Code_SOURCE_DIR}/Tools)
-SET(MATHS_LIBRARY_SOURCE_DIR     ${Code_SOURCE_DIR}/Maths)
-SET(DIFFUSION_LIBRARY_SOURCE_DIR ${Code_SOURCE_DIR}/Diffusion)
+SET(TOOLS_LIBRARY_SOURCE_DIR        ${Code_SOURCE_DIR}/Tools)
+SET(MATHS_LIBRARY_SOURCE_DIR        ${Code_SOURCE_DIR}/Maths)
+SET(DIFFUSION_LIBRARY_SOURCE_DIR    ${Code_SOURCE_DIR}/Diffusion)
+SET(TRACTOGRAPHY_LIBRARY_SOURCE_DIR ${Code_SOURCE_DIR}/Tractography)
 
 IF(BUILD_TESTING)
     SET(MATHS_TESTS_SOURCE_DIR ${MATHS_LIBRARY_SOURCE_DIR}/Tests)
@@ -97,3 +98,17 @@ SET(DIFFUSION_LIBRARY_SOURCES
 
 ADD_LIBRARY(btkDiffusionLibrary STATIC ${DIFFUSION_LIBRARY_HEADER} ${DIFFUSION_LIBRARY_SOURCES})
 TARGET_LINK_LIBRARIES(btkDiffusionLibrary btkToolsLibrary btkMathsLibrary)
+
+#---- Tractography library --------------------------------------------------------------
+
+SET(TRACTOGRAPHY_LIBRARY_HEADER
+    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkTractographyAlgorithm.h
+    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkStreamlineTractographyAlgorithm.h
+)
+
+SET(TRACTOGRAPHY_LIBRARY_SOURCES
+    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkTractographyAlgorithm.cxx
+    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkStreamlineTractographyAlgorithm.cxx
+)
+
+ADD_LIBRARY(btkTractographyLibrary STATIC ${TRACTOGRAPHY_LIBRARY_HEADER} ${TRACTOGRAPHY_LIBRARY_SOURCES})

@@ -41,6 +41,7 @@
 #include "itkSmartPointer.h"
 
 // Local includes
+#include "btkMacro.h"
 #include "btkTractographyAlgorithm.h"
 
 namespace btk
@@ -59,11 +60,19 @@ class StreamlineTractographyAlgorithm : public btk::TractographyAlgorithm
         typedef itk::SmartPointer< Self >       Pointer;
         typedef itk::SmartPointer< const Self > ConstPointer;
 
+        typedef Superclass::PhysicalPoint PhysicalPoint;
+
         itkNewMacro(Self);
 
         itkTypeMacro(StreamlineTractographyAlgorithm,btk::TractographyAlgorithm);
 
-        virtual void Update();
+        btkSetMacro(StepSize,float);
+        btkGetMacro(StepSize,float);
+
+        void UseRungeKuttaOrder4(bool arg)
+        {
+            m_UseRungeKuttaOrder4 = arg;
+        }
 
     protected:
         /**
@@ -77,6 +86,23 @@ class StreamlineTractographyAlgorithm : public btk::TractographyAlgorithm
          * @param indent Indentation.
          */
         virtual void PrintSelf(std::ostream &os, itk::Indent indent) const;
+
+        /**
+         * @brief Propagate using the tractography algorithm at a seed point.
+         * @param point Seed point.
+         */
+        virtual void PropagateSeed(Self::PhysicalPoint point);
+
+    private:
+        /**
+         * @brief Step size between two points of output.
+         */
+        float m_StepSize;
+
+        /**
+         * @brief True if the RK4 method is used or false if the RK1 (Euler) method is used.
+         */
+        bool m_UseRungeKuttaOrder4;
 };
 
 } // namespace btk
