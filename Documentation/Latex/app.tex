@@ -36,6 +36,20 @@ The full list of optional parameters of the method can be obtained by
 
 \end{description}
 
+\subsection{Anatomical segmentation}
+\label{subsec:ana_seg}
+\begin{description}
+ \item[btkTissueSegmentation] This program allows to obtain :
+        \begin{itemize}
+         \item A segmentation of the brain which separate pericerebral LCR and ventricules,
+         \item A segmentation of the cortex inside of a region of interest defined from the border between brain and pericerebral LCR,
+        \end{itemize}
+        as described in~\cite{caldairou_segmentation_2011}.
+        
+        Usage: \texttt{btkTissueSegmentation -i greyImage -s intracranianVolume -l brainstemSegmentation -l cerebellumSegmentation -o brainSegmentation -o cortexSegmentation}
+\end{description}
+
+
 \subsection{Reconstruction of DW sequences \cite{oubel_reconstruction_2010}}
 \label{subsec:diff_rec}
 The reconstruction of diffusion-weighted (DW) sequences aims at

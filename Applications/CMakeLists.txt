@@ -252,3 +252,16 @@ INSTALL(TARGETS btkODFParticleFilterTractography
                 btkTensorStreamlineTractography
         DESTINATION bin)
 
+# SEGMENTATION
+# ------------
+
+ADD_EXECUTABLE(btkTissueSegmentation
+        btkTissueSegmentation.cxx
+        ${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h
+        ${fbrain_SOURCE_DIR}/Code/Segmentation/btkTopologicalKMeans.h
+)
+
+TARGET_LINK_LIBRARIES(btkTissueSegmentation ${ITK_LIBRARIES})
+
+INSTALL(TARGETS btkTissueSegmentation
+        DESTINATION bin)
