@@ -200,23 +200,10 @@ ADD_EXECUTABLE(btkODFStreamlineTractography btkODFStreamlineTractography.cxx
 )
 TARGET_LINK_LIBRARIES(btkODFStreamlineTractography btkToolsLibrary ${ITK_LIBRARIES} vtkHybrid)
 
-ADD_EXECUTABLE(btkTensorStreamlineTractography btkTensorStreamlineTractography.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkCartesianCoordinates.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalCoordinates.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkVector.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkDirection.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkPoint.cxx
-    ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPSignalExtractor.cxx
-    ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPSignal.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalHarmonics.cxx
-)
-TARGET_LINK_LIBRARIES(btkTensorStreamlineTractography btkToolsLibrary ${ITK_LIBRARIES} vtkHybrid)
-
 INSTALL(TARGETS
     btkODFParticleFilterTractography
     btkODFStreamlineTractography
     btkTensorParticleFilterTractography
-    btkTensorStreamlineTractography
 DESTINATION bin)
 
 # ---- Segmentation ---------------------------------------------------------------------
