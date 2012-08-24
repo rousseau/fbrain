@@ -31,32 +31,63 @@ Please check that images are not flipped.\\
 \underline{NOTE}: The set of three files .nii.gz, .bvec, and .bval used to
 describe a DW sequences are represented in BTK just by the basename (``dwi'' in
 the previous example), and the sequences must be provided in this way to the
-different applications. This allows to have shorter command lines and a the use
+different applications. This allows to have shorter command lines and the use
 of consistent filenames.
 
 \subsection{Anatomical image reconstruction}
-Anatomical image reconstruction can be performed by using \textbf{btkImageReconstruction} (Section
-\ref{subsec:ana_rec})\footnote{Best results are obtained by using a mask for each anatomical image. Such image masks can be easily created using ITKSnap for instance.}, followed by a re-orientation procedure using \textbf{btkSetStandardCoorSystem} and \textbf{btkReorientImageToStandard} (Section \ref{sec:utilities})\footnote{Note that the landmarks file is obtained using external software (Slicer). Please see Section \ref{sec:utilities} for details about this step.}:
 
-\begin{verbatim}
+
+  \begin{figure*}[!htb]
+   \centering{
+     \begin{tabular}{c}
+         \psfig{figure=overview_anatomical_pipeline.eps,width=14cm}\\
+       \end{tabular}
+       }
+   \caption{Overview of the processing pipeline for anatomical data in BTK. Slicer3D (www.slicer.org) is used to convert the DICOM data to NIFTI format and for the placement of landmarks on which is based the reorientation of the 3D reconstructed image. The use of Slicer for these steps allows the user to check the orientation consistency between the three anatomical images (axial, coronal, sagittal for instance). ITKSNAP (www.itksnap.org) is used to create a rough mask of the brain (this step is optional).}
+   \label{fig:anatomical_pipeline}
+ \end{figure*}
+
+  \begin{figure*}[!htb]
+   \centering{
+     \begin{tabular}{c}
+         \psfig{figure=command_line_anatomical_pipeline.eps,width=14cm}\\
+       \end{tabular}
+       }
+   \caption{Command lines corresponding to the processing pipeline for anatomical data in BTK. On the left are shown the blocks used in the anatomical data pipeline (Figure~\ref{fig:anatomical_pipeline}) and on the right the correspond command lines.}
+   \label{fig:anatomical_command_line}
+ \end{figure*}
  
-btkImageReconstruction -i ana01.nii.gz -i ana02.nii.gz -i ana03.nii.gz 
-                       -m ana01_mask.nii.gz -m ana02_mask.nii.gz -m ana03_mask.nii.gz
-                       -o ana3D.nii.gz --mask
 
-btkReorientImageToStandard -i ana3D.nii.gz -o ana3D_oriented.nii.gz -l landmarks.fcsv
+The anatomical image reconstruction pipeline is depicted in Figure~\ref{fig:anatomical_pipeline}. The corresponding command lines are shown in Figure~\ref{fig:anatomical_command_line}. This pipeline consists in: 1) converting the data from DICOM to NIFTI, 2) manual masking of the brain (optional step which can improve the reconstruction results) and image cropping (based on the size of the masks), 3) image denoising, 4) motion correction and super-resolution, 5) reorientation of the image using landmarks placed using Slicer. Figure~\ref{fig:sr} shows a reconstructed 3D image obtained using such a processing pipeline.
 
-\end{verbatim}
 
 \subsection{Anatomical image segmentation}
 Anatomical image segmentation can be performed by using \textbf{btkTissueSegmentation} (Section \ref{subsec:ana_seg})\footnote{You need to provide a segmentation of the intracranian volume and of the cerebellum and brainstem}
 
 
 \subsection{Reconstruction of the diffusion sequence}
-To reconstruct diffusion data, you want to follow the steps described in
-Section \ref{subsec:diff_rec}. The use of two applications is required here:
-\textbf{btkGroupwiseS2SDistortionCorrection} and
-\textbf{btkRBFInterpolationS2S}.
+
+The processing pipeline described in this section is dedicated to DWI of the fetal brain (depicted in Figure~\ref{fig:diffusion_pipeline}). The corresponding command lines are shown in Figure~\ref{fig:diffusion_command_line}. It is similar to the anatomical image pipeline but it includes processing tools dedicated to DWI: 1) data conversion using dcm2nii (www.cabiatl.com/mricro/mricron/dcm2nii.html), 2) sequence normalization (the B0 image are registered together using affine transforms and then averaged to produce one B0 image), 3) B0 image extraction and manual masking using ITKSNAP, 4) motion correction and RBF interpolation to compute the reconstructed DW sequence, 5) reorientation of the image using landmarks placed using Slicer. This final step (sequence reorientation) is very important since it allows the user to visualize the DW data using consistent color coding schemes. Please see also Section \ref{subsec:diff_rec}. 
+
+  \begin{figure*}[!htb]
+   \centering{
+     \begin{tabular}{c}
+         \psfig{figure=overview_diffusion_pipeline.eps,width=14cm}\\
+       \end{tabular}
+       }
+   \caption{Overview of the processing pipeline for diffusion data in BTK. dcm2nii is used to convert the DICOM data to NIFTI format and Slicer for the placement of landmarks on which is based the reorientation of the 3D reconstructed image. ITKSNAP (www.itksnap.org) is used to create a rough mask of the brain.}
+   \label{fig:diffusion_pipeline}
+ \end{figure*}
+
+  \begin{figure*}[!htb]
+   \centering{
+     \begin{tabular}{c}
+         \psfig{figure=command_line_diffusion_pipeline.eps,width=14cm}\\
+       \end{tabular}
+       }
+   \caption{Command lines corresponding to the processing pipeline for diffusion data in BTK. On the left are shown the blocks used in the anatomical data pipeline (Figure~\ref{fig:diffusion_pipeline}) and on the right the correspond command lines.}
+   \label{fig:diffusion_command_line}
+ \end{figure*}
 
 \subsection{Registration of diffusion to anatomical data}
 This can be performed by using \textbf{btkRegisterDiffusionToAnatomicalData}
