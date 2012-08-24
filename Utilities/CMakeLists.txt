@@ -19,15 +19,10 @@ ADD_EXECUTABLE(btkConvertGradientTable btkConvertGradientTable.cxx
  )
 TARGET_LINK_LIBRARIES(btkConvertGradientTable ${ITK_LIBRARIES} )
 
-ADD_EXECUTABLE(btkReorientImageToStandard btkReorientImageToStandard.cxx
-        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkLandmarksFileReader.cxx
-        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkLandmarksFileReader.h
-)
-TARGET_LINK_LIBRARIES(btkReorientImageToStandard ${ITK_LIBRARIES})
+ADD_EXECUTABLE(btkReorientImageToStandard btkReorientImageToStandard.cxx)
+TARGET_LINK_LIBRARIES(btkReorientImageToStandard btkToolsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkReorientDiffusionSequenceToStandard btkReorientDiffusionSequenceToStandard.cxx
-        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkLandmarksFileReader.cxx
-        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkLandmarksFileReader.h
         ${fbrain_SOURCE_DIR}/Code/DTI/btkDiffusionGradientTable.h
 )
 TARGET_LINK_LIBRARIES(btkReorientDiffusionSequenceToStandard btkToolsLibrary ${ITK_LIBRARIES})

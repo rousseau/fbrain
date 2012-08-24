@@ -25,6 +25,7 @@ SET(TOOLS_LIBRARY_HEADER
     ${TOOLS_LIBRARY_SOURCE_DIR}/btkMacro.h
     ${TOOLS_LIBRARY_SOURCE_DIR}/btkFileHelper.h
     ${TOOLS_LIBRARY_SOURCE_DIR}/btkNrrdField.h
+    ${TOOLS_LIBRARY_SOURCE_DIR}/btkLandmarksFileReader.h
     ${TOOLS_LIBRARY_SOURCE_DIR}/btkIOTransformHelper.h
     ${TOOLS_LIBRARY_SOURCE_DIR}/btkImageHelper.h
     ${TOOLS_LIBRARY_SOURCE_DIR}/btkDiffusionSequenceFileHelper.h
@@ -35,6 +36,7 @@ SET(TOOLS_LIBRARY_HEADER
 SET(TOOLS_LIBRARY_SOURCES
     ${TOOLS_LIBRARY_SOURCE_DIR}/btkFileHelper.cxx
     ${TOOLS_LIBRARY_SOURCE_DIR}/btkNrrdField.cxx
+    ${TOOLS_LIBRARY_SOURCE_DIR}/btkLandmarksFileReader.cxx
     ${TOOLS_LIBRARY_SOURCE_DIR}/btkDiffusionSequenceFileHelper.cxx
     ${TOOLS_LIBRARY_SOURCE_DIR}/btkDiffusionSequenceHelper.cxx
 )
