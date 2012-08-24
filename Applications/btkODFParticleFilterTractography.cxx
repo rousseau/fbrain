@@ -56,7 +56,7 @@
 #include "btkAPrioriDensity.h"
 #include "btkLikelihoodDensity.h"
 #include "btkParticleFilter.h"
-#include "btkFileNameTools.h"
+#include "btkFileHelper.h"
 
 
 using namespace btk;
@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
             seedSpacing    = seedSpacingArg.getValue();
 
 
-            inRadix     = GetRadixOf(dwiFileName);
+            inRadix     = btk::FileHelper::GetRadixOf(dwiFileName);
             vecFileName = inRadix + ".bvec";
     }
     catch(TCLAP::ArgException &e)

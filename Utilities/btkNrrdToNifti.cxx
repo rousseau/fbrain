@@ -51,7 +51,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 // BTK includes
 #include "btkNrrdField.h"
-#include "btkFileNameTools.h"
+#include "btkFileHelper.h"
 
 
 
@@ -113,11 +113,11 @@ int main(int argc, char *argv[])
     // If no filename is given for output, set it up with input name
     if(outputFileName.empty())
     {
-        outputFileName = btk::GetRadixOf(inputFileName);
+        outputFileName = btk::FileHelper::GetRadixOf(inputFileName);
     }
     else // !outputFileName.empty()
     {
-        outputFileName = btk::GetRadixOf(outputFileName);
+        outputFileName = btk::FileHelper::GetRadixOf(outputFileName);
     }
 
 
@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
         //
 
         // Only .nhdr and .nrrd file formats are supported
-        std::string inputFormat = btk::GetExtensionOf(inputFileName);
+        std::string inputFormat = btk::FileHelper::GetExtensionOf(inputFileName);
 
         if(inputFormat != ".nhdr" && inputFormat != ".nrrd")
             throw std::string("Only NRRD file formats, such as .nhdr/.raw(.gz) and .nrrd, are supported !");
@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
             //
 
             if(inputFormat == ".nhdr")
-                std::cout << "Reading files \"" << btk::GetRadixOf(inputFileName) << "{.nhdr|.raw(.gz)}\"... " << std::flush;
+                std::cout << "Reading files \"" << btk::FileHelper::GetRadixOf(inputFileName) << "{.nhdr|.raw(.gz)}\"... " << std::flush;
             else // inputFormat == .nrrd
                 std::cout << "Reading file \"" << inputFileName << "\"... " << std::flush;
 

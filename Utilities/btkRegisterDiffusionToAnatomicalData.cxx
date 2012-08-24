@@ -77,7 +77,6 @@
 #include "itkTransformFactory.h"
 
 // Local includes
-#include "btkFileNameTools.h"
 #include "btkFileHelper.h"
 #include "btkImageHelper.h"
 #include "btkCommandIterationUpdate.h"
@@ -161,11 +160,11 @@ int main(int argc, char *argv[])
         itk::TransformFactory< Transform >::RegisterTransform();
 
         // Set B-values and gradients' filenames according to diffusion sequences' filenames
-        std::string     inputSequenceFileNameRadix = btk::GetRadixOf(inputSequenceFileName);
+        std::string     inputSequenceFileNameRadix = btk::FileHelper::GetRadixOf(inputSequenceFileName);
         std::string inputSequenceGradientsFileName = inputSequenceFileNameRadix + ".bvec";
         std::string inputSequenceBValuesFileName = inputSequenceFileNameRadix + ".bval";
 
-        std::string     outputSequenceFileNameRadix = btk::GetRadixOf(outputSequenceFileName);
+        std::string     outputSequenceFileNameRadix = btk::FileHelper::GetRadixOf(outputSequenceFileName);
         std::string outputSequenceGradientsFileName = outputSequenceFileNameRadix + ".bvec";
         std::string   outputSequenceBValuesFileName = outputSequenceFileNameRadix + ".bval";
 
