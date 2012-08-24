@@ -36,9 +36,82 @@
 
 // STL includes
 #include "cstdlib"
+#include "vector"
+#include "string"
+
+// TCLAP includes
+#include "tclap/CmdLine.h"
+
+// Local includes
+#include "btkDiffusionSequenceHelper.h"
+#include "btkDiffusionSequence.h"
+#include "btkDiffusionSequenceFileReader.h"
+#include "btkDiffusionSequenceFileWriter.h"
 
 
 int main(int argc, char *argv[])
 {
+    try
+    {
+        // Define command line parser
+        TCLAP::CmdLine cmd("Diffusion sequence test program.", ' ');
+
+        // Define arguments
+        TCLAP::UnlabeledMultiArg< std::string > filenamesArg("filenames", "Input and comparison filenames.", true, "string", cmd);
+
+        // Parse the command line
+        cmd.parse(argc, argv);
+
+        // Get back arguments' values
+        std::vector< std::string > filenames = filenamesArg.getValue();
+
+        // Check the number of arguments
+        if(filenames.size() != 2)
+            throw std::string("this test should have two filenames in command line !");
+
+
+        //
+        // Testing
+        //
+
+        // Test 1
+        std::vector< std::string > test_filenames;
+        test_filenames.push_back(filenames[0]);
+        std::vector< btk::DiffusionSequence::Pointer > test_reader = btk::DiffusionSequenceHelper::ReadSequenceArray(test_filenames);
+
+        if(test_reader.size() != 1)
+            throw std::string("Test 1 failed ! (wrong number of images red)");
+
+        // Test 2
+        std::vector< btk::DiffusionSequence::Pointer > test_copy = btk::DiffusionSequenceHelper::CreateNewSequenceFromPhysicalSpaceOf(test_reader);
+
+        if(test_reader[0]->GetLargestPossibleRegion() != test_copy[0]->GetLargestPossibleRegion())
+            throw std::string("Test 2 failed ! (regions are different)");
+
+        if(test_reader[0]->GetOrigin() != test_copy[0]->GetOrigin())
+            throw std::string("Test 2 failed ! (origins are different)");
+
+        if(test_reader[0]->GetSpacing() != test_copy[0]->GetSpacing())
+            throw std::string("Test 2 failed ! (spacings are different)");
+
+        if(test_reader[0]->GetDirection() != test_copy[0]->GetDirection())
+            throw std::string("Test 2 failed ! (directions are different)");
+
+        if(test_reader[0]->GetBValues() != test_copy[0]->GetBValues())
+            throw std::string("Test 2 failed ! (b-values are different)");
+
+        if(test_reader[0]->GetGradientTable() != test_copy[0]->GetGradientTable())
+            throw std::string("Test 2 failed ! (gradient tables are different)");
+
+        // Test 3
+        test_filenames[0] = filenames[1];
+        btk::DiffusionSequenceHelper::WriteSequenceArray(test_reader, test_filenames);
+    }
+    catch(itk::ExceptionObject &exception)
+    {
+        std::cerr << "Exception: " << exception << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
     return EXIT_SUCCESS;
 }

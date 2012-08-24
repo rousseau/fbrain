@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 05/07/2012
+  Date: 22/08/2012
   Author(s): Julien Pontabry (pontabry@unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -33,54 +33,52 @@
   
 ==========================================================================*/
 
-#ifndef BTK_DIFFUSION_SEQUENCE_FILE_READER_H
-#define BTK_DIFFUSION_SEQUENCE_FILE_READER_H
+#ifndef BTK_STREAMLINE_TRACTOGRAPHY_ALGORITHM_H
+#define BTK_STREAMLINE_TRACTOGRAPHY_ALGORITHM_H
 
 // ITK includes
-#include "itkSmartPointer.h"
 #include "itkMacro.h"
-#include "itkImageFileReader.h"
+#include "itkSmartPointer.h"
 
 // Local includes
-#include "btkDiffusionSequence.h"
-#include "btkGradientDirection.h"
+#include "btkMacro.h"
+#include "btkTractographyAlgorithm.h"
 
 namespace btk
 {
 
 /**
- * @brief Read a diffusion weighted MRI dataset
+ * @brief Define a deterministic streamline propagation algorithm.
  * @author Julien Pontabry
- * @ingroup Diffusion
+ * @ingroup Tractography
  */
-class DiffusionSequenceFileReader : public itk::ImageFileReader< DiffusionSequence >
+class StreamlineTractographyAlgorithm : public btk::TractographyAlgorithm
 {
     public:
-        typedef DiffusionSequenceFileReader               Self;
-        typedef itk::ImageFileReader< DiffusionSequence > Superclass;
-        typedef itk::SmartPointer< Self >                 Pointer;
-        typedef itk::SmartPointer< const Self >           ConstPointer;
+        typedef StreamlineTractographyAlgorithm Self;
+        typedef btk::TractographyAlgorithm      Superclass;
+        typedef itk::SmartPointer< Self >       Pointer;
+        typedef itk::SmartPointer< const Self > ConstPointer;
+
+        typedef Superclass::PhysicalPoint PhysicalPoint;
 
         itkNewMacro(Self);
 
-        itkTypeMacro(DiffusionSequenceFileReader, itk::ImageFileReader);
+        itkTypeMacro(StreamlineTractographyAlgorithm,btk::TractographyAlgorithm);
 
-        /**
-         * @brief Update the process (read the diffusion weighted intensities, the gradient table and the b-values).
-         * The radix of the name of the three files are supposed to be the same.
-         */
-        virtual void Update();
+        btkSetMacro(StepSize,float);
+        btkGetMacro(StepSize,float);
+
+        void UseRungeKuttaOrder4(bool arg)
+        {
+            m_UseRungeKuttaOrder4 = arg;
+        }
 
     protected:
         /**
          * @brief Constructor.
          */
-        DiffusionSequenceFileReader();
-
-        /**
-         * @brief Destructor.
-         */
-        virtual ~DiffusionSequenceFileReader();
+        StreamlineTractographyAlgorithm();
 
         /**
          * @brief Print a message on output stream.
@@ -88,8 +86,25 @@ class DiffusionSequenceFileReader : public itk::ImageFileReader< DiffusionSequen
          * @param indent Indentation.
          */
         virtual void PrintSelf(std::ostream &os, itk::Indent indent) const;
+
+        /**
+         * @brief Propagate using the tractography algorithm at a seed point.
+         * @param point Seed point.
+         */
+        virtual void PropagateSeed(Self::PhysicalPoint point);
+
+    private:
+        /**
+         * @brief Step size between two points of output.
+         */
+        float m_StepSize;
+
+        /**
+         * @brief True if the RK4 method is used or false if the RK1 (Euler) method is used.
+         */
+        bool m_UseRungeKuttaOrder4;
 };
 
 } // namespace btk
 
-#endif // BTK_DIFFUSION_SEQUENCE_FILE_READER_H
+#endif // BTK_STREAMLINE_TRACTOGRAPHY_ALGORITHM_H

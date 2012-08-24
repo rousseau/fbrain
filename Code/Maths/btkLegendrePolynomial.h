@@ -53,7 +53,7 @@ class LegendrePolynomial
          * @param l Order
          * @return Value of Legendre polynom at order l for parameter x
          */
-        static float ComputeInZero(unsigned int l);
+        static double ComputeInZero(unsigned int l);
 
         /**
          * @brief Associated Legendre polynom
@@ -63,7 +63,7 @@ class LegendrePolynomial
          * @param theta Parameters of Legendre polynomial (x = cos(theta))
          * @return Value of associated Legendre polynomial for cos(theta) at order l and degree m
          */
-        static float Compute(unsigned int l, unsigned int m, float theta);
+        static double Compute(unsigned int l, unsigned int m, double theta);
 };
 
 } // namespace btk

@@ -64,6 +64,8 @@ class DiffusionSequence : public itk::Image< short,4 >
         typedef itk::SmartPointer< Self >       Pointer;
         typedef itk::SmartPointer< const Self > ConstPointer;
 
+        typedef std::vector< GradientDirection > GradientTable;
+
         itkNewMacro(Self);
 
         itkTypeMacro(DiffusionSequence, itk::Image);
@@ -73,6 +75,11 @@ class DiffusionSequence : public itk::Image< short,4 >
 
         btkGetMacro(BValues, std::vector< unsigned short >);
         btkSetMacro(BValues, std::vector< unsigned short >);
+
+        // TODO : check how to make a good usage of gradient table
+//        void UseWorldCoordinatesForGradientTable(); // Change gradient table to world coordinates if necessary
+//        void UseImageCoordinatesForGradientTable(); // Change gradient table to image coordinates if necessary
+//        void RotateGradientTable(Matrix m); // Rotate the gradient table with a rotation matrix (or transform)
 
     protected:
         /**
@@ -94,7 +101,7 @@ class DiffusionSequence : public itk::Image< short,4 >
 
     private:
         /** Gradient table of the diffusion sequence. */
-        std::vector< GradientDirection > m_GradientTable;
+        GradientTable m_GradientTable;
 
         /** B-values of the diffusion sequence. */
         std::vector< unsigned short > m_BValues;

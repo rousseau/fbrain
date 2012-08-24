@@ -55,7 +55,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 /* Btk includes */
 #include "btkDiffusionGradientTable.h"
 #include "btkRBFInterpolateImageFunctionS2S.h"
-#include "btkFileNameTools.h"
+#include "btkFileHelper.h"
 
 
 int main( int argc, char *argv[] )
@@ -120,12 +120,12 @@ int main( int argc, char *argv[] )
   factor = factorArg.getValue();
 
   std::string input = inputArg.getValue();
-  std::string inRadix = btk::GetRadixOf(input);
+  std::string inRadix = btk::FileHelper::GetRadixOf(input);
   std::string bvec_in = inRadix + ".bvec";
   std::string bval_in = inRadix + ".bval";
 
   std::string output = outputArg.getValue();
-  std::string outRadix = btk::GetRadixOf(output);
+  std::string outRadix = btk::FileHelper::GetRadixOf(output);
   std::string bvec_out = outRadix + ".bvec";
   std::string bval_out = outRadix + ".bval";
 

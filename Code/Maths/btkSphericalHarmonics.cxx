@@ -48,28 +48,53 @@
 namespace btk
 {
 
-float SphericalHarmonics::ComputeBasis(btk::SphericalDirection u, unsigned int l, int m)
+double SphericalHarmonics::ComputeBasis(btk::SphericalDirection u, unsigned int l, int m)
 {
+    // Order coefficient
+    double orderCoefficient = 0.0;
+
+    if(l == 0)
+    {
+        orderCoefficient = SphericalHarmonics::m_CoefficientOrder0;
+    }
+    else if(l == 2)
+    {
+        orderCoefficient = SphericalHarmonics::m_CoefficientOrder2;
+    }
+    else if(l == 4)
+    {
+        orderCoefficient = SphericalHarmonics::m_CoefficientOrder4;
+    }
+    else if(l == 6)
+    {
+        orderCoefficient = SphericalHarmonics::m_CoefficientOrder6;
+    }
+    else // if(l == 8)
+    {
+        orderCoefficient = SphericalHarmonics::m_CoefficientOrder8;
+    }
+
+    // Degree coefficient and spherical harmonics
+    double degreeCoefficient = 0.0;
+    double value = 0.0;
+
     if(m < 0)
     {
-        float coeff = M_SQRT2 * std::sqrt( (float)btk::MathFunctions::factorial(l+m) / (float)btk::MathFunctions::factorial(l-m) );
-
-        if(m%2 != 0)
-            coeff = -coeff;
-
-        return coeff * (float)btk::LegendrePolynomial::Compute(l,(unsigned int)-m,u[0]) * (float)std::sin(-m*u[1]);
+        degreeCoefficient = M_SQRT2 * std::sqrt( (double)btk::MathFunctions::factorial(l+m) / (double)btk::MathFunctions::factorial(l-m) );
+                    value = (double)btk::LegendrePolynomial::Compute(l,(unsigned int)-m,u[0]) * (double)std::sin(-m*u[1]);
     }
     else if(m > 0)
     {
-        float coeff = M_SQRT2 * std::sqrt( (float)btk::MathFunctions::factorial(l-m) / (float)btk::MathFunctions::factorial(l+m) );
-
-        if(m%2 != 0)
-            coeff = -coeff;
-
-        return coeff * (float)btk::LegendrePolynomial::Compute(l,(unsigned int)m,u[0]) * (float)std::cos(m*u[1]);
+        degreeCoefficient = M_SQRT2 * std::sqrt( (double)btk::MathFunctions::factorial(l-m) / (double)btk::MathFunctions::factorial(l+m) );
+                    value = (double)btk::LegendrePolynomial::Compute(l,(unsigned int)m,u[0]) * (double)std::cos(m*u[1]);
     }
     else // m = 0
-        return (float)btk::LegendrePolynomial::Compute(l,(unsigned int)0,u[0]);
+    {
+        degreeCoefficient = 1.0;
+                    value = (double)btk::LegendrePolynomial::Compute(l,(unsigned int)0,u[0]);
+    }
+
+    return orderCoefficient * degreeCoefficient * value;
 }
 
 

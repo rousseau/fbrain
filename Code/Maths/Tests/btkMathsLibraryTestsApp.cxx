@@ -43,12 +43,18 @@
 
 // Local includes
 #include "btkMatrixOperationsTest.h"
+#include "btkLegendrePolynomialTest.h"
+#include "btkMathFunctionsTest.h"
+#include "btkSphericalHarmonicsTest.h"
 
 
 int main(int argc, char *argv[])
 {
     CppUnit::TextUi::TestRunner runner;
     runner.addTest(btk::MatrixOperationsTest::suite());
+    runner.addTest(btk::LegendrePolynomialTest::suite());
+    runner.addTest(btk::MathFunctionsTest::suite());
+    runner.addTest(btk::SphericalHarmonicsTest::suite());
     runner.setOutputter(new CppUnit::CompilerOutputter(&runner.result(), std::cerr));
 
     return runner.run() ? EXIT_SUCCESS : EXIT_FAILURE;

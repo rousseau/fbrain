@@ -60,7 +60,7 @@
 /* Btk includes */
 #include "btkLandmarksFileReader.h"
 #include "btkDiffusionGradientTable.h"
-#include "btkFileNameTools.h"
+#include "btkFileHelper.h"
 
 
 int main( int argc, char *argv[] )
@@ -96,12 +96,12 @@ int main( int argc, char *argv[] )
 
 
   std::string inputImageFile = inputArg.getValue();
-  std::string inRadix = btk::GetRadixOf(inputImageFile);
+  std::string inRadix = btk::FileHelper::GetRadixOf(inputImageFile);
   std::string bvec_in = inRadix + ".bvec";
   std::string bval_in = inRadix + ".bval";
 
   std::string outputImageFile = outputArg.getValue();
-  std::string outRadix = btk::GetRadixOf(outputImageFile);
+  std::string outRadix = btk::FileHelper::GetRadixOf(outputImageFile);
   std::string bvec_out = outRadix + ".bvec";
   std::string bval_out = outRadix + ".bval";
 

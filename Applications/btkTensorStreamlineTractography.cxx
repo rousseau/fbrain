@@ -54,7 +54,7 @@
 #include "btkDirection.h"
 #include "btkDTFPSignal.h"
 #include "btkDTFPSignalExtractor.h"
-#include "btkFileNameTools.h"
+#include "btkFileHelper.h"
 
 
 using namespace btk;
@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
             seedSpacing    = seedSpacingArg.getValue();
             faThreshold    = faThresholdArg.getValue();
 
-            inRadix     = GetRadixOf(dwiFileName);
+            inRadix     = btk::FileHelper::GetRadixOf(dwiFileName);
             vecFileName = inRadix + ".bvec";
     }
     catch(TCLAP::ArgException &e)

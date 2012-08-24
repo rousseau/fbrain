@@ -33,9 +33,6 @@
 
 ==========================================================================*/
 
-#ifndef BTK_DIFFUSION_SEQUENCE_HELPER_TXX
-#define BTK_DIFFUSION_SEQUENCE_HELPER_TXX
-
 #include "btkDiffusionSequenceHelper.h"
 
 
@@ -188,5 +185,3 @@ std::vector< btk::DiffusionSequence::Pointer > &DiffusionSequenceHelper::CreateN
 }
 
 } // namespace btk
-
-#endif // BTK_DIFFUSION_SEQUENCE_HELPER_TXX

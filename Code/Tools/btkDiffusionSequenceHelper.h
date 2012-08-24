@@ -98,6 +98,4 @@ namespace btk
 
 } // namespace btk
 
-#include "btkDiffusionSequenceHelper.txx"
-
 #endif // BTK_DIFFUSION_SEQUENCE_HELPER_H
