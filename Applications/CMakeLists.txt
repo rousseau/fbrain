@@ -33,7 +33,7 @@ INCLUDE_DIRECTORIES(
     ${ANN_INCLUDE_DIR}
     ${Code_SOURCE_DIR}/Reconstruction
     ${Code_SOURCE_DIR}/Reconstruction/SuperResolution
-    ${Code_SOURCE_DIR}/DTI
+    ${Code_SOURCE_DIR}/Diffusion
     ${Code_SOURCE_DIR}/Segmentation
     ${Code_SOURCE_DIR}/Transformations
 )
@@ -125,7 +125,7 @@ ADD_EXECUTABLE(btkRBFInterpolationS2S btkRBFInterpolationS2S.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkNumerical.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolateImageFunctionS2S.h
-    ${fbrain_SOURCE_DIR}/Code/DTI/btkDiffusionGradientTable.h
+    ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
 )
 TARGET_LINK_LIBRARIES(btkRBFInterpolationS2S btkToolsLibrary ${ITK_LIBRARIES} ${ANN_LIBRARY})
 

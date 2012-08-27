@@ -3,7 +3,7 @@ INCLUDE_REGULAR_EXPRESSION("^.*$")
 
 INCLUDE_DIRECTORIES(${TCLAP_DIRECTORY})
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Reconstruction)
-INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/DTI)
+INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Diffusion)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/InputOutput)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Tools)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Transformations)
@@ -15,7 +15,7 @@ ADD_EXECUTABLE(btkModifyImageUsingLookUpTable btkModifyImageUsingLookUpTable.cxx
 TARGET_LINK_LIBRARIES(btkModifyImageUsingLookUpTable ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkConvertGradientTable btkConvertGradientTable.cxx
-    ${fbrain_SOURCE_DIR}/Code/DTI/btkDiffusionGradientTable.h
+    ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
  )
 TARGET_LINK_LIBRARIES(btkConvertGradientTable ${ITK_LIBRARIES})
 
@@ -23,12 +23,12 @@ ADD_EXECUTABLE(btkReorientImageToStandard btkReorientImageToStandard.cxx)
 TARGET_LINK_LIBRARIES(btkReorientImageToStandard btkToolsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkReorientDiffusionSequenceToStandard btkReorientDiffusionSequenceToStandard.cxx
-    ${fbrain_SOURCE_DIR}/Code/DTI/btkDiffusionGradientTable.h
+    ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
 )
 TARGET_LINK_LIBRARIES(btkReorientDiffusionSequenceToStandard btkToolsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkSetStandardCoorSystem btkSetStandardCoorSystem.cxx
-    ${fbrain_SOURCE_DIR}/Code/DTI/btkDiffusionGradientTable.h
+    ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
  )
 TARGET_LINK_LIBRARIES(btkSetStandardCoorSystem ${ITK_LIBRARIES})
 
@@ -36,7 +36,7 @@ ADD_EXECUTABLE(btkPrintImageInfo btkPrintImageInfo.cxx)
 TARGET_LINK_LIBRARIES(btkPrintImageInfo ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkRegisterDiffusionToAnatomicalData btkRegisterDiffusionToAnatomicalData.cxx
-    ${fbrain_SOURCE_DIR}/Code/DTI/btkDiffusionGradientTable.h
+    ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
  )
 TARGET_LINK_LIBRARIES(btkRegisterDiffusionToAnatomicalData btkToolsLibrary ${ITK_LIBRARIES})
 
@@ -91,7 +91,7 @@ ADD_EXECUTABLE(btkWeightedMean btkWeightedMean.cxx)
 TARGET_LINK_LIBRARIES(btkWeightedMean ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkSequenceNormalization btkSequenceNormalization.cxx
-    ${fbrain_SOURCE_DIR}/Code/DTI/btkDiffusionGradientTable.h
+    ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkAffineRegistration.h
     #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRegistration.h
     #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkAffineRegistration.h
