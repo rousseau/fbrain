@@ -95,6 +95,19 @@ class StreamlineTractographyAlgorithm : public btk::TractographyAlgorithm
 
     private:
         /**
+         * @brief Propagate a seed using the Runke-Kutta method at order 4.
+         * @param points Vector of points initilized with the coordinates of the seed.
+         */
+        void PropagateSeedRK4(std::vector< Self::PhysicalPoint > &points);
+
+        /**
+         * @brief Propagate a seed using the Euler method (Runke-Kutta method at order 1).
+         * @param points Vector of points initilized with the coordinates of the seed.
+         */
+        void PropagateSeedRK1(std::vector< Self::PhysicalPoint > &points);
+
+    private:
+        /**
          * @brief Step size between two points of output.
          */
         float m_StepSize;

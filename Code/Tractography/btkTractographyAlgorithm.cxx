@@ -72,8 +72,6 @@ void TractographyAlgorithm::PrintSelf(std::ostream &os, itk::Indent indent) cons
 
 void TractographyAlgorithm::Update()
 {
-    btkCoutMacro("TractographyAlgorithm::Update");
-
     Self::ResampleLabelImage();
 
     LabelIterator it(m_RegionsOfInterest, m_RegionsOfInterest->GetLargestPossibleRegion());
