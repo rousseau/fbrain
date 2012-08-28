@@ -33,7 +33,7 @@ INCLUDE_DIRECTORIES(
     ${ANN_INCLUDE_DIR}
     ${Code_SOURCE_DIR}/Reconstruction
     ${Code_SOURCE_DIR}/Reconstruction/SuperResolution
-    ${Code_SOURCE_DIR}/DTI
+    ${Code_SOURCE_DIR}/Diffusion
     ${Code_SOURCE_DIR}/Segmentation
     ${Code_SOURCE_DIR}/Transformations
 )
@@ -165,7 +165,7 @@ ADD_EXECUTABLE(btkRBFInterpolationS2S btkRBFInterpolationS2S.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkNumerical.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolateImageFunctionS2S.h
-    ${fbrain_SOURCE_DIR}/Code/DTI/btkDiffusionGradientTable.h
+    ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
 )
 
 TARGET_LINK_LIBRARIES(btkRBFInterpolationS2S btkToolsLibrary ${ITK_LIBRARIES} ${ANN_LIBRARY})
@@ -242,23 +242,10 @@ ADD_EXECUTABLE(btkODFStreamlineTractography btkODFStreamlineTractography.cxx
 )
 TARGET_LINK_LIBRARIES(btkODFStreamlineTractography btkToolsLibrary ${ITK_LIBRARIES} vtkHybrid)
 
-ADD_EXECUTABLE(btkTensorStreamlineTractography btkTensorStreamlineTractography.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkCartesianCoordinates.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalCoordinates.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkVector.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkDirection.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkPoint.cxx
-    ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPSignalExtractor.cxx
-    ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPSignal.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalHarmonics.cxx
-)
-TARGET_LINK_LIBRARIES(btkTensorStreamlineTractography btkToolsLibrary ${ITK_LIBRARIES} vtkHybrid)
-
 INSTALL(TARGETS
     btkODFParticleFilterTractography
     btkODFStreamlineTractography
     btkTensorParticleFilterTractography
-    btkTensorStreamlineTractography
 DESTINATION bin)
 
 # ---- Segmentation ---------------------------------------------------------------------

@@ -149,11 +149,29 @@ class TensorModel : public btk::DiffusionModel
         virtual std::vector< btk::GradientDirection > MeanDirectionsAt(ContinuousIndex cindex);
 
         /**
+         * @brief Get mean directions in a solid angle formed by previous vector and search angle at a location in the physical space.
+         * @param point Point in the physical space.
+         * @param vector Previous vector
+         * @param angle Angle of search.
+         * @return Vector of mean directions of local model in a solid angle formed by previous vector and search angle at a physical location point.
+         */
+        virtual std::vector< btk::GradientDirection > MeanDirectionsAt(PhysicalPoint point, btk::GradientDirection vector, float angle);
+
+        /**
          * @brief Get mean directions at a location in the image space.
          * @param cindex Continuous index in the image space.
          * @return Vector of mean directions of local model at a location in image space.
          */
         virtual std::vector< btk::GradientDirection > MeanDirectionsAt(PhysicalPoint point);
+
+        /**
+         * @brief Get mean directions in a solid angle formed by previous vector and search angle at a location in the physical space.
+         * @param cindex Continuous index in the image space.
+         * @param vector Previous vector
+         * @param angle Angle of search.
+         * @return Vector of mean directions of local model in a solid angle formed by previous vector and search angle at a physical location point.
+         */
+        virtual std::vector< btk::GradientDirection > MeanDirectionsAt(ContinuousIndex cindex, btk::GradientDirection vector, float angle);
 
     protected:
         /**

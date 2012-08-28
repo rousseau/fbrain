@@ -82,6 +82,7 @@ SET(DIFFUSION_LIBRARY_HEADER
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkDiffusionSequence.h
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkDiffusionSequenceFileReader.h
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkDiffusionSequenceFileWriter.h
+    ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkDiffusionGradientTable.h
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkDiffusionTensorReconstructionFilter.h
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkSphericalHarmonicsDiffusionDecompositionFilter.h
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkDiffusionModel.h

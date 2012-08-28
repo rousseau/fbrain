@@ -55,6 +55,15 @@ DiffusionSequence::~DiffusionSequence()
 void DiffusionSequence::PrintSelf(std::ostream &os, itk::Indent indent) const
 {
     Superclass::PrintSelf(os, indent);
+
+    os << indent << "Number of gradients: " << m_GradientTable.size() << std::endl;
+    os << indent << "Gradient table: " << std::endl;
+    for(unsigned int i = 0; i < m_GradientTable.size(); i++)
+    {
+        os << indent << indent << m_GradientTable[i] << std::endl;
+    }
+
+    os << indent << "B-Value: " << m_BValues[1] << std::endl;
 }
 
 } // namespace btk

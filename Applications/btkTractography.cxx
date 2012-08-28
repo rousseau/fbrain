@@ -79,16 +79,15 @@ int main(int argc, char *argv[])
         TCLAP::ValueArg< std::string >         roiFileNameArg("r", "roi_image", "ROI image", true, "", "string", cmd);
         TCLAP::MultiArg< unsigned short >           labelsArg("l", "label", "Label selection in ROI image", false, "int", cmd);
 
-        TCLAP::SwitchArg particleFilterAlgorithmArg("", "particle_filter", "Use particle filtering algorithm for tractography", cmd, true);
         TCLAP::SwitchArg     streamlineAlgorithmArg("", "streamline", "Use streamline algorithm for tractography", cmd, false);
-        TCLAP::SwitchArg             odfModelingArg("", "odf", "Use ODF modeling for diffusion", cmd, true);
         TCLAP::SwitchArg          tensorModelingArg("", "tensor", "Use tensor modeling for diffusion", cmd, false);
 
         TCLAP::ValueArg< std::string >        modelFileNameArg("", "model", "Model image", false, "", "string", cmd);
         TCLAP::ValueArg< std::string > outputFileNamePrefixArg("o", "output", "Prefix of the filenames of the outputs", false, "tractography", "string", cmd);
 
-        TCLAP::ValueArg< float > stepSizeArg("", "step_size", "Step size between two points of the solution", false, 0.5, "positive real", cmd);
-        TCLAP::SwitchArg           useRK4Arg("", "RK4", "Use the Runge-Kutta method at order 4 instead of Euler's methods for path computing in streamline algorithm", cmd, false);
+        TCLAP::ValueArg< float >       stepSizeArg("", "step_size", "Step size between two points of the solution", false, 0.5, "positive real", cmd);
+        TCLAP::SwitchArg                 useRK4Arg("", "RK4", "Use the Runge-Kutta method at order 4 instead of Euler's methods for path computing in streamline algorithm", cmd, false);
+        TCLAP::ValueArg< float > thresholdAngleArg("", "threshold_angle", "Threshold angle (in degrees) between two successive displacements", false, 75, "positive real", cmd);
 
         // Parsing arguments
         cmd.parse(argc, argv);
@@ -99,27 +98,15 @@ int main(int argc, char *argv[])
         std::string              roiFileName = roiFileNameArg.getValue();
         std::vector< unsigned short > labels = labelsArg.getValue();
 
-        bool particleFilterAlgorithm = particleFilterAlgorithmArg.getValue();
         bool     streamlineAlgorithm = streamlineAlgorithmArg.getValue();
-        bool             odfModeling = odfModelingArg.getValue();
         bool          tensorModeling = tensorModelingArg.getValue();
 
         std::string        modelFileName = modelFileNameArg.getValue();
         std::string outputFileNamePrefix = outputFileNamePrefixArg.getValue();
 
-        float stepSize = stepSizeArg.getValue();
-        bool    useRK4 = useRK4Arg.getValue();
-
-
-        //
-        // Checking
-        //
-
-//        if(particleFilterAlgorithm)
-//            throw std::string("Particle filter algorithm not yet implemented !");
-
-//        if(odfModeling)
-//            throw std::string("ODF modeling not yet implemented !");
+        float       stepSize = stepSizeArg.getValue();
+        bool          useRK4 = useRK4Arg.getValue();
+        float thresholdAngle = 0.017453292519943 * thresholdAngleArg.getValue();
 
 
         //
@@ -138,7 +125,7 @@ int main(int argc, char *argv[])
         btk::DiffusionModel::Pointer model = NULL;
 
 //        if(tensorModeling)
-        {
+//        {
             btk::DiffusionTensorReconstructionFilter::OutputImageType::Pointer tensorImage = NULL;
 
             if(modelFileName.empty() || !btk::FileHelper::FileExist(modelFileName))
@@ -173,7 +160,7 @@ int main(int argc, char *argv[])
             model = tensorModel;
 
             btkCoutMacro("done.");
-        }
+//        }
 //        else // ODF modeling
 //        {
 //            btk::SphericalHarmonicsDiffusionDecompositionFilter::OutputImageType::Pointer shCoefficientsImage = NULL;
@@ -225,6 +212,7 @@ int main(int argc, char *argv[])
             btk::StreamlineTractographyAlgorithm::Pointer strAlgorithm = btk::StreamlineTractographyAlgorithm::New();
             strAlgorithm->SetStepSize(stepSize);
             strAlgorithm->UseRungeKuttaOrder4(useRK4);
+            strAlgorithm->SetThresholdAngle(thresholdAngle);
 
             algorithm = strAlgorithm;
 
