@@ -210,9 +210,44 @@ std::vector< btk::GradientDirection > TensorModel::MeanDirectionsAt(ContinuousIn
 
 //----------------------------------------------------------------------------------------
 
+std::vector< btk::GradientDirection > TensorModel::MeanDirectionsAt(ContinuousIndex cindex, btk::GradientDirection vector, float angle)
+{
+    std::vector< btk::GradientDirection > meanDirections = Self::MeanDirectionsAt(cindex);
+
+    std::vector< btk::GradientDirection > restrictedMeanDirections;
+
+    float dotProduct = meanDirections[0]*vector;
+
+    // Check the consistency between the previous and the new direction.
+    if(dotProduct < 0)
+    {
+        meanDirections[0] *= -1;
+        dotProduct        *= -1;
+    }
+
+    float alpha = std::acos( dotProduct / (meanDirections[0].GetNorm()*vector.GetNorm()) );
+
+    // Check if the direction is in the solid angle
+    if(alpha <= angle)
+    {
+        restrictedMeanDirections.push_back(meanDirections[0]);
+    }
+
+    return restrictedMeanDirections;
+}
+
+//----------------------------------------------------------------------------------------
+
 std::vector< btk::GradientDirection > TensorModel::MeanDirectionsAt(PhysicalPoint point)
 {
-    return MeanDirectionsAt(Self::TransformPhysicalPointToContinuousIndex(point));
+    return Self::MeanDirectionsAt(Self::TransformPhysicalPointToContinuousIndex(point));
+}
+
+//----------------------------------------------------------------------------------------
+
+std::vector< btk::GradientDirection > TensorModel::MeanDirectionsAt(PhysicalPoint point, GradientDirection vector, float angle)
+{
+    return Self::MeanDirectionsAt(Self::TransformPhysicalPointToContinuousIndex(point), vector, angle);
 }
 
 //----------------------------------------------------------------------------------------

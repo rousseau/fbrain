@@ -74,6 +74,9 @@ class StreamlineTractographyAlgorithm : public btk::TractographyAlgorithm
             m_UseRungeKuttaOrder4 = arg;
         }
 
+        btkSetMacro(ThresholdAngle,float);
+        btkGetMacro(ThresholdAngle,float);
+
     protected:
         /**
          * @brief Constructor.
@@ -106,6 +109,14 @@ class StreamlineTractographyAlgorithm : public btk::TractographyAlgorithm
          */
         void PropagateSeedRK1(std::vector< Self::PhysicalPoint > &points);
 
+        /**
+         * @brief Select the best direction in a vector of direction, depending on the previous direction.
+         * @param meanDirections Vector of mean directions.
+         * @param previousVector Previous direction.
+         * @return The closest direction to the previous direction.
+         */
+        btk::GradientDirection SelectClosestDirection(std::vector< btk::GradientDirection > &meanDirections, btk::GradientDirection &previousVector);
+
     private:
         /**
          * @brief Step size between two points of output.
@@ -116,6 +127,11 @@ class StreamlineTractographyAlgorithm : public btk::TractographyAlgorithm
          * @brief True if the RK4 method is used or false if the RK1 (Euler) method is used.
          */
         bool m_UseRungeKuttaOrder4;
+
+        /**
+         * @brief Allowed angle for propagation.
+         */
+        float m_ThresholdAngle;
 };
 
 } // namespace btk

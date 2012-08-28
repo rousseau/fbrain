@@ -476,9 +476,39 @@ std::vector< btk::GradientDirection > OrientationDiffusionFunctionModel::MeanDir
 
 //----------------------------------------------------------------------------------------
 
+std::vector< btk::GradientDirection > OrientationDiffusionFunctionModel::MeanDirectionsAt(ContinuousIndex cindex, GradientDirection vector, float angle)
+{
+    std::vector< btk::GradientDirection > meanDirections = Self::MeanDirectionsAt(cindex);
+
+    std::vector< btk::GradientDirection > restrictedMeanDirections;
+
+    for(unsigned int i = 0; i < meanDirections.size(); i++)
+    {
+        float dotProduct = meanDirections[i]*vector;
+        float      alpha = std::acos( dotProduct / (meanDirections[i].GetNorm()*vector.GetNorm()) );
+
+        // Check if the current direction is in the solid angle
+        if(alpha <= angle)
+        {
+            restrictedMeanDirections.push_back(meanDirections[i]);
+        }
+    }
+
+    return restrictedMeanDirections;
+}
+
+//----------------------------------------------------------------------------------------
+
 std::vector< btk::GradientDirection > OrientationDiffusionFunctionModel::MeanDirectionsAt(PhysicalPoint point)
 {
     return Self::MeanDirectionsAt(Self::TransformPhysicalPointToContinuousIndex(point));
+}
+
+//----------------------------------------------------------------------------------------
+
+std::vector< btk::GradientDirection > OrientationDiffusionFunctionModel::MeanDirectionsAt(PhysicalPoint point, GradientDirection vector, float angle)
+{
+    return Self::MeanDirectionsAt(Self::TransformPhysicalPointToContinuousIndex(point), vector, angle);
 }
 
 //----------------------------------------------------------------------------------------
