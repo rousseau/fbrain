@@ -200,6 +200,10 @@ ADD_EXECUTABLE(btkMidwayHistogramEqualization btkMidwayHistogramEqualization.cxx
 )
 TARGET_LINK_LIBRARIES(btkMidwayHistogramEqualization ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkBinarizeMask btkBinarizeMask.cxx
+     ${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+TARGET_LINK_LIBRARIES(btkBinarizeMask ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -239,4 +243,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkComputeOverlap
                 btkComputeChamferDistance
                 btkMidwayHistogramEqualization
+                btkBinarizeMask
         DESTINATION bin)
