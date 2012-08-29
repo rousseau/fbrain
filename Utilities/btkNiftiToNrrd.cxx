@@ -50,7 +50,7 @@
 #include "itkImageRegionIteratorWithIndex.h"
 
 /* Btk includes */
-#include "btkFileNameTools.h"
+#include "btkFileHelper.h"
 
 
 
@@ -79,12 +79,12 @@ int main( int argc, char * argv[] )
   const char* inputFile = inputFileStr.c_str();
 
   std::string bvecFileStr;
-  bvecFileStr = btk::GetRadixOf(inputFileStr);
+  bvecFileStr = btk::FileHelper::GetRadixOf(inputFileStr);
   bvecFileStr = bvecFileStr + ".bvec";
   const char* bvecFile = bvecFileStr.c_str();
 
   std::string bvalFileStr;
-  bvalFileStr = btk::GetRadixOf(inputFileStr);
+  bvalFileStr = btk::FileHelper::GetRadixOf(inputFileStr);
   bvalFileStr = bvalFileStr + ".bval";
   const char* bvalFile = bvalFileStr.c_str();
 

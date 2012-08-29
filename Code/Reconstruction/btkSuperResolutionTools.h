@@ -36,6 +36,7 @@
 #ifndef __btkSuperResolutionTools_h
 #define __btkSuperResolutionTools_h
 
+
 #include "itkImage.h"
 #include "itkImageDuplicator.h"
 #include "itkResampleImageFilter.h"
@@ -51,13 +52,18 @@
 #include "itkBinaryThresholdImageFilter.h"
 #include "itkAbsoluteValueDifferenceImageFilter.h"
 #include "itkStatisticsImageFilter.h"
+#include "itkLaplacianImageFilter.h"
 
 #include "vnl/vnl_sparse_matrix.h"
+#include "vnl/vnl_inverse.h"
+#include "vnl/algo/vnl_sparse_lu.h"
 
 #include "../Denoising/btkNLMTool.h"
 
 
 #include <sstream>
+#include <iostream>
+#include <fstream>
 
 class SuperResolutionDataManager;
 
@@ -83,13 +89,16 @@ public:
   typedef itk::AbsoluteValueDifferenceImageFilter <itkImage, itkImage, itkImage>  itkAbsoluteValueDifferenceImageFilter;  
   typedef itk::StatisticsImageFilter<itkImage>                            itkStatisticsImageFilter;
 
+  typedef itk::LaplacianImageFilter<itkImage , itkImage >                 itkLaplacianFilter;
+
+
   int                       m_psftype; // 0: 3D interpolated boxcar, 1: 3D oversampled boxcar
   std::vector<itkPointer>   m_PSF;
   int                       m_interpolationOrderPSF;
   int                       m_interpolationOrderIBP;
-  vnl_sparse_matrix<float>  m_H;
-  vnl_vector<float>         m_Y;
-  vnl_vector<float>         m_X;
+  vnl_sparse_matrix<double> m_H;
+  vnl_vector<double>         m_Y;
+  vnl_vector<double>         m_X;
   float                     m_paddingValue;
   std::vector<unsigned int> m_offset;
   
@@ -108,6 +117,7 @@ public:
   void SimulateLRImages(SuperResolutionDataManager & data);
   double IteratedBackProjection(SuperResolutionDataManager & data, int & nlm, float & beta, int & medianIBP);
   void CreateMaskHRImage(SuperResolutionDataManager & data);
+  void SRUsingPseudoInverse(SuperResolutionDataManager & data);
 };
 
 
@@ -520,8 +530,8 @@ void SuperResolutionTools::HComputation(SuperResolutionDataManager & data)
     
     double sum = m_H.sum_row(i);
     
-    vnl_sparse_matrix<float>::row & r = m_H.get_row(i);
-    vnl_sparse_matrix<float>::row::iterator col_iter;
+    vnl_sparse_matrix<double>::row & r = m_H.get_row(i);
+    vnl_sparse_matrix<double>::row::iterator col_iter;
     
     for (col_iter = r.begin(); col_iter != r.end(); ++col_iter)
       (*col_iter).second = (*col_iter).second / sum;
@@ -559,7 +569,7 @@ void SuperResolutionTools::SimulateLRImages(SuperResolutionDataManager & data)
   UpdateX(data);
   
   //Compute H * x
-  vnl_vector<float> Hx;
+  vnl_vector<double> Hx;
   m_H.mult(m_X,Hx);
   
   //resize the vector of simulated input LR images
@@ -712,7 +722,7 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
         for(itImage.GoToBegin(); !itImage.IsAtEnd(); ++itImage)
         {
           itkImage::IndexType p = itImage.GetIndex();
-          std::vector<float>  v;
+          std::vector<double>  v;
           for(uint i=0; i<data.m_inputLRImages.size(); i++)
             v.push_back(errorImages[i]->GetPixel(p));
           std::sort(v.begin(), v.end());
@@ -874,5 +884,163 @@ void SuperResolutionTools::CreateMaskHRImage(SuperResolutionDataManager & data)
   data.m_maskHRImage = thresholdFilter->GetOutput();
 
 }
+
+void SuperResolutionTools::SRUsingPseudoInverse(SuperResolutionDataManager & data)
+{
+  std::cout<<"Super-resolution using regularized pseudo-inverse approach"<<std::endl; 
+  //Create a patch containing values of a laplacian filter
+  itkPointer diracPatch = itkImage::New();
+  itkImage::IndexType start;
+  start[0] = 0; 
+  start[1] = 0;
+  start[2] = 0;
+  itkImage::SizeType size;
+  size[0] = 3;
+  size[1] = 3;
+  size[2] = 3;
+  itkImage::RegionType region;
+  region.SetSize(size);
+  region.SetIndex(start);
+  
+  diracPatch->SetRegions(region);
+  diracPatch->Allocate();
+  diracPatch->FillBuffer(0.0);
+  
+  start[0] = 1;
+  start[1] = 1;
+  start[2] = 1;
+  //Initialize laplacianPatch as a dirac  
+  diracPatch->SetPixel(start,1);
+    
+  itkLaplacianFilter::Pointer laplacian = itkLaplacianFilter::New();
+  laplacian->SetInput( diracPatch ); // NOTE: input image type must be double or float
+  laplacian->Update();
+    
+  itkPointer laplacianPatch = laplacian->GetOutput();
+  //--------------------------------------------------------
+  
+  //Compute the square matrix D (laplacian filter)
+  
+  // Set size of matrices
+  unsigned int n = data.m_inputHRImage->GetLargestPossibleRegion().GetNumberOfPixels();
+  std::cout<<"Number of voxels:"<<n<<std::endl;
+  vnl_sparse_matrix<double>  D;
+  D.set_size(n, n);
+  
+  
+  //linear index : an integer value corresponding to (x,y,z) triplet coordinates (ITK index)
+  uint hrLinearIndex = 0;
+  uint hrLinearIndexTmp = 0;
+
+  //Temporary variables
+  itkImage::IndexType hrIndex;     //index in HR image
+  itkImage::IndexType hrIndexTmp;  //index in HR image of tmp points
+
+  //Instantiate an iterator over the current HR image
+  itkIteratorWithIndex itHRImage(data.m_inputHRImage,data.m_inputHRImage->GetLargestPossibleRegion());
+
+  //Get the size of the current HR image
+  itkImage::SizeType  hrSize  = data.m_inputHRImage->GetLargestPossibleRegion().GetSize();
+
+  //Loop over the voxels of the current HR image
+  for(itHRImage.GoToBegin(); !itHRImage.IsAtEnd(); ++itHRImage){
+  
+    //Coordinate in the current LR image
+    hrIndex = itHRImage.GetIndex();
+        
+    //Compute the corresponding linear index of lrIndex
+    hrLinearIndex = hrIndex[0] + hrIndex[1]*hrSize[0] + hrIndex[2]*hrSize[0]*hrSize[1];
+    
+    for(uint i=0; i<size[0]; i++)
+    for(uint j=0; j<size[1]; j++)
+    for(uint k=0; k<size[2]; k++)
+    {
+      
+      //index du voisin de hrIndex
+      hrIndexTmp[0] = hrIndex[0] - size[0]/2 +i;
+      hrIndexTmp[1] = hrIndex[1] - size[0]/2 +j;
+      hrIndexTmp[2] = hrIndex[2] - size[0]/2 +k;
+      
+      hrLinearIndexTmp = hrIndexTmp[0] + hrIndexTmp[1]*hrSize[0] + hrIndexTmp[2]*hrSize[0]*hrSize[1];
+      
+      //index dans le laplacianPatch
+      start[0] = i;
+      start[1] = j;
+      start[2] = k;
+      
+      if( data.m_inputHRImage->GetLargestPossibleRegion().IsInside( hrIndexTmp ) )
+        D(hrLinearIndex, hrLinearIndexTmp) += laplacianPatch->GetPixel(start);
+        
+    }
+  } 
+  std::cout<< "Taille de H : "<<m_H.rows()<<" "<<m_H.cols()<<std::endl;
+  std::cout<< "Taille de D : "<<D.rows()<<" "<<D.cols()<<std::endl;
+  
+  
+  std::ofstream myfile_H;
+  myfile_H.open ("matrix_H.txt");
+  for(uint i = 0; i < m_H.rows(); i++)
+  {
+    for(uint j = 0; j < m_H.cols(); j++)
+    {
+      myfile_H << m_H(i,j) <<" ";
+    }
+    myfile_H << std::endl;
+  }
+  myfile_H.close();
+
+  std::ofstream myfile_D;
+  myfile_D.open ("matrix_D.txt");
+  for(uint i = 0; i < D.rows(); i++)
+  {
+    for(uint j = 0; j < D.cols(); j++)
+    {
+      myfile_D << D(i,j) <<" ";
+    }
+    myfile_D << std::endl;
+  }
+  myfile_D.close();  
+  
+  //Apply pseudo-inverse technique
+  //m_X = inverse(m_H.transpose()*m_H +lambda*D.transpose()*D) * m_H.transpose() * m_Y;
+
+  double lambda = 1e-5;
+  
+  std::cout<<"Inverse sparse matrix using LU decomposition"<<std::endl;
+  //inverse of sparse matrix is not supported by vnl !!
+  //Use LU decomposition (which works only with double values)
+  vnl_sparse_matrix<double>  M;
+  M = m_H.transpose()*m_H +lambda*D.transpose()*D;
+  
+    
+  vnl_sparse_matrix<double>  invM(n,n);    
+  vnl_sparse_lu lu(M,vnl_sparse_lu::quiet);
+
+  for(uint i=0; i<n; i++) 
+  {    
+    std::cout<<"current line:"<<i<<std::endl;
+    vnl_vector<double> b(n, 0.0), x(n);
+    b(i)=1;
+    lu.solve(b, &x);
+    std::cout<<"fill the inverse matrix"<<std::endl;
+    for(uint j=0; j<n; j++)
+      invM(i,j)=x(j);
+  }  
+  
+  invM = invM * m_H.transpose();  
+  invM.mult(m_Y,m_X);
+  
+  std::cout<<"Fill the output HR image"<<std::endl;
+  data.m_outputHRImage->FillBuffer(0);
+
+  itkIteratorWithIndex itOutputImage(data.m_outputHRImage,data.m_outputHRImage->GetLargestPossibleRegion());
+  for(itOutputImage.GoToBegin(); !itOutputImage.IsAtEnd(); ++itOutputImage){
+    hrIndex = itOutputImage.GetIndex();
+    hrLinearIndex = hrIndex[0] + hrIndex[1]*hrSize[0] + hrIndex[2]*hrSize[0]*hrSize[1];
+    itOutputImage.Set(m_X[hrLinearIndex]);
+  }
+  
+}
+
 
 #endif

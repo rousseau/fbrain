@@ -97,7 +97,23 @@ namespace btk
     m_numberOfSamples--;    
   }
   
+  void Histogram::AddWeightedSample(float sample, float weight)
+  {
+    //No boundary checking !
+    unsigned int bin = (int) (sample * m_aCoefficient + m_bCoefficient);
+    m_data[bin] += weight;
+    m_numberOfSamples += weight;
+  }
   
+  
+  void Histogram::RemoveWeightedSample(float sample, float weight)
+  {
+    //No boundary checking !
+    unsigned int bin = (int) (sample * m_aCoefficient + m_bCoefficient);
+    m_data[bin] -= weight;
+    m_numberOfSamples -= weight;    
+  }
+    
   float Histogram::BinToValue(unsigned int bin)
   {
     return ( bin*(m_upperBound - m_lowerBound)/m_numberOfBins + m_lowerBound ) + m_widthOfBin / 2.0;

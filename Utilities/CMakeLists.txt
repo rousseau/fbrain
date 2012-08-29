@@ -2,62 +2,49 @@ PROJECT(Utilities)
 INCLUDE_REGULAR_EXPRESSION("^.*$")
 
 INCLUDE_DIRECTORIES(${TCLAP_DIRECTORY})
-INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Reconstruction)
-INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/DTI)
-INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/InputOutput)
-INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Tools)
-INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Transformations)
-INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Segmentation)
-INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Maths)
-INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/ImageFilters)
+INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Reconstruction)
+INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Diffusion)
+INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/InputOutput)
+INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Tools)
+INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Transformations)
+INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Segmentation)
+INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Maths)
+INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/ImageFilters)
 
-ADD_EXECUTABLE(btkModifyImageUsingLookUpTable btkModifyImageUsingLookUpTable.cxx )
-TARGET_LINK_LIBRARIES(btkModifyImageUsingLookUpTable ${ITK_LIBRARIES} )
+ADD_EXECUTABLE(btkModifyImageUsingLookUpTable btkModifyImageUsingLookUpTable.cxx)
+TARGET_LINK_LIBRARIES(btkModifyImageUsingLookUpTable ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkConvertGradientTable btkConvertGradientTable.cxx
-        ${fbrain_SOURCE_DIR}/Code/DTI/btkDiffusionGradientTable.h
+    ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
  )
-TARGET_LINK_LIBRARIES(btkConvertGradientTable ${ITK_LIBRARIES} )
+TARGET_LINK_LIBRARIES(btkConvertGradientTable ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkReorientImageToStandard btkReorientImageToStandard.cxx
-        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkLandmarksFileReader.cxx
-        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkLandmarksFileReader.h
-)
-TARGET_LINK_LIBRARIES(btkReorientImageToStandard ${ITK_LIBRARIES})
+ADD_EXECUTABLE(btkReorientImageToStandard btkReorientImageToStandard.cxx)
+TARGET_LINK_LIBRARIES(btkReorientImageToStandard btkToolsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkReorientDiffusionSequenceToStandard btkReorientDiffusionSequenceToStandard.cxx
-        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkLandmarksFileReader.cxx
-        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkLandmarksFileReader.h
-        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkFileNameTools.h
-        ${fbrain_SOURCE_DIR}/Code/DTI/btkDiffusionGradientTable.h
+    ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
 )
-TARGET_LINK_LIBRARIES(btkReorientDiffusionSequenceToStandard ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkReorientDiffusionSequenceToStandard btkToolsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkSetStandardCoorSystem btkSetStandardCoorSystem.cxx
-        ${fbrain_SOURCE_DIR}/Code/DTI/btkDiffusionGradientTable.h
+    ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
  )
-TARGET_LINK_LIBRARIES(btkSetStandardCoorSystem ${ITK_LIBRARIES} )
+TARGET_LINK_LIBRARIES(btkSetStandardCoorSystem ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkPrintImageInfo btkPrintImageInfo.cxx )
-TARGET_LINK_LIBRARIES(btkPrintImageInfo ${ITK_LIBRARIES} )
+ADD_EXECUTABLE(btkPrintImageInfo btkPrintImageInfo.cxx)
+TARGET_LINK_LIBRARIES(btkPrintImageInfo ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkRegisterDiffusionToAnatomicalData btkRegisterDiffusionToAnatomicalData.cxx
-        ${fbrain_SOURCE_DIR}/Code/DTI/btkDiffusionGradientTable.h
-        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkFileNameTools.h
+    ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
  )
-TARGET_LINK_LIBRARIES(btkRegisterDiffusionToAnatomicalData ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkRegisterDiffusionToAnatomicalData btkToolsLibrary ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkNrrdToNifti btkNrrdToNifti.cxx
-        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkFileNameTools.h
-        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkNrrdField.cxx
-        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkNrrdField.h
-)
-TARGET_LINK_LIBRARIES(btkNrrdToNifti ${ITK_LIBRARIES})
+ADD_EXECUTABLE(btkNrrdToNifti btkNrrdToNifti.cxx)
+TARGET_LINK_LIBRARIES(btkNrrdToNifti btkToolsLibrary ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkNiftiToNrrd btkNiftiToNrrd.cxx
-        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkFileNameTools.h
-)
-TARGET_LINK_LIBRARIES(btkNiftiToNrrd ${ITK_LIBRARIES})
+ADD_EXECUTABLE(btkNiftiToNrrd btkNiftiToNrrd.cxx)
+TARGET_LINK_LIBRARIES(btkNiftiToNrrd btkToolsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkExtractOneImageFromSequence btkExtractOneImageFromSequence.cxx)
 TARGET_LINK_LIBRARIES(btkExtractOneImageFromSequence ${ITK_LIBRARIES})
@@ -69,8 +56,8 @@ ADD_EXECUTABLE(btkBinarizeLabels btkBinarizeLabels.cxx )
 TARGET_LINK_LIBRARIES(btkBinarizeLabels ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkResampleLabelsByInjection btkResampleLabelsByInjection.cxx
-        ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkResampleLabelsByInjectionFilter.h
-        ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkResampleLabelsByInjectionFilter.h
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
  )
 TARGET_LINK_LIBRARIES(btkResampleLabelsByInjection ${ITK_LIBRARIES})
 
@@ -84,48 +71,45 @@ ADD_EXECUTABLE(btkAverageImagesWithReference btkAverageImagesWithReference.cxx)
 TARGET_LINK_LIBRARIES(btkAverageImagesWithReference ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkImageInjection btkImageInjection.cxx
-        ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRegistration.h
-        ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkAffineRegistration.h
-        ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRigidRegistration.h
-        ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLowToHighImageResolutionMethod.h
-        ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkResampleImageByInjectionFilter.h
-        ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkImageIntersectionCalculator.h
-        ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRegistration.h
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkAffineRegistration.h
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRigidRegistration.h
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLowToHighImageResolutionMethod.h
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkResampleImageByInjectionFilter.h
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkImageIntersectionCalculator.h
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
 )
 TARGET_LINK_LIBRARIES(btkImageInjection ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkImageSimilarity btkImageSimilarity.cxx )
+ADD_EXECUTABLE(btkImageSimilarity btkImageSimilarity.cxx)
 TARGET_LINK_LIBRARIES(btkImageSimilarity ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkPSNR btkPSNR.cxx )
+ADD_EXECUTABLE(btkPSNR btkPSNR.cxx)
 TARGET_LINK_LIBRARIES(btkPSNR ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkWeightedMean btkWeightedMean.cxx )
+ADD_EXECUTABLE(btkWeightedMean btkWeightedMean.cxx)
 TARGET_LINK_LIBRARIES(btkWeightedMean ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkSequenceNormalization btkSequenceNormalization.cxx
-        ${fbrain_SOURCE_DIR}/Code/DTI/btkDiffusionGradientTable.h
-        ${fbrain_SOURCE_DIR}/Code/InputOutput/btkFileNameTools.h
-        ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkAffineRegistration.h
-        #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRegistration.h
-        #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkAffineRegistration.h
-        #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRigidRegistration.h
-
+    ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkAffineRegistration.h
+    #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRegistration.h
+    #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkAffineRegistration.h
+    #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRigidRegistration.h
  )
-TARGET_LINK_LIBRARIES(btkSequenceNormalization ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkSequenceNormalization btkToolsLibrary ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkRescaleIntensity btkRescaleIntensity.cxx )
+ADD_EXECUTABLE(btkRescaleIntensity btkRescaleIntensity.cxx)
 TARGET_LINK_LIBRARIES(btkRescaleIntensity ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkReconstructionComparisonTool btkReconstructionComparisonTool.cxx )
+ADD_EXECUTABLE(btkReconstructionComparisonTool btkReconstructionComparisonTool.cxx)
 TARGET_LINK_LIBRARIES(btkReconstructionComparisonTool ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkIteratedBackProjection
-btkIteratedBackProjection.cxx
-${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionRigidImageFilter.h
-${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionAffineImageFilter.h
-${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionManager.h
-${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
+ADD_EXECUTABLE(btkIteratedBackProjection btkIteratedBackProjection.cxx
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionRigidImageFilter.h
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionAffineImageFilter.h
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionManager.h
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
 )
 TARGET_LINK_LIBRARIES(btkIteratedBackProjection ${ITK_LIBRARIES})
 
@@ -141,62 +125,52 @@ TARGET_LINK_LIBRARIES(btkMajorityVoting ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkProbabilityMapNormalization btkProbabilityMapNormalization.cxx)
 TARGET_LINK_LIBRARIES(btkProbabilityMapNormalization ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkImageGaussianFilter btkImageGaussianFilter.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+ADD_EXECUTABLE(btkImageGaussianFilter btkImageGaussianFilter.cxx)
 TARGET_LINK_LIBRARIES(btkImageGaussianFilter ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkBinarizeTissueProbabilityMaps btkBinarizeTissueProbabilityMaps.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+ADD_EXECUTABLE(btkBinarizeTissueProbabilityMaps btkBinarizeTissueProbabilityMaps.cxx)
 TARGET_LINK_LIBRARIES(btkBinarizeTissueProbabilityMaps ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkSimulateMotionSliceBySlice btkSimulateMotionSliceBySlice.cxx
-${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceRigidRegistration.h
-${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceAffineRegistration.h
-${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceRigidRegistration.h
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceAffineRegistration.h
+)
 TARGET_LINK_LIBRARIES(btkSimulateMotionSliceBySlice ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkImageSubtract btkImageSubtract.cxx
-${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+ADD_EXECUTABLE(btkImageSubtract btkImageSubtract.cxx)
 TARGET_LINK_LIBRARIES(btkImageSubtract ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkApplyMaskToImage btkApplyMaskToImage.cxx
-${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+ADD_EXECUTABLE(btkApplyMaskToImage btkApplyMaskToImage.cxx)
 TARGET_LINK_LIBRARIES(btkApplyMaskToImage ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkWarpTransformationToImage btkWarpTransformationToImage.cxx
-${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h
-${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
-${fbrain_SOURCE_DIR}/Code/Transformations/btkWarpTransformToImageFilter.h)
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
+    ${fbrain_SOURCE_DIR}/Code/Transformations/btkWarpTransformToImageFilter.h
+)
 TARGET_LINK_LIBRARIES(btkWarpTransformationToImage ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkFCMClassification btkFCMClassification.cxx
-${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h
-${fbrain_SOURCE_DIR}/Code/Segmentation/btkFCMClassifier.h)
+    ${fbrain_SOURCE_DIR}/Code/Segmentation/btkFCMClassifier.h
+)
 TARGET_LINK_LIBRARIES(btkFCMClassification ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkImageMorphologicalClosing btkImageMorphologicalClosing.cxx
-${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+ADD_EXECUTABLE(btkImageMorphologicalClosing btkImageMorphologicalClosing.cxx)
 TARGET_LINK_LIBRARIES(btkImageMorphologicalClosing ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkImageMorphologicalTopHat btkImageMorphologicalTopHat.cxx
-${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+ADD_EXECUTABLE(btkImageMorphologicalTopHat btkImageMorphologicalTopHat.cxx)
 TARGET_LINK_LIBRARIES(btkImageMorphologicalTopHat ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkAverage3DImages btkAverage3DImages.cxx
-${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+ADD_EXECUTABLE(btkAverage3DImages btkAverage3DImages.cxx)
 TARGET_LINK_LIBRARIES(btkAverage3DImages ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkComputeOverlap btkComputeOverlap.cxx
-${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+ADD_EXECUTABLE(btkComputeOverlap btkComputeOverlap.cxx)
 TARGET_LINK_LIBRARIES(btkComputeOverlap ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkComputeChamferDistance btkComputeChamferDistance.cxx
-${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+ADD_EXECUTABLE(btkComputeChamferDistance btkComputeChamferDistance.cxx)
 TARGET_LINK_LIBRARIES(btkComputeChamferDistance ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkMidwayHistogramEqualization btkMidwayHistogramEqualization.cxx
-  ${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h
-  ${fbrain_SOURCE_DIR}/Code/ImageFilters/btkMidwayImageEqualization.h
+    ${fbrain_SOURCE_DIR}/Code/ImageFilters/btkMidwayImageEqualization.h
 )
 TARGET_LINK_LIBRARIES(btkMidwayHistogramEqualization ${ITK_LIBRARIES})
 
@@ -245,3 +219,4 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkMidwayHistogramEqualization
                 btkBinarizeMask
         DESTINATION bin)
+

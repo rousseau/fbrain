@@ -53,7 +53,7 @@
 
 /* Btk includes */
 #include "btkDiffusionGradientTable.h"
-#include "btkFileNameTools.h"
+#include "btkFileHelper.h"
 #include "btkAffineRegistration.h"
 
 
@@ -80,12 +80,12 @@ int main( int argc, char * argv[] )
   const char* inputFile = inputFileStr.c_str();
 
   std::string bvalFileStr;
-  bvalFileStr = btk::GetRadixOf(inputFileStr);
+  bvalFileStr = btk::FileHelper::GetRadixOf(inputFileStr);
   bvalFileStr = bvalFileStr + ".bval";
   const char* bvalFile = bvalFileStr.c_str();
 
   std::string bvecFileStr;
-  bvecFileStr = btk::GetRadixOf(inputFileStr);
+  bvecFileStr = btk::FileHelper::GetRadixOf(inputFileStr);
   bvecFileStr = bvecFileStr + ".bvec";
   const char* bvecFile = bvecFileStr.c_str();
 
@@ -96,12 +96,12 @@ int main( int argc, char * argv[] )
   // Both the bval file and bvec file must be modified to remove some zero entries
 
   std::string bvalOutputFileStr;
-  bvalOutputFileStr = btk::GetRadixOf(outputFileStr);
+  bvalOutputFileStr = btk::FileHelper::GetRadixOf(outputFileStr);
   bvalOutputFileStr = bvalOutputFileStr + ".bval";
   const char* bvalOutputFile = bvalOutputFileStr.c_str();
 
   std::string bvecOutputFileStr;
-  bvecOutputFileStr = btk::GetRadixOf(outputFileStr);
+  bvecOutputFileStr = btk::FileHelper::GetRadixOf(outputFileStr);
   bvecOutputFileStr = bvecOutputFileStr + ".bvec";
   const char* bvecOutputFile = bvecOutputFileStr.c_str();
 

@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 05/07/2012
+  Date: 09/07/2012
   Author(s): Julien Pontabry (pontabry@unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -33,63 +33,45 @@
   
 ==========================================================================*/
 
-#ifndef BTK_DIFFUSION_SEQUENCE_FILE_READER_H
-#define BTK_DIFFUSION_SEQUENCE_FILE_READER_H
-
-// ITK includes
-#include "itkSmartPointer.h"
-#include "itkMacro.h"
-#include "itkImageFileReader.h"
-
-// Local includes
-#include "btkDiffusionSequence.h"
-#include "btkGradientDirection.h"
+#include "btkDiffusionModel.h"
 
 namespace btk
 {
 
-/**
- * @brief Read a diffusion weighted MRI dataset
- * @author Julien Pontabry
- * @ingroup Diffusion
- */
-class DiffusionSequenceFileReader : public itk::ImageFileReader< DiffusionSequence >
+DiffusionModel::DiffusionModel() : m_SphericalResolution(100)
 {
-    public:
-        typedef DiffusionSequenceFileReader               Self;
-        typedef itk::ImageFileReader< DiffusionSequence > Superclass;
-        typedef itk::SmartPointer< Self >                 Pointer;
-        typedef itk::SmartPointer< const Self >           ConstPointer;
+    // ----
+}
 
-        itkNewMacro(Self);
+//----------------------------------------------------------------------------------------
 
-        itkTypeMacro(DiffusionSequenceFileReader, itk::ImageFileReader);
+void DiffusionModel::PrintSelf(std::ostream &os, itk::Indent indent) const
+{
+    Superclass::PrintSelf(os, indent);
+}
 
-        /**
-         * @brief Update the process (read the diffusion weighted intensities, the gradient table and the b-values).
-         * The radix of the name of the three files are supposed to be the same.
-         */
-        virtual void Update();
+//----------------------------------------------------------------------------------------
 
-    protected:
-        /**
-         * @brief Constructor.
-         */
-        DiffusionSequenceFileReader();
+void DiffusionModel::Update()
+{
+    // Compute the regular step on the unit sphere
+    unsigned int elevationResolution = static_cast< unsigned int >(std::ceil( std::sqrt(static_cast< float >(m_SphericalResolution)/2.f) ));
+    float                       step = M_PI / static_cast< float >(elevationResolution);
 
-        /**
-         * @brief Destructor.
-         */
-        virtual ~DiffusionSequenceFileReader();
+    const double M_2MPI = 2.0 * M_PI;
 
-        /**
-         * @brief Print a message on output stream.
-         * @param os Output stream where the message is printed.
-         * @param indent Indentation.
-         */
-        virtual void PrintSelf(std::ostream &os, itk::Indent indent) const;
-};
+    // Sample the unit sphere with the given spherical resolution.
+    m_Directions.push_back(btk::GradientDirection(0.f,0.f));
+
+    for(float theta = step; theta < M_PI; theta += step)
+    {
+        for(float phi = 0.f; phi < M_2MPI; phi += step)
+        {
+            m_Directions.push_back(btk::GradientDirection(theta,phi));
+        } // for phi
+    } // for theta
+
+    m_Directions.push_back(btk::GradientDirection(M_PI,0.f));
+}
 
 } // namespace btk
-
-#endif // BTK_DIFFUSION_SEQUENCE_FILE_READER_H

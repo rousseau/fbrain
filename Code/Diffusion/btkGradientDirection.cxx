@@ -35,14 +35,21 @@
 
 #include "btkGradientDirection.h"
 
+
+// STL includes
+#include "cmath"
+
+
 namespace btk
 {
 
 GradientDirection::GradientDirection(float x, float y, float z)
 {
-    Superclass::operator [](0) = x;
-    Superclass::operator [](1) = y;
-    Superclass::operator [](2) = z;
+    (*this)[0] = x;
+    (*this)[1] = y;
+    (*this)[2] = z;
+
+    this->UpdateSphericalCoordinates();
 }
 
 //----------------------------------------------------------------------------------------
@@ -50,6 +57,73 @@ GradientDirection::GradientDirection(float x, float y, float z)
 GradientDirection::GradientDirection()
 {
     Self::Self(0,0,0);
+}
+
+//----------------------------------------------------------------------------------------
+
+GradientDirection::GradientDirection(float theta, float phi) : m_SphericalDirection(theta, phi, 1.0f)
+{
+    Self::UpdateCartesianCoordinates();
+}
+
+//----------------------------------------------------------------------------------------
+
+vnl_vector_fixed< double,3 > GradientDirection::GetVnlVectorFixed()
+{
+    vnl_vector_fixed< double,3 > v;
+    v[0] = (*this)[0];
+    v[1] = (*this)[1];
+    v[2] = (*this)[2];
+
+    return v;
+}
+
+//----------------------------------------------------------------------------------------
+
+void GradientDirection::UpdateCartesianCoordinates()
+{
+    float theta = this->m_SphericalDirection[0];
+    float phi   = this->m_SphericalDirection[1];
+    float rau   = this->m_SphericalDirection[2];
+
+    float cosTheta = std::cos(theta);
+    float sinTheta = std::sin(theta);
+    float   cosPhi = std::cos(phi);
+    float   sinPhi = std::sin(phi);
+
+    (*this)[0] = rau * sinTheta * cosPhi;
+    (*this)[1] = rau * sinTheta * sinPhi;
+    (*this)[2] = rau * cosTheta;
+}
+
+//----------------------------------------------------------------------------------------
+
+void GradientDirection::UpdateSphericalCoordinates()
+{
+    float rau = std::sqrt(
+                   (*this)[0] * (*this)[0] +
+                   (*this)[1] * (*this)[1] +
+                   (*this)[2] * (*this)[2]
+                );
+
+    float theta = 0, phi = 0;
+
+    if((*this)[0] != 0 || (*this)[0] != 0) // Not colinear to Z-axis.
+    {
+        theta = std::acos( (*this)[2] / rau );
+        phi   = std::acos(
+                    (*this)[0] /
+                    std::sqrt(
+                        (*this)[0] * (*this)[0] +
+                        (*this)[1] * (*this)[1]
+                    )
+                );
+
+        if((*this)[1] < 0)
+            phi = 2.0 * M_PI - phi;
+    }
+
+    this->m_SphericalDirection = btk::SphericalDirection(theta, phi, rau);
 }
 
 } // namespace btk

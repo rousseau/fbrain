@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 05/07/2012
+  Date: 24/07/2012
   Author(s): Julien Pontabry (pontabry@unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -33,63 +33,30 @@
   
 ==========================================================================*/
 
-#ifndef BTK_DIFFUSION_SEQUENCE_FILE_READER_H
-#define BTK_DIFFUSION_SEQUENCE_FILE_READER_H
+#ifndef BTK_LEGENDRE_POLYNOMIAL_TEST_H
+#define BTK_LEGENDRE_POLYNOMIAL_TEST_H
 
-// ITK includes
-#include "itkSmartPointer.h"
-#include "itkMacro.h"
-#include "itkImageFileReader.h"
-
-// Local includes
-#include "btkDiffusionSequence.h"
-#include "btkGradientDirection.h"
+// CppUnit includes
+#include "extensions/HelperMacros.h"
 
 namespace btk
 {
 
-/**
- * @brief Read a diffusion weighted MRI dataset
- * @author Julien Pontabry
- * @ingroup Diffusion
- */
-class DiffusionSequenceFileReader : public itk::ImageFileReader< DiffusionSequence >
+class LegendrePolynomialTest : public CppUnit::TestFixture
 {
+        CPPUNIT_TEST_SUITE(LegendrePolynomialTest);
+        CPPUNIT_TEST(testComputeInZero);
+        CPPUNIT_TEST(testCompute);
+        CPPUNIT_TEST_SUITE_END();
+
     public:
-        typedef DiffusionSequenceFileReader               Self;
-        typedef itk::ImageFileReader< DiffusionSequence > Superclass;
-        typedef itk::SmartPointer< Self >                 Pointer;
-        typedef itk::SmartPointer< const Self >           ConstPointer;
+        void setUp();
+        void tearDown();
 
-        itkNewMacro(Self);
-
-        itkTypeMacro(DiffusionSequenceFileReader, itk::ImageFileReader);
-
-        /**
-         * @brief Update the process (read the diffusion weighted intensities, the gradient table and the b-values).
-         * The radix of the name of the three files are supposed to be the same.
-         */
-        virtual void Update();
-
-    protected:
-        /**
-         * @brief Constructor.
-         */
-        DiffusionSequenceFileReader();
-
-        /**
-         * @brief Destructor.
-         */
-        virtual ~DiffusionSequenceFileReader();
-
-        /**
-         * @brief Print a message on output stream.
-         * @param os Output stream where the message is printed.
-         * @param indent Indentation.
-         */
-        virtual void PrintSelf(std::ostream &os, itk::Indent indent) const;
+        void testComputeInZero();
+        void testCompute();
 };
 
 } // namespace btk
 
-#endif // BTK_DIFFUSION_SEQUENCE_FILE_READER_H
+#endif // BTK_LEGENDRE_POLYNOMIAL_TEST_H

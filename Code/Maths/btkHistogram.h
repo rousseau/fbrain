@@ -59,6 +59,8 @@ class Histogram
   void AddSample(float sample);
   void RemoveSample(float sample);
   float BinToValue(unsigned int bin);
+  void AddWeightedSample(float sample, float weight);
+  void RemoveWeightedSample(float sample, float weight);
   
   void ComputeCumulativeDistributionFunction();
   void ComputeInverseCumulativeDistributionFunction();
@@ -78,7 +80,7 @@ class Histogram
   
   unsigned int m_numberOfBins;
   unsigned int m_sampleQuantification;
-  unsigned int m_numberOfSamples;
+  float m_numberOfSamples;
   float m_lowerBound;
   float m_upperBound;
   float m_aCoefficient;

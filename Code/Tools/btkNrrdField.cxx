@@ -42,74 +42,49 @@ knowledge of the CeCILL-B license and that you accept its terms.
 namespace btk
 {
 
-class btkNrrdField::btkNrrdFieldPriv
+void NrrdField::Analyze()
 {
-    public:
-        std::string field;
-        std::string   key;
-        std::string value;
-
-    public:
-        void analyze();
-};
-
-void btkNrrdField::btkNrrdFieldPriv::analyze()
-{
-    if(!field.empty())
+    if(!m_Field.empty())
     {
         unsigned int i = 0;
 
         // state A
-        while(i < field.length() && field[i] != ':' && field[i] != '=')
+        while(i < m_Field.length() && m_Field[i] != ':' && m_Field[i] != '=')
             i++;
 
 
-        if(i < field.length() && field[i] == ':')
+        if(i < m_Field.length() && m_Field[i] == ':')
         {
             // get the key string before going on state B
-            key = field.substr(0,i++);
+            m_Key = m_Field.substr(0,i++);
 
             // state B
-            if(i < field.length() && field[i] == '=')
+            if(i < m_Field.length() && m_Field[i] == '=')
             {
                 // get the position of the first character of the value string
                 unsigned int pos = ++i;
 
                 // state D
-                while(i < field.length() && field[i] != ':' && field[i] != '=')
+                while(i < m_Field.length() && m_Field[i] != ':' && m_Field[i] != '=')
                     i++;
 
                 // get the value string
-                value = field.substr(pos,i-1);
+                m_Value = m_Field.substr(pos,i-1);
             }
         }
     }
 }
 
-btkNrrdField::btkNrrdField(std::string field) : m(new btkNrrdFieldPriv)
+NrrdField::NrrdField(std::string field)
 {
-    m->field = field;
-    m->analyze();
+    m_Field = field;
+    Self::Analyze();
 
+    // FIXME : ????
     std::stringstream st;
-    st << m->key;
-    m->key.clear();
-    st >> m->key;
-}
-
-btkNrrdField::~btkNrrdField()
-{
-    delete m;
-}
-
-std::string btkNrrdField::GetKey() const
-{
-    return m->key;
-}
-
-std::string btkNrrdField::GetValue() const
-{
-    return m->value;
+    st << m_Key;
+    m_Key.clear();
+    st >> m_Key;
 }
 
 } // namespace btk

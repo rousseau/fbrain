@@ -47,7 +47,7 @@
 #include "itkImageMaskSpatialObject.h"
 
 /* Btk includes */
-#include "btkFileNameTools.h"
+#include "btkFileHelper.h"
 #include "btkGroupwiseS2SDistortionCorrection.h"
 
 
@@ -86,11 +86,11 @@ try {
 
   std::cout << folder.c_str() << std::endl;
 
-  inRadix = btk::GetRadixOf(input);
+  inRadix = btk::FileHelper::GetRadixOf(input);
   bvec = inRadix + ".bvec";
   bval = inRadix + ".bval";
 
-  outRadix = btk::GetRadixOf(output);
+  outRadix = btk::FileHelper::GetRadixOf(output);
   bvec_out = outRadix + ".bvec";
   bval_out = outRadix + ".bval";
 

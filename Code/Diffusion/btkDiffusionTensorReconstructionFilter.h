@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 05/07/2012
+  Date: 12/07/2012
   Author(s): Julien Pontabry (pontabry@unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -33,54 +33,59 @@
   
 ==========================================================================*/
 
-#ifndef BTK_DIFFUSION_SEQUENCE_FILE_READER_H
-#define BTK_DIFFUSION_SEQUENCE_FILE_READER_H
+#ifndef BTK_DIFFUSION_TENSOR_RECONSTRUCTION_FILTER_H
+#define BTK_DIFFUSION_TENSOR_RECONSTRUCTION_FILTER_H
 
 // ITK includes
 #include "itkSmartPointer.h"
-#include "itkMacro.h"
-#include "itkImageFileReader.h"
+#include "itkDiffusionTensor3DReconstructionImageFilter.h"
+#include "itkVariableSizeMatrix.h"
 
 // Local includes
 #include "btkDiffusionSequence.h"
-#include "btkGradientDirection.h"
 
 namespace btk
 {
 
 /**
- * @brief Read a diffusion weighted MRI dataset
+ * @brief Reconstruction filter for diffusion tensor modelization of diffusion MRI.
  * @author Julien Pontabry
  * @ingroup Diffusion
  */
-class DiffusionSequenceFileReader : public itk::ImageFileReader< DiffusionSequence >
+class DiffusionTensorReconstructionFilter : public itk::DiffusionTensor3DReconstructionImageFilter< short,short,float >
 {
     public:
-        typedef DiffusionSequenceFileReader               Self;
-        typedef itk::ImageFileReader< DiffusionSequence > Superclass;
-        typedef itk::SmartPointer< Self >                 Pointer;
-        typedef itk::SmartPointer< const Self >           ConstPointer;
+        typedef DiffusionTensorReconstructionFilter                                  Self;
+        typedef itk::DiffusionTensor3DReconstructionImageFilter< short,short,float > Superclass;
+        typedef itk::SmartPointer< Self >                                            Pointer;
+        typedef itk::SmartPointer< const Self >                                      ConstPointer;
 
         itkNewMacro(Self);
 
-        itkTypeMacro(DiffusionSequenceFileReader, itk::ImageFileReader);
+        itkTypeMacro(DiffusionTensorReconstructionFilter, itk::DiffusionTensor3DReconstructionImageFilter);
 
         /**
-         * @brief Update the process (read the diffusion weighted intensities, the gradient table and the b-values).
-         * The radix of the name of the three files are supposed to be the same.
+         * @brief Set input diffusion sequence needed for reconstruction filter.
+         * @param sequence Diffusion sequence.
+         */
+        virtual void SetInput(btk::DiffusionSequence::Pointer sequence);
+
+        /**
+         * @brief Update the process (reconstructs the tensor image from diffusion weighted MRI sequence).
          */
         virtual void Update();
+
 
     protected:
         /**
          * @brief Constructor.
          */
-        DiffusionSequenceFileReader();
+        DiffusionTensorReconstructionFilter();
 
         /**
          * @brief Destructor.
          */
-        virtual ~DiffusionSequenceFileReader();
+        virtual ~DiffusionTensorReconstructionFilter();
 
         /**
          * @brief Print a message on output stream.
@@ -88,8 +93,12 @@ class DiffusionSequenceFileReader : public itk::ImageFileReader< DiffusionSequen
          * @param indent Indentation.
          */
         virtual void PrintSelf(std::ostream &os, itk::Indent indent) const;
+
+    private:
+        /** Input diffusion sequence. */
+        btk::DiffusionSequence::Pointer m_InputDiffusionSequence;
 };
 
 } // namespace btk
 
-#endif // BTK_DIFFUSION_SEQUENCE_FILE_READER_H
+#endif // BTK_DIFFUSION_TENSOR_RECONSTRUCTION_FILTER_H
