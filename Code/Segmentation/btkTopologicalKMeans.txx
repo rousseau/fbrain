@@ -86,15 +86,18 @@ namespace btk
 		//Algorithm
 		if(m_LcrOrCortex)
 		{
+			//Compute Centroids and Initialise the brain segmentation
 			ComputeCentroids(inputImage, initSeg, 1);
 			InitBrainSegmentation(initSeg, finalSeg);
 		}
 		else
 		{
+			//Initialise the cortex segmentation and compute the initial centroids
 			InitCortexSegmentation(initSeg, finalSeg);
 			ComputeCentroids(inputImage, finalSeg);
 		}
 		
+		//Runs Topological K-Means
 		RunSegmentation(inputImage, finalSeg);
 		
 		return;
@@ -103,7 +106,7 @@ namespace btk
 	template< typename TInputImage, typename TLabelImage>
 	void TopologicalKMeans<TInputImage, TLabelImage>::ComputeCentroids(typename TInputImage::Pointer inputImage, typename TLabelImage::Pointer segImage, bool initLCRCentroids)
 	{
-		// 3 because there is three spheres in this model
+		// 3 centroids vector because there is three spheres in this model
 		m_Centroids.SetSize(inputImage->GetNumberOfComponentsPerPixel(),3);
 		m_Centroids.Fill(0);
 		
@@ -155,6 +158,7 @@ namespace btk
 		itk::ImageRegionIterator<TLabelImage> intracranianVolumeIterator(intracranianVolume, intracranianVolume->GetLargestPossibleRegion());
 		itk::ImageRegionIterator<TLabelImage> brainSegmentationInitialisationIterator(brainSegmentationInitialisation, brainSegmentationInitialisation->GetLargestPossibleRegion());
 		
+		//Set the initial labels depending on how far voxels are from the intracranian volume
 		for(intracranianVolumeIterator.GoToBegin(), distanceImageIterator.GoToBegin(), brainSegmentationInitialisationIterator.GoToBegin(); !intracranianVolumeIterator.IsAtEnd(); ++intracranianVolumeIterator, ++distanceImageIterator, ++brainSegmentationInitialisationIterator)
 		{
 			if(intracranianVolumeIterator.Get() != 0)
@@ -203,7 +207,7 @@ namespace btk
 			}
 		}
 		
-		// Takes voxels from cerebellum and brainstem off + a little dilation
+		// Takes voxels from cerebellum and brainstem (+ a little dilation) off 
 		if(m_BrainstemImage.IsNotNull() && m_CerebellumImage.IsNotNull() )
 		{
 			typename itk::AddImageFilter<TLabelImage, TLabelImage, TLabelImage>::Pointer addImageFilter = itk::AddImageFilter<TLabelImage, TLabelImage, TLabelImage>::New();
@@ -238,11 +242,13 @@ namespace btk
 		
 		unsigned int numLabelChange2 = 1;
 		
+		//While some voxels have changed after the computation of centroids
 		while(numLabelChange2 != 0)
 		{
 			numLabelChange2 = 0;
 			
 			unsigned int numLabelChange = 1;
+			//While some voxels have changed by the succesion of dilation and erosion at borders
 			while(numLabelChange != 0)
 			{
 				numLabelChange = 0;
@@ -262,6 +268,7 @@ namespace btk
 				numLabelChange2 += numLabelChange;
 			}
 			
+			//Only one loop in case of the brain segmentation, since we already know the centroids by the FCM classification (and so are already optimal)
 			if(m_LcrOrCortex) {break;}
 			else {ComputeCentroids(inputImage, segImage);}
 		}
