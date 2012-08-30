@@ -55,7 +55,16 @@ virtual type Get##name () const                                   \
 }
 //-------------------------------------------------------------------------------------------------------------------
 #define btkSetMacro(name, type)                                   \
-virtual void Set##name (const type _arg)                          \
+virtual void Set##name (type _arg)                          \
+{                                                                 \
+    if ( this->m_##name != _arg )                                 \
+    {                                                             \
+        this->m_##name = _arg;                                    \
+    }                                                             \
+}
+//-------------------------------------------------------------------------------------------------------------------
+#define btkConstSetMacro(name, type)                           \
+virtual void Set##name (const type _arg)                                \
 {                                                                 \
     if ( this->m_##name != _arg )                                 \
     {                                                             \
