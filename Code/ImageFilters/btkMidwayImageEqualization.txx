@@ -299,6 +299,7 @@ void MidwayImageEqualization<T>::DoWithReference(std::vector<itkTPointer> inputI
     {
       if(maskImageIt.Get() > 0)
       {
+        //from input value to normalized value (2 rescaling)
         float inputValue = ( vec_coeffA[i] * inputImageIt.Get() + vec_coeffB[i]) / (maxValue*1.0);
         //from pixel value to bin index
         int inputBin = (int) (inputValue * histograms[i].m_aCoefficient + histograms[i].m_bCoefficient);

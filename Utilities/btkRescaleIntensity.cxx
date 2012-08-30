@@ -104,7 +104,6 @@ int main(int argc, char *argv[])
     
 
   //rescale coefficients xnew = a*xold + b
-  std::cout<<"debug : "<<maxValue<<" "<<minValue<<" "<<currentMax<<" "<<currentMin<<std::endl;
   float a = (maxValue-minValue) / (currentMax-currentMin);
   float b = minValue - a*currentMin;
   std::cout<<"linear coefficient for rescaling (xnew = a * xold + b). a="<<a<<", b="<<b<<std::endl;
