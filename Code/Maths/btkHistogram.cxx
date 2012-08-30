@@ -185,6 +185,7 @@ namespace btk
 
   }
   
+  //SAVE INTO TEXT FILES -----------------------------------------------------------
     
   void Histogram::SaveHistogram(const std::string & filename)
   {  
