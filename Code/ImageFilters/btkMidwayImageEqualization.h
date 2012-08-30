@@ -83,7 +83,8 @@ class MidwayImageEqualization
   void SetSampleQuantification(unsigned int n);
   
   void Do(std::vector<itkTPointer> inputImages, std::vector<itkTPointer> maskImages, std::vector<itkTPointer> outputImages);
-
+  void DoWithReference(std::vector<itkTPointer> inputImages, std::vector<itkTPointer> refImages, std::vector<itkTPointer> maskImages, std::vector<itkTPointer> maskRefImages, std::vector<itkTPointer> outputImages);
+  
 };
 
 }
