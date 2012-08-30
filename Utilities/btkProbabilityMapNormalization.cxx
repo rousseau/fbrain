@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
         // Reading images
         //
 
-        std::vector< Image::Pointer > inputImages  = btk::ImageHelper< Image >::ReadImageArray(inputFileNames);
+        std::vector< Image::Pointer > inputImages  = btk::ImageHelper< Image >::ReadImage(inputFileNames);
         std::vector< Image::Pointer > outputImages = btk::ImageHelper< Image >::CreateNewImageFromPhysicalSpaceOf(inputImages);
     
 
@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
         // Write images
         //
 
-        btk::ImageHelper< Image >::WriteImageArray(outputImages, outputFileNames);
+        btk::ImageHelper< Image >::WriteImage(outputImages, outputFileNames);
     }
     catch (TCLAP::ArgException &e)
     {

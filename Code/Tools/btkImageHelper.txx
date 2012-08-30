@@ -63,7 +63,7 @@ void ImageHelper< TImageInput, TImageOutput >::WriteImage(typename TImageInput::
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
-void ImageHelper< TImageInput, TImageOutput >::WriteImageArray(std::vector< typename TImageInput::Pointer > &images, std::vector<std::string> &fileNames)
+void ImageHelper< TImageInput, TImageOutput >::WriteImage(std::vector< typename TImageInput::Pointer > &images, std::vector<std::string> &fileNames)
 {
 
     if(images.size() == fileNames.size())
@@ -100,7 +100,7 @@ typename TImageInput::Pointer ImageHelper< TImageInput, TImageOutput >::ReadImag
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
-std::vector< typename TImageInput::Pointer > &ImageHelper< TImageInput, TImageOutput >::ReadImageArray(std::vector<std::string> &fileNames)
+std::vector< typename TImageInput::Pointer > &ImageHelper< TImageInput, TImageOutput >::ReadImage(std::vector<std::string> &fileNames)
 {
     std::vector< typename TImageInput::Pointer > *ptrImages = new std::vector< typename TImageInput::Pointer >;
     std::vector< typename TImageInput::Pointer > &images = *ptrImages;
@@ -149,23 +149,23 @@ std::vector< typename TImageOutput::Pointer > &ImageHelper< TImageInput, TImageO
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
-typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::ReadOrCreateImage(const std::string &fileName, typename TImageInput::Pointer image, typename TImageInput::PixelType value)
+typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::ReadOrCreateImage(const std::string &fileName, typename TImageInput::Pointer image, typename TImageOutput::PixelType value)
 {
-  typename TImageOutput::Pointer newImage = TImageOutput::New();
+    typename TImageOutput::Pointer newImage = TImageOutput::New();
 
-  std::ifstream file(fileName.c_str());
-  if(file)
-  {
-    file.close();
-    newImage = ReadImage(fileName);
-  }
-  else
-  {
-    std::cout << "Creating new image with pixel value set to " << value << std::endl;
-    newImage = CreateNewImageFromPhysicalSpaceOf(image); 
-    newImage->FillBuffer(value);   
-  }   
-  return newImage; 
+    std::ifstream file(fileName.c_str());
+    if(file)
+    {
+        file.close();
+        newImage = ReadImage(fileName);
+    }
+    else
+    {
+        std::cout << "Creating new image with pixel value set to " << value << std::endl;
+        newImage = CreateNewImageFromPhysicalSpaceOf(image);
+        newImage->FillBuffer(value);
+    }
+    return newImage;
 }
 
 

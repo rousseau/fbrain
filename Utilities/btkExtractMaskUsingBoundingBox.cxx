@@ -85,7 +85,7 @@ int main(int argc, char * argv[])
     }
 
     // Read input arguments into input image
-    inputImage = btk::ImageHelper<ImageType>::ReadImageArray(inputFileImage);
+    inputImage = btk::ImageHelper<ImageType>::ReadImage(inputFileImage);
 
     // Intersection Process
     for (unsigned int i=0;i<inputFileImage.size();i++)

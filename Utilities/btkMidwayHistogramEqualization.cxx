@@ -109,12 +109,12 @@ int main (int argc, char* argv[])
   outputImages.resize(input_file.size());
     
   std::cout<<"Read input images \n";
-  inputImages = btk::ImageHelper<ImageType>::ReadImageArray(input_file);
+  inputImages = btk::ImageHelper<ImageType>::ReadImage(input_file);
   
   if(mask_file.size()>0)
   {
     std::cout<<"Read mask images \n";
-    maskImages = btk::ImageHelper<ImageType>::ReadImageArray(mask_file);
+    maskImages = btk::ImageHelper<ImageType>::ReadImage(mask_file);
   }
   else
   {
@@ -147,7 +147,7 @@ int main (int argc, char* argv[])
   myTool.Do(inputImages, maskImages, outputImages);
 
   
-  btk::ImageHelper<ImageType>::WriteImageArray(outputImages, output_file);
+  btk::ImageHelper<ImageType>::WriteImage(outputImages, output_file);
     
   
   } catch (TCLAP::ArgException &e)  // catch any exceptions

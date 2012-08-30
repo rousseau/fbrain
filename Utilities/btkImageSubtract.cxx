@@ -88,7 +88,7 @@ int main(int argc, char * argv[])
     }
 
 
-    inputsImages = btk::ImageHelper<itkImage>::ReadImageArray(inputFileImages);
+    inputsImages = btk::ImageHelper<itkImage>::ReadImage(inputFileImages);
 
     SubstractFilter::Pointer subtractFilter = SubstractFilter::New ();
     subtractFilter->SetInput1(inputsImages[0]);

@@ -84,7 +84,7 @@ namespace btk
              * @param images vector of images to write.
              * @param fileNames File names of the images to write.
              */
-            static void WriteImageArray(std::vector< typename TImageInput::Pointer > &images, std::vector< std::string > &fileNames);
+            static void WriteImage(std::vector< typename TImageInput::Pointer > &images, std::vector< std::string > &fileNames);
 
             /**
              * @brief Read an image.
@@ -98,7 +98,7 @@ namespace btk
              * @param fileNames File names of the images to read.
              * @return A reference to a vector containing the images that have been red.
              */
-            static std::vector< typename TImageInput::Pointer > &ReadImageArray(std::vector< std::string> &fileNames);
+            static std::vector< typename TImageInput::Pointer > &ReadImage(std::vector< std::string> &fileNames);
 
             /**
              * @brief Create a new image in the same physical space of a current image.
@@ -121,7 +121,7 @@ namespace btk
              * @param pixel value used for initialisation in case of image creation.
              * @return A pointer to the image that have been red.
              */
-            static typename TImageOutput::Pointer ReadOrCreateImage(const std::string &fileName, typename TImageInput::Pointer image, typename TImageInput::PixelType value);
+            static typename TImageOutput::Pointer ReadOrCreateImage(const std::string &fileName, typename TImageInput::Pointer image, typename TImageOutput::PixelType value);
     };
 
 } // namespace btk
