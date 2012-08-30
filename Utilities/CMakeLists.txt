@@ -178,6 +178,19 @@ ADD_EXECUTABLE(btkBinarizeMask btkBinarizeMask.cxx
      ${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
 TARGET_LINK_LIBRARIES(btkBinarizeMask ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkExtractMaskUsingBoundingBox btkExtractMaskUsingBoundingBox.cxx
+${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkImageIntersectionCalculator.h)
+TARGET_LINK_LIBRARIES(btkExtractMaskUsingBoundingBox ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkTranslateImageOverTemplate btkTranslateImageOverTemplate.cxx
+${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+TARGET_LINK_LIBRARIES(btkTranslateImageOverTemplate ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkExtendMaskToImage btkExtendMaskToImage.cxx
+${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+TARGET_LINK_LIBRARIES(btkExtendMaskToImage ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -218,5 +231,8 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkComputeChamferDistance
                 btkMidwayHistogramEqualization
                 btkBinarizeMask
+                btkExtractMaskUsingBoundingBox
+                btkTranslateImageOverTemplate
+                btkExtendMaskToImage
         DESTINATION bin)
 
