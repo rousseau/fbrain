@@ -40,10 +40,10 @@
 
 /* Itk includes */
 #include "itkImage.h"
-#include "itkImageFileReader.h"
-#include "itkImageFileWriter.h"
-#include "itkMinimumMaximumImageCalculator.h"
-#include "itkRescaleIntensityImageFilter.h"
+#include "itkImageRegionIterator.h"
+
+
+#include "btkImageHelper.h"
 
 
 int main(int argc, char *argv[])
@@ -51,61 +51,69 @@ int main(int argc, char *argv[])
   
   try{
 
-    TCLAP::CmdLine cmd("Rescale the intensity values of an image (basic ITK filter) using short values", ' ', "1.0", true);
+    TCLAP::CmdLine cmd("Rescale the intensity values of an image using short values", ' ', "1.0", true);
     
-    TCLAP::ValueArg<std::string> inputImageArg("i","input_file","input image file (short)",true,"","string");
-    cmd.add( inputImageArg );
-    TCLAP::ValueArg<std::string> outputImageArg("o","output_file","output image file (short)",true,"","string");
-    cmd.add( outputImageArg );
-    TCLAP::ValueArg< short > minArg("","min","minimum value for the rescaling (default is 0)",false,0,"short");
-    cmd.add( minArg );
-    TCLAP::ValueArg< short > maxArg("","max","maximum value for the rescaling (default is 255)",false,255,"short");
-    cmd.add( maxArg );  
+    TCLAP::ValueArg<std::string> inputImageArg("i","input_file","input image file (short)",true,"","string", cmd);
+    TCLAP::ValueArg<std::string> maskImageArg("m","mask_file","mask image file (short)",true,"","string", cmd);
+    TCLAP::ValueArg<std::string> outputImageArg("o","output_file","output image file (short)",true,"","string", cmd);
+    TCLAP::ValueArg< short > minArg("","min","minimum value for the rescaling (default is 0)",false,0,"short", cmd);
+    TCLAP::ValueArg< short > maxArg("","max","maximum value for the rescaling (default is 255)",false,255,"short", cmd);
     
     // Parse the args.
     cmd.parse( argc, argv );
 
     // Get the value parsed by each arg.
     std::string input_file       = inputImageArg.getValue();
+    std::string mask_file        = maskImageArg.getValue();
     std::string output_file      = outputImageArg.getValue();    
     
-    short minimum              = minArg.getValue();
-    short maximum              = maxArg.getValue();
+    short minValue              = minArg.getValue();
+    short maxValue              = maxArg.getValue();
     
   
   //ITK declaration
   typedef short PixelType;
   const   unsigned int        Dimension = 3;
   typedef itk::Image< PixelType, Dimension >    ImageType;
-  typedef itk::ImageFileReader< ImageType >  ReaderType;
-  typedef itk::ImageFileWriter< ImageType > WriterType;
+  typedef itk::ImageRegionIterator< ImageType > itkIterator;
       
   //Reading the input file
-  ReaderType::Pointer reader = ReaderType::New();
-  reader->SetFileName( input_file  );
-  reader->Update();
-
-  ImageType::Pointer input_image = reader->GetOutput();
+  ImageType::Pointer inputImage = btk::ImageHelper<ImageType>::ReadImage(input_file);
+  ImageType::Pointer maskImage  = btk::ImageHelper<ImageType>::ReadOrCreateImage(mask_file, inputImage, 1);
+  ImageType::Pointer outputImage= btk::ImageHelper<ImageType>::CreateNewImageFromPhysicalSpaceOf(inputImage);
+  outputImage->FillBuffer(0.0);
   
-  itk::MinimumMaximumImageCalculator< ImageType >::Pointer minmax = itk::MinimumMaximumImageCalculator< ImageType >::New();
-  minmax->SetImage(input_image);
-  minmax->Compute();
-  std::cout<<"Dynamique - input image :"<<minmax->GetMaximum()<<" "<<minmax->GetMinimum()<<"\n";
-
-  typedef itk::RescaleIntensityImageFilter< ImageType, ImageType > FilterType;
-  FilterType::Pointer filter = FilterType::New();
-  filter->SetOutputMinimum(minimum);    
-  filter->SetOutputMaximum(maximum);
-  filter->SetInput(input_image);  
-  filter->UpdateLargestPossibleRegion();
   
-  ImageType::Pointer output_image = filter->GetOutput();  
+  float currentMin = 32767;
+  float currentMax = -32768;
+
+  itkIterator maskImageIt( maskImage, maskImage->GetLargestPossibleRegion());
+  itkIterator inputImageIt( inputImage, inputImage->GetLargestPossibleRegion());    
+  itkIterator outputImageIt( outputImage, outputImage->GetLargestPossibleRegion());    
     
-  //Writing the output file
-  WriterType::Pointer writer = WriterType::New();
-  writer->SetFileName( output_file  );
-  writer -> SetInput( output_image );
-  writer -> Update();
+  for(inputImageIt.GoToBegin(), maskImageIt.GoToBegin(); !inputImageIt.IsAtEnd(); ++inputImageIt, ++maskImageIt)
+  {
+    if(maskImageIt.Get() > 0)
+    {
+      if(currentMin > inputImageIt.Get() ) currentMin = inputImageIt.Get();
+      if(currentMax < inputImageIt.Get() ) currentMax = inputImageIt.Get();        
+    }  
+  }
+  std::cout<<"Image values (inside the mask) max: "<<currentMax<<", min: "<<currentMin<<std::endl;    
+    
+    
+
+  //rescale coefficients xnew = a*xold + b
+  std::cout<<"debug : "<<maxValue<<" "<<minValue<<" "<<currentMax<<" "<<currentMin<<std::endl;
+  float a = (maxValue-minValue) / (currentMax-currentMin);
+  float b = minValue - a*currentMin;
+  std::cout<<"linear coefficient for rescaling (xnew = a * xold + b). a="<<a<<", b="<<b<<std::endl;
+    
+  for(inputImageIt.GoToBegin(), maskImageIt.GoToBegin(), outputImageIt.GoToBegin(); !inputImageIt.IsAtEnd(); ++inputImageIt, ++maskImageIt, ++outputImageIt)
+    if(maskImageIt.Get() > 0)
+      outputImageIt.Set( a*inputImageIt.Get() + b );
+
+  btk::ImageHelper<ImageType>::WriteImage(outputImage, output_file);
 
   } catch (TCLAP::ArgException &e)  // catch any exceptions
   { std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; }
