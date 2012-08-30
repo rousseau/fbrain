@@ -102,6 +102,9 @@ TARGET_LINK_LIBRARIES(btkSequenceNormalization btkToolsLibrary ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkRescaleIntensity btkRescaleIntensity.cxx)
 TARGET_LINK_LIBRARIES(btkRescaleIntensity ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkImageHistogram btkImageHistogram.cxx)
+TARGET_LINK_LIBRARIES(btkImageHistogram ${ITK_LIBRARIES})
+
 ADD_EXECUTABLE(btkReconstructionComparisonTool btkReconstructionComparisonTool.cxx)
 TARGET_LINK_LIBRARIES(btkReconstructionComparisonTool ${ITK_LIBRARIES})
 
@@ -234,5 +237,8 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkExtractMaskUsingBoundingBox
                 btkTranslateImageOverTemplate
                 btkExtendMaskToImage
+                btkImageHistogram
+                btkRescaleIntensity
+
         DESTINATION bin)
 

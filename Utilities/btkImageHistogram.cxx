@@ -2,7 +2,7 @@
  
  © Université de Strasbourg - Centre National de la Recherche Scientifique
  
- Date: 22/11/2011
+ Date: 30/08/2012
  Author(s): François Rousseau (rousseau@unistra.fr)
  
  This software is governed by the CeCILL-B license under French law and
@@ -44,6 +44,7 @@
 
 
 #include "btkImageHelper.h"
+#include "btkHistogram.h" 
 
 
 int main(int argc, char *argv[])
@@ -51,13 +52,19 @@ int main(int argc, char *argv[])
   
   try{
 
-    TCLAP::CmdLine cmd("Rescale the intensity values of an image using short values", ' ', "1.0", true);
+    TCLAP::CmdLine cmd("Analysis of images through histograms", ' ', "1.0", true);
     
     TCLAP::ValueArg<std::string> inputImageArg("i","input_file","input image file (short)",true,"","string", cmd);
     TCLAP::ValueArg<std::string> maskImageArg("m","mask_file","mask image file (short)",true,"","string", cmd);
-    TCLAP::ValueArg<std::string> outputImageArg("o","output_file","output image file (short)",true,"","string", cmd);
-    TCLAP::ValueArg< short > minArg("","min","minimum value for the rescaling (default is 0)",false,0,"short", cmd);
-    TCLAP::ValueArg< short > maxArg("","max","maximum value for the rescaling (default is 255)",false,255,"short", cmd);
+    TCLAP::ValueArg< unsigned int > binArg("b","bin","number of bins for image intensity (default is 10000)",false,10000,"unsigned int",cmd);
+    TCLAP::ValueArg< unsigned int > samArg("s","sample","number of bins for number of samples (voxels) (default is 10000)",false,10000,"unsigned int",cmd);
+    TCLAP::ValueArg<std::string> outputHistogramArg("","output_histogram","file name of the image histogram",false,"","string", cmd);
+    TCLAP::ValueArg<std::string> outputNormalizedHistogramArg("","output_normalized_histogram","file name of the normalized image histogram",false,"","string", cmd);
+    TCLAP::ValueArg<std::string> outputCDFArg("","output_cdf","file name of the cumulative density function",false,"","string", cmd);
+    TCLAP::ValueArg<std::string> outputNormalizedCDFArg("","output_normalized_cdf","file name of the normalized cumulative density function",false,"","string", cmd);
+    TCLAP::ValueArg<std::string> outputICDFArg("","output_icdf","file name of the inverse cumulative density function",false,"","string", cmd);
+    TCLAP::ValueArg<std::string> outputNormalizedICDFArg("","output_normalized_icdf","file name of the normalized inverse cumulative density function",false,"","string", cmd);
+
     
     // Parse the args.
     cmd.parse( argc, argv );
@@ -65,11 +72,16 @@ int main(int argc, char *argv[])
     // Get the value parsed by each arg.
     std::string input_file       = inputImageArg.getValue();
     std::string mask_file        = maskImageArg.getValue();
-    std::string output_file      = outputImageArg.getValue();    
-    
-    short minValue              = minArg.getValue();
-    short maxValue              = maxArg.getValue();
-    
+    unsigned int numberOfBins         = binArg.getValue();
+    unsigned int sampleQuantification = samArg.getValue();
+
+  std::string output_histogram_file            = outputHistogramArg.getValue();       
+  std::string output_normalized_histogram_file = outputNormalizedHistogramArg.getValue();       
+  std::string output_cdf_file                  = outputCDFArg.getValue();       
+  std::string output_normalized_cdf_file       = outputNormalizedCDFArg.getValue();       
+  std::string output_icdf_file                 = outputICDFArg.getValue();       
+  std::string output_normalized_icdf_file      = outputNormalizedICDFArg.getValue();       
+
   
   //ITK declaration
   typedef short PixelType;
@@ -89,7 +101,6 @@ int main(int argc, char *argv[])
 
   itkIterator maskImageIt( maskImage, maskImage->GetLargestPossibleRegion());
   itkIterator inputImageIt( inputImage, inputImage->GetLargestPossibleRegion());    
-  itkIterator outputImageIt( outputImage, outputImage->GetLargestPossibleRegion());    
     
   for(inputImageIt.GoToBegin(), maskImageIt.GoToBegin(); !inputImageIt.IsAtEnd(); ++inputImageIt, ++maskImageIt)
   {
@@ -100,20 +111,50 @@ int main(int argc, char *argv[])
     }  
   }
   std::cout<<"Image values (inside the mask) max: "<<currentMax<<", min: "<<currentMin<<std::endl;    
-    
-    
 
-  //rescale coefficients xnew = a*xold + b
-  std::cout<<"debug : "<<maxValue<<" "<<minValue<<" "<<currentMax<<" "<<currentMin<<std::endl;
-  float a = (maxValue-minValue) / (currentMax-currentMin);
-  float b = minValue - a*currentMin;
-  std::cout<<"linear coefficient for rescaling (xnew = a * xold + b). a="<<a<<", b="<<b<<std::endl;
-    
-  for(inputImageIt.GoToBegin(), maskImageIt.GoToBegin(), outputImageIt.GoToBegin(); !inputImageIt.IsAtEnd(); ++inputImageIt, ++maskImageIt, ++outputImageIt)
+  btk::Histogram histogram;
+
+  histogram.SetNumberOfBins(numberOfBins);
+  histogram.SetSampleQuantification(sampleQuantification);
+  histogram.SetLowerBound(currentMin);
+  histogram.SetUpperBound(currentMax);    
+  histogram.Setup();
+
+  for(inputImageIt.GoToBegin(), maskImageIt.GoToBegin(); !inputImageIt.IsAtEnd(); ++inputImageIt, ++maskImageIt)
+  {
     if(maskImageIt.Get() > 0)
-      outputImageIt.Set( a*inputImageIt.Get() + b );
+    {
+      histogram.AddSample( inputImageIt.Get() );        
+    }  
+  }
 
-  btk::ImageHelper<ImageType>::WriteImage(outputImage, output_file);
+  //COMPUTE THINGS ------------------------------------------------------------------------------------------------------
+  histogram.NormalizeData();
+  histogram.ComputeCumulativeDistributionFunction();
+  histogram.ComputeInverseCumulativeDistributionFunction();
+  histogram.ComputeNormalizedCumulativeDistributionFunction();
+  histogram.ComputeNormalizedInverseCumulativeDistributionFunction();      
+
+  // SAVE OUTPUT --------------------------------------------------------------------------------------------------------
+  if(output_histogram_file != "")
+    histogram.SaveHistogram(output_histogram_file);  
+  
+  if(output_normalized_histogram_file != "")
+    histogram.SaveNormalizedHistogram(output_normalized_histogram_file);  
+  
+  if(output_cdf_file != "")
+    histogram.SaveCumulativeDistributionFunction(output_cdf_file);  
+  
+  if(output_normalized_cdf_file != "")
+    histogram.SaveNormalizedCumulativeDistributionFunction(output_normalized_cdf_file);  
+  
+  if(output_icdf_file != "")
+    histogram.SaveInverseCumulativeDistributionFunction(output_icdf_file);  
+  
+  if(output_normalized_icdf_file != "")
+    histogram.SaveNormalizedInverseCumulativeDistributionFunction(output_normalized_icdf_file);  
+  
+
 
   } catch (TCLAP::ArgException &e)  // catch any exceptions
   { std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; }

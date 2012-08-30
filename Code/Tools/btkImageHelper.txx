@@ -146,6 +146,30 @@ std::vector< typename TImageOutput::Pointer > &ImageHelper< TImageInput, TImageO
     return newImages;
 }
 
+//----------------------------------------------------------------------------------------
+
+template < class TImageInput, class TImageOutput >
+typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::ReadOrCreateImage(const std::string &fileName, typename TImageInput::Pointer image, typename TImageInput::PixelType value)
+{
+  typename TImageOutput::Pointer newImage = TImageOutput::New();
+
+  std::ifstream file(fileName.c_str());
+  if(file)
+  {
+    file.close();
+    newImage = ReadImage(fileName);
+  }
+  else
+  {
+    std::cout << "Creating new image with pixel value set to " << value << std::endl;
+    newImage = CreateNewImageFromPhysicalSpaceOf(image); 
+    newImage->FillBuffer(value);   
+  }   
+  return newImage; 
+}
+
+
+
 } // namespace btk
 
 #endif // BTK_IMAGE_HELPER_TXX

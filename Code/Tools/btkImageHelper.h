@@ -40,6 +40,10 @@
 
 // STL includes
 #include "string"
+#include "iostream"
+#include "fstream"
+#include "sstream"
+
 
 // ITK includes
 #include "itkImage.h"
@@ -109,6 +113,15 @@ namespace btk
              * @return Vector of new images in the same physical space.
              */
             static std::vector< typename TImageOutput::Pointer > &CreateNewImageFromPhysicalSpaceOf(std::vector< typename TImageInput::Pointer > &images);
+            
+             /**
+             * @brief Read an image if the file exist, otherwise create an image with a constant pixel value.
+             * @param fileName File name of the image to read.
+             * @param image Image of which physical space will be used for creation.
+             * @param pixel value used for initialisation in case of image creation.
+             * @return A pointer to the image that have been red.
+             */
+            static typename TImageOutput::Pointer ReadOrCreateImage(const std::string &fileName, typename TImageInput::Pointer image, typename TImageInput::PixelType value);
     };
 
 } // namespace btk
