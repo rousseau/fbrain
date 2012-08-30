@@ -184,6 +184,81 @@ namespace btk
     }
 
   }
+  
+    
+  void Histogram::SaveHistogram(const std::string & filename)
+  {  
+    std::cout<<"Saving histogram in "<<filename<<std::endl;
+    std::ofstream file;
+    file.open(filename.c_str());
+    for(uint i=0; i<m_numberOfBins; i++)
+    {
+      float value = BinToValue(i);
+      file << value << " " << m_data[i] << std::endl;    
+    } 
+    file.close(); 
+  }
+  
+  void Histogram::SaveNormalizedHistogram(const std::string & filename)
+  {
+    std::cout<<"Saving normalized histogram in "<<filename<<std::endl;
+    std::ofstream file;
+    file.open(filename.c_str());
+    for(uint i=0; i<m_numberOfBins; i++)
+    {
+      float value = BinToValue(i);
+      file << value << " " << m_normalizedData[i] << std::endl;    
+    } 
+    file.close();     
+  }
+
+  void Histogram::SaveCumulativeDistributionFunction(const std::string & filename)
+  {  
+    std::cout<<"Saving cdf in "<<filename<<std::endl;
+    std::ofstream file;
+    file.open(filename.c_str());
+    for(uint i=0; i<m_numberOfBins; i++)
+    {
+      float value = BinToValue(i);
+      file << value << " " << m_cumulativeDistributionFunction[i] << std::endl;    
+    } 
+    file.close(); 
+  }
+  void Histogram::SaveNormalizedCumulativeDistributionFunction(const std::string & filename)
+  {  
+    std::cout<<"Saving normalized cdf in "<<filename<<std::endl;
+    std::ofstream file;
+    file.open(filename.c_str());
+    for(uint i=0; i<m_numberOfBins; i++)
+    {
+      float value = BinToValue(i);
+      file << value << " " << m_normalizedCumulativeDistributionFunction[i] << std::endl;    
+    } 
+    file.close(); 
+  }  
+  void Histogram::SaveInverseCumulativeDistributionFunction(const std::string & filename)
+  {  
+    std::cout<<"Saving icdf in "<<filename<<std::endl;
+    std::ofstream file;
+    file.open(filename.c_str());
+    for(uint i=0; i<m_numberOfSamples; i++)
+    {
+      file << i << " " << m_inverseCumulativeDistributionFunction[i] << std::endl;    
+    } 
+    file.close(); 
+  }  
+  void Histogram::SaveNormalizedInverseCumulativeDistributionFunction(const std::string & filename)
+  {  
+    std::cout<<"Saving normalized icdf in "<<filename<<std::endl;
+    std::ofstream file;
+    file.open(filename.c_str());
+    for(uint i=0; i<m_sampleQuantification; i++)
+    {
+      file << i << " " << m_normalizedInverseCumulativeDistributionFunction[i] << std::endl;    
+    } 
+    file.close(); 
+  }  
+
 
 }
 #endif // btkHistogram_CXX
