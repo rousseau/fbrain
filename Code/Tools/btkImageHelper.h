@@ -99,16 +99,32 @@ namespace btk
             /**
              * @brief Create a new image in the same physical space of a current image.
              * @param image Image of which physical space will be used for creation.
+             * @param defaultValue Default value of pixel in new image.
              * @return New image in the same physical space.
              */
-            static typename TImageOutput::Pointer CreateNewImageFromPhysicalSpaceOf(typename TImageInput::Pointer image);
+            static typename TImageOutput::Pointer CreateNewImageFromPhysicalSpaceOf(typename TImageInput::Pointer image, typename TImageOutput::PixelType defaultValue=static_cast< typename TImageOutput::PixelType >(0));
 
             /**
              * @brief Create new images in the same physical space of current images.
              * @param images Vector of images of which physical space will be used for creation.
              * @return Vector of new images in the same physical space.
              */
-            static std::vector< typename TImageOutput::Pointer > &CreateNewImageFromPhysicalSpaceOf(std::vector< typename TImageInput::Pointer > &images);
+            static std::vector< typename TImageOutput::Pointer > &CreateNewImageFromPhysicalSpaceOf(std::vector< typename TImageInput::Pointer > &images, typename TImageOutput::PixelType defaultValue=static_cast< typename TImageOutput::PixelType >(0));
+
+            /**
+             * @brief Test if images are in the same physical space.
+             * @param firstImage First image.
+             * @param secondImage Second Image.
+             * @return True if the two images are in the same physical space, false otherwise.
+             */
+            static bool IsInSamePhysicalSpace(typename TImageInput::Pointer firstImage, typename TImageInput::Pointer secondImage);
+
+            /**
+             * @brief Test if images are in the same physical space.
+             * @param images Images to compare.
+             * @return True if the two images are in the same physical space, false otherwise.
+             */
+            static bool IsInSamePhysicalSpace(std::vector< typename TImageInput::Pointer > &images);
     };
 
 } // namespace btk
