@@ -2,8 +2,8 @@
 
   © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-  Date: 02/04/2012
-  Author(s): Marc Schweitzer (marc.schweitzer@unistra.fr)
+  Date: 23/08/2012
+  Author(s): François Rousseau (rousseau@unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -106,22 +106,11 @@ int main(int argc, char * argv[])
     TCLAP::MultiArg<std::string> inputArg("i","input","Low-resolution image file",true,"string",cmd);
     TCLAP::MultiArg<std::string> maskArg("m","mask","low-resolution image mask file",false,"string",cmd);
     TCLAP::MultiArg<std::string> transArg("t","transform","transform file",false,"string",cmd);
-    TCLAP::ValueArg<std::string> refArg  ("r","reconstructed","Reconstructed image for initialization. "
-                                          "Typically the output of btkImageReconstruction is used." ,false,"","string",cmd);
-    TCLAP::ValueArg<int> loopArg  ("","loop","Number of loops (SR/denoising) (default = 5)",false, 5,"int",cmd);
+    TCLAP::ValueArg<std::string> refArg  ("r","reconstructed","Reconstructed image for initialization. Typically the output of btkImageReconstruction is used." ,false,"","string",cmd);
     TCLAP::ValueArg<std::string> outArg  ("o","output","Super resolution output image",true,"","string",cmd);
 
-    TCLAP::SwitchArg    ComputeRegSwitchArg("","noReco","No Reconstruction is performed, the reference 3D image and the transforms files must be set", cmd, false);
+    TCLAP::SwitchArg        ComputeRegSwitchArg("","noReco","No Reconstruction is performed, the reference 3D image and the transforms files must be set", cmd, false);
     TCLAP::ValueArg<int>    TransfosTypeSwitchArg("","transfos","Type of Transformation to perform (0: Affine 3D, 1: Euler3D, 2: Affine SliceBySlice, 3: Euler SliceBySlice... ).",false,3,"int",cmd);
-    TCLAP::ValueArg<int>    ReconTypeSwitchArg("","RecoType","Type of reconstruction to perform (0: SR 3D, 1: IBP, 2:... ).",false,0,"int",cmd);
-
-    TCLAP::ValueArg<int> nlmArg           ("n","nlm","Type of filtering during IBP process (0: no filtering (default), 1: error map filtering, 2: current HR image filtering).", false,0,"int",cmd);
-    TCLAP::ValueArg<float> betaArg        ("b","beta","Smoothing parameter for NLM filtering (default = 1).", false,1,"float",cmd);
-    TCLAP::ValueArg<int> simArg           ("s","sim","Simulation of LR images based on the input HR image and the input LR images (0: no simulation, 1: simulation).", false,0,"int",cmd);
-    TCLAP::ValueArg<int> ibpOrderArg      ("","ibpOrder","Order for the B-spline interpolation during image backprojections (0: nearest neighbor, 1: trilinear etc.)", false,5,"int",cmd);
-    TCLAP::ValueArg<int> psfArg           ("p","psftype","Type of the PSF (0: interpolated boxcar, 1: oversampled boxcar (default), 2: Gaussian)", false,1,"int",cmd);
-    TCLAP::ValueArg<int> medArg           ("","medianIBP","Type of filtering on the error map (0: mean of error maps (default), 1: median)", false,0,"int",cmd);
-
 
     //TODO: Add the others used arg
 
@@ -129,13 +118,8 @@ int main(int argc, char * argv[])
     std::vector< std::string > mask;
     std::vector< std::string > transform;
 
-
-
     btk::TRANSFORMATION_TYPE transfosType;
     btk::RECONSTRUCTION_TYPE recoType;
-
-
-
 
     //std::vector< TransformReaderType > transforms;
 
@@ -149,8 +133,6 @@ int main(int argc, char * argv[])
 
     itkImage::Pointer SuperResolutionImage;
 
-
-
     // Parse the argv array.
     cmd.parse( argc, argv );
     input = inputArg.getValue();
@@ -159,16 +141,7 @@ int main(int argc, char * argv[])
     refImage = refArg.getValue().c_str();
     outImage = outArg.getValue().c_str();
 
-    int loops                    = loopArg.getValue();
-    int nlm                      = nlmArg.getValue();
-    int simulation               = simArg.getValue();
-    float beta                   = betaArg.getValue();
-    int ibpOrder                 = ibpOrderArg.getValue();
-    int psftype                  = psfArg.getValue();
-    int medianIBP                = medArg.getValue();
     transfosType = (btk::TRANSFORMATION_TYPE)TransfosTypeSwitchArg.getValue();
-    recoType = (btk::RECONSTRUCTION_TYPE)ReconTypeSwitchArg.getValue();
-
 
     int numberOfImages = input.size();
 
@@ -180,22 +153,19 @@ int main(int argc, char * argv[])
     inputsLREulerTransfos.resize(numberOfImages);
     inputsLRTransfos.resize(numberOfImages);
 
-
-
     itk::TransformFactory< MatrixTransformType >::RegisterTransform();
     itk::TransformFactory< btkAffineSliceBySliceTransform >::RegisterTransform();
     itk::TransformFactory< btkEulerSliceBySliceTransform >::RegisterTransform();
     itk::TransformFactory< btkOldSliceBySliceTransform >::RegisterTransform();
 
-    std::cout<<"Testing SuperResolution Pipeline :"<<std::endl;
-
+/*
     btk::SuperResolutionFilter * SuperResolutionFilter = NULL;
     SuperResolutionFilter =  new btk::SuperResolutionFilter();
     if(SuperResolutionFilter != NULL)
     {
 
-       inputsLRImages = btk::ImageHelper< itkImage >::ReadImage(input);
-       inputsLRMasks = btk::ImageHelper< ImageMaskType >::ReadImage(mask);
+       inputsLRImages = btk::ImageHelper< itkImage >::ReadImageArray(input);
+       inputsLRMasks = btk::ImageHelper< ImageMaskType >::ReadImageArray(mask);
 
 
         //std::vector<btkOldSliceBySliceTransform::Pointer> tr = btk::IOTransformHelper< btkOldSliceBySliceTransform >::ReadTransformArray(transform);
@@ -412,7 +382,7 @@ int main(int argc, char * argv[])
 
 
     delete SuperResolutionFilter;
-
+*/
     return EXIT_SUCCESS;
 
 }

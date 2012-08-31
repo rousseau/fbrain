@@ -43,6 +43,9 @@
 // STL includes
 #include "iostream"
 
+// Local includes
+#include "btkFileHelper.h"
+
 
 namespace btk
 {
@@ -63,7 +66,7 @@ void ImageHelper< TImageInput, TImageOutput >::WriteImage(typename TImageInput::
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
-void ImageHelper< TImageInput, TImageOutput >::WriteImageArray(std::vector< typename TImageInput::Pointer > &images, std::vector<std::string> &fileNames)
+void ImageHelper< TImageInput, TImageOutput >::WriteImage(std::vector< typename TImageInput::Pointer > &images, std::vector<std::string> &fileNames)
 {
 
     if(images.size() == fileNames.size())
@@ -100,7 +103,7 @@ typename TImageInput::Pointer ImageHelper< TImageInput, TImageOutput >::ReadImag
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
-std::vector< typename TImageInput::Pointer > &ImageHelper< TImageInput, TImageOutput >::ReadImageArray(std::vector<std::string> &fileNames)
+std::vector< typename TImageInput::Pointer > &ImageHelper< TImageInput, TImageOutput >::ReadImage(std::vector<std::string> &fileNames)
 {
     std::vector< typename TImageInput::Pointer > *ptrImages = new std::vector< typename TImageInput::Pointer >;
     std::vector< typename TImageInput::Pointer > &images = *ptrImages;
@@ -193,6 +196,26 @@ bool ImageHelper< TImageInput, TImageOutput >::IsInSamePhysicalSpace(std::vector
     }
 
     return isInSameSpace;
+}
+
+//----------------------------------------------------------------------------------------
+
+template < class TImageInput, class TImageOutput >
+typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::ReadOrCreateImage(const std::string &fileName, typename TImageInput::Pointer image, typename TImageOutput::PixelType defaultValue)
+{
+    typename TImageOutput::Pointer newImage = NULL;
+
+    if(!fileName.empty() && btk::FileHelper::FileExist(fileName))
+    {
+        newImage = ReadImage(fileName);
+    }
+    else
+    {
+        std::cout << "Creating new image with pixel value set to " << defaultValue << std::endl;
+        newImage = CreateNewImageFromPhysicalSpaceOf(image, defaultValue);
+    }
+
+    return newImage;
 }
 
 } // namespace btk

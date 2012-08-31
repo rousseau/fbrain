@@ -6,7 +6,7 @@ namespace btk
 
 //------------------------------------------------------------------------------------------------
 
-bool FileHelper::FileExist(std::string &file)
+bool FileHelper::FileExist(const std::string &file)
 {
     std::fstream fs;
 
@@ -17,7 +17,7 @@ bool FileHelper::FileExist(std::string &file)
 
 //------------------------------------------------------------------------------------------------
 
-bool FileHelper::FileExistPrintIt(std::string &file)
+bool FileHelper::FileExistPrintIt(const std::string &file)
 {
     std::fstream fs;
 
@@ -37,7 +37,7 @@ bool FileHelper::FileExistPrintIt(std::string &file)
 
 //------------------------------------------------------------------------------------------------
 
-void FileHelper::FilesExist(std::vector<std::string> &files, std::vector<bool> &result)
+void FileHelper::FilesExist(std::vector< std::string > &files, std::vector<bool> &result)
 {
     result.resize(files.size());
     std::fstream fs;
@@ -60,7 +60,7 @@ void FileHelper::FilesExist(std::vector<std::string> &files, std::vector<bool> &
 
 //------------------------------------------------------------------------------------------------
 
-void FileHelper::FilesExistPrintIt(std::vector<std::string> &files, std::vector<bool> &result)
+void FileHelper::FilesExistPrintIt(std::vector< std::string > &files, std::vector<bool> &result)
 {
     result.resize(files.size());
     std::fstream fs;

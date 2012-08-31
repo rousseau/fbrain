@@ -78,17 +78,21 @@ int main (int argc, char* argv[])
   TCLAP::MultiArg<std::string> outputImageArg("o","output_file","output anatomical image files (possible multiple inputs) ",true,"string", cmd);
   TCLAP::ValueArg< unsigned int > binArg("b","bin","number of bins for image intensity (default is 10000)",false,10000,"unsigned int",cmd);
   TCLAP::ValueArg< unsigned int > samArg("s","sample","number of bins for number of samples (voxels) (default is 10000)",false,10000,"unsigned int",cmd);
+  TCLAP::MultiArg<std::string> refImageArg("r","ref_file","reference anatomical image files (possible multiple inputs) ",false,"string", cmd);
+  TCLAP::MultiArg<std::string> maskRefImageArg("","mask_ref_file","input mask reference image files (possible multiple inputs) ",false,"string", cmd);
 
 
   // Parse the args.
   cmd.parse( argc, argv );
   
-  std::vector<std::string> input_file  = inputImageArg.getValue();
-  std::vector<std::string> mask_file   = maskImageArg.getValue();
-  std::vector<std::string> output_file = outputImageArg.getValue();
-  unsigned int numberOfBins            = binArg.getValue();
-  unsigned int sampleQuantification    = samArg.getValue();
-
+  std::vector<std::string> input_file    = inputImageArg.getValue();
+  std::vector<std::string> mask_file     = maskImageArg.getValue();
+  std::vector<std::string> output_file   = outputImageArg.getValue();
+  unsigned int numberOfBins              = binArg.getValue();
+  unsigned int sampleQuantification      = samArg.getValue();
+  std::vector<std::string> ref_file      = refImageArg.getValue();
+  std::vector<std::string> mask_ref_file = maskRefImageArg.getValue();
+  
   //ITK declaration
   typedef short PixelType;
   const   unsigned int        Dimension = 3;
@@ -108,13 +112,25 @@ int main (int argc, char* argv[])
   std::vector<ImagePointer> outputImages;
   outputImages.resize(input_file.size());
     
+  std::vector<ImagePointer> refImages;
+  refImages.resize(ref_file.size());
+
+  std::vector<ImagePointer> maskRefImages;
+  maskRefImages.resize(mask_ref_file.size());
+  
   std::cout<<"Read input images \n";
-  inputImages = btk::ImageHelper<ImageType>::ReadImageArray(input_file);
+  inputImages = btk::ImageHelper<ImageType>::ReadImage(input_file);
+  
+  if(ref_file.size() > 0)
+  {
+    std::cout<<"Read reference images \n";
+    refImages = btk::ImageHelper<ImageType>::ReadImage(ref_file);  
+  }
   
   if(mask_file.size()>0)
   {
     std::cout<<"Read mask images \n";
-    maskImages = btk::ImageHelper<ImageType>::ReadImageArray(mask_file);
+    maskImages = btk::ImageHelper<ImageType>::ReadImage(mask_file);
   }
   else
   {
@@ -130,6 +146,24 @@ int main (int argc, char* argv[])
     }
   }
   
+  if(mask_ref_file.size()>0)
+  {
+    std::cout<<"Read mask reference images \n";
+    maskRefImages = btk::ImageHelper<ImageType>::ReadImage(mask_ref_file);
+  }
+  else if(ref_file.size() > 0)
+  {
+    std::cout<<"No mask reference images provided: by default, mask images correspond to the entire image domain\n";    
+    maskRefImages.resize(ref_file.size());
+    
+    for(unsigned int i=0; i<ref_file.size(); i++)
+    {
+      maskRefImages[i] = btk::ImageHelper<ImageType>::CreateNewImageFromPhysicalSpaceOf(refImages[i]);
+      maskRefImages[i]->FillBuffer(1);  
+    }
+  }
+
+
   //Duplicate input images to initialize output images
   for(unsigned int i=0; i<input_file.size(); i++)
   {
@@ -144,10 +178,16 @@ int main (int argc, char* argv[])
   myTool.SetNumberOfBins(numberOfBins);
   myTool.SetSampleQuantification(sampleQuantification);
   
-  myTool.Do(inputImages, maskImages, outputImages);
-
+  std::cout<<"histogram parameters"<<std::endl;
+  std::cout<<"number of bins : "<<numberOfBins<<std::endl;
+  std::cout<<"sample quantification : "<<sampleQuantification<<std::endl;
   
-  btk::ImageHelper<ImageType>::WriteImageArray(outputImages, output_file);
+  if(ref_file.size() > 0)
+    myTool.DoWithReference(inputImages, refImages, maskImages, maskRefImages, outputImages);
+  else
+    myTool.Do(inputImages, maskImages, outputImages);
+  
+  btk::ImageHelper<ImageType>::WriteImage(outputImages, output_file);
     
   
   } catch (TCLAP::ArgException &e)  // catch any exceptions

@@ -72,7 +72,7 @@ int main (int argc, char* argv[])
   std::vector<ImagePointer> anatomicalImages;
   anatomicalImages.resize(anatomical_file.size());
 
-  anatomicalImages = btk::ImageHelper<ImageType>::ReadImageArray(anatomical_file);
+  anatomicalImages = btk::ImageHelper<ImageType>::ReadImage(anatomical_file);
   
   ImageType::RegionType region;
   ImageType::SizeType size;

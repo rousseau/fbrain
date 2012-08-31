@@ -40,6 +40,10 @@
 
 // STL includes
 #include "string"
+#include "iostream"
+#include "fstream"
+#include "sstream"
+
 
 // ITK includes
 #include "itkImage.h"
@@ -80,7 +84,7 @@ namespace btk
              * @param images vector of images to write.
              * @param fileNames File names of the images to write.
              */
-            static void WriteImageArray(std::vector< typename TImageInput::Pointer > &images, std::vector< std::string > &fileNames);
+            static void WriteImage(std::vector< typename TImageInput::Pointer > &images, std::vector< std::string > &fileNames);
 
             /**
              * @brief Read an image.
@@ -94,7 +98,7 @@ namespace btk
              * @param fileNames File names of the images to read.
              * @return A reference to a vector containing the images that have been red.
              */
-            static std::vector< typename TImageInput::Pointer > &ReadImageArray(std::vector< std::string> &fileNames);
+            static std::vector< typename TImageInput::Pointer > &ReadImage(std::vector< std::string> &fileNames);
 
             /**
              * @brief Create a new image in the same physical space of a current image.
@@ -107,6 +111,7 @@ namespace btk
             /**
              * @brief Create new images in the same physical space of current images.
              * @param images Vector of images of which physical space will be used for creation.
+             * @param defaultValue Default value of pixel in new image.
              * @return Vector of new images in the same physical space.
              */
             static std::vector< typename TImageOutput::Pointer > &CreateNewImageFromPhysicalSpaceOf(std::vector< typename TImageInput::Pointer > &images, typename TImageOutput::PixelType defaultValue=static_cast< typename TImageOutput::PixelType >(0));
@@ -125,6 +130,15 @@ namespace btk
              * @return True if the two images are in the same physical space, false otherwise.
              */
             static bool IsInSamePhysicalSpace(std::vector< typename TImageInput::Pointer > &images);
+            
+             /**
+             * @brief Read an image if the file exist, otherwise create an image with a constant pixel value.
+             * @param fileName File name of the image to read.
+             * @param image Image of which physical space will be used for creation.
+             * @param pixel value used for initialisation in case of image creation.
+             * @return A pointer to the image that have been red.
+             */
+            static typename TImageOutput::Pointer ReadOrCreateImage(const std::string &fileName, typename TImageInput::Pointer image, typename TImageOutput::PixelType defaultValue=static_cast< typename TImageOutput::PixelType >(0));
     };
 
 } // namespace btk

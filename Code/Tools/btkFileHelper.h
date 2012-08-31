@@ -53,14 +53,14 @@ class FileHelper
          * @param file
          * @return
          */
-        static bool FileExist(std::string &file);
+        static bool FileExist(const std::string &file);
 
         /**
          * @brief FileExistPrintIt
          * @param file
          * @return
          */
-        static bool FileExistPrintIt(std::string &file);
+        static bool FileExistPrintIt(const std::string &file);
 
         /**
          * @brief FilesExist

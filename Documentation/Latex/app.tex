@@ -19,10 +19,11 @@ obtained by using a mask (or a padding value).
 
 \subsection{Anatomical reconstruction}
 \label{subsec:ana_rec}
+
 \begin{description}
  \item[btkImageReconstruction] This program allows to obtain a
 high-resolution image from a set of low-resolution images, typically
-axial, coronal, and sagital acquisitions~\cite{Rousseau2006}. \\\\
+axial, coronal, and sagittal acquisitions~(similar to \cite{rousseau_registration_2006}). \\\\
 Minimal usage: \texttt{btkImageReconstruction -i image1 $\cdots$ -i imageN -o
 output --box}. 
 
@@ -36,8 +37,14 @@ The full list of optional parameters of the method can be obtained by
 
 \end{description}
 
+\begin{description}
+ \item[btkSuperResolution] To be documented. 
+
+\end{description}
+
 \subsection{Anatomical segmentation}
 \label{subsec:ana_seg}
+
 \begin{description}
  \item[btkTissueSegmentation] This program allows to obtain :
         \begin{itemize}
@@ -47,6 +54,10 @@ The full list of optional parameters of the method can be obtained by
         as described in~\cite{caldairou_segmentation_2011}.
         
         Usage: \texttt{btkTissueSegmentation -i greyImage -s intracranianVolume -l brainstemSegmentation -l cerebellumSegmentation -o brainSegmentation -o cortexSegmentation}
+\end{description}
+
+\begin{description}
+ \item[btkLabelPropagation] This program applies a patch-based label propagation algorithm for segmentation~\cite{rousseau_supervised_2011}. As a supervised method, it takes as input a textbook containing several anatomical images and the corresponding segmentation maps.
 \end{description}
 
 
@@ -97,6 +108,9 @@ Minimal usage: \texttt{btkRBFInterpolationS2S -i input -m mask.nii -o output
 
 \subsection{Tractography \cite{pontabry_probabilistic_2011}}
 \label{subsec:tracto}
+
+** TO BE MODIFIED ** : THIS SECTION CORRESPONDS TO THE FOLLOWING PROGRAMS: btkODFParticleFilterTractography, btkODFStreamlineTractography, btkTensorParticleFilterTractography, btkTensorStreamlineTractography, btkTractography.
+
     \subsubsection*{Standard usage}
         Suppose you want to perform a tractography on a diffusion weighted MRI 
 dataset. You should have a dwi image, the corresponding gradient vectors'

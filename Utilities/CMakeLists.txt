@@ -100,7 +100,10 @@ ADD_EXECUTABLE(btkSequenceNormalization btkSequenceNormalization.cxx
 TARGET_LINK_LIBRARIES(btkSequenceNormalization btkToolsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkRescaleIntensity btkRescaleIntensity.cxx)
-TARGET_LINK_LIBRARIES(btkRescaleIntensity ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkRescaleIntensity btkToolsLibrary ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkImageHistogram btkImageHistogram.cxx)
+TARGET_LINK_LIBRARIES(btkImageHistogram btkToolsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkReconstructionComparisonTool btkReconstructionComparisonTool.cxx)
 TARGET_LINK_LIBRARIES(btkReconstructionComparisonTool ${ITK_LIBRARIES})
@@ -174,44 +177,68 @@ ADD_EXECUTABLE(btkMidwayHistogramEqualization btkMidwayHistogramEqualization.cxx
 )
 TARGET_LINK_LIBRARIES(btkMidwayHistogramEqualization ${ITK_LIBRARIES})
 
-INSTALL(TARGETS
-    btkModifyImageUsingLookUpTable
-    btkConvertGradientTable
-    btkReorientImageToStandard
-    btkReorientDiffusionSequenceToStandard
-    btkSetStandardCoorSystem
-    btkPrintImageInfo
-    btkRegisterDiffusionToAnatomicalData
-    btkNrrdToNifti
-    btkNiftiToNrrd
-    btkExtractOneImageFromSequence
-    btkCropImageUsingMask
-    btkBinarizeLabels
-    btkResampleLabelsByInjection
-    btkSimulateStandardViewFromIsotropicImage
-    btkAverageImagesWithReference
-    btkImageInjection
-    btkImageSimilarity
-    btkPSNR
-    btkWeightedMean
-    btkSequenceNormalization
-    btkReconstructionComparisonTool
-    btkIteratedBackProjection
-    btkImageResampling
-    btkDifferentialBiasCorrection
-    btkMajorityVoting
-    btkProbabilityMapNormalization
-    btkImageGaussianFilter
-    btkBinarizeTissueProbabilityMaps
-    btkSimulateMotionSliceBySlice
-    btkImageSubtract
-    btkApplyMaskToImage
-    btkWarpTransformationToImage
-    btkFCMClassification
-    btkImageMorphologicalClosing
-    btkImageMorphologicalTopHat
-    btkAverage3DImages
-    btkComputeOverlap
-    btkComputeChamferDistance
-    btkMidwayHistogramEqualization
-DESTINATION bin)
+ADD_EXECUTABLE(btkBinarizeMask btkBinarizeMask.cxx
+     ${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+TARGET_LINK_LIBRARIES(btkBinarizeMask ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkExtractMaskUsingBoundingBox btkExtractMaskUsingBoundingBox.cxx
+${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkImageIntersectionCalculator.h)
+TARGET_LINK_LIBRARIES(btkExtractMaskUsingBoundingBox ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkTranslateImageOverTemplate btkTranslateImageOverTemplate.cxx
+${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+TARGET_LINK_LIBRARIES(btkTranslateImageOverTemplate ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkExtendMaskToImage btkExtendMaskToImage.cxx
+${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h)
+TARGET_LINK_LIBRARIES(btkExtendMaskToImage ${ITK_LIBRARIES})
+
+INSTALL(TARGETS btkModifyImageUsingLookUpTable
+                btkConvertGradientTable
+                btkReorientImageToStandard
+                btkReorientDiffusionSequenceToStandard
+                btkSetStandardCoorSystem
+                btkPrintImageInfo
+                btkRegisterDiffusionToAnatomicalData
+                btkNrrdToNifti
+                btkNiftiToNrrd
+                btkExtractOneImageFromSequence
+                btkCropImageUsingMask
+                btkBinarizeLabels
+                btkResampleLabelsByInjection
+                btkSimulateStandardViewFromIsotropicImage
+                btkAverageImagesWithReference
+                btkImageInjection
+                btkImageSimilarity
+                btkPSNR
+                btkWeightedMean
+                btkSequenceNormalization
+                btkReconstructionComparisonTool
+                btkIteratedBackProjection
+                btkImageResampling
+                btkDifferentialBiasCorrection
+                btkMajorityVoting
+                btkProbabilityMapNormalization
+                btkImageGaussianFilter
+                btkBinarizeTissueProbabilityMaps
+                btkSimulateMotionSliceBySlice
+                btkImageSubtract
+                btkApplyMaskToImage
+                btkWarpTransformationToImage
+                btkFCMClassification
+                btkImageMorphologicalClosing
+                btkImageMorphologicalTopHat
+                btkAverage3DImages
+                btkComputeOverlap
+                btkComputeChamferDistance
+                btkMidwayHistogramEqualization
+                btkBinarizeMask
+                btkExtractMaskUsingBoundingBox
+                btkTranslateImageOverTemplate
+                btkExtendMaskToImage
+                btkImageHistogram
+                btkRescaleIntensity
+
+        DESTINATION bin)
+

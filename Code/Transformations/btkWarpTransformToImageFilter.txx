@@ -10,7 +10,6 @@ template<typename TImageIn, typename TImageOut>
 WarpTransformToImageFilter<TImageIn,TImageOut>::WarpTransformToImageFilter()
 {
     m_Resampler = Resampler::New();
-    m_Transform = itkTransform::New();
 
 }
 //-------------------------------------------------------------------------------------------
@@ -27,6 +26,15 @@ WarpTransformToImageFilter<TImageIn,TImageOut>::~WarpTransformToImageFilter()
 template<typename TImageIn, typename TImageOut>
 void WarpTransformToImageFilter<TImageIn,TImageOut>::Initialize()
 {
+    if(!m_Transform)
+    {
+        btkException("Missing input transform !");
+    }
+    if(!m_InputImage)
+    {
+        btkException("Missing input image !")
+    }
+
     m_Resampler->SetInput(m_InputImage);
     m_Resampler->SetTransform(m_Transform);
     m_Resampler->SetOutputOrigin(m_InputImage->GetOrigin());

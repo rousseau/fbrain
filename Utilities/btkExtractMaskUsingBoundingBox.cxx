@@ -2,8 +2,8 @@
 
   © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-  Date: 25/06/2012
-  Author(s): Marc Schweitzer (marc.schweitzer@unistra.fr)
+  Date: 03/07/2012
+  Author(s): Youssef Taleb
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -33,93 +33,76 @@
 
 ==========================================================================*/
 
+
 /* ITK */
 #include "itkImage.h"
-#include "itkSubtractImageFilter.h"
 
 /* BTK */
-
 #include "btkImageHelper.h"
+#include "btkImageIntersectionCalculator.h"
 
 /* OTHERS */
 #include "iostream"
 #include <tclap/CmdLine.h>
-
 
 int main(int argc, char * argv[])
 {
     /* Typedefs */
 
     const unsigned int Dimension = 3;
-    typedef float PixelType;
+    typedef short PixelType;
+    typedef itk::Image<PixelType, Dimension>            ImageType;
+    typedef btk::ImageIntersectionCalculator<ImageType> IntersectionCalculatorType;
+    typedef itk::Image<unsigned char, Dimension>        ImageMaskType;
 
-    typedef itk::Image<PixelType, Dimension> itkImage;
 
-    typedef itk::SubtractImageFilter<itkImage> SubstractFilter;
+    IntersectionCalculatorType::Pointer intersector=IntersectionCalculatorType::New();
 
-    //TCLAP
+    //TCLAP Commands for arguments
+    TCLAP::CmdLine cmd("Extract Masks using Bouding Box of Images", ' ', "Unversioned");
+    TCLAP::MultiArg<std::string> inputArg("i","input","input image files",true,"string",cmd);
+    TCLAP::MultiArg<std::string> outArg  ("o","output","output mask files",true,"string",cmd);
 
-    TCLAP::CmdLine cmd("Pixel-wise subtraction of two image, or one image and a constant (-i im1 -i im2 -o result or -i im1 -c value -o result", ' ', "Unversioned");
-    TCLAP::MultiArg<std::string> inputArg("i","input","Low-resolution image file",true,"string",cmd);
-    TCLAP::ValueArg<std::string> outArg  ("o","output","Super resolution output image",true,"","string",cmd);
-    TCLAP::ValueArg<float> cstArg  ("c","constant","Super resolution output image",false,-9999,"string",cmd);
 
-    std::vector< std::string > inputFileImages;
-    std::string outputFileImage;
-    std::vector< itkImage::Pointer > inputsImages;
-    itkImage::Pointer outputImage;
+    std::vector< std::string > inputFileImage;
+    std::vector< std::string > outputFileImage;
+    std::vector< ImageType::Pointer > inputImage;
 
     // Parse the argv array.
     cmd.parse( argc, argv );
-    inputFileImages = inputArg.getValue();
-    outputFileImage = outArg.getValue().c_str();
-    float cst = cstArg.getValue();
+    inputFileImage = inputArg.getValue();
+    outputFileImage = outArg.getValue();
 
-    std::cout<<"Begin the subtraction : "<<std::endl<<std::endl;
 
-    if(inputFileImages.size() != 2 && cst == -9999)
+    std::cout<<"Initialization... "<<std::endl<<std::endl;
+
+
+    // Error output if wrong argument number
+    if(inputFileImage.size() == 0)
     {
-        std::cout<<"You should have 2 image in input or 1 image and a constant value(-c) !"<<std::endl;
+        std::cout<<"You should have at least one image in input  !"<<std::endl;
         return EXIT_FAILURE;
     }
-    else if(cst != -9999)
+
+    // Read input arguments into input image
+    inputImage = btk::ImageHelper<ImageType>::ReadImage(inputFileImage);
+
+    // Intersection Process
+    for (unsigned int i=0;i<inputFileImage.size();i++)
     {
-        std::cout<<"Constant value = "<<cst<<std::endl;
+        intersector->AddImage(inputImage[i]) ;
+    }
+
+    intersector->Compute();
+    for (int i=0;i<outputFileImage.size();i++)
+    {
+        ImageMaskType* mask = intersector-> GetImageMask(i);
+        btk::ImageHelper<ImageMaskType>::WriteImage(mask,outputFileImage[i]);
     }
 
 
-    inputsImages = btk::ImageHelper<itkImage>::ReadImage(inputFileImages);
-
-    SubstractFilter::Pointer subtractFilter = SubstractFilter::New ();
-    subtractFilter->SetInput1(inputsImages[0]);
-
-    if(inputFileImages.size() == 1 && cst != -9999)
-    {
-        subtractFilter->SetConstant2(cst);
-    }
-    else
-    {
-        subtractFilter->SetInput2(inputsImages[1]);
-    }
-
-    subtractFilter->Update();
-
-    outputImage = subtractFilter->GetOutput();
-
-    btk::ImageHelper<itkImage>::WriteImage(outputImage,outputFileImage);
-
-    std::cout<<"End Subtraction..."<<std::endl;
+    std::cout<<"End of execution..."<<std::endl;
 
     return EXIT_SUCCESS;
-
-
-
-
-
-
-
-
-
-
 
 }

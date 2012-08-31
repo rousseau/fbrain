@@ -40,6 +40,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "iomanip"
 #include "sstream"
 #include "fstream"
+#include "iostream"
 
 namespace btk
 {
@@ -59,6 +60,8 @@ class Histogram
   void AddSample(float sample);
   void RemoveSample(float sample);
   float BinToValue(unsigned int bin);
+  void AddWeightedSample(float sample, float weight);
+  void RemoveWeightedSample(float sample, float weight);
   
   void ComputeCumulativeDistributionFunction();
   void ComputeInverseCumulativeDistributionFunction();
@@ -66,6 +69,13 @@ class Histogram
   void NormalizeData();
   void ComputeNormalizedCumulativeDistributionFunction();
   void ComputeNormalizedInverseCumulativeDistributionFunction();
+  
+  void SaveHistogram(const std::string & filename);
+  void SaveNormalizedHistogram(const std::string & filename);
+  void SaveCumulativeDistributionFunction(const std::string & filename);
+  void SaveNormalizedCumulativeDistributionFunction(const std::string & filename);
+  void SaveInverseCumulativeDistributionFunction(const std::string & filename);
+  void SaveNormalizedInverseCumulativeDistributionFunction(const std::string & filename);  
     
   std::vector<float> m_data;  
   std::vector<float> m_cumulativeDistributionFunction; //not normalized
@@ -78,7 +88,7 @@ class Histogram
   
   unsigned int m_numberOfBins;
   unsigned int m_sampleQuantification;
-  unsigned int m_numberOfSamples;
+  float m_numberOfSamples;
   float m_lowerBound;
   float m_upperBound;
   float m_aCoefficient;
