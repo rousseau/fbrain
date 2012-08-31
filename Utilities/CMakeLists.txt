@@ -174,6 +174,9 @@ ADD_EXECUTABLE(btkMidwayHistogramEqualization btkMidwayHistogramEqualization.cxx
 )
 TARGET_LINK_LIBRARIES(btkMidwayHistogramEqualization ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkComputeVolumeFromTissueMaps btkComputeVolumeFromTissueMaps.cxx)
+TARGET_LINK_LIBRARIES(btkComputeVolumeFromTissueMaps ${ITK_LIBRARIES})
+
 INSTALL(TARGETS
     btkModifyImageUsingLookUpTable
     btkConvertGradientTable
@@ -214,4 +217,5 @@ INSTALL(TARGETS
     btkComputeOverlap
     btkComputeChamferDistance
     btkMidwayHistogramEqualization
+    btkComputeVolumeFromTissueMaps
 DESTINATION bin)

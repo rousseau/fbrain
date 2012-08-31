@@ -1,0 +1,6 @@
+PROJECT(Scripts)
+INCLUDE_REGULAR_EXPRESSION("^.*$")
+
+INSTALL(FILES
+    ${Scripts_SOURCE_DIR}/btkPrepareAtlasData.py
+DESTINATION bin)
