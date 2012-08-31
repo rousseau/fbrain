@@ -49,6 +49,7 @@
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
+#include "itkNumericTraits.h"
 
 namespace btk
 {
@@ -106,7 +107,7 @@ namespace btk
              * @param defaultValue Default value of pixel in new image.
              * @return New image in the same physical space.
              */
-            static typename TImageOutput::Pointer CreateNewImageFromPhysicalSpaceOf(typename TImageInput::Pointer image, typename TImageOutput::PixelType defaultValue=static_cast< typename TImageOutput::PixelType >(0));
+            static typename TImageOutput::Pointer CreateNewImageFromPhysicalSpaceOf(typename TImageInput::Pointer image, typename TImageOutput::PixelType defaultValue=itk::NumericTraits< typename TImageOutput::PixelType >::ZeroValue());
 
             /**
              * @brief Create new images in the same physical space of current images.
@@ -114,7 +115,7 @@ namespace btk
              * @param defaultValue Default value of pixel in new image.
              * @return Vector of new images in the same physical space.
              */
-            static std::vector< typename TImageOutput::Pointer > &CreateNewImageFromPhysicalSpaceOf(std::vector< typename TImageInput::Pointer > &images, typename TImageOutput::PixelType defaultValue=static_cast< typename TImageOutput::PixelType >(0));
+            static std::vector< typename TImageOutput::Pointer > &CreateNewImageFromPhysicalSpaceOf(std::vector< typename TImageInput::Pointer > &images, typename TImageOutput::PixelType defaultValue=itk::NumericTraits< typename TImageOutput::PixelType >::ZeroValue());
 
             /**
              * @brief Test if images are in the same physical space.
@@ -138,7 +139,7 @@ namespace btk
              * @param pixel value used for initialisation in case of image creation.
              * @return A pointer to the image that have been red.
              */
-            static typename TImageOutput::Pointer ReadOrCreateImage(const std::string &fileName, typename TImageInput::Pointer image, typename TImageOutput::PixelType defaultValue=static_cast< typename TImageOutput::PixelType >(0));
+            static typename TImageOutput::Pointer ReadOrCreateImage(const std::string &fileName, typename TImageInput::Pointer image, typename TImageOutput::PixelType defaultValue=itk::NumericTraits< typename TImageOutput::PixelType >::ZeroValue());
     };
 
 } // namespace btk
