@@ -33,83 +33,101 @@
 
 ==========================================================================*/
 
-#if defined(_MSC_VER)
-#pragma warning ( disable : 4786 )
-#endif
-
-/* Standard includes */
+// TCLAP includes
 #include <tclap/CmdLine.h>
 
-/* Itk includes */
+// STL includes
+#include "string"
+
+// ITK includes
 #include "itkImage.h"
-#include "itkImageFileReader.h"
-#include "itkImageFileWriter.h"
-#include "itkImageRegionIteratorWithIndex.h"
-#include "itkImageDuplicator.h"
+#include "itkImageRegionIterator.h"
 
-int main( int argc, char *argv[] )
+// Local includes
+#include "btkMacro.h"
+#include "btkImageHelper.h"
+
+
+// Define label image type
+const unsigned int Dimension = 3;
+
+typedef short                                  PixelType;
+typedef itk::Image< PixelType,Dimension >      LabelImage;
+typedef itk::ImageRegionIterator< LabelImage > LabelImageIterator;
+
+
+int main(int argc, char *argv[])
 {
+    try
+    {
+        //
+        // Read command line
+        //
 
-  try {
+        TCLAP::CmdLine cmd("Splits a label image into binary components", ' ', "2.0");
 
-  const char *inputName = NULL, *outputName = NULL;
-  int label;
+        TCLAP::ValueArg< std::string >  inputFileNameArg("i", "input", "Input image", true, "", "string", cmd);
+        TCLAP::ValueArg< std::string > outputFileNameArg("o", "output", "Output image", true, "", "string", cmd);
+        TCLAP::ValueArg< unsigned int >         labelArg("l", "label", "Label value", true, 0, "natural", cmd);
 
-  TCLAP::CmdLine cmd("Splits a label image into binary components", ' ', "Unversioned");
+        // Parse the command line
+        cmd.parse( argc, argv );
 
-  TCLAP::ValueArg<std::string> inputArg("i","input","Input image",true,"none","string",cmd);
-  TCLAP::ValueArg<std::string> outputArg("o","output","Output image",true,"none","string",cmd);
-  TCLAP::ValueArg<int> labelArg("l","label","Label value",true,0,"int",cmd);
+        std::string inputFileName  = inputFileNameArg.getValue();
+        std::string outputFileName = outputFileNameArg.getValue();
+        unsigned int         label = labelArg.getValue();
 
-  // Parse the argv array.
-  cmd.parse( argc, argv );
 
-  inputName = inputArg.getValue().c_str();
-  outputName = outputArg.getValue().c_str();
-  label = labelArg.getValue();
+        //
+        // Read input image
+        //
 
-  const    unsigned int    Dimension = 3;
-  typedef  short           PixelType;
+        LabelImage::Pointer inputImage = btk::ImageHelper< LabelImage >::ReadImage(inputFileName);
 
-  typedef itk::Image< PixelType, Dimension >  ImageType;
-  typedef ImageType::Pointer                  ImagePointer;
 
-  // Read input
+        //
+        // Create new image from input
+        //
 
-  typedef itk::ImageFileReader< ImageType  >  ImageReaderType;
-  ImageReaderType::Pointer imageReader = ImageReaderType::New();
-  imageReader -> SetFileName( inputName );
-  imageReader -> Update();
-  ImagePointer input = imageReader -> GetOutput();
+        LabelImage::Pointer outputImage = btk::ImageHelper< LabelImage >::CreateNewImageFromPhysicalSpaceOf(inputImage);
 
-  // Duplicate input
 
-  typedef itk::ImageDuplicator< ImageType > DuplicatorType;
-  DuplicatorType::Pointer duplicator = DuplicatorType::New();
-  duplicator -> SetInputImage (input);
-  duplicator -> Update();
-  ImageType::Pointer labelImage = duplicator -> GetOutput();
+        //
+        // Binarize label
+        //
 
-  typedef itk::ImageRegionIteratorWithIndex< ImageType > IteratorType;
-  IteratorType labelIt( labelImage, labelImage -> GetLargestPossibleRegion() );
+        LabelImageIterator outputIt(outputImage, outputImage->GetLargestPossibleRegion());
 
-  for (labelIt.GoToBegin(); !labelIt.IsAtEnd(); ++labelIt)
-  {
-    if ( labelIt.Get() == label )
-      labelIt.Set(1);
-    else
-      labelIt.Set(0);
-  }
+        for(outputIt.GoToBegin(); !outputIt.IsAtEnd(); ++outputIt)
+        {
+            if(outputIt.Get() == label)
+            {
+                outputIt.Set(1);
+            }
+            else // outputIt.Get() != label
+            {
+                outputIt.Set(0);
+            }
+        } // for each voxel
 
-  typedef itk::ImageFileWriter< ImageType >  ImageWriterType;
-  ImageWriterType::Pointer imageWriter = ImageWriterType::New();
-  imageWriter->SetFileName( outputName );
-  imageWriter->SetInput( labelImage );
-  imageWriter->Update();
 
-  return EXIT_SUCCESS;
+        //
+        // Write output image
+        //
 
-  } catch (TCLAP::ArgException &e)  // catch any exceptions
-  { std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; }
+        btk::ImageHelper< LabelImage >::WriteImage(outputImage, outputFileName);
+
+
+        return EXIT_SUCCESS;
+
+    }
+    catch(TCLAP::ArgException &e)
+    {
+        btkCoutMacro("Exception: " << e.error() << " for arg " << e.argId());
+    }
+    catch(std::string &message)
+    {
+        btkCoutMacro("Exception: " << message);
+    }
 }
 
