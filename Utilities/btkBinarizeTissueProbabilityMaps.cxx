@@ -213,15 +213,15 @@ int main(int argc, char *argv[])
                 outputTissueIterator.Set(2);
             }
 
-            if(inputCerveletIterator.Get() > maxValue)
-            {
-                maxValue = inputCerveletIterator.Get();
-                outputTissueIterator.Set(3);
-            }
-
             if(inputBrainstemIterator.Get() > maxValue)
             {
                 maxValue = inputBrainstemIterator.Get();
+                outputTissueIterator.Set(3);
+            }
+
+            if(inputCerveletIterator.Get() > maxValue)
+            {
+                maxValue = inputCerveletIterator.Get();
                 outputTissueIterator.Set(4);
             }
 
