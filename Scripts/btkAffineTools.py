@@ -37,18 +37,18 @@
 
 
 def extractRigidPartFromMatrix(affine):
-    "Extract and return the rigid part of the affine matrix."
+	"Extract and return the rigid part of the affine matrix."
 #	return (affine * affine.getT()) ** (-1/2) * affine
-    return linalg.inv(linalg.sqrtm(affine*affine.getT())) * affine
+	return linalg.inv(linalg.sqrtm(affine*affine.getT())) * affine
 
 def parametersToMatrix(parameters):
-    "Convert affine parameters to a homogeneous matrix."
+	"Convert affine parameters to a homogeneous matrix."
 	s = '{0} {1} {2} ; {3} {4} {5} ; {6} {7} {8}'.format(parameters[0], parameters[1], parameters[2], parameters[3], parameters[4], parameters[5], parameters[6], parameters[7], parameters[8])
 
 	return numpy.matrix(s).getT()
 
 def matrixToParameters(matrix):
-    "Convert a homogeneous matrix to affine parameters."
+	"Convert a homogeneous matrix to affine parameters."
 	M = matrix.getT()
 	params = [ str(M[0,0]), str(M[0,1]), str(M[0,2]), str(M[1,0]), str(M[1,1]), str(M[1,2]), str(M[2,0]), str(M[2,1]), str(M[2,2]) ]
 	i = 0
