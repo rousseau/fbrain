@@ -171,12 +171,10 @@ AntsBinaryDir    = ''
 ANTS             = 'ANTS'
 Warp             = 'WarpImageMultiTransform'
 AverageAffines   = 'AverageAffineTransform'
-
-AverageFields    = 'AverageDeformationFields'
-ShapeRegression  = 'DeformationKernelRegression'
-#WeightedSum      = 'pxbinaryimageoperator'
-CreateNewImage   = 'pxcreatezeroimage'
 ComposeTransform = 'ComposeMultiTransform'
+
+ShapeRegression  = 'DeformationKernelRegression'
+
 
 if len(BtkBinaryDir) > 0:
 	BtkBinaryDir += '/'
