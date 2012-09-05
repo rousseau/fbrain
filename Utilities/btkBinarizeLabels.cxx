@@ -68,14 +68,14 @@ int main(int argc, char *argv[])
 
         TCLAP::ValueArg< std::string >  inputFileNameArg("i", "input", "Input image", true, "", "string", cmd);
         TCLAP::ValueArg< std::string > outputFileNameArg("o", "output", "Output image", true, "", "string", cmd);
-        TCLAP::ValueArg< unsigned int >         labelArg("l", "label", "Label value", true, 0, "natural", cmd);
+        TCLAP::ValueArg< short >       labelArg("l", "label", "Label value", true, 0, "short", cmd);
 
         // Parse the command line
         cmd.parse( argc, argv );
 
         std::string inputFileName  = inputFileNameArg.getValue();
         std::string outputFileName = outputFileNameArg.getValue();
-        unsigned int         label = labelArg.getValue();
+        short                label = labelArg.getValue();
 
 
         //
@@ -96,11 +96,12 @@ int main(int argc, char *argv[])
         // Binarize label
         //
 
+        LabelImageIterator inputIt(inputImage, inputImage->GetLargestPossibleRegion());
         LabelImageIterator outputIt(outputImage, outputImage->GetLargestPossibleRegion());
 
-        for(outputIt.GoToBegin(); !outputIt.IsAtEnd(); ++outputIt)
+        for(inputIt.GoToBegin(),outputIt.GoToBegin(); !inputIt.IsAtEnd() && !outputIt.IsAtEnd(); ++inputIt,++outputIt)
         {
-            if(outputIt.Get() == label)
+            if(inputIt.Get() == label)
             {
                 outputIt.Set(1);
             }
