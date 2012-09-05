@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 #############################################################################
 #
 #  © Université de Strasbourg - Centre National de la Recherche Scientifique
@@ -159,12 +160,27 @@ atlasPath = outputPath + '/atlas'
 #                             External programs                             #
 #############################################################################
 
+BtkBinaryDir         = ''
+BinarizeLabels       = 'btkBinarizeLabels'
+GaussianFilter       = 'btkImageGaussianFilter'
+ProbMapNormalization = 'btkProbabilityMapNormalization'
+WeightedSum          = 'btkWeightedMean'
+BinarizeMaps         = 'btkBinarizeTissueProbabilityMaps'
+
+AntsBinaryDir    = ''
 ANTS             = 'ANTS'
 Warp             = 'WarpImageMultiTransform'
-AverageImages    = 'AverageImages'
 AverageAffines   = 'AverageAffineTransform'
+
 AverageFields    = 'AverageDeformationFields'
 ShapeRegression  = 'DeformationKernelRegression'
-WeightedSum      = 'pxbinaryimageoperator'
+#WeightedSum      = 'pxbinaryimageoperator'
 CreateNewImage   = 'pxcreatezeroimage'
 ComposeTransform = 'ComposeMultiTransform'
+
+if len(BtkBinaryDir) > 0:
+	BtkBinaryDir += '/'
+
+if len(AntsBinaryDir) > 0:
+	AntsBinaryDir += '/'
+

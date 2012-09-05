@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 #############################################################################
 #
 #  © Université de Strasbourg - Centre National de la Recherche Scientifique
@@ -36,7 +37,6 @@
 
 
 import btkAtlasData
-import tools
 import numpy
 import os
 import multiprocessing
@@ -61,10 +61,10 @@ for patient in btkAtlasData.patients:
 		if not(os.path.isdir(path)):
 			os.mkdir(path)
 
-		inputImage  = "{0}/Tissues/{1}_Tissues.nii.gz".format(btkAtlasData.dataPath, patient[0])
-		outputImage = "{0}/GM/{1}_GM.nii.gz".format(btkAtlasData.dataPath, patient[0])
-		goBinarize  = "btkBinarizeLabels -i {0} -o {1} -l 1 > {1}.log 2> {1}.errlog".format(inputImage, outputImage)
-		jobs.append(goBinarize)
+	inputImage  = "{0}/Tissues/{1}_Tissues.nii.gz".format(btkAtlasData.dataPath, patient[0])
+	outputImage = "{0}/GM/{1}_GM.nii.gz".format(btkAtlasData.dataPath, patient[0])
+	goBinarize  = "{0}{1} -i {2} -o {3} -l 1 > {3}_{1}.log 2> {3}_{1}.errlog".format(btkAtlasData.BtkBinaryDir, btkAtlasData.BinarizeLabels, inputImage, outputImage)
+	jobs.append(goBinarize)
 
 
 	path = "{0}/WM".format(btkAtlasData.dataPath)
@@ -73,10 +73,10 @@ for patient in btkAtlasData.patients:
 		if not(os.path.isdir(path)):
 			os.mkdir(path)
 
-		inputImage  = "{0}/Tissues/{1}_Tissues.nii.gz".format(btkAtlasData.dataPath, patient[0])
-		outputImage = "{0}/WM/{1}_WM.nii.gz".format(btkAtlasData.dataPath, patient[0])
-		goBinarize  = "btkBinarizeLabels -i {0} -o {1} -l 2 > {1}.log 2> {1}.errlog".format(inputImage, outputImage)
-		jobs.append(goBinarize)
+	inputImage  = "{0}/Tissues/{1}_Tissues.nii.gz".format(btkAtlasData.dataPath, patient[0])
+	outputImage = "{0}/WM/{1}_WM.nii.gz".format(btkAtlasData.dataPath, patient[0])
+	goBinarize  = "{0}{1} -i {2} -o {3} -l 2 > {3}_{1}.log 2> {3}_{1}.errlog".format(btkAtlasData.BtkBinaryDir, btkAtlasData.BinarizeLabels, inputImage, outputImage)
+	jobs.append(goBinarize)
 
 
 	path = "{0}/Brainstem".format(btkAtlasData.dataPath)
@@ -85,10 +85,10 @@ for patient in btkAtlasData.patients:
 		if not(os.path.isdir(path)):
 			os.mkdir(path)
 
-		inputImage  = "{0}/Tissues/{1}_Tissues.nii.gz".format(btkAtlasData.dataPath, patient[0])
-		outputImage = "{0}/Brainstem/{1}_Brainstem.nii.gz".format(btkAtlasData.dataPath, patient[0])
-		goBinarize  = "btkBinarizeLabels -i {0} -o {1} -l 3 > {1}.log 2> {1}.errlog".format(inputImage, outputImage)
-		jobs.append(goBinarize)
+	inputImage  = "{0}/Tissues/{1}_Tissues.nii.gz".format(btkAtlasData.dataPath, patient[0])
+	outputImage = "{0}/Brainstem/{1}_Brainstem.nii.gz".format(btkAtlasData.dataPath, patient[0])
+	goBinarize  = "{0}{1} -i {2} -o {3} -l 3 > {3}_{1}.log 2> {3}_{1}.errlog".format(btkAtlasData.BtkBinaryDir, btkAtlasData.BinarizeLabels, inputImage, outputImage)
+	jobs.append(goBinarize)
 
 
 	path = "{0}/Cervelet".format(btkAtlasData.dataPath)
@@ -97,10 +97,10 @@ for patient in btkAtlasData.patients:
 		if not(os.path.isdir(path)):
 			os.mkdir(path)
 
-		inputImage  = "{0}/Tissues/{1}_Tissues.nii.gz".format(btkAtlasData.dataPath, patient[0])
-		outputImage = "{0}/Cervelet/{1}_Cervelet.nii.gz".format(btkAtlasData.dataPath, patient[0])
-		goBinarize  = "btkBinarizeLabels -i {0} -o {1} -l 4 > {1}.log 2> {1}.errlog".format(inputImage, outputImage)
-		jobs.append(goBinarize)
+	inputImage  = "{0}/Tissues/{1}_Tissues.nii.gz".format(btkAtlasData.dataPath, patient[0])
+	outputImage = "{0}/Cervelet/{1}_Cervelet.nii.gz".format(btkAtlasData.dataPath, patient[0])
+	goBinarize  = "{0}{1} -i {2} -o {3} -l 4 > {3}_{1}.log 2> {3}_{1}.errlog".format(btkAtlasData.BtkBinaryDir, btkAtlasData.BinarizeLabels, inputImage, outputImage)
+	jobs.append(goBinarize)
 
 
 	path = "{0}/CSF".format(btkAtlasData.dataPath)
@@ -109,10 +109,10 @@ for patient in btkAtlasData.patients:
 		if not(os.path.isdir(path)):
 			os.mkdir(path)
 
-		inputImage  = "{0}/Tissues/{1}_Tissues.nii.gz".format(btkAtlasData.dataPath, patient[0])
-		outputImage = "{0}/CSF/{1}_CSF.nii.gz".format(btkAtlasData.dataPath, patient[0])
-		goBinarize  = "btkBinarizeLabels -i {0} -o {1} -l 5 > {1}.log 2> {1}.errlog".format(inputImage, outputImage)
-		jobs.append(goBinarize)
+	inputImage  = "{0}/Tissues/{1}_Tissues.nii.gz".format(btkAtlasData.dataPath, patient[0])
+	outputImage = "{0}/CSF/{1}_CSF.nii.gz".format(btkAtlasData.dataPath, patient[0])
+	goBinarize  = "{0}{1} -i {2} -o {3} -l 5 > {3}_{1}.log 2> {3}_{1}.errlog".format(btkAtlasData.BtkBinaryDir, btkAtlasData.BinarizeLabels, inputImage, outputImage)
+	jobs.append(goBinarize)
 
 
 	path = "{0}/Other".format(btkAtlasData.dataPath)
@@ -121,10 +121,10 @@ for patient in btkAtlasData.patients:
 		if not(os.path.isdir(path)):
 			os.mkdir(path)
 
-		inputImage  = "{0}/Tissues/{1}_Tissues.nii.gz".format(btkAtlasData.dataPath, patient[0])
-		outputImage = "{0}/Other/{1}_Other.nii.gz".format(btkAtlasData.dataPath, patient[0])
-		goBinarize  = "btkBinarizeLabels -i {0} -o {1} -l 0 > {1}.log 2> {1}.errlog".format(inputImage, outputImage)
-		jobs.append(goBinarize)
+	inputImage  = "{0}/Tissues/{1}_Tissues.nii.gz".format(btkAtlasData.dataPath, patient[0])
+	outputImage = "{0}/Other/{1}_Other.nii.gz".format(btkAtlasData.dataPath, patient[0])
+	goBinarize  = "{0}{1} -i {2} -o {3} -l 0 > {3}_{1}.log 2> {3}_{1}.errlog".format(btkAtlasData.BtkBinaryDir, btkAtlasData.BinarizeLabels, inputImage, outputImage)
+	jobs.append(goBinarize)
 
 if btkAtlasData.scriptOn:
 	pool.map(os.system, jobs)
@@ -146,37 +146,37 @@ jobs = []
 for patient in btkAtlasData.patients:
 	path = "{0}/GM".format(btkAtlasData.dataPath)
 	image  = "{0}/GM/{1}_GM.nii.gz".format(btkAtlasData.dataPath, patient[0])
-	goBlur = "btkImageGaussianFilter -i {0} -o {1} > {1}.log 2> {1}.errlog".format(image, image)
+	goBlur = "{0}{1} -i {2} -o {3} > {3}_{1}.log 2> {3}_{1}.errlog".format(btkAtlasData.BtkBinaryDir, btkAtlasData.GaussianFilter, image, image)
 	jobs.append(goBlur)
 
 
 	path = "{0}/WM".format(btkAtlasData.dataPath)
 	image  = "{0}/WM/{1}_WM.nii.gz".format(btkAtlasData.dataPath, patient[0])
-	goBlur = "btkImageGaussianFilter -i {0} -o {1} > {1}.log 2> {1}.errlog".format(image, image)
+	goBlur = "{0}{1} -i {2} -o {3} > {3}_{1}.log 2> {3}_{1}.errlog".format(btkAtlasData.BtkBinaryDir, btkAtlasData.GaussianFilter, image, image)
 	jobs.append(goBlur)
 
 
 	path = "{0}/Brainstem".format(btkAtlasData.dataPath)
 	image  = "{0}/Brainstem/{1}_Brainstem.nii.gz".format(btkAtlasData.dataPath, patient[0])
-	goBlur = "btkImageGaussianFilter -i {0} -o {1} > {1}.log 2> {1}.errlog".format(image, image)
+	goBlur = "{0}{1} -i {2} -o {3} > {3}_{1}.log 2> {3}_{1}.errlog".format(btkAtlasData.BtkBinaryDir, btkAtlasData.GaussianFilter, image, image)
 	jobs.append(goBlur)
 
 
 	path = "{0}/Cervelet".format(btkAtlasData.dataPath)
 	image  = "{0}/Cervelet/{1}_Cervelet.nii.gz".format(btkAtlasData.dataPath, patient[0])
-	goBlur = "btkImageGaussianFilter -i {0} -o {1} > {1}.log 2> {1}.errlog".format(image, image)
+	goBlur = "{0}{1} -i {2} -o {3} > {3}_{1}.log 2> {3}_{1}.errlog".format(btkAtlasData.BtkBinaryDir, btkAtlasData.GaussianFilter, image, image)
 	jobs.append(goBlur)
 
 
 	path = "{0}/CSF".format(btkAtlasData.dataPath)
 	image  = "{0}/CSF/{1}_CSF.nii.gz".format(btkAtlasData.dataPath, patient[0])
-	goBlur = "btkImageGaussianFilter -i {0} -o {1} > {1}.log 2> {1}.errlog".format(image, image)
+	goBlur = "{0}{1} -i {2} -o {3} > {3}_{1}.log 2> {3}_{1}.errlog".format(btkAtlasData.BtkBinaryDir, btkAtlasData.GaussianFilter, image, image)
 	jobs.append(goBlur)
 
 
 	path = "{0}/Other".format(btkAtlasData.dataPath)
 	image  = "{0}/Other/{1}_Other.nii.gz".format(btkAtlasData.dataPath, patient[0])
-	goBlur = "btkImageGaussianFilter -i {0} -o {1} > {1}.log 2> {1}.errlog".format(image, image)
+	goBlur = "{0}{1} -i {2} -o {3} > {3}_{1}.log 2> {3}_{1}.errlog".format(btkAtlasData.BtkBinaryDir, btkAtlasData.GaussianFilter, image, image)
 	jobs.append(goBlur)
 
 if btkAtlasData.scriptOn:
@@ -197,7 +197,7 @@ print 'Normalizing probability maps...'
 jobs = []
 
 for patient in btkAtlasData.patients:
-	goNorm = "btkProbabilityMapNormalization"
+	goNorm = "{0}{1}".format(btkAtlasData.BtkBinaryDir, btkAtlasData.ProbMapNormalization)
 
 	path = "{0}/GM".format(btkAtlasData.dataPath)
 	image   = "{0}/GM/{1}_GM.nii.gz".format(btkAtlasData.dataPath, patient[0])
@@ -227,7 +227,7 @@ for patient in btkAtlasData.patients:
 	image  = "{0}/Other/{1}_Other.nii.gz".format(btkAtlasData.dataPath, patient[0])
 	goNorm += " -i {0} -o {0}".format(image)
 
-	goNorm += " > {0}/{1}.log 2> {0}/{1}.errlog".format(btkAtlasData.dataPath,"btkProbabilityMapNormalization")
+	goNorm += " > {0}/{1}_{2}.log 2> {0}/{1}_{2}.errlog".format(btkAtlasData.dataPath, patient[0], btkAtlasData.ProbMapNormalization)
 	jobs.append(goNorm)
 
 if btkAtlasData.scriptOn:
