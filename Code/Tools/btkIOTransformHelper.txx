@@ -81,7 +81,7 @@ ReadTransform(std::string _fileName)
 template <class TTransform>
 std::vector< typename IOTransformHelper< TTransform >::TransformPointerType >&
 IOTransformHelper< TTransform >::
-ReadTransformArray(std::vector< std::string >& _fileNames)
+ReadTransform(std::vector< std::string >& _fileNames)
 {
     itk::TransformFactory<TTransform>::RegisterTransform();
 
@@ -147,7 +147,7 @@ void IOTransformHelper< TTransform >::WriteTransform(TransformPointerType _trans
 
 //---------------------------------------------------------------------------------
 template <class TTransform>
-void IOTransformHelper< TTransform >::WriteTransformArray(std::vector< TransformPointerType > &_transforms, std::vector< std::string > &_fileNames)
+void IOTransformHelper< TTransform >::WriteTransform(std::vector< TransformPointerType > &_transforms, std::vector< std::string > &_fileNames)
 {
     if(_transforms.size() > 0 && _transforms.size() == _fileNames.size())
     {
