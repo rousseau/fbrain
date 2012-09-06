@@ -191,6 +191,9 @@ TARGET_LINK_LIBRARIES(btkTranslateImageOverTemplate ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkExtendMaskToImage btkExtendMaskToImage.cxx)
 TARGET_LINK_LIBRARIES(btkExtendMaskToImage ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkAffineWeightedSum btkAffineWeightedSum.cxx)
+TARGET_LINK_LIBRARIES(btkAffineWeightedSum btkToolsLibrary btkMathsLibrary ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -236,5 +239,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkExtendMaskToImage
                 btkImageHistogram
                 btkRescaleIntensity
-
+                btkAffineWeightedSum
 DESTINATION bin)
