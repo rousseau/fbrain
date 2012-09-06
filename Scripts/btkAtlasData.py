@@ -165,15 +165,13 @@ BinarizeLabels       = 'btkBinarizeLabels'
 GaussianFilter       = 'btkImageGaussianFilter'
 ProbMapNormalization = 'btkProbabilityMapNormalization'
 WeightedSum          = 'btkWeightedMean'
+WeightedSumAffine    = 'btkAffineWeightedSum'
 BinarizeMaps         = 'btkBinarizeTissueProbabilityMaps'
 
 AntsBinaryDir    = ''
 ANTS             = 'ANTS'
 Warp             = 'WarpImageMultiTransform'
-AverageAffines   = 'AverageAffineTransform'
 ComposeTransform = 'ComposeMultiTransform'
-
-ShapeRegression  = 'DeformationKernelRegression'
 
 
 if len(BtkBinaryDir) > 0:

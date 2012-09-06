@@ -62,37 +62,42 @@ maxAge = btkPatientsTools.maxAge(btkAtlasData.patients)
 
 print 'Performing kernel regression over time on shapes...'
 
-outputPrefix =  '{0}/AtlasShapeInverse'.format(btkAtlasData.atlasPath)
-#goShapeRegression = '{0} --kernel_bandwith 1.0 --output_prefix {1} --time_step {2} '.format(btkAtlasData.ShapeRegression, outputPrefix, btkAtlasData.timeStep)
-goShapeRegression = '{0} --kernel_bandwith {3} --output_prefix {1} --time_step {2} '.format(btkAtlasData.ShapeRegression, outputPrefix, btkAtlasData.timeStep, btkAtlasData.bandwith)
+jobs = []
 
-for patient in btkAtlasData.patients:
-	affine = '{0}/{1}toTemplateAffine.txt'.format(btkAtlasData.templatePath, patient[0])
-	field  = '{0}/{1}toTemplateInverseWarp.nii.gz'.format(btkAtlasData.templatePath, patient[0])
-	
-	goShapeRegression += '-t {0} -a {1} -i {2} '.format(patient[1], affine, field)
-	
-goShapeRegression += '> {0}.log 2> {0}.errlog'.format(outputPrefix+btkAtlasData.ShapeRegression)
-	
+for modality in btkAtlasData.modalities.keys():
+	if btkAtlasData.modalities[modality][btkAtlasData.UseInRegression]:
+		for time in numpy.arange(minAge, maxAge+btkAtlasData.timeStep/2.0, btkAtlasData.timeStep):
+			weightsSum = 0
+			weights    = {}
+
+			for patient in btkAtlasData.patients:
+				weights[patient[0]] = btkGaussianKernel.Compute(time, float(patient[1]), btkAtlasData.bandwith)
+				weightsSum += weights[patient[0]]
+
+			outputAffine = '{0}/AtlasShapeInverse-{1:.4f}.txt'.format(btkAtlasData.atlasPath, time)
+			outputField  = '{0}/AtlasShapeInverse-{1:.4f}.nii.gz'.format(btkAtlasData.atlasPath, time)
+
+			goRegressionAffine = '{0}{1} -o {2} '.format(btkAtlasData.BtkBinaryDir, btkAtlasData.WeightedSumAffine, outputAffine)
+			goRegressionField  = '{0}{1} -f -o {2} '.format(btkAtlasData.BtkBinaryDir, btkAtlasData.WeightedSum, outputField)
+			
+			for patient in btkAtlasData.patients:
+				affine = '{0}/{1}toTemplateAffine.txt'.format(btkAtlasData.templatePath, patient[0])
+				field  = '{0}/{1}toTemplateInverseWarp.nii.gz'.format(btkAtlasData.templatePath, patient[0])
+
+				goRegressionAffine += '-i {0} -w {1} '.format(affine, weights[patient[0]]/weightsSum)
+				goRegressionField  += '-i {0} -w {1} '.format(affine, weights[patient[0]]/weightsSum)
+
+			goRegressionAffine += ' > {0}_{1}.log 2> {0}_{1}.errlog'.format(outputAffine, btkAtlasData.WeightedSumAffine)
+			goRegressionField  += ' > {0}_{1}.log 2> {0}_{1}.errlog'.format(outputField, btkAtlasData.WeightedSum)
+
+			jobs.append(goRegressionAffine)
+			jobs.append(goRegressionField)
+
 if btkAtlasData.scriptOn:
-	os.system(goShapeRegression)
+	pool.map(os.system, jobs)
 else:
-	print "\t{0}".format(goShapeRegression)
-
-#for modality in btkAtlasData.modalities.keys():
-#	if btkAtlasData.modalities[modality][btkAtlasData.UseInRegression]:
-#		for time in numpy.arange(minAge, maxAge+btkAtlasData.timeStep/2.0, btkAtlasData.timeStep):
-#			weightsSum = 0
-#			weights    = {}
-
-#			for patient in btkAtlasData.patients:
-#				weights[patient[0]] = btkGaussianKernel.Compute(time, float(patient[1]), btkAtlasData.bandwith)
-#				weightsSum += weights[patient[0]]
-
-#			for patient in btkAtlasData.patients:
-#				affine = '{0}/{1}toTemplateAffine.txt'.format(btkAtlasData.templatePath, patient[0])
-#				field  = '{0}/{1}toTemplateInverseWarp.nii.gz'.format(btkAtlasData.templatePath, patient[0])
-
+	for job in jobs:
+		print '\t{0}'.format(job)
 
 print 'done.'
 
