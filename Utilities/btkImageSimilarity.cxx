@@ -66,7 +66,7 @@ int main( int argc, char *argv[] )
 
   // Parse arguments
 
-  TCLAP::CmdLine cmd("Calculates MSE, MI, and NC of two images A and B. The use "
+  TCLAP::CmdLine cmd("Calculates MSE, MI, NC, and NMI of two images A and B. The use "
       "of a mask is possible.", ' ', "Unversioned");
 
   TCLAP::ValueArg<std::string> imageAArg("a","imageA","Image A",true,"","string",cmd);
