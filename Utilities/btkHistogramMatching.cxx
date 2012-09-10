@@ -61,7 +61,7 @@ int main (int argc, char* argv[])
   
   try {  
 
-  TCLAP::CmdLine cmd("Normalize the grayscale values between two images by histogram matching.", ' ', "1.0", true);
+  TCLAP::CmdLine cmd("Normalize the grayscale values of one image using a reference image by histogram matching.", ' ', "1.0", true);
   TCLAP::ValueArg<std::string> inputImageArg("i","input_file","input anatomical image file",true,"","string", cmd);
   TCLAP::ValueArg<std::string> refImageArg("r","reference_file","reference anatomical image file",true,"","string", cmd);
   TCLAP::ValueArg<std::string> outputImageArg("o","output_file","output anatomical image file",true,"","string", cmd);
