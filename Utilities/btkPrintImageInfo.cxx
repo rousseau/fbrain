@@ -240,7 +240,7 @@ int main( int argc, char *argv[] )
 
     // Define command line arguments
     TCLAP::ValueArg<std::string> inputFileNameArg("i", "input", "Input image", true, "", "string", cmd);
-    TCLAP::ValueArg<unsigned int> dimensionArg("d", "dimension", "Image dimension (default: 3; values: 3-4)", true, 3, "unsigned int", cmd);
+    TCLAP::ValueArg<unsigned int> dimensionArg("d", "dimension", "Image dimension (default: 3; values: 3-4)", false, 3, "unsigned int", cmd);
 
     // Parse arguments
     cmd.parse( argc, argv );
