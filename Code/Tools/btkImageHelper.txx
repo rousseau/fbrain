@@ -43,6 +43,9 @@
 // STL includes
 #include "iostream"
 
+// Local includes
+#include "btkFileHelper.h"
+
 
 namespace btk
 {
@@ -117,7 +120,7 @@ std::vector< typename TImageInput::Pointer > &ImageHelper< TImageInput, TImageOu
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
-typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::CreateNewImageFromPhysicalSpaceOf(typename TImageInput::Pointer image)
+typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::CreateNewImageFromPhysicalSpaceOf(typename TImageInput::Pointer image, typename TImageOutput::PixelType defaultValue)
 {
     typename TImageOutput::Pointer newImage = TImageOutput::New();
     newImage->SetRegions(image->GetLargestPossibleRegion());
@@ -125,7 +128,7 @@ typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::CreateN
     newImage->SetSpacing(image->GetSpacing());
     newImage->SetDirection(image->GetDirection());
     newImage->Allocate();
-//    newImage->FillBuffer(0);
+    newImage->FillBuffer(defaultValue);
 
     return newImage;
 }
@@ -133,14 +136,14 @@ typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::CreateN
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
-std::vector< typename TImageOutput::Pointer > &ImageHelper< TImageInput, TImageOutput >::CreateNewImageFromPhysicalSpaceOf(std::vector< typename TImageInput::Pointer > &images)
+std::vector< typename TImageOutput::Pointer > &ImageHelper< TImageInput, TImageOutput >::CreateNewImageFromPhysicalSpaceOf(std::vector< typename TImageInput::Pointer > &images, typename TImageOutput::PixelType defaultValue)
 {
     std::vector< typename TImageOutput::Pointer > *ptrNewImages = new std::vector< typename TImageOutput::Pointer >;
     std::vector< typename TImageOutput::Pointer > &newImages = *ptrNewImages;
 
     for(typename std::vector< typename TImageInput::Pointer >::iterator it = images.begin(); it != images.end(); it++)
     {
-        newImages.push_back(CreateNewImageFromPhysicalSpaceOf(*it));
+        newImages.push_back(CreateNewImageFromPhysicalSpaceOf(*it, defaultValue));
     }
 
     return newImages;
@@ -149,26 +152,71 @@ std::vector< typename TImageOutput::Pointer > &ImageHelper< TImageInput, TImageO
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
-typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::ReadOrCreateImage(const std::string &fileName, typename TImageInput::Pointer image, typename TImageOutput::PixelType value)
+bool ImageHelper< TImageInput, TImageOutput >::IsInSamePhysicalSpace(typename TImageInput::Pointer firstImage, typename TImageInput::Pointer secondImage)
 {
-    typename TImageOutput::Pointer newImage = TImageOutput::New();
+    typename TImageInput::SizeType            firstSize = firstImage->GetLargestPossibleRegion().GetSize();
+    typename TImageInput::SizeType           secondSize = secondImage->GetLargestPossibleRegion().GetSize();
+    typename TImageInput::SpacingType      firstSpacing = firstImage->GetSpacing();
+    typename TImageInput::SpacingType     secondSpacing = secondImage->GetSpacing();
+    typename TImageInput::PointType         firstOrigin = firstImage->GetOrigin();
+    typename TImageInput::PointType        secondOrigin = secondImage->GetOrigin();
+    typename TImageInput::DirectionType  firstDirection = firstImage->GetDirection();
+    typename TImageInput::DirectionType secondDirection = secondImage->GetDirection();
 
-    std::ifstream file(fileName.c_str());
-    if(file)
+    return ( firstSize == secondSize && firstSpacing == secondSpacing && firstOrigin == secondOrigin && firstDirection == secondDirection );
+}
+
+//----------------------------------------------------------------------------------------
+
+template < class TImageInput, class TImageOutput >
+bool ImageHelper< TImageInput, TImageOutput >::IsInSamePhysicalSpace(std::vector< typename TImageInput::Pointer > &images)
+{
+    bool isInSameSpace = true;
+
+    if(images.size() > 0)
     {
-        file.close();
+        typename TImageInput::SizeType           firstSize = images[0]->GetLargestPossibleRegion().GetSize();
+        typename TImageInput::SpacingType     firstSpacing = images[0]->GetSpacing();
+        typename TImageInput::PointType        firstOrigin = images[0]->GetOrigin();
+        typename TImageInput::DirectionType firstDirection = images[0]->GetDirection();
+
+        unsigned int i = 1;
+
+        while(i < images.size() && isInSameSpace)
+        {
+            typename TImageInput::SizeType           secondSize = images[i]->GetLargestPossibleRegion().GetSize();
+            typename TImageInput::SpacingType     secondSpacing = images[i]->GetSpacing();
+            typename TImageInput::PointType        secondOrigin = images[i]->GetOrigin();
+            typename TImageInput::DirectionType secondDirection = images[i]->GetDirection();
+
+            isInSameSpace = ( firstSize == secondSize && firstSpacing == secondSpacing && firstOrigin == secondOrigin && firstDirection == secondDirection );
+
+            i++;
+        } // for each other image
+    }
+
+    return isInSameSpace;
+}
+
+//----------------------------------------------------------------------------------------
+
+template < class TImageInput, class TImageOutput >
+typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::ReadOrCreateImage(const std::string &fileName, typename TImageInput::Pointer image, typename TImageOutput::PixelType defaultValue)
+{
+    typename TImageOutput::Pointer newImage = NULL;
+
+    if(!fileName.empty() && btk::FileHelper::FileExist(fileName))
+    {
         newImage = ReadImage(fileName);
     }
     else
     {
-        std::cout << "Creating new image with pixel value set to " << value << std::endl;
-        newImage = CreateNewImageFromPhysicalSpaceOf(image);
-        newImage->FillBuffer(value);
+        std::cout << "Creating new image with pixel value set to " << defaultValue << std::endl;
+        newImage = CreateNewImageFromPhysicalSpaceOf(image, defaultValue);
     }
+
     return newImage;
 }
-
-
 
 } // namespace btk
 

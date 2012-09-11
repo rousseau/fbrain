@@ -57,7 +57,7 @@ public:
   void Initialize();
   void SimulateLRImages();
   void IteratedBackProjection(int & loops, int & nlm, float & beta, int & medianIBP);
-  
+  void PseudoInverse();
 };
 
 void SuperResolutionManager::Initialize()
@@ -83,4 +83,10 @@ void SuperResolutionManager::IteratedBackProjection(int & loops, int & nlm, floa
     std::cout<<"Loop "<<i+1<<", current e: "<<e<<"\n";
   }
 }
+
+void SuperResolutionManager::PseudoInverse()
+{
+  tool.SRUsingPseudoInverse(data);
+}
+
 #endif

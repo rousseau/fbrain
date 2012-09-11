@@ -59,7 +59,8 @@ int main(int argc, char * argv[])
     IntersectionCalculatorType::Pointer intersector=IntersectionCalculatorType::New();
 
     //TCLAP Commands for arguments
-    TCLAP::CmdLine cmd("Extract masks using intersections of input images (Bounding Box)", ' ', "Unversioned");
+
+    TCLAP::CmdLine cmd("Extract Masks using the intersection of the bounding boxes of images", ' ', "Unversioned");
     TCLAP::MultiArg<std::string> inputArg("i","input","input image files",true,"string",cmd);
     TCLAP::MultiArg<std::string> outArg  ("o","output","output mask files",true,"string",cmd);
 

@@ -42,6 +42,7 @@
 #include "stdio.h"
 
 /* Itk includes */
+#include <itkNormalizedMutualInformationHistogramImageToImageMetric.h>
 #include "itkNormalizedCorrelationImageToImageMetric.h"
 #include "itkMattesMutualInformationImageToImageMetric.h"
 #include "itkMeanSquaresImageToImageMetric.h"
@@ -52,6 +53,8 @@
 #include "itkImageFileReader.h"
 #include "itkEuler3DTransform.h"
 
+/* BTK includes */
+#include "btkImageHelper.h"
 
 int main( int argc, char *argv[] )
 {
@@ -63,21 +66,23 @@ int main( int argc, char *argv[] )
 
   // Parse arguments
 
-  TCLAP::CmdLine cmd("Calculates MSE, MI, and NC of two images A and B. The use "
+  TCLAP::CmdLine cmd("Calculates MSE, MI, NC, and NMI of two images A and B. The use "
       "of a mask is possible.", ' ', "Unversioned");
 
   TCLAP::ValueArg<std::string> imageAArg("a","imageA","Image A",true,"","string",cmd);
   TCLAP::ValueArg<std::string> imageBArg("b","imageB","Image B",true,"","string",cmd);
   TCLAP::ValueArg<std::string> maskArg("m","mask","Mask file on image A",false,"","string",cmd);
 
-  TCLAP::SwitchArg axlSwitch("","nc","Calculates the normalized correlation.", false);
-  TCLAP::SwitchArg corSwitch("","mi","Calculates the mutual information.", false);
-  TCLAP::SwitchArg sagSwitch("","mse","Calculates the mean squared error.", false);
+  TCLAP::SwitchArg ncSwitch("","nc","Calculates the normalized correlation.", false);
+  TCLAP::SwitchArg miSwitch("","mi","Calculates the mutual information.", false);
+  TCLAP::SwitchArg mseSwitch("","mse","Calculates the mean squared error.", false);
+  TCLAP::SwitchArg nmiSwitch("","nmi","Calculates the normalized mutual information.", false);
 
   std::vector<TCLAP::Arg*>  xorlist;
-  xorlist.push_back(&axlSwitch);
-  xorlist.push_back(&corSwitch);
-  xorlist.push_back(&sagSwitch);
+  xorlist.push_back(&ncSwitch);
+  xorlist.push_back(&miSwitch);
+  xorlist.push_back(&mseSwitch);
+  xorlist.push_back(&nmiSwitch);
 
   cmd.xorAdd( xorlist );
 
@@ -88,9 +93,10 @@ int main( int argc, char *argv[] )
   imageBFile = imageBArg.getValue();
   maskFile 	 = maskArg.getValue();
 
-  bool nc_switch  = axlSwitch.getValue();
-  bool mi_switch  = corSwitch.getValue();
-  bool mse_switch = sagSwitch.getValue();
+  bool nc_switch  = ncSwitch.getValue();
+  bool mi_switch  = miSwitch.getValue();
+  bool mse_switch = mseSwitch.getValue();
+  bool nmi_switch = nmiSwitch.getValue();
 
   // typedefs
 
@@ -122,21 +128,15 @@ int main( int argc, char *argv[] )
   typedef itk::MeanSquaresImageToImageMetric< ImageType,
                                               ImageType > MSEMetricType;
 
-
+  typedef itk::NormalizedMutualInformationHistogramImageToImageMetric< ImageType,
+                                                         ImageType > NMIMetricType;
   // Read images
 
-  ImageReaderType::Pointer imageAReader = ImageReaderType::New();
-  imageAReader -> SetFileName(imageAFile.c_str() );
-  imageAReader -> Update();
-  ImagePointer imageA = imageAReader -> GetOutput();
+  ImagePointer imageA = btk::ImageHelper<ImageType>::ReadImage(imageAFile);
+  ImagePointer imageB = btk::ImageHelper<ImageType>::ReadImage(imageBFile);
 
-  ImageReaderType::Pointer imageBReader = ImageReaderType::New();
-  imageBReader -> SetFileName(imageBFile.c_str() );
-  imageBReader -> Update();
-  ImagePointer imageB = imageBReader -> GetOutput();
 
   // Read mask
-
   MaskPointer mask = MaskType::New();
 
   if (strcmp(maskFile.c_str(),"") != 0)
@@ -181,50 +181,83 @@ int main( int argc, char *argv[] )
     float nc_value = -nc -> GetValue( identity -> GetParameters() );
     std::cout << "NC = " << nc_value << std::endl;
 
-  } else if (mi_switch)
+  }
+  else if (mi_switch)
+  {
+    MIMetricType::Pointer mi = MIMetricType::New();
+    mi -> SetFixedImage(  imageA );
+    mi -> SetMovingImage( imageB );
+
+    if (strcmp(maskFile.c_str(),"") != 0)
     {
-      MIMetricType::Pointer mi = MIMetricType::New();
-      mi -> SetFixedImage(  imageA );
-      mi -> SetMovingImage( imageB );
+      mi -> SetFixedImageRegion( mask -> GetAxisAlignedBoundingBoxRegion() );
+      mi -> SetFixedImageMask( mask );
+    } else
+      {
+        mi -> SetFixedImageRegion( imageA -> GetLargestPossibleRegion() );
+      }
+
+    mi -> SetTransform( identity );
+    mi -> SetInterpolator( interpolator );
+    mi -> Initialize();
+
+    float mi_value = -mi -> GetValue( identity -> GetParameters() );
+    std::cout << "MI = " << mi_value << std::endl;
+
+   }
+   else if (mse_switch)
+    {
+      MSEMetricType::Pointer mse = MSEMetricType::New();
+      mse -> SetFixedImage(  imageA );
+      mse -> SetMovingImage( imageB );
 
       if (strcmp(maskFile.c_str(),"") != 0)
       {
-        mi -> SetFixedImageRegion( mask -> GetAxisAlignedBoundingBoxRegion() );
-        mi -> SetFixedImageMask( mask );
-      } else
-        {
-          mi -> SetFixedImageRegion( imageA -> GetLargestPossibleRegion() );
-        }
-
-      mi -> SetTransform( identity );
-      mi -> SetInterpolator( interpolator );
-      mi -> Initialize();
-
-      float mi_value = -mi -> GetValue( identity -> GetParameters() );
-      std::cout << "MI = " << mi_value << std::endl;
-
-    } else if (mse_switch)
-      {
-        MSEMetricType::Pointer mse = MSEMetricType::New();
-        mse -> SetFixedImage(  imageA );
-        mse -> SetMovingImage( imageB );
-
-        if (strcmp(maskFile.c_str(),"") != 0)
-        {
-          mse -> SetFixedImageRegion( mask -> GetAxisAlignedBoundingBoxRegion() );
-          mse -> SetFixedImageMask( mask );
-        } else
-          {
-            mse -> SetFixedImageRegion( imageA -> GetLargestPossibleRegion() );
-          }
-
-        mse -> SetTransform( identity );
-        mse -> SetInterpolator( interpolator );
-        mse -> Initialize();
-
-        float mse_value = mse -> GetValue( identity -> GetParameters() );
-        std::cout << "MSE = " << mse_value << std::endl;
+        mse -> SetFixedImageRegion( mask -> GetAxisAlignedBoundingBoxRegion() );
+        mse -> SetFixedImageMask( mask );
       }
+      else
+      {
+        mse -> SetFixedImageRegion( imageA -> GetLargestPossibleRegion() );
+      }
+
+      mse -> SetTransform( identity );
+      mse -> SetInterpolator( interpolator );
+      mse -> Initialize();
+
+      float mse_value = mse -> GetValue( identity -> GetParameters() );
+      std::cout << "MSE = " << mse_value << std::endl;
+    }
+  else if (nmi_switch)
+   {
+     NMIMetricType::Pointer nmi = NMIMetricType::New();
+     nmi -> SetFixedImage(  imageA );
+     nmi -> SetMovingImage( imageB );
+
+     if (strcmp(maskFile.c_str(),"") != 0)
+     {
+       nmi -> SetFixedImageRegion( mask -> GetAxisAlignedBoundingBoxRegion() );
+       nmi -> SetFixedImageMask( mask );
+     }
+     else
+     {
+       nmi -> SetFixedImageRegion( imageA -> GetLargestPossibleRegion() );
+     }
+
+     unsigned int nBins = 256;
+     NMIMetricType::HistogramType::SizeType histSize;
+     histSize.SetSize(2);
+     histSize[0] = nBins;
+     histSize[1] = nBins;
+     nmi->SetHistogramSize(histSize);
+
+     nmi -> SetTransform( identity );
+     nmi -> SetInterpolator( interpolator );
+     nmi -> Initialize();
+
+     float nmi_value = nmi -> GetValue( identity -> GetParameters() );
+     std::cout << "NMI = " << nmi_value << std::endl;
+   }
 
   return EXIT_SUCCESS;
 

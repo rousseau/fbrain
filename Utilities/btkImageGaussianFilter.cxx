@@ -33,6 +33,9 @@
   
 ==========================================================================*/
 
+// TCLAP includes
+#include <tclap/CmdLine.h>
+
 // STL includes
 #include "cstdlib"
 #include "string"
@@ -41,21 +44,20 @@
 #include "itkImage.h"
 #include "itkDiscreteGaussianImageFilter.h"
 
-// TCLAP includes
-#include <tclap/CmdLine.h>
-
 // BTK includes
 #include "btkImageHelper.h"
 
 
+// Define label image type
 const unsigned int Dimension = 3;
+
 typedef unsigned short LabelPixelType;
 typedef float          ProbabilityPixelType;
 
-typedef itk::Image<LabelPixelType,Dimension>       LabelImage;
-typedef itk::Image<ProbabilityPixelType,Dimension> ProbabilityImage;
+typedef itk::Image< LabelPixelType,Dimension >       LabelImage;
+typedef itk::Image< ProbabilityPixelType,Dimension > ProbabilityImage;
 
-typedef itk::DiscreteGaussianImageFilter<LabelImage,ProbabilityImage> ImageGaussianFilter;
+typedef itk::DiscreteGaussianImageFilter< LabelImage,ProbabilityImage > ImageGaussianFilter;
 
 
 int main(int argc, char *argv[])
@@ -70,8 +72,8 @@ int main(int argc, char *argv[])
         TCLAP::CmdLine cmd("Apply a gaussian filter on an image (convolutive filter)", ' ', "1.0", true);
 
         // Set up arguments
-        TCLAP::ValueArg<std::string> inputFileNameArg("i", "input_image", "Input image filename", true, "", "string", cmd);
-        TCLAP::ValueArg<std::string> outputFileNameArg("o", "output_image", "Output image filename", false, "Blurred-image.nii.gz", "string", cmd);
+        TCLAP::ValueArg< std::string > inputFileNameArg("i", "input_image", "Input image filename", true, "", "string", cmd);
+        TCLAP::ValueArg< std::string > outputFileNameArg("o", "output_image", "Output image filename", false, "Blurred-image.nii.gz", "string", cmd);
 
         // Parse arguments
         cmd.parse(argc, argv);
@@ -85,18 +87,12 @@ int main(int argc, char *argv[])
         // Read image
         //
 
-        std::cout << "Reading image \"" << inputFileName << "\"..." << std::flush;
-
-        LabelImage::Pointer inputImage = btk::ImageHelper<LabelImage>::ReadImage(inputFileName);
-
-        std::cout << "done." << std::endl;
+        LabelImage::Pointer inputImage = btk::ImageHelper< LabelImage >::ReadImage(inputFileName);
 
 
         //
         // Process image
         //
-
-        std::cout << "Processing image..." << std::flush;
 
         ImageGaussianFilter::Pointer filter = ImageGaussianFilter::New();
         filter->SetInput(inputImage);
@@ -112,18 +108,12 @@ int main(int argc, char *argv[])
 
         ProbabilityImage::Pointer outputImage = filter->GetOutput();
 
-        std::cout << "done." << std::endl;
-
 
         //
         // Write image
         //
 
-        std::cout << "Writing image \"" << outputFileName << "\"..." << std::flush;
-
-        btk::ImageHelper<ProbabilityImage>::WriteImage(outputImage, outputFileName);
-
-        std::cout << "done." << std::endl;
+        btk::ImageHelper< ProbabilityImage >::WriteImage(outputImage, outputFileName);
     }
     catch(std::string &error)
     {

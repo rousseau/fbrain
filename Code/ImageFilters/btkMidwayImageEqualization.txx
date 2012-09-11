@@ -35,7 +35,7 @@ void MidwayImageEqualization<T>::Do(std::vector<itkTPointer> inputImages, std::v
   }
 
   //Rescaling between 0 and 32767
-  //Don't ITK for rescaling because we need to take into account the mask of the image
+  //Don't use ITK for rescaling because we need to take into account the mask of the image
   T minValue = 0;
   T maxValue = 32767;
 
@@ -162,6 +162,7 @@ void MidwayImageEqualization<T>::Do(std::vector<itkTPointer> inputImages, std::v
 template <typename T>
 void MidwayImageEqualization<T>::DoWithReference(std::vector<itkTPointer> inputImages, std::vector<itkTPointer> refImages, std::vector<itkTPointer> maskImages, std::vector<itkTPointer> maskRefImages, std::vector<itkTPointer> outputImages)
 {
+  //This method estimates the icdf using the reference images and apply the intensity transform on the input images.
   std::vector<itkTPointer> rescaledImages;
   rescaledImages.resize(refImages.size());  
   
@@ -176,7 +177,7 @@ void MidwayImageEqualization<T>::DoWithReference(std::vector<itkTPointer> inputI
   }
 
   //Rescaling between 0 and 32767
-  //Don't ITK for rescaling because we need to take into account the mask of the image
+  //Don't use ITK for rescaling because we need to take into account the mask of the image
   T minValue = 0;
   T maxValue = 32767;
 
@@ -299,6 +300,7 @@ void MidwayImageEqualization<T>::DoWithReference(std::vector<itkTPointer> inputI
     {
       if(maskImageIt.Get() > 0)
       {
+        //from input value to normalized value (2 rescaling)
         float inputValue = ( vec_coeffA[i] * inputImageIt.Get() + vec_coeffB[i]) / (maxValue*1.0);
         //from pixel value to bin index
         int inputBin = (int) (inputValue * histograms[i].m_aCoefficient + histograms[i].m_bCoefficient);
