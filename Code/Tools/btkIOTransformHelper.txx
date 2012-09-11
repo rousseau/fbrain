@@ -68,8 +68,9 @@ ReadTransform(std::string _fileName)
         throw excpt;
     }
     TransformListType transforms = reader->GetTransformList();
-    itkTReader::TransformListType::const_iterator titr = transforms->begin();
-    TransformPointerType trans = dynamic_cast< TTransform * >( titr->GetPointer() );
+//    itkTReader::TransformListType::const_iterator titr = transforms->begin();
+//    TransformPointerType trans = dynamic_cast< TTransform * >( titr->GetPointer() );
+    TransformPointerType trans = static_cast< TTransform * >( transforms->front().GetPointer() );
     std::cout << " done! " << std::endl;
 
     return trans;
@@ -109,9 +110,10 @@ ReadTransform(std::vector< std::string >& _fileNames)
             throw excpt;
         }
         TransformListType tlist = reader->GetTransformList();
-        itkTReader::TransformListType::const_iterator titr = tlist->begin();
+//        itkTReader::TransformListType::const_iterator titr = tlist->begin();
         //transforms[i] = TransformType::New();
-        TransformPointerType trans = dynamic_cast< TTransform * >( titr->GetPointer() );
+//        TransformPointerType trans = dynamic_cast< TTransform * >( titr->GetPointer() );
+        TransformPointerType trans = static_cast< TTransform * >( tlist->front().GetPointer() );
         transforms[i] = trans;
         std::cout << " done! " << std::endl;
     }
