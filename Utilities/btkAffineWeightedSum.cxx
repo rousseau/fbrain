@@ -83,6 +83,8 @@ int main(int argc, char *argv[])
         // Read & check affine transforms
         //
 
+        itk::TransformFactory< itk::MatrixOffsetTransformBase< double,3,3 > >::RegisterTransform();
+
         // Verify number of images and number of weights
         if(weights.size() > 0 && inputFileNames.size() != weights.size())
             throw std::string("The number of input images is different than the number of weights !");
@@ -150,9 +152,6 @@ int main(int argc, char *argv[])
         outputTransform->SetCenter(inputTransforms[0]->GetCenter());
         outputTransform->SetMatrix(matrix);
         outputTransform->SetTranslation(translation);
-
-        outputTransformMatrix.GetVnlMatrix().print(std::cout);
-        outputTransform->Print(std::cout);
 
         btk::IOTransformHelper< AffineTransform >::WriteTransform(outputTransform, outputFileName);
     }
