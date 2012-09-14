@@ -114,6 +114,20 @@ int main(int argc, char *argv[])
         // Processing
         //
 
+        // Normalize weights
+        float sumOfWeights = 0;
+
+        for(unsigned int i = 0; i < weights.size(); i++)
+        {
+            sumOfWeights += weights[i];
+        }
+
+        for(unsigned int i = 0; i < weights.size(); i++)
+        {
+            weights[i] /= sumOfWeights;
+        }
+
+        // Compute weighted sum
         btk::MatrixOperations::Matrix outputTransformMatrix(4,4);
         outputTransformMatrix.Fill(0);
 

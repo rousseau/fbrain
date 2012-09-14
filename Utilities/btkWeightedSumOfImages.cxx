@@ -60,7 +60,7 @@ typedef itk::DisplacementFieldTransform< float,3 >::DisplacementFieldType Deform
 
 // Weight sum over template images
 template< typename TImage >
-void ComputeAndWriteWeightedMean(std::vector< std::string > &inputFileNames, std::vector< float > &weights, const std::string &outputFileName)
+void ComputeAndWriteWeightedSum(std::vector< std::string > &inputFileNames, std::vector< float > &weights, const std::string &outputFileName)
 {
     typedef itk::ResampleImageFilter< TImage,TImage > ResampleImageFilter;
 
@@ -77,7 +77,6 @@ void ComputeAndWriteWeightedMean(std::vector< std::string > &inputFileNames, std
 
     // Verify sizes of images
     if(!btk::ImageHelper< TImage >::IsInSamePhysicalSpace(inputImages))
-//        throw(std::string("Input images are not in the same physical space !"));
     {
         unsigned int  j = 0;
         float maxVolume = 0;
@@ -113,9 +112,23 @@ void ComputeAndWriteWeightedMean(std::vector< std::string > &inputFileNames, std
 
 
     //
-    // Compute the weighted mean
+    // Compute the weighted sum
     //
 
+    // Normalize weights
+    float sumOfWeights = 0;
+
+    for(unsigned int i = 0; i < weights.size(); i++)
+    {
+        sumOfWeights += weights[i];
+    }
+
+    for(unsigned int i = 0; i < weights.size(); i++)
+    {
+        weights[i] /= sumOfWeights;
+    }
+
+    // Compute weighted sum
     typename TImage::Pointer outputImage = btk::ImageHelper< TImage >::CreateNewImageFromPhysicalSpaceOf(inputImages[0]);
 
     itk::ImageRegionIterator< TImage > outputIt(outputImage, outputImage->GetLargestPossibleRegion());
@@ -191,13 +204,14 @@ int main(int argc, char *argv[])
         // Processing
         //
 
+        // Compute weighted sum
         if(deformationField)
         {
-            ComputeAndWriteWeightedMean< DeformationField >(inputFileNames, weights, outputFileName);
+            ComputeAndWriteWeightedSum< DeformationField >(inputFileNames, weights, outputFileName);
         }
         else
         {
-            ComputeAndWriteWeightedMean< Image >(inputFileNames, weights, outputFileName);
+            ComputeAndWriteWeightedSum< Image >(inputFileNames, weights, outputFileName);
         }
     }
     catch(TCLAP::ArgException &e)
