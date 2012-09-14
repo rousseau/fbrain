@@ -194,6 +194,9 @@ TARGET_LINK_LIBRARIES(btkExtendMaskToImage ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkAffineWeightedSum btkAffineWeightedSum.cxx)
 TARGET_LINK_LIBRARIES(btkAffineWeightedSum btkToolsLibrary btkMathsLibrary ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkInverseDisplacementField btkInverseDisplacementField.cxx)
+TARGET_LINK_LIBRARIES(btkInverseDisplacementField ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -240,4 +243,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkImageHistogram
                 btkRescaleIntensity
                 btkAffineWeightedSum
+                btkInverseDisplacementField
 DESTINATION bin)
