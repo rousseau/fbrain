@@ -87,8 +87,8 @@ TARGET_LINK_LIBRARIES(btkImageSimilarity ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkPSNR btkPSNR.cxx)
 TARGET_LINK_LIBRARIES(btkPSNR ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkWeightedMean btkWeightedMean.cxx)
-TARGET_LINK_LIBRARIES(btkWeightedMean ${ITK_LIBRARIES})
+ADD_EXECUTABLE(btkWeightedSumOfImages btkWeightedSumOfImages.cxx)
+TARGET_LINK_LIBRARIES(btkWeightedSumOfImages ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkSequenceNormalization btkSequenceNormalization.cxx
     ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
@@ -215,7 +215,7 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkImageInjection
                 btkImageSimilarity
                 btkPSNR
-                btkWeightedMean
+                btkWeightedSumOfImages
                 btkSequenceNormalization
                 btkReconstructionComparisonTool
                 btkIteratedBackProjection
