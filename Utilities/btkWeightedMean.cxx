@@ -46,6 +46,8 @@
 #include "itkImageRegionIterator.h"
 #include "itkDisplacementFieldTransform.h"
 
+#include "itkResampleImageFilter.h"
+
 // Local includes
 #include "btkMacro.h"
 #include "btkImageHelper.h"
@@ -60,6 +62,8 @@ typedef itk::DisplacementFieldTransform< float,3 >::DisplacementFieldType Deform
 template< typename TImage >
 void ComputeAndWriteWeightedMean(std::vector< std::string > &inputFileNames, std::vector< float > &weights, const std::string &outputFileName)
 {
+    typedef itk::ResampleImageFilter< TImage,TImage > ResampleImageFilter;
+
     //
     // Read & check
     //
@@ -73,7 +77,39 @@ void ComputeAndWriteWeightedMean(std::vector< std::string > &inputFileNames, std
 
     // Verify sizes of images
     if(!btk::ImageHelper< TImage >::IsInSamePhysicalSpace(inputImages))
-        throw(std::string("Input images are not in the same physical space !"));
+//        throw(std::string("Input images are not in the same physical space !"));
+    {
+        unsigned int  j = 0;
+        float maxVolume = 0;
+
+        for(unsigned int i = 0; i < inputImages.size(); i++)
+        {
+            typename TImage::SpacingType spacing = inputImages[i]->GetSpacing();
+            typename TImage::SizeType       size = inputImages[i]->GetLargestPossibleRegion().GetSize();
+            float volume = size[0]*spacing[0]*size[1]*spacing[1]*size[2]*spacing[2];
+
+            if(volume > maxVolume)
+            {
+                j = i;
+                maxVolume = volume;
+            }
+        }
+
+        typename ResampleImageFilter::Pointer filter = ResampleImageFilter::New();
+
+        filter->SetReferenceImage(inputImages[j]);
+        filter->SetSize(inputImages[j]->GetLargestPossibleRegion().GetSize());
+
+        for(unsigned int i = 0; i < inputImages.size(); i++)
+        {
+            if(i != j)
+            {
+                filter->SetInput(inputImages[i]);
+                filter->Update();
+                inputImages[i] = filter->GetOutput();
+            }
+        }
+    }
 
 
     //
