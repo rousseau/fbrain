@@ -64,34 +64,32 @@ print 'Performing kernel regression over time on shapes...'
 
 jobs = []
 
-for modality in btkAtlasData.modalities.keys():
-	if btkAtlasData.modalities[modality][btkAtlasData.UseInRegression]:
-		for time in numpy.arange(minAge, maxAge+btkAtlasData.timeStep/2.0, btkAtlasData.timeStep):
-			weightsSum = 0
-			weights    = {}
+for time in numpy.arange(minAge, maxAge+btkAtlasData.timeStep/2.0, btkAtlasData.timeStep):
+	weightsSum = 0
+	weights    = {}
 
-			for patient in btkAtlasData.patients:
-				weights[patient[0]] = btkGaussianKernel.Compute(time, float(patient[1]), btkAtlasData.bandwith)
-				weightsSum += weights[patient[0]]
+	for patient in btkAtlasData.patients:
+		weights[patient[0]] = btkGaussianKernel.Compute(time, float(patient[1]), btkAtlasData.bandwith)
+		weightsSum += weights[patient[0]]
 
-			outputAffine = '{0}/AtlasShapeInverse-{1:.4f}.txt'.format(btkAtlasData.atlasPath, time)
-			outputField  = '{0}/AtlasShapeInverse-{1:.4f}.nii.gz'.format(btkAtlasData.atlasPath, time)
+	outputAffine = '{0}/AtlasShapeInverse-{1:.4f}.txt'.format(btkAtlasData.atlasPath, time)
+	outputField  = '{0}/AtlasShapeInverse-{1:.4f}.nii.gz'.format(btkAtlasData.atlasPath, time)
 
-			goRegressionAffine = '{0}{1} -o {2} '.format(btkAtlasData.BtkBinaryDir, btkAtlasData.WeightedSumAffine, outputAffine)
-			goRegressionField  = '{0}{1} -f -o {2} '.format(btkAtlasData.BtkBinaryDir, btkAtlasData.WeightedSum, outputField)
+	goRegressionAffine = '{0}{1} -o {2} '.format(btkAtlasData.BtkBinaryDir, btkAtlasData.WeightedSumAffine, outputAffine)
+	goRegressionField  = '{0}{1} -f -o {2} '.format(btkAtlasData.BtkBinaryDir, btkAtlasData.WeightedSum, outputField)
 			
-			for patient in btkAtlasData.patients:
-				affine = '{0}/{1}toTemplateAffine.txt'.format(btkAtlasData.templatePath, patient[0])
-				field  = '{0}/{1}toTemplateInverseWarp.nii.gz'.format(btkAtlasData.templatePath, patient[0])
+	for patient in btkAtlasData.patients:
+		affine = '{0}/{1}toTemplateAffine.txt'.format(btkAtlasData.templatePath, patient[0])
+		field  = '{0}/{1}toTemplateInverseWarp.nii.gz'.format(btkAtlasData.templatePath, patient[0])
 
-				goRegressionAffine += '-i {0} -w {1} '.format(affine, weights[patient[0]]/weightsSum)
-				goRegressionField  += '-i {0} -w {1} '.format(affine, weights[patient[0]]/weightsSum)
+		goRegressionAffine += '-i {0} -w {1} '.format(affine, weights[patient[0]]/weightsSum)
+		goRegressionField  += '-i {0} -w {1} '.format(field, weights[patient[0]]/weightsSum)
 
-			goRegressionAffine += ' > {0}_{1}.log 2> {0}_{1}.errlog'.format(outputAffine, btkAtlasData.WeightedSumAffine)
-			goRegressionField  += ' > {0}_{1}.log 2> {0}_{1}.errlog'.format(outputField, btkAtlasData.WeightedSum)
+	goRegressionAffine += ' > {0}_{1}.log 2> {0}_{1}.errlog'.format(outputAffine, btkAtlasData.WeightedSumAffine)
+	goRegressionField  += ' > {0}_{1}.log 2> {0}_{1}.errlog'.format(outputField, btkAtlasData.WeightedSum)
 
-			jobs.append(goRegressionAffine)
-			jobs.append(goRegressionField)
+	jobs.append(goRegressionAffine)
+	jobs.append(goRegressionField)
 
 if btkAtlasData.scriptOn:
 	pool.map(os.system, jobs)
@@ -121,8 +119,8 @@ for modality in btkAtlasData.modalities.keys():
 			for patient in btkAtlasData.patients:
 				outputImage    = '{0}/{1}toAtlas-{2:.4f}_{3}.nii.gz'.format(btkAtlasData.atlasPath, patient[0], time, modality)
 				reference      = '{0}/Template_{1}.nii.gz'.format(btkAtlasData.templatePath, modality)
-				fieldToSample  = '{0}-{1:.4f}.nii.gz'.format(outputPrefix, time)
-				affineToSample = '{0}-{1:.4f}.txt'.format(outputPrefix, time)
+				fieldToSample  = '{0}/AtlasShapeInverse-{1:.4f}.nii.gz'.format(btkAtlasData.atlasPath, time)
+				affineToSample = '{0}/AtlasShapeInverse-{1:.4f}.txt'.format(btkAtlasData.atlasPath, time)
 				
 				movingImage = '{0}/{1}toTemplate_{2}.nii.gz'.format(btkAtlasData.templatePath, patient[0], modality)
 			
@@ -140,12 +138,7 @@ for modality in btkAtlasData.modalities.keys():
 
 			inputImage  = '{0}/Template_{1}.nii.gz'.format(btkAtlasData.templatePath, modality)
 			outputImage = '{0}/Atlas-{1:.4f}_{2}.nii.gz'.format(btkAtlasData.atlasPath, time, modality)
-			goCreate    = '{0}{1} -o {2} -i {3} -w 0'.format(btkAtlasData.BtkBinaryDir, btkAtlasData.WeightedSum, outputImage, inputImage)
 
-			if btkAtlasData.scriptOn:
-				os.system(goCreate)
-			else:
-				print "\t{0}".format(goCreate)
 
 			# weighted sum
 			goSum = '{0}{1} -o {2} '.format(btkAtlasData.BtkBinaryDir, btkAtlasData.WeightedSum, outputImage)
@@ -175,7 +168,7 @@ maxAge = btkPatientsTools.maxAge(btkAtlasData.patients)
 for time in numpy.arange(minAge, maxAge+btkAtlasData.timeStep/2.0, btkAtlasData.timeStep):
 	outputImage = '{0}/Atlas-{1:.4f}_Tissues.nii.gz'.format(btkAtlasData.atlasPath, time)
 	inputImages = '{0}/Atlas-{1:.4f}'.format(btkAtlasData.atlasPath, time)
-	goTissues   = '{0}{1} -o {2} --csf {3}_CSF.nii.gz --brainstem {3}_Brainstem.nii.gz --cervelet {3}_Cervelet.nii.gz --white_matter {3}_WM.nii.gz --grey_matter {3}_GM.nii.gz --other {3}_Other.nii.gz {2}_{1}.log 2> {2}_{1}.errlog'.format(btkAtlasData.BtkBinaryDir, btkAtlasData.BinarizeMaps, outputImage, inputImages)
+	goTissues   = '{0}{1} -o {2} -i {3}_Other.nii.gz -i {3}_GM.nii.gz -i {3}_WM.nii.gz -i {3}_Cervelet.nii.gz -i {3}_Brainstem.nii.gz -i {3}_CSF.nii.gz > {2}_{1}.log 2> {2}_{1}.errlog'.format(btkAtlasData.BtkBinaryDir, btkAtlasData.BinarizeMaps, outputImage, inputImages)
 
 	if btkAtlasData.scriptOn:
 		os.system(goTissues)
@@ -183,3 +176,20 @@ for time in numpy.arange(minAge, maxAge+btkAtlasData.timeStep/2.0, btkAtlasData.
 		print '\t{0}'.format(goTissues)
 
 print 'done.'
+
+#############################################################################
+#                           3. Clean directory                             #
+#############################################################################
+
+print 'Cleaning...'
+
+goClean = 'rm -f `ls {0}/* | grep -v -E "^{0}/Atlas-[[:digit:]]{{2}}.[[:digit:]]{{4}}_[[:alnum:]]+.nii.gz$|^{0}/AtlasShapeInverse-[[:digit:]]{{2}}.[[:digit:]]{{4}}.(nii.gz|txt)$"`'.format(btkAtlasData.atlasPath)
+
+if btkAtlasData.scriptOn:
+    os.system(goClean)
+else:
+    print '\t{0}'.format(goClean)
+
+print 'done.'
+
+

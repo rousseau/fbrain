@@ -89,7 +89,7 @@ print '\tdone.'
 #             1.2. Extract rigid part and prepare images                    #
 #############################################################################
 
-print '\tExtract rigid part from affine deformation and prepare images'
+print '\tExtract rigid part from affine deformation and prepare images...'
 
 jobs = []
 
@@ -150,22 +150,19 @@ print '\tComputing deformation from {0} to average...'.format(btkAtlasData.patie
 patientReferenceToAverageAffine = '{0}/{1}toAverageAffine.txt'.format(btkAtlasData.templatePath, btkAtlasData.patientReference)
 patientReferenceToAverageFields = '{0}/{1}toAverageWarp.nii.gz'.format(btkAtlasData.templatePath, btkAtlasData.patientReference)
 
-goAverageAffine = '{0}{1} 3 {2} '.format(btkAtlasData.AntsBinaryDir, btkAtlasData.AverageAffines, patientReferenceToAverageAffine)
-#goAverageFields = '{0} -o {1} '.format(btkAtlasData.AverageFields, patientReferenceToAverageFields)
+goAverageAffine = '{0}{1} -o {2} '.format(btkAtlasData.BtkBinaryDir, btkAtlasData.WeightedSumAffine, patientReferenceToAverageAffine)
 goAverageFields = '{0}{1} -f -o {2} '.format(btkAtlasData.BtkBinaryDir, btkAtlasData.WeightedSum, patientReferenceToAverageFields)
 
 for patient in btkAtlasData.patients:
 	if patient[0] != btkAtlasData.patientReference:
 		deformation = '{0}/{1}to{2}'.format(btkAtlasData.templatePath, patient[0], btkAtlasData.patientReference)
 		affine      = deformation + 'AffineOnly.txt'
-		field       = deformation + 'InverseWarp.nii.gz'
+		field       = deformation + 'Warp.nii.gz'
 	
-		goAverageAffine += '{0} '.format(affine)
-#		goAverageFields += '{0} '.format(field)
+		goAverageAffine += '-i {0} '.format(affine)
 		goAverageFields += '-i {0} '.format(field)
 	
-goAverageAffine += ' > {0}_{1}.log 2> {0}_{1}.errlog'.format(patientReferenceToAverageAffine, btkAtlasData.AverageAffines)
-#goAverageFields += ' > {0}.log 2> {0}.errlog'.format(patientReferenceToAverageFields+btkAtlasData.AverageFields)
+goAverageAffine += ' > {0}_{1}.log 2> {0}_{1}.errlog'.format(patientReferenceToAverageAffine, btkAtlasData.WeightedSumAffine)
 goAverageFields += ' > {0}_{1}.log 2> {0}_{1}.errlog'.format(patientReferenceToAverageFields, btkAtlasData.WeightedSum)
 	
 if btkAtlasData.scriptOn:
@@ -174,6 +171,15 @@ if btkAtlasData.scriptOn:
 else:
 	print "\t\t{0}".format(goAverageAffine)
 	print "\t\t{0}".format(goAverageFields)
+
+# Inverse the average deformation field
+patientReferenceToAverageInverseField = '{0}/{1}toAverageInverseWarp.nii.gz'.format(btkAtlasData.templatePath, btkAtlasData.patientReference)
+goInverse = '{0}{1} -i {2} -o {3} > {3}_{1}.log 2> {3}_{1}.errlog'.format(btkAtlasData.BtkBinaryDir, btkAtlasData.InverseField, patientReferenceToAverageFields, patientReferenceToAverageInverseField)
+
+if btkAtlasData.scriptOn:
+	os.system(goInverse)
+else:
+	print '\t\t{0}'.format(goInverse)
 	
 print '\tdone.'
 
@@ -197,11 +203,11 @@ for modality in btkAtlasData.modalities.keys():
 			if patient[0] != btkAtlasData.patientReference:
 				movingImage = '{0}/{1}_{2}.nii.gz'.format(btkAtlasData.modalities[modality][btkAtlasData.ModalityDataPath], patient[0], modality)
 			
-				goWarp = '{0}{1} 3 {2} {3} -R {4} --use-BSpline {5} {6} {7} {8} > {3}_{1}.log 2> {3}_{1}.errlog'.format(btkAtlasData.AntsBinaryDir, btkAtlasData.Warp, movingImage, outputImage, reference, patientReferenceToAverageFields, patientReferenceToAverageAffine, fieldToRef, affineToRef)
+				goWarp = '{0}{1} 3 {2} {3} -R {4} --use-BSpline -i {5} {6} {7} {8} > {3}_{1}.log 2> {3}_{1}.errlog'.format(btkAtlasData.AntsBinaryDir, btkAtlasData.Warp, movingImage, outputImage, reference, patientReferenceToAverageAffine, patientReferenceToAverageInverseField, fieldToRef, affineToRef)
 			else:
 				movingImage = '{0}/{1}_{2}.nii.gz'.format(btkAtlasData.modalities[modality][btkAtlasData.ModalityDataPath], btkAtlasData.patientReference, modality)
 				
-				goWarp = '{0}{1} 3 {2} {3} -R {4} --use-BSpline {5} {6} > {3}_{1}.log 2> {3}_{1}.errlog'.format(btkAtlasData.AntsBinaryDir, btkAtlasData.Warp, movingImage, outputImage, reference, patientReferenceToAverageFields, patientReferenceToAverageAffine)
+				goWarp = '{0}{1} 3 {2} {3} -R {4} --use-BSpline -i {5} {6} > {3}_{1}.log 2> {3}_{1}.errlog'.format(btkAtlasData.AntsBinaryDir, btkAtlasData.Warp, movingImage, outputImage, reference, patientReferenceToAverageAffine, patientReferenceToAverageInverseField)
 				
 			jobs.append(goWarp)
 
@@ -223,16 +229,13 @@ print '\tAveraging warped images...'
 for modality in btkAtlasData.modalities.keys():
 	if btkAtlasData.modalities[modality][btkAtlasData.UseInRegression]:
 		outputImage = '{0}/Average_{1}.nii.gz'.format(btkAtlasData.templatePath, modality)
-#		goAverage = '{0} 3 {1} 0 '.format(btkAtlasData.AverageImages, outputImage)
 		goAverage = '{0}{1} -o {2} '.format(btkAtlasData.BtkBinaryDir, btkAtlasData.WeightedSum, outputImage)
 		
 		for patient in btkAtlasData.patients:
 			image = '{0}/{1}toAverage_{2}.nii.gz'.format(btkAtlasData.templatePath, patient[0], modality)
 			
-#			goAverage += '{0} '.format(image)
 			goAverage += '-i {0} '.format(image)
-			
-#		goAverage += '> {0}.log 2> {0}.errlog'.format(outputImage+btkAtlasData.AverageImages)
+
 		goAverage += '> {0}_{1}.log 2> {0}_{1}.errlog'.format(outputImage, btkAtlasData.WeightedSum)
 	
 		if btkAtlasData.scriptOn:
@@ -325,16 +328,13 @@ print '\tAveraging warped images...'
 for modality in btkAtlasData.modalities.keys():
 	if btkAtlasData.modalities[modality][btkAtlasData.UseInRegression]:
 		outputImage = '{0}/Template_{1}.nii.gz'.format(btkAtlasData.templatePath, modality)
-#		goAverage = '{0} 3 {1} 0 '.format(btkAtlasData.AverageImages, outputImage)
 		goAverage = '{0}{1} -o {2} '.format(btkAtlasData.BtkBinaryDir, btkAtlasData.WeightedSum, outputImage)
 		
 		for patient in btkAtlasData.patients:
 			image = '{0}/{1}toTemplate_{2}.nii.gz'.format(btkAtlasData.templatePath, patient[0], modality)
 			
-#			goAverage += '{0} '.format(image)
 			goAverage += '-i {0} '.format(image)
-			
-#		goAverage += '> {0}.log 2> {0}.errlog'.format(outputImage+btkAtlasData.AverageImages)
+
 		goAverage += '> {0}_{1}.log 2> {0}_{1}.errlog'.format(outputImage, btkAtlasData.WeightedSum)
 	
 		if btkAtlasData.scriptOn:
@@ -353,7 +353,7 @@ print '\tdone.'
 print '\tComputing tissues map...'
 
 outputImage = '{0}/Template_Tissues.nii.gz'.format(btkAtlasData.templatePath)
-goTissues   = '{0}{1} -o {2} --csf {3}_CSF.nii.gz --brainstem {3}_Brainstem.nii.gz --cervelet {3}_Cervelet.nii.gz --white_matter {3}_WM.nii.gz --grey_matter {3}_GM.nii.gz --other {3}_Other.nii.gz {2}_{1}.log 2> {2}_{1}.errlog'.format(btkAtlasData.BtkBinaryDir, btkAtlasData.BinarizeMaps, outputImage, btkAtlasData.templatePath+'/Template')
+goTissues   = '{0}{1} -o {2} -i {3}_Other.nii.gz -i {3}_GM.nii.gz -i {3}_WM.nii.gz -i {3}_Cervelet.nii.gz -i {3}_Brainstem.nii.gz -i {3}_CSF.nii.gz > {2}_{1}.log 2> {2}_{1}.errlog'.format(btkAtlasData.BtkBinaryDir, btkAtlasData.BinarizeMaps, outputImage, btkAtlasData.templatePath+'/Template')
 
 if btkAtlasData.scriptOn:
 	os.system(goTissues)
@@ -363,3 +363,20 @@ else:
 print '\tdone.'
 
 print 'done.'
+
+
+#############################################################################
+#                           3. Clean directory                             #
+#############################################################################
+
+print 'Cleaning...'
+
+goClean = 'rm -f `ls {0}/* | grep -v -E "^{0}/Template_[[:alnum:]]+.nii.gz$|^{0}/[[:alnum:]_]+toTemplate_[[:alnum:]]+.nii.gz$|^{0}/[[:alnum:]_]+toTemplateInverseWarp.nii.gz$|^{0}/[[:alnum:]_]+toTemplateAffine.txt$|^{0}/[[:alnum:]_]+to[[:alnum:]_]+Rigid_[[:alnum:]]+.nii.gz$|^{0}/[[:alnum:]_]+to[[:alnum:]_]+Rigid.txt$"`'.format(btkAtlasData.templatePath)
+
+if btkAtlasData.scriptOn:
+    os.system(goClean)
+else:
+    print '\t{0}'.format(goClean)
+
+print 'done.'
+
