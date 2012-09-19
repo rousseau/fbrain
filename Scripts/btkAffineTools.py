@@ -36,6 +36,10 @@
 #############################################################################
 
 
+import numpy
+import scipy.linalg as linalg
+
+
 def extractRigidPartFromMatrix(affine):
 	"Extract and return the rigid part of the affine matrix."
 #	return (affine * affine.getT()) ** (-1/2) * affine
