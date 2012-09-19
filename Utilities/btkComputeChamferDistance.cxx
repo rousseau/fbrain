@@ -42,11 +42,24 @@
 /* Itk includes */
 #include "itkImage.h"
 #include "itkImageDuplicator.h"
+#include "itkApproximateSignedDistanceMapImageFilter.h"
+#include "itkFastChamferDistanceImageFilter.h"
 
 /*Btk includes*/
 #include "btkImageHelper.h"
 
 void chamfer_distance(itk::Image<short,3>::Pointer & inputImage, itk::Image<short,3>::Pointer & outputImage);
+
+/* It would be nicer to use the ITK filter itkApproximateSignedDistanceMapImageFilter, but it crashes on real images sometimes
+
+  typedef  itk::ApproximateSignedDistanceMapImageFilter< ImageType, FloatImageType  > ApproximateSignedDistanceMapImageFilterType;
+  ApproximateSignedDistanceMapImageFilterType::Pointer filter = ApproximateSignedDistanceMapImageFilterType::New();
+  filter->SetInput(image);
+  filter->SetInsideValue(1);
+  filter->SetOutsideValue(0);
+  filter->Update();
+
+*/
 
 int main (int argc, char* argv[])
 {
@@ -67,6 +80,7 @@ int main (int argc, char* argv[])
   typedef short      	      PixelType;
   const   unsigned int      Dimension = 3;
   typedef itk::Image< PixelType, Dimension >    ImageType;
+  typedef itk::Image< float, Dimension >    FloatImageType;
   typedef itk::ImageDuplicator< ImageType > DuplicatorType;
 
   ImageType::Pointer inputImage = btk::ImageHelper<ImageType>::ReadImage(inputFilename);
@@ -77,7 +91,7 @@ int main (int argc, char* argv[])
   ImageType::Pointer outputImage = duplicator->GetOutput();
 
   chamfer_distance(inputImage, outputImage);
-  
+
   btk::ImageHelper<ImageType>::WriteImage(outputImage, outputFilename);
 
   

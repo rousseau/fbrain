@@ -70,7 +70,7 @@ int main(int argc, char * argv[])
 
     //TCLAP Commands for arguments
 
-    TCLAP::CmdLine cmd("Registration (-i im -o result -r reference -t transformation", ' ', "Unversioned");
+    TCLAP::CmdLine cmd("Translate center of input image on center of the reference image", ' ', "Unversioned");
     TCLAP::ValueArg<std::string> inputArg("i","input","Low-resolution image file",true,"","string",cmd);
     TCLAP::ValueArg<std::string> refArg("r","reference","Reference image file",true,"","string",cmd);
     TCLAP::ValueArg<std::string> outArg  ("o","output","Translated image",true,"","string",cmd);

@@ -180,6 +180,9 @@ TARGET_LINK_LIBRARIES(btkMidwayHistogramEqualization ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkHistogramMatching btkHistogramMatching.cxx)
 TARGET_LINK_LIBRARIES(btkHistogramMatching ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkDistanceBetweenBinaryImages btkDistanceBetweenBinaryImages.cxx)
+TARGET_LINK_LIBRARIES(btkDistanceBetweenBinaryImages ${ITK_LIBRARIES})
+
 ADD_EXECUTABLE(btkBinarizeMask btkBinarizeMask.cxx)
 TARGET_LINK_LIBRARIES(btkBinarizeMask ${ITK_LIBRARIES})
 
@@ -248,4 +251,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkHistogramMatching
                 btkWeightedSumOfAffineTransforms
                 btkInverseDisplacementField
+                btkDistanceBetweenBinaryImages
 DESTINATION bin)

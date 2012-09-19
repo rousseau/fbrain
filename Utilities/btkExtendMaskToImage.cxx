@@ -52,7 +52,7 @@ int main( int argc, char *argv[] )
 
     //TCLAP Commands for arguments
 
-    TCLAP::CmdLine cmd("Mask extension", ' ', "Unversioned");
+    TCLAP::CmdLine cmd("Resample input image (mask) in the space of reference image", ' ', "Unversioned");
     TCLAP::ValueArg<std::string> inputArg("i","input","Mask file",true,"","string",cmd);
     TCLAP::ValueArg<std::string> refArg("r","reference","Fixed Image",true,"","string",cmd);
     TCLAP::ValueArg<std::string> outArg  ("o","output","Extended mask file",true,"","string",cmd);
