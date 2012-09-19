@@ -54,7 +54,7 @@
 
 // Types definitions
 typedef float ProbabilityMapPixelType;
-typedef unsigned short TissueSegmentationPixelType;
+typedef short TissueSegmentationPixelType;
 const unsigned int ImageDimension = 3;
 
 typedef itk::Image< ProbabilityMapPixelType,ImageDimension >                   ProbabilityMap;
