@@ -1,22 +1,22 @@
 /*==========================================================================
-
+  
   © Université de Strasbourg - Centre National de la Recherche Scientifique
-
-  Date: 15/11/2010
-  Author(s): Estanislao Oubel (oubel@unistra.fr)
-
+  
+  Date: 13/09/2012
+  Author(s): Julien Pontabry (pontabry@unistra.fr)
+  
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
   modify and/ or redistribute the software under the terms of the CeCILL-B
   license as circulated by CEA, CNRS and INRIA at the following URL
   "http://www.cecill.info".
-
+  
   As a counterpart to the access to the source code and  rights to copy,
   modify and redistribute granted by the license, users are provided only
   with a limited warranty  and the software's author,  the holder of the
   economic rights,  and the successive licensors  have only  limited
   liability.
-
+  
   In this respect, the user's attention is drawn to the risks associated
   with loading,  using,  modifying and/or developing or reproducing the
   software by the user in light of its specific status of free software,
@@ -27,99 +27,88 @@
   requirements in conditions enabling the security of their systems and/or
   data to be ensured and,  more generally, to use and operate it in the
   same conditions as regards security.
-
+  
   The fact that you are presently reading this means that you have had
   knowledge of the CeCILL-B license and that you accept its terms.
-
+  
 ==========================================================================*/
+
+// STL includes
+#include "string"
+#include "vector"
 
 // TCLAP includes
 #include <tclap/CmdLine.h>
 
-// STL includes
-#include "string"
-
 // ITK includes
-#include "itkImage.h"
-#include "itkImageRegionIterator.h"
+#include "itkDisplacementFieldTransform.h"
+#include "itkInverseDisplacementFieldImageFilter.h"
 
 // Local includes
 #include "btkMacro.h"
 #include "btkImageHelper.h"
 
 
-// Define label image type
-const unsigned int Dimension = 3;
-
-typedef short                                  PixelType;
-typedef itk::Image< PixelType,Dimension >      LabelImage;
-typedef itk::ImageRegionIterator< LabelImage > LabelImageIterator;
+// ITK definitions
+typedef itk::DisplacementFieldTransform< float,3 >::DisplacementFieldType DeformationField;
 
 
+// Main function
 int main(int argc, char *argv[])
 {
     try
     {
+
         //
-        // Read command line
+        // Command line parser
         //
 
-        TCLAP::CmdLine cmd("Splits a label image into binary components", ' ', "2.0");
+        // Command line
+        TCLAP::CmdLine cmd("Compute the inverse of a displacement field", ' ', "1.0", true);
 
-        TCLAP::ValueArg< std::string >  inputFileNameArg("i", "input", "Input image", true, "", "string", cmd);
-        TCLAP::ValueArg< std::string > outputFileNameArg("o", "output", "Output image", true, "", "string", cmd);
-        TCLAP::ValueArg< short >                labelArg("l", "label", "Label value", true, 0, "natural", cmd);
+        // Arguments
+        TCLAP::ValueArg< std::string > inputFileNameArg("i", "input", "Input field filenames", true, "", "string", cmd);
+        TCLAP::ValueArg< std::string > outputFileNameArg("o", "output", "Output field filename (default: \"out.nii.gz\")", false, "out.nii.gz", "string", cmd);
 
-        // Parse the command line
-        cmd.parse( argc, argv );
+        // Parse the args.
+        cmd.parse(argc, argv);
 
-        std::string inputFileName  = inputFileNameArg.getValue();
+        // Get the value parsed by each arg.
+        std::string  inputFileName = inputFileNameArg.getValue();
         std::string outputFileName = outputFileNameArg.getValue();
-        short                label = labelArg.getValue();
 
 
         //
-        // Read input image
+        // Reading
         //
 
-        LabelImage::Pointer inputImage = btk::ImageHelper< LabelImage >::ReadImage(inputFileName);
-
-
-        //
-        // Create new image from input
-        //
-
-        LabelImage::Pointer outputImage = btk::ImageHelper< LabelImage >::CreateNewImageFromPhysicalSpaceOf(inputImage);
+        DeformationField::Pointer input = btk::ImageHelper< DeformationField >::ReadImage(inputFileName);
 
 
         //
-        // Binarize label
+        // Processing
         //
 
-        LabelImageIterator outputIt(outputImage, outputImage->GetLargestPossibleRegion());
-        LabelImageIterator inputIt(inputImage, inputImage->GetLargestPossibleRegion());
+        typedef itk::InverseDisplacementFieldImageFilter< DeformationField, DeformationField > InverseDeformationFieldFilter;
 
-        for(inputIt.GoToBegin(), outputIt.GoToBegin(); !inputIt.IsAtEnd() && !outputIt.IsAtEnd(); ++inputIt, ++outputIt)
-        {
-            if(inputIt.Get() == label)
-            {
-                outputIt.Set(1);
-            }
-            else // inputIt.Get() != label
-            {
-                outputIt.Set(0);
-            }
-        } // for each voxel
+        btkCoutMacro("Processing...");
+
+        InverseDeformationFieldFilter::Pointer filter = InverseDeformationFieldFilter::New();
+        filter->SetInput(input);
+        filter->SetOutputSpacing(input->GetSpacing());
+        filter->SetOutputOrigin(input->GetOrigin());
+        filter->SetSize(input->GetLargestPossibleRegion().GetSize());
+        filter->SetSubsamplingFactor(16);
+        filter->Update();
+
+        btkCoutMacro("done.");
 
 
         //
-        // Write output image
+        // Writing
         //
 
-        btk::ImageHelper< LabelImage >::WriteImage(outputImage, outputFileName);
-
-
-        return EXIT_SUCCESS;
+        btk::ImageHelper< DeformationField >::WriteImage(filter->GetOutput(), outputFileName);
 
     }
     catch(TCLAP::ArgException &e)
@@ -130,5 +119,6 @@ int main(int argc, char *argv[])
     {
         btkCoutMacro("Exception: " << message);
     }
-}
 
+  return EXIT_SUCCESS;
+}

@@ -46,6 +46,8 @@
 #include "itkImageRegionIterator.h"
 #include "itkDisplacementFieldTransform.h"
 
+#include "itkResampleImageFilter.h"
+
 // Local includes
 #include "btkMacro.h"
 #include "btkImageHelper.h"
@@ -58,8 +60,10 @@ typedef itk::DisplacementFieldTransform< float,3 >::DisplacementFieldType Deform
 
 // Weight sum over template images
 template< typename TImage >
-void ComputeAndWriteWeightedMean(std::vector< std::string > &inputFileNames, std::vector< float > &weights, const std::string &outputFileName)
+void ComputeAndWriteWeightedSum(std::vector< std::string > &inputFileNames, std::vector< float > &weights, const std::string &outputFileName)
 {
+    typedef itk::ResampleImageFilter< TImage,TImage > ResampleImageFilter;
+
     //
     // Read & check
     //
@@ -73,13 +77,58 @@ void ComputeAndWriteWeightedMean(std::vector< std::string > &inputFileNames, std
 
     // Verify sizes of images
     if(!btk::ImageHelper< TImage >::IsInSamePhysicalSpace(inputImages))
-        throw(std::string("Input images are not in the same physical space !"));
+    {
+        unsigned int  j = 0;
+        float maxVolume = 0;
+
+        for(unsigned int i = 0; i < inputImages.size(); i++)
+        {
+            typename TImage::SpacingType spacing = inputImages[i]->GetSpacing();
+            typename TImage::SizeType       size = inputImages[i]->GetLargestPossibleRegion().GetSize();
+            float volume = size[0]*spacing[0]*size[1]*spacing[1]*size[2]*spacing[2];
+
+            if(volume > maxVolume)
+            {
+                j = i;
+                maxVolume = volume;
+            }
+        }
+
+        typename ResampleImageFilter::Pointer filter = ResampleImageFilter::New();
+
+        filter->SetReferenceImage(inputImages[j]);
+        filter->SetSize(inputImages[j]->GetLargestPossibleRegion().GetSize());
+
+        for(unsigned int i = 0; i < inputImages.size(); i++)
+        {
+            if(i != j)
+            {
+                filter->SetInput(inputImages[i]);
+                filter->Update();
+                inputImages[i] = filter->GetOutput();
+            }
+        }
+    }
 
 
     //
-    // Compute the weighted mean
+    // Compute the weighted sum
     //
 
+    // Normalize weights
+    float sumOfWeights = 0;
+
+    for(unsigned int i = 0; i < weights.size(); i++)
+    {
+        sumOfWeights += weights[i];
+    }
+
+    for(unsigned int i = 0; i < weights.size(); i++)
+    {
+        weights[i] /= sumOfWeights;
+    }
+
+    // Compute weighted sum
     typename TImage::Pointer outputImage = btk::ImageHelper< TImage >::CreateNewImageFromPhysicalSpaceOf(inputImages[0]);
 
     itk::ImageRegionIterator< TImage > outputIt(outputImage, outputImage->GetLargestPossibleRegion());
@@ -155,13 +204,14 @@ int main(int argc, char *argv[])
         // Processing
         //
 
+        // Compute weighted sum
         if(deformationField)
         {
-            ComputeAndWriteWeightedMean< DeformationField >(inputFileNames, weights, outputFileName);
+            ComputeAndWriteWeightedSum< DeformationField >(inputFileNames, weights, outputFileName);
         }
         else
         {
-            ComputeAndWriteWeightedMean< Image >(inputFileNames, weights, outputFileName);
+            ComputeAndWriteWeightedSum< Image >(inputFileNames, weights, outputFileName);
         }
     }
     catch(TCLAP::ArgException &e)
@@ -175,7 +225,3 @@ int main(int argc, char *argv[])
   
   return EXIT_SUCCESS;
 }
-
-
-
-

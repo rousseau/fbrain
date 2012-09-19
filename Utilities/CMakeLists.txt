@@ -87,8 +87,8 @@ TARGET_LINK_LIBRARIES(btkImageSimilarity ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkPSNR btkPSNR.cxx)
 TARGET_LINK_LIBRARIES(btkPSNR ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkWeightedMean btkWeightedMean.cxx)
-TARGET_LINK_LIBRARIES(btkWeightedMean ${ITK_LIBRARIES})
+ADD_EXECUTABLE(btkWeightedSumOfImages btkWeightedSumOfImages.cxx)
+TARGET_LINK_LIBRARIES(btkWeightedSumOfImages ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkSequenceNormalization btkSequenceNormalization.cxx
     ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
@@ -194,6 +194,12 @@ TARGET_LINK_LIBRARIES(btkTranslateImageOverTemplate ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkExtendMaskToImage btkExtendMaskToImage.cxx)
 TARGET_LINK_LIBRARIES(btkExtendMaskToImage ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkWeightedSumOfAffineTransforms btkWeightedSumOfAffineTransforms.cxx)
+TARGET_LINK_LIBRARIES(btkWeightedSumOfAffineTransforms btkToolsLibrary btkMathsLibrary ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkInverseDisplacementField btkInverseDisplacementField.cxx)
+TARGET_LINK_LIBRARIES(btkInverseDisplacementField ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -212,7 +218,7 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkImageInjection
                 btkImageSimilarity
                 btkPSNR
-                btkWeightedMean
+                btkWeightedSumOfImages
                 btkSequenceNormalization
                 btkReconstructionComparisonTool
                 btkIteratedBackProjection
@@ -240,4 +246,6 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkImageHistogram
                 btkRescaleIntensity
                 btkHistogramMatching
+                btkWeightedSumOfAffineTransforms
+                btkInverseDisplacementField
 DESTINATION bin)

@@ -401,7 +401,7 @@ int main(int argc, char * argv[])
 
         if(computeTransfo)
         {
-            btk::IOTransformHelper< TransformType >::WriteTransformArray(transfos,transform);
+            btk::IOTransformHelper< TransformType >::WriteTransform(transfos,transform);
         }
 
 

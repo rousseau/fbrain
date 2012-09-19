@@ -91,5 +91,6 @@ ENDIF(BUILD_DOCUMENTATION)
 SUBDIRS(
     Code
     Applications
+    Scripts
     Utilities
 )

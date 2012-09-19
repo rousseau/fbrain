@@ -68,8 +68,9 @@ ReadTransform(std::string _fileName)
         throw excpt;
     }
     TransformListType transforms = reader->GetTransformList();
-    itkTReader::TransformListType::const_iterator titr = transforms->begin();
-    TransformPointerType trans = dynamic_cast< TTransform * >( titr->GetPointer() );
+//    itkTReader::TransformListType::const_iterator titr = transforms->begin();
+//    TransformPointerType trans = dynamic_cast< TTransform * >( titr->GetPointer() );
+    TransformPointerType trans = static_cast< TTransform * >( transforms->front().GetPointer() );
     std::cout << " done! " << std::endl;
 
     return trans;
@@ -81,7 +82,7 @@ ReadTransform(std::string _fileName)
 template <class TTransform>
 std::vector< typename IOTransformHelper< TTransform >::TransformPointerType >&
 IOTransformHelper< TTransform >::
-ReadTransformArray(std::vector< std::string >& _fileNames)
+ReadTransform(std::vector< std::string >& _fileNames)
 {
     itk::TransformFactory<TTransform>::RegisterTransform();
 
@@ -109,9 +110,10 @@ ReadTransformArray(std::vector< std::string >& _fileNames)
             throw excpt;
         }
         TransformListType tlist = reader->GetTransformList();
-        itkTReader::TransformListType::const_iterator titr = tlist->begin();
+//        itkTReader::TransformListType::const_iterator titr = tlist->begin();
         //transforms[i] = TransformType::New();
-        TransformPointerType trans = dynamic_cast< TTransform * >( titr->GetPointer() );
+//        TransformPointerType trans = dynamic_cast< TTransform * >( titr->GetPointer() );
+        TransformPointerType trans = static_cast< TTransform * >( tlist->front().GetPointer() );
         transforms[i] = trans;
         std::cout << " done! " << std::endl;
     }
@@ -147,7 +149,7 @@ void IOTransformHelper< TTransform >::WriteTransform(TransformPointerType _trans
 
 //---------------------------------------------------------------------------------
 template <class TTransform>
-void IOTransformHelper< TTransform >::WriteTransformArray(std::vector< TransformPointerType > &_transforms, std::vector< std::string > &_fileNames)
+void IOTransformHelper< TTransform >::WriteTransform(std::vector< TransformPointerType > &_transforms, std::vector< std::string > &_fileNames)
 {
     if(_transforms.size() > 0 && _transforms.size() == _fileNames.size())
     {

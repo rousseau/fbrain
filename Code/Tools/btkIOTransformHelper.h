@@ -81,7 +81,7 @@ public :
      * @param fileNames of the transforms to read
      * @return A array of pointer of transforms (templated)
      */
-    static std::vector< TransformPointerType > & ReadTransformArray(std::vector< std::string > &fileNames );
+    static std::vector< TransformPointerType > & ReadTransform(std::vector< std::string > &fileNames );
     /**
      * @brief Write a transform
      * @param A pointer to the transform
@@ -93,7 +93,7 @@ public :
      * @param A array of pointer of transform
      * @param A array of name of transform file
      */
-    static void WriteTransformArray(std::vector< TransformPointerType > &transforms, std::vector< std::string > &fileNames);
+    static void WriteTransform(std::vector< TransformPointerType > &transforms, std::vector< std::string > &fileNames);
 
 };
 

@@ -44,7 +44,9 @@
 
 // ITK includes
 #include "itkImage.h"
-#include "itkImageRegionIterator.h"
+#include "itkResampleImageFilter.h"
+#include "itkAddImageFilter.h"
+#include "itkDivideImageFilter.h"
 
 // Local includes
 #include "btkImageHelper.h"
@@ -52,11 +54,13 @@
 
 // Types definitions
 typedef float ProbabilityMapPixelType;
-typedef unsigned short TissueSegmentationPixelType;
+typedef short TissueSegmentationPixelType;
 const unsigned int ImageDimension = 3;
 
-typedef itk::Image< ProbabilityMapPixelType,ImageDimension > ProbabilityMap;
-typedef itk::ImageRegionIterator< ProbabilityMap >           ProbabilityMapIterator;
+typedef itk::Image< ProbabilityMapPixelType,ImageDimension >                   ProbabilityMap;
+typedef itk::ResampleImageFilter< ProbabilityMap,ProbabilityMap >              ProbabilityMapResampleFilter;
+typedef itk::AddImageFilter< ProbabilityMap,ProbabilityMap,ProbabilityMap >    ProbabilityMapAddFilter;
+typedef itk::DivideImageFilter< ProbabilityMap,ProbabilityMap,ProbabilityMap > ProbabilityMapDivideFilter;
 
 typedef itk::Image< TissueSegmentationPixelType,ImageDimension > TissueSegmentation;
 typedef itk::ImageRegionIterator<TissueSegmentation>             TissueSegmentationIterator;
@@ -74,37 +78,31 @@ int main(int argc, char *argv[])
         TCLAP::CmdLine cmd("Binarize tissue probability maps", ' ', "1.0");
 
         // Define command line arguments
-        TCLAP::ValueArg< std::string > inputGMFileNameArg("g", "grey_matter", "Input grey matter filename", true, "", "string", cmd);
-        TCLAP::ValueArg< std::string > inputWMFileNameArg("w", "white_matter", "Input white matter filename", true, "", "string", cmd);
-        TCLAP::ValueArg< std::string > inputCerveletFileNameArg("c", "cervelet", "Input cervelet filename", true, "", "string", cmd);
-        TCLAP::ValueArg< std::string > inputBrainstemFileNameArg("b", "brainstem", "Input brainstem filename", true, "", "string", cmd);
-        TCLAP::ValueArg< std::string > inputCSFFileNameArg("s", "csf", "Input CSF filename", true, "", "string", cmd);
-        TCLAP::ValueArg< std::string > inputOtherFileNameArg("t", "other", "Input other filename", true, "", "string", cmd);
+        TCLAP::MultiArg< std::string > inputLabelFileNamesArg("i", "input", "Input label filenames", true, "string", cmd);
         TCLAP::ValueArg< std::string > outputTissueFileNameArg("o", "output", "Output filename", false, "outputTissue.nii.gz", "string", cmd);
 
         // Parse arguments
         cmd.parse(argc, argv);
 
         // Get back arguments' values
-        std::string inputGMFileName        = inputGMFileNameArg.getValue();
-        std::string inputWMFileName        = inputWMFileNameArg.getValue();
-        std::string inputCerveletFileName  = inputCerveletFileNameArg.getValue();
-        std::string inputBrainstemFileName = inputBrainstemFileNameArg.getValue();
-        std::string inputCSFFileName       = inputCSFFileNameArg.getValue();
-        std::string inputOtherFileName     = inputOtherFileNameArg.getValue();
-        std::string outputTissueFileName   = outputTissueFileNameArg.getValue();
+        std::vector< std::string > inputLabelFileNames = inputLabelFileNamesArg.getValue();
+        std::string               outputTissueFileName = outputTissueFileNameArg.getValue();
 
 
         //
         // Load images
         //
 
-        ProbabilityMap::Pointer        inputGM = btk::ImageHelper< ProbabilityMap >::ReadImage(inputGMFileName);
-        ProbabilityMap::Pointer        inputWM = btk::ImageHelper< ProbabilityMap >::ReadImage(inputWMFileName);
-        ProbabilityMap::Pointer  inputCervelet = btk::ImageHelper< ProbabilityMap >::ReadImage(inputCerveletFileName);
-        ProbabilityMap::Pointer inputBrainstem = btk::ImageHelper< ProbabilityMap >::ReadImage(inputBrainstemFileName);
-        ProbabilityMap::Pointer       inputCSF = btk::ImageHelper< ProbabilityMap >::ReadImage(inputCSFFileName);
-        ProbabilityMap::Pointer     inputOther = btk::ImageHelper< ProbabilityMap >::ReadImage(inputOtherFileName);
+        std::vector< ProbabilityMap::Pointer > inputs = btk::ImageHelper< ProbabilityMap >::ReadImage(inputLabelFileNames);
+
+        //
+        // Checking physical space
+        //
+
+        if(!btk::ImageHelper< ProbabilityMap >::IsInSamePhysicalSpace(inputs))
+        {
+            throw std::string("The input images do not have the same physical space !");
+        }
 
 
         //
@@ -113,123 +111,65 @@ int main(int argc, char *argv[])
 
         std::cout << "Processing images..." << std::endl;
 
+        // Normalize images
+        ProbabilityMap::Pointer normalizationImage = btk::ImageHelper< ProbabilityMap >::CreateNewImageFromPhysicalSpaceOf(inputs[0]);
+
+        for(unsigned int i = 0; i < inputs.size(); i++)
+        {
+            ProbabilityMapAddFilter::Pointer addFilter = ProbabilityMapAddFilter::New();
+            addFilter->SetInput1(normalizationImage);
+            addFilter->SetInput2(inputs[i]);
+            addFilter->Update();
+
+            normalizationImage = addFilter->GetOutput();
+        } // for each image
+
+        for(unsigned int i = 0; i < inputs.size(); i++)
+        {
+            ProbabilityMapDivideFilter::Pointer divideFilter = ProbabilityMapDivideFilter::New();
+            divideFilter->SetInput1(inputs[i]);
+            divideFilter->SetInput2(normalizationImage);
+            divideFilter->Update();
+
+            inputs[i] = divideFilter->GetOutput();
+        } // for each image
+
+
         // Create a new tissue map
-        TissueSegmentation::Pointer outputTissues = btk::ImageHelper< ProbabilityMap,TissueSegmentation >::CreateNewImageFromPhysicalSpaceOf(inputGM);
+        TissueSegmentation::Pointer outputTissues = btk::ImageHelper< ProbabilityMap,TissueSegmentation >::CreateNewImageFromPhysicalSpaceOf(inputs[0]);
 
-        // Iterators
-        ProbabilityMapIterator     inputGMIterator(inputGM, inputGM->GetLargestPossibleRegion());
-        ProbabilityMapIterator     inputWMIterator(inputWM, inputWM->GetLargestPossibleRegion());
-        ProbabilityMapIterator     inputCerveletIterator(inputCervelet, inputCervelet->GetLargestPossibleRegion());
-        ProbabilityMapIterator     inputBrainstemIterator(inputBrainstem, inputBrainstem->GetLargestPossibleRegion());
-        ProbabilityMapIterator     inputCSFIterator(inputCSF, inputCSF->GetLargestPossibleRegion());
-        ProbabilityMapIterator     inputOtherIterator(inputOther, inputOther->GetLargestPossibleRegion());
-        TissueSegmentationIterator outputTissueIterator(outputTissues, outputTissues->GetLargestPossibleRegion());
 
-        // Normalize probability maps (min-max)
-        ProbabilityMapPixelType GM_min = 1000, GM_max = 0, WM_min = 1000, WM_max = 0, Cervelet_min = 1000, Cervelet_max = 0, Brainstem_min = 1000, Brainstem_max = 0, CSF_min = 1000, CSF_max = 0, Other_min = 1000, Other_max = 0;
-        for(inputGMIterator.GoToBegin(), inputWMIterator.GoToBegin(), inputCerveletIterator.GoToBegin(), inputBrainstemIterator.GoToBegin(), inputCSFIterator.GoToBegin(), inputOtherIterator.GoToBegin(), outputTissueIterator.GoToBegin();
-            !inputGMIterator.IsAtEnd() && !inputWMIterator.IsAtEnd() && !inputCerveletIterator.IsAtEnd() && !inputBrainstemIterator.IsAtEnd() && !inputCSFIterator.IsAtEnd() && !inputOtherIterator.IsAtEnd() && !outputTissueIterator.IsAtEnd();
-            ++inputGMIterator, ++inputWMIterator, ++inputCerveletIterator, ++inputBrainstemIterator, ++inputCSFIterator, ++inputOtherIterator, ++outputTissueIterator)
+        // Compute new tissue map by majority voting
+        ProbabilityMap::SizeType size = inputs[0]->GetLargestPossibleRegion().GetSize();
+
+        for(unsigned int z = 0; z < size[2]; z++)
         {
-            if(inputGMIterator.Get() > GM_max)
-                GM_max = inputGMIterator.Get();
-
-            if(inputGMIterator.Get() < GM_min)
-                GM_min = inputGMIterator.Get();
-
-            if(inputWMIterator.Get() > WM_max)
-                WM_max = inputWMIterator.Get();
-
-            if(inputWMIterator.Get() < WM_min)
-                WM_min = inputWMIterator.Get();
-
-            if(inputCerveletIterator.Get() > Cervelet_max)
-                Cervelet_max = inputCerveletIterator.Get();
-
-            if(inputCerveletIterator.Get() < Cervelet_min)
-                Cervelet_min = inputCerveletIterator.Get();
-
-            if(inputBrainstemIterator.Get() > Brainstem_max)
-                Brainstem_max = inputBrainstemIterator.Get();
-
-            if(inputBrainstemIterator.Get() < Brainstem_min)
-                Brainstem_min = inputBrainstemIterator.Get();
-
-            if(inputBrainstemIterator.Get() > Brainstem_max)
-                Brainstem_max = inputBrainstemIterator.Get();
-
-            if(inputBrainstemIterator.Get() < Brainstem_min)
-                Brainstem_min = inputBrainstemIterator.Get();
-
-            if(inputCSFIterator.Get() > CSF_max)
-                CSF_max = inputCSFIterator.Get();
-
-            if(inputCSFIterator.Get() < CSF_min)
-                CSF_min = inputCSFIterator.Get();
-
-            if(inputOtherIterator.Get() > Other_max)
-                Other_max = inputOtherIterator.Get();
-
-            if(inputOtherIterator.Get() < Other_min)
-                Other_min = inputOtherIterator.Get();
-        }
-
-
-        // Rebuild the tissue map by picking the maximum probability of each voxel
-        for(inputGMIterator.GoToBegin(), inputWMIterator.GoToBegin(), inputCerveletIterator.GoToBegin(), inputBrainstemIterator.GoToBegin(), inputCSFIterator.GoToBegin(), inputOtherIterator.GoToBegin(), outputTissueIterator.GoToBegin();
-            !inputGMIterator.IsAtEnd() && !inputWMIterator.IsAtEnd() && !inputCerveletIterator.IsAtEnd() && !inputBrainstemIterator.IsAtEnd() && !inputCSFIterator.IsAtEnd() && !inputOtherIterator.IsAtEnd() && !outputTissueIterator.IsAtEnd();
-            ++inputGMIterator, ++inputWMIterator, ++inputCerveletIterator, ++inputBrainstemIterator, ++inputCSFIterator, ++inputOtherIterator, ++outputTissueIterator)
-        {
-            // Normalization min-max
-            inputGMIterator.Set( (inputGMIterator.Get() - GM_min) / (GM_max - GM_min) );
-            inputWMIterator.Set( (inputWMIterator.Get() - WM_min) / (WM_max - WM_min) );
-            inputCerveletIterator.Set( (inputCerveletIterator.Get() - Cervelet_min) / (Cervelet_max - Cervelet_min) );
-            inputBrainstemIterator.Set( (inputBrainstemIterator.Get() - Brainstem_min) / (Brainstem_max - Brainstem_min) );
-            inputCSFIterator.Set( (inputCSFIterator.Get() - CSF_min) / (CSF_max - CSF_min) );
-            inputOtherIterator.Set( (inputOtherIterator.Get() - Other_min) / (Other_max - Other_min) );
-
-            // Normalization
-            ProbabilityMapPixelType sum = inputGMIterator.Get() + inputWMIterator.Get() + inputCerveletIterator.Get() + inputBrainstemIterator.Get() + inputCSFIterator.Get() + inputOtherIterator.Get();
-            inputGMIterator.Set( inputGMIterator.Get() / sum );
-            inputWMIterator.Set( inputWMIterator.Get() / sum );
-            inputCerveletIterator.Set( inputCerveletIterator.Get() / sum );
-            inputBrainstemIterator.Set( inputBrainstemIterator.Get() / sum );
-            inputCSFIterator.Set( inputCSFIterator.Get() / sum );
-            inputOtherIterator.Set( inputOtherIterator.Get() / sum );
-
-            // 1: GM, 2: WM, 3: Cervelet, 4: Brainstem, 5: CSF
-            ProbabilityMapPixelType maxValue = inputOtherIterator.Get();
-            outputTissueIterator.Set(0);
-
-            if(inputGMIterator.Get() > maxValue)
+            for(unsigned int x = 0; x < size[0]; x++)
             {
-                maxValue = inputGMIterator.Get();
-                outputTissueIterator.Set(1);
-            }
+                for(unsigned int y = 0; y < size[1]; y++)
+                {
+                    ProbabilityMap::IndexType index;
+                    index[0] = x; index[1] = y; index[2] = z;
 
-            if(inputWMIterator.Get() > maxValue)
-            {
-                maxValue = inputWMIterator.Get();
-                outputTissueIterator.Set(2);
-            }
+                    ProbabilityMap::PixelType maxValue = inputs[0]->GetPixel(index);
+                    TissueSegmentation::PixelType label = static_cast< TissueSegmentation::PixelType >(0);
 
-            if(inputCerveletIterator.Get() > maxValue)
-            {
-                maxValue = inputCerveletIterator.Get();
-                outputTissueIterator.Set(3);
-            }
+                    for(unsigned int i = 1; i < inputs.size(); i++)
+                    {
+                        ProbabilityMap::PixelType value = inputs[i]->GetPixel(index);
 
-            if(inputBrainstemIterator.Get() > maxValue)
-            {
-                maxValue = inputBrainstemIterator.Get();
-                outputTissueIterator.Set(4);
-            }
+                        if(value > maxValue)
+                        {
+                            maxValue = value;
+                            label    = static_cast< TissueSegmentation::PixelType >(i);
+                        }
+                    } // for each image
 
-            if(inputCSFIterator.Get() > maxValue)
-            {
-                outputTissueIterator.Set(5);
-            }
-        }
+                    outputTissues->SetPixel(index, label);
+                } // for each voxel
+            } // for each line
+        } // for each slice
+
 
         //
         // Write output image
