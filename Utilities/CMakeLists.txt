@@ -203,6 +203,9 @@ TARGET_LINK_LIBRARIES(btkWeightedSumOfAffineTransforms btkToolsLibrary btkMathsL
 ADD_EXECUTABLE(btkInverseDisplacementField btkInverseDisplacementField.cxx)
 TARGET_LINK_LIBRARIES(btkInverseDisplacementField ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE( btkConvertFSLTransform  btkConvertFSLTransform.cxx)
+TARGET_LINK_LIBRARIES(btkConvertFSLTransform ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -252,4 +255,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkWeightedSumOfAffineTransforms
                 btkInverseDisplacementField
                 btkDistanceBetweenBinaryImages
+                btkConvertFSLTransform
 DESTINATION bin)
