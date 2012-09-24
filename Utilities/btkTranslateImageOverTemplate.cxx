@@ -3,7 +3,7 @@
   © Université de Strasbourg - Centre National de la Recherche Scientifique
 
   Date: 12/07/2012
-  Author(s): Youssef Taleb
+  Author(s): Youssef Taleb, Marc Schweitzer(marc.schweitzer(at)unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -33,14 +33,14 @@
 
 ==========================================================================*/
 
+
 /* ITK */
 #include "itkImage.h"
-#include "itkImageFileReader.h"
-#include "itkImageFileWriter.h"
 #include "itkResampleImageFilter.h"
 #include "itkAffineTransform.h"
 #include "itkNearestNeighborInterpolateImageFunction.h"
 #include "itkContinuousIndex.h"
+#include "itkImageRegionConstIteratorWithIndex.h"
 
 /* BTK */
 #include "btkImageHelper.h"
@@ -51,30 +51,24 @@
 #include <tclap/CmdLine.h>
 #include "fstream"
 
+
 int main(int argc, char * argv[])
 {
     /* Typedefs */
 
     const unsigned int Dimension = 3;
-
-
     typedef itk::Image<short, Dimension>                      Image;
-    typedef Image::IndexType                                  IndexType;
-
-    typedef itk::ImageFileReader< Image  >                    ImageReader;
-
+    typedef Image::IndexType                         IndexType;
     typedef itk::ResampleImageFilter<Image,Image>             FilterType;
-
     typedef itk::AffineTransform< double, Dimension >         TransformType;
-
+    typedef itk::ImageRegionConstIteratorWithIndex< Image >   ConstIteratorType;
 
     //TCLAP Commands for arguments
-
-    TCLAP::CmdLine cmd("Translate center of input image on center of the reference image", ' ', "Unversioned");
+    TCLAP::CmdLine cmd("Translate barycenter of input image  on center of the reference image (barycenter is calculated with voxels > 0)", ' ', "Unversioned");
     TCLAP::ValueArg<std::string> inputArg("i","input","Low-resolution image file",true,"","string",cmd);
     TCLAP::ValueArg<std::string> refArg("r","reference","Reference image file",true,"","string",cmd);
     TCLAP::ValueArg<std::string> outArg  ("o","output","Translated image",true,"","string",cmd);
-    TCLAP::ValueArg<std::string> matArg  ("m","matrix","Translation matrix file",true,"","string",cmd);
+    TCLAP::ValueArg<std::string> matArg  ("t","transform","Transform file (affine transform, with identity rotation and a translation)",true,"","string",cmd);
 
     std::string  inputFileImage;
     std::string  refFileImage;
@@ -90,28 +84,19 @@ int main(int argc, char * argv[])
     outputFileImage = outArg.getValue();
     translationFileName=matArg.getValue();
 
-    // Error output if no input image specified
-
-    if(inputFileImage.size() == 0)
-    {
-        std::stringstream message;
-        message<<"You must have one image in input  !";
-        throw std::string(message.str());
-    }
 
     //
     // Processing
     //
 
+
     try
     {
-
         // Read reference image
-        Image::Pointer refImage = Image::New();
-        refImage=btk::ImageHelper<Image>::ReadImage(refFileImage);
+        Image::Pointer refImage=btk::ImageHelper<Image>::ReadImage(refFileImage);
 
         // Read input image
-        Image::Pointer image = btk::ImageHelper< Image >::ReadImage(inputFileImage);
+        Image::Pointer image = btk::ImageHelper<Image>::ReadImage(inputFileImage);
 
         Image::SizeType size;
         Image::SizeType ref_size;
@@ -119,31 +104,50 @@ int main(int argc, char * argv[])
         size=image->GetLargestPossibleRegion().GetSize();
         ref_size=refImage->GetLargestPossibleRegion().GetSize();
 
-        // Calculate centers of images in voxel coordinates
-        itk::ContinuousIndex< double,Dimension > center, center_ref;
+        // Calculate center of reference image in voxel coordinates
+        itk::ContinuousIndex< double,Dimension > center_ref,read_point,barycentre;
 
-        unsigned int i = 0;
-
-        for (i=0;i<=2;i++)
-        {
-            center[i]=(double)size[i]/2.0;
-        }
-
-        for (i=0;i<=2;i++)
+        for (int i=0;i<=2;i++)
         {
             center_ref[i]=(double)ref_size[i]/2.0;
         }
 
-        std::cout <<  "Centers coordinates in physical space:" << std::endl;
+
+        // Calculate barycenter of input image
+        ConstIteratorType It( image, image->GetLargestPossibleRegion());
+        std::cout<<"Processing the barycenter of "<<inputFileImage<<std::flush;
+        double x_mean,y_mean,z_mean;
+        x_mean = y_mean = z_mean = 0;
+        int number_of_points=0;
+
+        for ( It.GoToBegin(); !It.IsAtEnd(); ++It)
+        {
+            read_point=It.GetIndex();
+            if (It.Get()!=0)
+            {
+                x_mean=x_mean+read_point[0];
+                y_mean=y_mean+read_point[1];
+                z_mean=z_mean+read_point[2];
+                ++number_of_points;
+            }
+        }
+
+        x_mean=x_mean/number_of_points;
+        y_mean=y_mean/number_of_points;
+        z_mean=z_mean/number_of_points;
+
+        barycentre[0]=x_mean;
+        barycentre[1]=y_mean;
+        barycentre[2]=z_mean;
+
 
         Image::PointType pi;
-        image->TransformContinuousIndexToPhysicalPoint(center,pi);
-        std::cout << "input image :" <<  pi << std::endl;
+        image->TransformContinuousIndexToPhysicalPoint(barycentre,pi);
+
         Image::PointType pr;
         refImage->TransformContinuousIndexToPhysicalPoint(center_ref,pr);
-        std::cout << "reference image :" << pr << std::endl;
 
-
+        std::cout<<"Apply translation..."<<std::flush;
         // Processing Translation
         FilterType::Pointer filter = FilterType::New();
         TransformType::Pointer transform = TransformType::New();
@@ -152,35 +156,39 @@ int main(int argc, char * argv[])
         translation=pi-pr;
         transform->Translate( translation );
 
-        std::cout<<transform<<std::endl;
+        //std::cout<<transform;
+
         filter->UseReferenceImageOn();
         filter->SetReferenceImage(refImage);
         filter->SetInput( image );
         filter->SetTransform( transform );
         filter->Update();
 
+        std::cout<<"done !"<<std::endl;
 
         //Write ouput image
+
         btk::ImageHelper<Image>::WriteImage(filter->GetOutput() ,outputFileImage);
 
-        // Write Transform file (for ANTS)
+        // Write Transform file
+        //TODO: If We Set a itk::AffineTransform<double, 3> with a identity and we set translation to the SetOffset function we should have the same result
         translationFile.open(translationFileName.c_str(), std::ios::out);
         translationFile <<"Transform : AffineTransform_double_3_3" << std::endl;
         translationFile <<"Parameters: 1 0 0 0 1 0 0 0 1 "<<translation[0]<<" " << translation[1]<<" "<<translation[2]<< std::endl;
         translationFile <<"FixedParameters: 0 0 0" << std::endl;
         translationFile.close();
 
-
     }
     catch(itk::ExceptionObject &error)
     {
         std::cout << "ITK error: " << error << std::endl;
+        return EXIT_FAILURE;
     }
     catch(std::string &message)
     {
         std::cout << "Error: " << message << std::endl;
+        return EXIT_FAILURE;
     }
-
 
     std::cout<<"End of execution..."<<std::endl;
 
