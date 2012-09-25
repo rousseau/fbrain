@@ -69,6 +69,7 @@ int main(int argc, char *argv[])
         TCLAP::MultiArg< std::string > inputFileNamesArg("i", "input", "Input affine transform filenames", true, "string", cmd);
         TCLAP::MultiArg< float >              weightsArg("w", "weight", "Image weight (default: 1/N)", false, "string", cmd);
         TCLAP::ValueArg< std::string > outputFileNameArg("o", "output", "Output affine transform filename (default: \"out.txt\")", false, "out.txt", "string", cmd);
+        TCLAP::SwitchArg              noNormalizationArg("", "no_normalization", "Desactivate the normalization of the weights (default: false)", cmd);
 
         // Parse the args.
         cmd.parse(argc, argv);
@@ -77,6 +78,7 @@ int main(int argc, char *argv[])
         std::vector< std::string > inputFileNames = inputFileNamesArg.getValue();
         std::vector< float >              weights = weightsArg.getValue();
         std::string                outputFileName = outputFileNameArg.getValue();
+        bool                      noNormalization = noNormalizationArg.getValue();
 
 
         //
@@ -115,16 +117,19 @@ int main(int argc, char *argv[])
         //
 
         // Normalize weights
-        float sumOfWeights = 0;
-
-        for(unsigned int i = 0; i < weights.size(); i++)
+        if(!noNormalization)
         {
-            sumOfWeights += weights[i];
-        }
+            float sumOfWeights = 0;
 
-        for(unsigned int i = 0; i < weights.size(); i++)
-        {
-            weights[i] /= sumOfWeights;
+            for(unsigned int i = 0; i < weights.size(); i++)
+            {
+                sumOfWeights += weights[i];
+            }
+
+            for(unsigned int i = 0; i < weights.size(); i++)
+            {
+                weights[i] /= sumOfWeights;
+            }
         }
 
         // Compute weighted sum

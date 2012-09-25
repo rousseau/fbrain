@@ -60,7 +60,7 @@ typedef itk::DisplacementFieldTransform< float,3 >::DisplacementFieldType Deform
 
 // Weight sum over template images
 template< typename TImage >
-void ComputeAndWriteWeightedSum(std::vector< std::string > &inputFileNames, std::vector< float > &weights, const std::string &outputFileName)
+void ComputeAndWriteWeightedSum(std::vector< std::string > &inputFileNames, std::vector< float > &weights, const std::string &outputFileName, bool noNormalization)
 {
     typedef itk::ResampleImageFilter< TImage,TImage > ResampleImageFilter;
 
@@ -116,16 +116,19 @@ void ComputeAndWriteWeightedSum(std::vector< std::string > &inputFileNames, std:
     //
 
     // Normalize weights
-    float sumOfWeights = 0;
-
-    for(unsigned int i = 0; i < weights.size(); i++)
+    if(!noNormalization)
     {
-        sumOfWeights += weights[i];
-    }
+        float sumOfWeights = 0;
 
-    for(unsigned int i = 0; i < weights.size(); i++)
-    {
-        weights[i] /= sumOfWeights;
+        for(unsigned int i = 0; i < weights.size(); i++)
+        {
+            sumOfWeights += weights[i];
+        }
+
+        for(unsigned int i = 0; i < weights.size(); i++)
+        {
+            weights[i] /= sumOfWeights;
+        }
     }
 
     // Compute weighted sum
@@ -188,6 +191,7 @@ int main(int argc, char *argv[])
         TCLAP::ValueArg< std::string > outputFileNameArg("o", "output", "Output image filename (default: \"out.nii.gz\")", false, "out.nii.gz", "string", cmd);
 
         TCLAP::SwitchArg deformationFieldArg("f", "deformation_field", "Operate on deformation field images", cmd);
+        TCLAP::SwitchArg  noNormalizationArg("", "no_normalization", "Desactivate the normalization of the weights (default: false)", cmd);
     
         // Parse the args.
         cmd.parse(argc, argv);
@@ -198,6 +202,7 @@ int main(int argc, char *argv[])
         std::string                outputFileName = outputFileNameArg.getValue();
 
         bool deformationField = deformationFieldArg.getValue();
+        bool  noNormalization = noNormalizationArg.getValue();
  
 
         //
@@ -207,11 +212,11 @@ int main(int argc, char *argv[])
         // Compute weighted sum
         if(deformationField)
         {
-            ComputeAndWriteWeightedSum< DeformationField >(inputFileNames, weights, outputFileName);
+            ComputeAndWriteWeightedSum< DeformationField >(inputFileNames, weights, outputFileName, noNormalization);
         }
         else
         {
-            ComputeAndWriteWeightedSum< Image >(inputFileNames, weights, outputFileName);
+            ComputeAndWriteWeightedSum< Image >(inputFileNames, weights, outputFileName, noNormalization);
         }
     }
     catch(TCLAP::ArgException &e)

@@ -77,13 +77,13 @@ Any researcher reporting results using BTK should acknowledge this software by c
 
 Baby Brain Toolkit (BTK) needs the following packages\footnote{BTK has been tested under Debian 5.0 and MacOSX 10.6.8}:
 \begin{itemize}
- \item \href{http://www.cmake.org}{CMake}, \href{http://tclap.sourceforge.net}{Tclap}, \href{http://openmp.org}{OpenMP}, \href{http://www.vtk.org}{VTK}, \href{http://www.cs.umd.edu/\string~mount/ANN}{ANN} and Doxygen. These libraries can be installed using the following command line: 
+ \item \href{http://www.cmake.org}{CMake}, \href{http://tclap.sourceforge.net}{Tclap}, \href{http://openmp.org}{OpenMP}, \href{http://www.vtk.org}{VTK}, \href{http://www.cs.umd.edu/\string~mount/ANN}{ANN} and \href{http://www.doxygen.org}{Doxygen}. These libraries can be installed using the following command line:
  \begin{itemize}
  \item for debian-based distributions: \texttt{apt-get install cmake
 cmake-curses-gui libtclap-dev libgomp1 libvtk5-dev libann-dev doxygen}
  \item for MacOSX using macports\footnote{When configuring in cmake, please use /opt/local/include for TCLAP\_DIRECTORY}: \texttt{port install cmake tclap vtk5 libANN doxygen}
  \end{itemize}
- \item Install Git: this library can be installed using the following command line : 
+ \item \href{http://git-scm.com/}{Git}: this library can be installed using the following command line :
  \begin{itemize}
  \item for debian-based distribution: \texttt{apt-get install git-core}
  \item for MacOSX using macports: \texttt{port install git-core}
@@ -112,7 +112,12 @@ BUILD_DOCUMENTATION = OFF
 \end{verbatim}
 Then press \texttt{[c]} to configure and \texttt{[g]} to generate the make file.
 Finally, go to the build folder of ITK (ITK-build) and type \texttt{make} at the prompt to obtain the final build of ITK.
-
+ \item \href{http://www.python.org/}{Python}, \href{http://numpy.scipy.org/}{Numpy} (Optional)
+ These libraries can be installed using the following command line:
+ \begin{itemize}
+     \item for debian-based distributions: \texttt{apt-get install python python-numpy}
+     \item for MacOSX using *** TODO ***
+ \end{itemize}
 \end{itemize}
 
 \subsubsection{Download and compile the BTK sources}
