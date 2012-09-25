@@ -148,7 +148,7 @@ TARGET_LINK_LIBRARIES(btkApplyMaskToImage ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkWarpTransformationToImage btkWarpTransformationToImage.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
-    ${fbrain_SOURCE_DIR}/Code/Transformations/btkWarpTransformToImageFilter.h
+    ${fbrain_SOURCE_DIR}/Code/ImageFilters/btkWarpTransformToImageFilter.h
 )
 TARGET_LINK_LIBRARIES(btkWarpTransformationToImage ${ITK_LIBRARIES})
 
@@ -193,9 +193,6 @@ TARGET_LINK_LIBRARIES(btkExtractMaskUsingBoundingBox ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkTranslateImageOverTemplate btkTranslateImageOverTemplate.cxx)
 TARGET_LINK_LIBRARIES(btkTranslateImageOverTemplate ${ITK_LIBRARIES})
-
-ADD_EXECUTABLE(btkExtendMaskToImage btkExtendMaskToImage.cxx)
-TARGET_LINK_LIBRARIES(btkExtendMaskToImage ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkWeightedSumOfAffineTransforms btkWeightedSumOfAffineTransforms.cxx)
 TARGET_LINK_LIBRARIES(btkWeightedSumOfAffineTransforms btkToolsLibrary btkMathsLibrary ${ITK_LIBRARIES})
@@ -248,7 +245,6 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkBinarizeMask
                 btkExtractMaskUsingBoundingBox
                 btkTranslateImageOverTemplate
-                btkExtendMaskToImage
                 btkImageHistogram
                 btkRescaleIntensity
                 btkHistogramMatching
