@@ -16,6 +16,9 @@ OPTION(BUILD_TESTING "Build testing applications" OFF)
 INCLUDE(${CMAKE_ROOT}/Modules/Documentation.cmake)
 OPTION(BUILD_DOCUMENTATION "Build the doxygen documentation" OFF)
 
+# Python script support
+OPTION(ENABLE_SCRIPT "Enable the use of python script in BTK." OFF)
+
 #---- Dependancies ---------------------------------------------------------------------
 
 # Find ITK
