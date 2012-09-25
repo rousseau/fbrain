@@ -31,7 +31,6 @@ The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-B license and that you accept its terms.
 */
 
-
 #ifndef btkHistogram_H
 #define btkHistogram_H
 
@@ -41,19 +40,21 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "sstream"
 #include "fstream"
 #include "iostream"
+#include "vector"
+
+/* BTK */
+#include "btkMacro.h"
 
 namespace btk
 {
 class Histogram
 {
-  public:
+
+public:
   Histogram();
   ~Histogram();
   
-  void SetNumberOfBins(unsigned int numberOfBins);
-  void SetSampleQuantification(unsigned int sampleQuantification);
-  void SetLowerBound(float lowerBound);
-  void SetUpperBound(float upperBound);
+
   
   void Setup();
   
@@ -76,33 +77,51 @@ class Histogram
   void SaveNormalizedCumulativeDistributionFunction(const std::string & filename);
   void SaveInverseCumulativeDistributionFunction(const std::string & filename);
   void SaveNormalizedInverseCumulativeDistributionFunction(const std::string & filename);  
+
+  // GET / SET
+
+  btkGetMacro(NormalizedInverseCumulativeDistributionFunction,std::vector<float>);
+
+  btkGetMacro(NormalizedCumulativeDistributionFunction,std::vector<float>);
+
+  btkGetMacro(ACoefficient,float);
+
+  btkGetMacro(BCoefficient,float);
+
+  void SetNumberOfBins(unsigned int numberOfBins);
+
+  btkSetMacro(SampleQuantification,unsigned int);
+
+  btkSetMacro(LowerBound,float);
+
+  btkSetMacro(UpperBound,float);
+
+
+private:
     
-  std::vector<float> m_data;  
-  std::vector<float> m_cumulativeDistributionFunction; //not normalized
-  std::vector<float> m_inverseCumulativeDistributionFunction; //not normalized
+  std::vector<float> m_Data;
+  std::vector<float> m_CumulativeDistributionFunction; //not normalized
+  std::vector<float> m_InverseCumulativeDistributionFunction; //not normalized
   
-  std::vector<float> m_normalizedData;  
-  std::vector<float> m_normalizedCumulativeDistributionFunction;
-  std::vector<float> m_normalizedInverseCumulativeDistributionFunction; 
+  std::vector<float> m_NormalizedData;
+  std::vector<float> m_NormalizedCumulativeDistributionFunction;
+  std::vector<float> m_NormalizedInverseCumulativeDistributionFunction;
   
   
-  unsigned int m_numberOfBins;
-  unsigned int m_sampleQuantification;
-  float m_numberOfSamples;
-  float m_lowerBound;
-  float m_upperBound;
-  float m_aCoefficient;
-  float m_bCoefficient;
-  float m_widthOfBin;
+  unsigned int m_NumberOfBins;
+  unsigned int m_SampleQuantification;
+  float m_NumberOfSamples;
+  float m_LowerBound;
+  float m_UpperBound;
+  float m_ACoefficient;
+  float m_BCoefficient;
+  float m_WidthOfBin;
   
   
   
 };
 }
 
-#ifndef ITK_MANUAL_INSTANTIATION
-#include "btkHistogram.cxx"
-#endif
 
 
 #endif

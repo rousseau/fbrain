@@ -103,7 +103,7 @@ ADD_EXECUTABLE(btkRescaleIntensity btkRescaleIntensity.cxx)
 TARGET_LINK_LIBRARIES(btkRescaleIntensity btkToolsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkImageHistogram btkImageHistogram.cxx)
-TARGET_LINK_LIBRARIES(btkImageHistogram btkToolsLibrary ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkImageHistogram btkToolsLibrary btkMathsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkReconstructionComparisonTool btkReconstructionComparisonTool.cxx)
 TARGET_LINK_LIBRARIES(btkReconstructionComparisonTool ${ITK_LIBRARIES})
@@ -175,7 +175,7 @@ TARGET_LINK_LIBRARIES(btkComputeChamferDistance ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkMidwayHistogramEqualization btkMidwayHistogramEqualization.cxx
     ${fbrain_SOURCE_DIR}/Code/ImageFilters/btkMidwayImageEqualization.h
 )
-TARGET_LINK_LIBRARIES(btkMidwayHistogramEqualization ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkMidwayHistogramEqualization btkMathsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkHistogramMatching btkHistogramMatching.cxx)
 TARGET_LINK_LIBRARIES(btkHistogramMatching ${ITK_LIBRARIES})

@@ -56,6 +56,7 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "itkImageRegionIterator.h"
 
 #include "btkHistogram.h" 
+#include "btkMacro.h"
 
 #include "string"
 #include "iomanip"
@@ -69,22 +70,25 @@ namespace btk
 template <typename TPixelType>
 class MidwayImageEqualization
 {
- public:
+
+public:
   
   typedef typename itk::Image< TPixelType, 3> itkTImage;
   typedef typename itkTImage::Pointer itkTPointer;
   typedef typename itk::ImageDuplicator< itkTImage > itkTDuplicator;
   typedef typename itk::ImageRegionIterator< itkTImage > itkTIterator;
 
-  unsigned int m_numberOfBins;
-  unsigned int m_sampleQuantification;
+
   
   void SetNumberOfBins(unsigned int n);
   void SetSampleQuantification(unsigned int n);
-  
+  //TODO: "Do" is not a very explicit function name, change for Update and a OverRide of Update for the reference !
   void Do(std::vector<itkTPointer> inputImages, std::vector<itkTPointer> maskImages, std::vector<itkTPointer> outputImages);
   void DoWithReference(std::vector<itkTPointer> inputImages, std::vector<itkTPointer> refImages, std::vector<itkTPointer> maskImages, std::vector<itkTPointer> maskRefImages, std::vector<itkTPointer> outputImages);
-  
+
+private:
+  unsigned int m_numberOfBins;
+  unsigned int m_sampleQuantification;
 };
 
 }

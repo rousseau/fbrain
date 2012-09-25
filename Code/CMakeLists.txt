@@ -52,6 +52,7 @@ SET(MATHS_LIBRARY_HEADER
     ${MATHS_LIBRARY_SOURCE_DIR}/btkLegendrePolynomial.h
     ${MATHS_LIBRARY_SOURCE_DIR}/btkSphericalHarmonics.h
     ${MATHS_LIBRARY_SOURCE_DIR}/btkMatrixOperations.h
+    ${MATHS_LIBRARY_SOURCE_DIR}/btkHistogram.h
 )
 
 SET(MATHS_LIBRARY_SOURCES
@@ -60,6 +61,7 @@ SET(MATHS_LIBRARY_SOURCES
     ${MATHS_LIBRARY_SOURCE_DIR}/btkLegendrePolynomial.cxx
     ${MATHS_LIBRARY_SOURCE_DIR}/btkSphericalHarmonics.cxx
     ${MATHS_LIBRARY_SOURCE_DIR}/btkMatrixOperations.cxx
+    ${MATHS_LIBRARY_SOURCE_DIR}/btkHistogram.cxx
 )
 
 ADD_LIBRARY(btkMathsLibrary STATIC ${MATHS_LIBRARY_HEADER} ${MATHS_LIBRARY_SOURCES})

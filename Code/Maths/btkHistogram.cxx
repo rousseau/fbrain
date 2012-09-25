@@ -38,227 +38,222 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 namespace btk
 {    
-  Histogram::Histogram()
-  {
-    m_numberOfSamples = 0;
-    m_numberOfBins = 0;
-  }
-  
-  Histogram::~Histogram()
-  {
-  
-  }
-  
-  void Histogram::SetNumberOfBins(unsigned int numberOfBins)
-  {
-    m_data.resize(numberOfBins);
-    m_normalizedData.resize(numberOfBins);
-    m_numberOfBins = m_data.size();
-  }
-  
-  void Histogram::SetSampleQuantification(unsigned int sampleQuantification)
-  {
-    m_sampleQuantification = sampleQuantification;
-  }  
-    
-  void Histogram::SetLowerBound(float lowerBound)
-  {
-    m_lowerBound = lowerBound;
-  }
-  
-  void Histogram::SetUpperBound(float upperBound)
-  {
-    m_upperBound = upperBound;
-  }
-  
-  //This function computes the linear coefficients used to convert bin to values and m_widthOfBin
-  void Histogram::Setup()
-  {
-    m_aCoefficient = (m_numberOfBins-1) * 1.0 / (m_upperBound - m_lowerBound);
-    m_bCoefficient = - m_aCoefficient * m_lowerBound;
-    m_widthOfBin   = m_upperBound / (m_numberOfBins - 1) ;
-  }
-  
-  
-  void Histogram::AddSample(float sample)
-  {
+Histogram::Histogram()
+{
+    m_NumberOfSamples = 0;
+    m_NumberOfBins = 0;
+}
+
+Histogram::~Histogram()
+{
+
+}
+
+void Histogram::SetNumberOfBins(unsigned int numberOfBins)
+{
+  m_Data.resize(numberOfBins);
+  m_NormalizedData.resize(numberOfBins);
+  m_NumberOfBins = m_Data.size();
+}
+
+//This function computes the linear coefficients used to convert bin to values and m_widthOfBin
+void Histogram::Setup()
+{
+    m_ACoefficient = (m_NumberOfBins-1) * 1.0 / (m_UpperBound - m_LowerBound);
+    m_BCoefficient = - m_ACoefficient * m_LowerBound;
+    m_WidthOfBin   = m_UpperBound / (m_NumberOfBins - 1) ;
+}
+
+
+void Histogram::AddSample(float sample)
+{
     //No boundary checking !
-    unsigned int bin = (int) (sample * m_aCoefficient + m_bCoefficient);
-    m_data[bin]++;
-    m_numberOfSamples++;
-  }
-  
-  
-  void Histogram::RemoveSample(float sample)
-  {
+    unsigned int bin = (int) (sample * m_ACoefficient + m_BCoefficient);
+    m_Data[bin]++;
+    m_NumberOfSamples++;
+}
+
+
+void Histogram::RemoveSample(float sample)
+{
     //No boundary checking !
-    unsigned int bin = (int) (sample * m_aCoefficient + m_bCoefficient);
-    m_data[bin]--;
-    m_numberOfSamples--;    
-  }
-  
-  void Histogram::AddWeightedSample(float sample, float weight)
-  {
+    unsigned int bin = (int) (sample * m_ACoefficient + m_BCoefficient);
+    m_Data[bin]--;
+    m_NumberOfSamples--;
+}
+
+void Histogram::AddWeightedSample(float sample, float weight)
+{
     //No boundary checking !
-    unsigned int bin = (int) (sample * m_aCoefficient + m_bCoefficient);
-    m_data[bin] += weight;
-    m_numberOfSamples += weight;
-  }
-  
-  
-  void Histogram::RemoveWeightedSample(float sample, float weight)
-  {
+    unsigned int bin = (int) (sample * m_ACoefficient + m_BCoefficient);
+    m_Data[bin] += weight;
+    m_NumberOfSamples += weight;
+}
+
+
+void Histogram::RemoveWeightedSample(float sample, float weight)
+{
     //No boundary checking !
-    unsigned int bin = (int) (sample * m_aCoefficient + m_bCoefficient);
-    m_data[bin] -= weight;
-    m_numberOfSamples -= weight;    
-  }
-    
-  float Histogram::BinToValue(unsigned int bin)
-  {
-    return ( bin*(m_upperBound - m_lowerBound)/m_numberOfBins + m_lowerBound ) + m_widthOfBin / 2.0;
-  }
-  
-  
-  void Histogram::ComputeCumulativeDistributionFunction()
-  {
-    m_cumulativeDistributionFunction.resize(m_numberOfBins);
-    m_cumulativeDistributionFunction[0] = m_data[0];
-    for(unsigned int i=1; i<m_numberOfBins; i++)
-      m_cumulativeDistributionFunction[i] = m_data[i] + m_cumulativeDistributionFunction[i-1];
-  }
-  
-  
-  void Histogram::ComputeInverseCumulativeDistributionFunction()
-  {
-    m_inverseCumulativeDistributionFunction.resize(m_numberOfSamples);
-    m_inverseCumulativeDistributionFunction[0] = 0;
+    unsigned int bin = (int) (sample * m_ACoefficient + m_BCoefficient);
+    m_Data[bin] -= weight;
+    m_NumberOfSamples -= weight;
+}
+
+float Histogram::BinToValue(unsigned int bin)
+{
+    return ( bin*(m_UpperBound - m_LowerBound)/m_NumberOfBins + m_LowerBound ) + m_WidthOfBin / 2.0;
+}
+
+
+void Histogram::ComputeCumulativeDistributionFunction()
+{
+    m_CumulativeDistributionFunction.resize(m_NumberOfBins);
+    m_CumulativeDistributionFunction[0] = m_Data[0];
+    for(unsigned int i=1; i<m_NumberOfBins; i++)
+    {
+        m_CumulativeDistributionFunction[i] = m_Data[i] + m_CumulativeDistributionFunction[i-1];
+    }
+}
+
+
+void Histogram::ComputeInverseCumulativeDistributionFunction()
+{
+    m_InverseCumulativeDistributionFunction.resize(m_NumberOfSamples);
+    m_InverseCumulativeDistributionFunction[0] = 0;
     unsigned int currentBin = 0;
     
-    for(unsigned int i=1; i<m_numberOfSamples+1; i++)
+    for(unsigned int i=1; i<m_NumberOfSamples+1; i++)
     {
-      m_inverseCumulativeDistributionFunction[i] = currentBin;
-      for(unsigned int bin=currentBin; bin<m_numberOfBins; bin++)
-        if( m_cumulativeDistributionFunction[bin] >= i )
+        m_InverseCumulativeDistributionFunction[i] = currentBin;
+        for(unsigned int bin=currentBin; bin<m_NumberOfBins; bin++)
         {
-          currentBin = bin;
-          m_inverseCumulativeDistributionFunction[i] = bin;
-          break;          
-        }    
+            if( m_CumulativeDistributionFunction[bin] >= i )
+            {
+                currentBin = bin;
+                m_InverseCumulativeDistributionFunction[i] = bin;
+                break;
+            }
+        }
     }
 
-  }
-  
-  //NORMALIZED VERSIONS -----------------------------------------------------------
-  void Histogram::NormalizeData()
-  {
-    for(unsigned int i=0; i<m_numberOfBins; i++)
-      m_normalizedData[i] = m_data[i] / m_numberOfSamples * (m_sampleQuantification-1);
-  }
+}
 
-  void Histogram::ComputeNormalizedCumulativeDistributionFunction()
-  {
-    m_normalizedCumulativeDistributionFunction.resize(m_numberOfBins);
-    m_normalizedCumulativeDistributionFunction[0] = m_normalizedData[0];
-    for(unsigned int i=1; i<m_numberOfBins; i++)
-      m_normalizedCumulativeDistributionFunction[i] = m_normalizedData[i] + m_normalizedCumulativeDistributionFunction[i-1];
-  }
-  
-  
-  void Histogram::ComputeNormalizedInverseCumulativeDistributionFunction()
-  {
-    m_normalizedInverseCumulativeDistributionFunction.resize(m_sampleQuantification);
-    m_normalizedInverseCumulativeDistributionFunction[0] = 0;
+//NORMALIZED VERSIONS -----------------------------------------------------------
+void Histogram::NormalizeData()
+{
+    for(unsigned int i=0; i<m_NumberOfBins; i++)
+    {
+        m_NormalizedData[i] = m_Data[i] / m_NumberOfSamples * (m_SampleQuantification-1);
+    }
+}
+
+void Histogram::ComputeNormalizedCumulativeDistributionFunction()
+{
+    m_NormalizedCumulativeDistributionFunction.resize(m_NumberOfBins);
+    m_NormalizedCumulativeDistributionFunction[0] = m_NormalizedData[0];
+    for(unsigned int i=1; i<m_NumberOfBins; i++)
+    {
+        m_NormalizedCumulativeDistributionFunction[i] = m_NormalizedData[i] + m_NormalizedCumulativeDistributionFunction[i-1];
+    }
+}
+
+
+void Histogram::ComputeNormalizedInverseCumulativeDistributionFunction()
+{
+    m_NormalizedInverseCumulativeDistributionFunction.resize(m_SampleQuantification);
+    m_NormalizedInverseCumulativeDistributionFunction[0] = 0;
     unsigned int currentBin = 0;
     
-    for(unsigned int i=1; i<m_sampleQuantification; i++)
+    for(unsigned int i=1; i<m_SampleQuantification; i++)
     {
-      m_normalizedInverseCumulativeDistributionFunction[i] = currentBin;
-      for(unsigned int bin=currentBin; bin<m_numberOfBins; bin++)
-        if( m_normalizedCumulativeDistributionFunction[bin] >= i )
+        m_NormalizedInverseCumulativeDistributionFunction[i] = currentBin;
+        for(unsigned int bin=currentBin; bin<m_NumberOfBins; bin++)
         {
-          currentBin = bin;
-          m_normalizedInverseCumulativeDistributionFunction[i] = bin;
-          break;          
-        }    
+            if( m_NormalizedCumulativeDistributionFunction[bin] >= i )
+            {
+                currentBin = bin;
+                m_NormalizedInverseCumulativeDistributionFunction[i] = bin;
+                break;
+            }
+        }
     }
 
-  }
-  
-  //SAVE INTO TEXT FILES -----------------------------------------------------------
-    
-  void Histogram::SaveHistogram(const std::string & filename)
-  {  
+}
+
+//SAVE INTO TEXT FILES -----------------------------------------------------------
+
+void Histogram::SaveHistogram(const std::string & filename)
+{
     std::cout<<"Saving histogram in "<<filename<<std::endl;
     std::ofstream file;
     file.open(filename.c_str());
-    for(uint i=0; i<m_numberOfBins; i++)
+    for(unsigned int i=0; i<m_NumberOfBins; i++)
     {
-      float value = BinToValue(i);
-      file << value << " " << m_data[i] << std::endl;    
-    } 
-    file.close(); 
-  }
-  
-  void Histogram::SaveNormalizedHistogram(const std::string & filename)
-  {
+        float value = BinToValue(i);
+        file << value << " " << m_Data[i] << std::endl;
+    }
+    file.close();
+}
+
+void Histogram::SaveNormalizedHistogram(const std::string & filename)
+{
     std::cout<<"Saving normalized histogram in "<<filename<<std::endl;
     std::ofstream file;
     file.open(filename.c_str());
-    for(uint i=0; i<m_numberOfBins; i++)
+    for(unsigned int i=0; i<m_NumberOfBins; i++)
     {
-      float value = BinToValue(i);
-      file << value << " " << m_normalizedData[i] << std::endl;    
-    } 
-    file.close();     
-  }
+        float value = BinToValue(i);
+        file << value << " " << m_NormalizedData[i] << std::endl;
+    }
+    file.close();
+}
 
-  void Histogram::SaveCumulativeDistributionFunction(const std::string & filename)
-  {  
+void Histogram::SaveCumulativeDistributionFunction(const std::string & filename)
+{
     std::cout<<"Saving cdf in "<<filename<<std::endl;
     std::ofstream file;
     file.open(filename.c_str());
-    for(uint i=0; i<m_numberOfBins; i++)
+    for(unsigned int i=0; i<m_NumberOfBins; i++)
     {
-      float value = BinToValue(i);
-      file << value << " " << m_cumulativeDistributionFunction[i] << std::endl;    
-    } 
-    file.close(); 
-  }
-  void Histogram::SaveNormalizedCumulativeDistributionFunction(const std::string & filename)
-  {  
+        float value = BinToValue(i);
+        file << value << " " << m_CumulativeDistributionFunction[i] << std::endl;
+    }
+    file.close();
+}
+void Histogram::SaveNormalizedCumulativeDistributionFunction(const std::string & filename)
+{
     std::cout<<"Saving normalized cdf in "<<filename<<std::endl;
     std::ofstream file;
     file.open(filename.c_str());
-    for(uint i=0; i<m_numberOfBins; i++)
+    for(unsigned int i=0; i<m_NumberOfBins; i++)
     {
-      float value = BinToValue(i);
-      file << value << " " << m_normalizedCumulativeDistributionFunction[i] << std::endl;    
-    } 
-    file.close(); 
-  }  
-  void Histogram::SaveInverseCumulativeDistributionFunction(const std::string & filename)
-  {  
+        float value = BinToValue(i);
+        file << value << " " << m_NormalizedCumulativeDistributionFunction[i] << std::endl;
+    }
+    file.close();
+}
+void Histogram::SaveInverseCumulativeDistributionFunction(const std::string & filename)
+{
     std::cout<<"Saving icdf in "<<filename<<std::endl;
     std::ofstream file;
     file.open(filename.c_str());
-    for(uint i=0; i<m_numberOfSamples; i++)
+    for(unsigned int i=0; i<m_NumberOfSamples; i++)
     {
-      file << i << " " << m_inverseCumulativeDistributionFunction[i] << std::endl;    
-    } 
-    file.close(); 
-  }  
-  void Histogram::SaveNormalizedInverseCumulativeDistributionFunction(const std::string & filename)
-  {  
+        file << i << " " << m_InverseCumulativeDistributionFunction[i] << std::endl;
+    }
+    file.close();
+}
+void Histogram::SaveNormalizedInverseCumulativeDistributionFunction(const std::string & filename)
+{
     std::cout<<"Saving normalized icdf in "<<filename<<std::endl;
     std::ofstream file;
     file.open(filename.c_str());
-    for(uint i=0; i<m_sampleQuantification; i++)
+    for(unsigned int i=0; i<m_SampleQuantification; i++)
     {
-      file << i << " " << m_normalizedInverseCumulativeDistributionFunction[i] << std::endl;    
-    } 
-    file.close(); 
-  }  
+        file << i << " " << m_NormalizedInverseCumulativeDistributionFunction[i] << std::endl;
+    }
+    file.close();
+}
 
 
 }

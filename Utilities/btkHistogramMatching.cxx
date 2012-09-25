@@ -39,7 +39,7 @@
 
 /* Itk includes */
 #include "itkImage.h"
-#include <itkHistogramMatchingImageFilter.h>
+#include "itkHistogramMatchingImageFilter.h"
 
 /*Btk includes*/
 #include "btkImageHelper.h"
