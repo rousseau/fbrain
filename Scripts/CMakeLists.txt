@@ -9,6 +9,8 @@ IF(ENABLE_SCRIPT)
         ${Scripts_SOURCE_DIR}/btkPrepareAtlasData.py
         ${Scripts_SOURCE_DIR}/btkCreateTemplate.py
         ${Scripts_SOURCE_DIR}/btkCreateLongitudinalAtlas.py
+        ${Scripts_SOURCE_DIR}/btkMaskExtractionProcess.py
+        ${Scripts_SOURCE_DIR}/btkMaskExtraction.py
     DESTINATION bin
     PERMISSIONS OWNER_WRITE OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 ENDIF(ENABLE_SCRIPT)
