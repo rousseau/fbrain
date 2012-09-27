@@ -173,7 +173,7 @@ int main(int argc, char * argv[])
         // Write Transform file
         //TODO: If We Set a itk::AffineTransform<double, 3> with a identity and we set translation to the SetOffset function we should have the same result
         translationFile.open(translationFileName.c_str(), std::ios::out);
-        translationFile <<"Transform : AffineTransform_double_3_3" << std::endl;
+        translationFile <<"Transform : MatrixOffsetTransformBase_double_3_3" << std::endl;
         translationFile <<"Parameters: 1 0 0 0 1 0 0 0 1 "<<translation[0]<<" " << translation[1]<<" "<<translation[2]<< std::endl;
         translationFile <<"FixedParameters: 0 0 0" << std::endl;
         translationFile.close();
