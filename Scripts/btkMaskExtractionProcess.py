@@ -55,11 +55,15 @@ format = '.nii.gz'
 #############################################################################
 # Paths
 #
-#image directory
+######### Image directory :
+#
 #images_directory = '/your/image/directory/'
 #template_directory ='/your/template/directory'
-images_directory = '/home/miv/schweitzer/Donnees_a_traiter/'
-template_directory ='/home/miv/schweitzer/Donnees_a_traiter/Templates2/'
+images_directory = ''
+template_directory = ''
+#
+##############################################################################
+#
 # image directory should respect this hierrarchy
 #                           |
 #                     [PatientName]
