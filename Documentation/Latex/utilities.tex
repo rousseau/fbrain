@@ -42,10 +42,6 @@
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkDistanceBetweenBinaryImages}
 \item[btkDistanceBetweenBinaryImages]: Compute Hausdorff and Mean Contour Distances between two binary images (ITK Filters: HausdorffDistanceImageFilter and ContourMeanDistanceImageFilter).
-
-%------------------------------------------------------------------------------
-\addcontentsline{toc}{subsection}{btkExtendMaskToImage}
-\item[btkExtendMaskToImage]: ?
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkExtractMaskUsingBoundingBox}
 \item[btkExtractMaskUsingBoundingBox]: Extract Masks using the intersection of the bounding boxes of images.
@@ -208,14 +204,12 @@ identify the left and right sides of the brain in the 2D views.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkSimulateStandardViewFromIsotropicImage}
 \item[btkSimulateStandardViewFromIsotropicImage]: Simulates standard acquisitions (axial, coronal, and sagital) from an isovoxel by using an observational model. This is useful for example to assess the performance of reconstruction algorithms according to the subsampling factor (the reconstructed image from the simulated images is then compared to the isovoxel image). 
-
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkTranslateImageOverTemplate}
-\item[btkTranslateImageOverTemplate]: ?
-
+\item[btkTranslateImageOverTemplate]: Usefull for the extraction mask pipeline, it will translate the center of image (or barycenter of masked image) on the center of the template image.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkWarpTransformationToImage}
-\item[btkWarpTransformationToImage]: ?
+\item[btkWarpTransformationToImage]: Apply a itk or btk transformation on a image.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkWeightedSum}
 \item[btkWeightedMean]: Compute a weighted mean of 3D images (no check for normalized weights!).

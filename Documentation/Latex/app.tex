@@ -309,3 +309,20 @@ because the search space will not be explored enough.
 
         Usage: \texttt{btkCreateLongitudinalAtlas.py}
     \end{description}
+
+\subsection{Mask Extraction}
+\label{subsec:Mask}
+
+Suppose you want to extract automicaly masks of your images. First of all you should have some Atlas of foetal brain for different ages (in week).
+In Addition you should know age of every image you want to process.
+The pipeline will registrate the corresponding age template with the current image, finaly you will have a new template succefully registrate on you image and you can use it as a mask.
+The mask extraction can be achieved by calling directly the first following python script.
+    \begin{description}
+        \item[btkMaskExtraction.py] This script will contain all your images, you must edit it ! It contain examples. This script is the only one you should execute, it will automaticaly search and execute the second one.
+
+        Usage: \texttt{btkMaskExtraction.py}
+
+        \item[btkMaskExtractionProcess.py] This script will process the pipeline, you must edit the images\_directory and template\_directory. Note that your image directory should respect a hierarchy (written in the script).
+
+        Usage: Should be execute by btkMaskExtraction.py or for advance user you can call like this : \texttt{btkMaskExtractionProcess.py subject exam age image01 image02 ...}
+    \end{description}
