@@ -19,6 +19,7 @@
 *.dvi
 *.ps
 *.blg
+*.out
 
 # Packages #
 ############
