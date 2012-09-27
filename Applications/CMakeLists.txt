@@ -246,6 +246,7 @@ INSTALL(TARGETS
     btkODFParticleFilterTractography
     btkODFStreamlineTractography
     btkTensorParticleFilterTractography
+    btkTractography
 DESTINATION bin)
 
 # ---- Segmentation ---------------------------------------------------------------------
