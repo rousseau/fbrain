@@ -31,6 +31,7 @@ SET(TOOLS_LIBRARY_HEADER
     ${TOOLS_LIBRARY_SOURCE_DIR}/btkDiffusionSequenceFileHelper.h
     ${TOOLS_LIBRARY_SOURCE_DIR}/btkDiffusionSequenceHelper.h
     ${TOOLS_LIBRARY_SOURCE_DIR}/btkCommandIterationUpdate.h
+    ${TOOLS_LIBRARY_SOURCE_DIR}/btkIOImageHelper.h
 )
 
 SET(TOOLS_LIBRARY_SOURCES
@@ -39,6 +40,7 @@ SET(TOOLS_LIBRARY_SOURCES
     ${TOOLS_LIBRARY_SOURCE_DIR}/btkLandmarksFileReader.cxx
     ${TOOLS_LIBRARY_SOURCE_DIR}/btkDiffusionSequenceFileHelper.cxx
     ${TOOLS_LIBRARY_SOURCE_DIR}/btkDiffusionSequenceHelper.cxx
+    ${TOOLS_LIBRARY_SOURCE_DIR}/btkIOImageHelper.cxx
 )
 
 ADD_LIBRARY(btkToolsLibrary STATIC ${TOOLS_LIBRARY_HEADER} ${TOOLS_LIBRARY_SOURCES})
