@@ -41,22 +41,22 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "itkImageFileWriter.h"
 #include "itkImage.h"
 #include "itkCropImageFilter.h"
+#include "itkImageIOBase.h"
 
 /* Btk includes */
 #include "btkImageHelper.h"
+#include "btkIOImageHelper.h"
 
 
-
-template<unsigned int imageDimension>
+template<unsigned int imageDimension, typename PixelType>
 void CropImageUsingMask(std::string input_file, std::string output_file, std::string mask_file)
 {
     //ITK declaration
-    typedef short PixelType;
-    typedef itk::Image< PixelType, imageDimension > ImageType;
+    typedef itk::Image<PixelType, imageDimension> ImageType;
     typedef itk::ImageFileReader< ImageType >  ReaderType;
     typedef itk::ImageFileWriter< ImageType >  WriterType;
 
-    typedef itk::Image< PixelType, 3 >         MaskType;
+    typedef itk::Image< PixelType, imageDimension >         MaskType;
     typedef itk::ImageFileReader< MaskType >  MaskReaderType;
 
 
@@ -65,7 +65,7 @@ void CropImageUsingMask(std::string input_file, std::string output_file, std::st
 
 
     //Reading the mask
-    MaskType::Pointer mask = btk::ImageHelper<MaskType>::ReadImage(mask_file);
+    typename MaskType::Pointer mask = btk::ImageHelper<MaskType>::ReadImage(mask_file);
 
 
     typedef itk::CropImageFilter< ImageType, ImageType >  CropImageFilterType;
@@ -146,19 +146,153 @@ int main(int argc, char** argv)
         std::string output_file      = outputImageArg.getValue();
         std::string mask_file        = inputMaskArg.getValue();
         unsigned int dim             = (unsigned int) dimArg.getValue();
+        btk::IOImageHelper::ScalarType type;
 
-        switch (dim)
+        //Looking for the type of pixels
+        type = btk::IOImageHelper::GetComponentTypeOfImageFile(input_file);
+
+        /*  NOTE : If we have a float image in input (a probability map for example) we don't want to save it into short (loose of data)
+        that's why we look the pixel type in input.*/
+
+
+        // switch for the type of pixels, and testing the dimension
+        // this may be a little bit complicated but it's the only way to do, thanks to the itk template !!!!
+        switch(type)
         {
-        case 3:
-            CropImageUsingMask<3>(input_file, output_file, mask_file);
-            break;
-        case 4:
-            CropImageUsingMask<4>(input_file, output_file, mask_file);
-            break;
-        default:
-            std::cerr << "unsupported dimension" << std::endl;
-            exit( EXIT_FAILURE );
+            case btk::IOImageHelper::Float:
+                if(dim == 3)
+                {
+                    CropImageUsingMask<3, float>(input_file, output_file, mask_file);
+                }
+                else if(dim == 4)
+                {
+                    CropImageUsingMask<4, float>(input_file, output_file, mask_file);
+                }
+                else
+                {
+                    std::cerr << "unsupported dimension" << std::endl;
+                    exit( EXIT_FAILURE );
+                }
+                break;
+
+            case btk::IOImageHelper::Short:
+                if(dim == 3)
+                {
+                    CropImageUsingMask<3, short>(input_file, output_file, mask_file);
+                }
+                else if(dim == 4)
+                {
+                    CropImageUsingMask<4, short>(input_file, output_file, mask_file);
+                }
+                else
+                {
+                    std::cerr << "unsupported dimension" << std::endl;
+                    exit( EXIT_FAILURE );
+                }
+                break;
+
+            case btk::IOImageHelper::UShort:
+                if(dim == 3)
+                {
+                    CropImageUsingMask<3, unsigned short>(input_file, output_file, mask_file);
+                }
+                else if(dim == 4)
+                {
+                    CropImageUsingMask<4, unsigned short>(input_file, output_file, mask_file);
+                }
+                else
+                {
+                    std::cerr << "unsupported dimension" << std::endl;
+                    exit( EXIT_FAILURE );
+                }
+                break;
+
+            case btk::IOImageHelper::Int:
+                if(dim == 3)
+                {
+                    CropImageUsingMask<3, int>(input_file, output_file, mask_file);
+                }
+                else if(dim == 4)
+                {
+                    CropImageUsingMask<4, int>(input_file, output_file, mask_file);
+                }
+                else
+                {
+                    std::cerr << "unsupported dimension" << std::endl;
+                    exit( EXIT_FAILURE );
+                }
+                break;
+
+            case btk::IOImageHelper::UInt:
+                if(dim == 3)
+                {
+                    CropImageUsingMask<3, unsigned int>(input_file, output_file, mask_file);
+                }
+                else if(dim == 4)
+                {
+                    CropImageUsingMask<4, unsigned int>(input_file, output_file, mask_file);
+                }
+                else
+                {
+                    std::cerr << "unsupported dimension" << std::endl;
+                    exit( EXIT_FAILURE );
+                }
+                break;
+
+            case btk::IOImageHelper::Double:
+                if(dim == 3)
+                {
+                    CropImageUsingMask<3, double>(input_file, output_file, mask_file);
+                }
+                else if(dim == 4)
+                {
+                    CropImageUsingMask<4, double>(input_file, output_file, mask_file);
+                }
+                else
+                {
+                    std::cerr << "unsupported dimension" << std::endl;
+                    exit( EXIT_FAILURE );
+                }
+                break;
+
+            case btk::IOImageHelper::Char:
+                if(dim == 3)
+                {
+                    CropImageUsingMask<3, char>(input_file, output_file, mask_file);
+                }
+                else if(dim == 4)
+                {
+                    CropImageUsingMask<4, char>(input_file, output_file, mask_file);
+                }
+                else
+                {
+                    std::cerr << "unsupported dimension" << std::endl;
+                    exit( EXIT_FAILURE );
+                }
+                break;
+
+            case btk::IOImageHelper::UChar:
+                if(dim == 3)
+                {
+                    CropImageUsingMask<3, unsigned char>(input_file, output_file, mask_file);
+                }
+                else if(dim == 4)
+                {
+                    CropImageUsingMask<4, unsigned char>(input_file, output_file, mask_file);
+                }
+                else
+                {
+                    std::cerr << "unsupported dimension" << std::endl;
+                    exit( EXIT_FAILURE );
+                }
+                break;
+
+            default:
+                std::cerr << "unsupported pixel type !" << std::endl;
+                exit( EXIT_FAILURE );
+                break;
         }
+
 
         return EXIT_SUCCESS;
 
