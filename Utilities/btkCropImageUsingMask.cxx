@@ -67,6 +67,12 @@ void CropImageUsingMask(std::string input_file, std::string output_file, std::st
     //Reading the mask
     typename MaskType::Pointer mask = btk::ImageHelper<MaskType>::ReadImage(mask_file);
 
+    //looking if mask and input image are in the same physical space, if not throw an exception
+    if(!btk::ImageHelper<ImageType>::IsInSamePhysicalSpace(image, mask))
+    {
+        btkException("Mask and Image are not in the same physical space !");
+    }
+
 
     typedef itk::CropImageFilter< ImageType, ImageType >  CropImageFilterType;
     typename CropImageFilterType::Pointer cropFilter = CropImageFilterType::New();
@@ -150,6 +156,8 @@ int main(int argc, char** argv)
 
         //Looking for the type of pixels
         type = btk::IOImageHelper::GetComponentTypeOfImageFile(input_file);
+
+
 
         /*  NOTE : If we have a float image in input (a probability map for example) we don't want to save it into short (loose of data)
         that's why we look the pixel type in input.*/
@@ -301,6 +309,10 @@ int main(int argc, char** argv)
     catch (TCLAP::ArgException &e)  // catch any exceptions
     {
         std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;
+    }
+    catch (std::string &e)  // catch any exceptions
+    {
+        std::cerr << "error: " << e <<std::endl;
     }
 }
 
