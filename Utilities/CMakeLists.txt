@@ -87,7 +87,9 @@ TARGET_LINK_LIBRARIES(btkImageSimilarity ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkPSNR btkPSNR.cxx)
 TARGET_LINK_LIBRARIES(btkPSNR ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkWeightedSumOfImages btkWeightedSumOfImages.cxx)
+ADD_EXECUTABLE(btkWeightedSumOfImages btkWeightedSumOfImages.cxx
+    ${fbrain_SOURCE_DIR}/Code/ImageFilters/btkResampleImagesToBiggestImageFilter.h
+    ${fbrain_SOURCE_DIR}/Code/ImageFilters/btkWeightedSumOfImagesFilter.h)
 TARGET_LINK_LIBRARIES(btkWeightedSumOfImages ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkSequenceNormalization btkSequenceNormalization.cxx
