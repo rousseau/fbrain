@@ -107,7 +107,7 @@ namespace btk
              * @param defaultValue Default value of pixel in new image.
              * @return New image in the same physical space.
              */
-            static typename TImageOutput::Pointer CreateNewImageFromPhysicalSpaceOf(typename TImageInput::Pointer image, typename TImageOutput::PixelType defaultValue=itk::NumericTraits< typename TImageOutput::PixelType >::ZeroValue());
+            static typename TImageOutput::Pointer CreateNewImageFromPhysicalSpaceOf(typename TImageInput::ConstPointer image, typename TImageOutput::PixelType defaultValue=itk::NumericTraits< typename TImageOutput::PixelType >::ZeroValue());
 
             /**
              * @brief Create new images in the same physical space of current images.
@@ -130,7 +130,7 @@ namespace btk
              * @param images Images to compare.
              * @return True if the two images are in the same physical space, false otherwise.
              */
-            static bool IsInSamePhysicalSpace(std::vector< typename TImageInput::Pointer > &images);
+            static bool IsInSamePhysicalSpace(const std::vector< typename TImageInput::Pointer > &images);
             
              /**
              * @brief Read an image if the file exist, otherwise create an image with a constant pixel value.
@@ -140,6 +140,13 @@ namespace btk
              * @return A pointer to the image that have been red.
              */
             static typename TImageOutput::Pointer ReadOrCreateImage(const std::string &fileName, typename TImageInput::Pointer image, typename TImageOutput::PixelType defaultValue=itk::NumericTraits< typename TImageOutput::PixelType >::ZeroValue());
+
+            /**
+             * @brief Make a deep copy of an image.
+             * @param image Constant pointer on the image to copy.
+             * @return A deep copy of the image parameter.
+             */
+            static typename TImageOutput::Pointer DeepCopy(typename TImageInput::ConstPointer image);
     };
 
 } // namespace btk

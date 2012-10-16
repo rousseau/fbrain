@@ -120,7 +120,7 @@ std::vector< typename TImageInput::Pointer > &ImageHelper< TImageInput, TImageOu
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
-typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::CreateNewImageFromPhysicalSpaceOf(typename TImageInput::Pointer image, typename TImageOutput::PixelType defaultValue)
+typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::CreateNewImageFromPhysicalSpaceOf(typename TImageInput::ConstPointer image, typename TImageOutput::PixelType defaultValue)
 {
     typename TImageOutput::Pointer newImage = TImageOutput::New();
     newImage->SetRegions(image->GetLargestPossibleRegion());
@@ -169,7 +169,7 @@ bool ImageHelper< TImageInput, TImageOutput >::IsInSamePhysicalSpace(typename TI
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
-bool ImageHelper< TImageInput, TImageOutput >::IsInSamePhysicalSpace(std::vector< typename TImageInput::Pointer > &images)
+bool ImageHelper< TImageInput, TImageOutput >::IsInSamePhysicalSpace(const std::vector< typename TImageInput::Pointer > &images)
 {
     bool isInSameSpace = true;
 
@@ -216,6 +216,28 @@ typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::ReadOrC
     }
 
     return newImage;
+}
+
+//----------------------------------------------------------------------------------------
+
+template < class TImageInput, class TImageOutput >
+typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::DeepCopy(typename TImageInput::ConstPointer image)
+{
+    typename TImageOutput::Pointer output = TImageOutput::New();
+    output->SetRegions(image->GetLargestPossibleRegion());
+    output->SetSpacing(image->GetSpacing());
+    output->SetDirection(image->GetDirection());
+    output->Allocate();
+
+    itk::ImageRegionConstIterator< TImageInput > inputIt(image, image->GetLargestPossibleRegion());
+    itk::ImageRegionIterator< TImageOutput >    outputIt(output, output->GetLargestPossibleRegion());
+
+    for(inputIt.GoToBegin(), outputIt.GoToBegin(); !inputIt.IsAtEnd() && !outputIt.IsAtEnd(); ++inputIt, ++outputIt)
+    {
+        outputIt.Set(inputIt.Get());
+    }
+
+    return output;
 }
 
 } // namespace btk
