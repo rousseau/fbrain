@@ -70,7 +70,12 @@ void CropImageUsingMask(std::string input_file, std::string output_file, std::st
     //looking if mask and input image are in the same physical space, if not throw an exception
     if(!btk::ImageHelper<ImageType>::IsInSamePhysicalSpace(image, mask))
     {
-        btkException("Mask and Image are not in the same physical space !");
+        //btkException("Mask and Image are not in the same physical space !");
+        std::cout<<"*********************WARNING*****************************\n";
+        std::cout<<"***Mask and Image are not in the same physical space !***\n";
+	std::cout<<"***Something nasty may happen!                        ***\n";
+        std::cout<<"*********************************************************\n";
+        
     }
 
 
@@ -115,6 +120,8 @@ void CropImageUsingMask(std::string input_file, std::string output_file, std::st
         upSize[3]  = imageSize[3]-1;
     }
 
+    
+
     std::cout<<"Bounding box : ("<<downSize[0]<<","<<downSize[1]<<","<<downSize[2]<<") (";
     std::cout<<upSize[0]<<","<<upSize[1]<<","<<upSize[2]<<")"<<std::endl;
 
@@ -137,7 +144,7 @@ int main(int argc, char** argv)
 {
     try {
 
-        TCLAP::CmdLine cmd("btkCropImageUsingMask: Crop an image (3D or 4D) using a 3D mask (non-zero values)", ' ', "1.0", true);
+        TCLAP::CmdLine cmd("btkCropImageUsingMask: Crop an image (3D or 4D) using a 3D mask (non-zero values). Input image and mask image must have the same pixel type.", ' ', "1.0", true);
 
         TCLAP::ValueArg<std::string> inputImageArg("i","image_file","input image file (short)",true,"","string", cmd);
         TCLAP::ValueArg<std::string> outputImageArg("o","output_file","output image file (short)",true,"","string", cmd);
@@ -157,7 +164,9 @@ int main(int argc, char** argv)
         //Looking for the type of pixels
         type = btk::IOImageHelper::GetComponentTypeOfImageFile(input_file);
 
-
+        std::cout<<"Type of input image : "<<btk::IOImageHelper::GetComponentTypeOfImageFile(input_file)<<std::endl;
+        std::cout<<"Type of input mask  : "<<btk::IOImageHelper::GetComponentTypeOfImageFile(mask_file)<<std::endl;
+        
 
         /*  NOTE : If we have a float image in input (a probability map for example) we don't want to save it into short (loose of data)
         that's why we look the pixel type in input.*/
