@@ -42,7 +42,7 @@
 // ITK includes
 #include "itkSmartPointer.h"
 #include "itkImageToImageFilter.h"
-#include "itkImageMaskSpatialObject.h"
+#include "itkInterpolateImageFunction.h"
 
 
 namespace btk
@@ -56,8 +56,12 @@ class ResampleImagesToBiggestImageFilter : public itk::ImageToImageFilter< TImag
         typedef itk::ImageToImageFilter< TImage,TImage > Superclass;
         typedef itk::SmartPointer< Self >                Pointer;
 
+        typedef itk::InterpolateImageFunction< TImage > Interpolator;
+
         itkNewMacro(Self);
         itkTypeMacro(ResampleImagesToBiggestImageFilter,ImageToImageFilter);
+
+        btkSetMacro(Interpolator, typename Interpolator::Pointer);
 
 
         /**
@@ -94,6 +98,11 @@ class ResampleImagesToBiggestImageFilter : public itk::ImageToImageFilter< TImag
          * @brief Structure for storing images.
          */
         std::vector< typename TImage::Pointer > m_Images; // Using this structure is needed since ITK may produce output images with a bad physical header (I do not know why...).
+
+        /**
+         * @brief Interpolator to use when resampling images.
+         */
+        typename Interpolator::Pointer m_Interpolator;
 };
 
 } // namespace btk

@@ -93,6 +93,7 @@ void ResampleImagesToBiggestImageFilter< TImage >::GenerateData()
     filter->SetReferenceImage(m_Images[j]);
     filter->UseReferenceImageOn();
     filter->SetSize(m_Images[j]->GetLargestPossibleRegion().GetSize());
+    filter->SetInterpolator(m_Interpolator);
 
     // Resample all input images and set them as output.
     for(int i = 0; i < m_Images.size(); i++)
