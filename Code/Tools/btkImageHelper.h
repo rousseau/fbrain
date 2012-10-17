@@ -123,14 +123,14 @@ namespace btk
              * @param secondImage Second Image.
              * @return True if the two images are in the same physical space, false otherwise.
              */
-            static bool IsInSamePhysicalSpace(typename TImageInput::Pointer firstImage, typename TImageInput::Pointer secondImage);
+            static bool IsInSamePhysicalSpace(typename TImageInput::Pointer firstImage, typename TImageInput::Pointer secondImage, double epsilon = 10e-7);
 
             /**
              * @brief Test if images are in the same physical space.
              * @param images Images to compare.
              * @return True if the two images are in the same physical space, false otherwise.
              */
-            static bool IsInSamePhysicalSpace(std::vector< typename TImageInput::Pointer > &images);
+            static bool IsInSamePhysicalSpace(std::vector< typename TImageInput::Pointer > &images, double epsilon = 10e-7);
             
              /**
              * @brief Read an image if the file exist, otherwise create an image with a constant pixel value.
