@@ -66,7 +66,7 @@ int main(int argc, char * argv[] )
      std::string outputName = outputArg.getValue();
      float threshold = threshArg.getValue();
 
-     FloatImage::Pointer floatImage = btk::ImageHelper<FloatImage>::ReadImage(inputName);
+     FloatImage::ConstPointer floatImage = btk::ImageHelper<FloatImage>::ReadConstImage(inputName);
      ShortImage::Pointer shortImage = ShortImage::New();
 
      shortImage = btk::ImageHelper<FloatImage, ShortImage>::CreateNewImageFromPhysicalSpaceOf(floatImage);

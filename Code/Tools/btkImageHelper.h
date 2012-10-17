@@ -95,6 +95,13 @@ namespace btk
             static typename TImageInput::Pointer ReadImage(const std::string &fileName);
 
             /**
+             * @brief Read an image and return an constant pointer.
+             * @param fileName File name of the image to read.
+             * @return A constant pointer to the image that have been red.
+             */
+            static typename TImageInput::ConstPointer ReadConstImage(const std::string &fileName);
+
+            /**
              * @brief Read a vector of images.
              * @param fileNames File names of the images to read.
              * @return A reference to a vector containing the images that have been red.

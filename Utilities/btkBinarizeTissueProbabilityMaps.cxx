@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
         std::cout << "Processing images..." << std::endl;
 
         // Normalize images
-        ProbabilityMap::Pointer normalizationImage = btk::ImageHelper< ProbabilityMap >::CreateNewImageFromPhysicalSpaceOf(inputs[0]);
+        ProbabilityMap::Pointer normalizationImage = btk::ImageHelper< ProbabilityMap >::CreateNewImageFromPhysicalSpaceOf(inputs[0].GetPointer());
 
         for(unsigned int i = 0; i < inputs.size(); i++)
         {
@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
 
 
         // Create a new tissue map
-        TissueSegmentation::Pointer outputTissues = btk::ImageHelper< ProbabilityMap,TissueSegmentation >::CreateNewImageFromPhysicalSpaceOf(inputs[0]);
+        TissueSegmentation::Pointer outputTissues = btk::ImageHelper< ProbabilityMap,TissueSegmentation >::CreateNewImageFromPhysicalSpaceOf(inputs[0].GetPointer());
 
 
         // Compute new tissue map by majority voting

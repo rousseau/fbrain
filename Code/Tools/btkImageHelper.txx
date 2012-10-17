@@ -103,6 +103,14 @@ typename TImageInput::Pointer ImageHelper< TImageInput, TImageOutput >::ReadImag
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
+typename TImageInput::ConstPointer ImageHelper< TImageInput, TImageOutput >::ReadConstImage(const std::string &fileName)
+{
+    return ReadImage(fileName).GetPointer();
+}
+
+//----------------------------------------------------------------------------------------
+
+template < class TImageInput, class TImageOutput >
 std::vector< typename TImageInput::Pointer > &ImageHelper< TImageInput, TImageOutput >::ReadImage(std::vector<std::string> &fileNames)
 {
     std::vector< typename TImageInput::Pointer > *ptrImages = new std::vector< typename TImageInput::Pointer >;
@@ -143,7 +151,7 @@ std::vector< typename TImageOutput::Pointer > &ImageHelper< TImageInput, TImageO
 
     for(typename std::vector< typename TImageInput::Pointer >::iterator it = images.begin(); it != images.end(); it++)
     {
-        newImages.push_back(CreateNewImageFromPhysicalSpaceOf(*it, defaultValue));
+        newImages.push_back(CreateNewImageFromPhysicalSpaceOf((*it).GetPointer(), defaultValue));
     }
 
     return newImages;
@@ -212,7 +220,7 @@ typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::ReadOrC
     else
     {
         std::cout << "Creating new image with pixel value set to " << defaultValue << std::endl;
-        newImage = CreateNewImageFromPhysicalSpaceOf(image, defaultValue);
+        newImage = CreateNewImageFromPhysicalSpaceOf(image.GetPointer(), defaultValue);
     }
 
     return newImage;

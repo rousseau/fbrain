@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
   //Reading the input file
   ImageType::Pointer inputImage = btk::ImageHelper<ImageType>::ReadImage(input_file);
   ImageType::Pointer maskImage  = btk::ImageHelper<ImageType>::ReadOrCreateImage(mask_file, inputImage, 1);
-  ImageType::Pointer outputImage= btk::ImageHelper<ImageType>::CreateNewImageFromPhysicalSpaceOf(inputImage);
+  ImageType::Pointer outputImage= btk::ImageHelper<ImageType>::CreateNewImageFromPhysicalSpaceOf(inputImage.GetPointer());
   outputImage->FillBuffer(0.0);
   
   
