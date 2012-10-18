@@ -43,6 +43,7 @@
 #include "itkSmartPointer.h"
 #include "itkImageToImageFilter.h"
 #include "itkInterpolateImageFunction.h"
+#include "itkResampleImageFilter.h"
 
 
 namespace btk
@@ -56,12 +57,13 @@ class ResampleImagesToBiggestImageFilter : public itk::ImageToImageFilter< TImag
         typedef itk::ImageToImageFilter< TImage,TImage > Superclass;
         typedef itk::SmartPointer< Self >                Pointer;
 
-        typedef itk::InterpolateImageFunction< TImage > Interpolator;
+        typedef itk::ResampleImageFilter< TImage,TImage > ResampleImageFilter;
+        typedef itk::InterpolateImageFunction< TImage >   Interpolator;
 
         itkNewMacro(Self);
         itkTypeMacro(ResampleImagesToBiggestImageFilter,ImageToImageFilter);
 
-        btkSetMacro(Interpolator, typename Interpolator::Pointer);
+        btkSetMacro(Interpolator, Interpolator *);
 
 
         /**

@@ -39,7 +39,6 @@
 // ITK includes
 #include "itkImageRegionIterator.h"
 #include "itkImageRegionConstIterator.h"
-#include "itkResampleImageFilter.h"
 
 // BTK includes
 #include "btkMacro.h"
@@ -54,6 +53,8 @@ ResampleImagesToBiggestImageFilter< TImage >::ResampleImagesToBiggestImageFilter
 {
     Self::SetNumberOfRequiredInputs(0);
     Self::SetNumberOfRequiredOutputs(0);
+
+    m_Interpolator = Self::ResampleImageFilter::LinearInterpolatorType::New();
 }
 
 //------------------------------------------------------------------------------------------------
@@ -87,8 +88,7 @@ void ResampleImagesToBiggestImageFilter< TImage >::GenerateData()
     }
 
     // Define a resampler with the reference image with the maximal volume.
-    typedef itk::ResampleImageFilter< TImage,TImage > ResampleImageFilter;
-    typename ResampleImageFilter::Pointer filter = ResampleImageFilter::New();
+    typename Self::ResampleImageFilter::Pointer filter = ResampleImageFilter::New();
 
     filter->SetReferenceImage(m_Images[j]);
     filter->UseReferenceImageOn();
@@ -115,7 +115,7 @@ void ResampleImagesToBiggestImageFilter< TImage >::SetInputs(const std::vector< 
     // Exceptions
     if(inputs.size() < 2)
     {
-        btkException("WeightedSumOfImagesFilter: There is not enough input images (it should be at least 2) !");
+        btkException("ResampleImagesToBiggestImageFilter: There is not enough input images (it should be at least 2) !");
     }
 
 
