@@ -70,6 +70,11 @@ ResampleImagesToBiggestImageFilter< TImage >::~ResampleImagesToBiggestImageFilte
 template< class TImage >
 void ResampleImagesToBiggestImageFilter< TImage >::GenerateData()
 {
+    // FIXME : the image with the maximal volume may not
+    // containt all the other images. Instead, we should
+    // search the bounding box of the whole images and
+    // create a new image with this bounding box.
+    // Note that the images are supposed to be closed enough.
     // Search the image with the maximum volume.
     unsigned int  j = 0;
     float maxVolume = 0;
