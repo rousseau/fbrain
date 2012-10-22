@@ -135,7 +135,6 @@ std::vector< typename TImage::Pointer > CropImageUsingMaskFilter< TImage,TMask >
     }
 
     return outputs;
-//    return m_Outputs;
 }
 
 } // namespace btk
