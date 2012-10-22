@@ -234,6 +234,7 @@ typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::DeepCop
     typename TImageOutput::Pointer output = TImageOutput::New();
     output->SetRegions(image->GetLargestPossibleRegion());
     output->SetSpacing(image->GetSpacing());
+    output->SetOrigin(image->GetOrigin());
     output->SetDirection(image->GetDirection());
     output->Allocate();
 
