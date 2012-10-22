@@ -91,7 +91,7 @@ void Process(std::vector< std::string > &inputFileNames, std::vector< std::strin
         sumFilter->Update();
 
         croppingMask = sumFilter->GetOutput();
-//btk::ImageHelper< TMask >::WriteImage(croppingMask, "test.nii.gz");
+
         btkCoutMacro("done.");
     }
     else // masks.size() == 1

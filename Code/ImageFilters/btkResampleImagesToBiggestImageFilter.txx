@@ -70,45 +70,93 @@ ResampleImagesToBiggestImageFilter< TImage >::~ResampleImagesToBiggestImageFilte
 template< class TImage >
 void ResampleImagesToBiggestImageFilter< TImage >::GenerateData()
 {
-    // FIXME : the image with the maximal volume may not
-    // containt all the other images. Instead, we should
-    // search the bounding box of the whole images and
-    // create a new image with this bounding box.
-    // Note that the images are supposed to be closed enough.
-    // Search the image with the maximum volume.
-    unsigned int  j = 0;
-    float maxVolume = 0;
+    // Search the bounding box of all of the images.
+    typename TImage::PointType minPoint, maxPoint;
+    typename TImage::IndexType index;
+    typename TImage::SizeType size = m_InputImages[0]->GetLargestPossibleRegion().GetSize();
 
-    for(int i = 0; i < m_Images.size(); i++)
+    index[0] = 0; index[1] = 0; index[2] = 0;
+    m_InputImages[0]->TransformIndexToPhysicalPoint(index, minPoint);
+
+    index[0] = size[0]-1; index[1] = size[1]-1; index[2] = size[2]-1;
+    m_InputImages[0]->TransformIndexToPhysicalPoint(index, maxPoint);
+
+    for(int i = 1; i < m_InputImages.size(); i++)
     {
-        typename TImage::SpacingType spacing = m_Images[i]->GetSpacing();
-        typename TImage::SizeType       size = m_Images[i]->GetLargestPossibleRegion().GetSize();
-        float volume = size[0]*spacing[0]*size[1]*spacing[1]*size[2]*spacing[2];
+        typename TImage::PointType point;
 
-        if(volume > maxVolume)
+        index[0] = 0; index[1] = 0; index[2] = 0;
+        m_InputImages[i]->TransformIndexToPhysicalPoint(index, point);
+
+        if(point[0] < minPoint[0])
         {
-            j = i;
-            maxVolume = volume;
+            minPoint[0] = point[0];
+        }
+
+        if(point[1] < minPoint[1])
+        {
+            minPoint[1] = point[1];
+        }
+
+        if(point[2] < minPoint[2])
+        {
+            minPoint[2] = point[2];
+        }
+
+
+        size = m_InputImages[i]->GetLargestPossibleRegion().GetSize();
+        index[0] = size[0]-1; index[1] = size[1]-1; index[2] = size[2]-1;
+        m_InputImages[i]->TransformIndexToPhysicalPoint(index, point);
+
+        if(point[0] > maxPoint[0])
+        {
+            maxPoint[0] = point[0];
+        }
+
+        if(point[1] > maxPoint[1])
+        {
+            maxPoint[1] = point[1];
+        }
+
+        if(point[2] > maxPoint[2])
+        {
+            maxPoint[2] = point[2];
         }
     }
 
-    // Define a resampler with the reference image with the maximal volume.
-    typename Self::ResampleImageFilter::Pointer filter = ResampleImageFilter::New();
 
-    filter->SetReferenceImage(m_Images[j]);
-    filter->UseReferenceImageOn();
-    filter->SetSize(m_Images[j]->GetLargestPossibleRegion().GetSize());
-    filter->SetInterpolator(m_Interpolator);
+    // Compute the reference layer information
+    typename TImage::SpacingType newspacing = m_InputImages[0]->GetSpacing();
+
+    typename TImage::SizeType newsize;
+    newsize[0] = std::abs(maxPoint[0]-minPoint[0])/newspacing[0]; newsize[1] = std::abs(maxPoint[1]-minPoint[1])/newspacing[1]; newsize[2] = std::abs(maxPoint[2]-minPoint[2])/newspacing[2];
+
+    typename TImage::PointType neworigin = minPoint;
+
+    typename TImage::DirectionType newdirection;
+    newdirection.SetIdentity();
+
+    // Create the reference image
+    typename TImage::Pointer reference = TImage::New();
+    reference->SetRegions(newsize);
+    reference->SetOrigin(neworigin);
+    reference->SetSpacing(newspacing);
+    reference->SetDirection(newdirection);
+    reference->Allocate();
+
 
     // Resample all input images and set them as output.
-    for(int i = 0; i < m_Images.size(); i++)
+    for(int i = 0; i < m_InputImages.size(); i++)
     {
-        if(i != j)
-        {
-            filter->SetInput(m_Images[i]);
-            filter->Update();
-            m_Images[i] = filter->GetOutput();
-        }
+        // Define a resampler with the reference image with the maximal volume.
+        typename Self::ResampleImageFilter::Pointer filter = ResampleImageFilter::New();
+
+        filter->SetReferenceImage(reference);
+        filter->UseReferenceImageOn();
+        filter->SetInterpolator(m_Interpolator);
+        filter->SetInput(m_InputImages[i]);
+        filter->Update();
+        m_OutputImages.push_back(filter->GetOutput());
     }
 }
 
@@ -124,7 +172,7 @@ void ResampleImagesToBiggestImageFilter< TImage >::SetInputs(const std::vector< 
     }
 
 
-    m_Images = inputs;
+    m_InputImages = inputs;
 }
 
 //------------------------------------------------------------------------------------------------
@@ -132,7 +180,7 @@ void ResampleImagesToBiggestImageFilter< TImage >::SetInputs(const std::vector< 
 template< class TImage >
 std::vector< typename TImage::Pointer > ResampleImagesToBiggestImageFilter< TImage >::GetOutputs()
 {
-    return m_Images;
+    return m_OutputImages;
 }
 
 } // namespace btk

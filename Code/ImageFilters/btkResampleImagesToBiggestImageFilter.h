@@ -97,9 +97,14 @@ class ResampleImagesToBiggestImageFilter : public itk::ImageToImageFilter< TImag
 
     private:
         /**
-         * @brief Structure for storing images.
+         * @brief Structure for storing input images.
          */
-        std::vector< typename TImage::Pointer > m_Images; // Using this structure is needed since ITK may produce output images with a bad physical header (I do not know why...).
+        std::vector< typename TImage::Pointer > m_InputImages; // Using this structure is needed since ITK may produce output images with a bad physical header (I do not know why...).
+
+        /**
+         * @brief Structure for storing output images.
+         */
+        std::vector< typename TImage::Pointer > m_OutputImages;
 
         /**
          * @brief Interpolator to use when resampling images.
