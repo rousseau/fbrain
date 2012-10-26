@@ -50,88 +50,88 @@ pool = multiprocessing.Pool(btkAtlasData.nbOfProcesses)
 #            1. Binarize probability maps (GM, WM and CSF)                  #
 #############################################################################
 
-print 'Binarizing probability maps (GM, WM and CSF)...'
+#print 'Binarizing probability maps (GM, WM and CSF)...'
 
-jobs = []
+#jobs = []
 
-for patient in btkAtlasData.patients:
-	for modality in btkAtlasData.modalities.keys():
-		if btkAtlasData.modalities[modality][btkAtlasData.IsTissueMap]:
-			path = "{0}/{1}".format(btkAtlasData.dataPath, modality)
+#for patient in btkAtlasData.patients:
+#	for modality in btkAtlasData.modalities.keys():
+#		if btkAtlasData.modalities[modality][btkAtlasData.IsTissueMap]:
+#			path = "{0}/{1}".format(btkAtlasData.dataPath, modality)
 
-			if btkAtlasData.scriptOn:
-				if not(os.path.isdir(path)):
-					os.mkdir(path)
+#			if btkAtlasData.scriptOn:
+#				if not(os.path.isdir(path)):
+#					os.mkdir(path)
 
-			inputImage  = "{0}/Tissues/{1}_Tissues.nii.gz".format(btkAtlasData.dataPath, patient[0])
-			outputImage = "{0}/{1}/{2}_{1}.nii.gz".format(btkAtlasData.dataPath, modality, patient[0])
-			goBinarize  = "{0}{1} -i {2} -o {3} -l {4} > {3}_{1}.log 2> {3}_{1}.errlog".format(btkAtlasData.BtkBinaryDir, btkAtlasData.BinarizeLabels, inputImage, outputImage, btkAtlasData.modalities[modality][btkAtlasData.TissueLabel])
-			jobs.append(goBinarize)
+#			inputImage  = "{0}/Tissues/{1}_Tissues.nii.gz".format(btkAtlasData.dataPath, patient[0])
+#			outputImage = "{0}/{1}/{2}_{1}.nii.gz".format(btkAtlasData.dataPath, modality, patient[0])
+#			goBinarize  = "{0}{1} -i {2} -o {3} -l {4} > {3}_{1}.log 2> {3}_{1}.errlog".format(btkAtlasData.BtkBinaryDir, btkAtlasData.BinarizeLabels, inputImage, outputImage, btkAtlasData.modalities[modality][btkAtlasData.TissueLabel])
+#			jobs.append(goBinarize)
 
-if btkAtlasData.scriptOn:
-	pool.map(os.system, jobs)
-else:
-	for job in jobs:
-		print "\t{0}".format(job)
+#if btkAtlasData.scriptOn:
+#	pool.map(os.system, jobs)
+#else:
+#	for job in jobs:
+#		print "\t{0}".format(job)
 
-print 'done.'
+#print 'done.'
 
 
 #############################################################################
 #                      2. Blur probability maps                             #
 #############################################################################
 
-print 'Blurring probability maps...'
+#print 'Blurring probability maps...'
 
-jobs = []
+#jobs = []
 
-for patient in btkAtlasData.patients:
-	for modality in btkAtlasData.modalities.keys():
-		if btkAtlasData.modalities[modality][btkAtlasData.IsTissueMap]:
-			path = "{0}/{1}".format(btkAtlasData.dataPath, modality)
+#for patient in btkAtlasData.patients:
+#	for modality in btkAtlasData.modalities.keys():
+#		if btkAtlasData.modalities[modality][btkAtlasData.IsTissueMap]:
+#			path = "{0}/{1}".format(btkAtlasData.dataPath, modality)
 
-			image  = "{0}/{1}/{2}_{1}.nii.gz".format(btkAtlasData.dataPath, modality, patient[0])
-			goBlur = "{0}{1} -i {2} -o {3} > {3}_{1}.log 2> {3}_{1}.errlog".format(btkAtlasData.BtkBinaryDir, btkAtlasData.GaussianFilter, image, image)
-			jobs.append(goBlur)
+#			image  = "{0}/{1}/{2}_{1}.nii.gz".format(btkAtlasData.dataPath, modality, patient[0])
+#			goBlur = "{0}{1} -i {2} -o {3} > {3}_{1}.log 2> {3}_{1}.errlog".format(btkAtlasData.BtkBinaryDir, btkAtlasData.GaussianFilter, image, image)
+#			jobs.append(goBlur)
 
-if btkAtlasData.scriptOn:
-	pool.map(os.system, jobs)
-else:
-	for job in jobs:
-		print "\t{0}".format(job)
+#if btkAtlasData.scriptOn:
+#	pool.map(os.system, jobs)
+#else:
+#	for job in jobs:
+#		print "\t{0}".format(job)
 
-print 'done.'
+#print 'done.'
 
 
 #############################################################################
 #                      3. Normalize probability maps                        #
 #############################################################################
 
-print 'Normalizing probability maps...'
+#print 'Normalizing probability maps...'
 
-jobs = []
+#jobs = []
 
-for patient in btkAtlasData.patients:
-	goNorm = "{0}{1}".format(btkAtlasData.BtkBinaryDir, btkAtlasData.ProbMapNormalization)
+#for patient in btkAtlasData.patients:
+#	goNorm = "{0}{1}".format(btkAtlasData.BtkBinaryDir, btkAtlasData.ProbMapNormalization)
 
-	for modality in btkAtlasData.modalities.keys():
-		if btkAtlasData.modalities[modality][btkAtlasData.IsTissueMap]:
+#	for modality in btkAtlasData.modalities.keys():
+#		if btkAtlasData.modalities[modality][btkAtlasData.IsTissueMap]:
 
-			path = "{0}/{1}".format(btkAtlasData.dataPath, modality)
+#			path = "{0}/{1}".format(btkAtlasData.dataPath, modality)
 
-			image  = "{0}/{1}/{2}_{1}.nii.gz".format(btkAtlasData.dataPath, modality, patient[0])
-			goNorm += " -i {0} -o {0}".format(image)
+#			image  = "{0}/{1}/{2}_{1}.nii.gz".format(btkAtlasData.dataPath, modality, patient[0])
+#			goNorm += " -i {0} -o {0}".format(image)
 
-	goNorm += " > {0}/{1}_{2}.log 2> {0}/{1}_{2}.errlog".format(btkAtlasData.dataPath, patient[0], btkAtlasData.ProbMapNormalization)
-	jobs.append(goNorm)
+#	goNorm += " > {0}/{1}_{2}.log 2> {0}/{1}_{2}.errlog".format(btkAtlasData.dataPath, patient[0], btkAtlasData.ProbMapNormalization)
+#	jobs.append(goNorm)
 
-if btkAtlasData.scriptOn:
-	pool.map(os.system, jobs)
-else:
-	for job in jobs:
-		print "\t{0}".format(job)
+#if btkAtlasData.scriptOn:
+#	pool.map(os.system, jobs)
+#else:
+#	for job in jobs:
+#		print "\t{0}".format(job)
 
-print 'done.'
+#print 'done.'
 
 
 
@@ -153,14 +153,14 @@ for patient in btkAtlasData.patients:
 	maskImage         = "{0}/Tissues/{1}_Tissues.nii.gz".format(btkAtlasData.dataPath, patient[0])
 	goCrop += "-i {0} -m {1} -o {2} ".format(inputOutputImage, maskImage, inputOutputImage)
 
-goCrop += "> {0}/T2_{1}.log 2> {0}/T2_{1}.errlog".format(btkAtlasData.outputPath, btkAtlasData.CropUsingMask)
+goCrop += "> {0}/T2_{1}.log 2> {0}/T2_{1}.errlog".format(btkAtlasData.dataPath, btkAtlasData.CropUsingMask)
 jobs.append(goCrop)
 
 for modality in btkAtlasData.modalities.keys():
 	goCrop = "{0}{1} ".format(btkAtlasData.BtkBinaryDir, btkAtlasData.CropUsingMask)
 
 	for patient in btkAtlasData.patients:
-		inputOutputImage  = "{0}/{1}_{2}.nii.gz".format(btkAtlasData.outputPath, patient[0], modality)
+		inputOutputImage  = "{0}/{2}/{1}_{2}.nii.gz".format(btkAtlasData.dataPath, patient[0], modality)
 		maskImage         = "{0}/Tissues/{1}_Tissues.nii.gz".format(btkAtlasData.dataPath, patient[0])
 		goCrop += "-i {0} -m {1} -o {2} ".format(inputOutputImage, maskImage, inputOutputImage)
 
