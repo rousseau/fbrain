@@ -167,7 +167,7 @@ for modality in btkAtlasData.modalities.keys():
 	goCrop += "> {0}/{1}_{2}.log 2> {0}/{1}_{2}.errlog".format(btkAtlasData.outputPath, modality, btkAtlasData.CropUsingMask)
 	jobs.append(goCrop)
 
-if scriptOn:
+if btkAtlasData.scriptOn:
 	pool.map(os.system, jobs)
 else:
 	for job in jobs:
