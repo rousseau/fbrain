@@ -133,3 +133,45 @@ else:
 
 print 'done.'
 
+
+
+
+
+#############################################################################
+#                      4. Cropping images                                   #
+#############################################################################
+
+print 'Cropping images...'
+
+# Crop images
+jobs = []
+
+goCrop = "{0}{1} ".format(btkAtlasData.BtkBinaryDir, btkAtlasData.CropUsingMask)
+
+for patient in btkAtlasData.patients:
+	inputOutputImage  = "{0}/T2/{1}_T2.nii.gz".format(btkAtlasData.dataPath, patient[0])
+	maskImage         = "{0}/Tissues/{1}_Tissues.nii.gz".format(btkAtlasData.dataPath, patient[0])
+	goCrop += "-i {0} -m {1} -o {2} ".format(inputOutputImage, maskImage, inputOutputImage)
+
+goCrop += "> {0}/T2_{1}.log 2> {0}/T2_{1}.errlog".format(btkAtlasData.outputPath, btkAtlasData.CropUsingMask)
+jobs.append(goCrop)
+
+for modality in btkAtlasData.modalities.keys():
+	goCrop = "{0}{1} ".format(btkAtlasData.BtkBinaryDir, btkAtlasData.CropUsingMask)
+
+	for patient in btkAtlasData.patients:
+		inputOutputImage  = "{0}/{1}_{2}.nii.gz".format(btkAtlasData.outputPath, patient[0], modality)
+		maskImage         = "{0}/Tissues/{1}_Tissues.nii.gz".format(btkAtlasData.dataPath, patient[0])
+		goCrop += "-i {0} -m {1} -o {2} ".format(inputOutputImage, maskImage, inputOutputImage)
+
+	goCrop += "> {0}/{1}_{2}.log 2> {0}/{1}_{2}.errlog".format(btkAtlasData.outputPath, modality, btkAtlasData.CropUsingMask)
+	jobs.append(goCrop)
+
+if scriptOn:
+	pool.map(os.system, jobs)
+else:
+	for job in jobs:
+		print '\t{0}'.format(job)
+
+print 'done.'
+
