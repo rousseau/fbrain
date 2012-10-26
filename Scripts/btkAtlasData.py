@@ -185,6 +185,7 @@ WeightedSumAffine    = 'btkWeightedSumOfAffineTransforms'
 BinarizeMaps         = 'btkBinarizeTissueProbabilityMaps'
 InverseField         = 'btkInverseDisplacementField'
 CropUsingMask        = 'btkCropImageUsingMask'
+HistogramMatching    = 'btkHistogramMatching'
 
 AntsBinaryDir    = ''
 ANTS             = 'ANTS'

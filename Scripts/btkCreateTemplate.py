@@ -226,6 +226,25 @@ print '\tdone.'
 
 print '\tAveraging warped images...'
 
+jobs = []
+
+# Histogram matching
+for modality in btkAtlasData.modalities.keys():
+	if btkAtlasData.modalities[modality][btkAtlasData.UseInRegression]:
+		for patient in btkAtlasData.patients:
+			image     = '{0}/{1}toAverage_{2}.nii.gz'.format(btkAtlasData.templatePath, patient[0], modality)
+			reference = '{0}/{1}toAverage_{2}.nii.gz'.format(btkAtlasData.templatePath, btkAtlasData.patientReference, modality)
+			goHistogramMatching = '{0}{1} -i {2} -o {2} -r {3}'.format(btkAtlasData.BtkBinaryDir, btkAtlasData.HistogramMatching, image, reference)
+			jobs.append(goHistogramMatching)	
+	
+if btkAtlasData.scriptOn:
+	pool.map(os.system, jobs)
+else:
+	for job in jobs:
+		print "\t\t{0}".format(job)
+
+
+# Average
 for modality in btkAtlasData.modalities.keys():
 	if btkAtlasData.modalities[modality][btkAtlasData.UseInRegression]:
 		outputImage = '{0}/Average_{1}.nii.gz'.format(btkAtlasData.templatePath, modality)
@@ -324,6 +343,24 @@ print '\tdone.'
 #############################################################################
 
 print '\tAveraging warped images...'
+
+jobs = []
+
+# Histogram matching
+for modality in btkAtlasData.modalities.keys():
+	if btkAtlasData.modalities[modality][btkAtlasData.UseInRegression]:
+		for patient in btkAtlasData.patients:
+			image     = '{0}/{1}toTemplate_{2}.nii.gz'.format(btkAtlasData.templatePath, patient[0], modality)
+			reference = '{0}/{1}toTemplate_{2}.nii.gz'.format(btkAtlasData.templatePath, btkAtlasData.patientReference, modality)
+			goHistogramMatching = '{0}{1} -i {2} -o {2} -r {3}'.format(btkAtlasData.BtkBinaryDir, btkAtlasData.HistogramMatching, image, reference)
+			jobs.append(goHistogramMatching)	
+	
+if btkAtlasData.scriptOn:
+	pool.map(os.system, jobs)
+else:
+	for job in jobs:
+		print "\t\t{0}".format(job)
+
 
 for modality in btkAtlasData.modalities.keys():
 	if btkAtlasData.modalities[modality][btkAtlasData.UseInRegression]:
