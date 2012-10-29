@@ -2,8 +2,8 @@
 
   © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-  Date: 17/04/2012
-  Author(s):  Marc Schweitzer (marc.schweitzer(at)unistra.fr)
+  Date: 16/08/2011
+  Author(s): Estanislao Oubel (oubel@unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -37,44 +37,44 @@
 // image (origin, direction, and spacing) in the fixed parameters. This would
 // allow to load a specific transformation needless to set the image.
 
-#ifndef __BTK_AFFINESLICEBYSLICETRANSFORM_H__
-#define __BTK_AFFINESLICEBYSLICETRANSFORM_H__
+#ifndef __btkSliceBySliceTransform_h
+#define __btkSliceBySliceTransform_h
+
+#include "itkTransform.h"
+#include "itkEuler3DTransform.h"
+#include "itkImage.h"
+#include "itkContinuousIndex.h"
+#include "list"
 
 #include "btkSliceBySliceTransformBase.h"
 
-#include "itkTransform.h"
-#include "itkAffineTransform.h"
-#include "itkImage.h"
-#include "itkContinuousIndex.h"
-#include "itkMatrixOffsetTransformBase.h"
-
-
 namespace btk
 {
+using namespace itk;
 
-
-template <class TScalarType,unsigned int NDimensions=3, typename TPixelType = float>
-class AffineSliceBySliceTransform  : public SliceBySliceTransformBase<TScalarType,NDimensions, TPixelType>
+template <class TScalarType,unsigned int NDimensions=3, typename TPixelType = float >
+class SliceBySliceTransform  : public SliceBySliceTransformBase<TScalarType,NDimensions, TPixelType>
 {
 public:
   /** Standard class typedefs. */
-  typedef AffineSliceBySliceTransform  Self;
+  typedef SliceBySliceTransform  Self;
   typedef SliceBySliceTransformBase<TScalarType,NDimensions> Superclass;
-  typedef itk::MatrixOffsetTransformBase<TScalarType, NDimensions> TransformBase;
-  typedef itk::AffineTransform< TScalarType, NDimensions > TransformType;
+  typedef typename Superclass::TransformType TransformBase;
+  //typedef itk::MatrixOffsetTransformBase<TScalarType, NDimensions> TransformBase;
+  typedef Euler3DTransform< TScalarType > TransformType;
 
-  typedef itk::Image< TPixelType,NDimensions > ImageType;
+  typedef Image< TPixelType,NDimensions > ImageType;
   typedef typename ImageType::Pointer ImagePointerType;
 
-  typedef itk::ContinuousIndex<double, NDimensions > ContinuousIndexType;
+  typedef ContinuousIndex<double, NDimensions > ContinuousIndexType;
 
-  typedef itk::SmartPointer< Self >   Pointer;
-  typedef itk::SmartPointer< const Self >  ConstPointer;
+  typedef SmartPointer< Self >   Pointer;
+  typedef SmartPointer< const Self >  ConstPointer;
 
-  typedef itk::SmartPointer<TransformType> TransformPointer;
+  typedef SmartPointer<TransformType> TransformPointer;
   typedef std::vector<TransformPointer> TransformPointerList;
   typedef typename TransformPointerList::const_iterator TransformPointerListConstIterator;
-  typedef std::vector<itk::TransformBase::Pointer> TransformBasePointerList;
+  //typedef std::vector<TransformType::Pointer> TransformBasePointerList;
 
   typedef typename Superclass::InputPointType InputPointType;
   typedef typename Superclass::OutputPointType OutputPointType;
@@ -129,13 +129,16 @@ public:
   /** Set the image where the transformation is defined. */
   void SetImage( ImageType * image);
 
+  /** Set the number of slice of the image where the transformation is defined */
+  void SetNumberOfSlices(int numberOfSlices);
+
   /** Get the Transformation Parameters. */
   const ParametersType& GetParameters(void) const;
 
   void SetParameters( const ParametersType & parameters );
 
   /** Print self */
-  void PrintSelf(std::ostream &os, itk::Indent indent) const
+  void PrintSelf(std::ostream &os, Indent indent) const
   {
     Superclass::PrintSelf(os,indent);
   }
@@ -172,27 +175,23 @@ public:
   const ParametersType & GetFixedParameters(void) const;
 
   /** Get the number of slices (transforms). */
-  virtual unsigned int GetNumberOfSlices()
-  {
-      return m_NumberOfSlices;
-  }
-
-  //itkGetMacro( NumberOfSlices, unsigned int);
+  itkGetMacro( NumberOfSlices, unsigned int);
 
   /** Get the inverse transform */
-  virtual void GetInverse(Self *) const;
+  virtual void GetInverse(Self*) const;
 
 
 protected:
     /** Default constructor. Otherwise we get a run time warning from itkTransform. */
-  AffineSliceBySliceTransform() : Superclass(  ) {}
+  SliceBySliceTransform() : Superclass(  ) {}
 
 private:
   /** List of transforms. */
-  TransformPointerList       m_TransformList;
-  ImagePointerType           m_Image;
+  TransformPointerList m_TransformList;
+  ImagePointerType 		 m_Image;
   unsigned int 				 m_NumberOfSlices;
   unsigned int 				 m_ParametersPerSlice;
+
 
   /** Temporary storage for transformation Jacobian. */
   mutable JacobianType m_Jacobian;
@@ -200,6 +199,6 @@ private:
 
 }
 
-# include "btkAffineSliceBySliceTransform.txx"
+# include "btkSliceBySliceTransform.txx"
 
 #endif /* __btkSliceBySliceTransform_h */

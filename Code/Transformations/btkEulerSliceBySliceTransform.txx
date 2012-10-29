@@ -44,302 +44,301 @@
 namespace btk
 {
 
-template <class TScalarType,unsigned int NDimensions>
-typename EulerSliceBySliceTransform<TScalarType,NDimensions>::OutputPointType
-EulerSliceBySliceTransform<TScalarType,NDimensions>
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
+typename EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::OutputPointType
+EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>
 ::TransformPoint(const InputPointType& p ) const
 {
-  OutputPointType Tp( p );
-  typename ImageType::IndexType index;
-  m_Image -> TransformPhysicalPointToIndex( Tp , index);
-//  std::cout<<"Physical Point : "<<Tp<<std::endl;
-//  std::cout<<"Index : "<<index[0]<<" ; "<<index[1]<<" ; "<<index[2]<<std::endl;
-//  std::cout<<"transform slice n :"<<index[2]<<"/"<<m_TransformList.size()<<std::endl<<std::endl;
-  int a, b,c, d;
-  a = index[0];
-  b = index[1];
-  c = index[2];
-  index[2] = index[2] < 0 ? 0 : index[2];
-  index[2] = index[2] > m_TransformList.size()-1 ? m_TransformList.size()-1 : index[2];
+    OutputPointType Tp( p );
 
-  d = index[2];
-  Tp = m_TransformList[ index[2] ] -> TransformPoint( Tp );
+    typename ImageType::IndexType index;
+    m_Image -> TransformPhysicalPointToIndex( Tp , index);
 
-  return Tp;
+    if(index[2] < 0 || index[2] > m_TransformList.size() -1 )
+    {
+        Tp = p;
+    }
+    else
+    {
+        Tp = m_TransformList[ index[2] ] -> TransformPoint( Tp );
+    }
+
+    return Tp;
 }
 
-template <class TScalarType,unsigned int NDimensions>
-typename EulerSliceBySliceTransform<TScalarType,NDimensions>::OutputVectorType
-EulerSliceBySliceTransform<TScalarType,NDimensions>::
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
+typename EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::OutputVectorType
+EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
 TransformVector(const InputVectorType& p) const
 {
-  OutputVectorType Tp( p );
-  for ( TransformPointerListConstIterator it = this->m_TransformList.begin();
-      it != this->m_TransformList.end(); ++it )
+    OutputVectorType Tp( p );
+    for ( TransformPointerListConstIterator it = this->m_TransformList.begin();
+          it != this->m_TransformList.end(); ++it )
     {
-    Tp = (*it)->TransformVector( Tp );
+        Tp = (*it)->TransformVector( Tp );
     }
-  return Tp;
+    return Tp;
 }
 
-template <class TScalarType,unsigned int NDimensions>
-typename EulerSliceBySliceTransform<TScalarType,NDimensions>::OutputVnlVectorType
-EulerSliceBySliceTransform<TScalarType,NDimensions>::
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
+typename EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::OutputVnlVectorType
+EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
 TransformVector(const InputVnlVectorType &p ) const
 {
-  OutputVnlVectorType Tp( p );
-  for ( TransformPointerListConstIterator it = this->m_TransformList.begin();
-      it != this->m_TransformList.end(); ++it )
+    OutputVnlVectorType Tp( p );
+    for ( TransformPointerListConstIterator it = this->m_TransformList.begin();
+          it != this->m_TransformList.end(); ++it )
     {
-    Tp = (*it)->TransformVector( Tp );
+        Tp = (*it)->TransformVector( Tp );
     }
-  return Tp;
+    return Tp;
 }
 
-template <class TScalarType,unsigned int NDimensions>
-typename EulerSliceBySliceTransform<TScalarType,NDimensions>::OutputCovariantVectorType
-EulerSliceBySliceTransform<TScalarType,NDimensions>::
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
+typename EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::OutputCovariantVectorType
+EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
 TransformCovariantVector( const InputCovariantVectorType &p ) const
 {
-  OutputCovariantVectorType Tp( p );
-  for ( TransformPointerListConstIterator it = this->m_TransformList.begin();
-      it != this->m_TransformList.end(); ++it )
+    OutputCovariantVectorType Tp( p );
+    for ( TransformPointerListConstIterator it = this->m_TransformList.begin();
+          it != this->m_TransformList.end(); ++it )
     {
-    Tp = (*it)->TransformCovariantVector( Tp );
+        Tp = (*it)->TransformCovariantVector( Tp );
     }
-  return Tp;
+    return Tp;
 }
 
-template <class TScalarType,unsigned int NDimensions>
-const typename EulerSliceBySliceTransform<TScalarType,NDimensions>::JacobianType&
-EulerSliceBySliceTransform<TScalarType,NDimensions>::
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
+const typename EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::JacobianType&
+EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
 GetJacobian(const InputPointType &p ) const
 {
 
-  this->m_Jacobian.SetSize( NDimensions, this->GetNumberOfParameters() );
-  this->m_Jacobian.Fill(0.0);
+    this->m_Jacobian.SetSize( NDimensions, this->GetNumberOfParameters() );
+    this->m_Jacobian.Fill(0.0);
 
-  typename ImageType::IndexType index;
-  m_Image -> TransformPhysicalPointToIndex( p , index);
-  //JacobianType jacobian = m_TransformList[ index[2] ] -> GetJacobian(p); // FIXME : in ITK GetJacobian is replaced by ComputeJacobianWithRespectToParameters (const InputPointType &p, JacobianType &jacobian)
-  JacobianType jacobian;
-  m_TransformList[ index[2] ]->ComputeJacobianWithRespectToParameters( p, jacobian ) ;
-  unsigned int offset = index[2]*m_TransformList[0]->GetNumberOfParameters();
+    typename ImageType::IndexType index;
+    m_Image -> TransformPhysicalPointToIndex( p , index);
+    //JacobianType jacobian = m_TransformList[ index[2] ] -> GetJacobian(p); // FIXME : in ITK GetJacobian is replaced by ComputeJacobianWithRespectToParameters (const InputPointType &p, JacobianType &jacobian)
+    JacobianType jacobian;
+    m_TransformList[ index[2] ]->ComputeJacobianWithRespectToParameters( p, jacobian ) ;
+    unsigned int offset = index[2]*m_TransformList[0]->GetNumberOfParameters();
 
-  for(unsigned int i = 0; i < NDimensions; i++)
-    for(unsigned int j = 0; j < m_TransformList[0]->GetNumberOfParameters(); j++)
-    {
-      this->m_Jacobian[i][j] = jacobian[i][j+offset];
-    }
+    for(unsigned int i = 0; i < NDimensions; i++)
+        for(unsigned int j = 0; j < m_TransformList[0]->GetNumberOfParameters(); j++)
+        {
+            this->m_Jacobian[i][j] = jacobian[i][j+offset];
+        }
 
-  return this->m_Jacobian;
+    return this->m_Jacobian;
 
 }
-template <class TScalarType,unsigned int NDimensions>
-void EulerSliceBySliceTransform<TScalarType,NDimensions>::
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
+void EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
 ComputeJacobianWithRespectToParameters( const InputPointType & p, JacobianType &_jacobian ) const
 {
 
-  _jacobian.SetSize( NDimensions, this->GetNumberOfParameters() );
-  _jacobian.Fill(0.0);
+    _jacobian.SetSize( NDimensions, this->GetNumberOfParameters() );
+    _jacobian.Fill(0.0);
 
-  typename ImageType::IndexType index;
-  m_Image -> TransformPhysicalPointToIndex( p , index);
+    typename ImageType::IndexType index;
+    m_Image -> TransformPhysicalPointToIndex( p , index);
 
-  JacobianType jacobian;
-  m_TransformList[ index[2] ]->ComputeJacobianWithRespectToParameters( p, jacobian ) ;
-  unsigned int offset = index[2]*m_TransformList[0]->GetNumberOfParameters();
+    JacobianType jacobian;
+    m_TransformList[ index[2] ]->ComputeJacobianWithRespectToParameters( p, jacobian ) ;
+    unsigned int offset = index[2]*m_TransformList[0]->GetNumberOfParameters();
 
-  for(unsigned int i = 0; i < NDimensions; i++)
-    for(unsigned int j = 0; j < m_TransformList[0]->GetNumberOfParameters(); j++)
-    {
-      _jacobian[i][j] = jacobian[i][j+offset];
-    }
-  this->m_Jacobian = _jacobian;
+    for(unsigned int i = 0; i < NDimensions; i++)
+        for(unsigned int j = 0; j < m_TransformList[0]->GetNumberOfParameters(); j++)
+        {
+            _jacobian[i][j] = jacobian[i][j+offset];
+        }
+    this->m_Jacobian = _jacobian;
 
 }
-template <class TScalarType,unsigned int NDimensions>
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
 void
-EulerSliceBySliceTransform<TScalarType,NDimensions>::
+EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
 SetImage( ImageType * image)
 {
-  m_Image = image;
+    m_Image = image;
 }
 
-template <class TScalarType,unsigned int NDimensions>
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
 void
-EulerSliceBySliceTransform<TScalarType,NDimensions>::
+EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
 Initialize()
 {
-  typename ImageType::SizeType size = m_Image -> GetLargestPossibleRegion().GetSize();
+    typename ImageType::SizeType size = m_Image -> GetLargestPossibleRegion().GetSize();
 
-  m_NumberOfSlices = size[2];
-  m_TransformList.resize(m_NumberOfSlices);
-
-  TransformPointer tmpTransform = TransformType::New();
-  m_ParametersPerSlice = tmpTransform -> GetNumberOfParameters();
-  this -> m_Parameters.SetSize( m_NumberOfSlices * m_ParametersPerSlice );
-
-  InputPointType centerPoint;
-  ContinuousIndexType centerIndex;
-
-  centerIndex[0] = (size[0]-1)/2.0;
-  centerIndex[1] = (size[1]-1)/2.0;
-
-  for(unsigned int i=0; i<m_NumberOfSlices; i++)
-  {
-    centerIndex[2] =  i;
-    m_Image -> TransformContinuousIndexToPhysicalPoint(centerIndex,centerPoint);
-
-    m_TransformList[i] = TransformType::New();
-    m_TransformList[i] -> SetIdentity();
-    m_TransformList[i] -> SetCenter(centerPoint);
-  }
-
-  this -> Modified();
-}
-
-template <class TScalarType,unsigned int NDimensions>
-void
-EulerSliceBySliceTransform<TScalarType,NDimensions>::
-Initialize( TransformBase * t )
-{
-  typename ImageType::SizeType size = m_Image -> GetLargestPossibleRegion().GetSize();
-
-  m_NumberOfSlices = size[2];
-  m_TransformList.resize(m_NumberOfSlices);
-
-  TransformPointer tmpTransform = TransformType::New();
-  m_ParametersPerSlice = tmpTransform -> GetNumberOfParameters();
-  this -> m_Parameters.SetSize( m_NumberOfSlices * m_ParametersPerSlice );
-
-  InputPointType centerPoint;
-  ContinuousIndexType centerIndex;
-
-  centerIndex[0] = (size[0]-1)/2.0;
-  centerIndex[1] = (size[1]-1)/2.0;
-
-  for(unsigned int i=0; i<m_NumberOfSlices; i++)
-  {
-    centerIndex[2] =  i;
-    m_Image -> TransformContinuousIndexToPhysicalPoint(centerIndex,centerPoint);
-
-    m_TransformList[i] = TransformType::New();
-    m_TransformList[i] -> SetIdentity();
-    //FIXME : if we set the center the transformation is not exactly the same as a global transform
-    //I don't know the reason why
-    //m_TransformList[i] -> SetCenter(centerPoint);
-    //t -> SetCenter( m_TransformList[i] -> GetCenter() );
-
-    m_TransformList[i] -> SetParameters( t -> GetParameters() );
-  }
-
-  this -> Modified();
-}
-
-template <class TScalarType,unsigned int NDimensions>
-const typename EulerSliceBySliceTransform<TScalarType,NDimensions>::ParametersType&
-EulerSliceBySliceTransform<TScalarType,NDimensions>::GetParameters(void) const
-{
-  for(unsigned int i=0; i<m_NumberOfSlices; i++)
-  {
-    ParametersType param = m_TransformList[i] -> GetParameters();
-
-    for (unsigned int p=0; p<m_ParametersPerSlice; p++)
-    {
-      this->m_Parameters[p + i*m_ParametersPerSlice] = param[p];
-    }
-
-  }
-  return this->m_Parameters;
-
-}
-
-template <class TScalarType,unsigned int NDimensions>
-void
-EulerSliceBySliceTransform<TScalarType,NDimensions>::
-SetParameters( const ParametersType & parameters )
-{
-
-  this -> m_Parameters = parameters;
-
-  for(unsigned int i=0; i<m_NumberOfSlices; i++)
-  {
-    ParametersType param(m_ParametersPerSlice);
-
-    for (unsigned int p=0; p<m_ParametersPerSlice; p++)
-      param[p] = this->m_Parameters[p + i*m_ParametersPerSlice];
-
-    m_TransformList[i] -> SetParameters( param );
-
-  }
-
-  this -> Modified();
-}
-
-template <class TScalarType,unsigned int NDimensions>
-void
-EulerSliceBySliceTransform<TScalarType,NDimensions>::
-SetFixedParameters( const ParametersType & fp )
-{
-  this -> m_FixedParameters = fp;
-
-  m_NumberOfSlices = this -> m_FixedParameters[0];
-
-  if (m_TransformList.size() == 0 )
-  {
-
+    m_NumberOfSlices = size[2];
     m_TransformList.resize(m_NumberOfSlices);
 
     TransformPointer tmpTransform = TransformType::New();
     m_ParametersPerSlice = tmpTransform -> GetNumberOfParameters();
     this -> m_Parameters.SetSize( m_NumberOfSlices * m_ParametersPerSlice );
 
+    InputPointType centerPoint;
+    ContinuousIndexType centerIndex;
+
+
+    centerIndex[0] = (size[0]-1)/2.0;
+    centerIndex[1] = (size[1]-1)/2.0;
+
     for(unsigned int i=0; i<m_NumberOfSlices; i++)
     {
-      m_TransformList[i] = TransformType::New();
-      m_TransformList[i] -> SetIdentity();
+        centerIndex[2] =  i;
+        m_Image -> TransformContinuousIndexToPhysicalPoint(centerIndex,centerPoint);
+
+        m_TransformList[i] = TransformType::New();
+        m_TransformList[i] -> SetIdentity();
+        m_TransformList[i] -> SetCenter(centerPoint);
     }
 
-  }
+    this -> Modified();
+}
 
-  InputPointType c;
-  typedef typename ParametersType::ValueType ParameterValueType;
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
+void
+EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
+Initialize( TransformBase * t )
+{
+    typename ImageType::SizeType size = m_Image -> GetLargestPossibleRegion().GetSize();
 
-  for ( unsigned int j = 0; j<m_NumberOfSlices; j++)
-  {
-    for ( unsigned int i = 0; i < NDimensions; i++ )
-      c[i] = this -> m_FixedParameters[j*NDimensions + i + 1];
+    m_NumberOfSlices = size[2];
+    m_TransformList.resize(m_NumberOfSlices);
 
-    m_TransformList[j] -> SetCenter ( c );
-  }
+    TransformPointer tmpTransform = TransformType::New();
+    m_ParametersPerSlice = tmpTransform -> GetNumberOfParameters();
+    this -> m_Parameters.SetSize( m_NumberOfSlices * m_ParametersPerSlice );
 
-  this -> Modified();
+    InputPointType centerPoint;
+    ContinuousIndexType centerIndex;
+
+    centerIndex[0] = (size[0]-1)/2.0;
+    centerIndex[1] = (size[1]-1)/2.0;
+
+    for(unsigned int i=0; i<m_NumberOfSlices; i++)
+    {
+        centerIndex[2] =  i;
+        m_Image -> TransformContinuousIndexToPhysicalPoint(centerIndex,centerPoint);
+
+        m_TransformList[i] = TransformType::New();
+        m_TransformList[i] -> SetIdentity();
+        //FIXME : if we set the center the transformation is not exactly the same as a global transform
+        //I don't know the reason why
+        //m_TransformList[i] -> SetCenter(centerPoint);
+        //t -> SetCenter( m_TransformList[i] -> GetCenter() );
+
+        m_TransformList[i] -> SetParameters( t -> GetParameters() );
+    }
+
+    this -> Modified();
+}
+
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
+const typename EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::ParametersType&
+EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::GetParameters(void) const
+{
+    for(unsigned int i=0; i<m_NumberOfSlices; i++)
+    {
+        ParametersType param = m_TransformList[i] -> GetParameters();
+
+        for (unsigned int p=0; p<m_ParametersPerSlice; p++)
+        {
+            this->m_Parameters[p + i*m_ParametersPerSlice] = param[p];
+        }
+
+    }
+    return this->m_Parameters;
 
 }
 
-template <class TScalarType,unsigned int NDimensions>
-const typename EulerSliceBySliceTransform<TScalarType,NDimensions>::ParametersType&
-EulerSliceBySliceTransform<TScalarType,NDimensions>::
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
+void
+EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
+SetParameters( const ParametersType & parameters )
+{
+
+    this -> m_Parameters = parameters;
+
+    for(unsigned int i=0; i<m_NumberOfSlices; i++)
+    {
+        ParametersType param(m_ParametersPerSlice);
+
+        for (unsigned int p=0; p<m_ParametersPerSlice; p++)
+            param[p] = this->m_Parameters[p + i*m_ParametersPerSlice];
+
+        m_TransformList[i] -> SetParameters( param );
+
+    }
+
+    this -> Modified();
+}
+
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
+void
+EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
+SetFixedParameters( const ParametersType & fp )
+{
+    this -> m_FixedParameters = fp;
+
+    m_NumberOfSlices = this -> m_FixedParameters[0];
+
+    if (m_TransformList.size() == 0 )
+    {
+
+        m_TransformList.resize(m_NumberOfSlices);
+
+        TransformPointer tmpTransform = TransformType::New();
+        m_ParametersPerSlice = tmpTransform -> GetNumberOfParameters();
+        this -> m_Parameters.SetSize( m_NumberOfSlices * m_ParametersPerSlice );
+
+        for(unsigned int i=0; i<m_NumberOfSlices; i++)
+        {
+            m_TransformList[i] = TransformType::New();
+            m_TransformList[i] -> SetIdentity();
+        }
+
+    }
+
+    InputPointType c;
+    typedef typename ParametersType::ValueType ParameterValueType;
+
+    for ( unsigned int j = 0; j<m_NumberOfSlices; j++)
+    {
+        for ( unsigned int i = 0; i < NDimensions; i++ )
+            c[i] = this -> m_FixedParameters[j*NDimensions + i + 1];
+
+        m_TransformList[j] -> SetCenter ( c );
+    }
+
+    this -> Modified();
+
+}
+
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
+const typename EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::ParametersType&
+EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
 GetFixedParameters(void) const
 {
-  this->m_FixedParameters.SetSize ( NDimensions * m_NumberOfSlices + 1 );
+    this->m_FixedParameters.SetSize ( NDimensions * m_NumberOfSlices + 1 );
 
-  this->m_FixedParameters[0] = m_NumberOfSlices;
+    this->m_FixedParameters[0] = m_NumberOfSlices;
 
-  for ( unsigned int j = 0; j < m_NumberOfSlices; j++ )
-  {
-    for ( unsigned int i = 0; i < NDimensions; i++ )
-      {
-      this->m_FixedParameters[j*NDimensions + i + 1] = m_TransformList[j]-> GetCenter()[i];
-      }
-  }
-  return this->m_FixedParameters;
+    for ( unsigned int j = 0; j < m_NumberOfSlices; j++ )
+    {
+        for ( unsigned int i = 0; i < NDimensions; i++ )
+        {
+            this->m_FixedParameters[j*NDimensions + i + 1] = m_TransformList[j]-> GetCenter()[i];
+        }
+    }
+    return this->m_FixedParameters;
 }
 
-template <class TScalarType,unsigned int NDimensions>
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
 void
-EulerSliceBySliceTransform<TScalarType,NDimensions>::
+EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
 GetInverse(Self* inverse)const
 {
     inverse->SetFixedParameters(this->GetFixedParameters());

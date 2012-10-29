@@ -44,7 +44,7 @@
 
 namespace btk
 {
-template < class TScalarType, unsigned int NDimensions=3 >
+template < class TScalarType, unsigned int NDimensions=3, typename TPixelType = float >
 class SliceBySliceTransformBase : public itk::MatrixOffsetTransformBase<TScalarType,NDimensions, NDimensions> //public itk::Transform<TScalarType,NDimensions,NDimensions>
 {
 public:
@@ -56,7 +56,7 @@ public:
     typedef itk::MatrixOffsetTransformBase<TScalarType,NDimensions,NDimensions> TransformType;
     typedef typename TransformType::Pointer TransformPointerType;
 
-    typedef itk::Image< float,NDimensions > ImageType;
+    typedef itk::Image< TPixelType,NDimensions > ImageType;
     typedef typename ImageType::Pointer ImagePointerType;
 
     typedef itk::ContinuousIndex<double, NDimensions > ContinuousIndexType;
@@ -116,6 +116,7 @@ public:
     /** Set the image where the transformation is defined. */
     virtual void SetImage( ImageType * image) = 0;
 
+
     /** Get the Transformation Parameters. */
     virtual const ParametersType& GetParameters(void) const = 0;
 
@@ -132,6 +133,10 @@ public:
 
     /** Set the transformation parameters for a slice. */
    virtual  void SetSliceParameters( unsigned int i, const ParametersType & parameters ) = 0;
+
+    /** Get the parameters for a slice. */
+    virtual ParametersType GetSliceParameters(unsigned int i) = 0;
+
     /** Initialize with the identity. */
     virtual void Initialize() = 0;
 
