@@ -36,12 +36,14 @@
 #ifndef BTK_MATH_FUNCTIONS_H
 #define BTK_MATH_FUNCTIONS_H
 
+#include "cmath"
+
 namespace btk
 {
 
 /**
  * @brief Basic maths functions.
- * @author Julien Pontabry
+ * @author Julien Pontabry, Marc Schweitzer
  * @ingroup Maths
  */
 class MathFunctions
@@ -53,6 +55,21 @@ class MathFunctions
          * @return Factorial of n
          */
         static unsigned int factorial(unsigned int n);
+
+        /**
+         * @brief Convert radian angle into degree
+         * @param angle in radian
+         * @return angle in degree
+         */
+        static double RadiansToDegrees(double rad);
+
+        /**
+         * @brief Convert radian angle into degree
+         * @param angle in radian
+         * @return angle in degree
+         */
+        static double DegreesToRadians(double deg);
+
 };
 
 } // namespace btk
