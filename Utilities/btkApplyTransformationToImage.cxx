@@ -59,7 +59,7 @@
 #include "btkAffineSliceBySliceTransform.h"
 #include "btkEulerSliceBySliceTransform.h"
 #include "btkIOTransformHelper.h"
-#include "btkWarpTransformToImageFilter.h"
+#include "btkApplyTransformToImageFilter.h"
 
 
 /* OTHERS */
@@ -88,7 +88,7 @@ int main (int argc, char* argv[])
     typedef btk::EulerSliceBySliceTransform< double, Dimension>  btkEulerSliceBySliceTransform;
     typedef btk::SliceBySliceTransform<double, Dimension>   btkOldSliceBySliceTransform;
 
-    typedef btk::WarpTransformToImageFilter<itkImage, itkImage> Resampler;
+    typedef btk::ApplyTransformToImageFilter<itkImage, itkImage> Resampler;
 
 
 
