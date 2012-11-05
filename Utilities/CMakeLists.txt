@@ -10,6 +10,7 @@ INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Transformations)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Segmentation)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Maths)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/ImageFilters)
+INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Registration)
 
 ADD_EXECUTABLE(btkModifyImageUsingLookUpTable btkModifyImageUsingLookUpTable.cxx)
 TARGET_LINK_LIBRARIES(btkModifyImageUsingLookUpTable ${ITK_LIBRARIES})
@@ -57,7 +58,7 @@ TARGET_LINK_LIBRARIES(btkBinarizeLabels ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkResampleLabelsByInjection btkResampleLabelsByInjection.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkResampleLabelsByInjectionFilter.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
+    ${fbrain_SOURCE_DIR}/Code/Transformations/btkSliceBySliceTransform.h
  )
 TARGET_LINK_LIBRARIES(btkResampleLabelsByInjection ${ITK_LIBRARIES})
 
@@ -71,13 +72,13 @@ ADD_EXECUTABLE(btkAverageImagesWithReference btkAverageImagesWithReference.cxx)
 TARGET_LINK_LIBRARIES(btkAverageImagesWithReference ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkImageInjection btkImageInjection.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRegistration.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkAffineRegistration.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRigidRegistration.h
+    ${fbrain_SOURCE_DIR}/Code/Registration/btkRegistration.h
+    ${fbrain_SOURCE_DIR}/Code/Registration/btkAffineRegistration.h
+    ${fbrain_SOURCE_DIR}/Code/Registration/btkRigidRegistration.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLowToHighImageResolutionMethod.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkResampleImageByInjectionFilter.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkImageIntersectionCalculator.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
+    ${fbrain_SOURCE_DIR}/Code/Transformations/btkSliceBySliceTransform.h
 )
 TARGET_LINK_LIBRARIES(btkImageInjection ${ITK_LIBRARIES})
 
@@ -92,10 +93,10 @@ TARGET_LINK_LIBRARIES(btkWeightedSumOfImages ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkSequenceNormalization btkSequenceNormalization.cxx
     ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkAffineRegistration.h
-    #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRegistration.h
-    #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkAffineRegistration.h
-    #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRigidRegistration.h
+    ${fbrain_SOURCE_DIR}/Code/Registration/btkAffineRegistration.h
+    #${fbrain_SOURCE_DIR}/Code/Registration/btkRegistration.h
+    #${fbrain_SOURCE_DIR}/Code/Registration/btkAffineRegistration.h
+    #${fbrain_SOURCE_DIR}/Code/Registration/btkRigidRegistration.h
  )
 TARGET_LINK_LIBRARIES(btkSequenceNormalization btkToolsLibrary ${ITK_LIBRARIES})
 
@@ -112,7 +113,7 @@ ADD_EXECUTABLE(btkIteratedBackProjection btkIteratedBackProjection.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionRigidImageFilter.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionAffineImageFilter.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionManager.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
+    ${fbrain_SOURCE_DIR}/Code/Transformations/btkSliceBySliceTransform.h
 )
 TARGET_LINK_LIBRARIES(btkIteratedBackProjection ${ITK_LIBRARIES})
 
@@ -135,8 +136,8 @@ ADD_EXECUTABLE(btkBinarizeTissueProbabilityMaps btkBinarizeTissueProbabilityMaps
 TARGET_LINK_LIBRARIES(btkBinarizeTissueProbabilityMaps ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkSimulateMotionSliceBySlice btkSimulateMotionSliceBySlice.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceRigidRegistration.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceAffineRegistration.h
+    ${fbrain_SOURCE_DIR}/Code/Registration/btkSliceBySliceRigidRegistration.h
+    ${fbrain_SOURCE_DIR}/Code/Registration/btkSliceBySliceAffineRegistration.h
 )
 TARGET_LINK_LIBRARIES(btkSimulateMotionSliceBySlice ${ITK_LIBRARIES})
 
@@ -147,7 +148,7 @@ ADD_EXECUTABLE(btkApplyMaskToImage btkApplyMaskToImage.cxx)
 TARGET_LINK_LIBRARIES(btkApplyMaskToImage ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkWarpTransformationToImage btkWarpTransformationToImage.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
+    ${fbrain_SOURCE_DIR}/Code/Transformations/btkSliceBySliceTransform.h
     ${fbrain_SOURCE_DIR}/Code/ImageFilters/btkWarpTransformToImageFilter.h
 )
 TARGET_LINK_LIBRARIES(btkWarpTransformationToImage ${ITK_LIBRARIES})
