@@ -24,7 +24,6 @@
 #include "btkEulerSliceBySliceTransform.h"
 #include "btkMotionCorrectionByIntersection.h"
 #include "btkIOTransformHelper.h"
-#include "btkLowToHighResolutionFilter.hxx"
 #include "btkResampleImageByInjectionFilter.h"
 #include "btkSliceBySliceTransformBase.h"
 
