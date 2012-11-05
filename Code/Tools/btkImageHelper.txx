@@ -103,6 +103,14 @@ typename TImageInput::Pointer ImageHelper< TImageInput, TImageOutput >::ReadImag
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
+typename TImageInput::ConstPointer ImageHelper< TImageInput, TImageOutput >::ReadConstImage(const std::string &fileName)
+{
+    return ReadImage(fileName).GetPointer();
+}
+
+//----------------------------------------------------------------------------------------
+
+template < class TImageInput, class TImageOutput >
 std::vector< typename TImageInput::Pointer > &ImageHelper< TImageInput, TImageOutput >::ReadImage(std::vector<std::string> &fileNames)
 {
     std::vector< typename TImageInput::Pointer > *ptrImages = new std::vector< typename TImageInput::Pointer >;
@@ -120,7 +128,7 @@ std::vector< typename TImageInput::Pointer > &ImageHelper< TImageInput, TImageOu
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
-typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::CreateNewImageFromPhysicalSpaceOf(typename TImageInput::Pointer image, typename TImageOutput::PixelType defaultValue)
+typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::CreateNewImageFromPhysicalSpaceOf(typename TImageInput::ConstPointer image, typename TImageOutput::PixelType defaultValue)
 {
     typename TImageOutput::Pointer newImage = TImageOutput::New();
     newImage->SetRegions(image->GetLargestPossibleRegion());
@@ -143,7 +151,7 @@ std::vector< typename TImageOutput::Pointer > &ImageHelper< TImageInput, TImageO
 
     for(typename std::vector< typename TImageInput::Pointer >::iterator it = images.begin(); it != images.end(); it++)
     {
-        newImages.push_back(CreateNewImageFromPhysicalSpaceOf(*it, defaultValue));
+        newImages.push_back(CreateNewImageFromPhysicalSpaceOf((*it).GetPointer(), defaultValue));
     }
 
     return newImages;
@@ -253,10 +261,33 @@ typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::ReadOrC
     else
     {
         std::cout << "Creating new image with pixel value set to " << defaultValue << std::endl;
-        newImage = CreateNewImageFromPhysicalSpaceOf(image, defaultValue);
+        newImage = CreateNewImageFromPhysicalSpaceOf(image.GetPointer(), defaultValue);
     }
 
     return newImage;
+}
+
+//----------------------------------------------------------------------------------------
+
+template < class TImageInput, class TImageOutput >
+typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::DeepCopy(typename TImageInput::ConstPointer image)
+{
+    typename TImageOutput::Pointer output = TImageOutput::New();
+    output->SetRegions(image->GetLargestPossibleRegion());
+    output->SetSpacing(image->GetSpacing());
+    output->SetOrigin(image->GetOrigin());
+    output->SetDirection(image->GetDirection());
+    output->Allocate();
+
+    itk::ImageRegionConstIterator< TImageInput > inputIt(image, image->GetLargestPossibleRegion());
+    itk::ImageRegionIterator< TImageOutput >    outputIt(output, output->GetLargestPossibleRegion());
+
+    for(inputIt.GoToBegin(), outputIt.GoToBegin(); !inputIt.IsAtEnd() && !outputIt.IsAtEnd(); ++inputIt, ++outputIt)
+    {
+        outputIt.Set(inputIt.Get());
+    }
+
+    return output;
 }
 
 } // namespace btk

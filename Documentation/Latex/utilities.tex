@@ -29,6 +29,9 @@
 \addcontentsline{toc}{subsection}{btkComputeOverlap}
 \item[btkComputeOverlap]: Compute the overlap (Dice coefficient and Jaccard index) between two label images.
 %------------------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{btkConvertFSLTransform}
+\item[btkConvertFSLTransform]: ?
+%------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkConvertGradientTable}
 \item[btkConvertGradientTable]: Transform gradients from world to image coordinates.
 
@@ -87,6 +90,9 @@ transformN -o output --mask}
 \addcontentsline{toc}{subsection}{btkImageSubtract}
 \item[btkImageSubtract]: Pixel-wise subtraction of two image, or one image and a constant (-i im1 -i im2 -o result or -i im1 -c value -o result) (ITK filter: SubtractImageFilter).
 %------------------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{btkInverseDisplacementField}
+\item[btkInverseDisplacementField]: Compute the inverse of a displacement field (-i field -o inverse\_field) (ITK filter: InverseDisplacementFieldImageFilter).
+%------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkIteratedBackProjection}
 \item[btkIteratedBackProjection]: Apply iterated back projection to high resolution image using one low resolution image.
 %------------------------------------------------------------------------------
@@ -113,14 +119,13 @@ nrrd format (*.nhdr). Usage: \texttt{-i input -o output.nhdr}
 \addcontentsline{toc}{subsection}{btkNrrdToNifti}
 \item[btkNrrdToNifti] This program convert an image from Nrrd file (*.nhdr and *.nrrd) to a Nifti file (*.nii or *.nii.gz). The conversion of a DWI image is possible by using the option \texttt{--dwi}. Usage: \texttt{-i input.nhdr -o output.nii.gz}. Usage for DWI sequence: \texttt{--dwi -i input.nhdr -o output.nii.gz}.
 %------------------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{btkPSNR}
+\item[btkPSNR]: Compute the PSNR between an input image and a reference image.%------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkPrintImageInfo}
 \item[btkPrintImageInfo]: Prints image information (size, origin, spacing, directions, anatomical orientation, pixel type).
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkProbabilityMapNormalization}
 \item[btkProbabilityMapNormalization]: Normalize in a voxelwise manner a set of (positive) probability maps. 
-%------------------------------------------------------------------------------
-\addcontentsline{toc}{subsection}{btkPSNR}
-\item[btkPSNR]: Compute the PSNR between an input image and a reference image.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkReconstructionComparisonTool}
 \item[btkReconstructionComparisonTool]: Compare several reconstruction methods: creates a label image explaining which reconstructed image is the best at each voxel.
@@ -209,7 +214,7 @@ identify the left and right sides of the brain in the 2D views.
 \item[btkTranslateImageOverTemplate]: Usefull for the extraction mask pipeline, it will translate the center of image (or barycenter of masked image) on the center of the template image.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkWarpTransformationToImage}
-\item[btkWarpTransformationToImage]: Apply a itk or btk transformation on a image.
+\item[btkWarpTransformationToImage]: Apply an ITK or BTK transformation on a image.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkWeightedSum}
 \item[btkWeightedMean]: Compute a weighted mean of 3D images (no check for normalized weights!).

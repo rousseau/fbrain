@@ -37,6 +37,7 @@
 // STL includes
 #include "string"
 #include "vector"
+#include "numeric"
 
 // TCLAP includes
 #include <tclap/CmdLine.h>
@@ -45,130 +46,47 @@
 #include "itkImage.h"
 #include "itkImageRegionIterator.h"
 #include "itkDisplacementFieldTransform.h"
-
 #include "itkResampleImageFilter.h"
 
 // Local includes
 #include "btkMacro.h"
 #include "btkImageHelper.h"
-
-
-// ITK definitions
-typedef itk::Image< float,3 >                                             Image;
-typedef itk::DisplacementFieldTransform< float,3 >::DisplacementFieldType DeformationField;
+#include "btkResampleImagesToBiggestImageFilter.h"
+#include "btkWeightedSumOfImagesFilter.h"
 
 
 // Weight sum over template images
-template< typename TImage >
-void ComputeAndWriteWeightedSum(std::vector< std::string > &inputFileNames, std::vector< float > &weights, const std::string &outputFileName, bool noNormalization)
+template< class TImage >
+void Process(std::vector< std::string > &inputFileNames, std::vector< float > &weights, std::string &outputFileName)
 {
-    typedef itk::ResampleImageFilter< TImage,TImage > ResampleImageFilter;
-
-    //
-    // Read & check
-    //
-
-    // Verify number of images and number of weights
-    if(weights.size() > 0 && inputFileNames.size() != weights.size())
-        throw(std::string("The number of input images is different than the number of weights !"));
-
     // Read images
     std::vector< typename TImage::Pointer > inputImages = btk::ImageHelper< TImage >::ReadImage(inputFileNames);
 
-    // Verify sizes of images
+    // Verify sizes of images and resample on largest lattice
     if(!btk::ImageHelper< TImage >::IsInSamePhysicalSpace(inputImages))
     {
-        unsigned int  j = 0;
-        float maxVolume = 0;
+        btkCoutMacro("Resampling images in same physical space... ");
 
-        for(unsigned int i = 0; i < inputImages.size(); i++)
-        {
-            typename TImage::SpacingType spacing = inputImages[i]->GetSpacing();
-            typename TImage::SizeType       size = inputImages[i]->GetLargestPossibleRegion().GetSize();
-            float volume = size[0]*spacing[0]*size[1]*spacing[1]*size[2]*spacing[2];
+        typename btk::ResampleImagesToBiggestImageFilter< TImage >::Pointer resampleFilter = btk::ResampleImagesToBiggestImageFilter< TImage >::New();
+        resampleFilter->SetInputs(inputImages);
+        resampleFilter->Update();
+        inputImages = resampleFilter->GetOutputs();
 
-            if(volume > maxVolume)
-            {
-                j = i;
-                maxVolume = volume;
-            }
-        }
-
-        typename ResampleImageFilter::Pointer filter = ResampleImageFilter::New();
-
-        filter->SetReferenceImage(inputImages[j]);
-        filter->SetSize(inputImages[j]->GetLargestPossibleRegion().GetSize());
-
-        for(unsigned int i = 0; i < inputImages.size(); i++)
-        {
-            if(i != j)
-            {
-                filter->SetInput(inputImages[i]);
-                filter->Update();
-                inputImages[i] = filter->GetOutput();
-            }
-        }
-    }
-
-
-    //
-    // Compute the weighted sum
-    //
-
-    // Normalize weights
-    if(!noNormalization)
-    {
-        float sumOfWeights = 0;
-
-        for(unsigned int i = 0; i < weights.size(); i++)
-        {
-            sumOfWeights += weights[i];
-        }
-
-        for(unsigned int i = 0; i < weights.size(); i++)
-        {
-            weights[i] /= sumOfWeights;
-        }
+        btkCoutMacro("done.");
     }
 
     // Compute weighted sum
-    typename TImage::Pointer outputImage = btk::ImageHelper< TImage >::CreateNewImageFromPhysicalSpaceOf(inputImages[0]);
+    btkCoutMacro("Summing images... ");
 
-    itk::ImageRegionIterator< TImage > outputIt(outputImage, outputImage->GetLargestPossibleRegion());
+    typename btk::WeightedSumOfImagesFilter< TImage >::Pointer sumFilter = btk::WeightedSumOfImagesFilter< TImage >::New();
+    sumFilter->SetInputs(inputImages);
+    sumFilter->SetWeights(weights);
+    sumFilter->Update();
 
-    if(weights.size() > 0)
-    {
-        for(unsigned int i = 0; i < inputImages.size(); i++)
-        {
-            itk::ImageRegionIterator< TImage > inputIt(inputImages[i], inputImages[i]->GetLargestPossibleRegion());
+    btkCoutMacro("done.");
 
-            for(inputIt.GoToBegin(), outputIt.GoToBegin(); !inputIt.IsAtEnd() && !outputIt.IsAtEnd(); ++inputIt, ++outputIt)
-            {
-                outputIt.Set( outputIt.Get() + (inputIt.Get() * weights[i]) );
-            } // for each voxel
-        } // for each image
-    }
-    else // weights.size() == 0
-    {
-        float defaultValue = 1.0 / static_cast< float >(inputImages.size());
-
-        for(unsigned int i = 0; i < inputImages.size(); i++)
-        {
-            itk::ImageRegionIterator< TImage > inputIt(inputImages[i], inputImages[i]->GetLargestPossibleRegion());
-
-            for(inputIt.GoToBegin(), outputIt.GoToBegin(); !inputIt.IsAtEnd() && !outputIt.IsAtEnd(); ++inputIt, ++outputIt)
-            {
-                outputIt.Set( outputIt.Get() + (inputIt.Get() * defaultValue) );
-            } // for each voxel
-        } // for each image
-    }
-
-
-    //
-    // Write output
-    //
-
-    btk::ImageHelper< TImage >::WriteImage(outputImage, outputFileName);
+    // Write output image
+    btk::ImageHelper< TImage >::WriteImage(sumFilter->GetOutput(), outputFileName);
 }
 
 
@@ -190,7 +108,6 @@ int main(int argc, char *argv[])
         TCLAP::MultiArg< float >              weightsArg("w", "weight", "Image weight (default: 1/N)", false, "string", cmd);
         TCLAP::ValueArg< std::string > outputFileNameArg("o", "output", "Output image filename (default: \"out.nii.gz\")", false, "out.nii.gz", "string", cmd);
 
-        TCLAP::SwitchArg deformationFieldArg("f", "deformation_field", "Operate on deformation field images", cmd);
         TCLAP::SwitchArg  noNormalizationArg("", "no_normalization", "Desactivate the normalization of the weights (default: false)", cmd);
     
         // Parse the args.
@@ -201,7 +118,6 @@ int main(int argc, char *argv[])
         std::vector< float >              weights = weightsArg.getValue();
         std::string                outputFileName = outputFileNameArg.getValue();
 
-        bool deformationField = deformationFieldArg.getValue();
         bool  noNormalization = noNormalizationArg.getValue();
  
 
@@ -209,23 +125,80 @@ int main(int argc, char *argv[])
         // Processing
         //
 
-        // Compute weighted sum
-        if(deformationField)
+        // Verify number of images and number of weights
+        if(weights.size() > 0 && inputFileNames.size() != weights.size())
         {
-            ComputeAndWriteWeightedSum< DeformationField >(inputFileNames, weights, outputFileName, noNormalization);
+            btkException("Main: The number of input images is different than the number of weights !");
         }
-        else
+        else if(weights.empty())
         {
-            ComputeAndWriteWeightedSum< Image >(inputFileNames, weights, outputFileName, noNormalization);
+            weights = std::vector< float >(inputFileNames.size(), 1.0f/static_cast< float >(inputFileNames.size()));
+        }
+
+        // Normalize weights if needed
+        if(!noNormalization)
+        {
+            float sum = std::accumulate(weights.begin(), weights.end(), 0.0f);
+
+            for(int i = 0; i < weights.size(); i++)
+            {
+                weights[i] /= sum;
+            }
+        }
+
+        itk::ImageIOBase::Pointer imageIO = itk::ImageIOFactory::CreateImageIO(inputFileNames[0].c_str(), itk::ImageIOFactory::ReadMode);
+        imageIO->SetFileName(inputFileNames[0]);
+        imageIO->ReadImageInformation();
+
+        if(imageIO->GetNumberOfDimensions() != 3)
+        {
+            btkCerrMacro("Error: Unsupported image dimension !");
+            exit(EXIT_FAILURE);
+        }
+
+        // Switch on pixel type
+        switch(imageIO->GetPixelType())
+        {
+            case itk::ImageIOBase::VECTOR:
+
+                Process< itk::DisplacementFieldTransform< float,3 >::DisplacementFieldType >(inputFileNames, weights, outputFileName);
+                break;
+
+            case itk::ImageIOBase::SCALAR:
+
+                switch(imageIO->GetComponentType())
+                {
+                    case itk::ImageIOBase::SHORT:
+                        Process< itk::Image< short,3 > >(inputFileNames, weights, outputFileName);
+                        break;
+
+                    case itk::ImageIOBase::FLOAT:
+                        Process< itk::Image< float,3 > >(inputFileNames, weights, outputFileName);
+                        break;
+
+                    case itk::ImageIOBase::DOUBLE:
+                        Process< itk::Image< double,3 > >(inputFileNames, weights, outputFileName);
+                        break;
+
+                    default:
+                        btkCerrMacro("Unsupported component type !");
+                        exit(EXIT_FAILURE);
+                }
+
+                break;
+
+            default:
+                btkCerrMacro("Error: Unsupported pixel type !");
+                exit(EXIT_FAILURE);
         }
     }
     catch(TCLAP::ArgException &e)
     {
         btkCoutMacro("Exception: " << e.error() << " for arg " << e.argId());
     }
-    catch(std::string &message)
+    catch(itk::ExceptionObject &object)
     {
-        btkCoutMacro("Exception: " << message);
+        btkCoutMacro(object);
     }
   
   return EXIT_SUCCESS;

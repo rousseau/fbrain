@@ -158,7 +158,7 @@ int main (int argc, char* argv[])
     
     for(unsigned int i=0; i<ref_file.size(); i++)
     {
-      maskRefImages[i] = btk::ImageHelper<ImageType>::CreateNewImageFromPhysicalSpaceOf(refImages[i]);
+        maskRefImages[i] = btk::ImageHelper<ImageType>::CreateNewImageFromPhysicalSpaceOf(refImages[i].GetPointer());
       maskRefImages[i]->FillBuffer(1);  
     }
   }

@@ -95,6 +95,13 @@ namespace btk
             static typename TImageInput::Pointer ReadImage(const std::string &fileName);
 
             /**
+             * @brief Read an image and return an constant pointer.
+             * @param fileName File name of the image to read.
+             * @return A constant pointer to the image that have been red.
+             */
+            static typename TImageInput::ConstPointer ReadConstImage(const std::string &fileName);
+
+            /**
              * @brief Read a vector of images.
              * @param fileNames File names of the images to read.
              * @return A reference to a vector containing the images that have been red.
@@ -107,7 +114,7 @@ namespace btk
              * @param defaultValue Default value of pixel in new image.
              * @return New image in the same physical space.
              */
-            static typename TImageOutput::Pointer CreateNewImageFromPhysicalSpaceOf(typename TImageInput::Pointer image, typename TImageOutput::PixelType defaultValue=itk::NumericTraits< typename TImageOutput::PixelType >::ZeroValue());
+            static typename TImageOutput::Pointer CreateNewImageFromPhysicalSpaceOf(typename TImageInput::ConstPointer image, typename TImageOutput::PixelType defaultValue=itk::NumericTraits< typename TImageOutput::PixelType >::ZeroValue());
 
             /**
              * @brief Create new images in the same physical space of current images.
@@ -130,6 +137,7 @@ namespace btk
              * @param images Images to compare.
              * @return True if the two images are in the same physical space, false otherwise.
              */
+
             static bool IsInSamePhysicalSpace(std::vector< typename TImageInput::Pointer > &images, double epsilon = 10e-7);
             
              /**
@@ -140,6 +148,13 @@ namespace btk
              * @return A pointer to the image that have been red.
              */
             static typename TImageOutput::Pointer ReadOrCreateImage(const std::string &fileName, typename TImageInput::Pointer image, typename TImageOutput::PixelType defaultValue=itk::NumericTraits< typename TImageOutput::PixelType >::ZeroValue());
+
+            /**
+             * @brief Make a deep copy of an image.
+             * @param image Constant pointer on the image to copy.
+             * @return A deep copy of the image parameter.
+             */
+            static typename TImageOutput::Pointer DeepCopy(typename TImageInput::ConstPointer image);
     };
 
 } // namespace btk

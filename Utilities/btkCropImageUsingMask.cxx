@@ -45,275 +45,181 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 /* Btk includes */
 #include "btkImageHelper.h"
+#include "btkDiffusionSequenceHelper.h"
 #include "btkIOImageHelper.h"
+#include "btkResampleImagesToBiggestImageFilter.h"
+#include "btkWeightedSumOfImagesFilter.h"
+#include "btkCropImageUsingMaskFilter.h"
+#include "itkNearestNeighborInterpolateImageFunction.h"
 
 
-template<unsigned int imageDimension, typename PixelType>
-void CropImageUsingMask(std::string input_file, std::string output_file, std::string mask_file)
+template< class TImage,class TMask,int Dimension >
+void Process(std::vector< std::string > &inputFileNames, std::vector< std::string > &outputFileNames, std::vector< std::string > &maskFileNames)
 {
-    //ITK declaration
-    typedef itk::Image<PixelType, imageDimension> ImageType;
-    typedef itk::ImageFileReader< ImageType >  ReaderType;
-    typedef itk::ImageFileWriter< ImageType >  WriterType;
-
-    typedef itk::Image< PixelType, imageDimension >         MaskType;
-    typedef itk::ImageFileReader< MaskType >  MaskReaderType;
+    // Read image files
+    std::vector< typename TImage::Pointer > inputs = /*btk::DiffusionSequenceHelper::ReadSequenceArray(inputFileNames):*/ btk::ImageHelper< TImage >::ReadImage(inputFileNames);
+    std::vector< typename TMask::Pointer >   masks = btk::ImageHelper< TMask >::ReadImage(maskFileNames);
 
 
-    //Reading the input image
-    typename ImageType::Pointer image = btk::ImageHelper<ImageType>::ReadImage(input_file);
+    // Compute the cropping mask by using the union of all masks
+    typename TMask::Pointer croppingMask = NULL;
 
-
-    //Reading the mask
-    typename MaskType::Pointer mask = btk::ImageHelper<MaskType>::ReadImage(mask_file);
-
-    //looking if mask and input image are in the same physical space, if not throw an exception
-    if(!btk::ImageHelper<ImageType>::IsInSamePhysicalSpace(image, mask))
+    if(masks.size() > 1)
     {
-        btkException("Mask and Image are not in the same physical space !");
+        // First, resample masks if needed
+        if(!btk::ImageHelper< TMask >::IsInSamePhysicalSpace(masks))
+        {
+            btkCoutMacro("Resampling masks in same physical space... ");
+
+            typename btk::ResampleImagesToBiggestImageFilter< TMask >::Pointer resampleFilter = btk::ResampleImagesToBiggestImageFilter< TMask >::New();
+            resampleFilter->SetInputs(masks);
+            resampleFilter->SetInterpolator(itk::NearestNeighborInterpolateImageFunction< TMask >::New());
+            resampleFilter->Update();
+            masks = resampleFilter->GetOutputs();
+
+            btkCoutMacro("done.");
+        }
+
+        // Combine the masks
+        btkCoutMacro("Combining masks... ");
+
+        std::vector< float > weights(masks.size(), 1.0f);
+
+        typename btk::WeightedSumOfImagesFilter< TMask >::Pointer sumFilter = btk::WeightedSumOfImagesFilter< TMask >::New();
+        sumFilter->SetInputs(masks);
+        sumFilter->SetWeights(weights);
+        sumFilter->Update();
+
+        croppingMask = sumFilter->GetOutput();
+
+        btkCoutMacro("done.");
+    }
+    else // masks.size() == 1
+    {
+        croppingMask = masks[0];
     }
 
 
-    typedef itk::CropImageFilter< ImageType, ImageType >  CropImageFilterType;
-    typename CropImageFilterType::Pointer cropFilter = CropImageFilterType::New();
+    // Crop input images
+    btkCoutMacro("Cropping images... ");
 
-    //find bounding box using the mask image
-    typename ImageType::RegionType region;
-    region.SetSize(image->GetLargestPossibleRegion().GetSize());
-    typename ImageType::SizeType imageSize = region.GetSize();
-    typename MaskType::IndexType pixelIndex;
-    typename ImageType::SizeType downSize, upSize;
+    typename btk::CropImageUsingMaskFilter< TImage,TMask >::Pointer cropFilter = btk::CropImageUsingMaskFilter< TImage,TMask >::New();
+    cropFilter->SetMask(croppingMask);
+    cropFilter->SetInputs(inputs);
+    cropFilter->Update();
 
-    for(unsigned int i=0; i<imageDimension; i++)
-    {
-        downSize[i] = imageSize[i]-1;
-        upSize[i] = 0;
-    }
+    std::vector< typename TImage::Pointer > outputs = cropFilter->GetOutputs();
 
-    //Looking for the size of the bounding box using the mask
-    for(unsigned int k=0;k<imageSize[2];k++)
-        for(unsigned int j=0;j<imageSize[1];j++)
-            for(unsigned int i=0;i<imageSize[0];i++)
-            {
-                pixelIndex[0] = i;
-                pixelIndex[1] = j;
-                pixelIndex[2] = k;
-                if(mask->GetPixel(pixelIndex) != 0)
-                {
-                    if(i<downSize[0]) downSize[0] = i;
-                    if(j<downSize[1]) downSize[1] = j;
-                    if(k<downSize[2]) downSize[2] = k;
-                    if(i>upSize[0]) upSize[0] = i;
-                    if(j>upSize[1]) upSize[1] = j;
-                    if(k>upSize[2]) upSize[2] = k;
-                }
-            }
+    btkCoutMacro("done.");
 
-    if(imageDimension == 4)
-    {
-        downSize[3]= 0;
-        upSize[3]  = imageSize[3]-1;
-    }
 
-    std::cout<<"Bounding box : ("<<downSize[0]<<","<<downSize[1]<<","<<downSize[2]<<") (";
-    std::cout<<upSize[0]<<","<<upSize[1]<<","<<upSize[2]<<")"<<std::endl;
-
-    for(unsigned int i=0; i<imageDimension; i++)
-    {
-        upSize[i] = imageSize[i] -1 - upSize[i];
-    }
-
-    cropFilter->SetInput( image );
-    cropFilter->SetLowerBoundaryCropSize( downSize );
-    cropFilter->SetUpperBoundaryCropSize( upSize );
-    cropFilter->UpdateLargestPossibleRegion();
-
-    btk::ImageHelper<ImageType>::WriteImage(cropFilter->GetOutput(),output_file);
-
+    // Write output files
+    btk::ImageHelper< TImage >::WriteImage(outputs, outputFileNames);
 }
 
 
 int main(int argc, char** argv)
 {
-    try {
+    try
+    {
+        //
+        // Command line parser
+        //
 
-        TCLAP::CmdLine cmd("btkCropImageUsingMask: Crop an image (3D or 4D) using a 3D mask (non-zero values)", ' ', "1.0", true);
+        TCLAP::CmdLine cmd("btkCropImageUsingMask: Crop an image (3D - anatomical, or 4D - diffusion weighted) using a 3D mask (non-zero values). Input image and mask image must have the same pixel type.", ' ', "2.0", true);
 
-        TCLAP::ValueArg<std::string> inputImageArg("i","image_file","input image file (short)",true,"","string", cmd);
-        TCLAP::ValueArg<std::string> outputImageArg("o","output_file","output image file (short)",true,"","string", cmd);
-        TCLAP::ValueArg<std::string> inputMaskArg("m","mask_file","filename of the mask image (dimension = 3)",false,"","string", cmd);
-        TCLAP::ValueArg< int > dimArg("d","dim","image dimension of the input image (default is 3)",false,3,"int", cmd);
+        TCLAP::MultiArg< std::string > inputFileNamesArg("i", "input", "Input image file", true, "string", cmd);
+        TCLAP::MultiArg< std::string > maskFileNamesArg("m", "mask", "Mask image file", true, "string", cmd);
+        TCLAP::MultiArg< std::string > outputFileNamesArg("o", "output", "Output image file", true, "string", cmd);
 
         // Parse the args.
         cmd.parse( argc, argv );
 
-        // Get the value parsed by each arg.
-        std::string input_file       = inputImageArg.getValue();
-        std::string output_file      = outputImageArg.getValue();
-        std::string mask_file        = inputMaskArg.getValue();
-        unsigned int dim             = (unsigned int) dimArg.getValue();
-        btk::IOImageHelper::ScalarType type;
-
-        //Looking for the type of pixels
-        type = btk::IOImageHelper::GetComponentTypeOfImageFile(input_file);
+        std::vector< std::string > inputFileNames = inputFileNamesArg.getValue();
+        std::vector< std::string > maskFileNames = maskFileNamesArg.getValue();
+        std::vector< std::string > outputFileNames = outputFileNamesArg.getValue();
 
 
+        //
+        // Processing
+        //
 
-        /*  NOTE : If we have a float image in input (a probability map for example) we don't want to save it into short (loose of data)
-        that's why we look the pixel type in input.*/
-
-
-        // switch for the type of pixels, and testing the dimension
-        // this may be a little bit complicated but it's the only way to do, thanks to the itk template !!!!
-        switch(type)
+        // Check arguments
+        if(inputFileNames.size() != maskFileNames.size() || inputFileNames.size() != outputFileNames.size())
         {
-            case btk::IOImageHelper::Float:
-                if(dim == 3)
-                {
-                    CropImageUsingMask<3, float>(input_file, output_file, mask_file);
-                }
-                else if(dim == 4)
-                {
-                    CropImageUsingMask<4, float>(input_file, output_file, mask_file);
-                }
-                else
-                {
-                    std::cerr << "unsupported dimension" << std::endl;
-                    exit( EXIT_FAILURE );
-                }
-                break;
-
-            case btk::IOImageHelper::Short:
-                if(dim == 3)
-                {
-                    CropImageUsingMask<3, short>(input_file, output_file, mask_file);
-                }
-                else if(dim == 4)
-                {
-                    CropImageUsingMask<4, short>(input_file, output_file, mask_file);
-                }
-                else
-                {
-                    std::cerr << "unsupported dimension" << std::endl;
-                    exit( EXIT_FAILURE );
-                }
-                break;
-
-            case btk::IOImageHelper::UShort:
-                if(dim == 3)
-                {
-                    CropImageUsingMask<3, unsigned short>(input_file, output_file, mask_file);
-                }
-                else if(dim == 4)
-                {
-                    CropImageUsingMask<4, unsigned short>(input_file, output_file, mask_file);
-                }
-                else
-                {
-                    std::cerr << "unsupported dimension" << std::endl;
-                    exit( EXIT_FAILURE );
-                }
-                break;
-
-            case btk::IOImageHelper::Int:
-                if(dim == 3)
-                {
-                    CropImageUsingMask<3, int>(input_file, output_file, mask_file);
-                }
-                else if(dim == 4)
-                {
-                    CropImageUsingMask<4, int>(input_file, output_file, mask_file);
-                }
-                else
-                {
-                    std::cerr << "unsupported dimension" << std::endl;
-                    exit( EXIT_FAILURE );
-                }
-                break;
-
-            case btk::IOImageHelper::UInt:
-                if(dim == 3)
-                {
-                    CropImageUsingMask<3, unsigned int>(input_file, output_file, mask_file);
-                }
-                else if(dim == 4)
-                {
-                    CropImageUsingMask<4, unsigned int>(input_file, output_file, mask_file);
-                }
-                else
-                {
-                    std::cerr << "unsupported dimension" << std::endl;
-                    exit( EXIT_FAILURE );
-                }
-                break;
-
-            case btk::IOImageHelper::Double:
-                if(dim == 3)
-                {
-                    CropImageUsingMask<3, double>(input_file, output_file, mask_file);
-                }
-                else if(dim == 4)
-                {
-                    CropImageUsingMask<4, double>(input_file, output_file, mask_file);
-                }
-                else
-                {
-                    std::cerr << "unsupported dimension" << std::endl;
-                    exit( EXIT_FAILURE );
-                }
-                break;
-
-            case btk::IOImageHelper::Char:
-                if(dim == 3)
-                {
-                    CropImageUsingMask<3, char>(input_file, output_file, mask_file);
-                }
-                else if(dim == 4)
-                {
-                    CropImageUsingMask<4, char>(input_file, output_file, mask_file);
-                }
-                else
-                {
-                    std::cerr << "unsupported dimension" << std::endl;
-                    exit( EXIT_FAILURE );
-                }
-                break;
-
-            case btk::IOImageHelper::UChar:
-                if(dim == 3)
-                {
-                    CropImageUsingMask<3, unsigned char>(input_file, output_file, mask_file);
-                }
-                else if(dim == 4)
-                {
-                    CropImageUsingMask<4, unsigned char>(input_file, output_file, mask_file);
-                }
-                else
-                {
-                    std::cerr << "unsupported dimension" << std::endl;
-                    exit( EXIT_FAILURE );
-                }
-                break;
-
-            default:
-                std::cerr << "unsupported pixel type !" << std::endl;
-                exit( EXIT_FAILURE );
-                break;
+            btkException("The number of inputs/masks/outputs is not coherent ! There should be a mask and an output for each input !");
         }
 
+        // Check image informations
+        itk::ImageIOBase::Pointer imageIO = itk::ImageIOFactory::CreateImageIO(inputFileNames[0].c_str(), itk::ImageIOFactory::ReadMode);
+        imageIO->SetFileName(inputFileNames[0]);
+        imageIO->ReadImageInformation();
 
-        return EXIT_SUCCESS;
+        if(imageIO->GetPixelType() != itk::ImageIOBase::SCALAR)
+        {
+            btkException("Unsupported image pixel type (only scalar are supported) !");
+        }
 
+        if(imageIO->GetNumberOfDimensions() == 3)
+        {
+            switch(imageIO->GetComponentType())
+            {
+                case itk::ImageIOBase::SHORT:
+                    Process< itk::Image< short,3 >,itk::Image< unsigned char,3 >,3 >(inputFileNames, outputFileNames, maskFileNames);
+                    break;
+
+                case itk::ImageIOBase::FLOAT:
+                    Process< itk::Image< float,3 >,itk::Image< unsigned char,3 >,3 >(inputFileNames, outputFileNames, maskFileNames);
+                    break;
+
+                case itk::ImageIOBase::DOUBLE:
+                    Process< itk::Image< double,3 >,itk::Image< unsigned char,3 >,3 >(inputFileNames, outputFileNames, maskFileNames);
+                    break;
+
+                default:
+                    btkException("Unsupported component type (only short, float or double types are supported) !");
+            }
+        }
+        else if(imageIO->GetNumberOfDimensions() == 4)
+        {
+//            switch(imageIO->GetComponentType())
+//            {
+//                case itk::ImageIOBase::SHORT:
+//                    Process< btk::DiffusionSequence,itk::Image< unsigned char,3 >,4 >(inputFileNames, outputFileNames, maskFileNames);
+//                    break;
+
+//                case itk::ImageIOBase::FLOAT:
+//                    Process< btk::DiffusionSequence,itk::Image< unsigned char,3 >,4 >(inputFileNames, outputFileNames, maskFileNames);
+//                    break;
+
+//                case itk::ImageIOBase::DOUBLE:
+//                    Process< btk::DiffusionSequence,itk::Image< unsigned char,3 >,4 >(inputFileNames, outputFileNames, maskFileNames);
+//                    break;
+
+//                default:
+//                    btkException("Unsupported component type (only short, float or double types are supported) !");
+//            }
+            btkException("Dimension 4 is not implemented yet !");
+        }
+        else // imageIO->GetNumberOfDimensions() != 3 && imageIO->GetNumberOfDimensions() != 4
+        {
+            btkException("Unsupported dimension (only anatomical - 3D - or diffusion weighted - 4D - images supported) !");
+        }
     }
-
-    catch (TCLAP::ArgException &e)  // catch any exceptions
+    catch(TCLAP::ArgException &e)  // catch any exceptions
     {
         std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;
     }
-    catch (std::string &e)  // catch any exceptions
+    catch(std::string &e)  // catch any exceptions
     {
         std::cerr << "error: " << e <<std::endl;
     }
+    catch(itk::ExceptionObject &e)
+    {
+        btkCerrMacro(e.GetDescription());
+    }
+
+    return EXIT_SUCCESS;
 }
 
 

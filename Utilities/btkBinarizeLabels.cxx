@@ -51,9 +51,10 @@
 // Define label image type
 const unsigned int Dimension = 3;
 
-typedef short                                  PixelType;
-typedef itk::Image< PixelType,Dimension >      LabelImage;
-typedef itk::ImageRegionIterator< LabelImage > LabelImageIterator;
+typedef short                                       PixelType;
+typedef itk::Image< PixelType,Dimension >           LabelImage;
+typedef itk::ImageRegionIterator< LabelImage >      LabelImageIterator;
+typedef itk::ImageRegionConstIterator< LabelImage > LabelImageConstIterator;
 
 
 int main(int argc, char *argv[])
@@ -82,7 +83,7 @@ int main(int argc, char *argv[])
         // Read input image
         //
 
-        LabelImage::Pointer inputImage = btk::ImageHelper< LabelImage >::ReadImage(inputFileName);
+        LabelImage::ConstPointer inputImage = btk::ImageHelper< LabelImage >::ReadConstImage(inputFileName);
 
 
         //
@@ -97,7 +98,7 @@ int main(int argc, char *argv[])
         //
 
         LabelImageIterator outputIt(outputImage, outputImage->GetLargestPossibleRegion());
-        LabelImageIterator inputIt(inputImage, inputImage->GetLargestPossibleRegion());
+        LabelImageConstIterator inputIt(inputImage, inputImage->GetLargestPossibleRegion());
 
         for(inputIt.GoToBegin(), outputIt.GoToBegin(); !inputIt.IsAtEnd() && !outputIt.IsAtEnd(); ++inputIt, ++outputIt)
         {
