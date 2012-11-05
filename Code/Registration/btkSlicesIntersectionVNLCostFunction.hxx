@@ -55,9 +55,7 @@
 #include "btkEulerSliceBySliceTransform.h"
 #include "btkImageHelper.h"
 #include "btkMathFunctions.h"
-#include "btkHistogram.h"
-#include "btkjointhistogram.h"
-#include "btkHistogramMap.hxx"
+
 
 #include  "cfloat"
 #include "sstream"
