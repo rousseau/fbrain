@@ -149,11 +149,11 @@ TARGET_LINK_LIBRARIES(btkImageSubtract ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkApplyMaskToImage btkApplyMaskToImage.cxx)
 TARGET_LINK_LIBRARIES(btkApplyMaskToImage ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkWarpTransformationToImage btkWarpTransformationToImage.cxx
+ADD_EXECUTABLE(btkApplyTransformationToImage btkApplyTransformationToImage.cxx
     ${fbrain_SOURCE_DIR}/Code/Transformations/btkSliceBySliceTransform.h
-    ${fbrain_SOURCE_DIR}/Code/ImageFilters/btkWarpTransformToImageFilter.h
+    ${fbrain_SOURCE_DIR}/Code/ImageFilters/btkApplyTransformToImageFilter.h
 )
-TARGET_LINK_LIBRARIES(btkWarpTransformationToImage ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkApplyTransformationToImage ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkFCMClassification btkFCMClassification.cxx
     ${fbrain_SOURCE_DIR}/Code/Segmentation/btkFCMClassifier.h
@@ -237,7 +237,7 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkSimulateMotionSliceBySlice
                 btkImageSubtract
                 btkApplyMaskToImage
-                btkWarpTransformationToImage
+                btkApplyTransformationToImage
                 btkFCMClassification
                 btkImageMorphologicalClosing
                 btkImageMorphologicalTopHat
