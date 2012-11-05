@@ -138,7 +138,7 @@ namespace btk
              * @return True if the two images are in the same physical space, false otherwise.
              */
 
-            static bool IsInSamePhysicalSpace(std::vector< typename TImageInput::Pointer > &images, double epsilon = 10e-7);
+            static bool IsInSamePhysicalSpace(const std::vector< typename TImageInput::Pointer > &images, double epsilon = 10e-7);
             
              /**
              * @brief Read an image if the file exist, otherwise create an image with a constant pixel value.

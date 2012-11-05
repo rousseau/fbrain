@@ -198,7 +198,7 @@ bool ImageHelper< TImageInput, TImageOutput >::IsInSamePhysicalSpace(typename TI
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
-bool ImageHelper< TImageInput, TImageOutput >::IsInSamePhysicalSpace(std::vector< typename TImageInput::Pointer > &images, double epsilon)
+bool ImageHelper< TImageInput, TImageOutput >::IsInSamePhysicalSpace(const std::vector< typename TImageInput::Pointer > &images, double epsilon)
 {
     bool isInSameSpace = true;
 
