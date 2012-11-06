@@ -84,6 +84,7 @@ AffineRegistration<ImageType>
   // Configure optimizer
 
   m_Optimizer->MinimizeOn();
+  //m_Optimizer->MaximizeOn();
   m_Optimizer->SetMaximumStepLength( 0.2 );
   m_Optimizer->SetMinimumStepLength( 0.001 );
   m_Optimizer->SetNumberOfIterations( m_Iterations );

@@ -1,20 +1,20 @@
-#ifndef __BTK_WARPTRANSFORMTOIMAGEFILTER_TXX__
-#define __BTK_WARPTRANSFORMTOIMAGEFILTER_TXX__
+#ifndef __BTK_APPLYTRANSFORMTOIMAGEFILTER_TXX__
+#define __BTK_APPLYTRANSFORMTOIMAGEFILTER_TXX__
 
-#include "btkWarpTransformToImageFilter.h"
+#include "btkApplyTransformToImageFilter.h"
 
 
 namespace btk
 {
 template<typename TImageIn, typename TImageOut>
-WarpTransformToImageFilter<TImageIn,TImageOut>::WarpTransformToImageFilter()
+ApplyTransformToImageFilter<TImageIn,TImageOut>::ApplyTransformToImageFilter()
 {
     m_Resampler = Resampler::New();
 
 }
 //-------------------------------------------------------------------------------------------
 template<typename TImageIn, typename TImageOut>
-WarpTransformToImageFilter<TImageIn,TImageOut>::~WarpTransformToImageFilter()
+ApplyTransformToImageFilter<TImageIn,TImageOut>::~ApplyTransformToImageFilter()
 {
     m_Resampler = NULL;
     m_Transform = NULL;
@@ -24,7 +24,7 @@ WarpTransformToImageFilter<TImageIn,TImageOut>::~WarpTransformToImageFilter()
 }
 //-------------------------------------------------------------------------------------------
 template<typename TImageIn, typename TImageOut>
-void WarpTransformToImageFilter<TImageIn,TImageOut>::Initialize()
+void ApplyTransformToImageFilter<TImageIn,TImageOut>::Initialize()
 {
     if(!m_Transform)
     {
@@ -44,7 +44,7 @@ void WarpTransformToImageFilter<TImageIn,TImageOut>::Initialize()
 }
 //-------------------------------------------------------------------------------------------
 template<typename TImageIn, typename TImageOut>
-void WarpTransformToImageFilter<TImageIn,TImageOut>::Update()
+void ApplyTransformToImageFilter<TImageIn,TImageOut>::Update()
 {
     try
     {

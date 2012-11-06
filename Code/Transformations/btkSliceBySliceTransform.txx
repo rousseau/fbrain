@@ -44,33 +44,30 @@
 namespace btk
 {
 
-template <class TScalarType,unsigned int NDimensions>
-typename SliceBySliceTransform<TScalarType,NDimensions>::OutputPointType
-SliceBySliceTransform<TScalarType,NDimensions>
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
+typename SliceBySliceTransform<TScalarType,NDimensions,TPixelType>::OutputPointType
+SliceBySliceTransform<TScalarType,NDimensions,TPixelType>
 ::TransformPoint(const InputPointType& p ) const
 {
-  OutputPointType Tp( p );
-  typename ImageType::IndexType index;
-  m_Image -> TransformPhysicalPointToIndex( Tp , index);
-//  std::cout<<"Physical Point : "<<Tp<<std::endl;
-//  std::cout<<"Index : "<<index[0]<<" ; "<<index[1]<<" ; "<<index[2]<<std::endl;
-//  std::cout<<"transform slice n :"<<index[2]<<"/"<<m_TransformList.size()<<std::endl<<std::endl;
-  int a, b,c, d;
-  a = index[0];
-  b = index[1];
-  c = index[2];
-  index[2] = index[2] < 0 ? 0 : index[2];
-  index[2] = index[2] > m_TransformList.size()-1 ? m_TransformList.size()-1 : index[2];
+    OutputPointType Tp( p );
+    typename ImageType::IndexType index;
+    m_Image -> TransformPhysicalPointToIndex( Tp , index);
 
-  d = index[2];
-  Tp = m_TransformList[ index[2] ] -> TransformPoint( Tp );
+    if(index[2] < 0 || index[2] > m_TransformList.size() -1 )
+    {
+        Tp = p;
+    }
+    else
+    {
+        Tp = m_TransformList[ index[2] ] -> TransformPoint( Tp );
+    }
 
-  return Tp;
+    return Tp;
 }
 
-template <class TScalarType,unsigned int NDimensions>
-typename SliceBySliceTransform<TScalarType,NDimensions>::OutputVectorType
-SliceBySliceTransform<TScalarType,NDimensions>::
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
+typename SliceBySliceTransform<TScalarType,NDimensions,TPixelType>::OutputVectorType
+SliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
 TransformVector(const InputVectorType& p) const
 {
   OutputVectorType Tp( p );
@@ -82,9 +79,9 @@ TransformVector(const InputVectorType& p) const
   return Tp;
 }
 
-template <class TScalarType,unsigned int NDimensions>
-typename SliceBySliceTransform<TScalarType,NDimensions>::OutputVnlVectorType
-SliceBySliceTransform<TScalarType,NDimensions>::
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
+typename SliceBySliceTransform<TScalarType,NDimensions,TPixelType>::OutputVnlVectorType
+SliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
 TransformVector(const InputVnlVectorType &p ) const
 {
   OutputVnlVectorType Tp( p );
@@ -96,9 +93,9 @@ TransformVector(const InputVnlVectorType &p ) const
   return Tp;
 }
 
-template <class TScalarType,unsigned int NDimensions>
-typename SliceBySliceTransform<TScalarType,NDimensions>::OutputCovariantVectorType
-SliceBySliceTransform<TScalarType,NDimensions>::
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
+typename SliceBySliceTransform<TScalarType,NDimensions,TPixelType>::OutputCovariantVectorType
+SliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
 TransformCovariantVector( const InputCovariantVectorType &p ) const
 {
   OutputCovariantVectorType Tp( p );
@@ -110,9 +107,9 @@ TransformCovariantVector( const InputCovariantVectorType &p ) const
   return Tp;
 }
 
-template <class TScalarType,unsigned int NDimensions>
-const typename SliceBySliceTransform<TScalarType,NDimensions>::JacobianType&
-SliceBySliceTransform<TScalarType,NDimensions>::
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
+const typename SliceBySliceTransform<TScalarType,NDimensions,TPixelType>::JacobianType&
+SliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
 GetJacobian(const InputPointType &p ) const
 {
 
@@ -135,8 +132,8 @@ GetJacobian(const InputPointType &p ) const
   return this->m_Jacobian;
 
 }
-template <class TScalarType,unsigned int NDimensions>
-void SliceBySliceTransform<TScalarType,NDimensions>::
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
+void SliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
 ComputeJacobianWithRespectToParameters( const InputPointType & p, JacobianType &_jacobian ) const
 {
 
@@ -158,19 +155,22 @@ ComputeJacobianWithRespectToParameters( const InputPointType & p, JacobianType &
   this->m_Jacobian = _jacobian;
 
 }
-template <class TScalarType,unsigned int NDimensions>
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
 void
-SliceBySliceTransform<TScalarType,NDimensions>::
+SliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
 SetImage( ImageType * image)
 {
   m_Image = image;
+
 }
 
-template <class TScalarType,unsigned int NDimensions>
+
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
 void
-SliceBySliceTransform<TScalarType,NDimensions>::
+SliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
 Initialize()
 {
+
   typename ImageType::SizeType size = m_Image -> GetLargestPossibleRegion().GetSize();
 
   m_NumberOfSlices = size[2];
@@ -199,9 +199,9 @@ Initialize()
   this -> Modified();
 }
 
-template <class TScalarType,unsigned int NDimensions>
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
 void
-SliceBySliceTransform<TScalarType,NDimensions>::
+SliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
 Initialize( TransformBase * t )
 {
   typename ImageType::SizeType size = m_Image -> GetLargestPossibleRegion().GetSize();
@@ -237,9 +237,9 @@ Initialize( TransformBase * t )
   this -> Modified();
 }
 
-template <class TScalarType,unsigned int NDimensions>
-const typename SliceBySliceTransform<TScalarType,NDimensions>::ParametersType&
-SliceBySliceTransform<TScalarType,NDimensions>::GetParameters(void) const
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
+const typename SliceBySliceTransform<TScalarType,NDimensions,TPixelType>::ParametersType&
+SliceBySliceTransform<TScalarType,NDimensions,TPixelType>::GetParameters(void) const
 {
   for(unsigned int i=0; i<m_NumberOfSlices; i++)
   {
@@ -255,9 +255,9 @@ SliceBySliceTransform<TScalarType,NDimensions>::GetParameters(void) const
 
 }
 
-template <class TScalarType,unsigned int NDimensions>
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
 void
-SliceBySliceTransform<TScalarType,NDimensions>::
+SliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
 SetParameters( const ParametersType & parameters )
 {
 
@@ -277,9 +277,9 @@ SetParameters( const ParametersType & parameters )
   this -> Modified();
 }
 
-template <class TScalarType,unsigned int NDimensions>
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
 void
-SliceBySliceTransform<TScalarType,NDimensions>::
+SliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
 SetFixedParameters( const ParametersType & fp )
 {
   this -> m_FixedParameters = fp;
@@ -318,9 +318,9 @@ SetFixedParameters( const ParametersType & fp )
 
 }
 
-template <class TScalarType,unsigned int NDimensions>
-const typename SliceBySliceTransform<TScalarType,NDimensions>::ParametersType&
-SliceBySliceTransform<TScalarType,NDimensions>::
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
+const typename SliceBySliceTransform<TScalarType,NDimensions,TPixelType>::ParametersType&
+SliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
 GetFixedParameters(void) const
 {
   this->m_FixedParameters.SetSize ( NDimensions * m_NumberOfSlices + 1 );
@@ -337,9 +337,9 @@ GetFixedParameters(void) const
   return this->m_FixedParameters;
 }
 
-template <class TScalarType,unsigned int NDimensions>
+template <class TScalarType,unsigned int NDimensions, typename TPixelType>
 void
-SliceBySliceTransform<TScalarType,NDimensions>::
+SliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
 GetInverse(Self* inverse) const
 {
     inverse->SetFixedParameters(this->GetFixedParameters());

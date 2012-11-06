@@ -53,17 +53,17 @@ namespace btk
 {
 
 
-template <class TScalarType,unsigned int NDimensions=3>
-class EulerSliceBySliceTransform  : public SliceBySliceTransformBase<TScalarType,NDimensions>
+template <class TScalarType,unsigned int NDimensions=3, typename TPixelType = float >
+class EulerSliceBySliceTransform  : public SliceBySliceTransformBase<TScalarType,NDimensions, TPixelType>
 {
 public:
   /** Standard class typedefs. */
   typedef EulerSliceBySliceTransform  Self;
-  typedef SliceBySliceTransformBase<TScalarType,NDimensions> Superclass;
+  typedef SliceBySliceTransformBase<TScalarType,NDimensions, TPixelType> Superclass;
   typedef itk::MatrixOffsetTransformBase< TScalarType, NDimensions> TransformBase;
   typedef itk::Euler3DTransform< TScalarType > TransformType;
 
-  typedef itk::Image< float,NDimensions > ImageType;
+  typedef itk::Image< TPixelType,NDimensions > ImageType;
   typedef typename ImageType::Pointer ImagePointerType;
 
   typedef itk::ContinuousIndex<double, NDimensions > ContinuousIndexType;
@@ -151,6 +151,12 @@ public:
   {
     m_TransformList[i] -> SetParameters( parameters );
     this -> Modified();
+  }
+
+  /** Get the parameters for a slice. */
+  virtual ParametersType GetSliceParameters(unsigned int i)
+  {
+      return m_TransformList[i]->GetParameters();
   }
 
   /** Initialize with the identity. */

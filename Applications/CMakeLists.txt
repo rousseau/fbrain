@@ -6,7 +6,9 @@ INCLUDE_DIRECTORIES(
     ${Code_SOURCE_DIR}/Tools
     ${Code_SOURCE_DIR}/Maths
     ${Code_SOURCE_DIR}/Transformations
+
 )
+
 
 # ---- Denoising ------------------------------------------------------------------------
 
@@ -36,18 +38,19 @@ INCLUDE_DIRECTORIES(
     ${Code_SOURCE_DIR}/Diffusion
     ${Code_SOURCE_DIR}/Segmentation
     ${Code_SOURCE_DIR}/Transformations
+    ${Code_SOURCE_DIR}/Registration
 )
 
 ADD_EXECUTABLE(btkImageReconstruction btkImageReconstruction.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLowToHighImageResolutionMethod.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceRigidRegistration.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceAffineRegistration.h
+    ${fbrain_SOURCE_DIR}/Code/Registration/btkSliceBySliceRigidRegistration.h
+    ${fbrain_SOURCE_DIR}/Code/Registration/btkSliceBySliceAffineRegistration.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkResampleImageByInjectionFilter.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
+    ${fbrain_SOURCE_DIR}/Code/Transformations/btkSliceBySliceTransform.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkImageIntersectionCalculator.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRegistration.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkAffineRegistration.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRigidRegistration.h
+    ${fbrain_SOURCE_DIR}/Code/Registration/btkRegistration.h
+    ${fbrain_SOURCE_DIR}/Code/Registration/btkAffineRegistration.h
+    ${fbrain_SOURCE_DIR}/Code/Registration/btkRigidRegistration.h
 )
 TARGET_LINK_LIBRARIES(btkImageReconstruction btkToolsLibrary ${ITK_LIBRARIES})
 
@@ -64,8 +67,8 @@ ADD_EXECUTABLE(btkSuperResolution btkSuperResolution.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSimulateLRImageFilter.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkCreateHRMaskFilter.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkCreateHRMaskFilter.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkMseCostFunction.h
+    ${fbrain_SOURCE_DIR}/Code/Transformations/btkSliceBySliceTransform.h
+    ${fbrain_SOURCE_DIR}/Code/Registration/btkMseCostFunction.h
     ${fbrain_SOURCE_DIR}/Code/Denoising/btkNLMTool.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionRigidImageFilter.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionAffineImageFilter.h
@@ -101,14 +104,15 @@ ADD_EXECUTABLE(btkSuperResolutionFilterTest btkSuperResolutionFilterTest.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSimulateLRImageFilter.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkCreateHRMaskFilter.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkCreateHRMaskFilter.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkMseCostFunction.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceRigidRegistration.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceAffineRegistration.h
-    #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
+    ${fbrain_SOURCE_DIR}/Code/Transformations/btkSliceBySliceTransform.h
+    ${fbrain_SOURCE_DIR}/Code/Registration/btkMseCostFunction.h
+    ${fbrain_SOURCE_DIR}/Code/Registration/btkSliceBySliceRigidRegistration.h
+    ${fbrain_SOURCE_DIR}/Code/Registration/btkSliceBySliceAffineRegistration.h
+    #${fbrain_SOURCE_DIR}/Code/Transformations/btkSliceBySliceTransform.h
     #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkMseCostFunction.h
 )
-TARGET_LINK_LIBRARIES(btkSuperResolutionFilterTest btkToolsLibrary ${ITK_LIBRARIES})
+
+TARGET_LINK_LIBRARIES(btkSuperResolutionFilterTest btkToolsLibrary btkMathsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkGroupwiseS2SDistortionCorrection btkGroupwiseS2SDistortionCorrection.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolation.h
@@ -149,11 +153,11 @@ ADD_EXECUTABLE(btk3DSuperResolution btk3DSuperResolution.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSimulateLRImageFilter.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkCreateHRMaskFilter.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkCreateHRMaskFilter.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkMseCostFunction.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceRigidRegistration.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceAffineRegistration.h
-    #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSliceBySliceTransform.h
+    ${fbrain_SOURCE_DIR}/Code/Transformations/btkSliceBySliceTransform.h
+    ${fbrain_SOURCE_DIR}/Code/Registration/btkMseCostFunction.h
+    ${fbrain_SOURCE_DIR}/Code/Registration/btkSliceBySliceRigidRegistration.h
+    ${fbrain_SOURCE_DIR}/Code/Registration/btkSliceBySliceAffineRegistration.h
+    #${fbrain_SOURCE_DIR}/Code/Transformations/btkSliceBySliceTransform.h
     #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkMseCostFunction.h
 )
 
@@ -168,17 +172,26 @@ ADD_EXECUTABLE(btkRBFInterpolationS2S btkRBFInterpolationS2S.cxx
     ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
 )
 
+
 TARGET_LINK_LIBRARIES(btkRBFInterpolationS2S btkToolsLibrary ${ITK_LIBRARIES} ${ANN_LIBRARY})
 
-INSTALL(TARGETS
-    btkImageReconstruction
-    btkLabelPropagation
-    btkSuperResolution
-    btkSuperResolutionFilterTest
-    btk3DSuperResolution
-    btkGroupwiseS2SDistortionCorrection
-    btkRBFInterpolationS2S
-DESTINATION bin)
+ADD_EXECUTABLE(btkIntersectionRegistration btkIntersectionRegistration.cxx
+${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h
+${fbrain_SOURCE_DIR}/Code/Registration/btkSlicesIntersectionVNLCostFunction.hxx
+${fbrain_SOURCE_DIR}/Code/Registration/btkSlicesIntersectionITKCostFunction.hxx)
+
+TARGET_LINK_LIBRARIES(btkIntersectionRegistration btkToolsLibrary btkMathsLibrary ${ITK_LIBRARIES})
+
+INSTALL(TARGETS btkImageReconstruction
+                btkLabelPropagation
+                btkSuperResolution
+                btkSuperResolutionFilterTest
+                btkGroupwiseS2SDistortionCorrection
+                btkRBFInterpolationS2S
+                btkIntersectionRegistration
+        DESTINATION bin)
+
+
 
 # ---- Tractography ---------------------------------------------------------------------
 

@@ -46,14 +46,14 @@
 #include "itkContinuousIndex.h"
 #include "list"
 
-#include "../Transformations/btkSliceBySliceTransformBase.h"
+#include "btkSliceBySliceTransformBase.h"
 
 namespace btk
 {
 using namespace itk;
 
-template <class TScalarType,unsigned int NDimensions=3>
-class SliceBySliceTransform  : public SliceBySliceTransformBase<TScalarType,NDimensions>
+template <class TScalarType,unsigned int NDimensions=3, typename TPixelType = float >
+class SliceBySliceTransform  : public SliceBySliceTransformBase<TScalarType,NDimensions, TPixelType>
 {
 public:
   /** Standard class typedefs. */
@@ -63,7 +63,7 @@ public:
   //typedef itk::MatrixOffsetTransformBase<TScalarType, NDimensions> TransformBase;
   typedef Euler3DTransform< TScalarType > TransformType;
 
-  typedef Image< float,NDimensions > ImageType;
+  typedef Image< TPixelType,NDimensions > ImageType;
   typedef typename ImageType::Pointer ImagePointerType;
 
   typedef ContinuousIndex<double, NDimensions > ContinuousIndexType;
@@ -129,6 +129,9 @@ public:
   /** Set the image where the transformation is defined. */
   void SetImage( ImageType * image);
 
+  /** Set the number of slice of the image where the transformation is defined */
+  void SetNumberOfSlices(int numberOfSlices);
+
   /** Get the Transformation Parameters. */
   const ParametersType& GetParameters(void) const;
 
@@ -151,6 +154,12 @@ public:
   {
     m_TransformList[i] -> SetParameters( parameters );
     this -> Modified();
+  }
+
+  /** Get the parameters for a slice. */
+  virtual ParametersType GetSliceParameters(unsigned int i)
+  {
+      return m_TransformList[i]->GetParameters();
   }
 
   /** Initialize with the identity. */
@@ -182,6 +191,7 @@ private:
   ImagePointerType 		 m_Image;
   unsigned int 				 m_NumberOfSlices;
   unsigned int 				 m_ParametersPerSlice;
+
 
   /** Temporary storage for transformation Jacobian. */
   mutable JacobianType m_Jacobian;

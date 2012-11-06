@@ -160,7 +160,7 @@ std::vector< typename TImageOutput::Pointer > &ImageHelper< TImageInput, TImageO
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
-bool ImageHelper< TImageInput, TImageOutput >::IsInSamePhysicalSpace(typename TImageInput::Pointer firstImage, typename TImageInput::Pointer secondImage)
+bool ImageHelper< TImageInput, TImageOutput >::IsInSamePhysicalSpace(typename TImageInput::Pointer firstImage, typename TImageInput::Pointer secondImage, double epsilon)
 {
     typename TImageInput::SizeType            firstSize = firstImage->GetLargestPossibleRegion().GetSize();
     typename TImageInput::SizeType           secondSize = secondImage->GetLargestPossibleRegion().GetSize();
@@ -171,13 +171,34 @@ bool ImageHelper< TImageInput, TImageOutput >::IsInSamePhysicalSpace(typename TI
     typename TImageInput::DirectionType  firstDirection = firstImage->GetDirection();
     typename TImageInput::DirectionType secondDirection = secondImage->GetDirection();
 
-    return ( firstSize == secondSize && firstSpacing == secondSpacing && firstOrigin == secondOrigin && firstDirection == secondDirection );
+    bool SameSize, SameSpacing, SameOrigin, SameDirection;
+    SameSize = SameSpacing = SameOrigin = SameDirection = true;
+
+    const unsigned int Dim =  TImageInput::ImageDimension;
+
+    SameSize = (firstSize == secondSize);
+
+    for(unsigned int i = 0; i<Dim; i++)
+    {
+        SameSpacing = SameSpacing && (std::abs(firstSpacing[i] - secondSpacing[i]) < epsilon);
+
+        SameOrigin = SameOrigin && (std::abs(firstOrigin[i] - secondOrigin[i]) < epsilon);
+
+
+        for(unsigned int j= 0; j<Dim; j++)
+        {
+            SameDirection = SameDirection && (std::abs(firstDirection(i,j) - secondDirection(i,j)) < epsilon);
+        }
+    }
+
+    return (SameSize && SameDirection && SameOrigin && SameSpacing);
+
 }
 
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
-bool ImageHelper< TImageInput, TImageOutput >::IsInSamePhysicalSpace(const std::vector< typename TImageInput::Pointer > &images)
+bool ImageHelper< TImageInput, TImageOutput >::IsInSamePhysicalSpace(const std::vector< typename TImageInput::Pointer > &images, double epsilon)
 {
     bool isInSameSpace = true;
 
@@ -188,18 +209,38 @@ bool ImageHelper< TImageInput, TImageOutput >::IsInSamePhysicalSpace(const std::
         typename TImageInput::PointType        firstOrigin = images[0]->GetOrigin();
         typename TImageInput::DirectionType firstDirection = images[0]->GetDirection();
 
-        unsigned int i = 1;
+        unsigned int im = 1;
 
-        while(i < images.size() && isInSameSpace)
+        bool SameSize, SameSpacing, SameOrigin, SameDirection;
+        SameSize = SameSpacing = SameOrigin = SameDirection = true;
+
+        while(im < images.size() && isInSameSpace)
         {
-            typename TImageInput::SizeType           secondSize = images[i]->GetLargestPossibleRegion().GetSize();
-            typename TImageInput::SpacingType     secondSpacing = images[i]->GetSpacing();
-            typename TImageInput::PointType        secondOrigin = images[i]->GetOrigin();
-            typename TImageInput::DirectionType secondDirection = images[i]->GetDirection();
+            typename TImageInput::SizeType           secondSize = images[im]->GetLargestPossibleRegion().GetSize();
+            typename TImageInput::SpacingType     secondSpacing = images[im]->GetSpacing();
+            typename TImageInput::PointType        secondOrigin = images[im]->GetOrigin();
+            typename TImageInput::DirectionType secondDirection = images[im]->GetDirection();
 
-            isInSameSpace = ( firstSize == secondSize && firstSpacing == secondSpacing && firstOrigin == secondOrigin && firstDirection == secondDirection );
+            const unsigned int Dim =  TImageInput::ImageDimension;
 
-            i++;
+            SameSize = (firstSize == secondSize);
+
+            for(unsigned int i = 0; i<Dim; i++)
+            {
+                SameSpacing = SameSpacing && (std::abs(firstSpacing[i] - secondSpacing[i]) < epsilon);
+
+                SameOrigin = SameOrigin && (std::abs(firstOrigin[i] - secondOrigin[i]) < epsilon);
+
+
+                for(unsigned int j= 0; j<Dim; j++)
+                {
+                    SameDirection = SameDirection && (std::abs(firstDirection(i,j) - secondDirection(i,j)) < epsilon);
+                }
+            }
+
+            isInSameSpace = (SameSize && SameDirection && SameOrigin && SameSpacing);
+
+            im++;
         } // for each other image
     }
 

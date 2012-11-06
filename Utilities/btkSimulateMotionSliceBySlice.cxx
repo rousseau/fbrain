@@ -37,6 +37,7 @@
 #include "btkAffineSliceBySliceTransform.h"
 #include "btkEulerSliceBySliceTransform.h"
 #include "btkImageHelper.h"
+#include "btkIOTransformHelper.h"
 
 /* ITK */
 #include "itkImage.h"
@@ -60,6 +61,7 @@ int main(int argc, char* argv[])
     TCLAP::CmdLine cmd("SimulateMotionSliceBySlice, Apply transformations on slices of input image.", ' ', "Unversioned");
     TCLAP::ValueArg<std::string> inputArg("i","input","input image.",true,"","string",cmd);
     TCLAP::ValueArg<std::string> outputArg("o","output","output image.",true,"","string",cmd);
+    TCLAP::ValueArg<std::string> transArg("t","transform","output transformation.",true,"","string",cmd);
     TCLAP::ValueArg<int> motionLevelArg("l","level","level of motion. (1,2 or 3 the greater)",false,1,"int",cmd);
     TCLAP::ValueArg<double> rotationLevelArg("","rotMax","Rotation max in radian.",false,0.2,"int",cmd);
     TCLAP::ValueArg<double> translationLevelArg("","traMax","Translation max in mm.",false,1.5,"int",cmd);
@@ -73,9 +75,11 @@ int main(int argc, char* argv[])
 
     std::string inputFileName;
     std::string outputFileName;
+    std::string transformFileName;
 
     inputFileName = inputArg.getValue();
     outputFileName = outputArg.getValue();
+    transformFileName = transArg.getValue();
     int level = motionLevelArg.getValue();
     double rotMax = rotationLevelArg.getValue();
     double traMax = translationLevelArg.getValue();
@@ -188,6 +192,7 @@ int main(int argc, char* argv[])
 
     outputImage =  resampleFilter->GetOutput();
     btk::ImageHelper< itkImage >::WriteImage(outputImage,outputFileName);
+    btk::IOTransformHelper<RigidSliceBySliceTransformation>::WriteTransform(globalTransform,transformFileName);
 
     return EXIT_SUCCESS;
 

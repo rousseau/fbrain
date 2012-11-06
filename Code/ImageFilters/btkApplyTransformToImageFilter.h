@@ -33,8 +33,8 @@
 
 ==========================================================================*/
 
-#ifndef __BTK_WARPTRANSFORMTOIMAGEFILTER_H__
-#define __BTK_WARPTRANSFORMTOIMAGEFILTER_H__
+#ifndef __BTK_APPLYTRANSFORMTOIMAGEFILTER_H__
+#define __BTK_APPLYTRANSFORMTOIMAGEFILTER_H__
 
 /* ITK */
 #include "itkObject.h"
@@ -51,7 +51,7 @@
 namespace btk
 {
 template <typename TImageIn, typename TImageOut>
-class WarpTransformToImageFilter : public itk::Object
+class ApplyTransformToImageFilter : public itk::Object
 {
 
 public:
@@ -62,7 +62,7 @@ public:
     typedef itk::Transform<double, 3,3> itkTransform;
     typedef itk::ResampleImageFilter<itkImage,itkImageOut> Resampler;
 
-    typedef WarpTransformToImageFilter Self;
+    typedef ApplyTransformToImageFilter Self;
     typedef itk::SmartPointer<Self>         Pointer;
     typedef itk::SmartPointer<const Self>     ConstPointer;
 
@@ -82,8 +82,8 @@ public:
 
 
 protected:
-    WarpTransformToImageFilter();
-    virtual ~WarpTransformToImageFilter();
+    ApplyTransformToImageFilter();
+    virtual ~ApplyTransformToImageFilter();
 
 private:
     itkImagePointer m_InputImage;
@@ -98,6 +98,6 @@ private:
 
 }
 
-#include "btkWarpTransformToImageFilter.txx"
+#include "btkApplyTransformToImageFilter.txx"
 
 #endif // BTKWarpTRANSFORMTOIMAGEFILTER_H

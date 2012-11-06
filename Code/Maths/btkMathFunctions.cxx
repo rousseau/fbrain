@@ -45,5 +45,15 @@ unsigned int MathFunctions::factorial(unsigned int n)
     else
         return factorial(n-1) * n;
 }
+//-------------------------------------------------------------------------------------------------
+double MathFunctions::RadiansToDegrees(double rad)
+{
+    return (M_PI * rad /180);
+}
+//-------------------------------------------------------------------------------------------------
+double MathFunctions::DegreesToRadians(double deg)
+{
+    return(180 * deg/M_PI);
+}
 
 } // namespace btk

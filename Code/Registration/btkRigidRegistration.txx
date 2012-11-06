@@ -128,9 +128,9 @@ RigidRegistration<ImageType>
   }
 
   // FIXME Uncomment if MI is used instead of NC
- // m_Metric -> SetNumberOfHistogramBins( 64 );
-  //m_Metric -> UseAllPixelsOn();
-  m_Metric -> SetNumberOfSpatialSamples(0.2*this -> GetFixedImageRegion().GetNumberOfPixels());
+  m_Metric -> SetNumberOfHistogramBins( 64 );
+  m_Metric -> UseAllPixelsOn();
+  m_Metric -> SetNumberOfSpatialSamples(0.5*this -> GetFixedImageRegion().GetNumberOfPixels());
 
 
   if(std::string(m_Transform->GetNameOfClass()) == "Euler3DTransform")
@@ -138,6 +138,7 @@ RigidRegistration<ImageType>
       // Configure optimizer
 
       m_Optimizer->MinimizeOn();
+      //m_Optimizer->MaximizeOn();
       m_Optimizer->SetMaximumStepLength( 0.1 );
       m_Optimizer->SetMinimumStepLength( 0.001 );
       m_Optimizer->SetNumberOfIterations( m_Iterations );
