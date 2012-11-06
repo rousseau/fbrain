@@ -62,7 +62,7 @@ ReadTransform(std::string _fileName)
     }
     catch(itk::ExceptionObject & excpt)
     {
-        std::cerr << "Error while saving transform" << std::endl;
+        std::cerr << "Error while reading transform" << std::endl;
         std::cerr << excpt << std::endl;
         std::cout << "[FAILED]" << std::endl;
         throw excpt;
@@ -104,7 +104,7 @@ ReadTransform(std::vector< std::string >& _fileNames)
         }
         catch(itk::ExceptionObject & excpt)
         {
-            std::cerr << "Error while saving transform" << std::endl;
+            std::cerr << "Error while reading transform" << std::endl;
             std::cerr << excpt << std::endl;
             std::cout << "[FAILED]" << std::endl;
             throw excpt;
