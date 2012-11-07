@@ -99,7 +99,7 @@ int main(int argc, char * argv[])
     std::vector< std::string > mask;
     std::vector<std::string> transfoNames;
 
-    std::vector< itkImage::Pointer > inputsImages;http://www.dentistes-strasbourg-scpghl.fr/
+    std::vector< itkImage::Pointer > inputsImages;
     std::vector<MaskType::Pointer> masks;
     std::vector<itkMaskImage::Pointer> inputMasks;
 
@@ -185,7 +185,7 @@ int main(int argc, char * argv[])
         return EXIT_FAILURE;
     }
 
-    btk::ImageHelper<itkImage>::WriteImage(LowToHigh->GetOutput(), "TMP_HR.nii.gz");
+    //btk::ImageHelper<itkImage>::WriteImage(LowToHigh->GetOutput(), "TMP_HR.nii.gz");
     // Injection :
 
     std::cout<<" Done !"<<std::endl;
