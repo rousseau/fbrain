@@ -8,7 +8,7 @@ namespace btk
 //-------------------------------------------------------------------------------------------------
 template<typename TImage>
 MotionCorrectionByIntersection<TImage>::MotionCorrectionByIntersection():m_VerboseMode(false),m_MaxLoop(5),m_VerboseDbg(false)
-  ,m_CurrentError(0.0),m_UseSliceExclusion(false)
+  ,m_CurrentError(0.0),m_UseSliceExclusion(true)
 {
 
 }
@@ -51,8 +51,8 @@ void MotionCorrectionByIntersection<TImage>::Initialize()
 //        const double rotationScale = 0.05;
 //        const double translationScale = 0.001;
 
-        const double rotationScale = 90.0;
-        const double translationScale = 50.0;
+        const double rotationScale = 1.0;
+        const double translationScale = 1.0;
 
 
         //Euler angles
@@ -93,13 +93,13 @@ void MotionCorrectionByIntersection<TImage>::Update()
     initialParams.set_size(6);
     DeltaSimplex.set_size(6);
     initialParams.Fill(0);
-    DeltaSimplex[0] = 5.00;
-    DeltaSimplex[1] = 5.00;
-    DeltaSimplex[2] = 5.0;
+    DeltaSimplex[0] = 0.01;
+    DeltaSimplex[1] = 0.01;
+    DeltaSimplex[2] = 0.01;
 
-    DeltaSimplex[3] = 1.0;
-    DeltaSimplex[4] = 1.0;
-    DeltaSimplex[5] = 1.0;
+    DeltaSimplex[3] = 0.1;
+    DeltaSimplex[4] = 0.1;
+    DeltaSimplex[5] = 0.1;
 
     std::cout<<" * Registration by intersection of slices * "<<std::endl;
     std::cout<<"Processing ..."<<std::endl;
@@ -153,7 +153,7 @@ void MotionCorrectionByIntersection<TImage>::Update()
 
                     //powell.minimize(m_X);
                     powell->SetCostFunction(f.GetPointer());
-                    powell->SetOptimizeWithRestarts(false);
+                    powell->SetOptimizeWithRestarts(true);
                     powell->SetMaximize(false);
                     //powell->SetMaximumIteration( 1000 );
                     //powell->SetMaximumLineIteration(1000);
@@ -164,9 +164,9 @@ void MotionCorrectionByIntersection<TImage>::Update()
                     powell->SetInitialPosition( initialParams );
 
                    // powell->SetMaximumNumberOfIterations(10000);
-                    powell->AutomaticInitialSimplexOff();
-                    powell->SetInitialSimplexDelta(DeltaSimplex);
-                    //powell->SetScales(m_ScaleX);
+                    //powell->AutomaticInitialSimplexOff();
+                    //powell->SetInitialSimplexDelta(DeltaSimplex);
+                    powell->SetScales(m_ScaleX);
                     double initialError = f->GetValue(initialParams);
 
                     if(initialError != DBL_MAX)
@@ -233,7 +233,7 @@ void MotionCorrectionByIntersection<TImage>::Update()
 
     if(m_UseSliceExclusion)
     {
-        //this->SlicesExclusion();
+        this->SlicesExclusion();
     }
 
     std::cout<<" Done !"<<std::endl;
