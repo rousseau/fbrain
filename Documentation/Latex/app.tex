@@ -301,6 +301,10 @@ because the search space will not be explored enough.
     Finaly, the atlas construction can be achieved by calling directly the following python scripts.
 
     \begin{description}
+        \item[btkPrepareAtlasData] This optional script will split the tissue label map (named \emph{patient-name\_Tissues.nii.gz}) into separate tissue probability maps. Tissue name and label are controlled by setting up the script \emph{Scripts/btkAtlasData.py}.
+
+        Usage: \texttt{btkPrepareAtlasData.py}
+
         \item[btkCreateTemplate.py] This script will use the informations contained in the data script to produce a template normalization as output.
 
         Usage: \texttt{btkCreateTemplate.py}
