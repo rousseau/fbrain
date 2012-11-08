@@ -51,6 +51,7 @@
 #include "itkResampleImageFilter.h"
 #include "itkCastImageFilter.h"
 #include "itkImageMaskSpatialObject.h"
+#include "itkMatrixOffsetTransformBase.hxx"
 
 /* BTK */
 #include "btkImageHelper.h"
@@ -59,6 +60,8 @@
 #include "btkIOTransformHelper.h"
 #include "btkResampleImageByInjectionFilter.h"
 #include "btkSliceBySliceTransformBase.h"
+#include "btkFileHelper.h"
+#include "btkLowToHighResolutionFilter.hxx"
 
 /* OTHERS */
 #include "iostream"
@@ -72,17 +75,17 @@ int main(int argc, char * argv[])
 
     const unsigned int Dimension = 3;
     //typedef float PixelType;
-    typedef unsigned short PixelType;
+    typedef  float PixelType;
     typedef itk::Image< PixelType, Dimension > itkImage;
     typedef itk::Image< unsigned char, Dimension> itkMaskImage;
     typedef itk::ImageMaskSpatialObject<Dimension> Mask;
-    typedef itk::MatrixOffsetTransformBase<double, 3 > TransformBase;
-    typedef btk::EulerSliceBySliceTransform< double, 3, PixelType > Transform;
-    //typedef btk::LowToHighResolutionFilter<itkImage> ResampleFilter;
+    typedef itk::MatrixOffsetTransformBase<double, Dimension > TransformBase;
+    typedef btk::EulerSliceBySliceTransform< double, Dimension, PixelType > Transform;
+    typedef btk::LowToHighResolutionFilter<itkImage> HighResFilter;
     typedef btk::ResampleImageByInjectionFilter< itkImage, itkImage>  ResampleFilter;
-  typedef itk::ImageMaskSpatialObject< Dimension >  MaskType;
-      typedef btk::SliceBySliceTransformBase< double, Dimension > TransformBaseType;
-
+    typedef itk::ImageMaskSpatialObject< Dimension >  MaskType;
+    typedef btk::SliceBySliceTransformBase< double, Dimension, PixelType > TransformBaseType;
+    //typedef itk::MatrixOffsetTransformBase<double , Dimension> TransformBaseType;
 
 
     // TCLAP :
@@ -113,18 +116,68 @@ int main(int argc, char * argv[])
     inputMasks = btk::ImageHelper<itkMaskImage>::ReadImage(mask);
     masks.resize(inputMasks.size());
 
+
+    std::vector<TransformBase::Pointer> T;
+    std::vector<Transform::Pointer> Identity;
+    T.resize(inputMasks.size());
+    Identity.resize(inputMasks.size());
+
+    bool computeRegistration = true;
+
+    for(int i = 0; i< inputsImages.size(); i++)
+    {
+        T[i] = TransformBase::New();
+        T[i]->SetIdentity();
+        Identity[i] = Transform::New();
+        Identity[i]->SetImage(inputsImages[i]);
+        Identity[i]->SetIdentity();
+        Identity[i]->Initialize();
+    }
+
     //---------------------------------------------------------------------
-    btk::MotionCorrectionByIntersection<itkImage> IntersectionFilter;
+    if(computeRegistration)
+    {
+        btk::MotionCorrectionByIntersection<itkImage> IntersectionFilter;
 
 
-    IntersectionFilter.SetImages(inputsImages);
-    IntersectionFilter.SetMasks(inputMasks);
-    IntersectionFilter.SetVerboseMode(verboseMode);
-    IntersectionFilter.SetUseSliceExclusion(true);
-    IntersectionFilter.Initialize();
+        IntersectionFilter.SetImages(inputsImages);
+        IntersectionFilter.SetMasks(inputMasks);
+        IntersectionFilter.SetVerboseMode(verboseMode);
+        IntersectionFilter.SetUseSliceExclusion(true);
+        IntersectionFilter.Initialize();
+        try
+        {
+            IntersectionFilter.Update();
+        }
+        catch(itk::ExceptionObject &exp)
+        {
+            std::cout<<exp<<std::endl;
+            return EXIT_FAILURE;
+        }
+
+
+        transforms = IntersectionFilter.GetTransforms();
+    }
+    else
+    {
+       transforms =  btk::IOTransformHelper< Transform >::ReadTransform(transfoNames);
+       for(int i = 0; i< transforms.size(); i ++)
+       {
+           transforms[i]->SetImage(inputsImages[i]);
+           transforms[i]->Initialize();
+       }
+
+    }
+
+    // Construction of HighResolution image
+    std::cout<<"Perform a High Resolution image ..."<<std::endl;
+    HighResFilter::Pointer LowToHigh = HighResFilter::New();
+    LowToHigh->SetImages(inputsImages);
+    LowToHigh->SetMasks(inputMasks);
+    LowToHigh->SetTransforms(T);
     try
     {
-        IntersectionFilter.Update();
+        LowToHigh -> Update();
     }
     catch(itk::ExceptionObject &exp)
     {
@@ -132,17 +185,11 @@ int main(int argc, char * argv[])
         return EXIT_FAILURE;
     }
 
-
-    transforms = IntersectionFilter.GetTransforms();
-
-
-
-    btk::IOTransformHelper< Transform >::WriteTransform(transforms,transfoNames);
-
-
+    //btk::ImageHelper<itkImage>::WriteImage(LowToHigh->GetOutput(), "TMP_HR.nii.gz");
     // Injection :
 
-
+    std::cout<<" Done !"<<std::endl;
+    std::cout<<"Resample by Injection..."<<std::endl;
     ResampleFilter::Pointer resampler = ResampleFilter::New();
     for(unsigned int i = 0; i< inputsImages.size(); i++)
     {
@@ -150,13 +197,29 @@ int main(int argc, char * argv[])
         masks[i] -> SetImage( inputMasks[i] );
         resampler->AddInput(inputsImages[i]);
         resampler->AddRegion(masks[i]->GetAxisAlignedBoundingBoxRegion());
-        resampler->SetTransform(i,dynamic_cast<TransformBaseType*>(transforms[i].GetPointer()) );
+        resampler->SetTransform(i,static_cast<TransformBaseType*>(transforms[i].GetPointer()) );
+
     }
 
-    resampler -> Update();
+    resampler -> UseReferenceImageOn();
+    resampler -> SetReferenceImage( LowToHigh->GetOutput() );
+    resampler -> SetImageMask(LowToHigh -> GetMaskCombination());
 
+    try
+    {
+        resampler -> Update();
+    }
+    catch(itk::ExceptionObject &exp)
+    {
+        std::cout<<exp<<std::endl;
+        return EXIT_FAILURE;
+    }
+
+    std::cout<<"Done !"<<std::endl;
+
+     //TODO : Cast into unsigned short at the end !
     btk::ImageHelper<itkImage>::WriteImage(resampler->GetOutput(), "TMP_Reconstruction.nii.gz");
-
+    btk::IOTransformHelper< Transform >::WriteTransform(transforms,transfoNames);
 
 
 
