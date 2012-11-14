@@ -8,7 +8,7 @@ static int count = 0;
 //-------------------------------------------------------------------------------------------------
 template<class TImage>
 SlicesIntersectionVNLCostFunction<TImage>::SlicesIntersectionVNLCostFunction(unsigned int dim)
-    :vnl_cost_function(dim),m_NumberOfPointsOfLine(100),m_VerboseMode(false)
+    :vnl_cost_function(dim),m_NumberOfPointsOfLine(1000),m_VerboseMode(false)
 {
 
 }
@@ -47,8 +47,8 @@ void SlicesIntersectionVNLCostFunction<TImage>::Initialize()
 
         // For the center of the transform !
         ContinuousIndexType centerIndex;
-        centerIndex[0] = size[0]/2 ;
-        centerIndex[1] = size[1]/2 ;
+        centerIndex[0] = (size[0]-1)/2.0 ;
+        centerIndex[1] = (size[1]-1)/2.0 ;
         centerIndex[2] = m_MovingSliceNum ;
 
         typename ImageType::PointType center;
@@ -101,6 +101,8 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
     TransformType::Pointer InverseX = TransformType::New();
     m_Transform->GetInverse(InverseX);
 
+    //TODO: paralelize this...
+
     for(unsigned int ifixed = 0; ifixed< m_Images.size(); ifixed ++)
     {
         if(ifixed != m_MovingImageNum)
@@ -128,7 +130,7 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
                 MovingCorner3[0] = m_Images[m_MovingImageNum]->GetLargestPossibleRegion().GetSize()[0] - 1; MovingCorner3[1] = m_Images[m_MovingImageNum]->GetLargestPossibleRegion().GetSize()[1] - 1;MovingCorner3[2] = m_MovingSliceNum;
                 MovingCorner4[0] = m_Images[m_MovingImageNum]->GetLargestPossibleRegion().GetSize()[0] - 1;MovingCorner4[1] = 0; MovingCorner4[2] = m_MovingSliceNum;
 
-                FixedCorner1[0] = 0; FixedCorner1[1] = 0; FixedCorner1[2] = m_MovingSliceNum;
+                FixedCorner1[0] = 0; FixedCorner1[1] = 0; FixedCorner1[2] = sfixed;
                 FixedCorner2[0] = 0; FixedCorner2[1] = m_Images[ifixed]->GetLargestPossibleRegion().GetSize()[1] - 1; FixedCorner2[2] = sfixed;
                 FixedCorner3[0] = m_Images[ifixed]->GetLargestPossibleRegion().GetSize()[0] - 1; FixedCorner3[1] = m_Images[ifixed]->GetLargestPossibleRegion().GetSize()[1] - 1;FixedCorner3[2] = sfixed;
                 FixedCorner4[0] = m_Images[ifixed]->GetLargestPossibleRegion().GetSize()[0] - 1;FixedCorner4[1] = 0; FixedCorner4[2] = sfixed;
@@ -171,18 +173,19 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
                 for(unsigned int i = 0; i< IteratorTab.size(); i++)
                 {
 
+
                     LineIterator it = IteratorTab[i];
                     for(it.GoToBegin(); !it.IsAtEnd(); ++it)
                     {
                         CurrentIndex = it.GetIndex();
 
-                        // Iterate over corner of moving slice
+                        // Iterate over corners of moving slice
                         if(i<4)
                         {
                             m_Images[m_MovingImageNum]->TransformIndexToPhysicalPoint(CurrentIndex, CurrentPoint);
                             // Apply X
                             CurrentPoint = m_Transform->TransformPoint(CurrentPoint);
-                            // Apply Inverse of the Optimized founded transform (if not idendity)
+                            // Apply Inverse of the Optimized founded transform (if not identity)
                             CorrespondingPoint = m_InverseTransforms[ifixed]->TransformPoint(CurrentPoint);
 
                             if(m_Interpolators[ifixed]->IsInsideBuffer(CorrespondingPoint))
@@ -212,9 +215,9 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
                         else
                         {
                             m_Images[ifixed]->TransformIndexToPhysicalPoint(CurrentIndex, CurrentPoint);
-                            //Apply  of the Optimized founded transform (if not idendity)
+                            //Apply  of the Optimized founded transform (if not identity)
                             CurrentPoint = m_Transforms[ifixed]->TransformPoint(CurrentPoint);
-                            //Apply inverse of X for returning in the moving slice
+                            //Apply inverse of X for return in the moving slice space
                             CorrespondingPoint = InverseX->TransformPoint(CurrentPoint);
                             if(m_Interpolators[m_MovingImageNum]->IsInsideBuffer(CorrespondingPoint))
                             {
@@ -270,6 +273,7 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
 
                         P = Point1 + (P12 * i/m_NumberOfPointsOfLine);
 
+                        //NOTE : Maybe there is a bug with the inverse transform of a sliceBySlice Transform !!
                         Pfixed = m_InverseTransforms[ifixed]->TransformPoint(P);
                         Pmoving = InverseX->TransformPoint(P);
 
@@ -291,15 +295,22 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
                                 movingVoxel = m_Interpolators[m_MovingImageNum]->EvaluateAtContinuousIndex(IndexMoving);
                                 fixedVoxel = m_Interpolators[ifixed]->EvaluateAtContinuousIndex(IndexFixed);
 
+
                                 VoxelType SquareDiff = SquareDifference(fixedVoxel,movingVoxel);
 
                                 SumOfIntersectedVoxels += SquareDiff;
                                 NumberOfIntersectedVoxels++;
-                            }//TODO : We should do an else condition
+                            }
+                            else
+                            {
 
-                        }
+                            }
+
+
+                        }//interpolate
 
                     }
+
 
                 }
 

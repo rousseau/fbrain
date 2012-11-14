@@ -227,10 +227,10 @@ Initialize( TransformBase * t )
         m_TransformList[i] -> SetIdentity();
         //FIXME : if we set the center the transformation is not exactly the same as a global transform
         //I don't know the reason why
-        //m_TransformList[i] -> SetCenter(centerPoint);
+        m_TransformList[i] -> SetCenter(centerPoint);
         //t -> SetCenter( m_TransformList[i] -> GetCenter() );
 
-        m_TransformList[i] -> SetParameters( t -> GetParameters() );
+        //m_TransformList[i] -> SetParameters( t -> GetParameters() );
     }
 
     this -> Modified();
