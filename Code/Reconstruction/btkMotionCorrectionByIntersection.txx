@@ -51,18 +51,27 @@ void MotionCorrectionByIntersection<TImage>::Initialize()
 //        const double rotationScale = 0.05;
 //        const double translationScale = 0.001;
 
-        const double rotationScale = 1.0;
-        const double translationScale = 1.0;
+        const double rotationScale = 180.0;
+        const double translationScale = 100.0;
 
+
+//        //Euler angles
+//        m_ScaleX[0] = 1.0/rotationScale;
+//        m_ScaleX[1] = 1.0/rotationScale;
+//        m_ScaleX[2] = 1.0/rotationScale;
+//        //translation
+//        m_ScaleX[3] = 1.0/translationScale;
+//        m_ScaleX[4] = 1.0/translationScale;
+//        m_ScaleX[5] = 1.0/translationScale;
 
         //Euler angles
-        m_ScaleX[0] = 1.0/rotationScale;
-        m_ScaleX[1] = 1.0/rotationScale;
-        m_ScaleX[2] = 1.0/rotationScale;
+        m_ScaleX[0] = rotationScale;
+        m_ScaleX[1] = rotationScale;
+        m_ScaleX[2] = rotationScale;
         //translation
-        m_ScaleX[3] = 1.0/translationScale;
-        m_ScaleX[4] = 1.0/translationScale;
-        m_ScaleX[5] = 1.0/translationScale;
+        m_ScaleX[3] = translationScale;
+        m_ScaleX[4] = translationScale;
+        m_ScaleX[5] = translationScale;
 
         // reference :
 
@@ -93,20 +102,22 @@ void MotionCorrectionByIntersection<TImage>::Update()
     initialParams.set_size(6);
     DeltaSimplex.set_size(6);
     initialParams.Fill(0);
-    DeltaSimplex[0] = 0.01;
-    DeltaSimplex[1] = 0.01;
-    DeltaSimplex[2] = 0.01;
+    //    DeltaSimplex[0] = 10.0/180.0;
+    //    DeltaSimplex[1] = 10.0/180.0;
+    //    DeltaSimplex[2] = 30.0/180.0;
 
-    DeltaSimplex[3] = 0.1;
-    DeltaSimplex[4] = 0.1;
-    DeltaSimplex[5] = 0.1;
+    //    DeltaSimplex[3] = 10.0/100.0;
+    //    DeltaSimplex[4] = 10.0/100.0;
+    //    DeltaSimplex[5] = 0.0/100.0;
+
+    std::cout<<"Scales : "<<m_ScaleX<<std::endl;
 
     std::cout<<" * Registration by intersection of slices * "<<std::endl;
     std::cout<<"Processing ..."<<std::endl;
     for(unsigned loop = 0; loop < 1/*m_MaxLoop*/; loop++)
     {
 
-
+        std::cout<<"Loop N°: "<<loop+1<<std::endl;
 
         for(unsigned int i = 0; i < m_NumberOfImages; i++)
         {
@@ -153,7 +164,7 @@ void MotionCorrectionByIntersection<TImage>::Update()
 
                     //powell.minimize(m_X);
                     powell->SetCostFunction(f.GetPointer());
-                    powell->SetOptimizeWithRestarts(true);
+                    powell->SetOptimizeWithRestarts(false);
                     powell->SetMaximize(false);
                     //powell->SetMaximumIteration( 1000 );
                     //powell->SetMaximumLineIteration(1000);
@@ -163,9 +174,12 @@ void MotionCorrectionByIntersection<TImage>::Update()
 
                     powell->SetInitialPosition( initialParams );
 
-                   // powell->SetMaximumNumberOfIterations(10000);
+                    powell->SetMaximumNumberOfIterations(10000);
+
                     //powell->AutomaticInitialSimplexOff();
                     //powell->SetInitialSimplexDelta(DeltaSimplex);
+                    //std::cout<<"Delta Simplex : "<<powell->GetInitialSimplexDelta()<<std::endl;
+
                     powell->SetScales(m_ScaleX);
                     double initialError = f->GetValue(initialParams);
 
@@ -197,18 +211,15 @@ void MotionCorrectionByIntersection<TImage>::Update()
                         }
 
 
-
-
                         if(m_VerboseMode)
                         {
                             std::cout<<"Final Parameters : "<<m_X<<std::endl;
                         }
 
 
-
                         for(unsigned int x = 0; x< m_X.size(); x++)
                         {
-                            if(i <3)
+                            if(x <3)
                             {
                               params[x] = MathFunctions::DegreesToRadians(m_X[x]);
                             }
