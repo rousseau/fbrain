@@ -47,8 +47,8 @@ void SlicesIntersectionVNLCostFunction<TImage>::Initialize()
 
         // For the center of the transform !
         ContinuousIndexType centerIndex;
-        centerIndex[0] = size[0]/2 ;
-        centerIndex[1] = size[1]/2 ;
+        centerIndex[0] = (size[0]-1)/2.0 ;
+        centerIndex[1] = (size[1]-1)/2.0 ;
         centerIndex[2] = m_MovingSliceNum ;
 
         typename ImageType::PointType center;
@@ -173,12 +173,8 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
                 for(unsigned int i = 0; i< IteratorTab.size(); i++)
                 {
 
-                    //WARNING: In /home/miv/schweitzer/Dev/BinPkgs/InsightToolkit-4.0.0/Modules/Core/Common/include/itkLineConstIterator.hxx, line 151
-                    //LineConstIterator (0x7fff49a36d40): Line left region; unable to finish tracing it
-                    // comes from ++it... but corners indexes are right so it is not possible to have corners point outside image !
 
                     LineIterator it = IteratorTab[i];
-                   // std::cout<<i<<std::endl;
                     for(it.GoToBegin(); !it.IsAtEnd(); ++it)
                     {
                         CurrentIndex = it.GetIndex();
@@ -299,7 +295,6 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
                                 movingVoxel = m_Interpolators[m_MovingImageNum]->EvaluateAtContinuousIndex(IndexMoving);
                                 fixedVoxel = m_Interpolators[ifixed]->EvaluateAtContinuousIndex(IndexFixed);
 
-                                //std::cout<<" | Point : "<<i<<" | Fixed Voxel : "<<fixedVoxel<<" | Moving Voxel : "<<movingVoxel<<" |"<<std::endl;
 
                                 VoxelType SquareDiff = SquareDifference(fixedVoxel,movingVoxel);
 
@@ -308,7 +303,7 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
                             }
                             else
                             {
-                                //std::cout<<" | Point : "<<i<<" Not in masks |"<<std::endl;
+
                             }
 
 
