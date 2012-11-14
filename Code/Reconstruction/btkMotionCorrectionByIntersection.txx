@@ -42,7 +42,7 @@ void MotionCorrectionByIntersection<TImage>::Initialize()
         }
 
         m_X.set_size(6);
-        m_X.fill(0);
+        m_X.fill(0.0);
         m_ScaleX.set_size(6);
         m_ScaleX.fill(1.0);
 
@@ -59,19 +59,19 @@ void MotionCorrectionByIntersection<TImage>::Initialize()
 //        m_ScaleX[0] = 1.0/rotationScale;
 //        m_ScaleX[1] = 1.0/rotationScale;
 //        m_ScaleX[2] = 1.0/rotationScale;
-//        //translation
-//        m_ScaleX[3] = 1.0/translationScale;
-//        m_ScaleX[4] = 1.0/translationScale;
-//        m_ScaleX[5] = 1.0/translationScale;
-
-        //Euler angles
-        m_ScaleX[0] = rotationScale;
-        m_ScaleX[1] = rotationScale;
-        m_ScaleX[2] = rotationScale;
         //translation
-        m_ScaleX[3] = translationScale;
-        m_ScaleX[4] = translationScale;
-        m_ScaleX[5] = translationScale;
+        m_ScaleX[3] = 1.0/translationScale;
+        m_ScaleX[4] = 1.0/translationScale;
+        m_ScaleX[5] = 1.0/translationScale;
+
+//        //Euler angles
+//        m_ScaleX[0] = rotationScale;
+//        m_ScaleX[1] = rotationScale;
+//        m_ScaleX[2] = rotationScale;
+//        //translation
+//        m_ScaleX[3] = translationScale;
+//        m_ScaleX[4] = translationScale;
+//        m_ScaleX[5] = translationScale;
 
         // reference :
 
@@ -101,7 +101,7 @@ void MotionCorrectionByIntersection<TImage>::Update()
     typename Transform::ParametersType DeltaSimplex;
     initialParams.set_size(6);
     DeltaSimplex.set_size(6);
-    initialParams.Fill(0);
+    initialParams.Fill(0.0);
     //    DeltaSimplex[0] = 10.0/180.0;
     //    DeltaSimplex[1] = 10.0/180.0;
     //    DeltaSimplex[2] = 30.0/180.0;
@@ -110,7 +110,11 @@ void MotionCorrectionByIntersection<TImage>::Update()
     //    DeltaSimplex[4] = 10.0/100.0;
     //    DeltaSimplex[5] = 0.0/100.0;
 
-    std::cout<<"Scales : "<<m_ScaleX<<std::endl;
+    if(m_VerboseMode)
+    {
+        std::cout<<"Scales : "<<m_ScaleX<<std::endl;
+    }
+
 
     std::cout<<" * Registration by intersection of slices * "<<std::endl;
     std::cout<<"Processing ..."<<std::endl;
@@ -148,8 +152,8 @@ void MotionCorrectionByIntersection<TImage>::Update()
                     typename btk::SlicesIntersectionITKCostFunction<ImageType>::Pointer f = btk::SlicesIntersectionITKCostFunction<ImageType>::New();
                     f->SetNumberOfParameters(6);
 
-                    //itk::PowellOptimizer::Pointer powell = itk::PowellOptimizer::New();
-                    itk::AmoebaOptimizer::Pointer powell = itk::AmoebaOptimizer::New();
+                    //itk::optimizerOptimizer::Pointer optimizer = itk::optimizerOptimizer::New();
+                    itk::AmoebaOptimizer::Pointer optimizer = itk::AmoebaOptimizer::New();
 
                     f->SetVerboseMode(m_VerboseDbg);
                     f->SetImages(m_Images);
@@ -162,32 +166,30 @@ void MotionCorrectionByIntersection<TImage>::Update()
                     f->Initialize();
 
 
-                    //powell.minimize(m_X);
-                    powell->SetCostFunction(f.GetPointer());
-                    powell->SetOptimizeWithRestarts(false);
-                    powell->SetMaximize(false);
-                    //powell->SetMaximumIteration( 1000 );
-                    //powell->SetMaximumLineIteration(1000);
-                    //powell->SetMetricWorstPossibleValue(250.0);
-//                    std::cout<<powell->GetValueTolerance()<<std::endl;
-//                    std::cout<<powell->GetStepLength()<<std::endl;
+                    //optimizer.minimize(m_X);
+                    optimizer->SetCostFunction(f.GetPointer());
+                    optimizer->SetOptimizeWithRestarts(true);
+                    optimizer->SetMaximize(false);
+                    //optimizer->SetMaximumIteration( 1000 );
+                    //optimizer->SetMaximumLineIteration(1000);
+                    //optimizer->SetMetricWorstPossibleValue(250.0);
 
-                    powell->SetInitialPosition( initialParams );
+                    optimizer->SetInitialPosition( initialParams );
 
-                    powell->SetMaximumNumberOfIterations(10000);
+                    //optimizer->SetMaximumNumberOfIterations(10000);
 
-                    //powell->AutomaticInitialSimplexOff();
-                    //powell->SetInitialSimplexDelta(DeltaSimplex);
-                    //std::cout<<"Delta Simplex : "<<powell->GetInitialSimplexDelta()<<std::endl;
+                    //optimizer->AutomaticInitialSimplexOff();
+                    //optimizer->SetInitialSimplexDelta(DeltaSimplex);
 
-                    powell->SetScales(m_ScaleX);
+                    //optimizer->SetScales(m_ScaleX);
+
                     double initialError = f->GetValue(initialParams);
 
                     if(initialError != DBL_MAX)
                     {
                         try
                         {
-                            powell->StartOptimization();
+                            optimizer->StartOptimization();
                         }
                         catch(itk::ExceptionObject &obj)
                         {
@@ -195,19 +197,19 @@ void MotionCorrectionByIntersection<TImage>::Update()
                         }
 
                         // if error = max(double) there are no intersection and we do nothing with this slice
-                        //m_CurrentError = powell->GetCurrentCost();
-                        m_CurrentError = powell->GetValue();
+                        //m_CurrentError = optimizer->GetCurrentCost();
+                        m_CurrentError = optimizer->GetValue();
 
                         if(m_VerboseMode)
                         {
                             std::cout<<"Best error : "<<m_CurrentError<<std::endl;
                         }
 
-                        m_X = powell->GetCurrentPosition();
+                        m_X = optimizer->GetCurrentPosition();
 
                         if(m_CurrentError == DBL_MAX || m_CurrentError == initialError)
                         {
-                            m_X.fill(0);
+                            m_X.fill(0.0);
                         }
 
 
@@ -219,7 +221,7 @@ void MotionCorrectionByIntersection<TImage>::Update()
 
                         for(unsigned int x = 0; x< m_X.size(); x++)
                         {
-                            if(x <3)
+                            if(x < 3)
                             {
                               params[x] = MathFunctions::DegreesToRadians(m_X[x]);
                             }
@@ -234,7 +236,7 @@ void MotionCorrectionByIntersection<TImage>::Update()
 
                     }
                     this->UpdateInfos();
-                    m_X.fill(0);
+                    m_X.fill(0.0);
 
                 }
                 m_BestError[i][smov] = m_CurrentError;
