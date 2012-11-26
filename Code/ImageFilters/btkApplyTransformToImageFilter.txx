@@ -9,14 +9,12 @@ namespace btk
 template<typename TImageIn, typename TImageOut>
 ApplyTransformToImageFilter<TImageIn,TImageOut>::ApplyTransformToImageFilter()
 {
-    m_Resampler = Resampler::New();
-
+    m_OutputImage = itkImageOut::New();
 }
 //-------------------------------------------------------------------------------------------
 template<typename TImageIn, typename TImageOut>
 ApplyTransformToImageFilter<TImageIn,TImageOut>::~ApplyTransformToImageFilter()
 {
-    m_Resampler = NULL;
     m_Transform = NULL;
     m_OutputImage = NULL;
     m_InputImage = NULL;
@@ -32,15 +30,13 @@ void ApplyTransformToImageFilter<TImageIn,TImageOut>::Initialize()
     }
     if(!m_InputImage)
     {
-        btkException("Missing input image !")
+        btkException("Missing input image !");
+    }
+    if(!m_ReferenceImage)
+    {
+        btkException("Missing reference image !");
     }
 
-    m_Resampler->SetInput(m_InputImage);
-    m_Resampler->SetTransform(m_Transform);
-    m_Resampler->SetOutputOrigin(m_InputImage->GetOrigin());
-    m_Resampler->SetOutputDirection(m_InputImage->GetDirection());
-    m_Resampler->SetOutputSpacing(m_InputImage->GetSpacing());
-    m_Resampler->SetSize(m_InputImage->GetLargestPossibleRegion().GetSize());
 }
 //-------------------------------------------------------------------------------------------
 template<typename TImageIn, typename TImageOut>
@@ -48,19 +44,57 @@ void ApplyTransformToImageFilter<TImageIn,TImageOut>::Update()
 {
     try
     {
-        m_Resampler->Update();
+        this->Resample();
     }
     catch(itk::ExceptionObject & excp)
     {
-        std::cerr << "Error in the Warping" << std::endl;
+        std::cerr << "Error when apply transformation" << std::endl;
         std::cerr << excp << std::endl;
         std::cout << "[FAILED]" << std::endl;
         throw excp;
     }
 
-    this->m_OutputImage = m_Resampler->GetOutput();
 
 
+}
+template<typename TImageIn, typename TImageOut>
+void ApplyTransformToImageFilter<TImageIn,TImageOut>::Resample() throw(itk::ExceptionObject &)
+{
+    typename Interpolator::Pointer interpolator = Interpolator::New();
+    interpolator->SetInputImage(m_ReferenceImage);
+
+    m_OutputImage =  btk::ImageHelper<itkImageOut>::CreateNewImageFromPhysicalSpaceOf(m_InputImage.GetPointer());
+
+    IteratorIn it(m_InputImage, m_InputImage->GetLargestPossibleRegion());
+    IteratorOut itO(m_OutputImage, m_OutputImage->GetLargestPossibleRegion());
+
+
+    for(it.GoToBegin(), itO.GoToBegin(); !it.IsAtEnd(), !itO.IsAtEnd(); ++it, ++itO)
+    {
+        typename itkImage::IndexType index = it.GetIndex();
+        typename Interpolator::ContinuousIndexType Tindex;
+
+
+        typename itkImage::PointType point, Tpoint;
+        m_InputImage->TransformIndexToPhysicalPoint(index, point);
+
+        Tpoint = m_Transform->TransformPoint(point);
+
+
+        if(interpolator->IsInsideBuffer(Tpoint))
+        {
+            m_ReferenceImage->TransformPhysicalPointToContinuousIndex(Tpoint,Tindex);
+
+            typename itkImage::PixelType value = interpolator->EvaluateAtContinuousIndex(Tindex);
+
+            itO.Set(value);
+        }
+        else
+        {
+            itO.Set(0);
+        }
+
+    }
 }
 }
 

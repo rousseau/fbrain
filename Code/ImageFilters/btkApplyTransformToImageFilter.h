@@ -39,14 +39,18 @@
 /* ITK */
 #include "itkObject.h"
 #include "itkImage.h"
-#include "itkResampleImageFilter.h"
+#include "itkLinearInterpolateImageFunction.h"
 #include "itkTransform.h"
 #include "itkMatrixOffsetTransformBase.h"
 #include "itkSmartPointer.h"
+#include "itkImageRegionIteratorWithIndex.h"
+#include "itkContinuousIndex.h"
+
 
 /* BTK */
 
 #include "btkMacro.h"
+#include "btkImageHelper.h"
 
 namespace btk
 {
@@ -54,42 +58,51 @@ template <typename TImageIn, typename TImageOut>
 class ApplyTransformToImageFilter : public itk::Object
 {
 
-public:
-    typedef TImageIn itkImage;
-    typedef typename itkImage::Pointer itkImagePointer;
-    typedef TImageOut itkImageOut;
-    typedef typename itkImageOut::Pointer itkImageOutPointer;
-    typedef itk::Transform<double, 3,3> itkTransform;
-    typedef itk::ResampleImageFilter<itkImage,itkImageOut> Resampler;
+    public:
+        typedef TImageIn itkImage;
+        typedef typename itkImage::Pointer itkImagePointer;
+        typedef TImageOut itkImageOut;
+        typedef typename itkImageOut::Pointer itkImageOutPointer;
+        typedef itk::Transform<double, 3,3> itkTransform;
+        typedef itk::LinearInterpolateImageFunction<itkImage> Interpolator;
+        typedef itk::ImageRegionIteratorWithIndex<itkImage> IteratorIn;
+        typedef itk::ImageRegionIteratorWithIndex<itkImageOut> IteratorOut;
+        typedef itk::ContinuousIndex<itkImage> ContinuousIndexIn;
+        typedef itk::ContinuousIndex<itkImageOut> ContinuousIndexOut;
 
-    typedef ApplyTransformToImageFilter Self;
-    typedef itk::SmartPointer<Self>         Pointer;
-    typedef itk::SmartPointer<const Self>     ConstPointer;
+        typedef ApplyTransformToImageFilter Self;
+        typedef itk::SmartPointer<Self>         Pointer;
+        typedef itk::SmartPointer<const Self>     ConstPointer;
 
-    /** Method for creation through the object factory. */
-    itkNewMacro(Self);
+        /** Method for creation through the object factory. */
+        itkNewMacro(Self);
 
-    virtual void Update();
-    virtual void Initialize();
-
-    btkSetMacro(InputImage,itkImagePointer);
-    btkGetMacro(InputImage,itkImagePointer);
-
-    btkGetMacro(OutputImage,itkImageOut*);
-
-
-    btkSetMacro(Transform, itkTransform*);
+        virtual void Update();
+        virtual void Initialize();
 
 
-protected:
-    ApplyTransformToImageFilter();
-    virtual ~ApplyTransformToImageFilter();
+        btkSetMacro(InputImage,itkImagePointer);
+        btkGetMacro(InputImage,itkImagePointer);
 
-private:
-    itkImagePointer m_InputImage;
-    itkImageOut* m_OutputImage;
-    itkTransform* m_Transform;
-    typename Resampler::Pointer m_Resampler;
+        btkSetMacro(ReferenceImage, itkImagePointer);
+        btkGetMacro(ReferenceImage, itkImagePointer);
+
+        btkGetMacro(OutputImage,itkImageOutPointer);
+
+
+        btkSetMacro(Transform, itkTransform*);
+
+
+    protected:
+        ApplyTransformToImageFilter();
+        virtual ~ApplyTransformToImageFilter();
+        virtual void Resample() throw(itk::ExceptionObject &);
+
+    private:
+        itkImagePointer m_InputImage;
+        itkImagePointer m_ReferenceImage;
+        itkImageOutPointer m_OutputImage;
+        itkTransform* m_Transform;
 
 
 
