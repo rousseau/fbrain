@@ -41,11 +41,13 @@
 #include "itkEuler3DTransform.h"
 #include "itkPowellOptimizer.h"
 #include "itkAmoebaOptimizer.h"
+#include "itkRegularStepGradientDescentOptimizer.h"
 
 /* BTK */
 #include "btkEulerSliceBySliceTransform.h"
 #include "btkSlicesIntersectionITKCostFunction.hxx"
 #include "btkMathFunctions.h"
+#include "btkCenteredEulerSliceBySliceTransform.h"
 
 
 
@@ -70,7 +72,8 @@ public:
     typedef typename ImageType::PixelType Pixel;
     typedef typename ImageType::RegionType ImageRegion;
     typedef itk::Image<unsigned char, 3> MaskType;
-    typedef btk::EulerSliceBySliceTransform<double, 3, Pixel> Transform;
+    //typedef btk::EulerSliceBySliceTransform<double, 3, Pixel> Transform;
+    typedef btk::CenteredEulerSliceBySliceTransform<double, 3, Pixel> Transform;
 
 
     /** Set/Get Methods for input Images */

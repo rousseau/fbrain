@@ -43,9 +43,11 @@
 #include "itkEuler3DTransform.h"
 #include "itkImageRegionConstIteratorWithIndex.h"
 #include "itkImageRegionConstIterator.h"
+#include "itkMultipleValuedCostFunction.h"
 
 #include "btkMacro.h"
 #include "btkEulerSliceBySliceTransform.h"
+#include "btkCenteredEulerSliceBySliceTransform.h"
 #include "btkSlicesIntersectionVNLCostFunction.hxx"
 
 #include  "cfloat"
@@ -74,7 +76,8 @@ class SlicesIntersectionITKCostFunction: public itk::SingleValuedCostFunction
         typedef itk::ImageRegionIteratorWithIndex< MaskType >  MaskIterator;
         //typedef itk::MatrixOffsetTransformBase<double, 3> TransformType;
         typedef itk::Euler3DTransform<double> TransformType;
-        typedef btk::EulerSliceBySliceTransform<double,3,VoxelType> SliceBySliceTransformType;
+        //typedef btk::EulerSliceBySliceTransform<double,3,VoxelType> SliceBySliceTransformType;
+        typedef btk::CenteredEulerSliceBySliceTransform<double, 3, VoxelType> SliceBySliceTransformType;
 
         /** Run-time type information (and related methods). */
         itkTypeMacro(SlicesIntersectionITKCostFunction, CostFunction);

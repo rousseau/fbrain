@@ -8,7 +8,7 @@ namespace btk
 //-------------------------------------------------------------------------------------------------
 template<typename TImage>
 MotionCorrectionByIntersection<TImage>::MotionCorrectionByIntersection():m_VerboseMode(false),m_MaxLoop(5),m_VerboseDbg(false)
-  ,m_CurrentError(0.0),m_UseSliceExclusion(true)
+  ,m_CurrentError(0.0),m_UseSliceExclusion(false)
 {
 
 }
@@ -48,30 +48,39 @@ void MotionCorrectionByIntersection<TImage>::Initialize()
 
         //Like all itk Example
 
-//        const double rotationScale = 0.05;
-//        const double translationScale = 0.001;
+        //        const double rotationScale = 0.05;
+        //        const double translationScale = 0.001;
 
-        const double rotationScale = 180.0;
-        const double translationScale = 100.0;
+        const double rotationScale = M_PI;
+        const double translationScale = 10.0;
 
 
-//        //Euler angles
-//        m_ScaleX[0] = 1.0/rotationScale;
-//        m_ScaleX[1] = 1.0/rotationScale;
-//        m_ScaleX[2] = 1.0/rotationScale;
+        //Euler angles
+        m_ScaleX[0] = 1.0/rotationScale;
+        m_ScaleX[1] = 1.0/rotationScale;
+        m_ScaleX[2] = 1.0/rotationScale;
         //translation
         m_ScaleX[3] = 1.0/translationScale;
         m_ScaleX[4] = 1.0/translationScale;
         m_ScaleX[5] = 1.0/translationScale;
 
-//        //Euler angles
-//        m_ScaleX[0] = rotationScale;
-//        m_ScaleX[1] = rotationScale;
-//        m_ScaleX[2] = rotationScale;
-//        //translation
-//        m_ScaleX[3] = translationScale;
-//        m_ScaleX[4] = translationScale;
-//        m_ScaleX[5] = translationScale;
+        //        //Euler angles
+//                m_ScaleX[0] = rotationScale;
+//                m_ScaleX[1] = rotationScale;
+//                m_ScaleX[2] = rotationScale;
+        //        //translation
+        //        m_ScaleX[3] = translationScale;
+        //        m_ScaleX[4] = translationScale;
+        //        m_ScaleX[5] = translationScale;
+
+        //        //Euler angles
+        //        m_ScaleX[0] = 1.0;
+        //        m_ScaleX[1] = 1.0;
+        //        m_ScaleX[2] = 1.0;
+        //        //translation
+        //        m_ScaleX[3] = 1.0;
+        //        m_ScaleX[4] = 1.0;
+        //        m_ScaleX[5] = 1.0;
 
         // reference :
 
@@ -79,11 +88,11 @@ void MotionCorrectionByIntersection<TImage>::Initialize()
         m_ReferenceSlice = m_Images[m_ReferenceStack]->GetLargestPossibleRegion().GetSize()[2]/2;
 
 
-        #ifndef NDEBUG
+#ifndef NDEBUG
+        m_VerboseDbg = true;
+#else
         m_VerboseDbg = false;
-        #else
-        m_VerboseDbg = false;
-        #endif
+#endif
 
     }
 
@@ -95,20 +104,20 @@ void MotionCorrectionByIntersection<TImage>::Update()
 {
 
     typename Transform::ParametersType params;
-    params.set_size(6);
+    params.set_size(9);
 
     typename Transform::ParametersType initialParams;
     typename Transform::ParametersType DeltaSimplex;
     initialParams.set_size(6);
     DeltaSimplex.set_size(6);
     initialParams.Fill(0.0);
-    //    DeltaSimplex[0] = 10.0/180.0;
-    //    DeltaSimplex[1] = 10.0/180.0;
-    //    DeltaSimplex[2] = 30.0/180.0;
+    DeltaSimplex[0] = 0.4;
+    DeltaSimplex[1] = 0.4;
+    DeltaSimplex[2] = 0.4;
 
-    //    DeltaSimplex[3] = 10.0/100.0;
-    //    DeltaSimplex[4] = 10.0/100.0;
-    //    DeltaSimplex[5] = 0.0/100.0;
+    DeltaSimplex[3] = 10.0;
+    DeltaSimplex[4] = 10.0;
+    DeltaSimplex[5] = 10.0;
 
     if(m_VerboseMode)
     {
@@ -152,8 +161,9 @@ void MotionCorrectionByIntersection<TImage>::Update()
                     typename btk::SlicesIntersectionITKCostFunction<ImageType>::Pointer f = btk::SlicesIntersectionITKCostFunction<ImageType>::New();
                     f->SetNumberOfParameters(6);
 
-                    //itk::optimizerOptimizer::Pointer optimizer = itk::optimizerOptimizer::New();
+                    //itk::PowellOptimizer::Pointer optimizer = itk::PowellOptimizer::New();
                     itk::AmoebaOptimizer::Pointer optimizer = itk::AmoebaOptimizer::New();
+                    //itk::RegularStepGradientDescentOptimizer::Pointer optimizer = itk::RegularStepGradientDescentOptimizer::New();
 
                     f->SetVerboseMode(m_VerboseDbg);
                     f->SetImages(m_Images);
@@ -168,8 +178,15 @@ void MotionCorrectionByIntersection<TImage>::Update()
 
                     //optimizer.minimize(m_X);
                     optimizer->SetCostFunction(f.GetPointer());
-                    optimizer->SetOptimizeWithRestarts(true);
-                    optimizer->SetMaximize(false);
+                    optimizer->MinimizeOn();
+                    //m_Optimizer->MaximizeOn();
+//                    optimizer->SetMaximumStepLength( 0.1 );
+//                    optimizer->SetMinimumStepLength( 0.001 );
+//                    optimizer->SetNumberOfIterations( 200 );
+//                    optimizer->SetRelaxationFactor( 0.8 );
+                    //optimizer->SetOptimizeWithRestarts(false);
+                    //optimizer->SetMaximize(false);
+                    optimizer->SetMinimize(true) ;
                     //optimizer->SetMaximumIteration( 1000 );
                     //optimizer->SetMaximumLineIteration(1000);
                     //optimizer->SetMetricWorstPossibleValue(250.0);
@@ -181,7 +198,9 @@ void MotionCorrectionByIntersection<TImage>::Update()
                     //optimizer->AutomaticInitialSimplexOff();
                     //optimizer->SetInitialSimplexDelta(DeltaSimplex);
 
-                    //optimizer->SetScales(m_ScaleX);
+                    //optimizer->SetStepLength(1.0);
+
+                    optimizer->SetScales(m_ScaleX);
 
                     double initialError = f->GetValue(initialParams);
 
@@ -218,14 +237,16 @@ void MotionCorrectionByIntersection<TImage>::Update()
                             std::cout<<"Final Parameters : "<<m_X<<std::endl;
                         }
 
+                        params = m_Transforms[i]->GetSliceParameters(smov);
 
                         for(unsigned int x = 0; x< m_X.size(); x++)
                         {
                             if(x < 3)
                             {
-                              params[x] = MathFunctions::DegreesToRadians(m_X[x]);
+                                //params[x] = MathFunctions::DegreesToRadians(m_X[x]);
+                                params[x] = m_X[x];
                             }
-                            else
+                            else if(x > 5)
                             {
                                 params[x] = m_X[x];
                             }
@@ -333,7 +354,7 @@ void MotionCorrectionByIntersection<TImage>::SlicesExclusion()
             //if(m_BestError[im][slice] > StdDeviation[im])
             if(m_BestError[im][slice] > 1.25 * MedianValues[im])
             {
-                  m_Transforms[im]->SetSliceParameters(slice,initialParams);
+                m_Transforms[im]->SetSliceParameters(slice,initialParams);
             }
 
         }

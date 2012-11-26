@@ -53,6 +53,7 @@
 
 #include "btkMacro.h"
 #include "btkEulerSliceBySliceTransform.h"
+#include "btkCenteredEulerSliceBySliceTransform.h"
 #include "btkImageHelper.h"
 #include "btkMathFunctions.h"
 
@@ -85,7 +86,8 @@ public:
     typedef itk::ImageRegionIteratorWithIndex< MaskType >  MaskIterator;
 
     typedef itk::Euler3DTransform<double> TransformType;
-    typedef btk::EulerSliceBySliceTransform<double,3,VoxelType> SliceBySliceTransformType;
+    //typedef btk::EulerSliceBySliceTransform<double,3,VoxelType> SliceBySliceTransformType;
+    typedef btk::CenteredEulerSliceBySliceTransform<double, 3, VoxelType> SliceBySliceTransformType;
 
     typedef itk::ContinuousIndex<double, 3 > ContinuousIndexType;
 
@@ -124,6 +126,7 @@ public:
     /** Cost Function */
     double f(const vnl_vector<double> &x) const;
 
+    virtual vnl_vector<double>GetGradient(vnl_vector<double> const& x,double stepsize = 10e-8) const;
      /** Intialization */
      void Initialize();
 
@@ -158,7 +161,8 @@ private :
     MaskType::Pointer m_ReferenceMask;
     MaskType::Pointer m_MovingMask;
 
-    TransformType::Pointer m_Transform;
+    //TransformType::Pointer m_Transform;
+    typename SliceBySliceTransformType::Pointer m_Transform;
 
     TransformType::ParametersType m_Parameters;
 

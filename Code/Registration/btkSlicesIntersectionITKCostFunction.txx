@@ -76,7 +76,8 @@ SlicesIntersectionITKCostFunction<TImage>::GetValue(const ParametersType &parame
 template< typename TImage >
 void SlicesIntersectionITKCostFunction< TImage >::GetDerivative(const ParametersType &parameters, DerivativeType &derivative) const
 {
-    btkException("GetDerivative is not implemented !");
+   derivative = m_VNLCostFunction.GetGradient(parameters);
+    //btkException("GetDerivative is not implemented !");
 }
 //-------------------------------------------------------------------------------------------------
 template< typename TImage >
