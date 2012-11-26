@@ -62,6 +62,7 @@
 #include "btkSliceBySliceTransformBase.h"
 #include "btkFileHelper.h"
 #include "btkLowToHighResolutionFilter.hxx"
+#include "btkCenteredEulerSliceBySliceTransform.h"
 
 /* OTHERS */
 #include "iostream"
@@ -80,12 +81,13 @@ int main(int argc, char * argv[])
     typedef itk::Image< unsigned char, Dimension> itkMaskImage;
     typedef itk::ImageMaskSpatialObject<Dimension> Mask;
     typedef itk::MatrixOffsetTransformBase<double, Dimension > TransformBase;
-    typedef btk::EulerSliceBySliceTransform< double, Dimension, PixelType > Transform;
+    //typedef btk::EulerSliceBySliceTransform< double, Dimension, PixelType > Transform;
     typedef btk::LowToHighResolutionFilter<itkImage> HighResFilter;
     typedef btk::ResampleImageByInjectionFilter< itkImage, itkImage>  ResampleFilter;
     typedef itk::ImageMaskSpatialObject< Dimension >  MaskType;
     typedef btk::SliceBySliceTransformBase< double, Dimension, PixelType > TransformBaseType;
-    //typedef itk::MatrixOffsetTransformBase<double , Dimension> TransformBaseType;
+    //typedef itk::MatrixOffsetTransformBase<double , Dimension> TransformBaseType;*
+    typedef btk::CenteredEulerSliceBySliceTransform<double, Dimension, PixelType> Transform;
 
 
     // TCLAP :
@@ -171,6 +173,8 @@ int main(int argc, char * argv[])
 
     // Construction of HighResolution image
     std::cout<<"Perform a High Resolution image ..."<<std::endl;
+    std::vector<itkImage::Pointer> images;
+    images.resize(inputsImages.size());
     HighResFilter::Pointer LowToHigh = HighResFilter::New();
     LowToHigh->SetImages(inputsImages);
     LowToHigh->SetMasks(inputMasks);
@@ -185,7 +189,44 @@ int main(int argc, char * argv[])
         return EXIT_FAILURE;
     }
 
-    //btk::ImageHelper<itkImage>::WriteImage(LowToHigh->GetOutput(), "TMP_HR.nii.gz");
+    //--------
+//    std::vector<std::string> ResampledNames(inputsImages.size());
+//    ResampledNames[0] = "tmp1.nii.gz";
+//    ResampledNames[1] = "tmp2.nii.gz";
+//    ResampledNames[2] = "tmp3.nii.gz";
+
+//    typedef itk::ResampleImageFilter<itkImage,itkImage> ResampleType;
+
+//    for(unsigned int i = 0; i< ResampledNames.size(); i++ )
+//    {
+//        ResampleType::Pointer resampler =  ResampleType::New();
+//        resampler -> SetTransform( static_cast<TransformBase*>(transforms[i].GetPointer()) );
+//        resampler -> SetInput( inputsImages[i] );
+//        resampler -> SetReferenceImage( LowToHigh->GetOutput() );
+//        resampler -> SetUseReferenceImage( true );
+//        resampler -> SetDefaultPixelValue( 0 );
+//        try
+//        {
+//        resampler -> Update();
+//        }
+//        catch(itk::ExceptionObject & exp)
+//        {
+//            throw (exp);
+//        }
+
+//        images[i] = resampler->GetOutput();
+//    }
+
+//    //-----
+
+//    btk::ImageHelper<itkImage>::WriteImage(images, ResampledNames);
+
+
+
+
+
+    //-----
+    //
     // Injection :
 
     std::cout<<" Done !"<<std::endl;
