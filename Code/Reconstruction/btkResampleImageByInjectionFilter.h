@@ -49,9 +49,7 @@
 #include "itkSize.h"
 #include "btkUserMacro.h"
 #include "itkImageMaskSpatialObject.h"
-
-//FIXME : remove absolute path
-#include "../Transformations/btkSliceBySliceTransformBase.h"
+#include "btkSliceBySliceTransformBase.h"
 
 namespace btk
 {
