@@ -58,6 +58,8 @@ UseInRegistration = 'UseInRegistration'
 UseInRegression   = 'UseInRegression'
 ModalityWeight    = 'Weight'
 ModalityDataPath  = 'DataPath'
+IsTissueMap       = 'IsTissueMap'
+TissueLabel       = 'TissueLabel'
 
 # T2 modality
 T2Image = 'T2'
@@ -66,6 +68,8 @@ modalities[T2Image][UseInRegistration] = True
 modalities[T2Image][UseInRegression]   = True
 modalities[T2Image][ModalityWeight]    = 1
 modalities[T2Image][ModalityDataPath]  = dataPath + '/T2'
+modalities[T2Image][IsTissueMap]       = False
+modalities[T2Image][TissueLabel]       = 0
 
 # GM modality
 GMImage = 'GM'
@@ -74,6 +78,8 @@ modalities[GMImage][UseInRegistration] = True
 modalities[GMImage][UseInRegression]   = True
 modalities[GMImage][ModalityWeight]    = 1
 modalities[GMImage][ModalityDataPath]  = dataPath + '/GM'
+modalities[GMImage][IsTissueMap]       = True
+modalities[GMImage][TissueLabel]       = 1
 
 # WM modality
 WMImage = 'WM'
@@ -82,6 +88,8 @@ modalities[WMImage][UseInRegistration] = True
 modalities[WMImage][UseInRegression]   = True
 modalities[WMImage][ModalityWeight]    = 1
 modalities[WMImage][ModalityDataPath]  = dataPath + '/WM'
+modalities[WMImage][IsTissueMap]       = True
+modalities[WMImage][TissueLabel]       = 2
 
 # Cervelet modality
 CerveletImage = 'Cervelet'
@@ -90,6 +98,8 @@ modalities[CerveletImage][UseInRegistration] = True
 modalities[CerveletImage][UseInRegression]   = True
 modalities[CerveletImage][ModalityWeight]    = 1
 modalities[CerveletImage][ModalityDataPath]  = dataPath + '/Cervelet'
+modalities[CerveletImage][IsTissueMap]       = True
+modalities[CerveletImage][TissueLabel]       = 3
 
 # Brainstem modality
 BrainstemImage = 'Brainstem'
@@ -98,6 +108,8 @@ modalities[BrainstemImage][UseInRegistration] = True
 modalities[BrainstemImage][UseInRegression]   = True
 modalities[BrainstemImage][ModalityWeight]    = 1
 modalities[BrainstemImage][ModalityDataPath]  = dataPath + '/Brainstem'
+modalities[BrainstemImage][IsTissueMap]       = True
+modalities[BrainstemImage][TissueLabel]       = 4
 
 # CSF modality
 CSFImage = 'CSF'
@@ -106,6 +118,8 @@ modalities[CSFImage][UseInRegistration] = False
 modalities[CSFImage][UseInRegression]   = True
 modalities[CSFImage][ModalityWeight]    = 0
 modalities[CSFImage][ModalityDataPath]  = dataPath + '/CSF'
+modalities[CSFImage][IsTissueMap]       = True
+modalities[CSFImage][TissueLabel]       = 5
 
 # Other modality
 OtherImage = 'Other'
@@ -114,6 +128,8 @@ modalities[OtherImage][UseInRegistration] = False
 modalities[OtherImage][UseInRegression]   = True
 modalities[OtherImage][ModalityWeight]    = 0
 modalities[OtherImage][ModalityDataPath]  = dataPath + '/Other'
+modalities[OtherImage][IsTissueMap]       = True
+modalities[OtherImage][TissueLabel]       = 0
 
 
 #############################################################################
@@ -168,6 +184,8 @@ WeightedSum          = 'btkWeightedSumOfImages'
 WeightedSumAffine    = 'btkWeightedSumOfAffineTransforms'
 BinarizeMaps         = 'btkBinarizeTissueProbabilityMaps'
 InverseField         = 'btkInverseDisplacementField'
+CropUsingMask        = 'btkCropImageUsingMask'
+HistogramMatching    = 'btkHistogramMatching'
 
 AntsBinaryDir    = ''
 ANTS             = 'ANTS'

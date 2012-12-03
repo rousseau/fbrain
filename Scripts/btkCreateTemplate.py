@@ -151,7 +151,7 @@ patientReferenceToAverageAffine = '{0}/{1}toAverageAffine.txt'.format(btkAtlasDa
 patientReferenceToAverageFields = '{0}/{1}toAverageWarp.nii.gz'.format(btkAtlasData.templatePath, btkAtlasData.patientReference)
 
 goAverageAffine = '{0}{1} -o {2} '.format(btkAtlasData.BtkBinaryDir, btkAtlasData.WeightedSumAffine, patientReferenceToAverageAffine)
-goAverageFields = '{0}{1} -f -o {2} '.format(btkAtlasData.BtkBinaryDir, btkAtlasData.WeightedSum, patientReferenceToAverageFields)
+goAverageFields = '{0}{1} -o {2} '.format(btkAtlasData.BtkBinaryDir, btkAtlasData.WeightedSum, patientReferenceToAverageFields)
 
 for patient in btkAtlasData.patients:
 	if patient[0] != btkAtlasData.patientReference:
@@ -226,6 +226,26 @@ print '\tdone.'
 
 print '\tAveraging warped images...'
 
+jobs = []
+
+# Histogram matching
+for modality in btkAtlasData.modalities.keys():
+	if btkAtlasData.modalities[modality][btkAtlasData.UseInRegression] and not(btkAtlasData.modalities[modality][btkAtlasData.IsTissueMap]):
+		for patient in btkAtlasData.patients:
+			if patient != btkAtlasData.patientReference:
+				image     = '{0}/{1}toAverage_{2}.nii.gz'.format(btkAtlasData.templatePath, patient[0], modality)
+				reference = '{0}/{1}toAverage_{2}.nii.gz'.format(btkAtlasData.templatePath, btkAtlasData.patientReference, modality)
+				goHistogramMatching = '{0}{1} -i {2} -o {2} -r {3} > {2}_{1}.log 2> {2}_{1}.errlog'.format(btkAtlasData.BtkBinaryDir, btkAtlasData.HistogramMatching, image, reference)
+				jobs.append(goHistogramMatching)	
+	
+if btkAtlasData.scriptOn:
+	pool.map(os.system, jobs)
+else:
+	for job in jobs:
+		print "\t\t{0}".format(job)
+
+
+# Average
 for modality in btkAtlasData.modalities.keys():
 	if btkAtlasData.modalities[modality][btkAtlasData.UseInRegression]:
 		outputImage = '{0}/Average_{1}.nii.gz'.format(btkAtlasData.templatePath, modality)
@@ -324,6 +344,25 @@ print '\tdone.'
 #############################################################################
 
 print '\tAveraging warped images...'
+
+jobs = []
+
+# Histogram matching
+for modality in btkAtlasData.modalities.keys():
+	if btkAtlasData.modalities[modality][btkAtlasData.UseInRegression] and not(btkAtlasData.modalities[modality][btkAtlasData.IsTissueMap]):
+		for patient in btkAtlasData.patients:
+			if patient != btkAtlasData.patientReference:
+				image     = '{0}/{1}toTemplate_{2}.nii.gz'.format(btkAtlasData.templatePath, patient[0], modality)
+				reference = '{0}/{1}toTemplate_{2}.nii.gz'.format(btkAtlasData.templatePath, btkAtlasData.patientReference, modality)
+				goHistogramMatching = '{0}{1} -i {2} -o {2} -r {3} > {2}_{1}.log 2> {2}_{1}.errlog'.format(btkAtlasData.BtkBinaryDir, btkAtlasData.HistogramMatching, image, reference)
+				jobs.append(goHistogramMatching)	
+	
+if btkAtlasData.scriptOn:
+	pool.map(os.system, jobs)
+else:
+	for job in jobs:
+		print "\t\t{0}".format(job)
+
 
 for modality in btkAtlasData.modalities.keys():
 	if btkAtlasData.modalities[modality][btkAtlasData.UseInRegression]:

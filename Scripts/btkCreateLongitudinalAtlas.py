@@ -76,7 +76,7 @@ for time in numpy.arange(minAge, maxAge+btkAtlasData.timeStep/2.0, btkAtlasData.
 	outputField  = '{0}/AtlasShapeInverse-{1:.4f}.nii.gz'.format(btkAtlasData.atlasPath, time)
 
 	goRegressionAffine = '{0}{1} -o {2} '.format(btkAtlasData.BtkBinaryDir, btkAtlasData.WeightedSumAffine, outputAffine)
-	goRegressionField  = '{0}{1} -f -o {2} '.format(btkAtlasData.BtkBinaryDir, btkAtlasData.WeightedSum, outputField)
+	goRegressionField  = '{0}{1} -o {2} '.format(btkAtlasData.BtkBinaryDir, btkAtlasData.WeightedSum, outputField)
 			
 	for patient in btkAtlasData.patients:
 		affine = '{0}/{1}toTemplateAffine.txt'.format(btkAtlasData.templatePath, patient[0])
