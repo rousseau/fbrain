@@ -9,7 +9,7 @@
 
     \begin{figure}[H]
      \centering
-      \includegraphics[height=0.5\textwidth]{Btk_tree.eps}
+      \includegraphics[width=0.5\textwidth]{Btk_tree.eps}
       \caption{Tree of BTK.}
     \end{figure}
 
@@ -88,6 +88,28 @@
       \end{verbatim}
     \end{itemize}
 
+    \subsubsection{btkIOImageHelper}
+    \begin{itemize}
+    \item File : Code/Tools/btkIOImageHelper.(h/txx)
+    \item Using : Class of static fonctions for check the type of the components of an image (before reading it)
+    \item example :
+      \begin{verbatim}
+      #include "btkIOImageHelper.h"
+      
+      std::string myFile;
+
+      if(IOImageHelper::GetComponentTypeOfImageFile(myFile) == IOImageHelper::FLOAT)
+      {
+	//Read the image in float
+      }
+      else if(IOImageHelper::GetComponentTypeOfImageFile(myFile) == IOImageHelper::USHORT)
+      {
+	//Read the image in unsigned short
+      }
+      \end{verbatim}
+
+    \end{itemize}
+
     \subsubsection{btkFileHelper}
     \begin{itemize}
     \item File : Code/Tools/btkFileHelper.(h/txx)
@@ -125,7 +147,7 @@
     \subsubsection{btkMacro}
     \begin{itemize}
     \item File : Code/Tools/btkMacro.h
-    \item Using : File with some macro for Set/Get variable into classes
+    \item Using : File with some macro for Set/Get variable into classes, print error or warning, and throw exceptions
     \item example :
       \begin{verbatim}
       #include "btkMacro.h"
@@ -144,6 +166,20 @@
 
       };
       }
+
+      ...
+
+      btkWaring("This is a usefull warning !");
+
+
+      ...
+      
+      btkCerr("This print an error ! ");
+
+
+    ... 
+    
+      btkException("This is going to throw an itk::Exception (don't forget to catch ! ) ")
 
       \end{verbatim}
 
@@ -166,7 +202,7 @@
 
 /*! \namespace btk
  * 
- * namespace to contain all btk composants
+ * namespace to contain all btk components
  */
 namespace btk
 {
@@ -260,4 +296,3 @@ INSTALL(TARGETS btkTensorStreamlineTractography
 \end{verbatim}
 
 
-..TODO..
