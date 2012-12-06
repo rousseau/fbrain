@@ -1,5 +1,5 @@
 /**
- * @defgroup Maths Basic mathematical operations.
+ * @defgroup Mathematics Mathematics
  */
 
 /**
@@ -24,6 +24,10 @@
 
 /**
  * @defgroup InputOutput Input and output
+ */
+
+/**
+ * @defgroup Diffusion Diffusion
  */
 
 
