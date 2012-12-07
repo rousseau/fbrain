@@ -365,15 +365,30 @@ int main(int argc, char *argv[])
         std::cout << std::fixed;
         std::cout << std::setprecision(2);
         Display1(displayMode, std::cout << "Running tractography..." << std::endl);
-        for(labelIt.GoToBegin(); !labelIt.IsAtEnd(); ++labelIt)
-        {
-            int label = (int)labelIt.Get();
+//        for(labelIt.GoToBegin(); !labelIt.IsAtEnd(); ++labelIt)
+//        {
+        int xMax = resampledLabelVolume->GetLargestPossibleRegion().GetSize(0);
+        int yMax = resampledLabelVolume->GetLargestPossibleRegion().GetSize(1);
+        int zMax = resampledLabelVolume->GetLargestPossibleRegion().GetSize(2);
 
+
+        for(int z = 0; z < zMax; z++)
+        {
+
+            for(int y = 0; y < yMax; y++)
+            {
+                #pragma omp parallel for
+                for(int x = 0; x < xMax; x++)
+                {
+//            int label = (int)labelIt.Get();
+                    LabelMap::IndexType index;
+                    index[0] = x; index[1] = y; index[2] = z;
+                    int label = (int)resampledLabelVolume->GetPixel(index);
             if(label > 0 &&
                (select_labels.size() == 0 ||
                 *std::find(select_labels.begin(),select_labels.end(),label) == label) )
             {
-                LabelMap::IndexType index = labelIt.GetIndex();
+//                LabelMap::IndexType index = labelIt.GetIndex();
 
                 itk::Point<Real,3> worldPoint;
                 resampledLabelVolume->TransformIndexToPhysicalPoint(index, worldPoint);
@@ -615,7 +630,10 @@ int main(int argc, char *argv[])
                     numOfSeedsDone++;
                 }
             }
-        } // for each labeled voxels
+//        } // for each labeled voxels
+                }
+            }
+        }
         Display1(displayMode, std::cout << "\tProgress: 100.00%" << std::endl << "done." << std::endl);
 
         delete signalFun;
