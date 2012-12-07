@@ -8,11 +8,14 @@
 \addcontentsline{toc}{subsection}{btkApplyMaskToImage}
 \item[btkApplyMaskToImage]: Mask an image with a mask (ITK filter: MaskImageFilter).
 %------------------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{btkApplyTransformationToImage}
+\item[btkApplyTransformationToImage]: Apply an ITK or BTK transformation on a image (old btkWarpTransformationToImage).
+%------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkAverage3DImages}
 \item[btkAverage3DImages]: Compute the mean (and variance) image of a set of 3D images.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkAverageImagesWithReference}
-\item[btkAverageImagesWithReference]: ?
+\item[btkAverageImagesWithReference]: Creates a high resolution image from a set of low resolution images.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkBinarizeLabels}
 \item[btkBinarizeLabels]: Binarize one label image (depending on the label value chosen).
@@ -21,7 +24,7 @@
 \item[btkBinarizeMask]: Binarize a float image using a threshold.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkBinarizeTissueProbabilityMaps}
-\item[btkBinarizeTissueProbabilityMaps]: Binarize a set of probability maps ([0,1]) into a short image (by taking the max probability at each voxel). (pourquoi ne pas faire un truc generique?)
+\item[btkBinarizeTissueProbabilityMaps]: Binarize a set of probability maps ([0,1]) into a short image (by taking the max probability at each voxel).
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkComputeChamferDistance}
 \item[btkComputeChamferDistance]: Compute the chamfer distance.
@@ -30,7 +33,7 @@
 \item[btkComputeOverlap]: Compute the overlap (Dice coefficient and Jaccard index) between two label images.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkConvertFSLTransform}
-\item[btkConvertFSLTransform]: ?
+\item[btkConvertFSLTransform]: Convert a FSL matrix to a ITK Affine Transform, specify $--inverse$ do the opposite
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkConvertGradientTable}
 \item[btkConvertGradientTable]: Transform gradients from world to image coordinates.
@@ -56,7 +59,8 @@
 \item[btkFCMClassification]: Fuzzy C-means classification algorithm.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkHistogramMatching}
-\item[btkHistogramMatching]: Normalize the grayscale values of one image using a reference image by histogram matching (ITK filter: HistogramMatchingImageFilter).%------------------------------------------------------------------------------
+\item[btkHistogramMatching]: Normalize the grayscale values of one image using a reference image by histogram matching (ITK filter: HistogramMatchingImageFilter).
+%------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkImageGaussianFilter}
 \item[btkImageGaussianFilter]: Apply a gaussian filter on an image (ITK filter: DiscreteGaussianImageFilter).
 %------------------------------------------------------------------------------
@@ -120,7 +124,8 @@ nrrd format (*.nhdr). Usage: \texttt{-i input -o output.nhdr}
 \item[btkNrrdToNifti] This program convert an image from Nrrd file (*.nhdr and *.nrrd) to a Nifti file (*.nii or *.nii.gz). The conversion of a DWI image is possible by using the option \texttt{--dwi}. Usage: \texttt{-i input.nhdr -o output.nii.gz}. Usage for DWI sequence: \texttt{--dwi -i input.nhdr -o output.nii.gz}.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkPSNR}
-\item[btkPSNR]: Compute the PSNR between an input image and a reference image.%------------------------------------------------------------------------------
+\item[btkPSNR]: Compute the PSNR between an input image and a reference image.
+%------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkPrintImageInfo}
 \item[btkPrintImageInfo]: Prints image information (size, origin, spacing, directions, anatomical orientation, pixel type).
 %------------------------------------------------------------------------------
@@ -213,14 +218,11 @@ identify the left and right sides of the brain in the 2D views.
 \addcontentsline{toc}{subsection}{btkTranslateImageOverTemplate}
 \item[btkTranslateImageOverTemplate]: Usefull for the extraction mask pipeline, it will translate the center of image (or barycenter of masked image) on the center of the template image.
 %------------------------------------------------------------------------------
-\addcontentsline{toc}{subsection}{btkWarpTransformationToImage}
-\item[btkWarpTransformationToImage]: Apply an ITK or BTK transformation on a image.
+\addcontentsline{toc}{subsection}{btkWeightedSum}
+\item[btkWeightedMean]: Compute a weighted mean of 3D images (no check for normalized weights!).
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkWeightedSumOfAffineTransforms}
-\item[btkWeightedSumOfAffineTransforms]: Compute a weighted sum of affine transforms (weights are normalized if the option \texttt{no\_normalization} is not set).
-%------------------------------------------------------------------------------
-\addcontentsline{toc}{subsection}{btkWeightedSumOfImages}
-\item[btkWeightedMean]: Compute a weighted mean of 3D images (weights are normalized if the option \texttt{no\_normalization} is not set).
+\item[btkWeightedSumOfAffineTransforms]: Compute a weighted mean of affine transforms (no check for normalized weights!).
 %------------------------------------------------------------------------------
 
 

@@ -75,7 +75,7 @@ int ImageExtractor(std::string inputFileName, std::string outputFileName, unsign
   region.SetSize(3,0);
   region.SetIndex(3,imageIndex);
   filter->SetExtractionRegion(region);
-  filter->SetDirectionCollapseToIdentity();
+  filter->SetDirectionCollapseToSubmatrix();
   filter->Update();
 
   // Write image
