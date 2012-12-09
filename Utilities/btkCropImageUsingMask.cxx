@@ -1,65 +1,76 @@
-/*
-Copyright or © or Copr. Université de Strasbourg - Centre National de la Recherche Scientifique
+/*==========================================================================
 
-16 march 2011
-rousseau @ unistra . fr
+  © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-This software is governed by the CeCILL-B license under French law and
-abiding by the rules of distribution of free software.  You can  use, 
-modify and/ or redistribute the software under the terms of the CeCILL-B
-license as circulated by CEA, CNRS and INRIA at the following URL
-"http://www.cecill.info". 
+  Date: 26/06/2012
+  Author(s): Marc Schweitzer (marc.schweitzer@unistra.fr)
+             modified by Frederic CHAMP (champ@unistra.fr)
 
-As a counterpart to the access to the source code and  rights to copy,
-modify and redistribute granted by the license, users are provided only
-with a limited warranty  and the software's author,  the holder of the
-economic rights,  and the successive licensors  have only  limited
-liability. 
+  This software is governed by the CeCILL-B license under French law and
+  abiding by the rules of distribution of free software.  You can  use,
+  modify and/ or redistribute the software under the terms of the CeCILL-B
+  license as circulated by CEA, CNRS and INRIA at the following URL
+  "http://www.cecill.info".
 
-In this respect, the user's attention is drawn to the risks associated
-with loading,  using,  modifying and/or developing or reproducing the
-software by the user in light of its specific status of free software,
-that may mean  that it is complicated to manipulate,  and  that  also
-therefore means  that it is reserved for developers  and  experienced
-professionals having in-depth computer knowledge. Users are therefore
-encouraged to load and test the software's suitability as regards their
-requirements in conditions enabling the security of their systems and/or 
-data to be ensured and,  more generally, to use and operate it in the 
-same conditions as regards security. 
+  As a counterpart to the access to the source code and  rights to copy,
+  modify and redistribute granted by the license, users are provided only
+  with a limited warranty  and the software's author,  the holder of the
+  economic rights,  and the successive licensors  have only  limited
+  liability.
 
-The fact that you are presently reading this means that you have had
-knowledge of the CeCILL-B license and that you accept its terms.
-*/
+  In this respect, the user's attention is drawn to the risks associated
+  with loading,  using,  modifying and/or developing or reproducing the
+  software by the user in light of its specific status of free software,
+  that may mean  that it is complicated to manipulate,  and  that  also
+  therefore means  that it is reserved for developers  and  experienced
+  professionals having in-depth computer knowledge. Users are therefore
+  encouraged to load and test the software's suitability as regards their
+  requirements in conditions enabling the security of their systems and/or
+  data to be ensured and,  more generally, to use and operate it in the
+  same conditions as regards security.
 
-/* Standard includes */
-#include <tclap/CmdLine.h>
-#include "string"
-#include "iomanip"
+  The fact that you are presently reading this means that you have had
+  knowledge of the CeCILL-B license and that you accept its terms.
 
-/* Itk includes */
-#include "itkImageFileReader.h"
-#include "itkImageFileWriter.h"
+==========================================================================*/
+
+/* ITK */
 #include "itkImage.h"
-#include "itkCropImageFilter.h"
+#include "itkMaskImageFilter.h"
 #include "itkImageIOBase.h"
+#include "itkExtractImageFilter.h"
+#include "itkJoinSeriesImageFilter.h"
+#include "itkNearestNeighborInterpolateImageFunction.h"
 
-/* Btk includes */
+/* BTK */
 #include "btkImageHelper.h"
+#include "btkDiffusionSequence.h"
 #include "btkDiffusionSequenceHelper.h"
+#include "btkDiffusionSequenceFileHelper.h"
+
 #include "btkIOImageHelper.h"
 #include "btkResampleImagesToBiggestImageFilter.h"
 #include "btkWeightedSumOfImagesFilter.h"
 #include "btkCropImageUsingMaskFilter.h"
-#include "itkNearestNeighborInterpolateImageFunction.h"
+#include "btkGradientDirection.h"
+
+/* OTHERS */
+#include "iostream"
+#include <tclap/CmdLine.h>
 
 
-template< class TImage,class TMask,int Dimension >
-void Process(std::vector< std::string > &inputFileNames, std::vector< std::string > &outputFileNames, std::vector< std::string > &maskFileNames)
+// Definitions
+typedef itk::ExtractImageFilter< btk::DiffusionSequence,itk::Image< short,3 > > ExtractImageFilter;
+typedef itk::JoinSeriesImageFilter< itk::Image< short,3 >,btk::DiffusionSequence> JoinSeriesFilterType;
+
+
+
+template< class TImage,class TMask >
+void Process(std::vector< std::string > &inputFileNames, std::vector< std::string > &outputFileNames, std::vector< std::string > &maskFileNames, const int Dimension)
 {
-    // Read image files
-    std::vector< typename TImage::Pointer > inputs = /*btk::DiffusionSequenceHelper::ReadSequenceArray(inputFileNames):*/ btk::ImageHelper< TImage >::ReadImage(inputFileNames);
-    std::vector< typename TMask::Pointer >   masks = btk::ImageHelper< TMask >::ReadImage(maskFileNames);
+    // Read Masks files
 
+    std::vector< typename TMask::Pointer >   masks = btk::ImageHelper< TMask >::ReadImage(maskFileNames);
 
     // Compute the cropping mask by using the union of all masks
     typename TMask::Pointer croppingMask = NULL;
@@ -100,25 +111,101 @@ void Process(std::vector< std::string > &inputFileNames, std::vector< std::strin
     }
 
 
-    // Crop input images
-    btkCoutMacro("Cropping images... ");
+    switch(Dimension)
+    {
+        //cropping for 3D images
+        case 3:
+        {
+            std::vector< typename TImage::Pointer > inputs = btk::ImageHelper< TImage >::ReadImage(inputFileNames);
 
-    typename btk::CropImageUsingMaskFilter< TImage,TMask >::Pointer cropFilter = btk::CropImageUsingMaskFilter< TImage,TMask >::New();
-    cropFilter->SetMask(croppingMask);
-    cropFilter->SetInputs(inputs);
-    cropFilter->Update();
+            btkCoutMacro("Cropping image... ");
+            typename btk::CropImageUsingMaskFilter< TImage,TMask >::Pointer cropFilter = btk::CropImageUsingMaskFilter< TImage,TMask >::New();
+            cropFilter->SetMask(croppingMask);
+            cropFilter->SetInputs(inputs);
+            cropFilter->Update();
+            std::vector< typename TImage::Pointer > outputs = cropFilter->GetOutputs();
+            btk::ImageHelper< TImage >::WriteImage(outputs, outputFileNames);
+            btkCoutMacro("done.");
+        }
+        break;
 
-    std::vector< typename TImage::Pointer > outputs = cropFilter->GetOutputs();
+        //cropping for 4D images
+        case 4:
+        {
+            std::vector< btk::DiffusionSequence::Pointer > inputs = btk::DiffusionSequenceHelper::ReadSequenceArray(inputFileNames);
 
-    btkCoutMacro("done.");
+            ExtractImageFilter::Pointer extractor = ExtractImageFilter::New();
+            JoinSeriesFilterType::Pointer outputs  = JoinSeriesFilterType::New();
+
+            btk::DiffusionSequence::RegionType  region4D = inputs[0]->GetLargestPossibleRegion();
+            btk::DiffusionSequence::SizeType input4DSize = region4D.GetSize();
+            btk::DiffusionSequence::SizeType input3DSize;
+            input3DSize[0] = input4DSize[0];
+            input3DSize[1] = input4DSize[1];
+            input3DSize[2] = input4DSize[2];
+            input3DSize[3] = 0;
+
+            outputs->SetOrigin( inputs[0]->GetOrigin()[3] );
+            outputs->SetSpacing(inputs[0]->GetSpacing()[3] );
+
+            extractor->SetInput(inputs[0]); //Maybe need to be change...
+
+            btk::DiffusionSequence::IndexType start = region4D.GetIndex();
+            uint numberOf3Dimages = input4DSize[3];
+
+            btkCoutMacro("Cropping images... ");
+            for (uint i = 0; i < numberOf3Dimages; i++)
+            {
+
+                start[3] = i;
+
+                std::vector< itk::Image<short,3>::Pointer > *vector3DImage = new std::vector< itk::Image<short,3>::Pointer>;
+
+                btk::DiffusionSequence::RegionType region3D;
+                region3D.SetSize( input3DSize );
+                region3D.SetIndex( start );
+
+                extractor->SetExtractionRegion( region3D );
+                extractor->SetDirectionCollapseToSubmatrix();
+                extractor->Update();
+
+                vector3DImage->push_back(extractor->GetOutput());
+
+                std::cout<<"\r-> Cropping image "<<i<<" ... "<<std::flush;
+                typename btk::CropImageUsingMaskFilter< itk::Image<short,3>,TMask >::Pointer cropFilter = btk::CropImageUsingMaskFilter< itk::Image<short,3>,TMask >::New();
+                cropFilter->SetMask(croppingMask);
+                cropFilter->SetInputs(*vector3DImage);
+                cropFilter->Update();
+
+                outputs->PushBackInput (cropFilter->GetOutput());
 
 
-    // Write output files
-    btk::ImageHelper< TImage >::WriteImage(outputs, outputFileNames);
+            }
+            btkCoutMacro("done.");
+
+            btk::ImageHelper<  btk::DiffusionSequence>::WriteImage(outputs->GetOutput(), outputFileNames[0]);
+
+            std::vector< unsigned short > bValues = inputs[0]->GetBValues();
+            std::string bValuesName = btk::FileHelper::GetRadixOf(outputFileNames[0])+".bval";
+            btk::DiffusionSequenceFileHelper::WriteBValues(bValues,bValuesName);
+
+
+            std::vector< btk::GradientDirection > GradientTable  = inputs[0]->GetGradientTable();
+            std::string GradientTableName = btk::FileHelper::GetRadixOf(outputFileNames[0])+".bvec";
+            btk::DiffusionSequenceFileHelper::WriteGradientTable(GradientTable,GradientTableName);
+
+
+        }
+        break;
+
+        default:
+            std::cout<<"Only dimension  3 or 4 are supported\n";
+
+    }
+
 }
 
-
-int main(int argc, char** argv)
+int main(int argc, char * argv[])
 {
     try
     {
@@ -139,7 +226,6 @@ int main(int argc, char** argv)
         std::vector< std::string > maskFileNames = maskFileNamesArg.getValue();
         std::vector< std::string > outputFileNames = outputFileNamesArg.getValue();
 
-
         //
         // Processing
         //
@@ -155,56 +241,38 @@ int main(int argc, char** argv)
         imageIO->SetFileName(inputFileNames[0]);
         imageIO->ReadImageInformation();
 
+        int Dimension = imageIO->GetNumberOfDimensions();
+        btkCoutMacro("Dimension of input image :"<<Dimension);
+
+
         if(imageIO->GetPixelType() != itk::ImageIOBase::SCALAR)
         {
             btkException("Unsupported image pixel type (only scalar are supported) !");
         }
 
-        if(imageIO->GetNumberOfDimensions() == 3)
+        else
         {
             switch(imageIO->GetComponentType())
             {
                 case itk::ImageIOBase::SHORT:
-                    Process< itk::Image< short,3 >,itk::Image< unsigned char,3 >,3 >(inputFileNames, outputFileNames, maskFileNames);
+                    // AVEC IF..... !!!!
+                    Process< itk::Image< short,3 >,itk::Image< unsigned char,3 > >(inputFileNames, outputFileNames, maskFileNames, Dimension);
                     break;
 
                 case itk::ImageIOBase::FLOAT:
-                    Process< itk::Image< float,3 >,itk::Image< unsigned char,3 >,3 >(inputFileNames, outputFileNames, maskFileNames);
+                    Process< itk::Image< float,3 >,itk::Image< unsigned char,3 > >(inputFileNames, outputFileNames, maskFileNames,Dimension);
                     break;
 
                 case itk::ImageIOBase::DOUBLE:
-                    Process< itk::Image< double,3 >,itk::Image< unsigned char,3 >,3 >(inputFileNames, outputFileNames, maskFileNames);
+                    Process< itk::Image< double,3 >,itk::Image< unsigned char,3 > >(inputFileNames, outputFileNames, maskFileNames,Dimension);
                     break;
 
                 default:
                     btkException("Unsupported component type (only short, float or double types are supported) !");
             }
         }
-        else if(imageIO->GetNumberOfDimensions() == 4)
-        {
-//            switch(imageIO->GetComponentType())
-//            {
-//                case itk::ImageIOBase::SHORT:
-//                    Process< btk::DiffusionSequence,itk::Image< unsigned char,3 >,4 >(inputFileNames, outputFileNames, maskFileNames);
-//                    break;
 
-//                case itk::ImageIOBase::FLOAT:
-//                    Process< btk::DiffusionSequence,itk::Image< unsigned char,3 >,4 >(inputFileNames, outputFileNames, maskFileNames);
-//                    break;
 
-//                case itk::ImageIOBase::DOUBLE:
-//                    Process< btk::DiffusionSequence,itk::Image< unsigned char,3 >,4 >(inputFileNames, outputFileNames, maskFileNames);
-//                    break;
-
-//                default:
-//                    btkException("Unsupported component type (only short, float or double types are supported) !");
-//            }
-            btkException("Dimension 4 is not implemented yet !");
-        }
-        else // imageIO->GetNumberOfDimensions() != 3 && imageIO->GetNumberOfDimensions() != 4
-        {
-            btkException("Unsupported dimension (only anatomical - 3D - or diffusion weighted - 4D - images supported) !");
-        }
     }
     catch(TCLAP::ArgException &e)  // catch any exceptions
     {
@@ -221,7 +289,3 @@ int main(int argc, char** argv)
 
     return EXIT_SUCCESS;
 }
-
-
-
-
