@@ -51,7 +51,7 @@ ADD_EXECUTABLE(btkExtractOneImageFromSequence btkExtractOneImageFromSequence.cxx
 TARGET_LINK_LIBRARIES(btkExtractOneImageFromSequence ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkCropImageUsingMask btkCropImageUsingMask.cxx)
-TARGET_LINK_LIBRARIES(btkCropImageUsingMask btkToolsLibrary ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkCropImageUsingMask btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkBinarizeLabels btkBinarizeLabels.cxx )
 TARGET_LINK_LIBRARIES(btkBinarizeLabels ${ITK_LIBRARIES})
