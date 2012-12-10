@@ -51,7 +51,7 @@ ADD_EXECUTABLE(btkExtractOneImageFromSequence btkExtractOneImageFromSequence.cxx
 TARGET_LINK_LIBRARIES(btkExtractOneImageFromSequence ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkCropImageUsingMask btkCropImageUsingMask.cxx)
-TARGET_LINK_LIBRARIES(btkCropImageUsingMask btkToolsLibrary ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkCropImageUsingMask btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkBinarizeLabels btkBinarizeLabels.cxx )
 TARGET_LINK_LIBRARIES(btkBinarizeLabels ${ITK_LIBRARIES})
@@ -206,6 +206,9 @@ TARGET_LINK_LIBRARIES(btkInverseDisplacementField ${ITK_LIBRARIES})
 ADD_EXECUTABLE( btkConvertFSLTransform  btkConvertFSLTransform.cxx)
 TARGET_LINK_LIBRARIES(btkConvertFSLTransform ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE( btkTractDensityMap  btkTractDensityMap.cxx)
+TARGET_LINK_LIBRARIES(btkTractDensityMap ${ITK_LIBRARIES} vtkHybrid)
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -255,6 +258,7 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkInverseDisplacementField
                 btkDistanceBetweenBinaryImages
                 btkConvertFSLTransform
+                btkTractDensityMap
         DESTINATION bin)
 
 
