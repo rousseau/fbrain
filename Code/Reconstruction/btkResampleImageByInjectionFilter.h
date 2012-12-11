@@ -102,9 +102,6 @@ public:
   typedef typename InputImageType::ConstPointer   InputImageConstPointer;
   typedef typename OutputImageType::Pointer       OutputImagePointer;
 
-  /** Type of the slice by slice transform. */
-  typedef SliceBySliceTransformBase< double, ImageDimension > TransformType;
-  typedef typename TransformType::Pointer TransformPointer;
 
   typedef Image<float,ImageDimension>    FloatImageType;
   typedef typename FloatImageType::Pointer FloatImagePointer;
@@ -125,7 +122,6 @@ public:
   /** Run-time type information (and related methods). */
   itkTypeMacro(ResampleImageByInjectionFilter, ImageToImageFilter);
 
-  typedef std::vector< TransformPointer > TransformPointerArrayType;
 
   /** Image size typedef. */
   typedef Size<itkGetStaticConstMacro(ImageDimension)> SizeType;
@@ -150,6 +146,13 @@ public:
 
   /** base type for images of the current ImageDimension */
   typedef ImageBase<itkGetStaticConstMacro(ImageDimension)> ImageBaseType;
+
+  /** Type of the slice by slice transform. */
+  typedef SliceBySliceTransformBase< double, ImageDimension,InputPixelType > TransformType;
+  typedef typename TransformType::Pointer TransformPointer;
+
+  typedef std::vector< TransformPointer > TransformPointerArrayType;
+
 
   /**Iterator typedef. */
   typedef ImageRegionIteratorWithIndex< InputImageType >  IteratorType;
