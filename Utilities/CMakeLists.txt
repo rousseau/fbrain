@@ -102,15 +102,6 @@ ADD_EXECUTABLE(btkSequenceNormalization btkSequenceNormalization.cxx
  )
 TARGET_LINK_LIBRARIES(btkSequenceNormalization btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkSequenceNormalizationTest btkSequenceNormalizationTest.cxx
-    ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
-    ${fbrain_SOURCE_DIR}/Code/Registration/btkAffineRegistration.h
-    #${fbrain_SOURCE_DIR}/Code/Registration/btkRegistration.h
-    #${fbrain_SOURCE_DIR}/Code/Registration/btkAffineRegistration.h
-    #${fbrain_SOURCE_DIR}/Code/Registration/btkRigidRegistration.h
- )
-TARGET_LINK_LIBRARIES(btkSequenceNormalizationTest btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
-
 ADD_EXECUTABLE(btkRescaleIntensity btkRescaleIntensity.cxx)
 TARGET_LINK_LIBRARIES(btkRescaleIntensity btkToolsLibrary ${ITK_LIBRARIES})
 
@@ -238,7 +229,6 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkPSNR
                 btkWeightedSumOfImages
                 btkSequenceNormalization
-                btkSequenceNormalizationTest
                 btkReconstructionComparisonTool
                 btkIteratedBackProjection
                 btkImageResampling
