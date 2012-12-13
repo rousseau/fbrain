@@ -50,6 +50,7 @@
 #include "itkImageDuplicator.h"
 #include "itkImageRegionIterator.h"
 #include "itkJoinSeriesImageFilter.h"
+#include "itkCastImageFilter.h"
 
 /* Btk includes */
 #include "btkDiffusionGradientTable.h"
@@ -116,6 +117,8 @@ int main( int argc, char * argv[] )
 
   typedef itk::Image< PixelType, Dimension >   SequenceType;
   typedef itk::ImageFileReader< SequenceType > ReaderType;
+
+  //TODO : DO A FILTER !
 
   // Read sequence
 
@@ -254,39 +257,55 @@ int main( int argc, char * argv[] )
 
   // Calculates the mean image
 
-  typedef itk::ImageDuplicator< ImageType > DuplicatorType;
-  DuplicatorType::Pointer duplicator = DuplicatorType::New();
-  duplicator -> SetInputImage (b0[0]);
-  duplicator -> Update();
-  ImageType::Pointer b0_mean = duplicator -> GetOutput();
-  b0_mean -> FillBuffer(0);
+  typedef itk::Image<double,3> ImageDoubleType;
+  typedef itk::CastImageFilter< ImageType, ImageDoubleType > CastToDoubleType;
 
-  typedef itk::ImageRegionIterator<ImageType>  IteratorType;
+  // Cast short images to double images
+  // the sum of values for a voxel could be superior as the short value range
+  ImageDoubleType::Pointer meanDoubleImage = ImageDoubleType::New();
+
+  CastToDoubleType::Pointer castShortToDouble = CastToDoubleType::New();
+  castShortToDouble->SetInput(b0[0]);
+  castShortToDouble->Update();
+
+  meanDoubleImage = castShortToDouble->GetOutput();
+
+  typedef itk::ImageRegionIterator<ImageType>  IteratorShort;
+  typedef itk::ImageRegionIterator<ImageDoubleType>  IteratorDouble;
+
 
   for(unsigned int i=0; i<b0_resampled.size(); i++ )
   {
+    ImageDoubleType::Pointer DoubleResampled = ImageDoubleType::New();
 
-    IteratorType b0_resampled_it( b0_resampled[i], b0_resampled[i]->GetLargestPossibleRegion() );
-    IteratorType b0_mean_it( b0_mean, b0_mean->GetLargestPossibleRegion() );
+    CastToDoubleType::Pointer castShortToDouble = CastToDoubleType::New();
+    castShortToDouble->SetInput(b0_resampled[i]);
+    castShortToDouble->Update();
 
+    DoubleResampled = castShortToDouble->GetOutput();
 
-    for(b0_resampled_it.GoToBegin(), b0_mean_it.GoToBegin();
-        !b0_resampled_it.IsAtEnd();
-        ++b0_resampled_it, ++b0_mean_it)
+    IteratorDouble b0_resampled_it( DoubleResampled, DoubleResampled->GetLargestPossibleRegion() );
+    IteratorDouble b0_mean_it( meanDoubleImage , meanDoubleImage->GetLargestPossibleRegion() );
+
+    for(b0_resampled_it.GoToBegin(), b0_mean_it.GoToBegin();!b0_resampled_it.IsAtEnd(); ++b0_resampled_it, ++b0_mean_it)
     {
-      float sum = static_cast<float>(b0_mean_it.Get()) + static_cast<float>(b0_resampled_it.Get());
-      float result = sum/static_cast<float>(b0_resampled.size());
-      b0_mean_it.Set( static_cast<short>(result));
+
+      b0_mean_it.Set( b0_mean_it.Get() + b0_resampled_it.Get()/b0_resampled.size());
+
     }
 
   }
 
-//  IteratorType b0_mean_it( b0_mean, b0_mean->GetLargestPossibleRegion() );
+  typedef itk::CastImageFilter< ImageDoubleType, ImageType > CastToShortType;
+  CastToShortType::Pointer castDoubleToShort = CastToShortType::New();
+  castDoubleToShort->SetInput(meanDoubleImage);
 
-//  for( b0_mean_it.GoToBegin(); !b0_mean_it.IsAtEnd(); ++b0_mean_it)
-//  {
-//    b0_mean_it.Set( b0_mean_it.Get() / b0_resampled.size() );
-//  }
+  ImageType::Pointer b0_mean = ImageType::New();
+  castDoubleToShort->Update();
+  b0_mean = castDoubleToShort -> GetOutput();
+
+
+
 
   // Join images
 
