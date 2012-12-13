@@ -3,7 +3,7 @@
   © Université de Strasbourg - Centre National de la Recherche Scientifique
 
   Date: 03/12/2010
-  Author(s): Estanislao Oubel (oubel@unistra.fr)
+  Author(s): Estanislao Oubel (oubel@unistra.fr), Frederic Champ (champ@unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -211,6 +211,9 @@ int main( int argc, char * argv[] )
   typedef btk::AffineRegistration<ImageType> RegistrationType;
   typedef itk::ResampleImageFilter<ImageType,ImageType,double> ResamplerType;
 
+  unsigned int i=0;
+
+  //#pragma omp parallel for private(i) schedule(dynamic)
   for(unsigned int i=1; i<b0_idx.size(); i++ )
   {
     std::cout << "Registering image " << b0_idx[i] << " to " << b0_idx[0]
@@ -266,21 +269,24 @@ int main( int argc, char * argv[] )
     IteratorType b0_resampled_it( b0_resampled[i], b0_resampled[i]->GetLargestPossibleRegion() );
     IteratorType b0_mean_it( b0_mean, b0_mean->GetLargestPossibleRegion() );
 
+
     for(b0_resampled_it.GoToBegin(), b0_mean_it.GoToBegin();
         !b0_resampled_it.IsAtEnd();
         ++b0_resampled_it, ++b0_mean_it)
     {
-      b0_mean_it.Set( b0_mean_it.Get() + b0_resampled_it.Get() );
+      float sum = static_cast<float>(b0_mean_it.Get()) + static_cast<float>(b0_resampled_it.Get());
+      float result = sum/static_cast<float>(b0_resampled.size());
+      b0_mean_it.Set( static_cast<short>(result));
     }
 
   }
 
-  IteratorType b0_mean_it( b0_mean, b0_mean->GetLargestPossibleRegion() );
+//  IteratorType b0_mean_it( b0_mean, b0_mean->GetLargestPossibleRegion() );
 
-  for( b0_mean_it.GoToBegin(); !b0_mean_it.IsAtEnd(); ++b0_mean_it)
-  {
-    b0_mean_it.Set( b0_mean_it.Get() / b0_resampled.size() );
-  }
+//  for( b0_mean_it.GoToBegin(); !b0_mean_it.IsAtEnd(); ++b0_mean_it)
+//  {
+//    b0_mean_it.Set( b0_mean_it.Get() / b0_resampled.size() );
+//  }
 
   // Join images
 
