@@ -113,6 +113,7 @@ typename TImageInput::ConstPointer ImageHelper< TImageInput, TImageOutput >::Rea
 template < class TImageInput, class TImageOutput >
 std::vector< typename TImageInput::Pointer > &ImageHelper< TImageInput, TImageOutput >::ReadImage(std::vector<std::string> &fileNames)
 {
+    //FIXME : memory leak about the returned vector (maybe use a itk::SmartPointer<>, or passing the vector per value)
     std::vector< typename TImageInput::Pointer > *ptrImages = new std::vector< typename TImageInput::Pointer >;
     std::vector< typename TImageInput::Pointer > &images = *ptrImages;
     images.resize(fileNames.size());
@@ -146,6 +147,7 @@ typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::CreateN
 template < class TImageInput, class TImageOutput >
 std::vector< typename TImageOutput::Pointer > &ImageHelper< TImageInput, TImageOutput >::CreateNewImageFromPhysicalSpaceOf(std::vector< typename TImageInput::Pointer > &images, typename TImageOutput::PixelType defaultValue)
 {
+    //FIXME : memory leak about the returned vector (maybe use a itk::SmartPointer<>, or passing the vector per value)
     std::vector< typename TImageOutput::Pointer > *ptrNewImages = new std::vector< typename TImageOutput::Pointer >;
     std::vector< typename TImageOutput::Pointer > &newImages = *ptrNewImages;
 

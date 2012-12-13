@@ -85,7 +85,8 @@ public:
     typedef itk::ImageRegionConstIteratorWithIndex< ImageType >  ConstIterator;
     typedef itk::ImageRegionIteratorWithIndex< MaskType >  MaskIterator;
 
-    typedef itk::Euler3DTransform<double> TransformType;
+    //typedef itk::Euler3DTransform<double> TransformType;
+    typedef itk::CenteredEuler3DTransform<double> TransformType;
     //typedef btk::EulerSliceBySliceTransform<double,3,VoxelType> SliceBySliceTransformType;
     typedef btk::CenteredEulerSliceBySliceTransform<double, 3, VoxelType> SliceBySliceTransformType;
 
@@ -141,7 +142,7 @@ public:
 protected:
 
      /** ComputeDifference between two voxels */
-      inline double SquareDifference(VoxelType ReferenceVoxel, VoxelType MovingVoxel) const
+      inline double SquareDifference(double ReferenceVoxel, double MovingVoxel) const
       {
           return (double)( (ReferenceVoxel - MovingVoxel ) * (ReferenceVoxel - MovingVoxel ) );
       }
@@ -161,8 +162,8 @@ private :
     MaskType::Pointer m_ReferenceMask;
     MaskType::Pointer m_MovingMask;
 
-    //TransformType::Pointer m_Transform;
-    typename SliceBySliceTransformType::Pointer m_Transform;
+    TransformType::Pointer m_Transform;
+    //typename SliceBySliceTransformType::Pointer m_Transform;
 
     TransformType::ParametersType m_Parameters;
 

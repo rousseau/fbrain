@@ -42,7 +42,7 @@ namespace btk
 {
 template< typename TImage >
 SlicesIntersectionITKCostFunction<TImage>::SlicesIntersectionITKCostFunction()
-    :m_VerboseMode(false),m_NumberOfParameters(6)
+    :m_VerboseMode(false),m_NumberOfParameters(6),m_MovingImageNum(0), m_MovingSliceNum(0)
 {
 
 }
