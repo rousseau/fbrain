@@ -273,7 +273,7 @@ int main( int argc, char * argv[] )
   typedef itk::ImageRegionIterator<ImageType>  IteratorShort;
   typedef itk::ImageRegionIterator<ImageDoubleType>  IteratorDouble;
 
-
+  IteratorDouble b0_mean_it( meanDoubleImage , meanDoubleImage->GetLargestPossibleRegion() );
   for(unsigned int i=0; i<b0_resampled.size(); i++ )
   {
     ImageDoubleType::Pointer DoubleResampled = ImageDoubleType::New();
@@ -285,16 +285,23 @@ int main( int argc, char * argv[] )
     DoubleResampled = castShortToDouble->GetOutput();
 
     IteratorDouble b0_resampled_it( DoubleResampled, DoubleResampled->GetLargestPossibleRegion() );
-    IteratorDouble b0_mean_it( meanDoubleImage , meanDoubleImage->GetLargestPossibleRegion() );
+    //IteratorDouble b0_mean_it( meanDoubleImage , meanDoubleImage->GetLargestPossibleRegion() );
 
     for(b0_resampled_it.GoToBegin(), b0_mean_it.GoToBegin();!b0_resampled_it.IsAtEnd(); ++b0_resampled_it, ++b0_mean_it)
     {
 
-      b0_mean_it.Set( b0_mean_it.Get() + b0_resampled_it.Get()/b0_resampled.size());
+      b0_mean_it.Set( b0_mean_it.Get() + b0_resampled_it.Get());
+
+    }
+   }
+
+    for (b0_mean_it.GoToBegin();!b0_mean_it.IsAtEnd(); ++b0_mean_it)
+    {
+
+      b0_mean_it.Set( b0_mean_it.Get()/static_cast<double>(b0_resampled.size()));
 
     }
 
-  }
 
   typedef itk::CastImageFilter< ImageDoubleType, ImageType > CastToShortType;
   CastToShortType::Pointer castDoubleToShort = CastToShortType::New();
