@@ -343,6 +343,7 @@ GetInverse(Self* inverse)const
 {
     inverse->SetFixedParameters(this->GetFixedParameters());
     inverse->SetImage(this->m_Image.GetPointer());
+    //inverse->Initialize();
 
     for(int i = 0; i< m_NumberOfSlices; i++)
     {

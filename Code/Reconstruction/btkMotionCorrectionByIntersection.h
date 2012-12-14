@@ -42,12 +42,15 @@
 #include "itkPowellOptimizer.h"
 #include "itkAmoebaOptimizer.h"
 #include "itkRegularStepGradientDescentOptimizer.h"
+#include "itkExhaustiveOptimizer.h"
+#include "itkDiscreteGaussianImageFilter.h"
 
 /* BTK */
 #include "btkEulerSliceBySliceTransform.h"
 #include "btkSlicesIntersectionITKCostFunction.hxx"
 #include "btkMathFunctions.h"
 #include "btkCenteredEulerSliceBySliceTransform.h"
+#include "btkOptimizer.h"
 
 
 
@@ -58,6 +61,7 @@
 #include  "cfloat"
 #include "cmath"
 #include "algorithm"
+#include "ctime"
 
 
 namespace btk
@@ -92,7 +96,7 @@ public:
     btkSetMacro(VerboseMode, bool);
     btkGetMacro(VerboseMode, bool);
 
-    /** Set/Get methods for number Max of loop, default 5 */
+    /** Set/Get methods for number Max of loop, default 1 */
     btkSetMacro(MaxLoop,int);
     btkGetMacro(MaxLoop,int);
 
@@ -105,7 +109,7 @@ public:
     /** Update method, here start the optimization */
     virtual void Update();
 
-    /** Method who correct slices with an two great error */
+    /** Method who correct slices with an to great error */
     void SlicesExclusion();
 
     /** Constructor */
@@ -120,31 +124,39 @@ protected:
     virtual void UpdateInfos();
 
 
+
 private:
+    /** return motion parameters for testing the algorithm (Only use for developement) */
+    typename Transform::ParametersType SimulateMotion(double _Rmin, double _Rmax, double _Tmin, double _Tmax);
+    /** Apply a Gaussian filter for multi-resolution */
+    void BlurImages(double level);
     /** Parameters of Rigid Transformation to compute */
     vnl_vector<double> m_X;
 
-    std::vector< typename ImageType::Pointer > m_Images;
-    std::vector< MaskType::Pointer > m_Masks;
-    std::vector<typename Transform::Pointer> m_Transforms;
-    std::vector<typename Transform::Pointer> m_InverseTransforms;
-    bool m_VerboseMode;
-    int m_NumberOfImages;
-    int m_ReferenceImage;
+    std::vector< typename ImageType::Pointer > m_Images; /** Input images */
+    std::vector< typename ImageType::Pointer > m_BlurredImages; /** Input images */
+    std::vector< MaskType::Pointer > m_Masks; /** Input Masks */
+    std::vector<typename Transform::Pointer> m_Transforms; /** Transforms to be computed */
+    std::vector<typename Transform::Pointer> m_InverseTransforms; /** Inverse Transform */
+    bool m_VerboseMode; /** Verbose Mode: true : on, false : off */
+    int m_NumberOfImages; /** Number of input images */
+    int m_ReferenceImage; /** Reference image num */
 
-    itk::Array<double> m_ScaleX;
+    itk::Array<double> m_ScaleX; /** Scale parameters for optimizer */
 
-    int m_ReferenceStack;
-    int m_ReferenceSlice;
+    int m_ReferenceStack; /** Reference stack (image) */
+    int m_ReferenceSlice; /** Reference slice */
 
-    int m_MaxLoop;
+    int m_MaxLoop; /** Number max of iteration*/
 
-    std::vector<std::vector<double> > m_BestError;
+    std::vector<std::vector<double> > m_BestError; /** Array of best error (for detecting outliers) */
 
-    bool m_VerboseDbg;
-    double m_CurrentError;
+    bool m_VerboseDbg; /** Debug mode (display of further informations) */
+    double m_CurrentError; /** Error at the current optimizer position */
 
-    bool m_UseSliceExclusion;
+    bool m_UseSliceExclusion; /** Perform or not Slice Exclusion (detection of outliers) */
+
+
 
 };
 

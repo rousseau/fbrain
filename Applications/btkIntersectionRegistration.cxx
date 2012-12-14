@@ -96,6 +96,7 @@ int main(int argc, char * argv[])
     TCLAP::MultiArg<std::string> maskArg("m","mask","mask image file",true,"string",cmd);
     TCLAP::MultiArg<std::string> tranArg("t","transform","transforms to write",true,"string",cmd);
     TCLAP::SwitchArg  VerboseArg("v","verbose","verbose Mode", cmd, false);
+    TCLAP::ValueArg<int> LoopArg("l","loop","Number of loops",false,1,"int",cmd);
 
     std::vector< std::string > input;
     std::vector< std::string > mask;
@@ -106,7 +107,7 @@ int main(int argc, char * argv[])
     std::vector<itkMaskImage::Pointer> inputMasks;
 
 
-    std::vector< Transform::Pointer > transforms;
+
 
     // Parse the argv array.
     cmd.parse( argc, argv );
@@ -118,11 +119,15 @@ int main(int argc, char * argv[])
     inputMasks = btk::ImageHelper<itkMaskImage>::ReadImage(mask);
     masks.resize(inputMasks.size());
 
+    int loop = LoopArg.getValue();
 
     std::vector<TransformBase::Pointer> T;
     std::vector<Transform::Pointer> Identity;
     T.resize(inputMasks.size());
     Identity.resize(inputMasks.size());
+
+    std::vector< Transform::Pointer > transforms;
+    transforms.resize(inputsImages.size());
 
     bool computeRegistration = true;
 
@@ -134,22 +139,28 @@ int main(int argc, char * argv[])
         Identity[i]->SetImage(inputsImages[i]);
         Identity[i]->SetIdentity();
         Identity[i]->Initialize();
-    }
 
+        transforms[i] = Transform::New();
+        transforms[i]->SetImage(inputsImages[i]);
+        transforms[i]->SetIdentity();
+        transforms[i]->Initialize();
+    }
+    btk::MotionCorrectionByIntersection<itkImage>* IntersectionFilter = new btk::MotionCorrectionByIntersection<itkImage>();
     //---------------------------------------------------------------------
     if(computeRegistration)
     {
-        btk::MotionCorrectionByIntersection<itkImage> IntersectionFilter;
 
 
-        IntersectionFilter.SetImages(inputsImages);
-        IntersectionFilter.SetMasks(inputMasks);
-        IntersectionFilter.SetVerboseMode(verboseMode);
-        IntersectionFilter.SetUseSliceExclusion(true);
-        IntersectionFilter.Initialize();
+
+        IntersectionFilter->SetImages(inputsImages);
+        IntersectionFilter->SetMasks(inputMasks);
+        IntersectionFilter->SetVerboseMode(verboseMode);
+        IntersectionFilter->SetUseSliceExclusion(true);
+        IntersectionFilter->SetMaxLoop(loop);
+        IntersectionFilter->Initialize();
         try
         {
-            IntersectionFilter.Update();
+            IntersectionFilter->Update();
         }
         catch(itk::ExceptionObject &exp)
         {
@@ -158,7 +169,7 @@ int main(int argc, char * argv[])
         }
 
 
-        transforms = IntersectionFilter.GetTransforms();
+        transforms = IntersectionFilter->GetTransforms();
     }
     else
     {
@@ -171,10 +182,12 @@ int main(int argc, char * argv[])
 
     }
 
+    btk::IOTransformHelper< Transform >::WriteTransform(transforms,transfoNames);
+
     // Construction of HighResolution image
     std::cout<<"Perform a High Resolution image ..."<<std::endl;
-    std::vector<itkImage::Pointer> images;
-    images.resize(inputsImages.size());
+//    std::vector<itkImage::Pointer> images;
+//    images.resize(inputsImages.size());
     HighResFilter::Pointer LowToHigh = HighResFilter::New();
     LowToHigh->SetImages(inputsImages);
     LowToHigh->SetMasks(inputMasks);
@@ -259,10 +272,13 @@ int main(int argc, char * argv[])
     std::cout<<"Done !"<<std::endl;
 
      //TODO : Cast into unsigned short at the end !
-    btk::ImageHelper<itkImage>::WriteImage(resampler->GetOutput(), "TMP_Reconstruction.nii.gz");
-    btk::IOTransformHelper< Transform >::WriteTransform(transforms,transfoNames);
+    itkImage::Pointer Output = itkImage::New();
+    Output = resampler->GetOutput();
+
+    btk::ImageHelper<itkImage>::WriteImage(Output, "TMP_Reconstruction.nii.gz");
 
 
+    delete IntersectionFilter;
 
     return EXIT_SUCCESS;
 }

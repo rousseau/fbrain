@@ -8,7 +8,7 @@ namespace btk
 //-------------------------------------------------------------------------------------------------
 template<class TImage>
 SlicesIntersectionVNLCostFunction<TImage>::SlicesIntersectionVNLCostFunction(unsigned int dim)
-    :vnl_cost_function(dim),m_NumberOfPointsOfLine(1000),m_VerboseMode(false),m_MovingImageNum(0),m_MovingSliceNum(0)
+    :vnl_cost_function(dim),m_NumberOfPointsOfLine(100),m_VerboseMode(false),m_MovingImageNum(0),m_MovingSliceNum(0)
 {
 }
 //-------------------------------------------------------------------------------------------------

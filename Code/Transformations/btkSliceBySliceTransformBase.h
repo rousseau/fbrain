@@ -190,6 +190,8 @@ public:
       /** Default constructor. Otherwise we get a run time warning from itkTransform. */
     SliceBySliceTransformBase() : Superclass( 0 ) {}
 
+    virtual ~SliceBySliceTransformBase(){}
+
   private:
     /** List of transforms. */
 //    TransformPointerList       m_TransformList;

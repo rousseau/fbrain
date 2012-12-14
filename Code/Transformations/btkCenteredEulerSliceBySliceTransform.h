@@ -185,6 +185,7 @@ public:
 protected:
     /** Default constructor. Otherwise we get a run time warning from itkTransform. */
   CenteredEulerSliceBySliceTransform() : Superclass(  ) {}
+  virtual ~CenteredEulerSliceBySliceTransform() {}
 
 private:
   /** List of transforms. */
