@@ -274,7 +274,7 @@ int main( int argc, char * argv[] )
   typedef itk::ImageRegionIterator<ImageDoubleType>  IteratorDouble;
 
   IteratorDouble b0_mean_it( meanDoubleImage , meanDoubleImage->GetLargestPossibleRegion() );
-  for(unsigned int i=0; i<b0_resampled.size(); i++ )
+  for(unsigned int i=1; i<b0_resampled.size(); i++ )
   {
     ImageDoubleType::Pointer DoubleResampled = ImageDoubleType::New();
 
