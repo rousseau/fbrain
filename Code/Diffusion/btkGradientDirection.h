@@ -96,6 +96,12 @@ class GradientDirection : public itk::Vector< float,3 >
          */
         void UpdateSphericalCoordinates();
 
+        /**
+         * @brief Get if the vector is null.
+         * @return True if the vector is null, false otherwise.
+         */
+        bool IsNull() const;
+
         btkGetMacro(SphericalDirection, btk::SphericalDirection);
 
     protected:

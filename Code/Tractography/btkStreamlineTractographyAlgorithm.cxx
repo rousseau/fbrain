@@ -129,17 +129,17 @@ void StreamlineTractographyAlgorithm::PropagateSeedRK4(std::vector< Self::Physic
         std::vector< btk::GradientDirection > directions = m_DiffusionModel->MeanDirectionsAt(lastPoint + (k1*stepSize_2), k1, m_ThresholdAngle);
         btk::GradientDirection k2 = Self::SelectClosestDirection(directions, k1);
 
-        if(k2 != btk::GradientDirection())
+        if(!k2.IsNull())
         {
                            directions = m_DiffusionModel->MeanDirectionsAt(lastPoint + (k2*stepSize_2), k2, m_ThresholdAngle);
             btk::GradientDirection k3 = Self::SelectClosestDirection(directions, k2);
 
-            if(k3 != btk::GradientDirection())
+            if(!k3.IsNull())
             {
                                directions = m_DiffusionModel->MeanDirectionsAt(lastPoint + (k3*m_StepSize), k3, m_ThresholdAngle);
                 btk::GradientDirection k4 = Self::SelectClosestDirection(directions, k3);
 
-                if(k4 != btk::GradientDirection())
+                if(!k4.IsNull())
                 {
                     Self::PhysicalPoint nextPoint = lastPoint + (k1 + (k2*2.f) + (k3*2.f) + k4) * stepSize_6;
 
@@ -160,7 +160,7 @@ void StreamlineTractographyAlgorithm::PropagateSeedRK4(std::vector< Self::Physic
                         std::vector< btk::GradientDirection > meanDirections = m_DiffusionModel->MeanDirectionsAt(nextPoint, k1, m_ThresholdAngle);
                         nextDirection = Self::SelectClosestDirection(meanDirections, k1);
 
-                        if(nextDirection == btk::GradientDirection())
+                        if(nextDirection.IsNull())
                         {
                             stop = true;
                         }
@@ -213,7 +213,7 @@ void StreamlineTractographyAlgorithm::PropagateSeedRK1(std::vector< Self::Physic
             std::vector< btk::GradientDirection > meanDirections = m_DiffusionModel->MeanDirectionsAt(nextPoint, k1, m_ThresholdAngle);
             nextDirection = Self::SelectClosestDirection(meanDirections, k1);
 
-            if(nextDirection == btk::GradientDirection())
+            if(nextDirection.IsNull())
             {
                 stop = true;
             }
@@ -226,7 +226,7 @@ void StreamlineTractographyAlgorithm::PropagateSeedRK1(std::vector< Self::Physic
 btk::GradientDirection StreamlineTractographyAlgorithm::SelectClosestDirection(std::vector< btk::GradientDirection > &meanDirections, btk::GradientDirection &previousVector)
 {
     unsigned int meanDirectionsSize = meanDirections.size();
-    btk::GradientDirection nextDirection;
+    btk::GradientDirection nextDirection(0,0,0);
 
     if(meanDirectionsSize == 1)
     {
