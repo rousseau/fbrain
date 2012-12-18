@@ -101,13 +101,13 @@ class StreamlineTractographyAlgorithm : public btk::TractographyAlgorithm
          * @brief Propagate a seed using the Runke-Kutta method at order 4.
          * @param points Vector of points initilized with the coordinates of the seed.
          */
-        void PropagateSeedRK4(std::vector< Self::PhysicalPoint > &points);
+        void PropagateSeedRK4(std::vector< Self::PhysicalPoint > &points, btk::GradientDirection nextDirection);
 
         /**
          * @brief Propagate a seed using the Euler method (Runke-Kutta method at order 1).
          * @param points Vector of points initilized with the coordinates of the seed.
          */
-        void PropagateSeedRK1(std::vector< Self::PhysicalPoint > &points);
+        void PropagateSeedRK1(std::vector< Self::PhysicalPoint > &points, btk::GradientDirection nextDirection);
 
         /**
          * @brief Select the best direction in a vector of direction, depending on the previous direction.
