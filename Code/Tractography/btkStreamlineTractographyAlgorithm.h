@@ -94,7 +94,7 @@ class StreamlineTractographyAlgorithm : public btk::TractographyAlgorithm
          * @brief Propagate using the tractography algorithm at a seed point.
          * @param point Seed point.
          */
-        virtual void PropagateSeed(Self::PhysicalPoint point);
+        virtual vtkSmartPointer< vtkPolyData > PropagateSeed(Self::PhysicalPoint point);
 
     private:
         /**

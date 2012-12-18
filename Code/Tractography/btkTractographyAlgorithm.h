@@ -45,6 +45,7 @@
 #include "itkProcessObject.h"
 #include "itkImage.h"
 #include "itkPoint.h"
+#include "itkFastMutexLock.h"
 
 // VTK includes
 #include "vtkSmartPointer.h"
@@ -126,10 +127,25 @@ class TractographyAlgorithm : public itk::ProcessObject
         virtual void ResampleLabelImage();
 
         /**
+         * @brief Split the requested region of the label image (for parallel processing).
+         */
+        virtual unsigned int SplitRequestedRegion(unsigned int i, unsigned int num, LabelImage::RegionType &splitRegion);
+
+        /**
+         * @brief Callback routine used by the threading library.
+         */
+        static ITK_THREAD_RETURN_TYPE ThreaderCallback(void *arg);
+
+        /**
+         * @brief The execute method for each thread.
+         */
+        virtual void ThreadedGenerateData(const LabelImage::RegionType &region, itk::ThreadIdType threadId);
+
+        /**
          * @brief Propagate using the tractography algorithm at a seed point.
          * @param point Seed point.
          */
-        virtual void PropagateSeed(Self::PhysicalPoint point) = 0;
+        virtual vtkSmartPointer< vtkPolyData > PropagateSeed(Self::PhysicalPoint point) = 0;
 
     protected:
         /**
@@ -148,9 +164,12 @@ class TractographyAlgorithm : public itk::ProcessObject
         Self::MaskImage::Pointer m_Mask;
 
         /**
-         * @brief Space memory for current fiber under construction.
+         * @brief Internal structure used for passing image data into the threading library.
          */
-        vtkSmartPointer< vtkPolyData > m_CurrentFiber;
+        struct ThreadStruct
+        {
+            Self::Pointer Filter;
+        };
 
     private:
         /**

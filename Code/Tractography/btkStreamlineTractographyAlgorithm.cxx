@@ -65,7 +65,7 @@ void StreamlineTractographyAlgorithm::PrintSelf(std::ostream &os, itk::Indent in
 
 //----------------------------------------------------------------------------------------
 
-void StreamlineTractographyAlgorithm::PropagateSeed(Self::PhysicalPoint point)
+vtkSmartPointer< vtkPolyData > StreamlineTractographyAlgorithm::PropagateSeed(Self::PhysicalPoint point)
 {
     // Diffusion directions provided by the model at point
     std::vector< btk::GradientDirection > nextDirections = m_DiffusionModel->MeanDirectionsAt(point);
@@ -74,7 +74,7 @@ void StreamlineTractographyAlgorithm::PropagateSeed(Self::PhysicalPoint point)
     vtkSmartPointer< vtkPoints >  vpoints = vtkSmartPointer< vtkPoints >::New();
     vtkSmartPointer< vtkCellArray > lines = vtkSmartPointer< vtkCellArray >::New();
 
-    m_CurrentFiber = vtkSmartPointer< vtkPolyData >::New();
+    vtkSmartPointer< vtkPolyData > currentFiber = vtkSmartPointer< vtkPolyData >::New();
 
     // Processing
     for(std::vector< btk::GradientDirection >::iterator it = nextDirections.begin(); it != nextDirections.end(); it++)
@@ -119,9 +119,12 @@ void StreamlineTractographyAlgorithm::PropagateSeed(Self::PhysicalPoint point)
         }
     } // for each direction
 
-    // Build the whole trajectory
-    m_CurrentFiber->SetPoints(vpoints);
-    m_CurrentFiber->SetLines(lines);
+    // Build the whole trajectories
+    currentFiber->SetPoints(vpoints);
+    currentFiber->SetLines(lines);
+
+
+    return currentFiber;
 }
 
 //----------------------------------------------------------------------------------------
