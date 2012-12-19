@@ -139,8 +139,9 @@ void DiffusionTensorReconstructionFilter::Update()
     // ITK consider that there is only on b-value for the whole gradient table.
     this->SetBValue(this->m_InputDiffusionSequence->GetBValues()[1]);
 
-    // Needed until netlib/dsvdc.c has been fixed.
-    this->SetNumberOfThreads(1);
+    // WARNING: check if there is no more bugs with netlib/dsvdc.c
+//    // Needed until netlib/dsvdc.c has been fixed.
+//    this->SetNumberOfThreads(1);
 
     // Evaluate tensors
     Superclass::Update();
