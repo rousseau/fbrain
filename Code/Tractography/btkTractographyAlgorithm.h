@@ -196,6 +196,11 @@ class TractographyAlgorithm : public itk::ProcessObject
          * @brief Indices of labels corresponding to output solutions.
          */
         std::vector< int > m_OutputIndicesOfLabels;
+
+        /**
+         * @brief Progress step corresponding to how amount is added to the progress bar for each seed.
+         */
+        double m_ProgressStep;
 };
 
 } // namespace btk

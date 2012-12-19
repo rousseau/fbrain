@@ -49,7 +49,6 @@
 // VTK includes
 #include "vtkPolyData.h"
 
-
 // Types used by this filter
 typedef itk::ResampleImageFilter< btk::TractographyAlgorithm::LabelImage,btk::TractographyAlgorithm::LabelImage > LabelResampler;
 typedef itk::NearestNeighborInterpolateImageFunction< btk::TractographyAlgorithm::LabelImage,double > LabelInterpolator;
@@ -91,6 +90,9 @@ void TractographyAlgorithm::Update()
     object->SetImage(objectCaster->GetOutput());
     m_RegionsOfInterest->SetRequestedRegion(object->GetAxisAlignedBoundingBoxRegion());
 
+    // Initialize the progress bar
+    this->SetProgress(0);
+    m_ProgressStep = 1.0 / static_cast< double >(m_RegionsOfInterest->GetRequestedRegion().GetNumberOfPixels());
 
     // Set up the multithreaded processing
     ThreadStruct str;
@@ -101,6 +103,10 @@ void TractographyAlgorithm::Update()
 
     // Multithread the execution
     this->GetMultiThreader()->SingleMethodExecute();
+
+    // Update progress to 1
+    this->SetProgress(1);
+    this->InvokeEvent(itk::ProgressEvent());
 }
 
 //----------------------------------------------------------------------------------------
@@ -189,6 +195,12 @@ void TractographyAlgorithm::ThreadedGenerateData(const LabelImage::RegionType &r
                 mutex.Unlock();
             }
         }
+
+        // Update progress
+        mutex.Lock();
+        this->SetProgress(this->GetProgress() + m_ProgressStep);
+        this->InvokeEvent(itk::ProgressEvent());
+        mutex.Unlock();
     } // for each seed in region
 }
 

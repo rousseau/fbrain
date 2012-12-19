@@ -60,6 +60,7 @@
 #include "btkOrientationDiffusionFunctionModel.h"
 #include "btkTractographyAlgorithm.h"
 #include "btkStreamlineTractographyAlgorithm.h"
+#include "btkCommandProgressUpdate.h"
 
 
 int main(int argc, char *argv[])
@@ -230,6 +231,11 @@ int main(int argc, char *argv[])
 
         btkCoutMacro("Processing...");
 
+        // Add an observer for progress bar
+        btk::CommandProgressUpdate::Pointer observer = btk::CommandProgressUpdate::New();
+        algorithm->AddObserver(itk::ProgressEvent(), observer);
+
+        // Process
         algorithm->SetDiffusionSequence(dwiSequence);
         algorithm->SetDiffusionModel(model);
         algorithm->SetMask(mask);
