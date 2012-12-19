@@ -161,7 +161,7 @@ void SphericalHarmonicsDiffusionDecompositionFilter::ComputeTransitionMatrix()
 
 //----------------------------------------------------------------------------------------
 
-void SphericalHarmonicsDiffusionDecompositionFilter::GenerateData()
+void SphericalHarmonicsDiffusionDecompositionFilter::AllocateOutputs()
 {
     // Compute the number of coefficients
     m_NumberOfSHCoefficients = 0.5 * (m_SphericalHarmonicsOrder+1) * (m_SphericalHarmonicsOrder+2);
@@ -194,11 +194,17 @@ void SphericalHarmonicsDiffusionDecompositionFilter::GenerateData()
     output->SetVectorLength(m_NumberOfSHCoefficients);
     output->Allocate();
     output->FillBuffer(Self::OutputImagePixelType(0));
+}
 
+//----------------------------------------------------------------------------------------
+
+//void SphericalHarmonicsDiffusionDecompositionFilter::GenerateData()
+void SphericalHarmonicsDiffusionDecompositionFilter::BeforeThreadedGenerateData()
+{
     // Compute needed matrices
-    Self::ComputeSphericalHarmonicsBasisMatrix();
-    Self::ComputeRegularizationMatrix();
-    Self::ComputeTransitionMatrix();
+    this->ComputeSphericalHarmonicsBasisMatrix();
+    this->ComputeRegularizationMatrix();
+    this->ComputeTransitionMatrix();
 
 
     // Extract reference and gradient images and give it to filter.
@@ -244,16 +250,25 @@ void SphericalHarmonicsDiffusionDecompositionFilter::GenerateData()
         it.Set(pixelValue);
     }
 
+    m_VectorImage = vectorImage;
+}
 
+//----------------------------------------------------------------------------------------
+
+void SphericalHarmonicsDiffusionDecompositionFilter::ThreadedGenerateData(const OutputImageRegionType &outputRegionForThread, itk::ThreadIdType threadId)
+{
     // Estimate model
-    itk::ImageRegionIterator< Self::OutputImageType > outIt(output, output->GetLargestPossibleRegion());
+    VectorImageIterator                                  it(m_VectorImage, outputRegionForThread);
+    itk::ImageRegionIterator< Self::OutputImageType > outIt(this->GetOutput(), outputRegionForThread);
+
+    unsigned int gradienTableSize = m_VectorImage->GetVectorLength();
 
     for(it.GoToBegin(), outIt.GoToBegin(); !it.IsAtEnd() && !outIt.IsAtEnd(); ++it, ++outIt)
     {
         VectorImage::PixelType signal = it.Get();
 
         // Get signal matrix
-        Self::Matrix signalMatrix(gradientTable.size()-1, 1);
+        Self::Matrix signalMatrix(gradienTableSize-1, 1);
 
         for(unsigned int i = 0; i < signalMatrix.Rows(); i++)
         {

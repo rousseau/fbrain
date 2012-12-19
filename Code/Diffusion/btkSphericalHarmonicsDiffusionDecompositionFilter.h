@@ -91,9 +91,19 @@ class SphericalHarmonicsDiffusionDecompositionFilter : public itk::ImageToImageF
         virtual ~SphericalHarmonicsDiffusionDecompositionFilter();
 
         /**
-         * @brief Run the filter and generate output data.
+         * @brief Pre-processing.
          */
-        virtual void GenerateData();
+        virtual void BeforeThreadedGenerateData();
+
+        /**
+         * @brief Allocate correctly the output image.
+         */
+        virtual void AllocateOutputs();
+
+        /**
+         * @brief The execute method for each thread.
+         */
+        virtual void ThreadedGenerateData(const OutputImageRegionType &outputRegionForThread, itk::ThreadIdType threadId);
 
         /**
          * @brief Print a message on output stream.
@@ -139,6 +149,9 @@ class SphericalHarmonicsDiffusionDecompositionFilter : public itk::ImageToImageF
 
         /** Transition matrix for linear regression. */
         Self::Matrix m_TransitionMatrix;
+
+        /** Internal diffusion weighted image. */
+        itk::VectorImage< short,3 >::Pointer m_VectorImage;
 };
 
 } // namespace btk
