@@ -127,8 +127,8 @@ int main(int argc, char *argv[])
 
         btk::DiffusionModel::Pointer model = NULL;
 
-//        if(tensorModeling)
-//        {
+        if(tensorModeling)
+        {
             btk::DiffusionTensorReconstructionFilter::OutputImageType::Pointer tensorImage = NULL;
 
             if(modelFileName.empty() || !btk::FileHelper::FileExist(modelFileName))
@@ -163,43 +163,43 @@ int main(int argc, char *argv[])
             model = tensorModel;
 
             btkCoutMacro("done.");
-//        }
-//        else // ODF modeling
-//        {
-//            btk::SphericalHarmonicsDiffusionDecompositionFilter::OutputImageType::Pointer shCoefficientsImage = NULL;
+        }
+        else // ODF modeling
+        {
+            btk::SphericalHarmonicsDiffusionDecompositionFilter::OutputImageType::Pointer shCoefficientsImage = NULL;
 
-//            if(modelFileName.empty() || !btk::FileHelper::FileExist(modelFileName))
-//            {
-//                btkCoutMacro("Estimating spherical harmonics Q-Ball modeling...");
+            if(modelFileName.empty() || !btk::FileHelper::FileExist(modelFileName))
+            {
+                btkCoutMacro("Estimating spherical harmonics Q-Ball modeling...");
 
-//                btk::SphericalHarmonicsDiffusionDecompositionFilter::Pointer decompositionFilter = btk::SphericalHarmonicsDiffusionDecompositionFilter::New();
-//                decompositionFilter->SetInput(dwiSequence);
-//                decompositionFilter->Update();
+                btk::SphericalHarmonicsDiffusionDecompositionFilter::Pointer decompositionFilter = btk::SphericalHarmonicsDiffusionDecompositionFilter::New();
+                decompositionFilter->SetInput(dwiSequence);
+                decompositionFilter->Update();
 
-//                shCoefficientsImage = decompositionFilter->GetOutput();
+                shCoefficientsImage = decompositionFilter->GetOutput();
 
-//                if(!modelFileName.empty())
-//                {
-//                    btk::ImageHelper< btk::SphericalHarmonicsDiffusionDecompositionFilter::OutputImageType >::WriteImage(shCoefficientsImage, modelFileName);
-//                }
-//            }
-//            else // There is an existant model image and we load it.
-//            {
-//                btkCoutMacro("Loading spherical harmonics coefficients image...");
+                if(!modelFileName.empty())
+                {
+                    btk::ImageHelper< btk::SphericalHarmonicsDiffusionDecompositionFilter::OutputImageType >::WriteImage(shCoefficientsImage, modelFileName);
+                }
+            }
+            else // There is an existant model image and we load it.
+            {
+                btkCoutMacro("Loading spherical harmonics coefficients image...");
 
-//                shCoefficientsImage = btk::ImageHelper< btk::SphericalHarmonicsDiffusionDecompositionFilter::OutputImageType >::ReadImage(modelFileName);
-//            }
+                shCoefficientsImage = btk::ImageHelper< btk::SphericalHarmonicsDiffusionDecompositionFilter::OutputImageType >::ReadImage(modelFileName);
+            }
 
-//            btk::OrientationDiffusionFunctionModel::Pointer odfModel = btk::OrientationDiffusionFunctionModel::New();
-//            odfModel->SetInputModelImage(shCoefficientsImage);
-//            odfModel->SetBValue(dwiSequence->GetBValues()[1]);
-//            odfModel->SetSphericalResolution(300);
-//            odfModel->Update();
+            btk::OrientationDiffusionFunctionModel::Pointer odfModel = btk::OrientationDiffusionFunctionModel::New();
+            odfModel->SetInputModelImage(shCoefficientsImage);
+            odfModel->SetBValue(dwiSequence->GetBValues()[1]);
+            odfModel->SetSphericalResolution(300);
+            odfModel->Update();
 
-//            model = odfModel;
+            model = odfModel;
 
-//            btkCoutMacro("done.");
-//        }
+            btkCoutMacro("done.");
+        }
 
 
         //
