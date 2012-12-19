@@ -204,6 +204,7 @@ std::vector< btk::GradientDirection > TensorModel::MeanDirectionsAt(ContinuousIn
 
     std::vector< btk::GradientDirection > meanDirections;
     meanDirections.push_back(btk::GradientDirection(eigenVectors(2,0), eigenVectors(2,1), eigenVectors(2,2)));
+    meanDirections.push_back(btk::GradientDirection(-eigenVectors(2,0), -eigenVectors(2,1), -eigenVectors(2,2)));
 
     return meanDirections;
 }
