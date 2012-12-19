@@ -107,10 +107,17 @@ public:
   /**  Index typedef support. */
   typedef typename ImageType::IndexType               	IndexType;
 
-  /**  Type of the metric. */
-  typedef MattesMutualInformationImageToImageMetric<
-  //FIXME Change metric to MI after testing NC
-  //typedef NormalizedCorrelationImageToImageMetric<
+  /**  Type of the metric.
+   * --------------------- /!\ Warning /!\ ------------------------------
+   *
+   * - itk::MattesMutualInformationImageToImageMetric is NOT THREAD SAFE....
+   *
+   * ---------------------------------------------------------------------
+   *
+   * typedef MattesMutualInformationImageToImageMetric<
+   */
+
+  typedef NormalizedCorrelationImageToImageMetric<
                                           ImageType,
                                           ImageType >   MetricType;
 
