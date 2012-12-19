@@ -44,7 +44,7 @@
 namespace btk
 {
 
-OrientationDiffusionFunctionModel::OrientationDiffusionFunctionModel() : m_UseSharpModel(false), m_SphericalHarmonicsOrder(4)
+OrientationDiffusionFunctionModel::OrientationDiffusionFunctionModel() : m_UseSharpModel(false)
 {
     // ----
 }
@@ -384,14 +384,7 @@ void OrientationDiffusionFunctionModel::PrintSelf(std::ostream &os, itk::Indent 
 
 void OrientationDiffusionFunctionModel::UseSharpModelOn()
 {
-    if(m_SphericalHarmonicsOrder <= 8)
-    {
-        m_UseSharpModel = true;
-    }
-    else
-    {
-        m_UseSharpModel = false;
-    }
+    m_UseSharpModel = true;
 }
 
 //----------------------------------------------------------------------------------------
