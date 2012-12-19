@@ -31,6 +31,7 @@ SET(TOOLS_LIBRARY_HEADER
     ${TOOLS_LIBRARY_SOURCE_DIR}/btkDiffusionSequenceFileHelper.h
     ${TOOLS_LIBRARY_SOURCE_DIR}/btkDiffusionSequenceHelper.h
     ${TOOLS_LIBRARY_SOURCE_DIR}/btkCommandIterationUpdate.h
+    ${TOOLS_LIBRARY_SOURCE_DIR}/btkCommandProgressUpdate.h
     ${TOOLS_LIBRARY_SOURCE_DIR}/btkIOImageHelper.h
 )
 
@@ -122,3 +123,4 @@ SET(TRACTOGRAPHY_LIBRARY_SOURCES
 )
 
 ADD_LIBRARY(btkTractographyLibrary STATIC ${TRACTOGRAPHY_LIBRARY_HEADER} ${TRACTOGRAPHY_LIBRARY_SOURCES})
+TARGET_LINK_LIBRARIES(btkTractographyLibrary ${ITK_LIBRARIES})

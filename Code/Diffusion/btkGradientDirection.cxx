@@ -56,6 +56,7 @@ GradientDirection::GradientDirection(float x, float y, float z)
 
 GradientDirection::GradientDirection()
 {
+    // NOTE : this seems not working
     Self::Self(0,0,0);
 }
 
@@ -124,6 +125,13 @@ void GradientDirection::UpdateSphericalCoordinates()
     }
 
     this->m_SphericalDirection = btk::SphericalDirection(theta, phi, rau);
+}
+
+//----------------------------------------------------------------------------------------
+
+bool GradientDirection::IsNull() const
+{
+    return ( (*this)[0] == 0 && (*this)[1] == 0 && (*this)[2] == 0 );
 }
 
 } // namespace btk

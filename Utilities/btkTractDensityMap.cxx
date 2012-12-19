@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
         //
 
         // Define command line variables
-        std::string bundleFileName;
+        std::vector<std::string> bundleFileName;
         std::string referenceFileName;
         std::string outputFileName;
 
@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
         TCLAP::CmdLine cmd("Convert a fibers bundle to its associated connectivity map", ' ', "0.1");
 
         // Define command line arguments
-        TCLAP::ValueArg<std::string> bundleFileNameArg("b", "bundle", "Fibers bundle filename", true, "", "string", cmd);
+        TCLAP::MultiArg<std::string> bundleFileNameArg("b", "bundle", "Fibers bundle filename (possible multiple inputs)", true, "string", cmd);
         TCLAP::ValueArg<std::string> referenceFileNameArg("r", "reference", "Reference image (space)", true, "", "string", cmd);
         TCLAP::ValueArg<std::string> outputFileNameArg("o", "output", "Output map filename", false, "map.nii.gz", "string", cmd);
 
@@ -97,12 +97,7 @@ int main(int argc, char *argv[])
         // Load files
         //
 
-        std::cout << "Loading files..." << std::flush;
-
-        // Load bundle
-        vtkSmartPointer<vtkPolyDataReader> bundleReader = vtkSmartPointer<vtkPolyDataReader>::New();
-        bundleReader->SetFileName(bundleFileName.c_str());
-        bundleReader->Update();
+        std::cout << "Loading reference image..." << std::flush;
 
         // Load reference
         ImageFileReader::Pointer referenceReader = ImageFileReader::New();
@@ -117,7 +112,7 @@ int main(int argc, char *argv[])
         // Create output image
         //
 
-        std::cout << "Creating output image..." << std::flush;
+        std::cout << "Creating empty output image..." << std::flush;
 
         Image::Pointer output = Image::New();
         output->SetRegions(reference->GetLargestPossibleRegion());
@@ -135,6 +130,15 @@ int main(int argc, char *argv[])
         //
 
         std::cout << "Converting fibers bundle to connectivity map..." << std::flush;
+
+
+        for(int bundleIndex=0; bundleIndex<bundleFileName.size(); bundleIndex++)
+        {
+          
+        // Load bundle
+        vtkSmartPointer<vtkPolyDataReader> bundleReader = vtkSmartPointer<vtkPolyDataReader>::New();
+        bundleReader->SetFileName(bundleFileName[bundleIndex].c_str());
+        bundleReader->Update();
 
         vtkSmartPointer<vtkPolyData> bundle = bundleReader->GetOutput();
         vtkSmartPointer<vtkCellArray> lines = bundle->GetLines();
@@ -230,6 +234,9 @@ int main(int argc, char *argv[])
             }
 
         }
+          
+        
+        }//End of loop of bundles
 
         ImageIterator it(output, output->GetLargestPossibleRegion());
 

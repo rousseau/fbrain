@@ -60,6 +60,7 @@
 #include "btkOrientationDiffusionFunctionModel.h"
 #include "btkTractographyAlgorithm.h"
 #include "btkStreamlineTractographyAlgorithm.h"
+#include "btkCommandProgressUpdate.h"
 
 
 int main(int argc, char *argv[])
@@ -86,6 +87,7 @@ int main(int argc, char *argv[])
         TCLAP::ValueArg< std::string > outputFileNamePrefixArg("o", "output", "Prefix of the filenames of the outputs", false, "tractography", "string", cmd);
 
         TCLAP::ValueArg< float >       stepSizeArg("", "step_size", "Step size between two points of the solution", false, 0.5, "positive real", cmd);
+        TCLAP::ValueArg< float >    seedSpacingArg("", "seed_spacing", "Spacing between two seeds (in mm)", false, 1, "positive real", cmd);
         TCLAP::SwitchArg                 useRK4Arg("", "RK4", "Use the Runge-Kutta method at order 4 instead of Euler's methods for path computing in streamline algorithm", cmd, false);
         TCLAP::ValueArg< float > thresholdAngleArg("", "threshold_angle", "Threshold angle (in degrees) between two successive displacements", false, 75, "positive real", cmd);
 
@@ -107,6 +109,7 @@ int main(int argc, char *argv[])
         float       stepSize = stepSizeArg.getValue();
         bool          useRK4 = useRK4Arg.getValue();
         float thresholdAngle = 0.017453292519943 * thresholdAngleArg.getValue();
+        float    seedSpacing = seedSpacingArg.getValue();
 
 
         //
@@ -213,6 +216,7 @@ int main(int argc, char *argv[])
             strAlgorithm->SetStepSize(stepSize);
             strAlgorithm->UseRungeKuttaOrder4(useRK4);
             strAlgorithm->SetThresholdAngle(thresholdAngle);
+            strAlgorithm->SetSeedSpacing(seedSpacing);
 
             algorithm = strAlgorithm;
 
@@ -227,6 +231,11 @@ int main(int argc, char *argv[])
 
         btkCoutMacro("Processing...");
 
+        // Add an observer for progress bar
+        btk::CommandProgressUpdate::Pointer observer = btk::CommandProgressUpdate::New();
+        algorithm->AddObserver(itk::ProgressEvent(), observer);
+
+        // Process
         algorithm->SetDiffusionSequence(dwiSequence);
         algorithm->SetDiffusionModel(model);
         algorithm->SetMask(mask);
