@@ -77,9 +77,9 @@ AffineRegistration<ImageType>
     m_Metric -> SetFixedImageMask( m_FixedMask );
   }
 
-
-  m_Metric->SetNumberOfHistogramBins( 24 );
-  m_Metric->UseAllPixelsOn();
+  // FIXME Uncomment if MI is used instead of NC
+  //m_Metric->SetNumberOfHistogramBins( 24 );
+  //m_Metric->UseAllPixelsOn();
 
   // Configure optimizer
 

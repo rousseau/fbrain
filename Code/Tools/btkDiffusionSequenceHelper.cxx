@@ -82,14 +82,10 @@ void DiffusionSequenceHelper::WriteSequenceArray(std::vector< btk::DiffusionSequ
 
 btk::DiffusionSequence::Pointer DiffusionSequenceHelper::ReadSequence(const std::string &fileName)
 {
-    std::cout << "Reading image \"" << fileName << "\"... " << std::flush;
-
     btk::DiffusionSequenceFileReader::Pointer reader = btk::DiffusionSequenceFileReader::New();
     reader->SetFileName(fileName);
     reader->Update();
-
-    std::cout << "done." << std::endl;
-
+    std::cout << "Reading image \"" << fileName << "\"... done." << std::endl;
     return reader->GetOutput();
 }
 

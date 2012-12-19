@@ -34,370 +34,236 @@
 ==========================================================================*/
 
 /* Standard includes */
-#include "iostream"
-#include "algorithm"
 #include "string"
 #include <tclap/CmdLine.h>
 
 /* Itk includes */
-#include "itkImageFileReader.h"
-#include "itkImageFileWriter.h"
-#include "itkImage.h"
 #include "itkExtractImageFilter.h"
-#include "itkImageRegionIteratorWithIndex.h"
+#include "itkImage.h"
 #include "itkResampleImageFilter.h"
 #include "itkImageMaskSpatialObject.h"
-#include "itkImageDuplicator.h"
-#include "itkImageRegionIterator.h"
 #include "itkJoinSeriesImageFilter.h"
-#include "itkCastImageFilter.h"
 
 /* Btk includes */
-#include "btkDiffusionGradientTable.h"
-#include "btkFileHelper.h"
 #include "btkAffineRegistration.h"
-
+#include "btkDiffusionGradientTable.h"
+#include "btkDiffusionSequenceHelper.h"
+#include "btkDiffusionSequenceFileHelper.h"
+#include "btkFileHelper.h"
+#include "btkWeightedSumOfImagesFilter.h"
 
 int main( int argc, char * argv[] )
 {
-  // Parse arguments
-  try{
-
-  TCLAP::CmdLine cmd("Writes a dwi sequence as a single image B0 + the diffusion "
-      "images. The new B0 is the mean of all B0 images in the original sequence, "
-      "or a user-provided B0.", ' ', "Unversioned");
-
-  TCLAP::ValueArg<std::string> inputArg("i","input","Original DWI sequence.",
-      true,"","string",cmd);
-  TCLAP::ValueArg<std::string> outputArg("o","output","Normalized DWI Sequence. ",
-      true,"","string",cmd);
-  TCLAP::ValueArg<std::string> maskArg("m","mask","Image mask for registration. ",
-      false,"","string",cmd);
-
-  cmd.parse( argc, argv );
-
-  std::string inputFileStr;
-  inputFileStr = inputArg.getValue();
-  const char* inputFile = inputFileStr.c_str();
-
-  std::string bvalFileStr;
-  bvalFileStr = btk::FileHelper::GetRadixOf(inputFileStr);
-  bvalFileStr = bvalFileStr + ".bval";
-  const char* bvalFile = bvalFileStr.c_str();
-
-  std::string bvecFileStr;
-  bvecFileStr = btk::FileHelper::GetRadixOf(inputFileStr);
-  bvecFileStr = bvecFileStr + ".bvec";
-  const char* bvecFile = bvecFileStr.c_str();
-
-  std::string outputFileStr;
-  outputFileStr = outputArg.getValue();
-  const char* outputFile = outputFileStr.c_str();
-
-  // Both the bval file and bvec file must be modified to remove some zero entries
-
-  std::string bvalOutputFileStr;
-  bvalOutputFileStr = btk::FileHelper::GetRadixOf(outputFileStr);
-  bvalOutputFileStr = bvalOutputFileStr + ".bval";
-  const char* bvalOutputFile = bvalOutputFileStr.c_str();
-
-  std::string bvecOutputFileStr;
-  bvecOutputFileStr = btk::FileHelper::GetRadixOf(outputFileStr);
-  bvecOutputFileStr = bvecOutputFileStr + ".bvec";
-  const char* bvecOutputFile = bvecOutputFileStr.c_str();
-
-  std::string maskFileStr;
-  maskFileStr = maskArg.getValue();
-  const char* maskFile = maskFileStr.c_str();
-
-  // typedefs
-
-  typedef short         PixelType;
-  const   unsigned int  Dimension = 4;
-
-  typedef itk::Image< PixelType, Dimension >   SequenceType;
-  typedef itk::ImageFileReader< SequenceType > ReaderType;
-
-  //TODO : DO A FILTER !
-
-  // Read sequence
-
-  ReaderType::Pointer reader = ReaderType::New();
-
-  reader -> SetFileName( inputFile );
-  reader -> Update();
-
-  SequenceType::Pointer    sequence  = reader -> GetOutput();
-  SequenceType::RegionType region    = sequence -> GetLargestPossibleRegion();
-  SequenceType::SizeType 	 size      = region.GetSize();
-  SequenceType::IndexType	 index     = region.GetIndex();
-
-  unsigned int length = size[3];
-
-  // Read b-values and identify B0 images
-
-  std::vector< int > b0_idx;
-  std::vector< int > b_values(length,0);
-
-  FILE* f;
-
-  f = fopen( bvalFile, "r" );
-  int bvalue;
-  int idx = 0;
-  while ( !feof(f) )
-  {
-    fscanf( f, "%d ", &bvalue);
-    b_values[idx] = bvalue;
-    if (bvalue == 0)
-      b0_idx.push_back(idx);
-    idx++;
-  }
-  fclose (f);
-
-  // Read mask
-
-  typedef itk::Image< unsigned char, 3 >    				ImageMaskType;
-  typedef ImageMaskType::Pointer            				ImageMaskPointer;
-
-  typedef itk::ImageFileReader< ImageMaskType >     MaskReaderType;
-
-  typedef itk::ImageMaskSpatialObject< 3 >  MaskType;
-  typedef MaskType::Pointer  MaskPointer;
-
-  MaskPointer mask = MaskType::New();
-  ImageMaskPointer imageMask  = ImageMaskType::New();
-
-  if (strcmp(maskFile,"") != 0)
-  {
-    MaskReaderType::Pointer maskReader = MaskReaderType::New();
-    maskReader -> SetFileName( maskFile );
-    maskReader -> Update();
-
-    mask -> SetImage( maskReader -> GetOutput() );
-    //FIXME : Due to new affine Registration we must set mask as an image
-    imageMask = maskReader->GetOutput();
-  }
-
-
-  // Extraction of B0s
-  typedef itk::Image< PixelType, 3 >  ImageType;
-  std::vector< ImageType::Pointer > b0;
-
-  size[3]  = 0;
-
-  typedef itk::ExtractImageFilter<SequenceType,ImageType> ExtractorType;
-
-  for(unsigned int i=0; i< b0_idx.size(); i++ )
-  {
-    index[3] = b0_idx[i];
-
-    SequenceType::RegionType imageRegion;
-    imageRegion.SetIndex( index );
-    imageRegion.SetSize( size );
-
-    ExtractorType::Pointer extractor = ExtractorType::New();
-    extractor -> SetInput( sequence );
-    extractor -> SetExtractionRegion( imageRegion );
-    extractor -> SetDirectionCollapseToSubmatrix( );
-    extractor -> Update();
-
-    b0.push_back( extractor ->  GetOutput() );
-
-    std::cout << "Extracted image " << b0_idx[i] << std::endl;
-  }
-
-  // Registration of B0s
-
-  std::vector< ImageType::Pointer > b0_resampled;
-  b0_resampled.push_back(b0[0]);
-
-  typedef btk::AffineRegistration<ImageType> RegistrationType;
-  typedef itk::ResampleImageFilter<ImageType,ImageType,double> ResamplerType;
-
-  unsigned int i=0;
-
-  //#pragma omp parallel for private(i) schedule(dynamic)
-  for(unsigned int i=1; i<b0_idx.size(); i++ )
-  {
-    std::cout << "Registering image " << b0_idx[i] << " to " << b0_idx[0]
-              << " ... ";
-
-    RegistrationType::Pointer registration = RegistrationType::New();
-    registration -> SetFixedImage(  b0[0] );
-    registration -> SetMovingImage( b0[i] );
-
-    if (strcmp(maskFile,"") != 0)
-    {
-       //FIXME : Set a ImageMask not a mask
-      //registration -> SetFixedImageMask( mask );
-      //registration -> SetFixedImageRegion( mask -> GetAxisAlignedBoundingBoxRegion() );
-
-       registration -> SetFixedImageMask( imageMask );
-       registration -> SetFixedImageRegion( mask -> GetAxisAlignedBoundingBoxRegion() );
-    } else
-      {
-        registration -> SetFixedImageRegion( b0[0] -> GetLargestPossibleRegion() );
-      }
-
-    //registration -> StartRegistration(); // FIXME : in ITK4 StartRegistration() is replaced by Update()
-    registration->Update();
-    std::cout << "done." << std::endl;
-
-    std::cout << registration -> GetLastTransformParameters() << std::endl;
-
-    ResamplerType::Pointer resampler = ResamplerType::New();
-    resampler -> UseReferenceImageOn();
-    resampler -> SetReferenceImage(b0[0]);
-    resampler -> SetInput(b0[i]);
-    resampler -> SetTransform( registration -> GetTransform() );
-
-    resampler -> Update();
-    b0_resampled.push_back( resampler -> GetOutput() );
-  }
-
-  // Calculates the mean image
-
-  typedef itk::Image<double,3> ImageDoubleType;
-  typedef itk::CastImageFilter< ImageType, ImageDoubleType > CastToDoubleType;
-
-  // Cast short images to double images
-  // the sum of values for a voxel could be superior as the short value range
-  ImageDoubleType::Pointer meanDoubleImage = ImageDoubleType::New();
-
-  CastToDoubleType::Pointer castShortToDouble = CastToDoubleType::New();
-  castShortToDouble->SetInput(b0[0]);
-  castShortToDouble->Update();
-
-  meanDoubleImage = castShortToDouble->GetOutput();
-
-  typedef itk::ImageRegionIterator<ImageType>  IteratorShort;
-  typedef itk::ImageRegionIterator<ImageDoubleType>  IteratorDouble;
-
-  IteratorDouble b0_mean_it( meanDoubleImage , meanDoubleImage->GetLargestPossibleRegion() );
-  for(unsigned int i=1; i<b0_resampled.size(); i++ )
-  {
-    ImageDoubleType::Pointer DoubleResampled = ImageDoubleType::New();
-
-    CastToDoubleType::Pointer castShortToDouble = CastToDoubleType::New();
-    castShortToDouble->SetInput(b0_resampled[i]);
-    castShortToDouble->Update();
-
-    DoubleResampled = castShortToDouble->GetOutput();
-
-    IteratorDouble b0_resampled_it( DoubleResampled, DoubleResampled->GetLargestPossibleRegion() );
-    //IteratorDouble b0_mean_it( meanDoubleImage , meanDoubleImage->GetLargestPossibleRegion() );
-
-    for(b0_resampled_it.GoToBegin(), b0_mean_it.GoToBegin();!b0_resampled_it.IsAtEnd(); ++b0_resampled_it, ++b0_mean_it)
-    {
-
-      b0_mean_it.Set( b0_mean_it.Get() + b0_resampled_it.Get());
-
-    }
-   }
-
-    for (b0_mean_it.GoToBegin();!b0_mean_it.IsAtEnd(); ++b0_mean_it)
-    {
-
-      b0_mean_it.Set( b0_mean_it.Get()/static_cast<double>(b0_resampled.size()));
-
-    }
-
-
-  typedef itk::CastImageFilter< ImageDoubleType, ImageType > CastToShortType;
-  CastToShortType::Pointer castDoubleToShort = CastToShortType::New();
-  castDoubleToShort->SetInput(meanDoubleImage);
-
-  ImageType::Pointer b0_mean = ImageType::New();
-  castDoubleToShort->Update();
-  b0_mean = castDoubleToShort -> GetOutput();
-
-
-
-
-  // Join images
-
-  std::cout << "Joining images ... ";
-
-  SequenceType::SpacingType  spacing  = sequence -> GetSpacing();
-
-  typedef itk::JoinSeriesImageFilter< ImageType, SequenceType > JoinerType;
-  JoinerType::Pointer joiner = JoinerType::New();
-  joiner -> SetOrigin( 0.0 );
-  joiner -> SetSpacing( spacing[3] );
-  joiner -> SetInput( 0, b0_mean );
-
-  unsigned j = 1;
-
-  for (unsigned int i = 0; i < length; i++)
-  {
-    if ( b_values[i] != 0 )
-    {
-      index[3] = i;
-
-      SequenceType::RegionType imageRegion;
-      imageRegion.SetIndex( index );
-      imageRegion.SetSize( size );
-
-      ExtractorType::Pointer extractor = ExtractorType::New();
-      extractor -> SetInput( sequence );
-      extractor -> SetExtractionRegion( imageRegion );
-      extractor -> SetDirectionCollapseToSubmatrix( );
-      extractor -> Update();
-
-      joiner -> SetInput( j, extractor -> GetOutput() );
-      j++;
-    }
-  }
-
-  std::cout << "done." << std::endl;
-
-  joiner -> Update();
-
-  // Write modified sequence
-
-  std::cout << "Writing sequence ... "; std::cout.flush();
-
-  typedef itk::ImageFileWriter< SequenceType >  WriterType;
-
-  WriterType::Pointer writer =  WriterType::New();
-
-  writer->SetFileName( outputFile );
-  writer->SetInput( joiner -> GetOutput() );
-  writer->Update();
-
-  std::cout << "done." << std::endl;
-
-  // Write new b-values with removed zero entries
-
-  std::cout << "Writing b-values ... ";
-
-  f = fopen( bvalOutputFile, "w" );
-  fprintf( f, "%d ", 0);
-
-  for(unsigned int i=0; i<length; i++)
-  {
-    if ( b_values[i] != 0)
-      fprintf( f, "%d ", b_values[i]);
-  }
-  fclose (f);
-
-  std::cout << "done." << std::endl;
-
-  std::cout << "Writing gradient table ... ";
-
-  typedef btk::DiffusionGradientTable< SequenceType > GradientTableType;
-  GradientTableType::Pointer gradientTable = GradientTableType::New();
-
-  gradientTable -> SetNumberOfGradients(length);
-  gradientTable -> LoadFromFile( bvecFile);
-  gradientTable -> RemoveRepeatedZeroEntries();
-  gradientTable -> SaveToFile( bvecOutputFile );
-
-  std::cout << "done." << std::endl;
-
-
-  } catch (TCLAP::ArgException &e)  // catch any exceptions
-  { std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; }
-
-  return EXIT_SUCCESS;
+    try{
+
+        //
+        // Command line parser
+        //
+
+        TCLAP::CmdLine cmd("Writes a dwi sequence as a single image B0 + the diffusion "
+                           "images. The new B0 is the mean of all B0 images in the original sequence, "
+                           "or a user-provided B0.", ' ', "Unversioned");
+
+        TCLAP::ValueArg<std::string> inputArg("i","input","Original DWI sequence.", true,"","string",cmd);
+        TCLAP::ValueArg<std::string> outputArg("o","output","Normalized DWI Sequence. ", true,"","string",cmd);
+        TCLAP::ValueArg<std::string> maskArg("m","mask","Image mask for registration. ", false,"","string",cmd);
+
+        cmd.parse( argc, argv );
+
+        std::string inputFileName  = inputArg.getValue();
+        std::string outputFileName = outputArg.getValue();
+        std::string maskFileName      = maskArg.getValue();
+
+        //
+        // Typedefs
+        //
+        typedef btk::DiffusionSequence TSequence;
+        typedef itk::Image< double,3> TImage;
+        typedef itk::Image< unsigned char,3> TMask;
+
+        typedef btk::AffineRegistration<TImage> AffineRegistration;
+        typedef itk::ExtractImageFilter< TSequence, TImage > ExtractImageFilter;
+        typedef itk::JoinSeriesImageFilter< TImage, TSequence > JoinerType;
+        typedef btk::ResampleImageFilter< TImage,TImage,double > ResampleImageFilter;
+        typedef btk::WeightedSumOfImagesFilter< TImage > WeightedSumOfImagesFilter;
+
+        // TODO : Do a filter or add a normalization method to btkDiffusionSequence class...
+
+        //
+        // Processing
+        //
+
+        /////////////////////////////////////////////////////////////
+        //
+        // Read sequence
+        //
+        TSequence::Pointer    sequence    = btk::DiffusionSequenceHelper::ReadSequence(inputFileName);
+        TSequence::RegionType region4D    = sequence -> GetLargestPossibleRegion();
+        TSequence::SizeType   input4Dsize = region4D.GetSize();
+        TSequence::IndexType  index       = region4D.GetIndex();
+        TSequence::SizeType   image3Dsize = input4Dsize;
+        image3Dsize[3]=0;
+
+        std::vector< unsigned short>          BValues       = sequence->GetBValues();
+        std::vector< btk::GradientDirection > GradientTable = sequence->GetGradientTable();
+        std::vector< TImage::Pointer > B0;
+        std::vector< TImage::Pointer > B0_resampled;
+
+        /////////////////////////////////////////////////////////////
+        //
+        // Extraction of B0s
+        //
+        btkCoutMacro("B0s extraction :");
+
+        unsigned int nb_loop =0;
+
+        for (unsigned int i = 0; i < input4Dsize[3]; i++)
+        {
+            if (BValues[i] == 0)
+            {
+                index[3] = i;
+
+                TSequence::RegionType imageRegion;
+                imageRegion.SetIndex( index );
+                imageRegion.SetSize( image3Dsize );
+
+                ExtractImageFilter::Pointer extractor = ExtractImageFilter::New();
+                extractor -> SetInput( sequence );
+                extractor -> SetExtractionRegion( imageRegion );
+                extractor -> SetDirectionCollapseToSubmatrix( );
+                extractor -> Update();
+                B0.push_back( extractor ->  GetOutput() );
+
+                nb_loop++;
+                std::cout<<"\r -> "<< nb_loop<<" volumes extracted ... ";
+            }
+        }
+        btkCoutMacro("Done.");
+
+        /////////////////////////////////////////////////////////////
+        //
+        // Registration of B0s
+        //
+        btkCoutMacro("B0s registration on the first one :");
+
+        // Read mask
+        TMask::Pointer  mask;
+
+        if (maskFileName !="")
+        {
+            mask = btk::ImageHelper< TMask >::ReadImage(maskFileName);
+        }
+
+        B0_resampled.push_back(B0[0]);
+
+        nb_loop =0;
+        unsigned int i;
+
+        #pragma omp parallel for private(i) schedule(dynamic)
+        for(unsigned int i=1; i<B0.size(); i++ )
+        {
+            AffineRegistration::Pointer registration = AffineRegistration::New();
+            ResampleImageFilter::Pointer resampler = ResampleImageFilter::New();
+
+            if (maskFileName != "")
+            {
+                registration -> SetFixedImageMask( mask );
+            }
+
+            registration -> SetFixedImage( B0[0] );
+            registration -> SetMovingImage(B0[i] );
+            registration -> SetFixedImageRegion( B0[0] -> GetLargestPossibleRegion() );
+            registration -> Update();
+
+            resampler -> UseReferenceImageOn();
+            resampler -> SetReferenceImage(B0[0]);
+            resampler -> SetInput(B0[i]);
+            resampler -> SetTransform( registration -> GetTransform() );
+            resampler -> Update();
+
+            B0_resampled.push_back( resampler -> GetOutput() );
+
+            nb_loop++;
+            std::cout<<"\r -> "<<nb_loop <<" volumes registred (total "<<B0.size()-1<<") ... "<<std::flush;
+        }
+        btkCoutMacro("Done.");
+
+        /////////////////////////////////////////////////////////////
+        //
+        // Calculates the mean image
+        //
+        std::cout<<"Calculating the mean image ... ";
+
+        std::vector< float > weights = std::vector< float >(B0_resampled.size(), 1.0f/static_cast< float >(B0_resampled.size()));
+
+        WeightedSumOfImagesFilter::Pointer sumFilter = WeightedSumOfImagesFilter::New();
+        sumFilter->SetInputs(B0_resampled);
+        sumFilter->SetWeights(weights);
+        sumFilter->Update();
+
+        TImage::Pointer B0_mean = sumFilter->GetOutput();
+
+        // Correcting of B-Values and B-vector (Removes repetitive zero entries)
+        while (BValues[1]==0)
+        {
+            BValues.erase(BValues.begin()+1);
+            GradientTable.erase(GradientTable.begin()+1);
+        }
+        btkCoutMacro("Done.");
+
+        ////////////////////////////////////////////////////////////
+        //
+        // Join images
+        //
+        std::cout << "Joining images ... ";
+
+        TSequence::SpacingType  spacing  = sequence -> GetSpacing();
+
+        JoinerType::Pointer joiner = JoinerType::New();
+        joiner -> SetOrigin( 0.0 );
+        joiner -> SetSpacing( spacing[3] );
+        joiner -> SetInput( 0, B0_mean );
+
+        unsigned j = 1;
+        for (unsigned int i = B0_resampled.size(); i < input4Dsize[3]; i++)
+        {
+            index[3] = i;
+
+            TSequence::RegionType imageRegion;
+            imageRegion.SetIndex( index );
+            imageRegion.SetSize( image3Dsize );
+
+            ExtractImageFilter::Pointer extractor = ExtractImageFilter::New();
+            extractor -> SetInput( sequence );
+            extractor -> SetExtractionRegion( imageRegion );
+            extractor -> SetDirectionCollapseToSubmatrix( );
+            extractor -> Update();
+
+            joiner -> SetInput( j, extractor -> GetOutput() );
+            j++;
+        }
+        joiner -> Update();
+        btkCoutMacro(" Done.");
+
+        //////////////////////////////////////////////////////////////////////////
+        ///
+        // Write Outputs : Normalized sequence, B-Values and B-vector
+        //
+
+        // Write modified sequence
+        btk::ImageHelper<  btk::DiffusionSequence>::WriteImage(joiner->GetOutput(), outputFileName);
+
+        // Write new B-values with removed zero entries
+        std::string bvalFileName = btk::FileHelper::GetRadixOf(outputFileName) + ".bval";
+        btk::DiffusionSequenceFileHelper::WriteBValues(BValues,bvalFileName);
+
+        // Write new B-vector with removed zero entries
+        std::string bvecFileName = btk::FileHelper::GetRadixOf(outputFileName) + ".bvec";
+        btk::DiffusionSequenceFileHelper::WriteGradientTable(GradientTable,bvecFileName);
+
+
+    } catch (TCLAP::ArgException &e)  // catch any exceptions
+    { std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; }
+
+    return EXIT_SUCCESS;
 }

@@ -68,7 +68,6 @@ RigidRegistration<ImageType>
 ::Initialize() throw (ExceptionObject)
 {
 
-
   // Configure transform
   m_Transform = TransformType::New();
 
@@ -128,8 +127,8 @@ RigidRegistration<ImageType>
   }
 
   // FIXME Uncomment if MI is used instead of NC
-  m_Metric -> SetNumberOfHistogramBins( 64 );
-  m_Metric -> UseAllPixelsOn();
+  //m_Metric -> SetNumberOfHistogramBins( 64 );
+  //m_Metric -> UseAllPixelsOn();
   m_Metric -> SetNumberOfSpatialSamples(0.5*this -> GetFixedImageRegion().GetNumberOfPixels());
 
 
