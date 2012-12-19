@@ -42,6 +42,7 @@
 #include "itkLinearInterpolateImageFunction.h"
 #include "itkAffineTransform.h"
 #include "itkMattesMutualInformationImageToImageMetric.h"
+#include "itkNormalizedCorrelationImageToImageMetric.h"
 #include "itkImageMaskSpatialObject.h"
 
 #include "itkNumericTraits.h"
@@ -99,12 +100,22 @@ public:
   typedef typename ImageType::RegionType                RegionType;
 
 
+  /**  Type of the metric.
+   * --------------------- /!\ Warning /!\ ------------------------------
+   *
+   * - itk::MattesMutualInformationImageToImageMetric is NOT THREAD SAFE....
+   *
+   * ---------------------------------------------------------------------
+   *
+   * typedef MattesMutualInformationImageToImageMetric<
+   */
 
-  /**  Type of the metric. */
-  typedef MattesMutualInformationImageToImageMetric<
+  typedef NormalizedCorrelationImageToImageMetric<
                                           ImageType,
                                           ImageType >   MetricType;
+
   typedef typename MetricType::Pointer                  MetricPointer;
+
 
   typedef typename MetricType::FixedImageMaskType   FixedImageMaskType;
   typedef typename FixedImageMaskType::Pointer     FixedImageMaskPointer;
