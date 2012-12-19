@@ -176,7 +176,14 @@ class OrientationDiffusionFunctionModel : public btk::DiffusionModel
          */
         virtual std::vector< btk::GradientDirection > MeanDirectionsAt(ContinuousIndex cindex, btk::GradientDirection vector, float angle);
 
+        /**
+         * @brief Activate the sharp model (by spherical deconvolution).
+         */
         void UseSharpModelOn();
+
+        /**
+         * @brief Desactivate the sharp model (by spherical deconvolution).
+         */
         void UseSharpModelOff();
 
     protected:
@@ -221,10 +228,19 @@ class OrientationDiffusionFunctionModel : public btk::DiffusionModel
         virtual ContinuousIndex TransformPhysicalPointToContinuousIndex(PhysicalPoint point);
 
     private:
+        /**
+         * @brief Compute the legendre matrix of the model.
+         */
         void ComputeLegendreMatrix();
 
+        /**
+         * @brief Compute the spherical harmonics basis matrix of the model.
+         */
         void ComputeSphericalHarmonicsMatrix();
 
+        /**
+         * @brief Compute the sharp matrix of the model (by spherical deconvolution).
+         */
         void ComputeModelSharpMatrix();
 
     private:
@@ -243,16 +259,34 @@ class OrientationDiffusionFunctionModel : public btk::DiffusionModel
          */
         InterpolateModelFunction::Pointer m_ModelImageFunction;
 
+        /**
+         * @brief Number of spherical harmonics coefficients used (depend on the order).
+         */
         unsigned int m_NumberOfSHCoefficients;
 
+        /**
+         * @brief Order of the spherical harmonics decomposition.
+         */
         unsigned int m_SphericalHarmonicsOrder;
 
+        /**
+         * @brief Flag for sharp model activation.
+         */
         bool m_UseSharpModel;
 
+        /**
+         * @brief Legendre matrix of the model.
+         */
         Self::Matrix m_LegendreMatrix;
 
+        /**
+         * @brief Spherical harmonics basis matrix of the model.
+         */
         Self::Matrix m_SphericalHarmonicsBasisMatrix;
 
+        /**
+         * @brief Sharp matrix of the model (by spherical deconvolution).
+         */
         Self::Matrix m_ModelSharpMatrix;
 };
 

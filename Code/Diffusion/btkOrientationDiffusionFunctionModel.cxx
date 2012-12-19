@@ -44,7 +44,7 @@
 namespace btk
 {
 
-OrientationDiffusionFunctionModel::OrientationDiffusionFunctionModel() : m_UseSharpModel(false)
+OrientationDiffusionFunctionModel::OrientationDiffusionFunctionModel() : m_UseSharpModel(false), m_SphericalHarmonicsOrder(4)
 {
     // ----
 }
@@ -71,12 +71,12 @@ void OrientationDiffusionFunctionModel::Update()
     m_SphericalHarmonicsOrder = -1.5 + std::sqrt( 2.25 - 2.*(1. - m_NumberOfSHCoefficients) );
 
     // Compute matrices
-    Self::ComputeLegendreMatrix();
-    Self::ComputeSphericalHarmonicsMatrix();
+    this->ComputeLegendreMatrix();
+    this->ComputeSphericalHarmonicsMatrix();
 
     if(m_UseSharpModel)
     {
-        Self::ComputeModelSharpMatrix();
+        this->ComputeModelSharpMatrix();
     }
 }
 
@@ -97,43 +97,6 @@ float OrientationDiffusionFunctionModel::ModelAt(ModelImage::PixelType shCoeffic
     // TODO : this code use the analytical form to compute exact signal in direction.
     // We may use interpolation to improve computation speed...
 
-
-    /*/ Matrix form
-    Self::Matrix Y(1, m_NumberOfSHCoefficients);
-
-    btk::SphericalDirection u = direction.GetSphericalDirection();
-    unsigned int            j = 0;
-
-    for(unsigned int l = 0; l <= m_SphericalHarmonicsOrder; l += 2)
-    {
-        for(int m = -(int)l; m <= (int)l; m++)
-        {
-            Y(0,j++) = btk::SphericalHarmonics::ComputeBasis(u,l,m);
-        } // for m
-    } // for l
-
-    Matrix C(m_NumberOfSHCoefficients, 1);
-
-    for(unsigned int i = 0; i < m_NumberOfSHCoefficients; i++)
-    {
-        C(i,0) = shCoefficients[i];
-    }
-
-    float response = 0.f;
-
-    if(m_UseSharpModel)
-    {
-        response = (Y * (m_LegendreMatrix * (m_ModelSharpMatrix * C)))(0,0);
-    }
-    else // m_UseSharpModel = false
-    {
-        response = (Y * (m_LegendreMatrix * C))(0,0);
-    }
-
-    return response;//*/
-
-
-    // Direct form
     btk::SphericalDirection u = direction.GetSphericalDirection();
     float            response = 0.f;
     unsigned int            i = 0;
@@ -159,7 +122,7 @@ float OrientationDiffusionFunctionModel::ModelAt(ModelImage::PixelType shCoeffic
         } // for l
     }
 
-    return response;//*/
+    return response;
 }
 
 //----------------------------------------------------------------------------------------
@@ -168,61 +131,20 @@ float OrientationDiffusionFunctionModel::ModelAt(ContinuousIndex cindex, Gradien
 {
     ModelImage::PixelType shCoefficients = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
 
-    return Self::ModelAt(shCoefficients, direction);
+    return this->ModelAt(shCoefficients, direction);
 }
 
 //----------------------------------------------------------------------------------------
 
 float OrientationDiffusionFunctionModel::ModelAt(PhysicalPoint point, GradientDirection direction)
 {
-    return Self::ModelAt(Self::TransformPhysicalPointToContinuousIndex(point), direction);
+    return this->ModelAt(this->TransformPhysicalPointToContinuousIndex(point), direction);
 }
 
 //----------------------------------------------------------------------------------------
 
 std::vector< float > OrientationDiffusionFunctionModel::ModelAt(ContinuousIndex cindex)
 {
-    /*/ Reuse form
-    std::vector< float > response;
-
-    for(unsigned int i = 0; i < m_Directions.size(); i++)
-    {
-        response.push_back(Self::ModelAt(cindex, m_Directions[i]));
-    }
-
-    return response;//*/
-
-    /*/ Matrix form
-    ModelImage::PixelType shCoefficients = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
-
-    Self::Matrix C(m_NumberOfSHCoefficients, 1);
-
-    for(unsigned int i = 0; i < m_NumberOfSHCoefficients; i++)
-    {
-        C(i,0) = shCoefficients[i];
-    }
-
-    Self::Matrix Psi;
-
-    if(m_UseSharpModel)
-    {
-        Psi = m_SphericalHarmonicsBasisMatrix * (m_LegendreMatrix * (m_ModelSharpMatrix * C));
-    }
-    else // m_UseSharpModel = false
-    {
-        Psi = m_SphericalHarmonicsBasisMatrix * (m_LegendreMatrix * C);
-    }
-
-    std::vector< float > response;
-
-    for(unsigned int i = 0; i < Psi.Rows(); i++)
-    {
-        response.push_back(Psi(i,0));
-    }
-
-    return response;//*/
-
-    // Direct form
     ModelImage::PixelType shCoefficients = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
 
     std::vector< float > response;
@@ -257,14 +179,14 @@ std::vector< float > OrientationDiffusionFunctionModel::ModelAt(ContinuousIndex 
         }
     }
 
-    return response;//*/
+    return response;
 }
 
 //----------------------------------------------------------------------------------------
 
 std::vector< float > OrientationDiffusionFunctionModel::ModelAt(PhysicalPoint point)
 {
-    return Self::ModelAt(Self::TransformPhysicalPointToContinuousIndex(point));
+    return this->ModelAt(this->TransformPhysicalPointToContinuousIndex(point));
 }
 
 //----------------------------------------------------------------------------------------
@@ -274,33 +196,6 @@ float OrientationDiffusionFunctionModel::SignalAt(ModelImage::PixelType shCoeffi
     // TODO : this code use the analytical form to compute exact signal in direction.
     // We may use interpolation to improve computation speed...
 
-
-    /*/ Matrix form
-    Self::Matrix Y(1,m_NumberOfSHCoefficients);
-
-    btk::SphericalDirection u = direction.GetSphericalDirection();
-    unsigned int            j = 0;
-
-    for(unsigned int l = 0; l <= m_SphericalHarmonicsOrder; l += 2)
-    {
-
-        for(int m = -(int)l; m <= (int)l; m++)
-        {
-            Y(0,j++) = btk::SphericalHarmonics::ComputeBasis(u,l,m);
-        } // for m
-    } // for l
-
-    Self::Matrix C(m_NumberOfSHCoefficients, 1);
-
-    for(unsigned int i = 0; i < m_NumberOfSHCoefficients; i++)
-    {
-        C(i,0) = shCoefficients[i];
-    }
-
-    return (Y * C)(0,0);//*/
-
-
-    // Direct form
     btk::SphericalDirection u = direction.GetSphericalDirection();
     float            response = 0.f;
     unsigned int            i = 0;
@@ -313,7 +208,7 @@ float OrientationDiffusionFunctionModel::SignalAt(ModelImage::PixelType shCoeffi
         } // for m
     } // for l
 
-    return response;//*/
+    return response;
 }
 
 //----------------------------------------------------------------------------------------
@@ -322,52 +217,20 @@ float OrientationDiffusionFunctionModel::SignalAt(ContinuousIndex cindex, Gradie
 {
     ModelImage::PixelType shCoefficients = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
 
-    return Self::SignalAt(shCoefficients, direction);
+    return this->SignalAt(shCoefficients, direction);
 }
 
 //----------------------------------------------------------------------------------------
 
 float OrientationDiffusionFunctionModel::SignalAt(PhysicalPoint point, GradientDirection direction)
 {
-    return Self::SignalAt(Self::TransformPhysicalPointToContinuousIndex(point), direction);
+    return this->SignalAt(this->TransformPhysicalPointToContinuousIndex(point), direction);
 }
 
 //----------------------------------------------------------------------------------------
 
 std::vector< float > OrientationDiffusionFunctionModel::SignalAt(ContinuousIndex cindex)
 {
-    /*/ Reuse form
-    std::vector< float > response;
-
-    for(unsigned int i = 0; i < m_Directions.size(); i++)
-    {
-        response.push_back(Self::SignalAt(cindex, m_Directions[i]));
-    }
-
-    return response;//*/
-
-    /*/ Matrix form
-    ModelImage::PixelType shCoefficients = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
-
-    Self::Matrix C(m_NumberOfSHCoefficients, 1);
-
-    for(unsigned int i = 0; i < m_NumberOfSHCoefficients; i++)
-    {
-        C(i,0) = shCoefficients[i];
-    }
-
-    Self::Matrix S = m_SphericalHarmonicsBasisMatrix * C;
-
-    std::vector< float > response;
-
-    for(unsigned int i = 0; i < S.Rows(); i++)
-    {
-        response.push_back(S(i,0));
-    }
-
-    return response;//*/
-
-    // Direct form
     ModelImage::PixelType shCoefficients = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
 
     std::vector< float > response;
@@ -385,22 +248,23 @@ std::vector< float > OrientationDiffusionFunctionModel::SignalAt(ContinuousIndex
         response.push_back(value);
     }
 
-    return response;//*/
+    return response;
 }
 
 //----------------------------------------------------------------------------------------
 
 std::vector< float > OrientationDiffusionFunctionModel::SignalAt(PhysicalPoint point)
 {
-    return Self::SignalAt(Self::TransformPhysicalPointToContinuousIndex(point));
+    return this->SignalAt(this->TransformPhysicalPointToContinuousIndex(point));
 }
 
 //----------------------------------------------------------------------------------------
 
 std::vector< btk::GradientDirection > OrientationDiffusionFunctionModel::MeanDirectionsAt(ContinuousIndex cindex)
 {
-    // TODO : test
-    std::vector< float > Psi = Self::ModelAt(cindex);
+    // TODO: improve speed with analytical space reduction (or interpolation of pre-computed data)
+
+    std::vector< float > Psi = this->ModelAt(cindex);
 
     float min = Psi[0], max = Psi[0];
     for(unsigned int i = 1; i < Psi.size(); i++)
@@ -413,14 +277,12 @@ std::vector< btk::GradientDirection > OrientationDiffusionFunctionModel::MeanDir
     }
 
     // Compute the regular step on the unit sphere
-    unsigned int elevationResolution = static_cast< unsigned int >(std::ceil( std::sqrt(static_cast< float >(m_SphericalResolution)/2.f) ));
-    float                       step = M_PI / static_cast< float >(elevationResolution);
+    unsigned int thetaRes = static_cast< unsigned int >(std::ceil( std::sqrt(static_cast< float >(m_SphericalResolution)/2.f) ));
+    unsigned int   phiRes = 2*thetaRes;
+    float       thetastep = M_PI / static_cast< float >(thetaRes);
+    float         phistep = 2.0*M_PI / static_cast< float >(phiRes);
 
     std::vector< btk::GradientDirection > meanDirections;
-
-    unsigned int thetaRes = step+1;
-    unsigned int phiRes   = step;
-
 
     for(unsigned int i = 1; i < thetaRes-1; i++)
     {
@@ -466,7 +328,7 @@ std::vector< btk::GradientDirection > OrientationDiffusionFunctionModel::MeanDir
             if(odf > odf1 && odf > odf2 && odf > odf3 && odf > odf4 && odf > odf5 && odf > odf6 && odf > odf7 && odf > odf8)
             {
                 if((Psi[phiRes*i+j]-min)/(max-min) > 0.9)
-                    meanDirections.push_back(btk::GradientDirection(i*step,j*step));
+                    meanDirections.push_back(btk::GradientDirection(i*thetastep,j*phistep));
             }
         } // for each phi
     } // for each theta
@@ -478,7 +340,7 @@ std::vector< btk::GradientDirection > OrientationDiffusionFunctionModel::MeanDir
 
 std::vector< btk::GradientDirection > OrientationDiffusionFunctionModel::MeanDirectionsAt(ContinuousIndex cindex, GradientDirection vector, float angle)
 {
-    std::vector< btk::GradientDirection > meanDirections = Self::MeanDirectionsAt(cindex);
+    std::vector< btk::GradientDirection > meanDirections = this->MeanDirectionsAt(cindex);
 
     std::vector< btk::GradientDirection > restrictedMeanDirections;
 
@@ -501,14 +363,14 @@ std::vector< btk::GradientDirection > OrientationDiffusionFunctionModel::MeanDir
 
 std::vector< btk::GradientDirection > OrientationDiffusionFunctionModel::MeanDirectionsAt(PhysicalPoint point)
 {
-    return Self::MeanDirectionsAt(Self::TransformPhysicalPointToContinuousIndex(point));
+    return this->MeanDirectionsAt(this->TransformPhysicalPointToContinuousIndex(point));
 }
 
 //----------------------------------------------------------------------------------------
 
 std::vector< btk::GradientDirection > OrientationDiffusionFunctionModel::MeanDirectionsAt(PhysicalPoint point, GradientDirection vector, float angle)
 {
-    return Self::MeanDirectionsAt(Self::TransformPhysicalPointToContinuousIndex(point), vector, angle);
+    return this->MeanDirectionsAt(this->TransformPhysicalPointToContinuousIndex(point), vector, angle);
 }
 
 //----------------------------------------------------------------------------------------
