@@ -42,7 +42,8 @@
 #include "itkConfigure.h"
 #include "itkMacro.h"
 
-#include <string>
+#include "string"
+#include "cmath"
 
 
 namespace btk
@@ -184,6 +185,39 @@ virtual void Set##name (const type _arg)  = 0
     return this->m_##name[i]; \
   }
 //-------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Project from RGB space to HSV space and return hue
+ * @param r Red channel
+ * @param g Green channel
+ * @param b Blue channel
+ * @return Hue from HSV space
+ */
+inline float RGBtoIndex(float r, float g, float b)
+{
+    float index = 0.0f;
+
+    float max = std::max(std::max(r, g), b);
+    float min = std::min(std::min(r, g), b);
+
+    if(max != min)
+    {
+        if(r == max)
+        {
+            index = ( std::fmod(60.0 * (g-b)/(max-min) + 360.0, 360.0) ) / 360.0;
+        }
+        else if(g == max)
+        {
+            index = ( 60.0 * (b-r)/(max-min) + 120.0 ) / 360.0;
+        }
+        else // b == max
+        {
+            index = ( 60.0 * (r-g)/(max-min) + 240.0 ) / 360.0;
+        }
+    }
+
+    return index;
+}
 
 }
 #endif
