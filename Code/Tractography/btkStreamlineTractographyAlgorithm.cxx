@@ -163,6 +163,8 @@ vtkSmartPointer< vtkPolyData > StreamlineTractographyAlgorithm::PropagateSeed(Se
 
 void StreamlineTractographyAlgorithm::PropagateSeedRK4(std::vector< Self::PhysicalPoint > &points, GradientDirection nextDirection)
 {
+    unsigned int numberOfIterations = 0;
+
     // Usefull constants
     float stepSize_2 = m_StepSize / 2.f;
     float stepSize_6 = m_StepSize / 6.f;
@@ -229,6 +231,11 @@ void StreamlineTractographyAlgorithm::PropagateSeedRK4(std::vector< Self::Physic
         {
             stop = true;
         }
+
+        if(++numberOfIterations > 1000)
+        {
+            stop = true;
+        }
     } while(!stop);
 }
 
@@ -237,6 +244,8 @@ void StreamlineTractographyAlgorithm::PropagateSeedRK4(std::vector< Self::Physic
 void StreamlineTractographyAlgorithm::PropagateSeedRK1(std::vector< Self::PhysicalPoint > &points, GradientDirection nextDirection)
 {
     bool stop = false;
+
+    unsigned int numberOfIterations = 0;
 
     do
     {
@@ -265,6 +274,11 @@ void StreamlineTractographyAlgorithm::PropagateSeedRK1(std::vector< Self::Physic
             {
                 stop = true;
             }
+        }
+
+        if(++numberOfIterations > 1000)
+        {
+            stop = true;
         }
     } while(!stop);
 }
