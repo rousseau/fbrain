@@ -41,6 +41,9 @@
 #include "btkLegendrePolynomial.h"
 
 
+#define ACCESS(i,j) (phiRes*(i) + (j) + 1)
+
+
 namespace btk
 {
 
@@ -279,59 +282,144 @@ std::vector< btk::GradientDirection > OrientationDiffusionFunctionModel::MeanDir
     // Compute the regular step on the unit sphere
     unsigned int thetaRes = static_cast< unsigned int >(std::ceil( std::sqrt(static_cast< float >(m_SphericalResolution)/2.f) ));
     unsigned int   phiRes = 2*thetaRes;
-    float       thetastep = M_PI / static_cast< float >(thetaRes);
-    float         phistep = 2.0*M_PI / static_cast< float >(phiRes);
 
     std::vector< btk::GradientDirection > meanDirections;
 
-    for(unsigned int i = 1; i < thetaRes-1; i++)
+    for(unsigned int i = 0; i < thetaRes; i++)
     {
         for(unsigned int j = 0; j < phiRes; j++)
         {
             float odf1, odf2, odf3, odf4, odf5, odf6, odf7, odf8;
-            float odf = Psi[phiRes*i + j];
+            float odf = Psi[ACCESS(i,j)];
 
             if(j == 0)
             {
-                odf1 = Psi[phiRes*(i-1)+(phiRes-1)];
-                odf2 = Psi[phiRes*(i-1)+j];
-                odf3 = Psi[phiRes*(i-1)+(j+1)];
-                odf4 = Psi[phiRes*i+(phiRes-1)];
-                odf5 = Psi[phiRes*i+(j+1)];
-                odf6 = Psi[phiRes*(i+1)+(phiRes-1)];
-                odf7 = Psi[phiRes*(i+1)+j];
-                odf8 = Psi[phiRes*(i+1)+(j+1)];
+                if(i == 0)
+                {
+                    odf1 = odf2 = odf3 = Psi[0];
+                }
+                else // i != 0
+                {
+                    odf1 = Psi[ACCESS(i-1,phiRes-1)];
+                    odf2 = Psi[ACCESS(i-1,0)];
+                    odf3 = Psi[ACCESS(i-1,1)];
+                }
+
+                odf4 = Psi[ACCESS(i,phiRes-1)];
+                odf5 = Psi[ACCESS(i,1)];
+
+                if(i == thetaRes-1)
+                {
+                    odf6 = odf7 = odf8 = Psi[Psi.size()-1];
+                }
+                else // i != thetaRes-1
+                {
+                    odf6 = Psi[ACCESS(i+1,phiRes-1)];
+                    odf7 = Psi[ACCESS(i+1,0)];
+                    odf8 = Psi[ACCESS(i+1,1)];
+                }
             }
             else if(j == phiRes-1)
             {
-                odf1 = Psi[phiRes*(i-1)+(j-1)];
-                odf2 = Psi[phiRes*(i-1)+j];
-                odf3 = Psi[phiRes*(i-1)+(0)];
-                odf4 = Psi[phiRes*i+(j-1)];
-                odf5 = Psi[phiRes*i+(0)];
-                odf6 = Psi[phiRes*(i+1)+(j-1)];
-                odf7 = Psi[phiRes*(i+1)+j];
-                odf8 = Psi[phiRes*(i+1)+(0)];
+                if(i == 0)
+                {
+                    odf1 = odf2 = odf3 = Psi[0];
+                }
+                else // i != 0
+                {
+                    odf1 = Psi[ACCESS(i-1,j-1)];
+                    odf2 = Psi[ACCESS(i-1,j)];
+                    odf3 = Psi[ACCESS(i-1,0)];
+                }
+
+                odf4 = Psi[ACCESS(i,j-1)];
+                odf5 = Psi[ACCESS(i,0)];
+
+                if(i == thetaRes-1)
+                {
+                    odf6 = odf7 = odf8 = Psi[Psi.size()-1];
+                }
+                else // i != thetaRes-1
+                {
+                    odf6 = Psi[ACCESS(i+1,j-1)];
+                    odf7 = Psi[ACCESS(i+1,j)];
+                    odf8 = Psi[ACCESS(i+1,j+1)];
+                }
             }
             else // j != 0 && j != phiRes-1
             {
-                odf1 = Psi[phiRes*(i-1)+(j-1)];
-                odf2 = Psi[phiRes*(i-1)+j];
-                odf3 = Psi[phiRes*(i-1)+(j+1)];
-                odf4 = Psi[phiRes*i+(j-1)];
-                odf5 = Psi[phiRes*i+(j+1)];
-                odf6 = Psi[phiRes*(i+1)+(j-1)];
-                odf7 = Psi[phiRes*(i+1)+j];
-                odf8 = Psi[phiRes*(i+1)+(j+1)];
+                if(i == 0)
+                {
+                    odf1 = odf2 = odf3 = Psi[0];
+                }
+                else // i != 0
+                {
+                    odf1 = Psi[ACCESS(i-1,j-1)];
+                    odf2 = Psi[ACCESS(i-1,j)];
+                    odf3 = Psi[ACCESS(i-1,j+1)];
+                }
+
+                odf4 = Psi[ACCESS(i,j-1)];
+                odf5 = Psi[ACCESS(i,j+1)];
+
+                if(i == thetaRes-1)
+                {
+                    odf6 = odf7 = odf8 = Psi[Psi.size()-1];
+                }
+                else // i != thetaRes-1
+                {
+                    odf6 = Psi[ACCESS(i+1,j-1)];
+                    odf7 = Psi[ACCESS(i+1,j)];
+                    odf8 = Psi[ACCESS(i+1,j+1)];
+                }
             }
 
             if(odf > odf1 && odf > odf2 && odf > odf3 && odf > odf4 && odf > odf5 && odf > odf6 && odf > odf7 && odf > odf8)
             {
-                if((Psi[phiRes*i+j]-min)/(max-min) > 0.9)
-                    meanDirections.push_back(btk::GradientDirection(i*thetastep,j*phistep));
+                if((odf-min)/(max-min) > 0.9)
+                {
+                    meanDirections.push_back(m_Directions[ACCESS(i,j)]);
+                }
             }
         } // for each phi
     } // for each theta
+
+    // North pole
+    bool maxima = true;
+    unsigned int k = 1;
+
+    float odf = Psi[0];
+    while(maxima && k <= phiRes)
+    {
+        if(odf < Psi[k++])
+        {
+            maxima = false;
+        }
+    }
+
+    if(maxima && (odf-min)/(max-min) > 0.9)
+    {
+        meanDirections.push_back(m_Directions[0]);
+    }
+
+
+    // South pole
+    maxima = true;
+    k = Psi.size()-1;
+
+    odf = Psi[Psi.size()-1];
+    while(maxima && k >= Psi.size()-1-phiRes)
+    {
+        if(odf < Psi[k--])
+        {
+            maxima = false;
+        }
+    }
+
+    if(maxima && (odf-min)/(max-min) > 0.9)
+    {
+        meanDirections.push_back(m_Directions[m_Directions.size()-1]);
+    }
 
     return meanDirections;
 }
