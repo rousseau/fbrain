@@ -242,23 +242,8 @@ ADD_EXECUTABLE(btkTensorParticleFilterTractography btkTensorParticleFilterTracto
 )
 TARGET_LINK_LIBRARIES(btkTensorParticleFilterTractography btkToolsLibrary ${ITK_LIBRARIES} vtkHybrid)
 
-ADD_EXECUTABLE(btkODFStreamlineTractography btkODFStreamlineTractography.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkCartesianCoordinates.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalCoordinates.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkVector.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkDirection.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkPoint.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSignalExtractor.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSignal.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalHarmonics.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSHModel.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSHModelEstimator.cxx
-)
-TARGET_LINK_LIBRARIES(btkODFStreamlineTractography btkToolsLibrary ${ITK_LIBRARIES} vtkHybrid)
-
 INSTALL(TARGETS
     btkODFParticleFilterTractography
-    btkODFStreamlineTractography
     btkTensorParticleFilterTractography
     btkTractography
 DESTINATION bin)
