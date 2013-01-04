@@ -42,21 +42,56 @@
 namespace btk
 {
 
+/**
+ * @class PolyDataColorLinesByOrientation
+ * @brief Color the polydata lines by their mean orientation.
+ * @author Julien Pontabry
+ * @ingroup Tractography
+ */
 class PolyDataColorLinesByOrientation : public vtkPolyDataAlgorithm
 {
     public:
+        /**
+         * @brief Create a new instance of the object.
+         * @return A new instance of the object.
+         */
         static PolyDataColorLinesByOrientation *New();
 
         vtkTypeRevisionMacro(PolyDataColorLinesByOrientation,vtkPolyDataAlgorithm);
 
+        /**
+         * @brief Display informations about the filter.
+         * @param os Stream where the information is piped
+         * @param indent Indentation type
+         */
         void PrintSelf(ostream &os, vtkIndent indent);
 
     protected:
+        /**
+         * @brief Default constructor.
+         */
         PolyDataColorLinesByOrientation();
+
+        /**
+         * @brief Default destructor.
+         */
         ~PolyDataColorLinesByOrientation();
 
+        /**
+         * @brief Processing part of the filter.
+         * @param request Informations
+         * @param inputVector Input data
+         * @param outputVector Output data
+         * @return Integer for success or failure
+         */
         virtual int RequestData(vtkInformation *request, vtkInformationVector **inputVector, vtkInformationVector *outputVector);
 
+        /**
+         * @brief Initialize the filter.
+         * @param port Port
+         * @param info Informations
+         * @return Integer for success or failure
+         */
         virtual int FillInputPortInformation(int port, vtkInformation *info);
 
     private:

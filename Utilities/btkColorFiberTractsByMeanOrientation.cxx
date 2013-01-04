@@ -89,6 +89,7 @@ int main(int argc, char *argv[])
         // Process
         vtkSmartPointer< btk::PolyDataColorLinesByOrientation > filter = vtkSmartPointer< btk::PolyDataColorLinesByOrientation >::New();
         filter->SetInputConnection(reader->GetOutputPort());
+
         // Write filtered fiber bundle
         vtkSmartPointer< vtkPolyDataWriter > writer = vtkSmartPointer< vtkPolyDataWriter >::New();
         writer->SetFileName(outputFileName.c_str());
