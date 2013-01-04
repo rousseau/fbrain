@@ -11,6 +11,7 @@ INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Segmentation)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Maths)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/ImageFilters)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Registration)
+INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Tractography)
 
 ADD_EXECUTABLE(btkModifyImageUsingLookUpTable btkModifyImageUsingLookUpTable.cxx)
 TARGET_LINK_LIBRARIES(btkModifyImageUsingLookUpTable ${ITK_LIBRARIES})
@@ -208,6 +209,9 @@ TARGET_LINK_LIBRARIES(btkConvertFSLTransform ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE( btkTractDensityMap  btkTractDensityMap.cxx)
 TARGET_LINK_LIBRARIES(btkTractDensityMap ${ITK_LIBRARIES} vtkHybrid)
+
+ADD_EXECUTABLE(btkColorFiberTractsByMeanOrientation btkColorFiberTractsByMeanOrientation.cxx)
+TARGET_LINK_LIBRARIES(btkColorFiberTractsByMeanOrientation btkTractographyLibrary vtkHybrid)
 
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
