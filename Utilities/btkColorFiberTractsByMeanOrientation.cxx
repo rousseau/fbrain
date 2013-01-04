@@ -50,9 +50,19 @@
 #include "vtkPolyData.h"
 #include "vtkPolyDataReader.h"
 #include "vtkPolyDataWriter.h"
+#include "vtkCallbackCommand.h"
 
 // Local includes
 #include "btkPolyDataColorLinesByOrientation.h"
+
+
+// Progress function
+void progress(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
+{
+    btk::PolyDataColorLinesByOrientation *filter = static_cast< btk::PolyDataColorLinesByOrientation * >(caller);
+
+    std::cout << "\tProgress: " << static_cast< unsigned int >(filter->GetProgress()*100) << "%\r" << std::flush;
+}
 
 
 int main(int argc, char *argv[])
@@ -83,18 +93,36 @@ int main(int argc, char *argv[])
         //
 
         // Load fiber bundle
+        std::cout << "Reading file... " << std::flush;
+
         vtkSmartPointer< vtkPolyDataReader > reader = vtkSmartPointer< vtkPolyDataReader >::New();
         reader->SetFileName(inputFileName.c_str());
+        reader->Update();
+
+        std::cout << "done." << std::endl;
 
         // Process
+        std::cout << "Processing... " << std::endl;
+
+        vtkSmartPointer< vtkCallbackCommand > observer = vtkSmartPointer< vtkCallbackCommand >::New();
+        observer->SetCallback(progress);
+
         vtkSmartPointer< btk::PolyDataColorLinesByOrientation > filter = vtkSmartPointer< btk::PolyDataColorLinesByOrientation >::New();
-        filter->SetInputConnection(reader->GetOutputPort());
+        filter->SetInput(reader->GetOutput());
+        filter->AddObserver(vtkCommand::ProgressEvent, observer);
+        filter->Update();
+
+        std::cout << std::endl << "done." << std::endl;
 
         // Write filtered fiber bundle
+        std::cout << "Writing file... " << std::flush;
+
         vtkSmartPointer< vtkPolyDataWriter > writer = vtkSmartPointer< vtkPolyDataWriter >::New();
         writer->SetFileName(outputFileName.c_str());
-        writer->SetInputConnection(filter->GetOutputPort());
+        writer->SetInput(filter->GetOutput());
         writer->Update();
+
+        std::cout << "done." << std::endl;
     }
     catch(TCLAP::ArgException &e)
     {

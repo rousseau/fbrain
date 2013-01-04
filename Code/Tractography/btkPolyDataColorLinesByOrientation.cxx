@@ -48,6 +48,7 @@
 #include "vtkFloatArray.h"
 #include "vtkPointData.h"
 #include "vtkPolyLine.h"
+#include "vtkCommand.h"
 
 // ITK includes
 #include "itkVector.h"
@@ -101,6 +102,13 @@ int PolyDataColorLinesByOrientation::RequestData(vtkInformation *vtkNotUsed(requ
     outputColors->SetName("MeanOrientation");
 
 
+    // Initialize the progress bar
+    this->SetProgress(0.0);
+    this->InvokeEvent(vtkCommand::ProgressEvent);
+    unsigned int numberOfTracts = inputLines->GetNumberOfCells();
+    double         progressStep = 1.0 / numberOfTracts;
+
+
     vtkIdType numberOfPoints, *pointIds;
 
     // Compute colors for each fiber
@@ -150,12 +158,20 @@ int PolyDataColorLinesByOrientation::RequestData(vtkInformation *vtkNotUsed(requ
         {
             outputColors->InsertNextTupleValue(color);
         }
+
+        // Update progress
+        this->SetProgress(this->GetProgress() + progressStep);
+        this->InvokeEvent(vtkCommand::ProgressEvent);
     } // for each fiber
 
     // Set output
     output->SetPoints(outputPoints);
     output->SetLines(outputLines);
     output->GetPointData()->SetScalars(outputColors);
+
+    // Update progress bar
+    this->SetProgress(1.0);
+    this->InvokeEvent(vtkCommand::ProgressEvent);
 
 
     return 1;
