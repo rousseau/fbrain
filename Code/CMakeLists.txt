@@ -115,11 +115,13 @@ TARGET_LINK_LIBRARIES(btkDiffusionLibrary btkToolsLibrary btkMathsLibrary)
 SET(TRACTOGRAPHY_LIBRARY_HEADER
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkTractographyAlgorithm.h
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkStreamlineTractographyAlgorithm.h
+    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkPolyDataColorLinesByOrientation.h
 )
 
 SET(TRACTOGRAPHY_LIBRARY_SOURCES
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkTractographyAlgorithm.cxx
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkStreamlineTractographyAlgorithm.cxx
+    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkPolyDataColorLinesByOrientation.cxx
 )
 
 ADD_LIBRARY(btkTractographyLibrary STATIC ${TRACTOGRAPHY_LIBRARY_HEADER} ${TRACTOGRAPHY_LIBRARY_SOURCES})

@@ -61,6 +61,7 @@
 #include "btkTractographyAlgorithm.h"
 #include "btkStreamlineTractographyAlgorithm.h"
 #include "btkCommandProgressUpdate.h"
+#include "btkPolyDataColorLinesByOrientation.h"
 
 
 int main(int argc, char *argv[])
@@ -264,8 +265,13 @@ int main(int argc, char *argv[])
 
                 fibers[i]->Update();
 
+                // Color fibers by mean orientation
+                vtkSmartPointer< btk::PolyDataColorLinesByOrientation > colorFilter = vtkSmartPointer< btk::PolyDataColorLinesByOrientation >::New();
+                colorFilter->SetInput(fibers[i]->GetOutput());
+                colorFilter->Update();
+
                 vtkSmartPointer< vtkPolyDataWriter > writer = vtkSmartPointer< vtkPolyDataWriter >::New();
-                writer->SetInput(fibers[i]->GetOutput());
+                writer->SetInput(colorFilter->GetOutput());
                 writer->SetFileName(filename.str().c_str());
                 writer->Write();
             }

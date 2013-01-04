@@ -76,12 +76,7 @@ vtkSmartPointer< vtkPolyData > StreamlineTractographyAlgorithm::PropagateSeed(Se
     // Graphical representation structures
     vtkSmartPointer< vtkPoints >        vpoints = vtkSmartPointer< vtkPoints >::New();
     vtkSmartPointer< vtkCellArray >       lines = vtkSmartPointer< vtkCellArray >::New();
-    vtkSmartPointer< vtkFloatArray >     colors = vtkSmartPointer< vtkFloatArray >::New();
     vtkSmartPointer< vtkPolyData > currentFiber = vtkSmartPointer< vtkPolyData >::New();
-
-    // Initialize the colors
-    colors->SetNumberOfComponents(1);
-    colors->SetName("MeanOrientation");
 
     // Processing
     for(std::vector< btk::GradientDirection >::iterator it = nextDirections.begin(); it != nextDirections.end(); it++)
@@ -114,9 +109,6 @@ vtkSmartPointer< vtkPolyData > StreamlineTractographyAlgorithm::PropagateSeed(Se
 
             line->GetPointIds()->SetNumberOfIds(points.size());
 
-            itk::Vector< float,3 > displacement;
-            displacement.Fill(0);
-
             unsigned int nbOfPreviousPoints = vpoints->GetNumberOfPoints();
 
             vpoints->InsertNextPoint(-points[0][0], -points[0][1], points[0][2]);
@@ -127,33 +119,15 @@ vtkSmartPointer< vtkPolyData > StreamlineTractographyAlgorithm::PropagateSeed(Se
                 // Insert cells (points and lines)
                 vpoints->InsertNextPoint(-points[i][0], -points[i][1], points[i][2]);
                 line->GetPointIds()->SetId(i,i+nbOfPreviousPoints);
-
-                // Accumulate the local orientation
-                displacement[0] += std::abs(-points[i][0]+points[i-1][0]); displacement[1] += std::abs(-points[i][1]+points[i-1][1]); displacement[2] += std::abs(points[i][2]-points[i-1][2]);
             }
 
             lines->InsertNextCell(line);
-
-            // Compute the mean orientation and the associated color
-            displacement[0] /= points.size(); displacement[1] /= points.size(); displacement[2] /= points.size();
-
-            float color[1] = { 0 };
-            displacement.Normalize();
-            displacement[0] *= 255; displacement[1] *= 255; displacement[2] *= 255;
-            color[0] = btk::RGBtoIndex(displacement[0], displacement[1], displacement[2]);
-
-            // Add one scalar per point
-            for(unsigned int i = 0; i < points.size(); i++)
-            {
-                colors->InsertNextTupleValue(color);
-            }
         }
     } // for each direction
 
     // Build the whole trajectories
     currentFiber->SetPoints(vpoints);
     currentFiber->SetLines(lines);
-    currentFiber->GetPointData()->SetScalars(colors);
 
 
     return currentFiber;
