@@ -213,6 +213,9 @@ TARGET_LINK_LIBRARIES(btkTractDensityMap ${ITK_LIBRARIES} vtkHybrid)
 ADD_EXECUTABLE(btkColorFiberTractsByMeanOrientation btkColorFiberTractsByMeanOrientation.cxx)
 TARGET_LINK_LIBRARIES(btkColorFiberTractsByMeanOrientation btkTractographyLibrary vtkHybrid)
 
+ADD_EXECUTABLE(btkComputeSoftMaskUsingOrthogonalImages btkComputeSoftMaskUsingOrthogonalImages.cxx)
+TARGET_LINK_LIBRARIES(btkComputeSoftMaskUsingOrthogonalImages ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -263,6 +266,8 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkDistanceBetweenBinaryImages
                 btkConvertFSLTransform
                 btkTractDensityMap
+                btkColorFiberTractsByMeanOrientation
+                btkComputeSoftMaskUsingOrthogonalImages
         DESTINATION bin)
 
 
