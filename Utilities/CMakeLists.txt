@@ -40,7 +40,7 @@ TARGET_LINK_LIBRARIES(btkPrintImageInfo ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkRegisterDiffusionToAnatomicalData btkRegisterDiffusionToAnatomicalData.cxx
     ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
  )
-TARGET_LINK_LIBRARIES(btkRegisterDiffusionToAnatomicalData btkToolsLibrary ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkRegisterDiffusionToAnatomicalData btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkNrrdToNifti btkNrrdToNifti.cxx)
 TARGET_LINK_LIBRARIES(btkNrrdToNifti btkToolsLibrary ${ITK_LIBRARIES})
