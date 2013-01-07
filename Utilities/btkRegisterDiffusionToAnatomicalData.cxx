@@ -393,6 +393,10 @@ int main(int argc, char *argv[])
 
         joiner->Update();
 
+        // Set diffusion information
+        joiner->GetOutput()->SetBValues(inputSequence->GetBValues());
+        joiner->GetOutput()->SetGradientTable(inputSequence->GetGradientTable());
+
         std::cout << "done." << std::endl;
 
 
