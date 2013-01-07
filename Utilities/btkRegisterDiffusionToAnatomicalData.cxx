@@ -363,8 +363,8 @@ int main(int argc, char *argv[])
         joiner->SetSpacing(1);
 
         // Each image of diffusion sequence is warped to anatomical reference and resampled
-        for(unsigned int i = 0; i < inputSequence->GetLargestPossibleRegion().GetSize(3) && i < 1; i++)
-        {
+        for(unsigned int i = 0; i < inputSequence->GetLargestPossibleRegion().GetSize(3); i++)
+        {btkCoutVariable(i);
             // Define the current region of interest (1 image is sequence) for extractor
             Sequence::RegionType currentRegion = inputSequence->GetLargestPossibleRegion();
             currentRegion.SetSize(3,0);
@@ -393,9 +393,11 @@ int main(int argc, char *argv[])
 
         joiner->Update();
 
+        Sequence::Pointer outputSequence = joiner->GetOutput();
+
         // Set diffusion information
-        joiner->GetOutput()->SetBValues(inputSequence->GetBValues());
-        joiner->GetOutput()->SetGradientTable(inputSequence->GetGradientTable());
+        outputSequence->SetBValues(inputSequence->GetBValues());
+        outputSequence->SetGradientTable(inputSequence->GetGradientTable());
 
         std::cout << "done." << std::endl;
 
@@ -452,7 +454,7 @@ int main(int argc, char *argv[])
         //
 
         // Save diffusion sequence
-        btk::DiffusionSequenceHelper::WriteSequence(joiner->GetOutput(), outputSequenceFileName);
+        btk::DiffusionSequenceHelper::WriteSequence(outputSequence, outputSequenceFileName);
 
         // Save gradient table
         inputGradientTable->SaveToFile(outputSequenceGradientsFileName.c_str());

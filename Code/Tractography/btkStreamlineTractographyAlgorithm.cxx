@@ -145,6 +145,8 @@ void StreamlineTractographyAlgorithm::PropagateSeedRK4(std::vector< Self::Physic
 
     bool stop = false;
 
+    Self::MaskImage::RegionType maskRegion = m_Mask->GetLargestPossibleRegion();
+
     do
     {
         // This use the RK4 to compute the next point (Runge-Kutta, order 4)
@@ -172,7 +174,7 @@ void StreamlineTractographyAlgorithm::PropagateSeedRK4(std::vector< Self::Physic
                     Self::MaskImage::IndexType maskIndex;
                     m_Mask->TransformPhysicalPointToIndex(nextPoint, maskIndex);
 
-                    if(m_Mask->GetPixel(maskIndex) == 0)
+                    if(!maskRegion.IsInside(maskIndex) || m_Mask->GetPixel(maskIndex) == 0)
                     {
                         stop = true;
                     }
@@ -221,6 +223,8 @@ void StreamlineTractographyAlgorithm::PropagateSeedRK1(std::vector< Self::Physic
 
     unsigned int numberOfIterations = 0;
 
+    Self::MaskImage::RegionType maskRegion = m_Mask->GetLargestPossibleRegion();
+
     do
     {
         // This use the RK1 (Euler) to compute the next point (Runge-Kutta, order 1, Euler method)
@@ -231,7 +235,7 @@ void StreamlineTractographyAlgorithm::PropagateSeedRK1(std::vector< Self::Physic
         Self::MaskImage::IndexType maskIndex;
         m_Mask->TransformPhysicalPointToIndex(nextPoint, maskIndex);
 
-        if(m_Mask->GetPixel(maskIndex) == 0)
+        if(!maskRegion.IsInside(maskIndex) || m_Mask->GetPixel(maskIndex) == 0)
         {
             stop = true;
         }
