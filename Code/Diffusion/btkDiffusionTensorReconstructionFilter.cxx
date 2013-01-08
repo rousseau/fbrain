@@ -86,6 +86,16 @@ void DiffusionTensorReconstructionFilter::Update()
     btk::DiffusionSequence::RegionType          region = this->m_InputDiffusionSequence->GetLargestPossibleRegion();
     ExtractImageFilter::Pointer                extract = ExtractImageFilter::New();
 
+    if(gradientTable.size() != region.GetSize(3))
+    {
+        throw(std::string("There is a mismatch between the number of gradient directions and gradient images ! Cannot estimate tensors !"));
+    }
+
+    if(gradientTable.size() < 6)
+    {
+        throw(std::string("There are less than 6 gradient directions ! Cannot estimate tensors !"));
+    }
+
     // Get the reference image
     region.SetSize(3,0);
     extract->SetInput(this->m_InputDiffusionSequence);
