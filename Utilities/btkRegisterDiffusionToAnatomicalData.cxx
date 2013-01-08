@@ -364,7 +364,7 @@ int main(int argc, char *argv[])
 
         // Each image of diffusion sequence is warped to anatomical reference and resampled
         for(unsigned int i = 0; i < inputSequence->GetLargestPossibleRegion().GetSize(3); i++)
-        {btkCoutVariable(i);
+        {
             // Define the current region of interest (1 image is sequence) for extractor
             Sequence::RegionType currentRegion = inputSequence->GetLargestPossibleRegion();
             currentRegion.SetSize(3,0);
