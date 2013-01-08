@@ -259,6 +259,10 @@ int main(int argc, char * argv[])
                     Process< itk::Image< short,3 >,itk::Image< unsigned char,3 > >(inputFileNames, outputFileNames, maskFileNames, Dimension);
                     break;
 
+                case itk::ImageIOBase::USHORT:
+                    Process< itk::Image< unsigned short,3 >,itk::Image< unsigned char,3 > >(inputFileNames, outputFileNames, maskFileNames,Dimension);
+                    break;
+
                 case itk::ImageIOBase::FLOAT:
                     Process< itk::Image< float,3 >,itk::Image< unsigned char,3 > >(inputFileNames, outputFileNames, maskFileNames,Dimension);
                     break;
