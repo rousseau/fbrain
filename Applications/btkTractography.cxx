@@ -289,6 +289,11 @@ int main(int argc, char *argv[])
         btkCoutMacro("Exception raised: " << message << std::endl);
         exit(EXIT_FAILURE);
     }
+    catch(itk::ExceptionObject &e)
+    {
+        btkCoutMacro("Error (" << e.GetLocation() << "): " << e.GetDescription() << std::endl);
+        exit(EXIT_FAILURE);
+    }
 
     return EXIT_SUCCESS;
 }
