@@ -53,7 +53,7 @@ int main(int argc, char * argv[])
 {
     /* Typedefs */
     typedef itk::Image<float, 3>                              ImageType;
-    typedef itk::AffineTransform< double >                    TransformType;
+    typedef itk::MatrixOffsetTransformBase< double,3 >        TransformType;
     typedef itk::Matrix<double,3,3>                           MatrixType;
     typedef itk::Matrix<double,4,4>                           TransformMatrixType;
     //TCLAP Commands for arguments
@@ -113,7 +113,7 @@ int main(int argc, char * argv[])
         else
         {
             // Read ITK transform from file and store it into 4*4 matrix
-            itk_transform = btk::IOTransformHelper<TransformType>::ReadTransform(ITKFileName);
+                itk_transform = btk::IOTransformHelper<TransformType>::ReadTransform(ITKFileName);
             m_itk.SetIdentity();
             m_itk.GetVnlMatrix().update((itk_transform->GetMatrix()).GetVnlMatrix());
             m_itk.GetVnlMatrix().set_column(3, (itk_transform->GetTranslation()).GetVnlVector());
