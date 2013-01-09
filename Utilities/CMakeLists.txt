@@ -12,6 +12,7 @@ INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Maths)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/ImageFilters)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Registration)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Tractography)
+INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Image)
 
 ADD_EXECUTABLE(btkModifyImageUsingLookUpTable btkModifyImageUsingLookUpTable.cxx)
 TARGET_LINK_LIBRARIES(btkModifyImageUsingLookUpTable ${ITK_LIBRARIES})
@@ -216,6 +217,9 @@ TARGET_LINK_LIBRARIES(btkColorFiberTractsByMeanOrientation btkTractographyLibrar
 ADD_EXECUTABLE(btkComputeSoftMaskUsingOrthogonalImages btkComputeSoftMaskUsingOrthogonalImages.cxx)
 TARGET_LINK_LIBRARIES(btkComputeSoftMaskUsingOrthogonalImages ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkFSLToITKTransform btkFSLToITKTransform.cxx)
+TARGET_LINK_LIBRARIES(btkFSLToITKTransform ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -268,6 +272,7 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkTractDensityMap
                 btkColorFiberTractsByMeanOrientation
                 btkComputeSoftMaskUsingOrthogonalImages
+                btkFSLToITKTransform
         DESTINATION bin)
 
 
