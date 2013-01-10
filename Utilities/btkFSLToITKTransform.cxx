@@ -246,6 +246,10 @@ int main(int argc, char * argv[])
         {
             for(size_t c = 0; c < 3; c++)
             {
+                if(mat(r,c) < 1.0e-06 && mat(r,c) > -1.0e-06)
+                {
+                    mat(r,c) = 0.0;
+                }
                 amat(r,c) = mat(r,c);
             }
             aoff[r] = mat(r,3);
