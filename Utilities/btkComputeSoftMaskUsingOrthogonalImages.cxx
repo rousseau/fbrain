@@ -122,7 +122,7 @@ int main(int argc, char** argv)
 
     std::cout<<"Define a set of interpolators to use the ITK function isInsideBuffer "<<std::endl;
     std::vector< NNInterpolatorType::Pointer > nn_interpolator;
-    for(uint i=0; i!=inputImages.size(); i++ )    
+    for(unsigned int i=0; i!=inputImages.size(); i++ )
     {
       NNInterpolatorType::Pointer nn = NNInterpolatorType::New();
       nn -> SetInputImage( inputImages[i] );
@@ -132,12 +132,12 @@ int main(int argc, char** argv)
 
     //Can be done in a more elegant way...
     
-    for(uint i=0; i!=inputImages.size(); i++ )    
+    for(unsigned int i=0; i!=inputImages.size(); i++ )
     {
       std::cout<<"Find the orthogonal images wrt the current image ..."<<std::endl;
-      std::vector<uint> orthogonalImages;
+      std::vector<unsigned int> orthogonalImages;
       
-      for(uint j=0; j!=inputImages.size(); j++)
+      for(unsigned int j=0; j!=inputImages.size(); j++)
       {
         double dotProduct = physicalZVectors[i] * physicalZVectors[j];
         if( fabs(dotProduct < 0.5) )
@@ -157,7 +157,7 @@ int main(int argc, char** argv)
         FloatImage::PointType point;
         outputImages[i] -> TransformIndexToPhysicalPoint(index, point);
 
-        for(uint j=0; j!=orthogonalImages.size(); j++)
+        for(unsigned int j=0; j!=orthogonalImages.size(); j++)
         {
 
           if ( nn_interpolator[ orthogonalImages[j] ] -> IsInsideBuffer( point ) )
