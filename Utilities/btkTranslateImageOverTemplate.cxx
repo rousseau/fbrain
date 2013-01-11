@@ -178,6 +178,7 @@ int main(int argc, char * argv[])
         // Processing Translation
         FilterType::Pointer filter = FilterType::New();
         TransformType::Pointer transform = TransformType::New();
+        transform->SetIdentity();
 
         TransformType::OutputVectorType translation;
         translation=pi-pr;
