@@ -23,13 +23,16 @@
  */
 
 /**
- * @defgroup InputOutput Input and output
+ * @defgroup Tools Tools and Helpers
  */
 
 /**
  * @defgroup Diffusion Diffusion
  */
 
+/**
+ * @defgroup ImageFilters Image filters
+ */
 
 
 

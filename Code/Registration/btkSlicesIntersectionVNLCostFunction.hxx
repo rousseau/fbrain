@@ -63,6 +63,15 @@
 
 namespace btk
 {
+/**
+ * Class for compute a cost function on intersection of slices.
+ * This class is specificly designed for motion correction on fetal MRI.
+ * This cost function can be used by a vnl_optimizer, or an ITK::Optimizer
+ * (using the specific adaptor class btk::SliceIntersectionITKCostFunction).
+ *
+ * @author Marc Schweitzer
+ * \ingroup Registration
+ */
 template <class TImage>
 class SlicesIntersectionVNLCostFunction: public vnl_cost_function
 {

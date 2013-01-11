@@ -54,11 +54,17 @@
 
 namespace btk
 {
+/**
+ * Class for apply a transformation to an image, templated on input and output image
+ * @author Marc Schweitzer
+ * \ingroup ImageFilters
+ */
 template <typename TImageIn, typename TImageOut>
 class ApplyTransformToImageFilter : public itk::Object
 {
 
     public:
+        /** Typedefs */
         typedef TImageIn itkImage;
         typedef typename itkImage::Pointer itkImagePointer;
         typedef TImageOut itkImageOut;
@@ -76,32 +82,42 @@ class ApplyTransformToImageFilter : public itk::Object
 
         /** Method for creation through the object factory. */
         itkNewMacro(Self);
-
+        /** Update Method */
         virtual void Update();
+        /** Initialize Method to call before Update() */
         virtual void Initialize();
 
-
+        /** Set/Get Input Image */
         btkSetMacro(InputImage,itkImagePointer);
         btkGetMacro(InputImage,itkImagePointer);
 
+        /** Set/Get Reference Image */
         btkSetMacro(ReferenceImage, itkImagePointer);
         btkGetMacro(ReferenceImage, itkImagePointer);
 
+        /** Get Output Image (result of the filter) */
         btkGetMacro(OutputImage,itkImageOutPointer);
 
-
+        /** Set Transform to Apply */
         btkSetMacro(Transform, itkTransform*);
 
 
     protected:
+        /** Constructor */
         ApplyTransformToImageFilter();
+        /** Destructor */
         virtual ~ApplyTransformToImageFilter();
+        /** Resample method, called by Update(),  it can throw an exception */
         virtual void Resample() throw(itk::ExceptionObject &);
 
     private:
+        /** SmartPointer on Input Image */
         itkImagePointer m_InputImage;
+        /** SmartPointer on Reference Image */
         itkImagePointer m_ReferenceImage;
+        /** SmartPointer on Output Image */
         itkImageOutPointer m_OutputImage;
+        /** Pointer to an itk::Transform */
         itkTransform* m_Transform;
 
 

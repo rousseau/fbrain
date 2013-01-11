@@ -46,11 +46,20 @@
 namespace btk
 {
 
-
+/**
+ * Class for apply a mask on an image, templated on input image, mask image and output image.
+ * A Threshold can be applied if mask is a probability map, default value is 0.5 (all pixel in mask strictly greater
+ * than threshold are considerated).
+ * @author Marc Schweitzer
+ * \ingroup ImageFilters
+ */
 template < typename TImageIn, typename TMaskIn, typename TImageOut = TImageIn >
 class MaskImageFilter
 {
+
+        //TODO: Do an ITK::Filter for using it into a pipeline.
     public:
+        /** Typedefs */
         typedef TImageIn ImageTypeIn;
         typedef TImageOut ImageTypeOut;
         typedef TMaskIn   MaskType;
@@ -58,30 +67,39 @@ class MaskImageFilter
         typedef itk::ImageRegionConstIteratorWithIndex<MaskType> ConstIteratorMask;
         typedef itk::ImageRegionIteratorWithIndex<ImageTypeOut> IteratorImageOut;
 
-
+        /** Constructor */
         MaskImageFilter();
+        /** Destructor */
         virtual ~MaskImageFilter();
 
+       /** Set/Get Input image */
         btkSetMacro(Input,typename ImageTypeIn::Pointer );
         btkGetMacro(Input,typename ImageTypeIn::Pointer );
 
+        /** Set/Get Mask image */
         btkSetMacro(Mask,typename MaskType::Pointer );
         btkGetMacro(Mask,typename MaskType::Pointer );
 
-        btkSetMacro(Output,typename ImageTypeOut::Pointer );
+        /** Get Output image (result of the filter) */
         btkGetMacro(Output,typename ImageTypeOut::Pointer );
 
+        /** Set/Get Threshold (if mask is a probability map) default value is 0.5 */
         btkSetMacro(Threshold, float);
         btkGetMacro(Threshold, float);
 
+        /** Update Method */
         void Update() throw(itk::ExceptionObject &);
 
     protected :
 
     private :
+        /** SmartPointer on input image */
         typename ImageTypeIn::Pointer m_Input;
+        /** SmartPointer on mask image */
         typename MaskType::Pointer m_Mask;
+        /** SmartPointer on ouput image */
         typename ImageTypeOut::Pointer m_Output;
+        /** Threshold for mask */
         float m_Threshold;
 
 };
