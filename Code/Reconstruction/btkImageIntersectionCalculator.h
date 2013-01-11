@@ -51,12 +51,7 @@ namespace btk
 using namespace itk;
 
 /** \class ImageIntersectionCalculator
- * \brief Describe the class briefly here.
- *
- * Full class description
- * Full class description
- * Full class description
-
+ * \brief Perform a bounding box mask, with intersection of orthogonal image
  * \sa ImageRegistrationMethod
  * \ingroup RegistrationFilters
  */
@@ -128,7 +123,7 @@ public:
   void AddImage( ImageType * image);
 
   /** Calculates the intersection */
-  void Compute();
+  void Update();
 
 protected:
   ImageIntersectionCalculator();

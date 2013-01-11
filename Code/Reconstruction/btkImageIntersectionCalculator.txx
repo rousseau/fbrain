@@ -91,7 +91,7 @@ void ImageIntersectionCalculator<ImageType>
 template < typename ImageType >
 void
 ImageIntersectionCalculator<ImageType>
-::Compute()
+::Update()
 {
   IndexType index;
   PointType point;
