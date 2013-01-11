@@ -33,8 +33,8 @@
 
 ==========================================================================*/
 
-#ifndef BTKSLICESINTERSECTIONITKCOSTFUNCTION_HXX
-#define BTKSLICESINTERSECTIONITKCOSTFUNCTION_HXX
+#ifndef BTK_SLICESINTERSECTIONITKCOSTFUNCTION_HXX
+#define BTK_SLICESINTERSECTIONITKCOSTFUNCTION_HXX
 
 #include "itkSingleValuedCostFunction.h"
 #include "itkImage.h"
@@ -55,6 +55,11 @@
 
 namespace btk
 {
+/**
+ * Adaptor for using btk::SlicesIntersectionVNLCostFunction with itk::Optimizers
+ * @author Marc Schweitzer
+ * \ingroup Registration
+ */
 template<class TImage>
 class SlicesIntersectionITKCostFunction: public itk::SingleValuedCostFunction
 {

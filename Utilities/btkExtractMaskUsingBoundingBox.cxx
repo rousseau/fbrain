@@ -94,7 +94,7 @@ int main(int argc, char * argv[])
         intersector->AddImage(inputImage[i]) ;
     }
 
-    intersector->Compute();
+    intersector->Update();
     for (int i=0;i<outputFileImage.size();i++)
     {
         ImageMaskType* mask = intersector-> GetImageMask(i);
