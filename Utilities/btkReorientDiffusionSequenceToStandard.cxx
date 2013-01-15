@@ -375,7 +375,7 @@ int main( int argc, char *argv[] )
   stdB0 -> TransformContinuousIndexToPhysicalPoint(centerIndex, centerPoint);
 
   transform -> SetCenter( centerPoint );
-  transform -> SetRotationMatrix( NQ );
+  transform -> SetMatrix( NQ );
 
 //  TODO Cannot constrain the rotation because sometimes it is necessary to rotate in xy
 //  Something I could do is to round the rotations in xy to n*pi*/2 ...
@@ -427,7 +427,7 @@ int main( int argc, char *argv[] )
   Image3DType::PointType resamplingOrigin;
   stdB0 -> TransformIndexToPhysicalPoint(lowerIndex, resamplingOrigin );
 
-  transform -> SetRotationMatrix( NQ.transpose() );
+  transform -> SetMatrix( NQ.transpose() );
 
   // Resampling
 

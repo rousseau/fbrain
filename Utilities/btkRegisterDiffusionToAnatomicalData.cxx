@@ -436,7 +436,7 @@ int main(int argc, char *argv[])
 
         // Define rigid transformation for gradient table reorientation
         EulerTransform::Pointer gradientTableTransform = EulerTransform::New();
-        gradientTableTransform->SetRotationMatrix(NQ);
+        gradientTableTransform->SetMatrix(NQ);
 
         // Load input gradient table, rotate and save to new gradient table file
         GradientTable::Pointer inputGradientTable = GradientTable::New();
