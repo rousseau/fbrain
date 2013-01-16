@@ -6,7 +6,7 @@
 
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkApplyMaskToImage}
-\item[btkApplyMaskToImage]: Mask an image with a mask (ITK filter: MaskImageFilter).
+\item[btkApplyMaskToImage]: Multiply an image with a mask.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkApplyTransformationToImage}
 \item[btkApplyTransformationToImage]: Apply an ITK or BTK transformation on a image (old btkWarpTransformationToImage).
@@ -26,25 +26,29 @@
 \addcontentsline{toc}{subsection}{btkBinarizeTissueProbabilityMaps}
 \item[btkBinarizeTissueProbabilityMaps]: Binarize a set of probability maps ([0,1]) into a short image (by taking the max probability at each voxel).
 %------------------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{btkColorFiberTractsByMeanOrientation}
+\item[btkColorFiberTractsByMeanOrientation]: Color the fibers (polydata) by their mean orientation.
+%------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkComputeChamferDistance}
 \item[btkComputeChamferDistance]: Compute the chamfer distance.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkComputeOverlap}
 \item[btkComputeOverlap]: Compute the overlap (Dice coefficient and Jaccard index) between two label images.
 %------------------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{btkComputeSoftMaskUsingOrthogonalImages}
+\item[btkComputeSoftMaskUsingOrthogonalImages]: Compute Soft Mask using orthogonal images.
+%------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkConvertFSLTransform}
 \item[btkConvertFSLTransform]: Convert a FSL matrix to a ITK Affine Transform, specify $--inverse$ do the opposite
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkConvertGradientTable}
 \item[btkConvertGradientTable]: Transform gradients from world to image coordinates.
-
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkCropImageUsingMask}
 \item[btkCropImageUsingMask] This program crops one (3D or 4D) image using a 3D mask.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkDifferentialBiasCorrection}
 \item[btkDifferentialBiasCorrection]: Differential bias correction method for $n$ images (Leung et al. Neuroimage 2012) 
-
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkDistanceBetweenBinaryImages}
 \item[btkDistanceBetweenBinaryImages]: Compute Hausdorff and Mean Contour Distances between two binary images (ITK Filters: HausdorffDistanceImageFilter and ContourMeanDistanceImageFilter).
