@@ -179,7 +179,7 @@ class NLMTool
    * @brief Todo
    * @param Todo
    */
-  void GetOutput(itkTPointer & outputImage);
+   itkTPointer GetOutput();
   /**
    * @brief Todo
    * @param Todo

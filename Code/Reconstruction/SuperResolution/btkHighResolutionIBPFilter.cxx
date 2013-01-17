@@ -785,7 +785,7 @@ double HighResolutionIBPFilter::ComputeIterativeBackProjection( int & nlm, float
 
 
       myTool.ComputeOutput();
-      myTool.GetOutput(SuperClass::m_OutputHRImage);
+      SuperClass::m_OutputHRImage = myTool.GetOutput();
       //s = "ibp_nlm_error.nii.gz";
       //data.WriteOneImage(data.m_outputHRImage, s);
     }
@@ -810,7 +810,7 @@ double HighResolutionIBPFilter::ComputeIterativeBackProjection( int & nlm, float
       myTool.SetSmoothing(beta);
       myTool.SetBlockwiseStrategy(1); //0 pointwise, 1 block, 2 fast block
       myTool.ComputeOutput();
-      myTool.GetOutput(SuperClass::m_OutputHRImage);
+      SuperClass::m_OutputHRImage = myTool.GetOutput();
       //s = "ibp_nlm_smooth.nii.gz";
       //data.WriteOneImage(data.m_currentHRImage, s);
     }
