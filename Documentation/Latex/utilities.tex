@@ -6,10 +6,10 @@
 
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkApplyMaskToImage}
-\item[btkApplyMaskToImage]: Mask an image with a mask (ITK filter: MaskImageFilter).
+\item[btkApplyMaskToImage]: Multiply an image with a mask.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkApplyTransformationToImage}
-\item[btkApplyTransformationToImage]: Apply an ITK or BTK transformation on a image (old btkWarpTransformationToImage).
+\item[btkApplyTransformationToImage]: Apply an ITK or BTK transformation on a image (old btkWarpTransformationToImage XXXXXXXX UNCLEAR XXXXXXXX).
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkAverage3DImages}
 \item[btkAverage3DImages]: Compute the mean (and variance) image of a set of 3D images.
@@ -26,25 +26,29 @@
 \addcontentsline{toc}{subsection}{btkBinarizeTissueProbabilityMaps}
 \item[btkBinarizeTissueProbabilityMaps]: Binarize a set of probability maps ([0,1]) into a short image (by taking the max probability at each voxel).
 %------------------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{btkColorFiberTractsByMeanOrientation}
+\item[btkColorFiberTractsByMeanOrientation]: Color the fibers (polydata) by their mean orientation.
+%------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkComputeChamferDistance}
 \item[btkComputeChamferDistance]: Compute the chamfer distance.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkComputeOverlap}
 \item[btkComputeOverlap]: Compute the overlap (Dice coefficient and Jaccard index) between two label images.
 %------------------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{btkComputeSoftMaskUsingOrthogonalImages}
+\item[btkComputeSoftMaskUsingOrthogonalImages]: Compute soft masks of a set of images using the geometry of protocol acquisition (\textit{i.e.} orthogonal images).
+%------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkConvertFSLTransform}
-\item[btkConvertFSLTransform]: Convert a FSL matrix to a ITK Affine Transform, specify $--inverse$ do the opposite
+\item[btkConvertFSLTransform]: Convert a FSL matrix to a ITK Affine Transform, specify $--inverse$ to do the opposite (ITK to FSL).
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkConvertGradientTable}
 \item[btkConvertGradientTable]: Transform gradients from world to image coordinates.
-
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkCropImageUsingMask}
 \item[btkCropImageUsingMask] This program crops one (3D or 4D) image using a 3D mask.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkDifferentialBiasCorrection}
-\item[btkDifferentialBiasCorrection]: Differential bias correction method for $n$ images (Leung et al. Neuroimage 2012) 
-
+\item[btkDifferentialBiasCorrection]: Differential bias correction method for $n$ images (Leung et al. Neuroimage 2012). 
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkDistanceBetweenBinaryImages}
 \item[btkDistanceBetweenBinaryImages]: Compute Hausdorff and Mean Contour Distances between two binary images (ITK Filters: HausdorffDistanceImageFilter and ContourMeanDistanceImageFilter).
@@ -57,6 +61,9 @@
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkFCMClassification}
 \item[btkFCMClassification]: Fuzzy C-means classification algorithm.
+%------------------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{btkFSLToITKTransform}
+\item[btkFSLToITKTransform]: XXXXXXXXXXXXXXXXXXXXXXXXXXX.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkHistogramMatching}
 \item[btkHistogramMatching]: Normalize the grayscale values of one image using a reference image by histogram matching (ITK filter: HistogramMatchingImageFilter).
@@ -209,20 +216,27 @@ identify the left and right sides of the brain in the 2D views.
 \addcontentsline{toc}{subsection}{btkSetStandardCoorSystem}
 \item[btkSetStandardCoorSystem]: Sets the direction to the identity, and the origin to the center of the image.
 %------------------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{btkSimulateLowResolutionImage}
+\item[btkSimulateLowResolutionImage]: XXXXXXXXXXXXXXXXXXXXXXXXXXX.%------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkSimulateMotionSliceBySlice}
 \item[btkSimulateMotionSliceBySlice]: Apply transformations on slices of input image.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkSimulateStandardViewFromIsotropicImage}
 \item[btkSimulateStandardViewFromIsotropicImage]: Simulates standard acquisitions (axial, coronal, and sagital) from an isovoxel by using an observational model. This is useful for example to assess the performance of reconstruction algorithms according to the subsampling factor (the reconstructed image from the simulated images is then compared to the isovoxel image). 
 %------------------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{btkSimulateStandardViewsFromImage}
+\item[btkSimulateStandardViewsFromImage]: XXXXXXXXXXXXXXXXXXXXXXXXXXX.%------------------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{btkTractDensityMap}
+\item[btkTractDensityMap]: Create tract density images using set of fibers as input.
+%------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkTranslateImageOverTemplate}
 \item[btkTranslateImageOverTemplate]: Usefull for the extraction mask pipeline, it will translate the center of image (or barycenter of masked image) on the center of the template image.
 %------------------------------------------------------------------------------
-\addcontentsline{toc}{subsection}{btkWeightedSum}
-\item[btkWeightedMean]: Compute a weighted mean of 3D images (no check for normalized weights!).
-%------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkWeightedSumOfAffineTransforms}
 \item[btkWeightedSumOfAffineTransforms]: Compute a weighted mean of affine transforms (no check for normalized weights!).
+%------------------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{btkWeightedSumOfImages}
+\item[btkWeightedSumOfImages]: Compute a weighted mean of 3D images (no check for normalized weights!).
 %------------------------------------------------------------------------------
 
 
