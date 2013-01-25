@@ -60,6 +60,7 @@
 
 #include  "cfloat"
 #include "sstream"
+#include "numeric"
 
 namespace btk
 {
@@ -126,6 +127,10 @@ public:
     btkSetMacro(NumberOfPointsOfLine, int);
     btkGetMacro(NumberOfPointsOfLine, int);
 
+    /** Set/Get the center of the transform (default, middle of the volume ) */
+    btkSetMacro(CenterOfTransform, typename ImageType::PointType);
+    btkGetMacro(CenterOfTransform, typename ImageType::PointType);
+
     /** Constructor */
     SlicesIntersectionVNLCostFunction(unsigned int dim);
     SlicesIntersectionVNLCostFunction(){}
@@ -146,6 +151,7 @@ public:
 
 //     /** Set the reference stack (for the reference coordinate system) */
 //     btkSetMacro(ReferenceCoordImage, int);
+
 
 
 protected:
@@ -190,6 +196,8 @@ private :
     std::vector<MaskType::Pointer> m_Masks;
     std::vector<typename Interpolator::Pointer> m_Interpolators;
     int m_NumberOfPointsOfLine;
+
+    typename ImageType::PointType m_CenterOfTransform;
 
 
 };

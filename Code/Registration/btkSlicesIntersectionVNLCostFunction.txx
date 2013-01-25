@@ -8,7 +8,7 @@ namespace btk
 //-------------------------------------------------------------------------------------------------
 template<class TImage>
 SlicesIntersectionVNLCostFunction<TImage>::SlicesIntersectionVNLCostFunction(unsigned int dim)
-    :vnl_cost_function(dim),m_NumberOfPointsOfLine(100),m_VerboseMode(false),m_MovingImageNum(0),m_MovingSliceNum(0)
+    :vnl_cost_function(dim),m_NumberOfPointsOfLine(50),m_VerboseMode(false),m_MovingImageNum(0),m_MovingSliceNum(0)
 {
 }
 //-------------------------------------------------------------------------------------------------
@@ -48,13 +48,14 @@ void SlicesIntersectionVNLCostFunction<TImage>::Initialize()
         ContinuousIndexType centerIndex;
         centerIndex[0] = (size[0]-1)/2.0 ;
         centerIndex[1] = (size[1]-1)/2.0 ;
-        centerIndex[2] = m_MovingSliceNum ;
+        //centerIndex[2] = m_MovingSliceNum ;
+        centerIndex[2] = (size[2]-1)/2.0;
 
         typename ImageType::PointType center;
 
         m_Images[m_MovingImageNum]->TransformContinuousIndexToPhysicalPoint(centerIndex,center);
 
-        m_Transform->SetCenter(center);
+        m_Transform->SetCenter(m_CenterOfTransform);
 
     }
 
@@ -65,11 +66,9 @@ template<class TImage>
 double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x) const
 {
 
-    double CostFunction = 0;
-    unsigned int NumberOfIntersectedVoxels = 0;
-    double SumOfIntersectedVoxels = 0;
-
-
+    double CostFunction = 0.0;
+    unsigned long NumberOfIntersectedVoxels = 0;
+    double SumOfIntersectedVoxels = 0.0;
 
     TransformType::ParametersType params;
    // params.SetSize(x.size());
@@ -114,23 +113,28 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
 
     m_Transform->GetInverse(InverseX);
 
-
-    //TODO: paralelize this...
-    // 39min to 27min when parallalized
     unsigned int ifixed = 0;
 
     for( ifixed = 0; ifixed< m_Images.size(); ifixed ++)
     {
+        unsigned int numberOfFixedSlices = m_Images[ifixed]->GetLargestPossibleRegion().GetSize()[2];
+
         if(ifixed != m_MovingImageNum)
         {
-            unsigned int numberOfFixedSlices = m_Images[ifixed]->GetLargestPossibleRegion().GetSize()[2];
-
-            // TODO : Check if it is possible to paralelize this :
             unsigned int sfixed = 0;
-            #pragma omp parallel for private(sfixed) schedule(dynamic)
+            /* PARALLELIZATION : Use of reduction to avoid use of #pragma critical
+             * Each thread have a local copy of both NumberOfIntersectedVoxels and SumOfIntersectedVoxels
+             * At the end we sum all this local copy into a global one.
+             **/
+
+            #pragma omp parallel for private(sfixed) schedule(dynamic)\
+            default(shared)\
+            reduction(+:NumberOfIntersectedVoxels) reduction(+:SumOfIntersectedVoxels)
+
             for(sfixed = 0; sfixed < numberOfFixedSlices; sfixed++)
             {
 
+                // Lets consider the 4 corners of a slice like this :
 
                 //      slice
                 //     1------2
@@ -172,8 +176,6 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
                 FixedRegion.SetSize(FixedRgSize);
 
 
-
-
                 typename ImageType::PointType Point1, Point2, CurrentPoint, TCurrentPoint, CorrespondingPoint;
                 bool FoundP1, FoundP2, intersection;
 
@@ -210,6 +212,7 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
 
 
                 std::vector<typename ImageType::PointType> P1, P2;
+                //TODO: This part is very complex, is there a way to simplify it ?
                 for(unsigned int i = 0; i< IteratorTab.size(); i++)
                 {
                     LineIterator it = IteratorTab[i];
@@ -273,7 +276,7 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
                             {
                                 if(P1.size() > 0) // if we have found some candidates for P1
                                 {
-                                    // check the candidate who have the Z coordinate closest to the moving slice num
+                                    // check the candidate who have the Z coordinate cintlosest to the moving slice num
                                     double Z = (double)sfixed;
                                     double min = 99999.9;
                                     typename Interpolator::ContinuousIndexType ix;
@@ -427,17 +430,14 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
                     }
                 }
 
-                //****
-                //TODO : Cleaning
+
+                // Cleaning
                 IteratorTab.clear();
                 P1.clear();
                 P2.clear();
-                //****
+
                 if(intersection)
                 {
-
-
-
                     typename ImageType::PointType P, Pfixed, Pmoving;
                     itk::Vector<double,3> P12;
                     typename Interpolator::ContinuousIndexType IndexFixed, IndexMoving;
@@ -447,25 +447,19 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
                     P12[1] = Point2[1] - Point1[1];
                     P12[2] = Point2[2] - Point1[2];
 
-
+                    // Loop Over intersection line points
                     for(unsigned int i = 0; i<m_NumberOfPointsOfLine; i++)
                     {
-
                         P = Point1 + (P12 * i/(m_NumberOfPointsOfLine-1));
 
-
                         Pfixed = m_InverseTransforms[ifixed]->TransformPoint(P);
-
                         Pmoving = InverseX->TransformPoint(P);
-
-
 
                         m_Images[ifixed]->TransformPhysicalPointToContinuousIndex(Pfixed, IndexFixed);
                         m_Images[m_MovingImageNum]->TransformPhysicalPointToContinuousIndex(Pmoving,IndexMoving);
 
                         m_Images[ifixed]->TransformPhysicalPointToIndex(Pfixed, MaskIndexFx);
                         m_Images[m_MovingImageNum]->TransformPhysicalPointToIndex(Pmoving,MaskIndexMv);
-
 
                         // Test if still in the image, while EvaluateAtContinuousIndex method don't check if pixel is inside bounding box
                         if(m_Interpolators[ifixed]->IsInsideBuffer(IndexFixed) && m_Interpolators[m_MovingImageNum]->IsInsideBuffer(IndexMoving))
@@ -477,52 +471,37 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
                                 movingVoxel = m_Interpolators[m_MovingImageNum]->EvaluateAtContinuousIndex(IndexMoving);
                                 fixedVoxel = m_Interpolators[ifixed]->EvaluateAtContinuousIndex(IndexFixed);
 
-
                                 double SquareDiff = SquareDifference(fixedVoxel,movingVoxel);
 
-
-                                #pragma omp critical
-                                //#pragma omp atomic
-                                {
-                                    SumOfIntersectedVoxels += SquareDiff;
-                                    NumberOfIntersectedVoxels++;
-                                }
-                            }
-                            else
-                            {
-
-                            }
+                                SumOfIntersectedVoxels += SquareDiff;
+                                NumberOfIntersectedVoxels++;
 
 
-                        }//interpolate
+                            }//End if inside masks
+                        }//End if IsInsideBuffer
+                    }//End Loop over POINT
+                }//End If intersection
+            }//end of loop over SLICES
+        }// end if image = reference
+    }// end loop over IMAGES
 
-                    }
-
-
-                }
-                else
-                {
-
-                }
-
-            }
-        }
-    }
     //Normalize the sum
     if(NumberOfIntersectedVoxels != 0)
     {
-        CostFunction = (SumOfIntersectedVoxels/(VoxelType)NumberOfIntersectedVoxels) ;
+        CostFunction = (SumOfIntersectedVoxels/(double)NumberOfIntersectedVoxels) ;
     }
     else
     {
         CostFunction =  MAX_COSTFUNCTION_VALUE;
     }
+
     if(m_VerboseMode)
     {
         std::cout<<"Number of Intersected Voxels : "<<NumberOfIntersectedVoxels<<std::endl;
         std::cout<<"Sum of difference between intersected voxels : "<<SumOfIntersectedVoxels<<std::endl;
         std::cout<<"CostFunction Value : "<<CostFunction<<std::endl;
     }
+
 
     return CostFunction;
 
