@@ -106,8 +106,19 @@ int main( int argc, char * argv[] )
 
         std::vector< unsigned short>          BValues       = sequence->GetBValues();
         std::vector< btk::GradientDirection > GradientTable = sequence->GetGradientTable();
+        std::vector< unsigned short>          new_BValues;
+        std::vector< btk::GradientDirection > new_GradientTable;
+
         std::vector< TImage::Pointer > B0;
         std::vector< TImage::Pointer > B0_resampled;
+
+        // Read mask
+        TMask::Pointer  mask;
+
+        if (maskFileName !="")
+        {
+            mask = btk::ImageHelper< TMask >::ReadImage(maskFileName);
+        }
 
         /////////////////////////////////////////////////////////////
         //
@@ -145,14 +156,6 @@ int main( int argc, char * argv[] )
         // Registration of B0s
         //
         btkCoutMacro("B0s registration on the first one :");
-
-        // Read mask
-        TMask::Pointer  mask;
-
-        if (maskFileName !="")
-        {
-            mask = btk::ImageHelper< TMask >::ReadImage(maskFileName);
-        }
 
         B0_resampled.push_back(B0[0]);
 
@@ -203,13 +206,8 @@ int main( int argc, char * argv[] )
 
         TImage::Pointer B0_mean = sumFilter->GetOutput();
 
-        // Correcting of B-Values and B-vector (Removes repetitive zero entries)
-        while (BValues[1]==0)
-        {
-            BValues.erase(BValues.begin()+1);
-            GradientTable.erase(GradientTable.begin()+1);
-        }
         btkCoutMacro("Done.");
+
 
         ////////////////////////////////////////////////////////////
         //
@@ -224,23 +222,47 @@ int main( int argc, char * argv[] )
         joiner -> SetSpacing( spacing[3] );
         joiner -> SetInput( 0, B0_mean );
 
+
         unsigned j = 1;
-        for (unsigned int i = B0_resampled.size(); i < input4Dsize[3]; i++)
+        int nb_zeros=0;
+        for (unsigned int i = 0; i < input4Dsize[3]; i++)
         {
-            index[3] = i;
+            if (BValues[i] != 0)
+            {
 
-            TSequence::RegionType imageRegion;
-            imageRegion.SetIndex( index );
-            imageRegion.SetSize( image3Dsize );
+                index[3] = i;
 
-            ExtractImageFilter::Pointer extractor = ExtractImageFilter::New();
-            extractor -> SetInput( sequence );
-            extractor -> SetExtractionRegion( imageRegion );
-            extractor -> SetDirectionCollapseToSubmatrix( );
-            extractor -> Update();
+                TSequence::RegionType imageRegion;
+                imageRegion.SetIndex( index );
+                imageRegion.SetSize( image3Dsize );
 
-            joiner -> SetInput( j, extractor -> GetOutput() );
-            j++;
+                ExtractImageFilter::Pointer extractor = ExtractImageFilter::New();
+                extractor -> SetInput( sequence );
+                extractor -> SetExtractionRegion( imageRegion );
+                extractor -> SetDirectionCollapseToSubmatrix( );
+                extractor -> Update();
+
+                joiner -> SetInput( j, extractor -> GetOutput() );
+
+                new_BValues.push_back(BValues[i]);
+                new_GradientTable.push_back(GradientTable[i]);
+
+                j++;
+            }
+            else
+            {
+
+               // Correcting of B-Values and B-vector (Removes repetitive zero entries)
+                if (nb_zeros==0)
+                {
+
+                    new_BValues.push_back(BValues[i]);
+                    new_GradientTable.push_back(GradientTable[i]);
+                }
+                nb_zeros++;
+                 btkCoutMacro("0 in "<<i<<" - total "<<nb_zeros);
+
+            }
         }
         joiner -> Update();
         btkCoutMacro(" Done.");
@@ -255,11 +277,11 @@ int main( int argc, char * argv[] )
 
         // Write new B-values with removed zero entries
         std::string bvalFileName = btk::FileHelper::GetRadixOf(outputFileName) + ".bval";
-        btk::DiffusionSequenceFileHelper::WriteBValues(BValues,bvalFileName);
+        btk::DiffusionSequenceFileHelper::WriteBValues(new_BValues,bvalFileName);
 
         // Write new B-vector with removed zero entries
         std::string bvecFileName = btk::FileHelper::GetRadixOf(outputFileName) + ".bvec";
-        btk::DiffusionSequenceFileHelper::WriteGradientTable(GradientTable,bvecFileName);
+        btk::DiffusionSequenceFileHelper::WriteGradientTable(new_GradientTable,bvecFileName);
 
 
     } catch (TCLAP::ArgException &e)  // catch any exceptions
