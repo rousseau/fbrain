@@ -159,11 +159,13 @@ int main( int argc, char *argv[] )
   writer->SetInput( outputImage );
   writer->Update();  
 
-  OutputWriterType::Pointer outputWriter = OutputWriterType::New();  
-  outputWriter->SetFileName( weight_file );
-  outputWriter->SetInput( weightImage );
-  outputWriter->Update();  
-
+  if(weight_file!="")
+  {
+    OutputWriterType::Pointer outputWriter = OutputWriterType::New();  
+    outputWriter->SetFileName( weight_file );
+    outputWriter->SetInput( weightImage );
+    outputWriter->Update();  
+  }
 
 
   } catch (TCLAP::ArgException &e)  // catch any exceptions

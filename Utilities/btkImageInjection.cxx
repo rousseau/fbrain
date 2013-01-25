@@ -182,7 +182,7 @@ int main( int argc, char *argv[] )
 
   if ( boxSwitchArg.isSet() )
   {
-    intersectionCalculator -> Compute();
+    intersectionCalculator -> Update();
   }
 
   // Set roi according to the provided arguments

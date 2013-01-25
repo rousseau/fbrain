@@ -75,7 +75,7 @@ void WeightedSumOfImagesFilter< TImage,TPrecision >::GenerateData()
 
 
     // Create new output image from the same physical space of input ones (and initialize it to 0).
-    typename TImage::Pointer outputImage = btk::ImageHelper< TImage >::CreateNewImageFromPhysicalSpaceOf(Self::GetInput(0));
+    typename TImage::Pointer outputImage = btk::ImageHelper< TImage >::CreateNewImageFromPhysicalSpaceOfConst(Self::GetInput(0));
 
     // Define an iterator on output image.
     itk::ImageRegionIterator< TImage > outputIt(outputImage, outputImage->GetLargestPossibleRegion());

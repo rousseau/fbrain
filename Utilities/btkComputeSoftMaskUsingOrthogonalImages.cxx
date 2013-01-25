@@ -38,6 +38,7 @@
 #include "itkImage.h"
 #include "itkVector.h"
 #include "itkNearestNeighborInterpolateImageFunction.h"
+#include "itkPoint.h"
 
 /* BTK */
 #include "btkImageHelper.h"
@@ -54,6 +55,8 @@ int main(int argc, char** argv)
     TCLAP::MultiArg<std::string> inputImageArg("i","input_file","input image file (float)",true,"string",cmd);
     TCLAP::MultiArg<std::string> outputImageArg("o","output_file","output image file (float)",true,"string",cmd);
     TCLAP::ValueArg<int>         valueArg("v","value","type of soft masks: 0=mask, 1=mean image (default:0)",false,0,"int",cmd);
+    TCLAP::ValueArg<float>       distanceArg("d","distance","distance (to the barycentre) for mask thresholding",false,10000,"float",cmd);
+    TCLAP::ValueArg<float>       thresholdArg("t","threshold","threshold on the dot product between z vector",false,0.5,"float",cmd);
 
     cmd.parse( argc, argv );
     
@@ -61,7 +64,8 @@ int main(int argc, char** argv)
     std::vector<std::string> input_file       = inputImageArg.getValue();
     std::vector<std::string> output_file      = outputImageArg.getValue();
     int                      mask_value       = valueArg.getValue();
-    
+    float                    maxDistance      = distanceArg.getValue();
+    float                    threshold        = thresholdArg.getValue();
     //ITK declaration
     const   unsigned int Dimension = 3;
     typedef itk::Image< float, Dimension >    FloatImage; 
@@ -79,7 +83,7 @@ int main(int argc, char** argv)
     std::cout<<"Compute the physical z vectors"<<std::endl;
     std::vector< itk::Vector<double, 3> > physicalZVectors;
     
-    for(uint i=0; i!=inputImages.size(); i++ )
+    for(unsigned int i=0; i!=inputImages.size(); i++ )
     {
       FloatImage::IndexType startingIndex;  
       FloatImage::PointType startingPoint;  
@@ -122,7 +126,7 @@ int main(int argc, char** argv)
 
     std::cout<<"Define a set of interpolators to use the ITK function isInsideBuffer "<<std::endl;
     std::vector< NNInterpolatorType::Pointer > nn_interpolator;
-    for(uint i=0; i!=inputImages.size(); i++ )    
+    for(unsigned int i=0; i!=inputImages.size(); i++ )    
     {
       NNInterpolatorType::Pointer nn = NNInterpolatorType::New();
       nn -> SetInputImage( inputImages[i] );
@@ -132,15 +136,15 @@ int main(int argc, char** argv)
 
     //Can be done in a more elegant way...
     
-    for(uint i=0; i!=inputImages.size(); i++ )    
+    for(unsigned int i=0; i!=inputImages.size(); i++ )    
     {
       std::cout<<"Find the orthogonal images wrt the current image ..."<<std::endl;
-      std::vector<uint> orthogonalImages;
+      std::vector<unsigned int> orthogonalImages;
       
-      for(uint j=0; j!=inputImages.size(); j++)
+      for(unsigned int j=0; j!=inputImages.size(); j++)
       {
         double dotProduct = physicalZVectors[i] * physicalZVectors[j];
-        if( fabs(dotProduct < 0.5) )
+        if( fabs(dotProduct < threshold) )
         {
           orthogonalImages.push_back(j);
         }
@@ -157,13 +161,15 @@ int main(int argc, char** argv)
         FloatImage::PointType point;
         outputImages[i] -> TransformIndexToPhysicalPoint(index, point);
 
-        for(uint j=0; j!=orthogonalImages.size(); j++)
+        for(unsigned int j=0; j!=orthogonalImages.size(); j++)
         {
 
           if ( nn_interpolator[ orthogonalImages[j] ] -> IsInsideBuffer( point ) )
           {
             if(mask_value==0)
+            {
               outputValue += 1.0;
+            }  
             else
             {
               ContinuousIndex contIndex;
@@ -177,6 +183,48 @@ int main(int argc, char** argv)
         outputImageIt.Set( outputValue / orthogonalImages.size() );
       }      
     }    
+
+
+    //Now, compute the barycentre for each image and apply a distance-based threshold
+
+    for(unsigned int i=0; i!=inputImages.size(); i++ )    
+    {
+      FloatImage::PointType barycentre;
+      barycentre[0] = 0;
+      barycentre[1] = 0;
+      barycentre[2] = 0;
+      double currentIndex = 0;
+      itkFloatIterator outputImageIt( outputImages[i], outputImages[i] -> GetLargestPossibleRegion() );
+      for(outputImageIt.GoToBegin(); !outputImageIt.IsAtEnd(); ++outputImageIt )
+        if( outputImageIt.Get() > 0 )
+        {
+          FloatImage::IndexType index = outputImageIt.GetIndex();
+          FloatImage::PointType point;
+          outputImages[i] -> TransformIndexToPhysicalPoint(index, point);
+          double weight = (1.0*currentIndex)/(1.0*(currentIndex+1.0));
+          barycentre[0] = weight * barycentre[0] + (1.0-weight) * point[0];
+          barycentre[1] = weight * barycentre[1] + (1.0-weight) * point[1];
+          barycentre[2] = weight * barycentre[2] + (1.0-weight) * point[2];          
+          currentIndex += 1;
+          
+        }
+        
+      std::cout<<"Barycentre of image "<<i<<":\n "<<barycentre<<std::endl;
+        
+      //Threshold the outputImage based on the distance to the barycentre
+      for(outputImageIt.GoToBegin(); !outputImageIt.IsAtEnd(); ++outputImageIt )
+        if( outputImageIt.Get() > 0 )
+        {
+          FloatImage::IndexType index = outputImageIt.GetIndex();
+          FloatImage::PointType point;
+          outputImages[i] -> TransformIndexToPhysicalPoint(index, point);
+
+          if( point.SquaredEuclideanDistanceTo(barycentre) > maxDistance )
+            outputImageIt.Set(0);
+        }  
+            
+    }  
+
         
     std::cout<<"Writing the output soft masks ... "<<std::endl;
     btk::ImageHelper<FloatImage>::WriteImage(outputImages, output_file);

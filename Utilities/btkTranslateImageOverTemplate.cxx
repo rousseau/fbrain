@@ -109,7 +109,6 @@ int main(int argc, char * argv[])
         // Calculate center of reference image in voxel coordinates
         itk::ContinuousIndex< double,Dimension > read_point,barycentre, barycentre_ref;
 
-        //------------
         // Calculate barycenter of reference image
         ConstIteratorType It_ref( refImage, refImage->GetLargestPossibleRegion());
         double x_mean,y_mean,z_mean;
@@ -135,9 +134,6 @@ int main(int argc, char * argv[])
         barycentre_ref[0]=x_mean;
         barycentre_ref[1]=y_mean;
         barycentre_ref[2]=z_mean;
-
-
-        //-------------
 
 
 
@@ -178,6 +174,7 @@ int main(int argc, char * argv[])
         // Processing Translation
         FilterType::Pointer filter = FilterType::New();
         TransformType::Pointer transform = TransformType::New();
+        transform->SetIdentity();
 
         TransformType::OutputVectorType translation;
         translation=pi-pr;
@@ -197,14 +194,6 @@ int main(int argc, char * argv[])
         //Write ouput image
 
         btk::ImageHelper<Image>::WriteImage(filter->GetOutput() ,outputFileImage);
-
-        // Write Transform file
-//        translationFile.open(translationFileName.c_str(), std::ios::out);
-//        translationFile <<"Transform : MatrixOffsetTransformBase_double_3_3" << std::endl;
-//        translationFile <<"Parameters: 1 0 0 0 1 0 0 0 1 "<<translation[0]<<" " << translation[1]<<" "<<translation[2]<< std::endl;
-//        translationFile <<"FixedParameters: 0 0 0" << std::endl;
-//        translationFile.close();
-
 
         btk::IOTransformHelper<TransformType>::WriteTransform(transform,translationFileName);
 

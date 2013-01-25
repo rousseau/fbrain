@@ -33,8 +33,8 @@
 
 ==========================================================================*/
 
-#ifndef BTKSLICESINTERSECTIONITKCOSTFUNCTION_TXX
-#define BTKSLICESINTERSECTIONITKCOSTFUNCTION_TXX
+#ifndef BTK_SLICESINTERSECTIONITKCOSTFUNCTION_TXX
+#define BTK_SLICESINTERSECTIONITKCOSTFUNCTION_TXX
 
 #include "btkSlicesIntersectionITKCostFunction.hxx"
 

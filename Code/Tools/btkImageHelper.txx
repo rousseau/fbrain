@@ -129,8 +129,9 @@ std::vector< typename TImageInput::Pointer > &ImageHelper< TImageInput, TImageOu
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
-typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::CreateNewImageFromPhysicalSpaceOf(typename TImageInput::ConstPointer image, typename TImageOutput::PixelType defaultValue)
+typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::CreateNewImageFromPhysicalSpaceOfConst(typename TImageInput::ConstPointer image, typename TImageOutput::PixelType defaultValue)
 {
+
     typename TImageOutput::Pointer newImage = TImageOutput::New();
     newImage->SetRegions(image->GetLargestPossibleRegion());
     newImage->SetOrigin(image->GetOrigin());
@@ -145,6 +146,21 @@ typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::CreateN
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
+typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::CreateNewImageFromPhysicalSpaceOf(typename TImageInput::Pointer image, typename TImageOutput::PixelType defaultValue)
+{
+    typename TImageOutput::Pointer newImage = TImageOutput::New();
+    newImage->SetRegions(image->GetLargestPossibleRegion());
+    newImage->SetOrigin(image->GetOrigin());
+    newImage->SetSpacing(image->GetSpacing());
+    newImage->SetDirection(image->GetDirection());
+    newImage->Allocate();
+    newImage->FillBuffer(defaultValue);
+
+    return newImage;
+}
+//----------------------------------------------------------------------------------------
+
+template < class TImageInput, class TImageOutput >
 std::vector< typename TImageOutput::Pointer > &ImageHelper< TImageInput, TImageOutput >::CreateNewImageFromPhysicalSpaceOf(std::vector< typename TImageInput::Pointer > &images, typename TImageOutput::PixelType defaultValue)
 {
     //FIXME : memory leak about the returned vector (maybe use a itk::SmartPointer<>, or passing the vector per value)
@@ -153,7 +169,24 @@ std::vector< typename TImageOutput::Pointer > &ImageHelper< TImageInput, TImageO
 
     for(typename std::vector< typename TImageInput::Pointer >::iterator it = images.begin(); it != images.end(); it++)
     {
-        newImages.push_back(CreateNewImageFromPhysicalSpaceOf((*it).GetPointer(), defaultValue));
+        newImages.push_back(CreateNewImageFromPhysicalSpaceOf(*it, defaultValue));
+    }
+
+    return newImages;
+}
+
+//----------------------------------------------------------------------------------------
+
+template < class TImageInput, class TImageOutput >
+std::vector< typename TImageOutput::Pointer > &ImageHelper< TImageInput, TImageOutput >::CreateNewImageFromPhysicalSpaceOfConst(std::vector< typename TImageInput::ConstPointer > &images, typename TImageOutput::PixelType defaultValue)
+{
+    //FIXME : memory leak about the returned vector (maybe use a itk::SmartPointer<>, or passing the vector per value)
+    std::vector< typename TImageOutput::Pointer > *ptrNewImages = new std::vector< typename TImageOutput::Pointer >;
+    std::vector< typename TImageOutput::Pointer > &newImages = *ptrNewImages;
+
+    for(typename std::vector< typename TImageInput::Pointer >::iterator it = images.begin(); it != images.end(); it++)
+    {
+        newImages.push_back(CreateNewImageFromPhysicalSpaceOfConst(*it, defaultValue));
     }
 
     return newImages;
