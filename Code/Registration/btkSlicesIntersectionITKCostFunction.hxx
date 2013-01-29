@@ -141,6 +141,10 @@ class SlicesIntersectionITKCostFunction: public itk::SingleValuedCostFunction
             Changing this number will introduce some error */
         btkSetMacro(NumberOfParameters,unsigned int);
 
+        /** Set/Get the center of the transform (default, middle of the volume ) */
+        btkSetMacro(CenterOfTransform, typename ImageType::PointType);
+        btkGetMacro(CenterOfTransform, typename ImageType::PointType);
+
 
         /** Intialization */
         void Initialize();
@@ -188,6 +192,8 @@ class SlicesIntersectionITKCostFunction: public itk::SingleValuedCostFunction
 
         SlicesIntersectionVNLCostFunction<ImageType> m_VNLCostFunction;
         unsigned int m_NumberOfParameters;
+
+        typename ImageType::PointType m_CenterOfTransform;
 
 
 

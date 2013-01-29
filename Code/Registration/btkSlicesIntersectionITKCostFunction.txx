@@ -59,6 +59,7 @@ void SlicesIntersectionITKCostFunction<TImage>::Initialize()
 
         m_VNLCostFunction.SetMovingImageNum(m_MovingImageNum);
         m_VNLCostFunction.SetMovingSliceNum(m_MovingSliceNum);
+        m_VNLCostFunction.SetCenterOfTransform(m_CenterOfTransform);
 
         m_VNLCostFunction.Initialize();
 
