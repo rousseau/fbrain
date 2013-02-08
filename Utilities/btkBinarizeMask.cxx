@@ -69,7 +69,7 @@ int main(int argc, char * argv[] )
      FloatImage::ConstPointer floatImage = btk::ImageHelper<FloatImage>::ReadConstImage(inputName);
      ShortImage::Pointer shortImage = ShortImage::New();
 
-     shortImage = btk::ImageHelper<FloatImage, ShortImage>::CreateNewImageFromPhysicalSpaceOf(floatImage);
+     shortImage = btk::ImageHelper<FloatImage, ShortImage>::CreateNewImageFromPhysicalSpaceOfConst(floatImage);
 
      Iterator shortIt(shortImage, shortImage->GetLargestPossibleRegion());
 

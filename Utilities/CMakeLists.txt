@@ -4,7 +4,6 @@ INCLUDE_REGULAR_EXPRESSION("^.*$")
 INCLUDE_DIRECTORIES(${TCLAP_DIRECTORY})
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Reconstruction)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Diffusion)
-INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/InputOutput)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Tools)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Transformations)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Segmentation)
@@ -216,6 +215,9 @@ TARGET_LINK_LIBRARIES(btkColorFiberTractsByMeanOrientation btkTractographyLibrar
 ADD_EXECUTABLE(btkComputeSoftMaskUsingOrthogonalImages btkComputeSoftMaskUsingOrthogonalImages.cxx)
 TARGET_LINK_LIBRARIES(btkComputeSoftMaskUsingOrthogonalImages ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkFSLToITKTransform btkFSLToITKTransform.cxx)
+TARGET_LINK_LIBRARIES(btkFSLToITKTransform ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -268,6 +270,7 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkTractDensityMap
                 btkColorFiberTractsByMeanOrientation
                 btkComputeSoftMaskUsingOrthogonalImages
+                btkFSLToITKTransform
         DESTINATION bin)
 
 

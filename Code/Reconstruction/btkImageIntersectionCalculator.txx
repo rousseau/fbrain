@@ -91,7 +91,7 @@ void ImageIntersectionCalculator<ImageType>
 template < typename ImageType >
 void
 ImageIntersectionCalculator<ImageType>
-::Compute()
+::Update()
 {
   IndexType index;
   PointType point;
@@ -158,7 +158,7 @@ ImageIntersectionCalculator<ImageType>
 template < typename ImageType >
 void
 ImageIntersectionCalculator<ImageType>
-::PrintSelf(std::ostream& os, Indent indent) const
+::PrintSelf(std::ostream& os, itk::Indent indent) const
 {
   Superclass::PrintSelf( os, indent );
 }

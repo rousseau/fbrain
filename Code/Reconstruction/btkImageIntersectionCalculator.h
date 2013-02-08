@@ -48,28 +48,21 @@
 namespace btk
 {
 
-using namespace itk;
-
 /** \class ImageIntersectionCalculator
- * \brief Describe the class briefly here.
- *
- * Full class description
- * Full class description
- * Full class description
-
+ * \brief Perform a bounding box mask, with intersection of orthogonal image
  * \sa ImageRegistrationMethod
  * \ingroup RegistrationFilters
  */
 
 template <typename TImage>
-class ImageIntersectionCalculator : public Object
+class ImageIntersectionCalculator : public itk::Object
 {
 public:
   /** Standard class typedefs. */
   typedef ImageIntersectionCalculator  Self;
-  typedef Object                                       Superclass;
-  typedef SmartPointer<Self>                           Pointer;
-  typedef SmartPointer<const Self>                     ConstPointer;
+  typedef itk::Object                                       Superclass;
+  typedef itk::SmartPointer<Self>                           Pointer;
+  typedef itk::SmartPointer<const Self>                     ConstPointer;
 
   /** Method for creation through the object factory. */
   itkNewMacro(Self);
@@ -82,19 +75,19 @@ public:
   typedef typename ImageType::Pointer                   ImagePointer;
   typedef          std::vector<ImagePointer>            ImageArrayPointer;
 
-  typedef Image< unsigned char,
+  typedef itk::Image< unsigned char,
                  ImageType::ImageDimension >            ImageMaskType;
   typedef typename ImageMaskType::Pointer               ImageMaskPointer;
   typedef          std::vector<ImageMaskPointer>        ImageMaskPointerArray;
 
-  typedef ImageMaskSpatialObject< ImageType::ImageDimension > MaskType;
+  typedef itk::ImageMaskSpatialObject< ImageType::ImageDimension > MaskType;
   typedef typename MaskType::Pointer                          MaskPointer;
   typedef          std::vector<MaskPointer>                   MaskPointerArray;
 
   typedef typename ImageType::RegionType                ImageRegionType;
   typedef          std::vector< ImageRegionType >       ImageRegionArray;
 
-  typedef LinearInterpolateImageFunction< ImageType,
+  typedef itk::LinearInterpolateImageFunction< ImageType,
                                           double>       InterpolatorType;
   typedef typename InterpolatorType::Pointer            InterpolatorPointer;
   typedef          std::vector<InterpolatorPointer>     InterpolatorPointerArray;
@@ -105,9 +98,9 @@ public:
   typedef typename ImageType::RegionType               	RegionType;
   typedef  std::vector<RegionType>                      RegionArray;
 
-  typedef ImageFileWriter< ImageMaskType >  ImageWriterType;
+  typedef itk::ImageFileWriter< ImageMaskType >  ImageWriterType;
 
-  typedef ImageRegionIteratorWithIndex< ImageMaskType >  IteratorType;
+  typedef itk::ImageRegionIteratorWithIndex< ImageMaskType >  IteratorType;
 
   /** Write a specific mask to disk. */
   void WriteMask( unsigned int i, const char *filename );
@@ -128,12 +121,12 @@ public:
   void AddImage( ImageType * image);
 
   /** Calculates the intersection */
-  void Compute();
+  void Update();
 
 protected:
   ImageIntersectionCalculator();
   virtual ~ImageIntersectionCalculator() {};
-  void PrintSelf(std::ostream& os, Indent indent) const;
+  void PrintSelf(std::ostream& os, itk::Indent indent) const;
 
 
 private:
