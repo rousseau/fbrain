@@ -41,6 +41,7 @@
 #include "itkExtractImageFilter.h"
 #include "itkJoinSeriesImageFilter.h"
 #include "itkNearestNeighborInterpolateImageFunction.h"
+#include "itkDisplacementFieldTransform.h"
 
 /* BTK */
 #include "btkImageHelper.h"
@@ -242,41 +243,54 @@ int main(int argc, char * argv[])
         imageIO->ReadImageInformation();
 
         int Dimension = imageIO->GetNumberOfDimensions();
-        btkCoutMacro("Dimension of input image :"<<Dimension);
+        btkCoutMacro("Dimension of input image :" << Dimension);
 
-
-        if(imageIO->GetPixelType() != itk::ImageIOBase::SCALAR)
+        switch(imageIO->GetPixelType())
         {
-            btkException("Unsupported image pixel type (only scalar are supported) !");
-        }
-
-        else
-        {
-            switch(imageIO->GetComponentType())
+            case itk::ImageIOBase::VECTOR:
             {
-                case itk::ImageIOBase::SHORT:
-                    // AVEC IF..... !!!!
-                    Process< itk::Image< short,3 >,itk::Image< unsigned char,3 > >(inputFileNames, outputFileNames, maskFileNames, Dimension);
-                    break;
+                btkCoutMacro("Pixel type: Vector");
 
-                case itk::ImageIOBase::USHORT:
-                    Process< itk::Image< unsigned short,3 >,itk::Image< unsigned char,3 > >(inputFileNames, outputFileNames, maskFileNames,Dimension);
-                    break;
-
-                case itk::ImageIOBase::FLOAT:
-                    Process< itk::Image< float,3 >,itk::Image< unsigned char,3 > >(inputFileNames, outputFileNames, maskFileNames,Dimension);
-                    break;
-
-                case itk::ImageIOBase::DOUBLE:
-                    Process< itk::Image< double,3 >,itk::Image< unsigned char,3 > >(inputFileNames, outputFileNames, maskFileNames,Dimension);
-                    break;
-
-                default:
-                    btkException("Unsupported component type (only short, float or double types are supported) !");
+                typedef itk::DisplacementFieldTransform< double,3 >::DisplacementFieldType DisplacementField;
+                Process< DisplacementField,itk::Image< unsigned char,3 > >(inputFileNames, outputFileNames, maskFileNames, Dimension);
             }
+                break;
+
+            case itk::ImageIOBase::SCALAR:
+            {
+                btkCoutMacro("Pixel type: Scalar");
+
+                switch(imageIO->GetComponentType())
+                {
+                    case itk::ImageIOBase::SHORT:
+                        btkCoutMacro("Scalar type: Short");
+                        Process< itk::Image< short,3 >,itk::Image< unsigned char,3 > >(inputFileNames, outputFileNames, maskFileNames, Dimension);
+                        break;
+
+                    case itk::ImageIOBase::USHORT:
+                        btkCoutMacro("Scalar type: Unsigned Short");
+                        Process< itk::Image< unsigned short,3 >,itk::Image< unsigned char,3 > >(inputFileNames, outputFileNames, maskFileNames,Dimension);
+                        break;
+
+                    case itk::ImageIOBase::FLOAT:
+                        btkCoutMacro("Scalar type: Float");
+                        Process< itk::Image< float,3 >,itk::Image< unsigned char,3 > >(inputFileNames, outputFileNames, maskFileNames,Dimension);
+                        break;
+
+                    case itk::ImageIOBase::DOUBLE:
+                        btkCoutMacro("Scalar type: Double");
+                        Process< itk::Image< double,3 >,itk::Image< unsigned char,3 > >(inputFileNames, outputFileNames, maskFileNames,Dimension);
+                        break;
+
+                    default:
+                        btkException("Unsupported component type (only short, float or double types are supported) !");
+                }
+            }
+                break;
+
+            default:
+                btkException("Unsupported pixel type (only scalar and vector are supported) !");
         }
-
-
     }
     catch(TCLAP::ArgException &e)  // catch any exceptions
     {

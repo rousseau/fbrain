@@ -39,6 +39,7 @@
 #include "itkImageIOBase.h"
 #include "itkExtractImageFilter.h"
 #include "itkJoinSeriesImageFilter.h"
+#include "itkDisplacementFieldTransform.h"
 
 /* BTK */
 #include "btkImageHelper.h"
@@ -46,6 +47,8 @@
 /* OTHERS */
 #include "iostream"
 #include <tclap/CmdLine.h>
+
+typedef itk::DisplacementFieldTransform< double,3 >::DisplacementFieldType DisplacementField;
 
 
 int main(int argc, char * argv[])
@@ -82,23 +85,53 @@ int main(int argc, char * argv[])
     mask  = btk::ImageHelper<itk3DMask>::ReadImage(mask_file);
 
     
+    try{
     switch(Dimension)
     {
       case 3:
       {
-        itk3DImage::Pointer image = itk3DImage::New();
+            switch(imageIO->GetPixelType())
+            {
+                case itk::ImageIOBase::VECTOR:
+                {
+                    typedef itk::MaskImageFilter< DisplacementField, itk3DMask > MaskFieldFilter;
 
-        //read input image and mask
-        image = btk::ImageHelper<itk3DImage>::ReadImage(input_file);
-    
-        MaskImageFilter::Pointer maskImageFilter = MaskImageFilter::New();
-        maskImageFilter->SetMaskImage(mask);        
-        maskImageFilter->SetInput(image);
-        maskImageFilter->Update();
+                    // read input
+                    DisplacementField::Pointer field = btk::ImageHelper< DisplacementField >::ReadImage(input_file);
 
-        //write the result
-        btk::ImageHelper<itk3DImage>::WriteImage(maskImageFilter->GetOutput(),output_file);
-           
+                    // process
+                    MaskFieldFilter::Pointer maskImageFilter = MaskFieldFilter::New();
+                    maskImageFilter->SetMaskImage(mask);
+                    maskImageFilter->SetInput(field);
+                    maskImageFilter->Update();
+
+                    // write result
+                    btk::ImageHelper< DisplacementField >::WriteImage(maskImageFilter->GetOutput(), output_file);
+                }
+                    break;
+
+                case itk::ImageIOBase::SCALAR:
+                {
+                    itk3DImage::Pointer image = itk3DImage::New();
+
+                    //read input image and mask
+                    image = btk::ImageHelper<itk3DImage>::ReadImage(input_file);
+
+                    MaskImageFilter::Pointer maskImageFilter = MaskImageFilter::New();
+                    maskImageFilter->SetMaskImage(mask);
+                    maskImageFilter->SetInput(image);
+                    maskImageFilter->Update();
+
+                    //write the result
+                    btk::ImageHelper<itk3DImage>::WriteImage(maskImageFilter->GetOutput(),output_file);
+                }
+                    break;
+
+                default:
+                {
+                    throw(std::string("Unrecognized pixel type !"));
+                }
+            }
       }
         break;
       case 4:
@@ -174,6 +207,12 @@ int main(int argc, char * argv[])
         break;
       default:
         std::cout<<"Only dimension equal to 3 or 4 is supported.\n";      
+    }
+    }
+    catch(std::string &message)
+    {
+        std::cout << "Exception: " << message << std::endl;
+        return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;
