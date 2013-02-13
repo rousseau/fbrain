@@ -34,7 +34,7 @@ ADD_EXECUTABLE(btkSetStandardCoorSystem btkSetStandardCoorSystem.cxx
 TARGET_LINK_LIBRARIES(btkSetStandardCoorSystem ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkPrintImageInfo btkPrintImageInfo.cxx)
-TARGET_LINK_LIBRARIES(btkPrintImageInfo ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkPrintImageInfo ${ITK_LIBRARIES} btkToolsLibrary btkDiffusionLibrary)
 
 ADD_EXECUTABLE(btkRegisterDiffusionToAnatomicalData btkRegisterDiffusionToAnatomicalData.cxx
     ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
