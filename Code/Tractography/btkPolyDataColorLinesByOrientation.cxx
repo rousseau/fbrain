@@ -97,6 +97,32 @@ int PolyDataColorLinesByOrientation::RequestData(vtkInformation *vtkNotUsed(requ
     vtkSmartPointer< vtkCellArray >   outputLines = vtkSmartPointer< vtkCellArray >::New();
     vtkSmartPointer< vtkFloatArray > outputColors = vtkSmartPointer< vtkFloatArray >::New();
 
+    switch(m_ColorOrientation)
+    {
+        case COLOR_MEAN_ORIENTATION:
+            this->ColorByMeanOrientation(input, output, inputLines, outputPoints, outputLines, outputColors);
+            break;
+
+        case COLOR_LOCAL_ORIENTATION:
+            this->ColorByLocalOrientation(input, output, inputLines, outputPoints, outputLines, outputColors);
+            break;
+
+        default:
+            btkException("Unknown orientation type for fiber tracts coloration !");
+    }
+
+    // Update progress bar
+    this->SetProgress(1.0);
+    this->InvokeEvent(vtkCommand::ProgressEvent);
+
+
+    return 1;
+}
+
+//----------------------------------------------------------------------------------------
+
+inline void PolyDataColorLinesByOrientation::ColorByMeanOrientation(vtkSmartPointer< vtkPolyData > input, vtkSmartPointer< vtkPolyData > output, vtkSmartPointer< vtkCellArray > inputLines, vtkSmartPointer< vtkPoints > outputPoints, vtkSmartPointer< vtkCellArray > outputLines, vtkSmartPointer< vtkFloatArray > outputColors)
+{
     // Initialize the colors
     outputColors->SetNumberOfComponents(1);
     outputColors->SetName("MeanOrientation");
@@ -168,13 +194,82 @@ int PolyDataColorLinesByOrientation::RequestData(vtkInformation *vtkNotUsed(requ
     output->SetPoints(outputPoints);
     output->SetLines(outputLines);
     output->GetPointData()->SetScalars(outputColors);
+}
 
-    // Update progress bar
-    this->SetProgress(1.0);
+//----------------------------------------------------------------------------------------
+
+inline void PolyDataColorLinesByOrientation::ColorByLocalOrientation(vtkSmartPointer< vtkPolyData > input, vtkSmartPointer< vtkPolyData > output, vtkSmartPointer< vtkCellArray > inputLines, vtkSmartPointer< vtkPoints > outputPoints, vtkSmartPointer< vtkCellArray > outputLines, vtkSmartPointer< vtkFloatArray > outputColors)
+{
+    // Initialize the colors
+    outputColors->SetNumberOfComponents(1);
+    outputColors->SetName("LocalOrientation");
+
+
+    // Initialize the progress bar
+    this->SetProgress(0.0);
     this->InvokeEvent(vtkCommand::ProgressEvent);
+    unsigned int numberOfTracts = inputLines->GetNumberOfCells();
+    double         progressStep = 1.0 / numberOfTracts;
 
 
-    return 1;
+    vtkIdType numberOfPoints, *pointIds;
+
+    // Compute colors for each fiber
+    while(inputLines->GetNextCell(numberOfPoints, pointIds) != 0)
+    {
+        itk::Vector< float,3 > displacement;
+        displacement.Fill(0);
+
+        float color[1] = { 0 };
+
+        // Get first point
+        double firstPoint[3];
+        input->GetPoint(pointIds[0], firstPoint);
+
+        // Initialize current line and set first point
+        vtkSmartPointer< vtkPolyLine > line = vtkSmartPointer< vtkPolyLine >::New();
+        line->GetPointIds()->SetNumberOfIds(numberOfPoints);
+        line->GetPointIds()->SetId(0, outputPoints->InsertNextPoint(firstPoint));
+
+        // Compute mean direction based on each points
+        for(unsigned int i = 1; i < numberOfPoints; i++)
+        {
+            // Get points' coordinates
+            double previousPoint[3], currentPoint[3];
+            input->GetPoint(pointIds[i-1], previousPoint);
+            input->GetPoint(pointIds[i], currentPoint);
+
+            // Add current point to output
+            line->GetPointIds()->SetId(i, outputPoints->InsertNextPoint(currentPoint));
+
+            // Add current displacement vector
+            displacement[0] = std::abs(-currentPoint[0]+previousPoint[0]); displacement[1] = std::abs(-currentPoint[1]+previousPoint[1]); displacement[2] = std::abs(currentPoint[2]-previousPoint[2]);
+
+            // Compute rgb color index
+
+            displacement.Normalize();
+            displacement[0] *= 255; displacement[1] *= 255; displacement[2] *= 255;
+            color[0] = btk::RGBtoIndex(displacement[0], displacement[1], displacement[2]);
+
+            // Add color index to current previous point
+            outputColors->InsertNextTupleValue(color);
+        } // for each point
+
+        // Add color of before last point to the last point
+        outputColors->InsertNextTupleValue(color);
+
+        // Add line to polydata
+        outputLines->InsertNextCell(line);
+
+        // Update progress
+        this->SetProgress(this->GetProgress() + progressStep);
+        this->InvokeEvent(vtkCommand::ProgressEvent);
+    } // for each fiber
+
+    // Set output
+    output->SetPoints(outputPoints);
+    output->SetLines(outputLines);
+    output->GetPointData()->SetScalars(outputColors);
 }
 
 //----------------------------------------------------------------------------------------
