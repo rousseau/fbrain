@@ -77,8 +77,8 @@ int main(int argc, char *argv[])
         TCLAP::CmdLine cmd("btkColorFiberTractsByMeanOrientation: color the fibers (polydata) by their mean orientation", ' ', "1.0", true);
 
         // Arguments
-        TCLAP::ValueArg< std::string >  inputFileNameArg("i", "input", "Input polydata filename (VTK)", true, "string", "", cmd);
-        TCLAP::ValueArg< std::string > outputFileNameArg("o", "output", "Output polydata filename (VTK)", true, "string", "", cmd);
+        TCLAP::ValueArg< std::string >  inputFileNameArg("i", "input", "Input polydata filename (VTK)", true, "", "string", cmd);
+        TCLAP::ValueArg< std::string > outputFileNameArg("o", "output", "Output polydata filename (VTK)", true, "", "string", cmd);
 
         TCLAP::SwitchArg colorByLocalOrientationArg("", "local_orientation_color", "Color the output fibers by local orientation instead of mean orientation", cmd);
 
