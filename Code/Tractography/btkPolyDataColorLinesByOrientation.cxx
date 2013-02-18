@@ -175,9 +175,12 @@ inline void PolyDataColorLinesByOrientation::ColorByMeanOrientation(vtkSmartPoin
 
         // Compute rgb color index
         float color[1] = { 0 };
-        displacement.Normalize();
-        displacement[0] *= 255; displacement[1] *= 255; displacement[2] *= 255;
-        color[0] = btk::RGBtoIndex(displacement[0], displacement[1], displacement[2]);
+
+        if(!(displacement[0] == 0 && displacement[2] == 0 && displacement[2] == 0))
+        {
+            displacement.Normalize();
+            color[0] = btk::RGBtoIndex(displacement[0], displacement[1], displacement[2]);
+        }
 
         // Add one scalar per point
         for(unsigned int i = 0; i < numberOfPoints; i++)
@@ -189,6 +192,7 @@ inline void PolyDataColorLinesByOrientation::ColorByMeanOrientation(vtkSmartPoin
         this->SetProgress(this->GetProgress() + progressStep);
         this->InvokeEvent(vtkCommand::ProgressEvent);
     } // for each fiber
+
 
     // Set output
     output->SetPoints(outputPoints);
@@ -242,14 +246,15 @@ inline void PolyDataColorLinesByOrientation::ColorByLocalOrientation(vtkSmartPoi
             // Add current point to output
             line->GetPointIds()->SetId(i, outputPoints->InsertNextPoint(currentPoint));
 
-            // Add current displacement vector
-            displacement[0] = std::abs(-currentPoint[0]+previousPoint[0]); displacement[1] = std::abs(-currentPoint[1]+previousPoint[1]); displacement[2] = std::abs(currentPoint[2]-previousPoint[2]);
+            // Current displacement vector
+            displacement[0] = std::fabs(-currentPoint[0]+previousPoint[0]); displacement[1] = std::fabs(-currentPoint[1]+previousPoint[1]); displacement[2] = std::fabs(currentPoint[2]-previousPoint[2]);
 
             // Compute rgb color index
-
-            displacement.Normalize();
-            displacement[0] *= 255; displacement[1] *= 255; displacement[2] *= 255;
-            color[0] = btk::RGBtoIndex(displacement[0], displacement[1], displacement[2]);
+            if(!(displacement[0] == 0 && displacement[2] == 0 && displacement[2] == 0))
+            {
+                displacement.Normalize();
+                color[0] = btk::RGBtoIndex(displacement[0], displacement[1], displacement[2]);
+            }
 
             // Add color index to current previous point
             outputColors->InsertNextTupleValue(color);
@@ -265,6 +270,7 @@ inline void PolyDataColorLinesByOrientation::ColorByLocalOrientation(vtkSmartPoi
         this->SetProgress(this->GetProgress() + progressStep);
         this->InvokeEvent(vtkCommand::ProgressEvent);
     } // for each fiber
+
 
     // Set output
     output->SetPoints(outputPoints);

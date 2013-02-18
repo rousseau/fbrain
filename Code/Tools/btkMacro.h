@@ -195,6 +195,8 @@ virtual void Set##name (const type _arg)  = 0
  */
 inline float RGBtoIndex(float r, float g, float b)
 {
+    r *= 255; g *= 255; b *= 255;
+
     float index = 0.0f;
 
     float max = std::max(std::max(r, g), b);
