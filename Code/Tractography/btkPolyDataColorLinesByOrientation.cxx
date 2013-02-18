@@ -65,7 +65,7 @@ vtkStandardNewMacro(PolyDataColorLinesByOrientation);
 
 //----------------------------------------------------------------------------------------
 
-PolyDataColorLinesByOrientation::PolyDataColorLinesByOrientation()
+PolyDataColorLinesByOrientation::PolyDataColorLinesByOrientation() : m_ColorOrientation(COLOR_MEAN_ORIENTATION)
 {
     // ----
 }
