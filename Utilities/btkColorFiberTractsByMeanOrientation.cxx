@@ -80,12 +80,16 @@ int main(int argc, char *argv[])
         TCLAP::ValueArg< std::string >  inputFileNameArg("i", "input", "Input polydata filename (VTK)", true, "string", "", cmd);
         TCLAP::ValueArg< std::string > outputFileNameArg("o", "output", "Output polydata filename (VTK)", true, "string", "", cmd);
 
+        TCLAP::SwitchArg colorByLocalOrientationArg("", "local_orientation_color", "Color the output fibers by local orientation instead of mean orientation", cmd);
+
         // Parse the args.
         cmd.parse(argc, argv);
 
         // Get arguments' values
         std::string  inputFileName = inputFileNameArg.getValue();
         std::string outputFileName = outputFileNameArg.getValue();
+
+        bool colorByLocalOrientation = colorByLocalOrientationArg.getValue();
 
 
         //
@@ -109,6 +113,12 @@ int main(int argc, char *argv[])
 
         vtkSmartPointer< btk::PolyDataColorLinesByOrientation > filter = vtkSmartPointer< btk::PolyDataColorLinesByOrientation >::New();
         filter->SetInput(reader->GetOutput());
+
+        if(colorByLocalOrientation)
+        {
+            filter->SetColorOrientation(btk::PolyDataColorLinesByOrientation::COLOR_LOCAL_ORIENTATION);
+        }
+
         filter->AddObserver(vtkCommand::ProgressEvent, observer);
         filter->Update();
 
