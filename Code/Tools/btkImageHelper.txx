@@ -207,22 +207,22 @@ bool ImageHelper< TImageInput, TImageOutput >::IsInSamePhysicalSpace(typename TI
     typename TImageOutput::DirectionType secondDirection = secondImage->GetDirection();
 
     bool SameSize, SameSpacing, SameOrigin, SameDirection, SameDimension;
-    SameSize = SameSpacing = SameOrigin = SameDirection = true;
+    SameSize = SameSpacing = SameOrigin = SameDirection = SameDimension = true;
 
-    SameDimension = (TImageInput::ImageDimension == TImageOutput::ImageDimension);
+    SameDimension = (firstImage->GetImageDimension() == secondImage->GetImageDimension());
 
-    const unsigned int Dim =  std::min(TImageInput::ImageDimension, TImageOutput::ImageDimension);
+    const unsigned int Dim =  std::min(firstImage->GetImageDimension(), secondImage->GetImageDimension());
 
     SameSize = (firstSize == secondSize);
 
-    for(unsigned int i = 0; i<Dim; i++)
+    for(unsigned int i = 0; i < Dim; i++)
     {
         SameSpacing = SameSpacing && (std::abs(firstSpacing[i] - secondSpacing[i]) < epsilon);
 
         SameOrigin = SameOrigin && (std::abs(firstOrigin[i] - secondOrigin[i]) < epsilon);
 
 
-        for(unsigned int j= 0; j<Dim; j++)
+        for(unsigned int j = 0; j < Dim; j++)
         {
             SameDirection = SameDirection && (std::abs(firstDirection(i,j) - secondDirection(i,j)) < epsilon);
         }
