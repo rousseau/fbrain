@@ -195,21 +195,23 @@ std::vector< typename TImageOutput::Pointer > &ImageHelper< TImageInput, TImageO
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
-bool ImageHelper< TImageInput, TImageOutput >::IsInSamePhysicalSpace(typename TImageInput::Pointer firstImage, typename TImageInput::Pointer secondImage, double epsilon)
+bool ImageHelper< TImageInput, TImageOutput >::IsInSamePhysicalSpace(typename TImageInput::Pointer firstImage, typename TImageOutput::Pointer secondImage, double epsilon)
 {
-    typename TImageInput::SizeType            firstSize = firstImage->GetLargestPossibleRegion().GetSize();
-    typename TImageInput::SizeType           secondSize = secondImage->GetLargestPossibleRegion().GetSize();
-    typename TImageInput::SpacingType      firstSpacing = firstImage->GetSpacing();
-    typename TImageInput::SpacingType     secondSpacing = secondImage->GetSpacing();
-    typename TImageInput::PointType         firstOrigin = firstImage->GetOrigin();
-    typename TImageInput::PointType        secondOrigin = secondImage->GetOrigin();
-    typename TImageInput::DirectionType  firstDirection = firstImage->GetDirection();
-    typename TImageInput::DirectionType secondDirection = secondImage->GetDirection();
+    typename TImageInput::SizeType             firstSize = firstImage->GetLargestPossibleRegion().GetSize();
+    typename TImageOutput::SizeType           secondSize = secondImage->GetLargestPossibleRegion().GetSize();
+    typename TImageInput::SpacingType       firstSpacing = firstImage->GetSpacing();
+    typename TImageOutput::SpacingType     secondSpacing = secondImage->GetSpacing();
+    typename TImageInput::PointType          firstOrigin = firstImage->GetOrigin();
+    typename TImageOutput::PointType        secondOrigin = secondImage->GetOrigin();
+    typename TImageInput::DirectionType   firstDirection = firstImage->GetDirection();
+    typename TImageOutput::DirectionType secondDirection = secondImage->GetDirection();
 
-    bool SameSize, SameSpacing, SameOrigin, SameDirection;
+    bool SameSize, SameSpacing, SameOrigin, SameDirection, SameDimension;
     SameSize = SameSpacing = SameOrigin = SameDirection = true;
 
-    const unsigned int Dim =  TImageInput::ImageDimension;
+    SameDimension = (TImageInput::ImageDimension == TImageOutput::ImageDimension);
+
+    const unsigned int Dim =  std::min(TImageInput::ImageDimension, TImageOutput::ImageDimension);
 
     SameSize = (firstSize == secondSize);
 
@@ -226,7 +228,7 @@ bool ImageHelper< TImageInput, TImageOutput >::IsInSamePhysicalSpace(typename TI
         }
     }
 
-    return (SameSize && SameDirection && SameOrigin && SameSpacing);
+    return (SameDimension && SameSize && SameDirection && SameOrigin && SameSpacing);
 
 }
 

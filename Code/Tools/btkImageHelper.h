@@ -147,7 +147,7 @@ namespace btk
              * @param secondImage Second Image.
              * @return True if the two images are in the same physical space, false otherwise.
              */
-            static bool IsInSamePhysicalSpace(typename TImageInput::Pointer firstImage, typename TImageInput::Pointer secondImage, double epsilon = 10e-7);
+            static bool IsInSamePhysicalSpace(typename TImageInput::Pointer firstImage, typename TImageOutput::Pointer secondImage, double epsilon = 10e-7);
 
             /**
              * @brief Test if images are in the same physical space.
