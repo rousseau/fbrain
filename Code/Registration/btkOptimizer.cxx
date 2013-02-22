@@ -32,25 +32,14 @@
   knowledge of the CeCILL-B license and that you accept its terms.
   
 ==========================================================================*/
-#ifndef _btkOptimizer_cxx
-#define _btkOptimizer_cxx
 
 #include "btkOptimizer.h"
 
 namespace btk
 {
-//---------------------------------------------------------------------------
-Optimizer::Optimizer()
+
+Optimizer::Optimizer():m_Stop(false)
 {
-    m_Stop = false;
-    m_StopConditionDescription<< this->GetNameOfClass()<< ":";
-
-    m_CurrentValue = 0;
-    m_CurrentCost = 0;
-
-    m_MaximumNumberOfIterations = 100;
-
-
 
 }
 
@@ -60,39 +49,7 @@ Optimizer::~Optimizer()
 
 }
 //---------------------------------------------------------------------------
-void Optimizer::StartOptimization(void)
-{
-    if(m_CostFunction.IsNull())
-    {
-        return;
-    }
 
-    m_StopConditionDescription.str("");
-    m_StopConditionDescription<<this->GetNameOfClass()<<": ";
-
-    this->InvokeEvent(itk::StartEvent());
-    m_Stop = false;
-
-    // TODO: here do the optimization
-
-
-    //double val = this->m_CostFunction->GetValue(param);
-    //this->m_InitialPosition;
-    //this->m_CurrentPosition;
-    //this->m_CurrentCost
-
-}
-//---------------------------------------------------------------------------
-void Optimizer::SetCostFunction(SingleValuedCostFunction *costFunction)
-{
-    this->m_CostFunction = costFunction;
-}
-//---------------------------------------------------------------------------
-const std::string Optimizer::GetStopConditionDescription() const
-{
-    return m_StopConditionDescription.str();
-}
-//---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 }
-#endif
+
