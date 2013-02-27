@@ -87,10 +87,13 @@ virtual void Set##name (const type _arg)  = 0
 //-------------------------------------------------------------------------------------------------------------------
 #define btkWarningMacro(string)     std::cerr << "(" << __FILE__ << ":" << __LINE__ << ")" << "Btk Warning: " << string << std::endl;
 //-------------------------------------------------------------------------------------------------------------------
-#define btkException(string)        \
-    itk::ExceptionObject error;     \
-    error.SetDescription(string);   \
-    throw(error);                   \
+#define btkException(string)                 \
+    itk::ExceptionObject error;              \
+    error.SetDescription(string);            \
+    std::stringstream location;              \
+    location << __FILE__ << ':' << __LINE__; \
+    error.SetLocation(location.str());       \
+    throw(error);
 //-------------------------------------------------------------------------------------------------------------------
 //TODO: To be continued with const, pointer, string, vector...etc.
 //-------------------------------------------------------------------------------------------------------------------
