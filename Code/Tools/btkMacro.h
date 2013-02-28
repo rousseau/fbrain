@@ -36,57 +36,105 @@
 #ifndef __BTKMACRO_H__
 #define __BTKMACRO_H__
 
+// STL includes
 #include "iostream"
+#include "string"
+#include "cmath"
+#include "ctime"
 
+// ITK includes
 #include "itkWin32Header.h"
 #include "itkConfigure.h"
 #include "itkMacro.h"
 
-#include "string"
-#include "cmath"
-
 
 namespace btk
 {
+
 //-------------------------------------------------------------------------------------------------------------------
+// Elapsed time macros
+//-------------------------------------------------------------------------------------------------------------------
+
+#define btkTicTocInit()         \
+    clock_t _btk_tic, _btk_toc; \
+    double _btk_elapsed_time;   \
+
+//-------------------------------------------------------------------------------------------------------------------
+
+#define btkTic()        \
+{                       \
+    _btk_tic = clock(); \
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+
+#define btkToc()                                                                                          \
+{                                                                                                         \
+    _btk_toc = clock();                                                                                   \
+    _btk_elapsed_time = static_cast< double >(_btk_toc-_btk_tic) / static_cast< double >(CLOCKS_PER_SEC); \
+    btkCoutMacro("Elapsed time: " << _btk_elapsed_time << " seconds.");                                   \
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+// Usefull macros
+//-------------------------------------------------------------------------------------------------------------------
+
 #define btkGetMacro(name, type)                                   \
 virtual type Get##name () const                                   \
 {                                                                 \
     return this->m_##name;                                        \
 }
+
 //-------------------------------------------------------------------------------------------------------------------
+
 #define btkSetMacro(name, type)                                   \
-virtual void Set##name (type _arg)                          \
+virtual void Set##name (type _arg)                                \
 {                                                                 \
     if ( this->m_##name != _arg )                                 \
     {                                                             \
         this->m_##name = _arg;                                    \
     }                                                             \
 }
+
 //-------------------------------------------------------------------------------------------------------------------
-#define btkConstSetMacro(name, type)                           \
-virtual void Set##name (const type _arg)                                \
+
+#define btkConstSetMacro(name, type)                              \
+virtual void Set##name (const type _arg)                          \
 {                                                                 \
     if ( this->m_##name != _arg )                                 \
     {                                                             \
         this->m_##name = _arg;                                    \
     }                                                             \
 }
+
 //-------------------------------------------------------------------------------------------------------------------
+
 #define btkPureVirtualGetMacro(name, type)                         \
 virtual type Get##name () = 0
+
 //-------------------------------------------------------------------------------------------------------------------
+
 #define btkPureVirtualSetMacro(name, type)                         \
 virtual void Set##name (const type _arg)  = 0
+
 //-------------------------------------------------------------------------------------------------------------------
+
 #define btkCoutMacro(string)        std::cout << string << std::endl;
+
 //-------------------------------------------------------------------------------------------------------------------
+
 #define btkCoutVariable(variable)   std::cout << #variable << ": " << variable <<std::endl;
+
 //-------------------------------------------------------------------------------------------------------------------
+
 #define btkCerrMacro(string)        std::cerr << "(" << __FILE__ << ":" << __LINE__ << ") " << string << std::endl;
+
 //-------------------------------------------------------------------------------------------------------------------
+
 #define btkWarningMacro(string)     std::cerr << "(" << __FILE__ << ":" << __LINE__ << ")" << "Btk Warning: " << string << std::endl;
+
 //-------------------------------------------------------------------------------------------------------------------
+
 #define btkException(string)                 \
     itk::ExceptionObject error;              \
     error.SetDescription(string);            \
@@ -94,6 +142,7 @@ virtual void Set##name (const type _arg)  = 0
     location << __FILE__ << ':' << __LINE__; \
     error.SetLocation(location.str());       \
     throw(error);
+
 //-------------------------------------------------------------------------------------------------------------------
 //TODO: To be continued with const, pointer, string, vector...etc.
 //-------------------------------------------------------------------------------------------------------------------
@@ -101,6 +150,7 @@ virtual void Set##name (const type _arg)  = 0
 //TODO: Remove Old include of btkUserMacro in all btk files, and replace by this one
 
 //-------------------------------------------------------------------------------------------------------------------
+
 /** Set built-in type.  Creates member Set"name"() (e.g., SetVisibility()); */
 #define itkSetMacroNoDeb(name,type) \
   virtual void Set##name (const type _arg) \
@@ -111,14 +161,18 @@ virtual void Set##name (const type _arg)  = 0
       this->Modified(); \
       } \
   }
+
 //-------------------------------------------------------------------------------------------------------------------
+
 /** Get built-in type.  Creates member Get"name"() (e.g., GetVisibility()); */
 #define itkGetMacroNoDeb(name,type) \
   virtual type Get##name () \
   { \
     return this->m_##name; \
   }
+
 //-------------------------------------------------------------------------------------------------------------------
+
 /** Set built-in type.  Creates member Set"name"() (e.g., SetVisibility()); */
 #define UserSetMacro(name,type) \
   virtual void Set##name (int i, const type _arg) \
@@ -130,7 +184,9 @@ virtual void Set##name (const type _arg)  = 0
       this->Modified(); \
       } \
   }
+
 //-------------------------------------------------------------------------------------------------------------------
+
 /** Set pointer to object; uses Object reference counting methodology.
  * Creates method Set"name"() (e.g., SetPoints()). Note that using
  * smart pointers requires using real pointers when setting input,
@@ -144,7 +200,9 @@ virtual void Set##name (const type _arg)  = 0
       this->Modified(); \
       } \
   }
+
 //-------------------------------------------------------------------------------------------------------------------
+
 /** Get a smart pointer to an object.  Creates the member
  * Get"name"() (e.g., GetPoints()). */
 #define UserGetObjectMacro(name,type) \
@@ -153,7 +211,9 @@ virtual void Set##name (const type _arg)  = 0
     itkDebugMacro("returning " #name " address " << this->m_##name[i] ); \
     return this->m_##name[i].GetPointer(); \
   }
+
 //-------------------------------------------------------------------------------------------------------------------
+
 /** Set const pointer to object; uses Object reference counting methodology.
  * Creates method Set"name"() (e.g., SetPoints()). Note that using
  * smart pointers requires using real pointers when setting input,
@@ -170,6 +230,7 @@ virtual void Set##name (const type _arg)  = 0
   }
 
 //-------------------------------------------------------------------------------------------------------------------
+
 /** Get a smart const pointer to an object.  Creates the member
  * Get"name"() (e.g., GetPoints()). */
 #define UserGetConstObjectMacro(name,type) \
@@ -178,7 +239,9 @@ virtual void Set##name (const type _arg)  = 0
     itkDebugMacro("returning " #name " address " << this->m_##name[i] ); \
     return this->m_##name[i].GetPointer(); \
   }
+
 //-------------------------------------------------------------------------------------------------------------------
+
 /** Get a const reference to a smart pointer to an object.
  * Creates the member Get"name"() (e.g., GetPoints()). */
 #define UserGetConstReferenceObjectMacro(name,type) \
@@ -187,6 +250,7 @@ virtual void Set##name (const type _arg)  = 0
     itkDebugMacro("returning " #name " address " << this->m_##name[i] ); \
     return this->m_##name[i]; \
   }
+
 //-------------------------------------------------------------------------------------------------------------------
 
 /**
