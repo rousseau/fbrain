@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 20/07/2012
+  Date: 01/03/2013
   Author(s): Julien Pontabry (pontabry@unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -33,33 +33,34 @@
   
 ==========================================================================*/
 
+#ifndef BTK_PROBABILITY_DENSITY_H
+#define BTK_PROBABILITY_DENSITY_H
 
-// STL includes
-#include "cstdlib"
-
-// CppUnit includes
-#include "ui/text/TestRunner.h"
-#include "CompilerOutputter.h"
-
-// Local includes
-#include "btkMatrixOperationsTest.h"
-#include "btkLegendrePolynomialTest.h"
-#include "btkMathFunctionsTest.h"
-#include "btkSphericalHarmonicsTest.h"
-#include "btkNormalProbabilityDensityTest.h"
-
-
-int main(int argc, char *argv[])
+namespace btk
 {
-    CppUnit::TextUi::TestRunner runner;
 
-    runner.addTest(btk::MatrixOperationsTest::suite());
-    runner.addTest(btk::LegendrePolynomialTest::suite());
-    runner.addTest(btk::MathFunctionsTest::suite());
-    runner.addTest(btk::SphericalHarmonicsTest::suite());
-    runner.addTest(btk::NormalProbabilityDensityTest::suite());
+class ProbabilityDensity
+{
+    public:
+        /**
+         * @brief Constructor.
+         */
+        ProbabilityDensity();
 
-    runner.setOutputter(new CppUnit::CompilerOutputter(&runner.result(), std::cerr));
+        /**
+         * @brief Evaluate the distribution in x.
+         * @param x Point of evaluation.
+         * @return The value of the distribution in x.
+         */
+        virtual double Evaluate(double x) = 0;
 
-    return runner.run() ? EXIT_SUCCESS : EXIT_FAILURE;
-}
+        /**
+         * @brief Simulate the distribution.
+         * @return Simulated point.
+         */
+        virtual double Simulate() = 0;
+};
+
+} // namespace btk
+
+#endif // BTK_PROBABILITY_DENSITY_H

@@ -56,6 +56,8 @@ SET(MATHS_LIBRARY_HEADER
     ${MATHS_LIBRARY_SOURCE_DIR}/btkSphericalHarmonics.h
     ${MATHS_LIBRARY_SOURCE_DIR}/btkMatrixOperations.h
     ${MATHS_LIBRARY_SOURCE_DIR}/btkHistogram.h
+    ${MATHS_LIBRARY_SOURCE_DIR}/btkProbabilityDensity.h
+    ${MATHS_LIBRARY_SOURCE_DIR}/btkNormalProbabilityDensity.h
 )
 
 SET(MATHS_LIBRARY_SOURCES
@@ -65,16 +67,19 @@ SET(MATHS_LIBRARY_SOURCES
     ${MATHS_LIBRARY_SOURCE_DIR}/btkSphericalHarmonics.cxx
     ${MATHS_LIBRARY_SOURCE_DIR}/btkMatrixOperations.cxx
     ${MATHS_LIBRARY_SOURCE_DIR}/btkHistogram.cxx
+    ${MATHS_LIBRARY_SOURCE_DIR}/btkProbabilityDensity.cxx
+    ${MATHS_LIBRARY_SOURCE_DIR}/btkNormalProbabilityDensity.cxx
 )
 
 ADD_LIBRARY(btkMathsLibrary STATIC ${MATHS_LIBRARY_HEADER} ${MATHS_LIBRARY_SOURCES})
 
 IF(BUILD_TESTING)
     ADD_EXECUTABLE(btkMathsLibraryTestsApp ${MATHS_TESTS_SOURCE_DIR}/btkMathsLibraryTestsApp.cxx
-        ${MATHS_TESTS_SOURCE_DIR}/btkMatrixOperationsTest.cxx ${MATHS_TESTS_SOURCE_DIR}/btkMatrixOperationsTest.h
-        ${MATHS_TESTS_SOURCE_DIR}/btkLegendrePolynomialTest.cxx ${MATHS_TESTS_SOURCE_DIR}/btkLegendrePolynomialTest.h
-        ${MATHS_TESTS_SOURCE_DIR}/btkMathFunctionsTest.cxx ${MATHS_TESTS_SOURCE_DIR}/btkMathFunctionsTest.h
-        ${MATHS_TESTS_SOURCE_DIR}/btkSphericalHarmonicsTest.cxx ${MATHS_TESTS_SOURCE_DIR}/btkSphericalHarmonicsTest.h
+        ${MATHS_TESTS_SOURCE_DIR}/btkMatrixOperationsTest.cxx
+        ${MATHS_TESTS_SOURCE_DIR}/btkLegendrePolynomialTest.cxx
+        ${MATHS_TESTS_SOURCE_DIR}/btkMathFunctionsTest.cxx
+        ${MATHS_TESTS_SOURCE_DIR}/btkSphericalHarmonicsTest.cxx
+        ${MATHS_TESTS_SOURCE_DIR}/btkNormalProbabilityDensityTest.cxx
     )
     TARGET_LINK_LIBRARIES(btkMathsLibraryTestsApp btkMathsLibrary ${CPPUNIT_LIBRARY} ${ITK_LIBRARIES})
     ADD_TEST(btkMathsLibraryTests btkMathsLibraryTestsApp)
@@ -115,12 +120,14 @@ TARGET_LINK_LIBRARIES(btkDiffusionLibrary btkToolsLibrary btkMathsLibrary)
 SET(TRACTOGRAPHY_LIBRARY_HEADER
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkTractographyAlgorithm.h
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkStreamlineTractographyAlgorithm.h
+    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkParticleFilteringTractographyAlgorithm.h
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkPolyDataColorLinesByOrientation.h
 )
 
 SET(TRACTOGRAPHY_LIBRARY_SOURCES
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkTractographyAlgorithm.cxx
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkStreamlineTractographyAlgorithm.cxx
+    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkParticleFilteringTractographyAlgorithm.cxx
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkPolyDataColorLinesByOrientation.cxx
 )
 
