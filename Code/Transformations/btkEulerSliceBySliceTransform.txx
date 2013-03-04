@@ -52,11 +52,15 @@ EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>
     OutputPointType Tp( p );
 
     typename ImageType::IndexType index;
-    m_Image -> TransformPhysicalPointToIndex( Tp , index);
+    bool isInside = m_Image -> TransformPhysicalPointToIndex( Tp , index);
 
-    if(index[2] < 0 || index[2] > m_TransformList.size() -1 )
+//    if(index[2] < 0 || index[2] > m_TransformList.size()-1 )// looks like an infinite plane on Z axis
+//    {
+//        Tp = p;
+//    }
+    if(!isInside) //if point is not inside the image we don't transform it
     {
-        Tp = p;
+        Tp =p;
     }
     else
     {

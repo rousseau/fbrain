@@ -59,7 +59,7 @@ class AffineSliceBySliceTransform  : public SliceBySliceTransformBase<TScalarTyp
 public:
   /** Standard class typedefs. */
   typedef AffineSliceBySliceTransform  Self;
-  typedef SliceBySliceTransformBase<TScalarType,NDimensions, TPixelType > Superclass;
+  typedef SliceBySliceTransformBase<TScalarType,NDimensions, TPixelType> Superclass;
   typedef itk::MatrixOffsetTransformBase<TScalarType, NDimensions> TransformBase;
   typedef itk::AffineTransform< TScalarType, NDimensions > TransformType;
 
