@@ -47,6 +47,7 @@
 #include "btkMathFunctionsTest.h"
 #include "btkSphericalHarmonicsTest.h"
 #include "btkNormalProbabilityDensityTest.h"
+#include "btkVonMisesFisherProbabilityDensityTest.h"
 
 
 int main(int argc, char *argv[])
@@ -58,6 +59,7 @@ int main(int argc, char *argv[])
     runner.addTest(btk::MathFunctionsTest::suite());
     runner.addTest(btk::SphericalHarmonicsTest::suite());
     runner.addTest(btk::NormalProbabilityDensityTest::suite());
+    runner.addTest(btk::VonMisesFisherProbabilityDensityTest::suite());
 
     runner.setOutputter(new CppUnit::CompilerOutputter(&runner.result(), std::cerr));
 

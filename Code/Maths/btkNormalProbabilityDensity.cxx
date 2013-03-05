@@ -41,14 +41,14 @@
 namespace btk
 {
 
-NormalProbabilityDensity::NormalProbabilityDensity() : Superclass(), m_Mu(0.0), m_Sigma(1.0)
+NormalProbabilityDensity::NormalProbabilityDensity() : m_Mu(0.0), m_Sigma(1.0)
 {
     this->Initialize();
 }
 
 //----------------------------------------------------------------------------------------
 
-NormalProbabilityDensity::NormalProbabilityDensity(double mu, double sigma) : Superclass(), m_Mu(mu), m_Sigma(sigma)
+NormalProbabilityDensity::NormalProbabilityDensity(double mu, double sigma) : m_Mu(mu), m_Sigma(sigma)
 {
     this->Initialize();
 }

@@ -58,6 +58,7 @@ SET(MATHS_LIBRARY_HEADER
     ${MATHS_LIBRARY_SOURCE_DIR}/btkHistogram.h
     ${MATHS_LIBRARY_SOURCE_DIR}/btkProbabilityDensity.h
     ${MATHS_LIBRARY_SOURCE_DIR}/btkNormalProbabilityDensity.h
+    ${MATHS_LIBRARY_SOURCE_DIR}/btkVonMisesFisherProbabilityDensity.h
 )
 
 SET(MATHS_LIBRARY_SOURCES
@@ -67,8 +68,8 @@ SET(MATHS_LIBRARY_SOURCES
     ${MATHS_LIBRARY_SOURCE_DIR}/btkSphericalHarmonics.cxx
     ${MATHS_LIBRARY_SOURCE_DIR}/btkMatrixOperations.cxx
     ${MATHS_LIBRARY_SOURCE_DIR}/btkHistogram.cxx
-    ${MATHS_LIBRARY_SOURCE_DIR}/btkProbabilityDensity.cxx
     ${MATHS_LIBRARY_SOURCE_DIR}/btkNormalProbabilityDensity.cxx
+    ${MATHS_LIBRARY_SOURCE_DIR}/btkVonMisesFisherProbabilityDensity.cxx
 )
 
 ADD_LIBRARY(btkMathsLibrary STATIC ${MATHS_LIBRARY_HEADER} ${MATHS_LIBRARY_SOURCES})
@@ -80,8 +81,9 @@ IF(BUILD_TESTING)
         ${MATHS_TESTS_SOURCE_DIR}/btkMathFunctionsTest.cxx
         ${MATHS_TESTS_SOURCE_DIR}/btkSphericalHarmonicsTest.cxx
         ${MATHS_TESTS_SOURCE_DIR}/btkNormalProbabilityDensityTest.cxx
+        ${MATHS_TESTS_SOURCE_DIR}/btkVonMisesFisherProbabilityDensityTest.cxx
     )
-    TARGET_LINK_LIBRARIES(btkMathsLibraryTestsApp btkMathsLibrary ${CPPUNIT_LIBRARY} ${ITK_LIBRARIES})
+    TARGET_LINK_LIBRARIES(btkMathsLibraryTestsApp btkDiffusionLibrary btkMathsLibrary ${CPPUNIT_LIBRARY} ${ITK_LIBRARIES})
     ADD_TEST(btkMathsLibraryTests btkMathsLibraryTestsApp)
 ENDIF(BUILD_TESTING)
 

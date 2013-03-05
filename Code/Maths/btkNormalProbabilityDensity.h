@@ -45,11 +45,11 @@
 namespace btk
 {
 
-class NormalProbabilityDensity : public ProbabilityDensity
+class NormalProbabilityDensity : public ProbabilityDensity< double >
 {
     public:
-        typedef NormalProbabilityDensity Self;
-        typedef ProbabilityDensity       Superclass;
+        typedef NormalProbabilityDensity     Self;
+        typedef ProbabilityDensity< double > Superclass;
 
         /**
          * @brief Constructor (standard normal distribution).

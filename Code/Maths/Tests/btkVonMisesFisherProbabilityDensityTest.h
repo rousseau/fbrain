@@ -2,7 +2,7 @@
 
   © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-  Date: 01/03/2013
+  Date: 04/03/2013
   Author(s): Julien Pontabry (pontabry@unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
@@ -33,15 +33,30 @@
 
 ==========================================================================*/
 
-#include "btkProbabilityDensity.h"
+#ifndef BTK_VON_MISES_FISHER_PROBABILITY_DENSITY_TEST_H
+#define BTK_VON_MISES_FISHER_PROBABILITY_DENSITY_TEST_H
 
+// CppUnit includes
+#include "extensions/HelperMacros.h"
 
 namespace btk
 {
 
-ProbabilityDensity::ProbabilityDensity()
+class VonMisesFisherProbabilityDensityTest : public CppUnit::TestFixture
 {
-    // ----
-}
+        CPPUNIT_TEST_SUITE(VonMisesFisherProbabilityDensityTest);
+        CPPUNIT_TEST(testEvaluate);
+        CPPUNIT_TEST(testSimulate);
+        CPPUNIT_TEST_SUITE_END();
+
+    public:
+        void setUp();
+        void tearDown();
+
+        void testEvaluate();
+        void testSimulate();
+};
 
 } // namespace btk
+
+#endif // BTK_VON_MISES_FISHER_PROBABILITY_DENSITY_TEST_H

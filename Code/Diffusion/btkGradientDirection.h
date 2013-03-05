@@ -54,11 +54,11 @@ namespace btk
  * @author Julien Pontabry
  * @ingroup Diffusion
  */
-class GradientDirection : public itk::Vector< float,3 >
+class GradientDirection : public itk::Vector< double,3 >
 {
     public:
         typedef GradientDirection      Self;
-        typedef itk::Vector< float,3 > Superclass;
+        typedef itk::Vector< double,3 > Superclass;
 
         /**
          * @brief Construct a null gradient direction.
@@ -71,14 +71,14 @@ class GradientDirection : public itk::Vector< float,3 >
          * @param y Y coordinate.
          * @param z Z coordinate.
          */
-        GradientDirection(float x, float y, float z);
+        GradientDirection(double x, double y, double z);
 
         /**
          * @brief Constructor.
          * @param theta Elevation (in spherical coordinates).
          * @param phi Azimuth (in spherical coordinates).
          */
-        GradientDirection(float theta, float phi);
+        GradientDirection(double theta, double phi);
 
         /**
          * @brief Get the gradient direction in a vnl fixed structure for vector.

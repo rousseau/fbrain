@@ -43,7 +43,7 @@
 namespace btk
 {
 
-GradientDirection::GradientDirection(float x, float y, float z)
+GradientDirection::GradientDirection(double x, double y, double z)
 {
     (*this)[0] = x;
     (*this)[1] = y;
@@ -62,7 +62,7 @@ GradientDirection::GradientDirection()
 
 //----------------------------------------------------------------------------------------
 
-GradientDirection::GradientDirection(float theta, float phi) : m_SphericalDirection(theta, phi, 1.0f)
+GradientDirection::GradientDirection(double theta, double phi) : m_SphericalDirection(theta, phi, 1.0f)
 {
     Self::UpdateCartesianCoordinates();
 }
