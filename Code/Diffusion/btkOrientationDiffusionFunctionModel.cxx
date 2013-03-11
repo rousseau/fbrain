@@ -125,7 +125,7 @@ float OrientationDiffusionFunctionModel::ModelAt(ModelImage::PixelType shCoeffic
         } // for l
     }
 
-    return response;
+    return (response >= 0.0 ? response : 0.0);
 }
 
 //----------------------------------------------------------------------------------------
@@ -164,7 +164,7 @@ std::vector< float > OrientationDiffusionFunctionModel::ModelAt(ContinuousIndex 
                 value += m_SphericalHarmonicsBasisMatrix(i,j) * m_ModelSharpMatrix(j,j) * m_LegendreMatrix(j,j) * shCoefficients[j];
             }
 
-            response.push_back(value);
+            response.push_back(value >= 0.0 ? value : 0.0);
         }
     }
     else // m_UseSharpModel = false
@@ -178,7 +178,7 @@ std::vector< float > OrientationDiffusionFunctionModel::ModelAt(ContinuousIndex 
                 value += m_SphericalHarmonicsBasisMatrix(i,j) * m_LegendreMatrix(j,j) * shCoefficients[j];
             }
 
-            response.push_back(value);
+            response.push_back(value >= 0.0 ? value : 0.0);
         }
     }
 
@@ -211,7 +211,7 @@ float OrientationDiffusionFunctionModel::SignalAt(ModelImage::PixelType shCoeffi
         } // for m
     } // for l
 
-    return response;
+    return (response >= 0.0 ? response : 0.0);
 }
 
 //----------------------------------------------------------------------------------------
@@ -248,7 +248,7 @@ std::vector< float > OrientationDiffusionFunctionModel::SignalAt(ContinuousIndex
             value += m_SphericalHarmonicsBasisMatrix(i,j) * shCoefficients[j];
         }
 
-        response.push_back(value);
+        response.push_back(value >= 0.0 ? value : 0.0);
     }
 
     return response;
