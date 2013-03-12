@@ -57,6 +57,13 @@ VonMisesFisherProbabilityDensity::VonMisesFisherProbabilityDensity(GradientDirec
 
 //----------------------------------------------------------------------------------------
 
+VonMisesFisherProbabilityDensity::VonMisesFisherProbabilityDensity(double kappa) : m_Mu(0.0, 0.0), m_Kappa(kappa)
+{
+    this->Initialize();
+}
+
+//----------------------------------------------------------------------------------------
+
 void VonMisesFisherProbabilityDensity::Initialize()
 {
     m_NormalizationCoefficient = m_Kappa / (m_2pi * (std::exp(m_Kappa) - std::exp(-m_Kappa)));

@@ -63,6 +63,13 @@ class VonMisesFisherProbabilityDensity : public ProbabilityDensity< GradientDire
          */
         VonMisesFisherProbabilityDensity(GradientDirection mu, double kappa);
 
+        /**
+         * @brief Constructor.
+         * @param kappa Concentration.
+         */
+        VonMisesFisherProbabilityDensity(double kappa);
+
+        btkSetMacro(Mu, GradientDirection);
         btkGetMacro(Mu, GradientDirection);
 
         btkGetMacro(Kappa, double);
