@@ -72,9 +72,9 @@ class TractographyAlgorithm : public itk::ProcessObject
         typedef itk::SmartPointer< Self >       Pointer;
         typedef itk::SmartPointer< const Self > ConstPointer;
 
-        typedef itk::Image< short,3 > MaskImage;
-        typedef itk::Image< short,3 > LabelImage;
-        typedef itk::Point< float,3 > PhysicalPoint;
+        typedef itk::Image< short,3 >  MaskImage;
+        typedef itk::Image< short,3 >  LabelImage;
+        typedef itk::Point< double,3 > PhysicalPoint;
 
         itkTypeMacro(TractographyAlgorithm,itk::ProcessObject);
 
