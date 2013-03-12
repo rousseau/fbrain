@@ -5,6 +5,7 @@ INCLUDE_REGULAR_EXPRESSION("^.*$")
 
 SET(TOOLS_LIBRARY_SOURCE_DIR        ${Code_SOURCE_DIR}/Tools)
 SET(MATHS_LIBRARY_SOURCE_DIR        ${Code_SOURCE_DIR}/Maths)
+SET(DENOISING_LIBRARY_SOURCE_DIR    ${Code_SOURCE_DIR}/Denoising)
 SET(DIFFUSION_LIBRARY_SOURCE_DIR    ${Code_SOURCE_DIR}/Diffusion)
 SET(TRACTOGRAPHY_LIBRARY_SOURCE_DIR ${Code_SOURCE_DIR}/Tractography)
 
@@ -17,6 +18,7 @@ INCLUDE_DIRECTORIES(
     ${TOOLS_LIBRARY_SOURCE_DIR}
     ${DIFFUSION_LIBRARY_SOURCE_DIR}
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}
+    ${DENOISING_LIBRARY_SOURCE_DIR}
 )
 
 #---- Tools library ---------------------------------------------------------------------
@@ -87,6 +89,12 @@ IF(BUILD_TESTING)
     ADD_TEST(btkMathsLibraryTests btkMathsLibraryTestsApp)
 ENDIF(BUILD_TESTING)
 
+#---- Denoising library ---------------------------------------------------------------------
+
+SET(DENOISING_LIBRARY_HEADER
+    ${DENOISING_LIBRARY_SOURCE_DIR}/btkPseudoResidualsVarianceCalculator.h
+)
+
 #---- Diffusion library -----------------------------------------------------------------
 
 SET(DIFFUSION_LIBRARY_HEADER
@@ -100,6 +108,8 @@ SET(DIFFUSION_LIBRARY_HEADER
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkDiffusionModel.h
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkTensorModel.h
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkOrientationDiffusionFunctionModel.h
+    ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkDiffusionSignal.h
+    ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkDiffusionSequenceToDiffusionSignalFilter.h
 )
 
 SET(DIFFUSION_LIBRARY_SOURCES
@@ -112,6 +122,8 @@ SET(DIFFUSION_LIBRARY_SOURCES
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkDiffusionModel.cxx
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkTensorModel.cxx
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkOrientationDiffusionFunctionModel.cxx
+    ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkDiffusionSignal.cxx
+    ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkDiffusionSequenceToDiffusionSignalFilter.cxx
 )
 
 ADD_LIBRARY(btkDiffusionLibrary STATIC ${DIFFUSION_LIBRARY_HEADER} ${DIFFUSION_LIBRARY_SOURCES})
@@ -124,6 +136,10 @@ SET(TRACTOGRAPHY_LIBRARY_HEADER
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkStreamlineTractographyAlgorithm.h
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkParticleFilteringTractographyAlgorithm.h
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkPolyDataColorLinesByOrientation.h
+    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/tmp/btkParticle.h
+    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/tmp/btkImportanceDensity.h
+    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/tmp/btkLikelihoodDensity.h
+    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/tmp/btkPriorDensity.h
 )
 
 SET(TRACTOGRAPHY_LIBRARY_SOURCES
@@ -131,6 +147,10 @@ SET(TRACTOGRAPHY_LIBRARY_SOURCES
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkStreamlineTractographyAlgorithm.cxx
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkParticleFilteringTractographyAlgorithm.cxx
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkPolyDataColorLinesByOrientation.cxx
+    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/tmp/btkParticle.cxx
+    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/tmp/btkImportanceDensity.cxx
+    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/tmp/btkLikelihoodDensity.cxx
+    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/tmp/btkPriorDensity.cxx
 )
 
 ADD_LIBRARY(btkTractographyLibrary STATIC ${TRACTOGRAPHY_LIBRARY_HEADER} ${TRACTOGRAPHY_LIBRARY_SOURCES})
