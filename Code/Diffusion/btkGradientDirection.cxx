@@ -54,6 +54,17 @@ GradientDirection::GradientDirection(double x, double y, double z)
 
 //----------------------------------------------------------------------------------------
 
+GradientDirection::GradientDirection(const Superclass &d)
+{
+    (*this)[0] = d[0];
+    (*this)[1] = d[1];
+    (*this)[2] = d[2];
+
+    this->UpdateSphericalCoordinates();
+}
+
+//----------------------------------------------------------------------------------------
+
 GradientDirection::GradientDirection()
 {
     // NOTE : this seems not working

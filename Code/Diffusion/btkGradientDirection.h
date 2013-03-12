@@ -66,6 +66,12 @@ class GradientDirection : public itk::Vector< double,3 >
         GradientDirection();
 
         /**
+         * @brief Copy constructor for superclass.
+         * @param d Object of superclass type to copy.
+         */
+        GradientDirection(const Superclass &d);
+
+        /**
          * @brief Constructor.
          * @param x X coordinate.
          * @param y Y coordinate.
