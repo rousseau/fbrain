@@ -35,6 +35,7 @@
 
 ==========================================================================*/
 
+#include "btkPseudoResidualsVarianceCalculator.h"
 
 // ITK includes
 #include "itkImageMaskSpatialObject.h"
@@ -49,32 +50,39 @@
 namespace btk
 {
 
-template< class TImage >
-PseudoResidualsVarianceCalculator< TImage >::PseudoResidualsVarianceCalculator() : Superclass(), m_InputImage(NULL), m_MaskImage(NULL), m_PseudoResidualsVariance(0.0)
+const double PseudoResidualsVarianceCalculator::m_1over6;
+const double PseudoResidualsVarianceCalculator::m_sqrt6over7;
+
+//-------------------------------------------------------------------------------------------------
+
+PseudoResidualsVarianceCalculator::PseudoResidualsVarianceCalculator() : Superclass(), m_InputImage(NULL), m_MaskImage(NULL)
 {
     // ----
 }
 
 //-------------------------------------------------------------------------------------------------
 
-template< class TImage >
-PseudoResidualsVarianceCalculator< TImage >::~PseudoResidualsVarianceCalculator()
+PseudoResidualsVarianceCalculator::~PseudoResidualsVarianceCalculator()
 {
     // ----
 }
 
 //-------------------------------------------------------------------------------------------------
 
-template< class TImage >
-void PseudoResidualsVarianceCalculator< TImage >::PrintSelf(std::ostream &os, itk::Indent indent) const
+void PseudoResidualsVarianceCalculator::PrintSelf(std::ostream &os, itk::Indent indent) const
 {
     Superclass::PrintSelf(os, indent);
 }
 
 //-------------------------------------------------------------------------------------------------
 
-template< class TImage >
-void PseudoResidualsVarianceCalculator< TImage >::Compute()
+void PseudoResidualsVarianceCalculator::SetInputImage(DiffusionSignal::Pointer signal){
+    m_InputImage = dynamic_cast< InternalImage *>(signal.GetPointer());
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void PseudoResidualsVarianceCalculator::Compute()
 {
     // Test for input image
     if(m_InputImage.IsNull())
@@ -83,23 +91,23 @@ void PseudoResidualsVarianceCalculator< TImage >::Compute()
     }
 
     // Define region for calculator
-    typename TImage::RegionType region;
+    DiffusionSignal::RegionType region;
     if(m_MaskImage.IsNotNull())
     {
         // Test if image and mask are in same physical space
-        if(!btk::ImageHelper< TImage >::IsInSamePhysicalSpace(m_InputImage, m_MaskImage))
+        if(!btk::ImageHelper< InternalImage,MaskImage >::IsInSamePhysicalSpace(m_InputImage, m_MaskImage))
         {
             btkException("Input image and mask image are not in same physical space !");
         }
 
-        typedef itk::ImageMaskSpatialObject< 3 >                            MaskSpatialObject;
-        typedef itk::CastImageFilter< TImage,MaskSpatialObject::ImageType > MaskSpatialObjectCaster;
+        typedef itk::ImageMaskSpatialObject< 3 >                               MaskSpatialObject;
+        typedef itk::CastImageFilter< MaskImage,MaskSpatialObject::ImageType > MaskSpatialObjectCaster;
 
         // Set the region of interest
-        typename MaskSpatialObjectCaster::Pointer objectCaster = MaskSpatialObjectCaster::New();
+        MaskSpatialObjectCaster::Pointer objectCaster = MaskSpatialObjectCaster::New();
         objectCaster->SetInput(m_MaskImage);
         objectCaster->Update();
-        typename MaskSpatialObject::Pointer object = MaskSpatialObject::New();
+        MaskSpatialObject::Pointer object = MaskSpatialObject::New();
         object->SetImage(objectCaster->GetOutput());
         region = object->GetAxisAlignedBoundingBoxRegion();
     }
@@ -107,7 +115,7 @@ void PseudoResidualsVarianceCalculator< TImage >::Compute()
     {
         region = m_InputImage->GetLargestPossibleRegion();
 
-        m_MaskImage = btk::ImageHelper< TImage >::CreateNewImageFromPhysicalSpaceOf(m_InputImage, itk::NumericTraits< typename TImage::PixelType >::OneValue());
+        m_MaskImage = btk::ImageHelper< InternalImage,MaskImage >::CreateNewImageFromPhysicalSpaceOf(m_InputImage, itk::NumericTraits< MaskImage::PixelType >::OneValue());
     }
 
     // Set requested region for input image
@@ -116,30 +124,33 @@ void PseudoResidualsVarianceCalculator< TImage >::Compute()
     // Set requested region for mask image
     m_MaskImage->SetRequestedRegion(region);
 
+    // Initialize vectors
+    m_PseudoResidualsVariance     = std::vector< double >(m_InputImage->GetNumberOfComponentsPerPixel(), 0.0);
+    m_PseudoResidualsStdDeviation = std::vector< double >(m_InputImage->GetNumberOfComponentsPerPixel(), 0.0);
+
     // Generate data (compute the variance of the square residuals)
     this->GenerateData();
 }
 
 //-------------------------------------------------------------------------------------------------
 
-template< class TImage >
-void PseudoResidualsVarianceCalculator< TImage >::GenerateData()
+void PseudoResidualsVarianceCalculator::GenerateData()
 {
-    typedef itk::ConstNeighborhoodIterator< TImage > ConstNeighborhoodImageIterator;
-    typedef itk::ImageRegionConstIterator< TImage >  ConstImageRegionIterator;
+    typedef itk::ConstNeighborhoodIterator< InternalImage > ConstNeighborhoodImageIterator;
+    typedef itk::ImageRegionConstIterator< MaskImage >      ConstImageRegionIterator;
 
     // Define neighborhood iterator for input image
-    typename ConstNeighborhoodImageIterator::RadiusType radius;
+    ConstNeighborhoodImageIterator::RadiusType radius;
     radius[0] = radius[1] = radius[2] = 1;
 
     ConstNeighborhoodImageIterator neighborInputImageIterator(radius, m_InputImage, m_InputImage->GetRequestedRegion());
 
-    typename ConstNeighborhoodImageIterator::OffsetType offset1 = { {-1, 0, 0} };
-    typename ConstNeighborhoodImageIterator::OffsetType offset2 = { { 1, 0, 0} };
-    typename ConstNeighborhoodImageIterator::OffsetType offset3 = { { 0,-1, 0} };
-    typename ConstNeighborhoodImageIterator::OffsetType offset4 = { { 0, 1, 0} };
-    typename ConstNeighborhoodImageIterator::OffsetType offset5 = { { 0, 0,-1} };
-    typename ConstNeighborhoodImageIterator::OffsetType offset6 = { { 0, 0, 1} };
+    ConstNeighborhoodImageIterator::OffsetType offset1 = { {-1, 0, 0} };
+    ConstNeighborhoodImageIterator::OffsetType offset2 = { { 1, 0, 0} };
+    ConstNeighborhoodImageIterator::OffsetType offset3 = { { 0,-1, 0} };
+    ConstNeighborhoodImageIterator::OffsetType offset4 = { { 0, 1, 0} };
+    ConstNeighborhoodImageIterator::OffsetType offset5 = { { 0, 0,-1} };
+    ConstNeighborhoodImageIterator::OffsetType offset6 = { { 0, 0, 1} };
 
     // Define mask image iterator
     ConstImageRegionIterator maskIterator(m_MaskImage, m_MaskImage->GetRequestedRegion());
@@ -153,22 +164,29 @@ void PseudoResidualsVarianceCalculator< TImage >::GenerateData()
         if(maskIterator.Get() > 0)
         {
             // Compute residual
-            double residual = m_sqrt6over7 * (
+            DiffusionSignal::PixelType residual = m_sqrt6over7 * (
                                   neighborInputImageIterator.GetCenterPixel() - m_1over6 * (
                                       neighborInputImageIterator.GetPixel(offset1) + neighborInputImageIterator.GetPixel(offset2) + neighborInputImageIterator.GetPixel(offset3) + neighborInputImageIterator.GetPixel(offset4) + neighborInputImageIterator.GetPixel(offset5) + neighborInputImageIterator.GetPixel(offset6)
                                       )
                                   );
 
             // Sum of square residuals
-            m_PseudoResidualsVariance += residual*residual;
+            for(unsigned int i = 0; i < m_InputImage->GetNumberOfComponentsPerPixel(); i++)
+            {
+                m_PseudoResidualsVariance[i] += residual[i]*residual[i];
+            }
 
             // Compute the number of visited voxels
             numberOfVoxels++;
         }
     }
 
-    // Normalize by the number of visited voxels
-    m_PseudoResidualsVariance /= numberOfVoxels;
+    // Normalize by the number of visited voxels and compute standard deviation
+    for(unsigned int i = 0; i < m_InputImage->GetNumberOfComponentsPerPixel(); i++)
+    {
+        m_PseudoResidualsVariance[i]    /= numberOfVoxels;
+        m_PseudoResidualsStdDeviation[i] = std::sqrt(m_PseudoResidualsVariance[i]);
+    }
 }
 
 } // namespace btk

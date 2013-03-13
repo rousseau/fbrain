@@ -46,11 +46,13 @@
 
 // Local includes
 #include "btkMacro.h"
+#include "btkDiffusionSignal.h"
 
 
 namespace btk
 {
 
+// TODO : template this class to accept multiple 3D image type (vector image and image).
 /**
  * @class PseudoResidualsVarianceCalculator
  * @author François Rousseau
@@ -58,7 +60,6 @@ namespace btk
  * @author Marc Schweitzer
  * This program implements a method to compute the pseudo residuals variances based on the work of Coupé et al. described in : Coupé, P., Yger, P., Prima, S., Hellier, P., Kervrann, C., Barillot, C., 2008. An optimized blockwise nonlocal means denoising filter for 3-D magnetic resonance images. IEEE Transactions on Medical Imaging 27 (4), 425–441.
  */
-template< class TImage >
 class PseudoResidualsVarianceCalculator : public itk::Object
 {
     public:
@@ -67,16 +68,25 @@ class PseudoResidualsVarianceCalculator : public itk::Object
         typedef itk::SmartPointer< Self >         Pointer;
         typedef itk::SmartPointer< const Self >   ConstPointer;
 
+        typedef itk::Image< unsigned char,3 > MaskImage;
+        typedef itk::VectorImage< double,3 >  InternalImage;
+
         itkNewMacro(Self);
         itkTypeMacro(PseudoResidualsVarianceCalculator,itk::Object);
 
-        btkSetMacro(InputImage, typename TImage::Pointer);
-        btkGetMacro(InputImage, typename TImage::Pointer);
+        btkSetMacro(MaskImage, MaskImage::Pointer);
+        btkGetMacro(MaskImage, MaskImage::Pointer);
 
-        btkSetMacro(MaskImage, typename TImage::Pointer);
-        btkGetMacro(MaskImage, typename TImage::Pointer);
+        btkGetMacro(PseudoResidualsVariance, std::vector< double >);
 
-        btkGetMacro(PseudoResidualsVariance, double);
+        btkGetMacro(PseudoResidualsStdDeviation, std::vector< double >);
+
+
+        /**
+         * @brief Set input image.
+         * @param signal Input signal image.
+         */
+        void SetInputImage(DiffusionSignal::Pointer signal);
 
         /**
          * @brief Compute the pseudo residuals variance.
@@ -117,17 +127,22 @@ class PseudoResidualsVarianceCalculator : public itk::Object
         /**
          * @brief m_InputImage
          */
-        typename TImage::Pointer m_InputImage;
+        InternalImage::Pointer m_InputImage;
 
         /**
          * @brief m_MaskImage
          */
-        typename TImage::Pointer m_MaskImage;
+        MaskImage::Pointer m_MaskImage;
 
         /**
          * @brief Pseudo residuals variance of the input image.
          */
-        double m_PseudoResidualsVariance;
+        std::vector< double > m_PseudoResidualsVariance;
+
+        /**
+         * @brief Pseudo residuals standard deviation of the input image.
+         */
+        std::vector< double > m_PseudoResidualsStdDeviation;
 
         /**
          * @brief Precomputed constant.
@@ -141,7 +156,5 @@ class PseudoResidualsVarianceCalculator : public itk::Object
 };
 
 }
-
-#include "btkPseudoResidualsVarianceCalculator.txx"
 
 #endif // BTK_PSEUDO_RESIDUALS_VARIANCE_CALCULATOR_H
