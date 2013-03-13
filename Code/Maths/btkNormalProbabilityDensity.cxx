@@ -67,7 +67,19 @@ void NormalProbabilityDensity::Initialize()
 double NormalProbabilityDensity::Evaluate(double x)
 {
     double deviationToMean = x - m_Mu;
+
     return m_normalizationConstant * std::exp( -0.5 * (deviationToMean*deviationToMean) / m_Sigma2 );
+}
+
+//----------------------------------------------------------------------------------------
+
+double NormalProbabilityDensity::Evaluate(double sigma, double x)
+{
+    double       deviationToMean = x - m_Mu;
+    double                sigma2 = sigma*sigma;
+    double normalizationConstant = 1.0 / (sigma * m_sqrt2pi);
+
+    return normalizationConstant * std::exp( -0.5 * (deviationToMean*deviationToMean) / sigma2 );
 }
 
 //----------------------------------------------------------------------------------------

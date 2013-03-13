@@ -75,6 +75,14 @@ class NormalProbabilityDensity : public ProbabilityDensity< double >
         double Evaluate(double x);
 
         /**
+         * @brief Evaluate the distribution in x.
+         * @param sigma Standard deviation of the normal law.
+         * @param x Point of evaluation.
+         * @return The value of the distribution in x.
+         */
+        double Evaluate(double sigma, double x);
+
+        /**
          * @brief Simulate the distribution.
          * @return Simulated point.
          */
