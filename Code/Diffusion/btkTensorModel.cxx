@@ -102,6 +102,21 @@ float TensorModel::ModelAt(ModelImage::PixelType tensor, btk::GradientDirection 
 
 //----------------------------------------------------------------------------------------
 
+std::vector< float > TensorModel::ModelAt(ModelImage::PixelType tensor, std::vector< GradientDirection > &directions)
+{
+    std::vector< float > response;
+    unsigned int numberOfDirections = directions.size();
+
+    for(unsigned int i = 0; i < numberOfDirections; i++)
+    {
+        response.push_back(this->ModelAt(tensor, directions[i]));
+    }
+
+    return response;
+}
+
+//----------------------------------------------------------------------------------------
+
 float TensorModel::ModelAt(ContinuousIndex cindex, GradientDirection direction)
 {
     ModelImage::PixelType tensor = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
@@ -111,9 +126,25 @@ float TensorModel::ModelAt(ContinuousIndex cindex, GradientDirection direction)
 
 //----------------------------------------------------------------------------------------
 
+std::vector< float > TensorModel::ModelAt(ContinuousIndex cindex, std::vector< GradientDirection > &directions)
+{
+    ModelImage::PixelType tensor = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
+
+    return this->ModelAt(tensor, directions);
+}
+
+//----------------------------------------------------------------------------------------
+
 float TensorModel::ModelAt(PhysicalPoint point, GradientDirection direction)
 {
     return Self::ModelAt(Self::TransformPhysicalPointToContinuousIndex(point), direction);
+}
+
+//----------------------------------------------------------------------------------------
+
+std::vector< float > TensorModel::ModelAt(PhysicalPoint point, std::vector< GradientDirection > &directions)
+{
+    return this->ModelAt(this->TransformPhysicalPointToContinuousIndex(point), directions);
 }
 
 //----------------------------------------------------------------------------------------
@@ -155,6 +186,21 @@ inline float TensorModel::SignalAt(ModelImage::PixelType tensor, btk::GradientDi
 
 //----------------------------------------------------------------------------------------
 
+std::vector< float > TensorModel::SignalAt(ModelImage::PixelType tensor, std::vector< GradientDirection > &directions)
+{
+    std::vector< float > response;
+    unsigned int numberOfDirections = directions.size();
+
+    for(unsigned int i = 0; i < numberOfDirections; i++)
+    {
+        response.push_back(this->SignalAt(tensor, directions[i]));
+    }
+
+    return response;
+}
+
+//----------------------------------------------------------------------------------------
+
 float TensorModel::SignalAt(ContinuousIndex cindex, GradientDirection direction)
 {
     ModelImage::PixelType tensor = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
@@ -164,9 +210,25 @@ float TensorModel::SignalAt(ContinuousIndex cindex, GradientDirection direction)
 
 //----------------------------------------------------------------------------------------
 
+std::vector< float > TensorModel::SignalAt(ContinuousIndex cindex, std::vector< GradientDirection > &directions)
+{
+    ModelImage::PixelType tensor = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
+
+    return this->SignalAt(tensor, directions);
+}
+
+//----------------------------------------------------------------------------------------
+
 float TensorModel::SignalAt(PhysicalPoint point, GradientDirection direction)
 {
     return Self::SignalAt(Self::TransformPhysicalPointToContinuousIndex(point), direction);
+}
+
+//----------------------------------------------------------------------------------------
+
+std::vector< float > TensorModel::SignalAt(PhysicalPoint point, std::vector< GradientDirection > &directions)
+{
+    return this->SignalAt(this->TransformPhysicalPointToContinuousIndex(point), directions);
 }
 
 //----------------------------------------------------------------------------------------

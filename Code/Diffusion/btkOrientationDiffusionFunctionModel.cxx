@@ -130,6 +130,69 @@ float OrientationDiffusionFunctionModel::ModelAt(ModelImage::PixelType shCoeffic
 
 //----------------------------------------------------------------------------------------
 
+std::vector< float > OrientationDiffusionFunctionModel::ModelAt(ModelImage::PixelType shCoefficients, std::vector< GradientDirection > &directions)
+{
+    // TODO : this code use the analytical form to compute exact signal in direction.
+    // We may use interpolation to improve computation speed...
+
+
+    unsigned int numberOfDirections = directions.size();
+
+    // Compute spherical harmonics model
+    Matrix sphericalHarmonicsMatrix(directions.size(), m_NumberOfSHCoefficients);
+
+    // Compute the basis
+    for(unsigned int u = 0; u < numberOfDirections; u++)
+    {
+        unsigned int j = 0;
+
+        for(unsigned int l = 0; l <= m_SphericalHarmonicsOrder; l += 2)
+        {
+            for(int m = -(int)l; m <= (int)l; m++)
+            {
+                sphericalHarmonicsMatrix(u,j++) = btk::SphericalHarmonics::ComputeBasis(directions[u].GetSphericalDirection(), l, m);
+            } // for each m
+        } // for each even order
+    } // for each gradient direction
+
+
+    // Compute model
+    std::vector< float > response;
+
+    if(m_UseSharpModel)
+    {
+        for(unsigned int i = 0; i < numberOfDirections; i++)
+        {
+            float value = 0.f;
+
+            for(unsigned int j = 0; j < m_NumberOfSHCoefficients; j++)
+            {
+                value += sphericalHarmonicsMatrix(i,j) * m_ModelSharpMatrix(j,j) * m_LegendreMatrix(j,j) * shCoefficients[j];
+            }
+
+            response.push_back(value >= 0.0 ? value : 0.0);
+        }
+    }
+    else // m_UseSharpModel = false
+    {
+        for(unsigned int i = 0; i < numberOfDirections; i++)
+        {
+            float value = 0.f;
+
+            for(unsigned int j = 0; j < m_NumberOfSHCoefficients; j++)
+            {
+                value += sphericalHarmonicsMatrix(i,j) * m_LegendreMatrix(j,j) * shCoefficients[j];
+            }
+
+            response.push_back(value >= 0.0 ? value : 0.0);
+        }
+    }
+
+    return response;
+}
+
+//----------------------------------------------------------------------------------------
+
 float OrientationDiffusionFunctionModel::ModelAt(ContinuousIndex cindex, GradientDirection direction)
 {
     ModelImage::PixelType shCoefficients = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
@@ -139,9 +202,25 @@ float OrientationDiffusionFunctionModel::ModelAt(ContinuousIndex cindex, Gradien
 
 //----------------------------------------------------------------------------------------
 
+std::vector< float > OrientationDiffusionFunctionModel::ModelAt(ContinuousIndex cindex, std::vector< GradientDirection > &directions)
+{
+    ModelImage::PixelType shCoefficients = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
+
+    return this->ModelAt(shCoefficients, directions);
+}
+
+//----------------------------------------------------------------------------------------
+
 float OrientationDiffusionFunctionModel::ModelAt(PhysicalPoint point, GradientDirection direction)
 {
     return this->ModelAt(this->TransformPhysicalPointToContinuousIndex(point), direction);
+}
+
+//----------------------------------------------------------------------------------------
+
+std::vector< float > OrientationDiffusionFunctionModel::ModelAt(PhysicalPoint point, std::vector< GradientDirection > &directions)
+{
+    return this->ModelAt(this->TransformPhysicalPointToContinuousIndex(point), directions);
 }
 
 //----------------------------------------------------------------------------------------
@@ -216,6 +295,51 @@ float OrientationDiffusionFunctionModel::SignalAt(ModelImage::PixelType shCoeffi
 
 //----------------------------------------------------------------------------------------
 
+std::vector< float > OrientationDiffusionFunctionModel::SignalAt(ModelImage::PixelType shCoefficients, std::vector< GradientDirection > &directions)
+{
+    // TODO : this code use the analytical form to compute exact signal in direction.
+    // We may use interpolation to improve computation speed...
+
+    unsigned int numberOfDirections = directions.size();
+
+    // Compute spherical harmonics matrix
+    Matrix sphericalHarmonicsMatrix(directions.size(), m_NumberOfSHCoefficients);
+
+    // Compute the basis
+    for(unsigned int u = 0; u < numberOfDirections; u++)
+    {
+        unsigned int j = 0;
+
+        for(unsigned int l = 0; l <= m_SphericalHarmonicsOrder; l += 2)
+        {
+            for(int m = -(int)l; m <= (int)l; m++)
+            {
+                sphericalHarmonicsMatrix(u,j++) = btk::SphericalHarmonics::ComputeBasis(directions[u].GetSphericalDirection(), l, m);
+            } // for each m
+        } // for each even order
+    } // for each gradient direction
+
+
+    // Compute signal
+    std::vector< float > response;
+
+    for(unsigned int i = 0; i < numberOfDirections; i++)
+    {
+        float value = 0.f;
+
+        for(unsigned int j = 0; j < m_NumberOfSHCoefficients; j++)
+        {
+            value += sphericalHarmonicsMatrix(i,j) * shCoefficients[j];
+        }
+
+        response.push_back(value >= 0.0 ? value : 0.0);
+    }
+
+    return response;
+}
+
+//----------------------------------------------------------------------------------------
+
 float OrientationDiffusionFunctionModel::SignalAt(ContinuousIndex cindex, GradientDirection direction)
 {
     ModelImage::PixelType shCoefficients = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
@@ -225,9 +349,25 @@ float OrientationDiffusionFunctionModel::SignalAt(ContinuousIndex cindex, Gradie
 
 //----------------------------------------------------------------------------------------
 
+std::vector< float > OrientationDiffusionFunctionModel::SignalAt(ContinuousIndex cindex, std::vector< GradientDirection > &directions)
+{
+    ModelImage::PixelType shCoefficients = m_ModelImageFunction->EvaluateAtContinuousIndex(cindex);
+
+    return this->SignalAt(shCoefficients, directions);
+}
+
+//----------------------------------------------------------------------------------------
+
 float OrientationDiffusionFunctionModel::SignalAt(PhysicalPoint point, GradientDirection direction)
 {
     return this->SignalAt(this->TransformPhysicalPointToContinuousIndex(point), direction);
+}
+
+//----------------------------------------------------------------------------------------
+
+std::vector< float > OrientationDiffusionFunctionModel::SignalAt(PhysicalPoint point, std::vector< GradientDirection > &directions)
+{
+    return this->SignalAt(this->TransformPhysicalPointToContinuousIndex(point), directions);
 }
 
 //----------------------------------------------------------------------------------------
