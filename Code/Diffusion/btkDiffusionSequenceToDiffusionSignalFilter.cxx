@@ -37,7 +37,6 @@
 
 
 // ITK includes
-#include "itkExtractImageFilter.h"
 #include "itkImageRegionIterator.h"
 
 
@@ -111,21 +110,14 @@ void DiffusionSequenceToDiffusionSignalFilter::AllocateOutputs()
 
 void DiffusionSequenceToDiffusionSignalFilter::GenerateData()
 {
+    // Allocate outputs
     this->AllocateOutputs();
 
-    typedef itk::ExtractImageFilter< InputImageType,itk::Image< short,3 > > ExtractImageFilter;
-    typedef itk::ImageRegionIterator< OutputImageType >               OutputImageIterator;
+
+    typedef itk::ImageRegionIterator< OutputImageType > OutputImageIterator;
 
     // Extract reference and gradient images and give it to filter.
     // This process assume that the given sequence is normalized (one reference image at first).
-    InputImageType::RegionType   region = m_InputDiffusionSequence->GetLargestPossibleRegion();
-    ExtractImageFilter::Pointer extract = ExtractImageFilter::New();
-
-    // Get the reference image
-    region.SetSize(3,0);
-    extract->SetInput(m_InputDiffusionSequence);
-    extract->SetExtractionRegion(region);
-    extract->Update();
 
     // Build a vector image from the diffusion sequence
     OutputImageType::Pointer output = this->GetOutput();
