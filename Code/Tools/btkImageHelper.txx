@@ -292,6 +292,60 @@ typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::DeepCop
     return output;
 }
 
+//----------------------------------------------------------------------------------------
+template < class TImageInput, class TImageOutput >
+bool
+ImageHelper< TImageInput, TImageOutput >::AreOrthos(typename TImageInput::Pointer image1, typename TImageInput::Pointer image2, float threshold)
+{
+    // TODO : This can be done more easily !
+    itk::Vector<double,3> physicalZVector1, physicalZVector2;
+
+    typename TImageInput::IndexType startIndex1, startIndex2;
+    typename TImageInput::IndexType endIndex1, endIndex2;
+    typename TImageInput::PointType startPoint1, startPoint2;
+    typename TImageInput::PointType endPoint1, endPoint2;
+
+    startIndex1[0] = startIndex2[0] = 0;
+    startIndex1[1] = startIndex2[1] = 0;
+    startIndex1[2] = startIndex2[2] = 0;
+
+    image1->TransformIndexToPhysicalPoint(startIndex1,startPoint1);
+    image2->TransformIndexToPhysicalPoint(startIndex2,startPoint2);
+
+    endIndex1[0] = endIndex2[0] = 0;
+    endIndex1[1] = endIndex2[1] = 0;
+    endIndex1[2] = endIndex2[2] = 1;
+
+    image1->TransformIndexToPhysicalPoint(endIndex1,endPoint1);
+    image2->TransformIndexToPhysicalPoint(endIndex2,endPoint2);
+
+    physicalZVector1[0] = startPoint1[0] - endPoint1[0];
+    physicalZVector1[1] = startPoint1[1] - endPoint1[1];
+    physicalZVector1[2] = startPoint1[2] - endPoint1[2];
+
+    physicalZVector2[0] = startPoint2[0] - endPoint2[0];
+    physicalZVector2[1] = startPoint2[1] - endPoint2[1];
+    physicalZVector2[2] = startPoint2[2] - endPoint2[2];
+
+    physicalZVector1.Normalize();
+    physicalZVector2.Normalize();
+
+
+    // Test if images are orthogonal or not
+    double dotProduct = physicalZVector1 * physicalZVector2;
+
+    if(dotProduct< threshold)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+
+}
+
+
 } // namespace btk
 
 #endif // BTK_IMAGE_HELPER_TXX
