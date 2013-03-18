@@ -6,6 +6,7 @@ INCLUDE_DIRECTORIES(
     ${Code_SOURCE_DIR}/Tools
     ${Code_SOURCE_DIR}/Maths
     ${Code_SOURCE_DIR}/Transformations
+    ${Code_SOURCE_DIR}/Visualization
 
 )
 
@@ -39,6 +40,8 @@ INCLUDE_DIRECTORIES(
     ${Code_SOURCE_DIR}/Segmentation
     ${Code_SOURCE_DIR}/Transformations
     ${Code_SOURCE_DIR}/Registration
+    ${Code_SOURCE_DIR}/Maths
+    ${Code_SOURCE_DIR}/Visualization
 )
 
 ADD_EXECUTABLE(btkImageReconstruction btkImageReconstruction.cxx
@@ -179,7 +182,11 @@ ADD_EXECUTABLE(btkIntersectionRegistration btkIntersectionRegistration.cxx
 ${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h
 ${fbrain_SOURCE_DIR}/Code/Registration/btkSlicesIntersectionVNLCostFunction.hxx
 ${fbrain_SOURCE_DIR}/Code/Registration/btkSlicesIntersectionITKCostFunction.hxx
-${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLowToHighResolutionFilter.hxx)
+${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLowToHighResolutionFilter.hxx
+${fbrain_SOURCE_DIR}/Code/Registration/btkOptimizer.cxx ${fbrain_SOURCE_DIR}/Code/Registration/btkOptimizer.h
+${fbrain_SOURCE_DIR}/Code/Registration/btkSimulatedAnnealingOptimizer.cxx ${fbrain_SOURCE_DIR}/Code/Registration/btkSimulatedAnnealingOptimizer.h
+${fbrain_SOURCE_DIR}/Code/Registration/btkSmartStepGradientDescentOptimizer.cxx ${fbrain_SOURCE_DIR}/Code/Registration/btkSmartStepGradientDescentOptimizer.h
+)
 
 TARGET_LINK_LIBRARIES(btkIntersectionRegistration btkToolsLibrary btkMathsLibrary ${ITK_LIBRARIES})
 
