@@ -11,6 +11,7 @@ INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Maths)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/ImageFilters)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Registration)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Tractography)
+INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Visualization)
 
 ADD_EXECUTABLE(btkModifyImageUsingLookUpTable btkModifyImageUsingLookUpTable.cxx)
 TARGET_LINK_LIBRARIES(btkModifyImageUsingLookUpTable ${ITK_LIBRARIES})
@@ -141,7 +142,7 @@ ADD_EXECUTABLE(btkSimulateMotionSliceBySlice btkSimulateMotionSliceBySlice.cxx
     ${fbrain_SOURCE_DIR}/Code/Registration/btkSliceBySliceRigidRegistration.h
     ${fbrain_SOURCE_DIR}/Code/Registration/btkSliceBySliceAffineRegistration.h
 )
-TARGET_LINK_LIBRARIES(btkSimulateMotionSliceBySlice ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkSimulateMotionSliceBySlice btkMathsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkImageSubtract btkImageSubtract.cxx)
 TARGET_LINK_LIBRARIES(btkImageSubtract ${ITK_LIBRARIES})
@@ -218,6 +219,11 @@ TARGET_LINK_LIBRARIES(btkComputeSoftMaskUsingOrthogonalImages ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkFSLToITKTransform btkFSLToITKTransform.cxx)
 TARGET_LINK_LIBRARIES(btkFSLToITKTransform ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE( btkSlicesMotionViewer btkSlicesMotionViewer.cxx
+${Code_SOURCE_DIR}/Visualization/btkRenderPolydata.cxx
+${Code_SOURCE_DIR}/Visualization/btkRenderPolydata.h)
+TARGET_LINK_LIBRARIES(btkSlicesMotionViewer btkMathsLibrary ${ITK_LIBRARIES} vtkHybrid)
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -271,6 +277,7 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkColorFiberTractsByMeanOrientation
                 btkComputeSoftMaskUsingOrthogonalImages
                 btkFSLToITKTransform
+                btkSlicesMotionViewer
         DESTINATION bin)
 
 
