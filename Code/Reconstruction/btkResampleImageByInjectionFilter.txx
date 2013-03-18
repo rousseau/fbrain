@@ -266,9 +266,9 @@ ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecision
       VnlMatrixType NQd;
       NQd = m_Transform[im] -> GetSliceTransform(i) -> GetMatrix().GetVnlMatrix();
 
-      VnlVectorType idirTransformed = NQd*idir.Get_vnl_vector();
-      VnlVectorType jdirTransformed = NQd*jdir.Get_vnl_vector();
-      VnlVectorType kdirTransformed = NQd*kdir.Get_vnl_vector();
+      VnlVectorType idirTransformed = NQd*idir.GetVnlVector();
+      VnlVectorType jdirTransformed = NQd*jdir.GetVnlVector();
+      VnlVectorType kdirTransformed = NQd*kdir.GetVnlVector();
 
       InputImageRegionType wholeSliceRegion;
       wholeSliceRegion = m_InputImageRegion[im];
@@ -319,7 +319,7 @@ ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecision
 
             if ( mask -> IsInside(nbPoint))
             {
-              VnlVectorType diffPoint = nbPoint.Get_vnl_vector() - transformedPoint.Get_vnl_vector();
+              VnlVectorType diffPoint = nbPoint.GetVnlVector() - transformedPoint.GetVnlVector();
               rotPoint[0] = dot_product(diffPoint,idirTransformed);
               rotPoint[1] = dot_product(diffPoint,jdirTransformed);
               rotPoint[2] = dot_product(diffPoint,kdirTransformed);
@@ -345,7 +345,7 @@ ResampleImageByInjectionFilter<TInputImage, TOutputImage, TInterpolatorPrecision
 
               if ( mask -> IsInside(nbPoint))
               {
-                VnlVectorType diffPoint = nbPoint.Get_vnl_vector() - transformedPoint.Get_vnl_vector();
+                VnlVectorType diffPoint = nbPoint.GetVnlVector() - transformedPoint.GetVnlVector();
                 rotPoint[0] = dot_product(diffPoint,idirTransformed);
                 rotPoint[1] = dot_product(diffPoint,jdirTransformed);
                 rotPoint[2] = dot_product(diffPoint,kdirTransformed);

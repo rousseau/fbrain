@@ -51,7 +51,7 @@ namespace btk
 template< class TImage,typename TPrecision >
 WeightedSumOfImagesFilter< TImage,TPrecision >::WeightedSumOfImagesFilter() : Superclass()
 {
-    Self::SetNumberOfOutputs(1);
+    Self::SetNumberOfIndexedOutputs(1);
 }
 
 //------------------------------------------------------------------------------------------------
