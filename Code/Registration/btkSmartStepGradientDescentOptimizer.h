@@ -86,7 +86,8 @@ class SmartStepGradientDescentOptimizer : public btk::Optimizer
         void SetOptimizedParameters(ParametersType _Op)
         {
             m_OptimizedParameters = _Op;
-            if(m_OptimizedParameters.arg_min() == 0)
+
+            if(m_OptimizedParameters.min_value() == 0)
             {
                 m_OptimizeAllParameters = false;
             }
@@ -114,18 +115,39 @@ class SmartStepGradientDescentOptimizer : public btk::Optimizer
         btkSetMacro(Epsilon, double);
         btkGetMacro(Epsilon, double);
 
+        /** Set/Get Min Bounds */
+        btkSetMacro(MinBounds, ParametersType);
+        btkGetMacro(MinBounds, ParametersType);
+
+        /** Set/Get max Bounds */
+        btkSetMacro(MaxBounds, ParametersType);
+        btkGetMacro(MaxBounds, ParametersType);
+
+        /** Set/Get verbose mode */
+        btkSetMacro(VerboseMode, bool);
+        btkGetMacro(VerboseMode, bool);
+
+        /** Set/Get Use bounds mode */
+        btkSetMacro(UseBounds, bool);
+        btkGetMacro(UseBounds, bool);
+
 
 
     protected:
 
         SmartStepGradientDescentOptimizer();
         virtual ~SmartStepGradientDescentOptimizer(){}
+
         void PrintSelf(std::ostream &os, itk::Indent indent) const
         {
             Superclass::PrintSelf(os, indent);
         }
 
     private :
+
+        bool IsInsideBounds(ParametersType _xIn);
+
+        ParametersType ReverseBounds(ParametersType _xIn);
 
         double SearchStep(ParametersType _x , DerivativeType _gx);
 
@@ -151,6 +173,12 @@ class SmartStepGradientDescentOptimizer : public btk::Optimizer
         ParametersType m_OptimizedParameters;
 
         bool m_OptimizeAllParameters;
+
+        ParametersType m_MinBounds;
+        ParametersType m_MaxBounds;
+
+        bool m_VerboseMode;
+        bool m_UseBounds;
 
 };
 
