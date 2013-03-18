@@ -86,6 +86,7 @@ int main(int argc, char *argv[])
 
         TCLAP::ValueArg< std::string >        modelFileNameArg("", "model", "Model image", false, "", "string", cmd);
         TCLAP::ValueArg< std::string > outputFileNamePrefixArg("o", "output", "Prefix of the filenames of the outputs", false, "tractography", "string", cmd);
+        TCLAP::SwitchArg            colorByLocalOrientationArg("", "local_orientation_color", "Color the output fibers by local orientation instead of mean orientation", cmd);
 
         TCLAP::ValueArg< float >       stepSizeArg("", "step_size", "Step size between two points of the solution", false, 0.5, "positive real", cmd);
         TCLAP::ValueArg< float >    seedSpacingArg("", "seed_spacing", "Spacing between two seeds (in mm)", false, 1, "positive real", cmd);
@@ -106,6 +107,7 @@ int main(int argc, char *argv[])
 
         std::string        modelFileName = modelFileNameArg.getValue();
         std::string outputFileNamePrefix = outputFileNamePrefixArg.getValue();
+        bool     colorByLocalOrientation = colorByLocalOrientationArg.getValue();
 
         float       stepSize = stepSizeArg.getValue();
         bool          useRK4 = useRK4Arg.getValue();
@@ -268,6 +270,12 @@ int main(int argc, char *argv[])
                 // Color fibers by mean orientation
                 vtkSmartPointer< btk::PolyDataColorLinesByOrientation > colorFilter = vtkSmartPointer< btk::PolyDataColorLinesByOrientation >::New();
                 colorFilter->SetInput(fibers[i]->GetOutput());
+
+                if(colorByLocalOrientation)
+                {
+                    colorFilter->SetColorOrientation(btk::PolyDataColorLinesByOrientation::COLOR_LOCAL_ORIENTATION);
+                }
+
                 colorFilter->Update();
 
                 vtkSmartPointer< vtkPolyDataWriter > writer = vtkSmartPointer< vtkPolyDataWriter >::New();

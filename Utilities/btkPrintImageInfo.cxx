@@ -4,6 +4,7 @@
 
   Date: 26/01/2010
   Author(s): Estanislao Oubel (oubel@unistra.fr)
+             Julien Pontabry (pontabry@unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -40,12 +41,20 @@
 // STL includes
 #include "iostream"
 #include "string"
+#include "sstream"
+#include "cfloat"
 
 // ITK includes
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 #include "itkSpatialOrientationAdapter.h"
+#include "itkDisplacementFieldTransform.h"
 #include "vnl/vnl_matrix.h"
+
+// BTK includes
+#include "btkMacro.h"
+#include "btkFileHelper.h"
+#include "btkDiffusionSequenceFileHelper.h"
 
 
 // Spatial orientation (RAS, LPS, etc.)
@@ -216,105 +225,150 @@ std::string SpatialOrientationToString(SpatialOrientation orientation)
 }
 
 
-// Input sequence (4D)
-typedef itk::Image<short,4>            Sequence;
-typedef itk::ImageFileReader<Sequence> SequenceReader;
-
-// Input volume (3D)
-typedef itk::Image<short,3>         Image;
-typedef itk::ImageFileReader<Image> ImageReader;
-
-
 int main( int argc, char *argv[] )
 {
-    //
-    // Parse program's arguments
-    //
-
-    // Define command line parameters
-    std::string inputFileName;
-    unsigned int dimension;
-
-    // Define command line parser
-    TCLAP::CmdLine cmd("Prints some image information.", ' ', "Unversioned");
-
-    // Define command line arguments
-    TCLAP::ValueArg<std::string> inputFileNameArg("i", "input", "Input image", true, "", "string", cmd);
-    TCLAP::ValueArg<unsigned int> dimensionArg("d", "dimension", "Image dimension (default: 3; values: 3-4)", false, 3, "unsigned int", cmd);
-
-    // Parse arguments
-    cmd.parse( argc, argv );
-
-    // Get back arguments' values
-    inputFileName = inputFileNameArg.getValue();
-    dimension     = dimensionArg.getValue();
-
-
-    //
-    // Processing
-    //
-
     try
     {
-        if(dimension == 4)
-        {
-            // Read sequence
-            SequenceReader::Pointer  sequenceReader  = SequenceReader::New();
-            sequenceReader->SetFileName(inputFileName);
-            sequenceReader->Update();
+        //
+        // Parse program's arguments
+        //
 
-            Sequence::Pointer sequence = sequenceReader->GetOutput();
+        // Define command line parameters
+        std::string inputFileName;
 
-            // Display informations
-            std::cout << "Dimension: " << Sequence::GetImageDimension() << std::endl << std::endl;
+        // Define command line parser
+        TCLAP::CmdLine cmd("Prints some image information.", ' ', "Unversioned");
 
-            std::cout << "Size:    " << sequence->GetLargestPossibleRegion().GetSize() << std::endl;
-            std::cout << "Origin:  " << sequence->GetOrigin() << std::endl;
-            std::cout << "Spacing: " << sequence->GetSpacing() << std::endl << std::endl;
+        // Define command line arguments
+        TCLAP::UnlabeledValueArg< std::string > inputFileNameArg("input", "Input image", true, "", "string", cmd);
 
-            std::cout << "Direction:" << std::endl << sequence->GetDirection() << std::endl;
+        // Parse arguments
+        cmd.parse( argc, argv );
 
-            // Display spatial orientation
-            Image::DirectionType direction(sequence->GetDirection().GetVnlMatrix().extract(3,3));
-            std::cout << "Anatomical orientation: " << SpatialOrientationToString(itk::SpatialOrientationAdapter().FromDirectionCosines(direction)) << std::endl;
-        }
-        else if (dimension == 3)
-        {
-            // Read image
-            ImageReader::Pointer imageReader = ImageReader::New();
-            imageReader->SetFileName(inputFileName);
-            imageReader->Update();
-
-            Image::Pointer image = imageReader->GetOutput();
-
-            // Display informations
-            std::cout << "Dimension: " << Image::GetImageDimension() << std::endl << std::endl;
-
-            std::cout << "Size:    " << image->GetLargestPossibleRegion().GetSize() << std::endl;
-            std::cout << "Origin:  " << image->GetOrigin() << std::endl;
-            std::cout << "Spacing: " << image->GetSpacing() << std::endl << std::endl;
-
-            std::cout << "Direction:" << std::endl << image->GetDirection() << std::endl;
-
-            // Display spatial orientation
-            std::cout << std::endl << "Anatomical orientation: " << SpatialOrientationToString(itk::SpatialOrientationAdapter().FromDirectionCosines(image->GetDirection())) << std::endl;
-        }
-        else // dimension != 3 && dimension != 4
-        {
-            std::stringstream message;
-            message << "Image dimension (" << dimension << ") not supported ! You should use either dimension 3 or 4. Exiting";
-            throw std::string(message.str());
-        }
+        // Get back arguments' values
+        inputFileName = inputFileNameArg.getValue();
 
 
-        // Trying to determine the pixel type
-        typedef itk::ImageIOBase::IOComponentType ScalarPixelType;
+        //
+        // Processing
+        //
+
+        // Read image informations
         itk::ImageIOBase::Pointer imageIO = itk::ImageIOFactory::CreateImageIO(inputFileName.c_str(), itk::ImageIOFactory::ReadMode);
-
         imageIO->SetFileName(inputFileName);
         imageIO->ReadImageInformation();
-        const ScalarPixelType pixelType = imageIO->GetComponentType();
-        std::cout << "Pixel type: " << imageIO->GetComponentTypeAsString(pixelType) << std::endl;
+
+        // Determine image dimension
+        unsigned int Dimension = imageIO->GetNumberOfDimensions();
+
+        // Determine pixel type
+        itk::ImageIOBase::IOPixelType pixelType = imageIO->GetPixelType();
+
+        // Determine component type
+        itk::ImageIOBase::IOComponentType componentType = imageIO->GetComponentType();
+
+        // Determine if image is a diffusion sequence
+        std::stringstream diffusionSequence;
+        if(Dimension == 4 && pixelType == itk::ImageIOBase::SCALAR)
+        {
+            std::string bval = btk::FileHelper::GetRadixOf(inputFileName) + ".bval";
+            std::string bvec = btk::FileHelper::GetRadixOf(inputFileName) + ".bvec";
+
+            if(btk::FileHelper::FileExist(bval) && btk::FileHelper::FileExist(bvec))
+            {
+                std::vector< unsigned short > bvals = btk::DiffusionSequenceFileHelper::ReadBValues(bval);
+
+                unsigned int  numberOfBaseline = 0;
+                unsigned int numberOfGradients = 0;
+
+                for(unsigned int b = 0; b < bvals.size(); b++)
+                {
+                    if(bvals[b] == 0)
+                    {
+                        numberOfBaseline++;
+                    }
+                    else
+                    {
+                        numberOfGradients++;
+                    }
+                }
+
+                diffusionSequence << numberOfBaseline << " baseline images and " << numberOfGradients << " gradient images";
+            }
+        }
+
+        // Determine size
+        std::stringstream size;
+        size << "[" << imageIO->GetDimensions(0);
+        for(unsigned int d = 1; d < Dimension; d++)
+        {
+            size << ", " << imageIO->GetDimensions(d);
+        }
+        size << "]";
+
+        // Determine origin
+        std::stringstream origin;
+        origin << "[" << imageIO->GetOrigin(0);
+        for(unsigned int d = 1; d < Dimension; d++)
+        {
+            origin << ", " << imageIO->GetOrigin(d);
+        }
+        origin << "]";
+
+        // Determine spacing
+        std::stringstream spacing;
+        spacing << "[" << imageIO->GetSpacing(0);
+        for(unsigned int d = 1; d < Dimension; d++)
+        {
+            spacing << ", " << imageIO->GetSpacing(d);
+        }
+        spacing << "]";
+
+        // Determine direction
+        std::stringstream direction;
+        itk::Matrix< double,3,3 > directionMatrix;
+        direction << std::endl;
+        for(unsigned int d1 = 0; d1 < Dimension; d1++)
+        {
+            for(unsigned int d2 = 0; d2 < Dimension; d2++)
+            {
+                double value = ( (std::abs(imageIO->GetDirection(d2)[d1]) < DBL_EPSILON) ? 0 : imageIO->GetDirection(d2)[d1] );// NOTE: This tweak has been used to avoid negative zeros
+                direction << value << " ";
+
+                if(d1 < 3 && d2 < 3)
+                {
+                    directionMatrix(d1,d2) = value;
+                }
+            }
+
+            direction << std::endl;
+        }
+
+        // Determine anatomical orientation
+        std::string orientation = SpatialOrientationToString(itk::SpatialOrientationAdapter().FromDirectionCosines(directionMatrix));
+
+
+        //
+        // Display informations
+        //
+
+        std::cout << "Dimension: " << Dimension << std::endl << std::endl;
+
+        if(!diffusionSequence.str().empty())
+        {
+            std::cout << "Diffusion sequence: " << diffusionSequence.str() << std::endl << std::endl;
+        }
+
+        std::cout << "Pixel type:     " << imageIO->GetPixelTypeAsString(pixelType) << std::endl;
+        std::cout << "Component type: " << imageIO->GetComponentTypeAsString(componentType) << std::endl << std::endl;
+
+        std::cout << "Size:    " << size.str() << std::endl;
+        std::cout << "Origin:  " << origin.str() << std::endl;
+        std::cout << "Spacing: " << spacing.str() << std::endl << std::endl;
+
+        std::cout << "Direction: " << direction.str() << std::endl;
+
+        std::cout << "Anatomical orientation: " << orientation << std::endl;
     }
     catch(itk::ExceptionObject &error)
     {

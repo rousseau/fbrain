@@ -129,8 +129,9 @@ std::vector< typename TImageInput::Pointer > &ImageHelper< TImageInput, TImageOu
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
-typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::CreateNewImageFromPhysicalSpaceOf(typename TImageInput::ConstPointer image, typename TImageOutput::PixelType defaultValue)
+typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::CreateNewImageFromPhysicalSpaceOfConst(typename TImageInput::ConstPointer image, typename TImageOutput::PixelType defaultValue)
 {
+
     typename TImageOutput::Pointer newImage = TImageOutput::New();
     newImage->SetRegions(image->GetLargestPossibleRegion());
     newImage->SetOrigin(image->GetOrigin());
@@ -145,6 +146,21 @@ typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::CreateN
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
+typename TImageOutput::Pointer ImageHelper< TImageInput, TImageOutput >::CreateNewImageFromPhysicalSpaceOf(typename TImageInput::Pointer image, typename TImageOutput::PixelType defaultValue)
+{
+    typename TImageOutput::Pointer newImage = TImageOutput::New();
+    newImage->SetRegions(image->GetLargestPossibleRegion());
+    newImage->SetOrigin(image->GetOrigin());
+    newImage->SetSpacing(image->GetSpacing());
+    newImage->SetDirection(image->GetDirection());
+    newImage->Allocate();
+    newImage->FillBuffer(defaultValue);
+
+    return newImage;
+}
+//----------------------------------------------------------------------------------------
+
+template < class TImageInput, class TImageOutput >
 std::vector< typename TImageOutput::Pointer > &ImageHelper< TImageInput, TImageOutput >::CreateNewImageFromPhysicalSpaceOf(std::vector< typename TImageInput::Pointer > &images, typename TImageOutput::PixelType defaultValue)
 {
     //FIXME : memory leak about the returned vector (maybe use a itk::SmartPointer<>, or passing the vector per value)
@@ -153,7 +169,7 @@ std::vector< typename TImageOutput::Pointer > &ImageHelper< TImageInput, TImageO
 
     for(typename std::vector< typename TImageInput::Pointer >::iterator it = images.begin(); it != images.end(); it++)
     {
-        newImages.push_back(CreateNewImageFromPhysicalSpaceOf((*it).GetPointer(), defaultValue));
+        newImages.push_back(CreateNewImageFromPhysicalSpaceOf(*it, defaultValue));
     }
 
     return newImages;
@@ -162,38 +178,57 @@ std::vector< typename TImageOutput::Pointer > &ImageHelper< TImageInput, TImageO
 //----------------------------------------------------------------------------------------
 
 template < class TImageInput, class TImageOutput >
-bool ImageHelper< TImageInput, TImageOutput >::IsInSamePhysicalSpace(typename TImageInput::Pointer firstImage, typename TImageInput::Pointer secondImage, double epsilon)
+std::vector< typename TImageOutput::Pointer > &ImageHelper< TImageInput, TImageOutput >::CreateNewImageFromPhysicalSpaceOfConst(std::vector< typename TImageInput::ConstPointer > &images, typename TImageOutput::PixelType defaultValue)
 {
-    typename TImageInput::SizeType            firstSize = firstImage->GetLargestPossibleRegion().GetSize();
-    typename TImageInput::SizeType           secondSize = secondImage->GetLargestPossibleRegion().GetSize();
-    typename TImageInput::SpacingType      firstSpacing = firstImage->GetSpacing();
-    typename TImageInput::SpacingType     secondSpacing = secondImage->GetSpacing();
-    typename TImageInput::PointType         firstOrigin = firstImage->GetOrigin();
-    typename TImageInput::PointType        secondOrigin = secondImage->GetOrigin();
-    typename TImageInput::DirectionType  firstDirection = firstImage->GetDirection();
-    typename TImageInput::DirectionType secondDirection = secondImage->GetDirection();
+    //FIXME : memory leak about the returned vector (maybe use a itk::SmartPointer<>, or passing the vector per value)
+    std::vector< typename TImageOutput::Pointer > *ptrNewImages = new std::vector< typename TImageOutput::Pointer >;
+    std::vector< typename TImageOutput::Pointer > &newImages = *ptrNewImages;
 
-    bool SameSize, SameSpacing, SameOrigin, SameDirection;
-    SameSize = SameSpacing = SameOrigin = SameDirection = true;
+    for(typename std::vector< typename TImageInput::Pointer >::iterator it = images.begin(); it != images.end(); it++)
+    {
+        newImages.push_back(CreateNewImageFromPhysicalSpaceOfConst(*it, defaultValue));
+    }
 
-    const unsigned int Dim =  TImageInput::ImageDimension;
+    return newImages;
+}
+
+//----------------------------------------------------------------------------------------
+
+template < class TImageInput, class TImageOutput >
+bool ImageHelper< TImageInput, TImageOutput >::IsInSamePhysicalSpace(typename TImageInput::Pointer firstImage, typename TImageOutput::Pointer secondImage, double epsilon)
+{
+    typename TImageInput::SizeType             firstSize = firstImage->GetLargestPossibleRegion().GetSize();
+    typename TImageOutput::SizeType           secondSize = secondImage->GetLargestPossibleRegion().GetSize();
+    typename TImageInput::SpacingType       firstSpacing = firstImage->GetSpacing();
+    typename TImageOutput::SpacingType     secondSpacing = secondImage->GetSpacing();
+    typename TImageInput::PointType          firstOrigin = firstImage->GetOrigin();
+    typename TImageOutput::PointType        secondOrigin = secondImage->GetOrigin();
+    typename TImageInput::DirectionType   firstDirection = firstImage->GetDirection();
+    typename TImageOutput::DirectionType secondDirection = secondImage->GetDirection();
+
+    bool SameSize, SameSpacing, SameOrigin, SameDirection, SameDimension;
+    SameSize = SameSpacing = SameOrigin = SameDirection = SameDimension = true;
+
+    SameDimension = (firstImage->GetImageDimension() == secondImage->GetImageDimension());
+
+    const unsigned int Dim =  std::min(firstImage->GetImageDimension(), secondImage->GetImageDimension());
 
     SameSize = (firstSize == secondSize);
 
-    for(unsigned int i = 0; i<Dim; i++)
+    for(unsigned int i = 0; i < Dim; i++)
     {
         SameSpacing = SameSpacing && (std::abs(firstSpacing[i] - secondSpacing[i]) < epsilon);
 
         SameOrigin = SameOrigin && (std::abs(firstOrigin[i] - secondOrigin[i]) < epsilon);
 
 
-        for(unsigned int j= 0; j<Dim; j++)
+        for(unsigned int j = 0; j < Dim; j++)
         {
             SameDirection = SameDirection && (std::abs(firstDirection(i,j) - secondDirection(i,j)) < epsilon);
         }
     }
 
-    return (SameSize && SameDirection && SameOrigin && SameSpacing);
+    return (SameDimension && SameSize && SameDirection && SameOrigin && SameSpacing);
 
 }
 

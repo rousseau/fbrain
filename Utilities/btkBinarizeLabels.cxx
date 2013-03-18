@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
         //
         // Create new image from input
         //
-        LabelImage::Pointer outputImage = btk::ImageHelper< LabelImage >::CreateNewImageFromPhysicalSpaceOf(inputImage);
+        LabelImage::Pointer outputImage = btk::ImageHelper< LabelImage >::CreateNewImageFromPhysicalSpaceOfConst(inputImage);
 
 
         //

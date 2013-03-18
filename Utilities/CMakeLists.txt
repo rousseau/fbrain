@@ -35,7 +35,7 @@ ADD_EXECUTABLE(btkSetStandardCoorSystem btkSetStandardCoorSystem.cxx
 TARGET_LINK_LIBRARIES(btkSetStandardCoorSystem ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkPrintImageInfo btkPrintImageInfo.cxx)
-TARGET_LINK_LIBRARIES(btkPrintImageInfo ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkPrintImageInfo ${ITK_LIBRARIES} btkToolsLibrary btkDiffusionLibrary)
 
 ADD_EXECUTABLE(btkRegisterDiffusionToAnatomicalData btkRegisterDiffusionToAnatomicalData.cxx
     ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
@@ -210,8 +210,8 @@ TARGET_LINK_LIBRARIES(btkConvertFSLTransform ${ITK_LIBRARIES})
 ADD_EXECUTABLE( btkTractDensityMap  btkTractDensityMap.cxx)
 TARGET_LINK_LIBRARIES(btkTractDensityMap ${ITK_LIBRARIES} vtkHybrid)
 
-ADD_EXECUTABLE(btkColorFiberTractsByMeanOrientation btkColorFiberTractsByMeanOrientation.cxx)
-TARGET_LINK_LIBRARIES(btkColorFiberTractsByMeanOrientation btkTractographyLibrary vtkHybrid)
+ADD_EXECUTABLE(btkColorFiberTractsByOrientation btkColorFiberTractsByOrientation.cxx)
+TARGET_LINK_LIBRARIES(btkColorFiberTractsByOrientation btkTractographyLibrary vtkHybrid)
 
 ADD_EXECUTABLE(btkComputeSoftMaskUsingOrthogonalImages btkComputeSoftMaskUsingOrthogonalImages.cxx)
 TARGET_LINK_LIBRARIES(btkComputeSoftMaskUsingOrthogonalImages ${ITK_LIBRARIES})
@@ -274,7 +274,7 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkDistanceBetweenBinaryImages
                 btkConvertFSLTransform
                 btkTractDensityMap
-                btkColorFiberTractsByMeanOrientation
+                btkColorFiberTractsByOrientation
                 btkComputeSoftMaskUsingOrthogonalImages
                 btkFSLToITKTransform
                 btkSlicesMotionViewer

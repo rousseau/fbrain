@@ -116,7 +116,23 @@ namespace btk
              * @param defaultValue Default value of pixel in new image.
              * @return New image in the same physical space.
              */
-            static typename TImageOutput::Pointer CreateNewImageFromPhysicalSpaceOf(typename TImageInput::ConstPointer image, typename TImageOutput::PixelType defaultValue=itk::NumericTraits< typename TImageOutput::PixelType >::ZeroValue());
+            static typename TImageOutput::Pointer CreateNewImageFromPhysicalSpaceOf(typename TImageInput::Pointer image, typename TImageOutput::PixelType defaultValue=itk::NumericTraits< typename TImageOutput::PixelType >::ZeroValue());
+
+            /**
+             * @brief Create a new image in the same physical space of a current image.
+             * @param image Image of which physical space will be used for creation.
+             * @param defaultValue Default value of pixel in new image.
+             * @return New image in the same physical space.
+             */
+            static typename TImageOutput::Pointer CreateNewImageFromPhysicalSpaceOfConst(typename TImageInput::ConstPointer image, typename TImageOutput::PixelType defaultValue=itk::NumericTraits< typename TImageOutput::PixelType >::ZeroValue());
+
+            /**
+             * @brief Create new images in the same physical space of current images.
+             * @param images Vector of images of which physical space will be used for creation.
+             * @param defaultValue Default value of pixel in new image.
+             * @return Vector of new images in the same physical space.
+             */
+            static std::vector< typename TImageOutput::Pointer > &CreateNewImageFromPhysicalSpaceOfConst(std::vector< typename TImageInput::ConstPointer > &images, typename TImageOutput::PixelType defaultValue=itk::NumericTraits< typename TImageOutput::PixelType >::ZeroValue());
 
             /**
              * @brief Create new images in the same physical space of current images.
@@ -132,7 +148,7 @@ namespace btk
              * @param secondImage Second Image.
              * @return True if the two images are in the same physical space, false otherwise.
              */
-            static bool IsInSamePhysicalSpace(typename TImageInput::Pointer firstImage, typename TImageInput::Pointer secondImage, double epsilon = 10e-7);
+            static bool IsInSamePhysicalSpace(typename TImageInput::Pointer firstImage, typename TImageOutput::Pointer secondImage, double epsilon = 10e-7);
 
             /**
              * @brief Test if images are in the same physical space.

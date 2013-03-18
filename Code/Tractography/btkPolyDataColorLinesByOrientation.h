@@ -37,7 +37,14 @@
 #define BTKPOLYDATACOLORLINESBYORIENTATION_H
 
 // VTK includes
+#include "vtkSmartPointer.h"
 #include "vtkPolyDataAlgorithm.h"
+#include "vtkPoints.h"
+#include "vtkFloatArray.h"
+#include "vtkCellArray.h"
+
+// Local includes
+#include "btkMacro.h"
 
 namespace btk
 {
@@ -50,6 +57,16 @@ namespace btk
  */
 class PolyDataColorLinesByOrientation : public vtkPolyDataAlgorithm
 {
+    public:
+        /**
+         * @brief Defines the type of orientation (mean or local orientation)
+         */
+        enum ColorOrientation
+        {
+            COLOR_MEAN_ORIENTATION,
+            COLOR_LOCAL_ORIENTATION
+        };
+
     public:
         /**
          * @brief Create a new instance of the object.
@@ -65,6 +82,10 @@ class PolyDataColorLinesByOrientation : public vtkPolyDataAlgorithm
          * @param indent Indentation type
          */
         void PrintSelf(ostream &os, vtkIndent indent);
+
+
+        btkSetMacro(ColorOrientation, ColorOrientation);
+        btkGetMacro(ColorOrientation, ColorOrientation);
 
     protected:
         /**
@@ -94,9 +115,33 @@ class PolyDataColorLinesByOrientation : public vtkPolyDataAlgorithm
          */
         virtual int FillInputPortInformation(int port, vtkInformation *info);
 
+        /**
+         * @brief Color fibers by mean orientation
+         * @param inputLines Input lines (fibers) from the input polydata
+         * @param outputPoints Output points of the outpyt polydata
+         * @param outputLines Output lines of the outpyt polydata
+         * @param outputColors Output colors of the outpyt polydata
+         */
+        void ColorByMeanOrientation(vtkSmartPointer< vtkPolyData > input, vtkSmartPointer< vtkPolyData > output, vtkSmartPointer< vtkCellArray > inputLines, vtkSmartPointer< vtkPoints > outputPoints, vtkSmartPointer< vtkCellArray > outputLines, vtkSmartPointer< vtkFloatArray > outputColors);
+
+        /**
+         * @brief Color fibers by local orientation
+         * @param inputLines Input lines (fibers) from the input polydata
+         * @param outputPoints Output points of the outpyt polydata
+         * @param outputLines Output lines of the outpyt polydata
+         * @param outputColors Output colors of the outpyt polydata
+         */
+        void ColorByLocalOrientation(vtkSmartPointer< vtkPolyData > input, vtkSmartPointer< vtkPolyData > output, vtkSmartPointer< vtkCellArray > inputLines, vtkSmartPointer< vtkPoints > outputPoints, vtkSmartPointer< vtkCellArray > outputLines, vtkSmartPointer< vtkFloatArray > outputColors);
+
     private:
         PolyDataColorLinesByOrientation(const PolyDataColorLinesByOrientation&); // purposely not implemented
         void operator=(const PolyDataColorLinesByOrientation&); // purposely not implemented
+
+    private:
+        /**
+         * @brief Type of color orientation used to color fibers.
+         */
+        ColorOrientation m_ColorOrientation;
 };
 
 } // namespace btk
