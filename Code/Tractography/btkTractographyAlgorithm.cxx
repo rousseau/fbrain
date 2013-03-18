@@ -63,7 +63,7 @@ static itk::SimpleFastMutexLock mutex;
 namespace btk
 {
 
-TractographyAlgorithm::TractographyAlgorithm() : m_RegionsOfInterest(0), m_SeedSpacing(1), m_SeedLabels(0), m_OutputFibers(0), m_OutputIndicesOfLabels(0), m_DiffusionSequence(0), m_DiffusionModel(0), m_Mask(0), Superclass()
+TractographyAlgorithm::TractographyAlgorithm() : m_RegionsOfInterest(NULL), m_SeedSpacing(1), m_SeedLabels(), m_OutputFibers(), m_OutputIndicesOfLabels(), m_DiffusionSignal(NULL), m_DiffusionModel(NULL), m_Mask(NULL), Superclass()
 {
     // ----
 }
@@ -79,6 +79,9 @@ void TractographyAlgorithm::PrintSelf(std::ostream &os, itk::Indent indent) cons
 
 void TractographyAlgorithm::Update()
 {
+    // Initialize filter
+    this->Initialize();
+
     // Resample label image to seed spacing
     this->ResampleLabelImage();
 
@@ -107,6 +110,13 @@ void TractographyAlgorithm::Update()
     // Update progress to 1
     this->SetProgress(1);
     this->InvokeEvent(itk::ProgressEvent());
+}
+
+//----------------------------------------------------------------------------------------
+
+void TractographyAlgorithm::Initialize()
+{
+    // ----
 }
 
 //----------------------------------------------------------------------------------------

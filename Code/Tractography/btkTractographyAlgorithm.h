@@ -53,7 +53,7 @@
 
 // Local includes
 #include "btkMacro.h"
-#include "btkDiffusionSequence.h"
+#include "btkDiffusionSignal.h"
 #include "btkDiffusionModel.h"
 
 namespace btk
@@ -78,8 +78,8 @@ class TractographyAlgorithm : public itk::ProcessObject
 
         itkTypeMacro(TractographyAlgorithm,itk::ProcessObject);
 
-        btkSetMacro(DiffusionSequence, btk::DiffusionSequence::Pointer);
-        btkGetMacro(DiffusionSequence, btk::DiffusionSequence::Pointer);
+        btkSetMacro(DiffusionSignal, btk::DiffusionSignal::Pointer);
+        btkGetMacro(DiffusionSignal, btk::DiffusionSignal::Pointer);
 
         btkSetMacro(DiffusionModel, btk::DiffusionModel::Pointer);
         btkGetMacro(DiffusionModel, btk::DiffusionModel::Pointer);
@@ -127,6 +127,11 @@ class TractographyAlgorithm : public itk::ProcessObject
         virtual void ResampleLabelImage();
 
         /**
+         * @brief Initialize the filter.
+         */
+        virtual void Initialize();
+
+        /**
          * @brief Split the requested region of the label image (for parallel processing).
          */
         virtual unsigned int SplitRequestedRegion(unsigned int i, unsigned int num, LabelImage::RegionType &splitRegion);
@@ -151,7 +156,7 @@ class TractographyAlgorithm : public itk::ProcessObject
         /**
          * @brief Diffusion sequence used as measured observations in algorithm.
          */
-        btk::DiffusionSequence::Pointer m_DiffusionSequence;
+        btk::DiffusionSignal::Pointer m_DiffusionSignal;
 
         /**
          * @brief Diffusion modeling used in algorithm.
