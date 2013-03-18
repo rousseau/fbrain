@@ -68,8 +68,8 @@ class PseudoResidualsVarianceCalculator : public itk::Object
         typedef itk::SmartPointer< Self >         Pointer;
         typedef itk::SmartPointer< const Self >   ConstPointer;
 
-        typedef itk::Image< unsigned char,3 > MaskImage;
-        typedef itk::VectorImage< double,3 >  InternalImage;
+        typedef itk::Image< short,3 >        MaskImage;
+        typedef itk::VectorImage< double,3 > InternalImage;
 
         itkNewMacro(Self);
         itkTypeMacro(PseudoResidualsVarianceCalculator,itk::Object);
