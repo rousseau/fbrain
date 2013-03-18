@@ -51,12 +51,21 @@
 
 namespace btk
 {
-
+/**
+ * This class transform an itk::Images into a vtk::PolyData.
+ * The output polydata contain coutours of the input image slices.
+ * Typicaly this class is used to display slice by slice movement.
+ * In order to display movement user must provide an itk::Transform, even if transform is identity.
+ *
+ * @author Marc Schweitzer
+ * \ingroup ImageFilters
+ */
 template <typename TImage>
 class SlicesToPolyData : public itk::Object
 {
 
 public:
+        /** Typedefs */
         typedef btk::SlicesToPolyData<TImage> Self;
         typedef itk::Object Superclass;
         typedef itk::SmartPointer< Self > Pointer;
@@ -67,6 +76,7 @@ public:
 
         /** Method for creation through the object factory. */
         itkNewMacro(Self);
+
         /** Update Method */
         virtual void Update();
 
@@ -85,14 +95,16 @@ public:
     protected :
         /** Initialize Method to call before Update() */
         virtual void Initialize();
+        /** Constructor */
         SlicesToPolyData();
+        /** Destructor */
         virtual ~SlicesToPolyData();
 
     private :
-        typename ImageType::Pointer m_Input;
-        Transform* m_Transform;
+        typename ImageType::Pointer m_Input; /** Pointer to the input image */
+        Transform* m_Transform; /** itk::Transform (needed) */
 
-        vtkSmartPointer< vtkPolyData > m_Output;
+        vtkSmartPointer< vtkPolyData > m_Output; /** Pointer to the output polydata */
 
 
 };

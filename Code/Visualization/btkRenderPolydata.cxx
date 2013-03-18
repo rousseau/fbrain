@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date:
+  Date:08/03/2013
   Author(s):Marc Schweitzer (marc.schweitzer(at)unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and

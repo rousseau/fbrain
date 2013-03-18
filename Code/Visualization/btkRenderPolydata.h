@@ -58,10 +58,21 @@
 
 namespace btk
 {
-
+/**
+ * Class for render one or several vtk::PolyDatas
+ * First we Set the number of PolyData to render with SetNumberOfPolyData.
+ * Next we Set the Polydata with SetNthPolyData (inner a for loop for example) and we add a color with SetNthPolyDataColor
+ * At the end why call Render().
+ *
+ * Note that if we recall Render() it will be update the render window (if a polydata change for example).
+ *
+ * @author Marc Schweitzer
+ * \ingroup Visualization
+ */
 class RenderPolyData : public itk::Object
 {
     public :
+        /** typedefs */
         typedef RenderPolyData   Self;
         typedef itk::Object Superclass;
         typedef itk::SmartPointer< Self > Pointer;
@@ -70,30 +81,32 @@ class RenderPolyData : public itk::Object
         /** Method for creation through the object factory. */
         itkNewMacro(Self);
 
-        /** Update Method */
+        /** Render Method */
         virtual void Render();
-        virtual void UpdateAndRender(){}
+        /** Set the nth PolyData (_n need to be <= m_NumberOfPolyData) */
         virtual void SetNthPolyData(unsigned int _n, vtkSmartPointer< vtkPolyData > _PolyData );
+        /** Set the color of the nth PolyData (_n need to be <= m_NumberOfPolyData) */
         virtual void SetNthPolyDataColor(unsigned int _n, std::vector<double>);
         /** Set/Get Number of PolyData to render */
         virtual void SetNumberOfPolyData(unsigned int _n);
         btkGetMacro(NumberOfPolyData,unsigned int);
 
     protected:
+        /** Constructor */
         RenderPolyData();
+        /** Destructor */
         virtual ~RenderPolyData();
-        virtual void Initialize(){}
 
     private :
 
-        std::vector< vtkSmartPointer< vtkPolyData > > m_Inputs;
-        unsigned int m_NumberOfPolyData;
-        std::vector< std::vector<double> > m_Colors;
+        std::vector< vtkSmartPointer< vtkPolyData > > m_Inputs; /** vector of inputs polydatas */
+        unsigned int m_NumberOfPolyData; /** Number of PolyData to render */
+        std::vector< std::vector<double> > m_Colors; /** Corresponding color of polydatas */
 
-        vtkSmartPointer< vtkRenderWindow > m_RenderWindow;
-        vtkSmartPointer< vtkInteractorStyleTrackballCamera > m_Interactor;
-        vtkSmartPointer< vtkRenderWindowInteractor > m_Iren;
-        vtkSmartPointer< vtkRenderer > m_Renderer;
+        vtkSmartPointer< vtkRenderWindow > m_RenderWindow; /** render window */
+        vtkSmartPointer< vtkInteractorStyleTrackballCamera > m_Interactor; /** Interactor */
+        vtkSmartPointer< vtkRenderWindowInteractor > m_Iren; /** render window interactor */
+        vtkSmartPointer< vtkRenderer > m_Renderer; /** renderer */
 
 };
 

@@ -90,6 +90,7 @@ SlicesToPolyData< TImage >::Update()
     vtkSmartPointer< vtkCellArray > Lines = vtkSmartPointer< vtkCellArray >::New();
     vtkSmartPointer< vtkPolyLine > line = vtkSmartPointer< vtkPolyLine >::New();
 
+    // for each slices
     for(unsigned int z = 0; z < size[2]; z++)
     {
         typename ImageType::IndexType corner1, corner2, corner3, corner4;
