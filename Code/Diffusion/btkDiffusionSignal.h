@@ -76,6 +76,7 @@ class DiffusionSignal : public itk::VectorImage< double,3 >
         btkSetMacro(GradientTable, std::vector< btk::GradientDirection >);
         btkGetMacro(GradientTable, std::vector< btk::GradientDirection >);
 
+        btkSetMacro(PseudoResidualsStdDeviation, std::vector< double >);
         btkGetMacro(PseudoResidualsStdDeviation, std::vector< double >);
 
 
