@@ -40,6 +40,7 @@
 #include "itkObject.h"
 #include "itkImage.h"
 #include "itkLinearInterpolateImageFunction.h"
+#include "itkBSplineInterpolateImageFunction.h"
 #include "itkTransform.h"
 #include "itkMatrixOffsetTransformBase.h"
 #include "itkSmartPointer.h"

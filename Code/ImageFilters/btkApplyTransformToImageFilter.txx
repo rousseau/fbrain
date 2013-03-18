@@ -95,41 +95,39 @@ void ApplyTransformToImageFilter<TImageIn,TImageOut>::Update()
 template<typename TImageIn, typename TImageOut>
 void ApplyTransformToImageFilter<TImageIn,TImageOut>::Resample() throw(itk::ExceptionObject &)
 {
-    typename Interpolator::Pointer interpolator = Interpolator::New();
-    interpolator->SetInputImage(m_ReferenceImage);
-
-    m_OutputImage =  btk::ImageHelper<itkImageOut>::CreateNewImageFromPhysicalSpaceOf(m_InputImage.GetPointer());
+    m_OutputImage = btk::ImageHelper<itkImageOut>::DeepCopy(m_ReferenceImage.GetPointer());
 
     IteratorIn it(m_InputImage, m_InputImage->GetLargestPossibleRegion());
     IteratorOut itO(m_OutputImage, m_OutputImage->GetLargestPossibleRegion());
 
+    typename Interpolator::Pointer interpolator = Interpolator::New();
+    interpolator->SetInputImage(m_InputImage);
 
-    for(it.GoToBegin(), itO.GoToBegin(); !it.IsAtEnd(), !itO.IsAtEnd(); ++it, ++itO)
+    for(it.GoToBegin(),itO.GoToBegin(); !it.IsAtEnd(),!itO.IsAtEnd(); ++it,++itO)
     {
-        typename itkImage::IndexType index = it.GetIndex();
+        typename itkImage::IndexType InputIndex = it.GetIndex();
+        typename itkImage::IndexType OutputIndex = itO.GetIndex();
+        typename itkImage::PointType point, Tpoint;
         typename Interpolator::ContinuousIndexType Tindex;
 
-
-        typename itkImage::PointType point, Tpoint;
-        m_InputImage->TransformIndexToPhysicalPoint(index, point);
+        m_OutputImage->TransformIndexToPhysicalPoint(OutputIndex, point);
 
         Tpoint = m_Transform->TransformPoint(point);
 
+         m_InputImage->TransformPhysicalPointToContinuousIndex(Tpoint, Tindex);
 
-        if(interpolator->IsInsideBuffer(Tpoint))
+        if(interpolator->IsInsideBuffer(Tindex))
         {
-            m_ReferenceImage->TransformPhysicalPointToContinuousIndex(Tpoint,Tindex);
-
             typename itkImage::PixelType value = interpolator->EvaluateAtContinuousIndex(Tindex);
-
             itO.Set(value);
         }
         else
         {
             itO.Set(0);
         }
-
     }
+
+
 }
 }
 
