@@ -144,8 +144,8 @@ int main( int argc, char *argv[] )
       btkSRM.data.WriteSimulatedLRImages(input_file);
     }
     
-    //btkSRM.IteratedBackProjection(loops,nlm,beta,medianIBP);
-    btkSRM.PseudoInverse();
+    btkSRM.IteratedBackProjection(loops,nlm,beta,medianIBP);
+    //btkSRM.PseudoInverse();
     btkSRM.data.WriteOutputHRImage(output_file);
         
     
