@@ -47,7 +47,6 @@ void SlicesIntersectionVNLCostFunction<TImage>::Initialize()
 
         typename ImageType::SizeType size;
         size =  m_Images[m_MovingImageNum]->GetLargestPossibleRegion().GetSize();
-        m_CenterOfMovingSlice.resize(3);
 
         // For the center of the transform !
         ContinuousIndexType centerIndex;
@@ -92,14 +91,17 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
         std::cout<<"Parameters : "<<params<<std::endl;
     }
 
+    // Set Optimizer's parameters in transformation
     m_X->SetParameters(params);
 
+    //Get the inverse for the process
     m_InverseX->SetCenter(m_X->GetCenter());
     m_InverseX->SetFixedParameters(m_X->GetFixedParameters());
 
     m_X->GetInverse(m_InverseX);
 
     unsigned int ifixed = 0;
+
 
     // For all others images
     for( ifixed = 0; ifixed< m_Images.size(); ifixed ++)
@@ -116,18 +118,22 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
 
             /* PARALLELIZATION : Use of reduction to avoid use of #pragma omp critical
              * Each thread have a local copy of both NumberOfIntersectedVoxels and SumOfIntersectedVoxels
-             * At the end we sum all this local copy into a global one.
+             * At the end we sum all local copys into a global one.
              **/
-
             #pragma omp parallel for private(sfixed) schedule(dynamic)\
             default(shared)\
             reduction(+:NumberOfIntersectedVoxels) reduction(+:SumOfIntersectedVoxels)
 
             for(sfixed = 0; sfixed < numberOfFixedSlices; sfixed++)
             {
-               typename ImageType::PointType Point1, Point2;
-                bool intersection = this->FoundIntersectionPoints(ifixed,sfixed,Point1,Point2);
+                // Check for starting point and ending point
+                typename ImageType::PointType Point1, Point2;
 
+                /* Point 1 is the starting point, point 2 the ending one, if there is no intersection the function return false
+                the function is looking for an intersection between fixed slice (sfixed) in fixed image (ifixed)
+                and the moving one (m_MovingImageNum,m_MovingSliceNum) */
+
+                bool intersection = this->FoundIntersectionPoints(ifixed,sfixed,Point1,Point2);
 
                 // If we have found an intersection
                 if(intersection)
@@ -141,12 +147,9 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
                     P12[1] = Point2[1] - Point1[1];
                     P12[2] = Point2[2] - Point1[2];
 
+                    // Process for a point each mm
                     double EuclideanDist = std::sqrt((P12[0]* P12[0]) + (P12[1]* P12[1]) + (P12[2]* P12[2]));
-
                     int NumberOfPoints = std::floor(EuclideanDist);
-
-
-                    //std::cout<<"NumberOfPoints : "<<NumberOfPoints<<std::endl;
 
                     // Loop Over intersection line points
                     //for(unsigned int i = 0; i<m_NumberOfPointsOfLine; i++)// user set a fixed number of points
@@ -159,6 +162,7 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
                         P = Point1 + (P12 * i/(NumberOfPoints));
 
                         //std::cout<<"P-->"<<P<<std::endl;
+
                         // Point in fixed image
                         Pfixed = m_InverseTransforms[ifixed]->TransformPoint(P);
                         //Point in moving image
@@ -177,9 +181,10 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
                         {
                             VoxelType fixedVoxel, movingVoxel;
 
-
+                            //Test if pixel is inside both fixed maks and moving mask
                             if(m_Masks[ifixed]->GetPixel(MaskIndexFx) > 0 && m_Masks[m_MovingImageNum]->GetPixel(MaskIndexMv) > 0)
                             {
+                                // Get The values with linear interpolator
                                 movingVoxel = m_Interpolators[m_MovingImageNum]->EvaluateAtContinuousIndex(IndexMoving);
                                 fixedVoxel = m_Interpolators[ifixed]->EvaluateAtContinuousIndex(IndexFixed);
 
@@ -442,7 +447,7 @@ FoundIntersectionPoints(unsigned int _fixedImage, unsigned int _fixedSlice, type
             else // fixed slice
             {
                 m_Images[_fixedImage]->TransformIndexToPhysicalPoint(CurrentIndex, CurrentPoint);
-                //Apply  of the Optimized founded transform (if not identity)
+                //Apply transform of the fixedImage (if not identity)
                 TCurrentPoint = m_Transforms[_fixedImage]->TransformPoint(CurrentPoint);
                 //Apply inverse of X for return in the moving slice space
                 CorrespondingPoint = m_InverseX->TransformPoint(TCurrentPoint);
@@ -482,7 +487,7 @@ FoundIntersectionPoints(unsigned int _fixedImage, unsigned int _fixedSlice, type
                     {
                         // check the candidate who have the Z coordinate closest to the moving slice num
                         double Z = (double)m_MovingSliceNum;
-                        double min = 99999.9;
+                        double min = 99999.9;// for initialization
                         typename Interpolator::ContinuousIndexType ix;
                         for(unsigned int j = 0; j< P1.size(); j++)
                         {
@@ -504,7 +509,7 @@ FoundIntersectionPoints(unsigned int _fixedImage, unsigned int _fixedSlice, type
                     {
                         // check the candidate who have the Z coordinate closest to the moving slice num
                         double Z = (double)m_MovingSliceNum;
-                        double min = 99999.9;
+                        double min = 99999.9;// for init
                         typename Interpolator::ContinuousIndexType ix;
                         for(unsigned int j = 0; j< P2.size(); j++)
                         {
@@ -540,6 +545,7 @@ FoundIntersectionPoints(unsigned int _fixedImage, unsigned int _fixedSlice, type
     IteratorTab.clear();
     P1.clear();
     P2.clear();
+
     if(intersection)
     {
         return true;

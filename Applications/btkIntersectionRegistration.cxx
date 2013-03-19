@@ -89,9 +89,6 @@ int main(int argc, char * argv[])
     typedef btk::ResampleImageByInjectionFilter< itkImage, itkImage>  ResampleFilter;
     typedef itk::ImageMaskSpatialObject< Dimension >  MaskType;
     typedef btk::SliceBySliceTransformBase< double, Dimension, PixelType > TransformBaseType;
-    //typedef itk::MatrixOffsetTransformBase<double , Dimension> TransformBaseType;
-    //typedef btk::SliceBySliceTransform<double,Dimension, PixelType> Transform;
-    //typedef btk::CenteredEulerSliceBySliceTransform<double, Dimension, PixelType> Transform;
     typedef itk::ImageMaskSpatialObject< Dimension > MaskType;
     typedef itk::HistogramMatchingImageFilter<itkImage, itkImage, PixelType> HistoFilter;
 
@@ -173,7 +170,7 @@ int main(int argc, char * argv[])
 
         itkImage::RegionType roi = mask -> GetAxisAlignedBoundingBoxRegion();
         SR_filter -> AddRegion( roi );
-
+        // denoising before motion correction
         if(denoisingInput)
         {
             btk::NLMTool<PixelType> myTool;
@@ -185,7 +182,7 @@ int main(int argc, char * argv[])
         }
 
     }
-
+    // histogram matching (useless I think)
     if(histogramMatching)
     {
         for(int i = 0; i< inputsImages.size(); i++)
@@ -206,7 +203,7 @@ int main(int argc, char * argv[])
         }
     }
 
-
+    // Motion Correction
     btk::MotionCorrectionByIntersection<itkImage>* IntersectionFilter = new btk::MotionCorrectionByIntersection<itkImage>();
     //---------------------------------------------------------------------
     if(computeRegistration)
@@ -215,7 +212,7 @@ int main(int argc, char * argv[])
         IntersectionFilter->SetImages(inputsImages);
         IntersectionFilter->SetMasks(inputMasks);
         IntersectionFilter->SetVerboseMode(verboseMode);
-        IntersectionFilter->SetUseSliceExclusion(false);
+        IntersectionFilter->SetUseSliceExclusion(false);//Not implemented well
         IntersectionFilter->SetMaxLoop(loop);
         IntersectionFilter->Initialize();
         try
@@ -228,18 +225,16 @@ int main(int argc, char * argv[])
             return EXIT_FAILURE;
         }
 
+        //testing if stan used inverse or not inverse transform
         if(UseInverse)
         {
            transforms = IntersectionFilter->GetInverseTransforms();
         }
         else
         {
-           transforms = IntersectionFilter->GetTransforms();
+           transforms = IntersectionFilter->GetTransforms(); // this one is the good one
         }
 
-
-
-        //return 0;
 
     }
     else
@@ -263,7 +258,6 @@ int main(int argc, char * argv[])
         for(unsigned int j=0; j< transforms[i] -> GetNumberOfSlices(); j++)
         {
             SR_filter-> SetTransform(i, j, transforms[i] -> GetSliceTransform(j) ) ;
-            //std::cout<<"Transform image["<<i<<"] slice["<<j<<"] ->"<<transforms[i] -> GetSliceTransform(j)<<std::endl;
         }
     }
 
@@ -365,13 +359,12 @@ int main(int argc, char * argv[])
     SR_filter -> SetIterations(25);
     SR_filter -> SetLambda( 0.02 );
     SR_filter -> SetPSF( SuperResolutionFilter::GAUSSIAN );
-    //SR_filter->SetOutliers(IntersectionFilter->GetOutliers());//NOT implemented well
+    //SR_filter->SetOutliers(IntersectionFilter->GetOutliers());//NOT implemented yet
     SR_filter -> Update();
 
 
     //btk::ImageHelper<itkImage>::WriteImage(Output, output);
 
-    //return 0;
     for (int i=0; i<numberOfLoops; i++)
     {
       std::cout<<"Loop : "<<i+1<<std::endl;
