@@ -207,7 +207,6 @@ void NLMTool<T>::SetOptimizationStrategy(int o)
         m_varianceImage->FillBuffer(0);
 
         int x,y,z;
-        //FIXME : This is going to take a huge set of time, we should use iterator instead !
         #pragma omp parallel for private(x,y,z) schedule(dynamic)
 
         for(z=0; z < (int)m_size[2]; z++)

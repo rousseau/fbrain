@@ -219,6 +219,12 @@ TARGET_LINK_LIBRARIES(btkComputeSoftMaskUsingOrthogonalImages ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkFSLToITKTransform btkFSLToITKTransform.cxx)
 TARGET_LINK_LIBRARIES(btkFSLToITKTransform ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkLocalHistogramMatching btkLocalHistogramMatching.cxx)
+TARGET_LINK_LIBRARIES(btkLocalHistogramMatching btkToolsLibrary ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkWeightImageOfPatches btkWeightImageOfPatches.cxx)
+TARGET_LINK_LIBRARIES(btkWeightImageOfPatches btkToolsLibrary ${ITK_LIBRARIES})
+
 ADD_EXECUTABLE( btkSlicesMotionViewer btkSlicesMotionViewer.cxx
 ${Code_SOURCE_DIR}/Visualization/btkRenderPolydata.cxx
 ${Code_SOURCE_DIR}/Visualization/btkRenderPolydata.h)
@@ -277,6 +283,8 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkColorFiberTractsByOrientation
                 btkComputeSoftMaskUsingOrthogonalImages
                 btkFSLToITKTransform
+                btkLocalHistogramMatching
+                btkWeightImageOfPatches
                 btkSlicesMotionViewer
         DESTINATION bin)
 

@@ -57,12 +57,6 @@ ADD_EXECUTABLE(btkImageReconstruction btkImageReconstruction.cxx
 )
 TARGET_LINK_LIBRARIES(btkImageReconstruction btkToolsLibrary ${ITK_LIBRARIES})
 
-
-ADD_EXECUTABLE(btkLabelPropagation btkLabelPropagation.cxx
-    ${fbrain_SOURCE_DIR}/Code/Segmentation/btkLabelPropagationTool.h
-)
-TARGET_LINK_LIBRARIES(btkLabelPropagation ${ITK_LIBRARIES})
-
 ADD_EXECUTABLE(btkSuperResolution btkSuperResolution.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionAffineImageFilter.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionRigidImageFilter.h
@@ -191,7 +185,6 @@ ${fbrain_SOURCE_DIR}/Code/Registration/btkSmartStepGradientDescentOptimizer.cxx 
 TARGET_LINK_LIBRARIES(btkIntersectionRegistration btkToolsLibrary btkMathsLibrary ${ITK_LIBRARIES})
 
 INSTALL(TARGETS btkImageReconstruction
-                btkLabelPropagation
                 btkSuperResolution
                 btkSuperResolutionFilterTest
                 btkGroupwiseS2SDistortionCorrection
@@ -249,10 +242,15 @@ ADD_EXECUTABLE(btkTensorParticleFilterTractography btkTensorParticleFilterTracto
 )
 TARGET_LINK_LIBRARIES(btkTensorParticleFilterTractography btkToolsLibrary ${ITK_LIBRARIES} vtkHybrid)
 
+ADD_EXECUTABLE(btkAtlasBasedFiberLabeling btkAtlasBasedFiberLabeling.cxx
+)
+TARGET_LINK_LIBRARIES(btkAtlasBasedFiberLabeling ${ITK_LIBRARIES} vtkHybrid)
+
 INSTALL(TARGETS
     btkODFParticleFilterTractography
     btkTensorParticleFilterTractography
     btkTractography
+    btkAtlasBasedFiberLabeling
 DESTINATION bin)
 
 # ---- Segmentation ---------------------------------------------------------------------
@@ -262,6 +260,16 @@ ADD_EXECUTABLE(btkTissueSegmentation btkTissueSegmentation.cxx
 )
 TARGET_LINK_LIBRARIES(btkTissueSegmentation ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkLabelPropagation btkLabelPropagation.cxx
+    ${fbrain_SOURCE_DIR}/Code/Segmentation/btkLabelPropagationTool.h
+)
+TARGET_LINK_LIBRARIES(btkLabelPropagation ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkSSL btkSSL.cxx)
+TARGET_LINK_LIBRARIES(btkSSL btkToolsLibrary ${ITK_LIBRARIES})
+
 INSTALL(TARGETS
     btkTissueSegmentation
+    btkLabelPropagation
+    btkSSL
 DESTINATION bin)
