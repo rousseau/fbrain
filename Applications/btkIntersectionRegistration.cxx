@@ -66,7 +66,6 @@
 #include "btkCenteredEulerSliceBySliceTransform.h"
 #include "btkSuperResolutionRigidImageFilter.h"
 #include "btkNLMTool.h"
-#include "btkMRIBiasCorrectionFilter.h"
 
 /* OTHERS */
 #include "iostream"
@@ -106,7 +105,6 @@ int main(int argc, char * argv[])
 
     TCLAP::SwitchArg  VerboseArg("v","verbose","verbose Mode", cmd, false);
     TCLAP::SwitchArg  DenoisingArg("","denoising","denoising inputs", cmd, false);
-    TCLAP::SwitchArg  BiasArg("","bias","bias correction", cmd, false);
     TCLAP::SwitchArg  InverseArg("","inverse","use inverse transformations", cmd, false);
     TCLAP::ValueArg<int> LoopArg("l","loop","Number of loops",false,1,"int",cmd);
     TCLAP::ValueArg<int> IterArg("","iter","Number of iteration for SR",false,1,"int",cmd);
@@ -134,7 +132,6 @@ int main(int argc, char * argv[])
     output = outputArg.getValue();
     bool verboseMode = VerboseArg.getValue();
     bool denoisingInput = DenoisingArg.getValue();
-    bool biasInput = BiasArg.getValue();
     bool UseInverse = InverseArg.getValue();
     inputsImages = btk::ImageHelper<itkImage>::ReadImage(input);
     inputMasks = btk::ImageHelper<itkMaskImage>::ReadImage(mask);
@@ -186,16 +183,6 @@ int main(int argc, char * argv[])
             myTool.ComputeOutput();
             inputsImages[i] = myTool.GetOutput();
         }
-        if(biasInput)
-        {
-            btk::MRIBiasCorrectionFilter<itkImage, itkImage>::Pointer bias = btk::MRIBiasCorrectionFilter<itkImage, itkImage>::New();
-            bias->SetInput(inputsImages[i]);
-            bias->SetMask(inputMasks[i]);
-            bias->SetBiasFilterType(btk::MRIBiasCorrectionFilter<itkImage, itkImage>::N4_TYPE);
-            bias->Update();
-
-            inputsImages[i] = bias->GetOutput();
-        }
 
     }
 
@@ -218,13 +205,6 @@ int main(int argc, char * argv[])
 
         }
     }
-
-
-
-
-
-
-
 
 
     btk::MotionCorrectionByIntersection<itkImage>* IntersectionFilter = new btk::MotionCorrectionByIntersection<itkImage>();
