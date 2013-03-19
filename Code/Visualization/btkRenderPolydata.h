@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 13/12/2012
+  Date: 08/03/2013
   Author(s):Marc Schweitzer (marc.schweitzer(at)unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -32,84 +32,70 @@
   knowledge of the CeCILL-B license and that you accept its terms.
   
 ==========================================================================*/
-#ifndef _btkOptimizer_h
-#define _btkOptimizer_h
 
-#include "itkSingleValuedNonLinearOptimizer.h"
+#ifndef BTKRENDERPOLYDATA_H
+#define BTKRENDERPOLYDATA_H
+
+/* ITK */
+#include "itkMacro.h"
+#include "itkObjectFactory.h"
+#include "itkObject.h"
+#include "itkSmartPointer.h"
+
+/* BTK */
+#include "btkMacro.h"
+
+/* VTK */
+#include "vtkSmartPointer.h"
+#include "vtkPolyData.h"
+#include "vtkRenderWindow.h"
+#include "vtkRenderer.h"
+#include "vtkRenderWindowInteractor.h"
+#include "vtkInteractorStyleTrackballCamera.h"
+
+/* Others */
+#include "vector"
 
 namespace btk
 {
-/**
- * Base class for Optimizer
- *
- * @author Marc Schweitzer
- * \ingroup Registration
- */
-class Optimizer : public itk::SingleValuedNonLinearOptimizer
+
+class RenderPolyData : public itk::Object
 {
-public:
-        typedef Optimizer   Self;
-        typedef itk::SingleValuedNonLinearOptimizer Superclass;
+    public :
+        typedef RenderPolyData   Self;
+        typedef itk::Object Superclass;
         typedef itk::SmartPointer< Self > Pointer;
         typedef itk::SmartPointer< const Self > ConstPointer;
 
+        /** Method for creation through the object factory. */
         itkNewMacro(Self);
 
-        itkTypeMacro(Optimizer, itk::SingleValuedNonLinearOptimizer);
-
-        /**  Parameters type.
-         *  It defines a position in the optimization search space. */
-        typedef Superclass::ParametersType ParametersType;
-
-        /** InternalParameters typedef. */
-        typedef   vnl_vector< double > InternalParametersType;
-
-        /** Type of Measure */
-
-        typedef CostFunctionType::MeasureType MeasureType;
-
-        /** Start optimization. */
-        virtual void StartOptimization()
-        {
-
-        }
-
-        /** When users call StartOptimization, this value will be set false.
-             * By calling StopOptimization, this flag will be set true, and
-             * optimization will stop at the next iteration. */
-        void StopOptimization(void)
-        {
-            m_Stop = true;
-        }
-
-
-        /** Get the reason for termination */
-        virtual const std::string GetStopConditionDescription() const
-        {
-            return m_StopConditionDescription.str();
-        }
-
-        virtual void SetCurrentPosition(const ParametersType &param)
-        {
-            this->m_CurrentPosition = param;
-        }
-
+        /** Update Method */
+        virtual void Render();
+        virtual void UpdateAndRender(){}
+        virtual void SetNthPolyData(unsigned int _n, vtkSmartPointer< vtkPolyData > _PolyData );
+        virtual void SetNthPolyDataColor(unsigned int _n, std::vector<double>);
+        /** Set/Get Number of PolyData to render */
+        virtual void SetNumberOfPolyData(unsigned int _n);
+        btkGetMacro(NumberOfPolyData,unsigned int);
 
     protected:
-        Optimizer();
-        virtual ~Optimizer();
-        void PrintSelf(std::ostream &os, itk::Indent indent) const
-        {
-            Superclass::PrintSelf(os, indent);
-        }
+        RenderPolyData();
+        virtual ~RenderPolyData();
+        virtual void Initialize(){}
 
+    private :
 
-        bool m_Stop;
+        std::vector< vtkSmartPointer< vtkPolyData > > m_Inputs;
+        unsigned int m_NumberOfPolyData;
+        std::vector< std::vector<double> > m_Colors;
 
-       std::ostringstream m_StopConditionDescription;
+        vtkSmartPointer< vtkRenderWindow > m_RenderWindow;
+        vtkSmartPointer< vtkInteractorStyleTrackballCamera > m_Interactor;
+        vtkSmartPointer< vtkRenderWindowInteractor > m_Iren;
+        vtkSmartPointer< vtkRenderer > m_Renderer;
 
 };
 
-}// namespace
-
-#endif
+} //end namespace
+#endif // BTKRENDERPOLYDATA_H

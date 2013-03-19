@@ -48,8 +48,7 @@ OrientedRASImage<TPixel, Dimension>::OrientedRASImage()
 }
 //-------------------------------------------------------------------------------------------------
 template <class TPixel, unsigned int Dimension>
-OrientedRASImage<TPixel, Dimension>::
-~OrientedRasImage()
+OrientedRASImage<TPixel, Dimension>::~OrientedRASImage()
 {
 
 }

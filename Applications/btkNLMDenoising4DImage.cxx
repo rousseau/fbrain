@@ -205,7 +205,7 @@ int main(int argc, char** argv)
 
       
       myTool.ComputeOutput();
-      myTool.GetOutput(output3DImage);
+      output3DImage = myTool.GetOutput();
 
       concatenator->PushBackInput(output3DImage);
     }

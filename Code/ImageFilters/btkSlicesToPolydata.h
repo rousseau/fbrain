@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 13/12/2012
+  Date: 08/03/2013
   Author(s):Marc Schweitzer (marc.schweitzer(at)unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -33,23 +33,72 @@
   
 ==========================================================================*/
 
-#include "btkOptimizer.h"
+#ifndef BTKSLICESTOPOLYDATA_H
+#define BTKSLICESTOPOLYDATA_H
+
+/* ITK */
+#include "itkObject.h"
+#include "itkTransform.h"
+#include "itkSmartPointer.h"
+
+/* VTK */
+#include "vtkSmartPointer.h"
+#include "vtkPolyData.h"
+
+
+/* BTK */
+#include "btkMacro.h"
 
 namespace btk
 {
 
-Optimizer::Optimizer():m_Stop(false)
+template <typename TImage>
+class SlicesToPolyData : public itk::Object
 {
 
-}
+public:
+        typedef btk::SlicesToPolyData<TImage> Self;
+        typedef itk::Object Superclass;
+        typedef itk::SmartPointer< Self > Pointer;
+        typedef itk::SmartPointer< const Self > ConstPointer;
+        typedef TImage ImageType;
 
-//---------------------------------------------------------------------------
-Optimizer::~Optimizer()
-{
+        typedef itk::Transform<double, 3,3> Transform;
 
-}
-//---------------------------------------------------------------------------
+        /** Method for creation through the object factory. */
+        itkNewMacro(Self);
+        /** Update Method */
+        virtual void Update();
 
-//---------------------------------------------------------------------------
-}
+        /** Set/Get input image*/
+        btkSetMacro(Input,typename ImageType::Pointer);
+        btkGetMacro(Input, typename ImageType::Pointer);
 
+        /** Set/Get transform */
+        btkSetMacro(Transform, Transform*);
+        btkGetMacro(Transform, Transform*);
+
+        /** Get Output PolyData */
+        btkGetMacro(Output,vtkSmartPointer< vtkPolyData > );
+
+
+    protected :
+        /** Initialize Method to call before Update() */
+        virtual void Initialize();
+        SlicesToPolyData();
+        virtual ~SlicesToPolyData();
+
+    private :
+        typename ImageType::Pointer m_Input;
+        Transform* m_Transform;
+
+        vtkSmartPointer< vtkPolyData > m_Output;
+
+
+};
+
+} //end namespace
+
+#include "btkSlicesToPolydata.txx"
+
+#endif // BTKSLICESTOPOLYDATA_H

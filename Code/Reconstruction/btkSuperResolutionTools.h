@@ -759,7 +759,7 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
 
 
     myTool.ComputeOutput();
-    myTool.GetOutput(data.m_outputHRImage);    
+    data.m_outputHRImage = myTool.GetOutput(); //FIXME : Not safe, do not respect C++ encapsulation
     //s = "ibp_nlm_error.nii.gz";
     //data.WriteOneImage(data.m_outputHRImage, s);     
   }
@@ -783,7 +783,7 @@ double SuperResolutionTools::IteratedBackProjection(SuperResolutionDataManager &
     myTool.SetSmoothing(beta);
     myTool.SetBlockwiseStrategy(1); //0 pointwise, 1 block, 2 fast block
     myTool.ComputeOutput();
-    myTool.GetOutput(data.m_outputHRImage);  
+    data.m_outputHRImage = myTool.GetOutput();  //FIXME : Not safe, do not respect C++ encapsulation
     //s = "ibp_nlm_smooth.nii.gz";
     //data.WriteOneImage(data.m_currentHRImage, s);                
   }  

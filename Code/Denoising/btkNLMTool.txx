@@ -440,9 +440,10 @@ void NLMTool<T>::SetLocalSmoothing(float beta)
 }
 
 template <typename T>
-void NLMTool<T>::GetOutput(itkTPointer & outputImage)
+typename NLMTool<T>::itkTPointer
+NLMTool<T>::GetOutput()
 {
-  outputImage = m_outputImage;
+  return m_outputImage;
 }
 
 template <typename T>

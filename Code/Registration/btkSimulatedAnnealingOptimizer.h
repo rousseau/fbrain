@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 13/12/2012
+  Date: 
   Author(s):Marc Schweitzer (marc.schweitzer(at)unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -32,84 +32,102 @@
   knowledge of the CeCILL-B license and that you accept its terms.
   
 ==========================================================================*/
-#ifndef _btkOptimizer_h
-#define _btkOptimizer_h
+#ifndef BTKRANDOMOPTIMIZER_H
+#define BTKRANDOMOPTIMIZER_H
 
-#include "itkSingleValuedNonLinearOptimizer.h"
+#include "btkOptimizer.h"
+#include "btkMacro.h"
+
+/* OTHERS */
+#include "cfloat"
+#include "cmath"
+#include "algorithm"
+#include "ctime"
 
 namespace btk
 {
 /**
- * Base class for Optimizer
+ * This is an optimizer using Simulated Anneal Strategy.
+ * It can be used with any class inherited form itk::SingleValuedCostFunction.
  *
  * @author Marc Schweitzer
  * \ingroup Registration
  */
-class Optimizer : public itk::SingleValuedNonLinearOptimizer
+class SimulatedAnnealingOptimizer : public btk::Optimizer
 {
-public:
-        typedef Optimizer   Self;
-        typedef itk::SingleValuedNonLinearOptimizer Superclass;
+
+    public:
+        typedef SimulatedAnnealingOptimizer   Self;
+        typedef btk::Optimizer Superclass;
         typedef itk::SmartPointer< Self > Pointer;
         typedef itk::SmartPointer< const Self > ConstPointer;
 
         itkNewMacro(Self);
 
-        itkTypeMacro(Optimizer, itk::SingleValuedNonLinearOptimizer);
+        itkTypeMacro(SimulatedAnnealingOptimizer, Optimizer);
 
         /**  Parameters type.
-         *  It defines a position in the optimization search space. */
+             *  It defines a position in the optimization search space. */
         typedef Superclass::ParametersType ParametersType;
 
         /** InternalParameters typedef. */
         typedef   vnl_vector< double > InternalParametersType;
 
+        /** Type of the Cost Function   */
+        typedef  itk::SingleValuedCostFunction  CostFunctionType;
+        typedef  CostFunctionType::Pointer CostFunctionPointer;
+
         /** Type of Measure */
 
         typedef CostFunctionType::MeasureType MeasureType;
 
-        /** Start optimization. */
-        virtual void StartOptimization()
-        {
+        /** Compute Optimization */
+        virtual void StartOptimization(void);
 
+        /** Get the current cost value */
+        MeasureType GetValue() const
+        {
+            return this->m_CurrentValue;
         }
 
-        /** When users call StartOptimization, this value will be set false.
-             * By calling StopOptimization, this flag will be set true, and
-             * optimization will stop at the next iteration. */
-        void StopOptimization(void)
-        {
-            m_Stop = true;
-        }
+        /** Set/Get temperature */
+        btkSetMacro(Temperature,double);
+        btkGetMacro(Temperature, double);
 
-
-        /** Get the reason for termination */
-        virtual const std::string GetStopConditionDescription() const
-        {
-            return m_StopConditionDescription.str();
-        }
-
-        virtual void SetCurrentPosition(const ParametersType &param)
-        {
-            this->m_CurrentPosition = param;
-        }
+        /** Set/Get Number of Iterations */
+        btkSetMacro(Iteration,unsigned int);
+        btkGetMacro(Iteration,unsigned int);
 
 
     protected:
-        Optimizer();
-        virtual ~Optimizer();
+
+        SimulatedAnnealingOptimizer();
+        virtual ~SimulatedAnnealingOptimizer(){}
         void PrintSelf(std::ostream &os, itk::Indent indent) const
         {
             Superclass::PrintSelf(os, indent);
         }
 
+    private :
 
-        bool m_Stop;
 
-       std::ostringstream m_StopConditionDescription;
+        ParametersType GenerateRandomNeighboor(ParametersType _x);
+
+        inline double Random()
+        {
+            return (double)rand()/(double)RAND_MAX;
+        }
+
+        ParametersType m_Range;
+        ParametersType m_RangeNeighboor;
+
+        double m_Temperature;
+        unsigned int m_Iteration;
+        MeasureType m_CurrentValue;
+
 
 };
 
-}// namespace
+}
 
-#endif
+#endif // BTKRANDOMOPTIMIZER_H

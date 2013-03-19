@@ -52,11 +52,15 @@ CenteredEulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>
     OutputPointType Tp( p );
 
     typename ImageType::IndexType index;
-    m_Image -> TransformPhysicalPointToIndex( Tp , index);
+    bool isInside = m_Image -> TransformPhysicalPointToIndex( Tp , index);
 
-    if(index[2] < 0 || index[2] > m_TransformList.size() -1 )
+//    if(index[2] < 0 || index[2] > m_TransformList.size() -1 )
+//    {
+//        Tp = p;
+//    }
+    if(!isInside) //if point is not inside the image we don't transform it
     {
-        Tp = p;
+        Tp =p;
     }
     else
     {
@@ -212,25 +216,28 @@ Initialize( TransformBase * t )
     m_ParametersPerSlice = tmpTransform -> GetNumberOfParameters();
     this -> m_Parameters.SetSize( m_NumberOfSlices * m_ParametersPerSlice );
 
-    InputPointType centerPoint;
-    ContinuousIndexType centerIndex;
+//    InputPointType centerPoint;
+//    ContinuousIndexType centerIndex;
 
-    centerIndex[0] = (size[0]-1)/2.0;
-    centerIndex[1] = (size[1]-1)/2.0;
+//    centerIndex[0] = (size[0]-1)/2.0;
+//    centerIndex[1] = (size[1]-1)/2.0;
 
     for(unsigned int i=0; i<m_NumberOfSlices; i++)
     {
-        centerIndex[2] =  i;
-        m_Image -> TransformContinuousIndexToPhysicalPoint(centerIndex,centerPoint);
+//        centerIndex[2] =  i;
+//        m_Image -> TransformContinuousIndexToPhysicalPoint(centerIndex,centerPoint);
 
         m_TransformList[i] = TransformType::New();
         m_TransformList[i] -> SetIdentity();
         //FIXME : if we set the center the transformation is not exactly the same as a global transform
-        //I don't know the reason why
-        m_TransformList[i] -> SetCenter(centerPoint);
+        //If each slice have a center, it is not the same as a center for an image
+        // We should convert the transform for each slice
+        m_TransformList[i] -> SetParameters( t -> GetParameters() );
+        m_TransformList[i]->SetFixedParameters(t->GetFixedParameters());
+        //m_TransformList[i] -> SetCenter(centerPoint);
         //t -> SetCenter( m_TransformList[i] -> GetCenter() );
 
-        //m_TransformList[i] -> SetParameters( t -> GetParameters() );
+
     }
 
     this -> Modified();
@@ -238,7 +245,8 @@ Initialize( TransformBase * t )
 
 template <class TScalarType,unsigned int NDimensions, typename TPixelType>
 const typename CenteredEulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::ParametersType&
-CenteredEulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::GetParameters(void) const
+CenteredEulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
+GetParameters(void) const
 {
     for(unsigned int i=0; i<m_NumberOfSlices; i++)
     {

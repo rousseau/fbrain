@@ -87,7 +87,7 @@ public :
      * @param A pointer to the transform
      * @param The name of the transform file
      */
-    static void WriteTransform(TransformPointerType transform, std::string fileName );
+    static void WriteTransform(TransformPointerType transform, const std::string fileName );
     /**
      * @brief Write a array of transforms
      * @param A array of pointer of transform

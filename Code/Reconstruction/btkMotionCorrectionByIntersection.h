@@ -43,22 +43,28 @@
 #include "itkAmoebaOptimizer.h"
 #include "itkRegularStepGradientDescentOptimizer.h"
 #include "itkExhaustiveOptimizer.h"
+#include "itkLevenbergMarquardtOptimizer.h"
+#include "itkOnePlusOneEvolutionaryOptimizer.h"
+#include "itkNormalVariateGenerator.h"
+#include "itkConjugateGradientOptimizer.h"
+#include "itkGradientDescentOptimizer.h"
 #include "itkDiscreteGaussianImageFilter.h"
+#include "itkContinuousIndex.h"
 
 /* BTK */
 #include "btkEulerSliceBySliceTransform.h"
 #include "btkSlicesIntersectionITKCostFunction.hxx"
 #include "btkMathFunctions.h"
-#include "btkCenteredEulerSliceBySliceTransform.h"
+//#include "btkCenteredEulerSliceBySliceTransform.h"
 #include "btkOptimizer.h"
+#include "btkRigidRegistration.h"
+//#include "btkCenteredRigidRegistration.h"
+#include "btkSimulatedAnnealingOptimizer.h"
+#include "btkSmartStepGradientDescentOptimizer.h"
 
 
-
-/* VNL */
-
-#include "vnl/algo/vnl_powell.h"
-
-#include  "cfloat"
+/* OTHERS */
+#include "cfloat"
 #include "cmath"
 #include "algorithm"
 #include "ctime"
@@ -66,6 +72,15 @@
 
 namespace btk
 {
+/**
+ * \brief Perform motion correction using intersection of slices
+ *
+ * This class perform a registration based on intersection of othogonals slices.
+ * This class is templated over the input images.
+ *
+ * \ingroup Reconstruction
+ */
+
 template< typename TImage>
 class MotionCorrectionByIntersection
 {
@@ -76,8 +91,10 @@ public:
     typedef typename ImageType::PixelType Pixel;
     typedef typename ImageType::RegionType ImageRegion;
     typedef itk::Image<unsigned char, 3> MaskType;
-    //typedef btk::EulerSliceBySliceTransform<double, 3, Pixel> Transform;
-    typedef btk::CenteredEulerSliceBySliceTransform<double, 3, Pixel> Transform;
+    typedef btk::EulerSliceBySliceTransform<double, 3, Pixel> TransformType;
+    //typedef itk::CenteredEuler3DTransform<double> Rigid3DTransform;
+    typedef itk::Euler3DTransform<double> Rigid3DTransform;
+    typedef typename TransformType::ParametersType ParametersType;
 
 
     /** Set/Get Methods for input Images */
@@ -90,7 +107,10 @@ public:
     btkGetMacro(Masks, std::vector< MaskType::Pointer >);
 
     /** Get Method for transforms */
-    btkGetMacro(Transforms, std::vector< typename Transform::Pointer >);
+    btkGetMacro(Transforms, std::vector< typename TransformType::Pointer >);
+
+    /** Get Method for the inverse transforms */
+    btkGetMacro(InverseTransforms, std::vector< typename TransformType::Pointer >);
 
     /** Set/Get method for VerboseMode, default off (false) */
     btkSetMacro(VerboseMode, bool);
@@ -102,6 +122,13 @@ public:
 
     /** Set Use of slice exclusion (default OFF) */
     btkSetMacro(UseSliceExclusion, bool);
+
+
+    /** Get The outliers 2D vector */
+    std::vector< std::vector< bool > > GetOutliers()
+    {
+        return m_Outliers;
+    }
 
     /** Initialize method */
     virtual void Initialize();
@@ -126,18 +153,19 @@ protected:
 
 
 private:
-    /** return motion parameters for testing the algorithm (Only use for developement) */
-    typename Transform::ParametersType SimulateMotion(double _Rmin, double _Rmax, double _Tmin, double _Tmax);
+    /** return motion parameters for testing the algorithm (Only use for developement and testing) */
+    typename TransformType::ParametersType SimulateMotion(double _Rmin, double _Rmax, double _Tmin, double _Tmax);
     /** Apply a Gaussian filter for multi-resolution */
     void BlurImages(double level);
+
     /** Parameters of Rigid Transformation to compute */
     vnl_vector<double> m_X;
 
     std::vector< typename ImageType::Pointer > m_Images; /** Input images */
     std::vector< typename ImageType::Pointer > m_BlurredImages; /** Input images */
     std::vector< MaskType::Pointer > m_Masks; /** Input Masks */
-    std::vector<typename Transform::Pointer> m_Transforms; /** Transforms to be computed */
-    std::vector<typename Transform::Pointer> m_InverseTransforms; /** Inverse Transform */
+    std::vector<typename TransformType::Pointer> m_Transforms; /** Transforms to be computed */
+    std::vector<typename TransformType::Pointer> m_InverseTransforms; /** Inverse Transform */
     bool m_VerboseMode; /** Verbose Mode: true : on, false : off */
     int m_NumberOfImages; /** Number of input images */
     int m_ReferenceImage; /** Reference image num */
@@ -156,7 +184,9 @@ private:
 
     bool m_UseSliceExclusion; /** Perform or not Slice Exclusion (detection of outliers) */
 
+    std::vector< std::vector<bool> > m_Outliers; /** Vector 2D of bool, if the value is true it is a outlier slice */
 
+    unsigned int m_NumberOfParameters;
 
 };
 

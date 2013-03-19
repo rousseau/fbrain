@@ -11,6 +11,7 @@ INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Maths)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/ImageFilters)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Registration)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Tractography)
+INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Visualization)
 
 ADD_EXECUTABLE(btkModifyImageUsingLookUpTable btkModifyImageUsingLookUpTable.cxx)
 TARGET_LINK_LIBRARIES(btkModifyImageUsingLookUpTable ${ITK_LIBRARIES})
@@ -34,7 +35,7 @@ ADD_EXECUTABLE(btkSetStandardCoorSystem btkSetStandardCoorSystem.cxx
 TARGET_LINK_LIBRARIES(btkSetStandardCoorSystem ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkPrintImageInfo btkPrintImageInfo.cxx)
-TARGET_LINK_LIBRARIES(btkPrintImageInfo ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkPrintImageInfo ${ITK_LIBRARIES} btkToolsLibrary btkDiffusionLibrary)
 
 ADD_EXECUTABLE(btkRegisterDiffusionToAnatomicalData btkRegisterDiffusionToAnatomicalData.cxx
     ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
@@ -141,7 +142,7 @@ ADD_EXECUTABLE(btkSimulateMotionSliceBySlice btkSimulateMotionSliceBySlice.cxx
     ${fbrain_SOURCE_DIR}/Code/Registration/btkSliceBySliceRigidRegistration.h
     ${fbrain_SOURCE_DIR}/Code/Registration/btkSliceBySliceAffineRegistration.h
 )
-TARGET_LINK_LIBRARIES(btkSimulateMotionSliceBySlice ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkSimulateMotionSliceBySlice btkMathsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkImageSubtract btkImageSubtract.cxx)
 TARGET_LINK_LIBRARIES(btkImageSubtract ${ITK_LIBRARIES})
@@ -209,8 +210,8 @@ TARGET_LINK_LIBRARIES(btkConvertFSLTransform ${ITK_LIBRARIES})
 ADD_EXECUTABLE( btkTractDensityMap  btkTractDensityMap.cxx)
 TARGET_LINK_LIBRARIES(btkTractDensityMap ${ITK_LIBRARIES} vtkHybrid)
 
-ADD_EXECUTABLE(btkColorFiberTractsByMeanOrientation btkColorFiberTractsByMeanOrientation.cxx)
-TARGET_LINK_LIBRARIES(btkColorFiberTractsByMeanOrientation btkTractographyLibrary vtkHybrid)
+ADD_EXECUTABLE(btkColorFiberTractsByOrientation btkColorFiberTractsByOrientation.cxx)
+TARGET_LINK_LIBRARIES(btkColorFiberTractsByOrientation btkTractographyLibrary vtkHybrid)
 
 ADD_EXECUTABLE(btkComputeSoftMaskUsingOrthogonalImages btkComputeSoftMaskUsingOrthogonalImages.cxx)
 TARGET_LINK_LIBRARIES(btkComputeSoftMaskUsingOrthogonalImages ${ITK_LIBRARIES})
@@ -223,6 +224,11 @@ TARGET_LINK_LIBRARIES(btkLocalHistogramMatching btkToolsLibrary ${ITK_LIBRARIES}
 
 ADD_EXECUTABLE(btkWeightImageOfPatches btkWeightImageOfPatches.cxx)
 TARGET_LINK_LIBRARIES(btkWeightImageOfPatches btkToolsLibrary ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE( btkSlicesMotionViewer btkSlicesMotionViewer.cxx
+${Code_SOURCE_DIR}/Visualization/btkRenderPolydata.cxx
+${Code_SOURCE_DIR}/Visualization/btkRenderPolydata.h)
+TARGET_LINK_LIBRARIES(btkSlicesMotionViewer btkMathsLibrary ${ITK_LIBRARIES} vtkHybrid)
 
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
@@ -274,11 +280,12 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkDistanceBetweenBinaryImages
                 btkConvertFSLTransform
                 btkTractDensityMap
-                btkColorFiberTractsByMeanOrientation
+                btkColorFiberTractsByOrientation
                 btkComputeSoftMaskUsingOrthogonalImages
                 btkFSLToITKTransform
                 btkLocalHistogramMatching
                 btkWeightImageOfPatches
+                btkSlicesMotionViewer
         DESTINATION bin)
 
 
