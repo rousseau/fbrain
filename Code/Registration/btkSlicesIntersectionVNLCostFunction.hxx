@@ -53,7 +53,6 @@
 
 #include "btkMacro.h"
 #include "btkEulerSliceBySliceTransform.h"
-#include "btkCenteredEulerSliceBySliceTransform.h"
 #include "btkImageHelper.h"
 #include "btkMathFunctions.h"
 
@@ -63,9 +62,9 @@
 #include "numeric"
 
 
-#include "itkJoinImageFilter.h"
-#include "itkImageToHistogramFilter.h"
-#include "itkMinimumMaximumImageCalculator.h"
+//#include "itkJoinImageFilter.h"
+//#include "itkImageToHistogramFilter.h"
+//#include "itkMinimumMaximumImageCalculator.h"
 
 namespace btk
 {
@@ -101,19 +100,17 @@ public:
     typedef itk::ImageRegionIteratorWithIndex< MaskType >  MaskIterator;
 
     typedef itk::Euler3DTransform<double> TransformType;
-    //typedef itk::CenteredEuler3DTransform<double> TransformType;
    typedef btk::EulerSliceBySliceTransform<double,3,VoxelType> SliceBySliceTransformType;
-    //typedef btk::CenteredEulerSliceBySliceTransform<double, 3, VoxelType> SliceBySliceTransformType;
 
     typedef itk::ContinuousIndex<double, 3 > ContinuousIndexType;
 
-    typedef itk::JoinImageFilter< ImageType, ImageType >  JoinFilterType;
+//    typedef itk::JoinImageFilter< ImageType, ImageType >  JoinFilterType;
 
-    typedef typename JoinFilterType::OutputImageType               VectorImageType;
+//    typedef typename JoinFilterType::OutputImageType               VectorImageType;
 
-    typedef typename itk::Statistics::ImageToHistogramFilter< VectorImageType >  HistogramFilterType;
+//    typedef typename itk::Statistics::ImageToHistogramFilter< VectorImageType >  HistogramFilterType;
 
-    typedef itk::MinimumMaximumImageCalculator<ImageType> MinMaxFilter;
+//    typedef itk::MinimumMaximumImageCalculator<ImageType> MinMaxFilter;
 
     /** Get/Set Method for the verboseMode */
     btkGetMacro(VerboseMode, bool);
@@ -189,39 +186,27 @@ protected:
 
 private :
 
-    bool m_VerboseMode;
+    bool m_VerboseMode; /** Boolean to activate, desactivate the verbose mode */
 
-    typename ImageType::Pointer m_ReferenceImage;
-    typename ImageType::Pointer m_MovingImage;
+    TransformType::Pointer m_X; /** Transformation with parameters found by the optimizer */
+    TransformType::Pointer m_InverseX; /** Inverse of the transformation */
 
-    typename Interpolator::Pointer m_ReferenceInterpolator;
-    typename Interpolator::Pointer m_MovingInterpolator;
+    TransformType::ParametersType m_Parameters; /** Parameters found by optimizer */
 
-    MaskType::Pointer m_ReferenceMask;
-    MaskType::Pointer m_MovingMask;
-
-    TransformType::Pointer m_X;
-    TransformType::Pointer m_InverseX;
-    //typename SliceBySliceTransformType::Pointer m_Transform;
-
-    TransformType::ParametersType m_Parameters;
-
-    //typename ImageType::PointType
-    std::vector<double> m_CenterOfMovingSlice;
-    int m_MovingSliceNum;
-    int m_MovingImageNum;
-    int m_NumberOfImages;
+    int m_MovingSliceNum; /** Moving slice num */
+    int m_MovingImageNum;/** Moving image num */
+    int m_NumberOfImages;/** Number of images */
 
 
-    std::vector<typename ImageType::Pointer> m_Images;
-    std::vector<typename SliceBySliceTransformType::Pointer> m_Transforms;
-    std::vector<typename SliceBySliceTransformType::Pointer> m_InverseTransforms;
-    std::vector<MaskType::Pointer> m_Masks;
-    std::vector<typename Interpolator::Pointer> m_Interpolators;
-    int m_NumberOfPointsOfLine;
+    std::vector<typename ImageType::Pointer> m_Images; /** Vector of pointer of images */
+    std::vector<typename SliceBySliceTransformType::Pointer> m_Transforms; /** Vector of pointer of transformations. Warning: if you want to use transformation of moving image use m_X instead! */
+    std::vector<typename SliceBySliceTransformType::Pointer> m_InverseTransforms; /** Vector of inverse transforms */
+    std::vector<MaskType::Pointer> m_Masks; /** Vector of Masks */
+    std::vector<typename Interpolator::Pointer> m_Interpolators; /** Vector of interpolators */
+    int m_NumberOfPointsOfLine; /** Number Of points of the intersection line (currently unused) */
 
     typename ImageType::PointType m_CenterOfTransform;
-    mutable bool m_Intersection; //mutable while we modify it in a const function( f )
+    mutable bool m_Intersection; /** Return true if the moving slice has intersections or not. This variable is mutable while we modify it into a const function (f()) */
 
 
 };

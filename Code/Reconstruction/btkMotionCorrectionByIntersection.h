@@ -39,15 +39,6 @@
 /* ITK */
 #include "itkImage.h"
 #include "itkEuler3DTransform.h"
-#include "itkPowellOptimizer.h"
-#include "itkAmoebaOptimizer.h"
-#include "itkRegularStepGradientDescentOptimizer.h"
-#include "itkExhaustiveOptimizer.h"
-#include "itkLevenbergMarquardtOptimizer.h"
-#include "itkOnePlusOneEvolutionaryOptimizer.h"
-#include "itkNormalVariateGenerator.h"
-#include "itkConjugateGradientOptimizer.h"
-#include "itkGradientDescentOptimizer.h"
 #include "itkDiscreteGaussianImageFilter.h"
 #include "itkContinuousIndex.h"
 
@@ -55,10 +46,8 @@
 #include "btkEulerSliceBySliceTransform.h"
 #include "btkSlicesIntersectionITKCostFunction.hxx"
 #include "btkMathFunctions.h"
-//#include "btkCenteredEulerSliceBySliceTransform.h"
 #include "btkOptimizer.h"
 #include "btkRigidRegistration.h"
-//#include "btkCenteredRigidRegistration.h"
 #include "btkSimulatedAnnealingOptimizer.h"
 #include "btkSmartStepGradientDescentOptimizer.h"
 
