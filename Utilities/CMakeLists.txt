@@ -218,6 +218,12 @@ TARGET_LINK_LIBRARIES(btkComputeSoftMaskUsingOrthogonalImages ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkFSLToITKTransform btkFSLToITKTransform.cxx)
 TARGET_LINK_LIBRARIES(btkFSLToITKTransform ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkLocalHistogramMatching btkLocalHistogramMatching.cxx)
+TARGET_LINK_LIBRARIES(btkLocalHistogramMatching btkToolsLibrary ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkWeightImageOfPatches btkWeightImageOfPatches.cxx)
+TARGET_LINK_LIBRARIES(btkWeightImageOfPatches btkToolsLibrary ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -271,6 +277,8 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkColorFiberTractsByMeanOrientation
                 btkComputeSoftMaskUsingOrthogonalImages
                 btkFSLToITKTransform
+                btkLocalHistogramMatching
+                btkWeightImageOfPatches
         DESTINATION bin)
 
 
