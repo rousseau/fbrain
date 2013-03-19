@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
         //
 
         std::cout << "Processing images..." << std::endl;
-
+/*
         // Normalize images
         ProbabilityMap::Pointer normalizationImage = btk::ImageHelper< ProbabilityMap >::CreateNewImageFromPhysicalSpaceOf(inputs[0].GetPointer());
 
@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
 
             inputs[i] = divideFilter->GetOutput();
         } // for each image
-
+*/
 
         // Create a new tissue map
         TissueSegmentation::Pointer outputTissues = btk::ImageHelper< ProbabilityMap,TissueSegmentation >::CreateNewImageFromPhysicalSpaceOf(inputs[0].GetPointer());
@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
                     index[0] = x; index[1] = y; index[2] = z;
 
                     ProbabilityMap::PixelType maxValue = inputs[0]->GetPixel(index);
-                    TissueSegmentation::PixelType label = static_cast< TissueSegmentation::PixelType >(0);
+                    TissueSegmentation::PixelType label = static_cast< TissueSegmentation::PixelType >(1);
 
                     for(unsigned int i = 1; i < inputs.size(); i++)
                     {
@@ -161,10 +161,11 @@ int main(int argc, char *argv[])
                         if(value > maxValue)
                         {
                             maxValue = value;
-                            label    = static_cast< TissueSegmentation::PixelType >(i);
+                            label    = static_cast< TissueSegmentation::PixelType >(i+1);
                         }
                     } // for each image
-
+										if(fabs(maxValue)<0.0001)
+											label = 0;
                     outputTissues->SetPixel(index, label);
                 } // for each voxel
             } // for each line
