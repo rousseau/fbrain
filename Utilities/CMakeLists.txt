@@ -66,8 +66,10 @@ TARGET_LINK_LIBRARIES(btkResampleLabelsByInjection ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkSimulateStandardViewFromIsotropicImage btkSimulateStandardViewFromIsotropicImage.cxx)
 TARGET_LINK_LIBRARIES(btkSimulateStandardViewFromIsotropicImage ${ITK_LIBRARIES})
 
-#ADD_EXECUTABLE(btkSimulateLowResolutionImage btkSimulateLowResolutionImage.cxx)
-#TARGET_LINK_LIBRARIES(btkSimulateLowResolutionImage ${ITK_LIBRARIES})
+ADD_EXECUTABLE(btkSimulateLowResolutionImage btkSimulateLowResolutionImage.cxx
+${fbrain_SOURCE_DIR}/Code/Transformations/btkRandomSliceBySliceTransformGenerator.h
+${fbrain_SOURCE_DIR}/Code/Transformations/btkRandomSliceBySliceTransformGenerator.cxx)
+TARGET_LINK_LIBRARIES(btkSimulateLowResolutionImage btkMathsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkAverageImagesWithReference btkAverageImagesWithReference.cxx)
 TARGET_LINK_LIBRARIES(btkAverageImagesWithReference ${ITK_LIBRARIES})
@@ -244,6 +246,7 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkBinarizeLabels
                 btkResampleLabelsByInjection
                 btkSimulateStandardViewFromIsotropicImage
+                btkSimulateLowResolutionImage
                 btkAverageImagesWithReference
                 btkImageInjection
                 btkImageSimilarity
