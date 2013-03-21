@@ -45,7 +45,7 @@ namespace btk
 template <class TInputImage, class TOutputImage,
           class TInterpolatorPrecisionType>
 SimulateLowResolutionImagesFilter<TInputImage, TOutputImage, TInterpolatorPrecisionType>
-::SimulateLowResolutionImagesFilter()
+::SimulateLowResolutionImagesFilter():m_PSF(1)
 {
 }
 //-------------------------------------------------------------------------------------------------
@@ -187,6 +187,8 @@ SimulateLowResolutionImagesFilter<TInputImage, TOutputImage, TInterpolatorPrecis
         {
           lrIndex = fixedIt.GetIndex();
           m_Images[im] -> TransformIndexToPhysicalPoint( lrIndex, lrPoint );
+
+          lrPoint = m_Transforms[im]->TransformPoint(lrPoint);
 
           if ( interpolator -> IsInsideBuffer( lrPoint ) )
           {
