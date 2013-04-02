@@ -68,11 +68,18 @@ int main( int argc, char * argv[] )
         TCLAP::ValueArg<std::string> outputArg("o","output","Normalized DWI Sequence. ", true,"","string",cmd);
         TCLAP::ValueArg<std::string> maskArg("m","mask","Image mask for registration. ", false,"","string",cmd);
 
+        // Options
+        TCLAP::SwitchArg gradientConvertToWCArg("", "gradient_world_coordinates", "Convert gradient table to world coordinates", cmd);
+        TCLAP::SwitchArg gradientConvertToICArg("", "gradient_image_coordinates", "Convert gradient table to image coordinates", cmd);
+
         cmd.parse( argc, argv );
 
         std::string inputFileName  = inputArg.getValue();
         std::string outputFileName = outputArg.getValue();
         std::string maskFileName      = maskArg.getValue();
+
+        bool gradientConvertToWC = gradientConvertToWCArg.getValue();
+        bool gradientConvertToIC = gradientConvertToICArg.getValue();
 
         //
         // Typedefs
@@ -118,6 +125,20 @@ int main( int argc, char * argv[] )
         if (maskFileName !="")
         {
             mask = btk::ImageHelper< TMask >::ReadImage(maskFileName);
+        }
+
+        /////////////////////////////////////////////////////////////
+        //
+        // Conversions
+        //
+
+        if(gradientConvertToWC)
+        {
+            sequence->ConvertGradientTableToPhysicalCoordinates();
+        }
+        else if(gradientConvertToIC)
+        {
+            sequence->ConvertGradientTableToImageCoordinates();
         }
 
         /////////////////////////////////////////////////////////////

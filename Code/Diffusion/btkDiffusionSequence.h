@@ -76,6 +76,15 @@ class DiffusionSequence : public itk::Image< short,4 >
         btkGetMacro(BValues, std::vector< unsigned short >);
         btkSetMacro(BValues, std::vector< unsigned short >);
 
+        /**
+         * @brief Convert the gradient table to physical coordinates.
+         */
+        void ConvertGradientTableToPhysicalCoordinates();
+
+        /**
+         * @brief Convert the gradient table to image coordinates.
+         */
+        void ConvertGradientTableToImageCoordinates();
         // TODO : check how to make a good usage of gradient table
 //        void UseWorldCoordinatesForGradientTable(); // Change gradient table to world coordinates if necessary
 //        void UseImageCoordinatesForGradientTable(); // Change gradient table to image coordinates if necessary

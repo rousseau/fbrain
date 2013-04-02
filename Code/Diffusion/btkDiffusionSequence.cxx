@@ -35,6 +35,11 @@
 
 #include "btkDiffusionSequence.h"
 
+
+// VNL includes
+#include "vnl/vnl_inverse.h"
+
+
 namespace btk
 {
 
@@ -64,6 +69,36 @@ void DiffusionSequence::PrintSelf(std::ostream &os, itk::Indent indent) const
     }
 
     os << indent << "B-Value: " << m_BValues[1] << std::endl;
+}
+
+//----------------------------------------------------------------------------------------
+
+void DiffusionSequence::ConvertGradientTableToPhysicalCoordinates()
+{
+    for(unsigned int i = 0; i < m_GradientTable.size(); i++)
+    {
+        vnl_matrix< double > direction = this->GetDirection().GetVnlMatrix().extract(3,3,0,0);
+        vnl_vector< double >  gradient = m_GradientTable[i].GetVnlVector();
+
+        gradient = direction * gradient;
+        gradient.normalize();
+        m_GradientTable[i] = GradientDirection(gradient[0], gradient[1], gradient[2]);
+    }
+}
+
+//----------------------------------------------------------------------------------------
+
+void DiffusionSequence::ConvertGradientTableToImageCoordinates()
+{
+    for(unsigned int i = 0; i < m_GradientTable.size(); i++)
+    {
+        vnl_matrix< double > directionInverse = vnl_inverse(this->GetDirection().GetVnlMatrix().extract(3,3,0,0));
+        vnl_vector< double >         gradient = m_GradientTable[i].GetVnlVector();
+
+        gradient = directionInverse * gradient;
+        gradient.normalize();
+        m_GradientTable[i] = GradientDirection(gradient[0], gradient[1], gradient[2]);
+    }
 }
 
 } // namespace btk
