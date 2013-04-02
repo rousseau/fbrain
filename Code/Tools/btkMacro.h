@@ -41,6 +41,7 @@
 #include "string"
 #include "cmath"
 #include "ctime"
+#include "cfloat"
 
 // ITK includes
 #include "itkWin32Header.h"
@@ -73,6 +74,47 @@ namespace btk
     _btk_toc = clock();                                                                                   \
     _btk_elapsed_time = static_cast< double >(_btk_toc-_btk_tic) / static_cast< double >(CLOCKS_PER_SEC); \
     btkCoutMacro("Elapsed time: " << _btk_elapsed_time << " seconds.");                                   \
+}
+
+//-------------------------------------------------------------------------------------------------------------------
+// Floating point equality macros
+//-------------------------------------------------------------------------------------------------------------------
+
+/**
+ * @brief Templated floating equal.
+ * @param a First operand of equality.
+ * @param b Second operand of equality.
+ * @param epsilon Floating precision of the equality.
+ * @return True if operands are equals, false otherwise (according to given precision).
+ */
+template< typename T >
+inline bool btkFloatingEqualTemplate(T a, T b, T epsilon)
+{
+    return ( std::abs(a - b) < epsilon);
+}
+
+/**
+ * @brief Double precision floating equal.
+ * @param a First operand of equality.
+ * @param b Second operand of equality.
+ * @param epsilon Floating precision of the equality (default is machine precision).
+ * @return True if operands are equals, false otherwise (according to given precision).
+ */
+inline bool btkFloatingEqual(double a, double b, double epsilon=DBL_EPSILON)
+{
+    return btkFloatingEqualTemplate< double >(a, b, epsilon);
+}
+
+/**
+ * @brief Simple precision floating equal.
+ * @param a First operand of equality.
+ * @param b Second operand of equality.
+ * @param epsilon Floating precision of the equality (default is machine precision).
+ * @return True if operands are equals, false otherwise (according to given precision).
+ */
+inline bool btkFloatingEqual(float a, float b, float epsilon=FLT_EPSILON)
+{
+    return btkFloatingEqualTemplate< float >(a, b, epsilon);
 }
 
 //-------------------------------------------------------------------------------------------------------------------
