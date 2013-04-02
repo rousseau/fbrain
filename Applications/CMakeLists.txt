@@ -197,13 +197,15 @@ INSTALL(TARGETS btkImageReconstruction
 # ---- Tractography ---------------------------------------------------------------------
 
 INCLUDE_DIRECTORIES(
+    ${Code_SOURCE_DIR}/Denoising
     ${Code_SOURCE_DIR}/Diffusion
     ${Code_SOURCE_DIR}/Tractography
-    ${Code_SOURCE_DIR}/DtiParticleFilteringTractography
 )
 
-ADD_EXECUTABLE(btkTractography btkTractography.cxx)
-TARGET_LINK_LIBRARIES(btkTractography btkToolsLibrary btkMathsLibrary btkDiffusionLibrary btkTractographyLibrary ${ITK_LIBRARIES} vtkHybrid)
+ADD_EXECUTABLE(btkTractography btkTractography.cxx
+    ${Code_SOURCE_DIR}/Denoising/btkPseudoResidualsVarianceCalculator.h
+)
+TARGET_LINK_LIBRARIES(btkTractography btkToolsLibrary btkMathsLibrary btkDiffusionLibrary btkTractographyLibrary btkDenoisingLibrary ${ITK_LIBRARIES} vtkHybrid)
 
 ADD_EXECUTABLE(btkODFParticleFilterTractography btkODFParticleFilterTractography.cxx
     ${fbrain_SOURCE_DIR}/Code/Tractography/btkTypes.h
@@ -225,26 +227,8 @@ ADD_EXECUTABLE(btkODFParticleFilterTractography btkODFParticleFilterTractography
 )
 TARGET_LINK_LIBRARIES(btkODFParticleFilterTractography btkToolsLibrary ${ITK_LIBRARIES} vtkHybrid)
 
-ADD_EXECUTABLE(btkTensorParticleFilterTractography btkTensorParticleFilterTractography.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkCartesianCoordinates.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalCoordinates.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkVector.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkDirection.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkPoint.cxx
-    ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPSignalExtractor.cxx
-    ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPSignal.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalHarmonics.cxx
-    ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPAPrioriDensity.cxx
-    ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPLikelihoodDensity.cxx
-    ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPImportanceDensity.cxx
-    ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPParticle.cxx
-    ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPParticleFilter.cxx
-)
-TARGET_LINK_LIBRARIES(btkTensorParticleFilterTractography btkToolsLibrary ${ITK_LIBRARIES} vtkHybrid)
-
 INSTALL(TARGETS
     btkODFParticleFilterTractography
-    btkTensorParticleFilterTractography
     btkTractography
 DESTINATION bin)
 
