@@ -68,27 +68,30 @@ template<class TImage>
 double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x) const
 {
     // Initials values
-    double CostFunction = 0.0;
+    double        CostFunction = 0.0;
     unsigned long NumberOfIntersectedVoxels = 0;
-    double SumOfIntersectedVoxels = 0.0;
-
+    double        SumOfIntersectedVoxels = 0.0;
+	unsigned int  NumberOfIntersectedSlices = 0;
+	
     TransformType::ParametersType params;
     params.SetSize(x.size());
     params = m_X->GetParameters();
     // Convert Angles in degrees to radians
     for(unsigned int i = 0; i< params.size(); i++)
     {
-        params[i] = x[i];
+        
         if(i < 3)
         {
             params[i] = MathFunctions::DegreesToRadians(x[i]);
         }
+        else
+          params[i] = x[i];
 
     }
 
     if(m_VerboseMode)
     {
-        std::cout<<"Parameters : "<<params<<std::endl;
+        std::cout<<"Input parameters : "<<params<<std::endl;
     }
 
     // Set Optimizer's parameters in transformation
@@ -138,6 +141,8 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
                 // If we have found an intersection
                 if(intersection)
                 {
+                    NumberOfIntersectedSlices++;
+                    
                     typename ImageType::PointType P, Pfixed, Pmoving;
                     itk::Vector<double,3> P12;
                     typename Interpolator::ContinuousIndexType IndexFixed, IndexMoving;
@@ -147,9 +152,12 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
                     P12[1] = Point2[1] - Point1[1];
                     P12[2] = Point2[2] - Point1[2];
 
-                    // Process for a point each mm
+                    // Compute the distance between the 2 extrema (points)
                     double EuclideanDist = std::sqrt((P12[0]* P12[0]) + (P12[1]* P12[1]) + (P12[2]* P12[2]));
-                    int NumberOfPoints = std::floor(EuclideanDist);
+                    // Set the number of points equal to this distance times the spacing in mm (in x direction)
+                    int NumberOfPoints = std::floor(EuclideanDist) * m_Images[ifixed]->GetSpacing()[0];
+                    //std::cout<<"Using "<<NumberOfPoints<<" intersection points."<<std::endl;
+                    
 
                     // Loop Over intersection line points
                     //for(unsigned int i = 0; i<m_NumberOfPointsOfLine; i++)// user set a fixed number of points
@@ -163,12 +171,13 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
 
                         //std::cout<<"P-->"<<P<<std::endl;
 
+						//On peut accélerer ce calcul en travaillant dans l'espace image (?) de l'image moving
+						//en optimisant également le nombre de test sur les masques
+
                         // Point in fixed image
                         Pfixed = m_InverseTransforms[ifixed]->TransformPoint(P);
                         //Point in moving image
                         Pmoving = m_InverseX->TransformPoint(P);
-
-
 
                         m_Images[ifixed]->TransformPhysicalPointToContinuousIndex(Pfixed, IndexFixed);
                         m_Images[m_MovingImageNum]->TransformPhysicalPointToContinuousIndex(Pmoving,IndexMoving);
@@ -189,8 +198,8 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
                                 fixedVoxel = m_Interpolators[ifixed]->EvaluateAtContinuousIndex(IndexFixed);
 
                                 //SumOfIntersectedVoxels += SquaredDifference(fixedVoxel,movingVoxel); // MSE
-                                //SumOfIntersectedVoxels += AbsoluteDifference(fixedVoxel,movingVoxel); //MAE
-                                SumOfIntersectedVoxels += RootSquaredDifference(fixedVoxel,movingVoxel); //RSE
+                                SumOfIntersectedVoxels += AbsoluteDifference(fixedVoxel,movingVoxel); //MAE
+                                //SumOfIntersectedVoxels += RootSquaredDifference(fixedVoxel,movingVoxel); //RSE
                                 NumberOfIntersectedVoxels++;// we count each point
 
                                 //std::cout<<"Number of Points:"<<NumberOfIntersectedVoxels<<std::endl;
@@ -219,6 +228,7 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
 
     if(m_VerboseMode)
     {
+        std::cout<<"Number of Intersected Slices : "<<NumberOfIntersectedSlices<<std::endl;
         std::cout<<"Number of Intersected Voxels : "<<NumberOfIntersectedVoxels<<std::endl;
         std::cout<<"Sum of difference between intersected voxels : "<<SumOfIntersectedVoxels<<std::endl;
         std::cout<<"CostFunction Value : "<<CostFunction<<std::endl;

@@ -168,9 +168,59 @@ void MotionCorrectionByIntersection<TImage>::Update()
         m_Transforms[i]->GetInverse(m_InverseTransforms[i]);
     }
 
+	unsigned int loop = 0;
+	double min_Epsilon= 0.0001;
+
+	
+	double previousCost   = ComputeOverallCostFunctionValue();
+	double newCost        = previousCost + 1;
+	double current_Epsilon = min_Epsilon * std::fabs(previousCost);
+	double differenceCost = current_Epsilon + 1;
+		
+/*
+ while(Diff > CurrentEpsilon){ //loop over iterations
+
+    LinMin(fbrr, fbrim, i, k0, k1);
+
+    if((this->SimilarityMeasure >= 5) && (this->SimilarityMeasure <= 8)){
+      ComputeProjection(fbrim->ProjectionImage, fbrim->Images[i], fbrim->MixImages[i], k0, k1, ImageParamForRR[i], SliceParamForRR[i],
+SliceOrder[i]);
+      ComputeMixProjection(fbrim->MixProjectionImage, fbrim->Images[i], fbrim->ProjectionImage, k0, k1, SliceOrder[i]);
+    }
+    if((this->SimilarityMeasure >= 1) && (this->SimilarityMeasure <= 4))
+      ComputeJHForBunchOfSlices(fbrim->Images[i], fbrim->MixImages[i], k0, k1, ImageParamForRR[i], SliceParamForRR[i], SliceOrder[i]);
+
+    if(this->SimilarityMeasure == 10)
+      NewSimilarity = ComputeL2ForBunchOfSlices(fbrim->Images[i], fbrim->MixImages[i], k0, k1, ImageParamForRR[i], SliceParamForRR[i],
+SliceOrder[i]);
+    else
+      NewSimilarity = Evaluate(fbrim);
+    Diff = NewSimilarity - OldSimilarity;
+    //cout<<"Old : "<<OldSimilarity<<" New :"<<NewSimilarity<<" Diff : "<<Diff<<" Current Epsilon : "<<CurrentEpsilon<<endl;
+    if(Diff>0){
+      OldSimilarity = NewSimilarity;
+      CurrentEpsilon = Epsilon * fabs(OldSimilarity);
+    }
+
+    ComputeGradient(fbrr, fbrim, i, k0, k1);
+    NormalizeGradient(i, k0, k1);
+
+  }
+  */		
+		
+		
+		
+		
+    while( loop < m_MaxLoop &&  differenceCost > current_Epsilon )
     // Loop over number max of loop
-    for(unsigned loop = 0; loop < m_MaxLoop; loop++) //TODO: add a while loop, and check m_MaxLoop, AND epsilon between two loop (if a parameters change, of sum of errors).
+    //for(unsigned int loop = 0; loop < m_MaxLoop; loop++) //TODO: add a while loop, and check m_MaxLoop, AND epsilon between two loop (if a parameters change, of sum of errors).
     {
+      
+      
+      previousCost   = ComputeOverallCostFunctionValue();
+      
+      
+      
         //****** Multi-Resolution ****
 //        this->BlurImages(m_MaxLoop - loop);
 //        //************************************
@@ -200,7 +250,7 @@ void MotionCorrectionByIntersection<TImage>::Update()
             if(m_VerboseMode)
             {
                 std::cout<<"**************** "<<std::endl;
-                std::cout<<"Moving Image n° : "<<i<<std::flush;
+                std::cout<<"Moving Image n° : "<<i<<std::endl;
             }
 
 
@@ -245,11 +295,13 @@ void MotionCorrectionByIntersection<TImage>::Update()
                     f->Initialize();//Don't forget
 
                     btk::SmartStepGradientDescentOptimizer::Pointer optimizer = btk::SmartStepGradientDescentOptimizer::New();// first optimizer (gradient descent)
-                    itk::FRPROptimizer::Pointer optimizer2 = itk::FRPROptimizer::New();//second optimizer to refine result of the first one (this is a test)
+                    
+                    //Utilisation d'un seul optimiseur
+                    //itk::FRPROptimizer::Pointer optimizer2 = itk::FRPROptimizer::New();//second optimizer to refine result of the first one (this is a test)
                     //TODO: Test with others itk::Optimizers (powell, amoeba...)
 
-                    if(loop <=1) // the first and the second loop we use first optimizer
-                    {
+                    //if(loop <=1) // the first and the second loop we use first optimizer
+                    //{
 
                         optimizer->SetCostFunction(f.GetPointer());
                         optimizer->SetNumberOfIterations(300);
@@ -259,31 +311,48 @@ void MotionCorrectionByIntersection<TImage>::Update()
                         optimizer->SetMaxBounds(MaxBounds);
                         optimizer->SetUseBounds(false);
                         optimizer->SetOptimizedParameters(ActiveParameters);
-                    }
-                    else // otherwise we use second one
-                    {
+                    
+                    //For debugging purpose.
+                    /*    
+                    if(m_VerboseMode)
+                        {
+                            optimizer->SetVerboseMode(m_VerboseMode);
+                        }
+                    */
+                            
+                    //}
+                    //else // otherwise we use second one
+                    //{
+                    /*
                         optimizer2->SetCostFunction(f.GetPointer());
                         optimizer2->SetStepLength(0.01);
                         optimizer2->SetMaximize(false);
                         optimizer2->SetMaximumIteration( 200 );
                         //optimizer2->SetToFletchReeves();
                         optimizer2->SetToPolakRibiere();
-
-                    }
+					*/
+                    //}
 
 
                     optimizer->SetInitialPosition( initialParams );
-                    optimizer2->SetInitialPosition( initialParams );
+                    //optimizer2->SetInitialPosition( initialParams );
 
                     // Before optimization we check if there are intersections
+                    // ?????????????????? pourquoi zeroParams ???????????? -> valable uniquement à la première itération
                     double initialError = f->GetValue(zeroParams);
+
+					double before = this->ComputeOverallCostFunctionValue();					
+					std::cout<<"Before optimization, ocfv : "<<before<<std::endl;
+					std::cout<<"cfv for current slice     : "<<this->ComputeCostFunctionValueForOneSlice(i, smov)<<std::endl;
+
 
                     // Get if the last evaluation of cost function has an intersection
                     if(f->GetIntersection())
                     {
+                    	
                         // if yes we can optimize
-                        if(loop <=1)//first optimizer
-                        {
+                        //if(loop <=1)//first optimizer
+                        //{
                             try
                             {
                                 optimizer->StartOptimization();
@@ -294,7 +363,8 @@ void MotionCorrectionByIntersection<TImage>::Update()
                             }
                             m_CurrentError = optimizer->GetValue(); // Get The current error
                             m_X = optimizer->GetCurrentPosition();// Get the current parameters
-                        }
+                        //}
+                        /*
                         else // second optimizer
                         {
                             try
@@ -308,6 +378,7 @@ void MotionCorrectionByIntersection<TImage>::Update()
                             m_CurrentError = optimizer2->GetValue();// Get the current error
                             m_X = optimizer2->GetCurrentPosition();// Get the current parameters
                         }
+                        */
 
 
                         if(m_VerboseMode)
@@ -315,6 +386,35 @@ void MotionCorrectionByIntersection<TImage>::Update()
                             std::cout<<"Best error : "<<m_CurrentError<<std::endl;
                         }
 
+
+						//Save previous parameter values
+		                typename TransformType::ParametersType previousP = m_Transforms[i]->GetSliceParameters(smov);
+
+						//Set new values to evaluate the overall cost function
+						params[0] = MathFunctions::DegreesToRadians(m_X[0]);
+   						params[1] = MathFunctions::DegreesToRadians(m_X[1]);
+						params[2] = MathFunctions::DegreesToRadians(m_X[2]);
+						params[3] = m_X[3];
+						params[4] = m_X[4];
+						params[5] = m_X[5];
+						m_Transforms[i]->SetSliceParameters(smov,params);
+
+						double after = this->ComputeOverallCostFunctionValue();
+              			std::cout<<"After optimization, ocfv : "<<after<<std::endl;
+						std::cout<<"cfv for current slice     : "<<this->ComputeCostFunctionValueForOneSlice(i, smov)<<std::endl;
+						std::cout<<"value used for optimization: "<<m_CurrentError<<std::endl;
+						
+						
+						if(after > before) std::cout<<"AIE AIE AIE AIE AIE AIE AIE"<<std::endl;
+	
+						if(after > before)
+						{	    
+							//std::cout<<"Set back to previous values for params"<<std::endl;
+							m_Transforms[i]->SetSliceParameters(smov,previousP);
+						}
+
+						/*						
+						// Partie peu claire
                         params = m_Transforms[i]->GetSliceParameters(smov);
 
                         if(m_CurrentError == initialError) // if error is exactly the same as initial error (0 for all parameters)
@@ -332,19 +432,28 @@ void MotionCorrectionByIntersection<TImage>::Update()
                         }
 
                         //We copy m_X into params and we convert degrees into radians for the sliceBySliceTransform
+                        
                         for(unsigned int x = 0; x< params.size(); x++)
-                        {
-
-                            params[x] = m_X[x];
+                        {                            
                             if(x < 3)
                             {
                                 params[x] = MathFunctions::DegreesToRadians(m_X[x]);
                             }
+                            else
+                                params[x] = m_X[x];
 
 
                         }
+                      
+                        
+                        
+                        
                         // We set the parameters into the transformation
                         m_Transforms[i]->SetSliceParameters(smov,params);
+                        
+                        */
+                        
+
                         // DEBUG PART: uncomment this if you want to write error in files
                         //***********************************************
 //                        if(i == 0)
@@ -384,6 +493,12 @@ void MotionCorrectionByIntersection<TImage>::Update()
                     // if we don't cost function is out of date and results are wrong
                     this->UpdateInfos();
                     m_X.fill(0.0); // reinitialize m_X
+                    
+
+
+
+					
+
 
                 }
                 m_BestError[i][smov] = m_CurrentError; // Save the current error on a vector
@@ -408,8 +523,16 @@ void MotionCorrectionByIntersection<TImage>::Update()
             }
         }
         // after each loop display the sum of errors
-        std::cout<<"**** ERROR : "<<error<<" ****"<<std::endl;
+        std::cout<<"**** Overall Cost Function Value : "<<error<<" ****"<<std::endl;
 
+	  newCost   = ComputeOverallCostFunctionValue();
+	  differenceCost = previousCost - newCost;
+	  current_Epsilon = min_Epsilon * std::fabs(previousCost);
+	  std::cout<<"New cost : "<<newCost<<std::endl;
+	  std::cout<<"Difference between the 2 loops: "<<differenceCost<<std::endl;
+	  std::cout<<"Current epsilon : "<<current_Epsilon<<std::endl;
+	  loop++;
+	  
     }
     // if you want to use Outliers exclusion
     if(m_UseSliceExclusion)
@@ -594,6 +717,47 @@ BlurImages(double level)
 }
 
 //-------------------------------------------------------------------------------------------------
+template<typename TImage>
+double MotionCorrectionByIntersection<TImage>::ComputeOverallCostFunctionValue()
+{
+	double res = 0;
+	
+	for(unsigned int i = 0; i< m_Images.size(); i++)
+	{
+      for(unsigned int smov = 0; smov < m_Images[i]->GetLargestPossibleRegion().GetSize()[2]; smov++ )
+      {                
+        res += this->ComputeCostFunctionValueForOneSlice(i,smov);
+      }	
+	}
+
+	return res;
+}
+
+//-------------------------------------------------------------------------------------------------
+template<typename TImage>
+double MotionCorrectionByIntersection<TImage>::ComputeCostFunctionValueForOneSlice(unsigned int i, unsigned int smov)
+{
+	double res = 0;
+
+    this->UpdateInfos();
+
+    typename btk::SlicesIntersectionITKCostFunction<ImageType>::Pointer f = btk::SlicesIntersectionITKCostFunction<ImageType>::New();
+    f->SetNumberOfParameters(m_NumberOfParameters);
+    f->SetVerboseMode(m_VerboseDbg);
+    f->SetImages(m_Images);
+    f->SetMasks(m_Masks);
+    f->SetTransforms(m_Transforms);
+    f->SetInverseTransforms(m_InverseTransforms);
+    f->SetMovingImageNum(i);
+    f->SetMovingSliceNum(smov);
+    f->Initialize();
+        
+    typename TransformType::ParametersType p = m_Transforms[i]->GetSliceParameters(smov);
+                
+    res = f->GetValue(p);
+
+	return res;
+}
 
 }//namespace
 

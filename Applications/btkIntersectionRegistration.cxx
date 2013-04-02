@@ -338,7 +338,7 @@ int main(int argc, char * argv[])
 
     try
     {
-        //resampler -> Update();
+        resampler -> Update();
     }
     catch(itk::ExceptionObject &exp)
     {
@@ -352,7 +352,7 @@ int main(int argc, char * argv[])
     //
     //Super Resolution :
 
-
+    /*
     std::cout<<"Performing super resolution"<<std::endl;
     SR_filter -> UseReferenceImageOn();
     SR_filter -> SetReferenceImage( LowToHigh->GetOutput() );
@@ -399,11 +399,13 @@ int main(int argc, char * argv[])
     myTool.ComputeOutput();
 
     std::cout<<"Done !"<<std::endl;
-
+  */
      //TODO : Cast into unsigned short at the end !
    itkImage::Pointer Output = itkImage::New();
-   Output = myTool.GetOutput();
-
+   //Output = myTool.GetOutput();
+   //Output = LowToHigh->GetOutput(); //produces a zero image
+   Output = resampler->GetOutput();
+  
   btk::ImageHelper<itkImage>::WriteImage(Output, output);
   btk::IOTransformHelper< Transform >::WriteTransform(transforms,transfoNames);
 

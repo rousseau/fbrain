@@ -122,7 +122,8 @@ void SmartStepGradientDescentOptimizer::StartOptimization()
 
         double newCost = this->m_CostFunction->GetValue(x);
 
-        epsilon = std::fabs(newCost-cost);
+        //epsilon = std::fabs(newCost-cost); /**** BUG ****/
+        epsilon = cost - newCost;
 
         if(m_VerboseMode)
         {
@@ -143,7 +144,8 @@ void SmartStepGradientDescentOptimizer::StartOptimization()
             this->m_CurrentValue = newCost;
             cost = newCost;
         }
-
+        
+		//Should be in the previous brackets? -----------------
         m_X = x;
         this->m_CostFunction->GetDerivative(m_X,gx);
         gx.normalize();
@@ -151,6 +153,11 @@ void SmartStepGradientDescentOptimizer::StartOptimization()
         m_gX = this->CheckParameters(m_gX);
 
         i++;
+    }
+    if(m_VerboseMode)
+    {
+    	std::cout<<"Stopping optimization. Number of iterations : "<<i<<std::endl;
+    	std::cout<<"--------------------------------------------------"<<std::endl;
     }
 
 

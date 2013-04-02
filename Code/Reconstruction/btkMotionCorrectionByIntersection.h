@@ -134,6 +134,9 @@ public:
     /** Destructor */
     virtual ~MotionCorrectionByIntersection(){}
 
+	/* Francois debugging */
+	double ComputeCostFunctionValueForOneSlice(unsigned int i, unsigned int smov);
+	double ComputeOverallCostFunctionValue();
 
 protected:
     /** UpdateInfos method, called after each iteration for updating transformations parameters informations */

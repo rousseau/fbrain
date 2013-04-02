@@ -173,6 +173,7 @@ protected:
           return (double)( std::abs(ReferenceVoxel - MovingVoxel ));
       }
 
+	  //Cette fonction est complètement inutile !!!!!!!!!!! -----------------------------------------------
       /** Compute the square root difference between two voxels */
       inline double RootSquaredDifference(VoxelType ReferenceVoxel, VoxelType MovingVoxel) const
       {
