@@ -111,11 +111,6 @@ int main( int argc, char * argv[] )
         TSequence::SizeType   image3Dsize = input4Dsize;
         image3Dsize[3]=0;
 
-        std::vector< unsigned short>          BValues       = sequence->GetBValues();
-        std::vector< btk::GradientDirection > GradientTable = sequence->GetGradientTable();
-        std::vector< unsigned short>          new_BValues;
-        std::vector< btk::GradientDirection > new_GradientTable;
-
         std::vector< TImage::Pointer > B0;
         std::vector< TImage::Pointer > B0_resampled;
 
@@ -129,7 +124,7 @@ int main( int argc, char * argv[] )
 
         /////////////////////////////////////////////////////////////
         //
-        // Conversions
+        // Coordinates conversions
         //
 
         if(gradientConvertToWC)
@@ -140,6 +135,11 @@ int main( int argc, char * argv[] )
         {
             sequence->ConvertGradientTableToImageCoordinates();
         }
+
+        std::vector< unsigned short>          BValues       = sequence->GetBValues();
+        std::vector< btk::GradientDirection > GradientTable = sequence->GetGradientTable();
+        std::vector< unsigned short>          new_BValues;
+        std::vector< btk::GradientDirection > new_GradientTable;
 
         /////////////////////////////////////////////////////////////
         //
