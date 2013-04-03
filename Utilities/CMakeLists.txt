@@ -218,6 +218,9 @@ TARGET_LINK_LIBRARIES(btkComputeSoftMaskUsingOrthogonalImages ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkFSLToITKTransform btkFSLToITKTransform.cxx)
 TARGET_LINK_LIBRARIES(btkFSLToITKTransform ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkViewer btkViewer.cxx)
+TARGET_LINK_LIBRARIES(btkViewer btkToolsLibrary btkDiffusionLibrary ${ITK_LIBARIES} vtkHybrid vtkWidgets)
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
