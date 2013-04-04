@@ -90,13 +90,13 @@ public:
 
   typedef typename Superclass::JacobianType JacobianType;
 
-  typedef typename Superclass::ParametersType ParametersType;
+  typedef typename TransformType::ParametersType ParametersType;
 
   /** New method for creating an object using a factory. */
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro( SliceBySliceTransform, Transform );
+  itkTypeMacro( EulerSliceBySliceTransform, SliceBySliceTransformBase );
 
   /** Method to transform a point. */
   virtual OutputPointType TransformPoint(const InputPointType& p ) const;
@@ -143,27 +143,27 @@ public:
   /** Get the transformation associated to a slice. */
   TransformType * GetSliceTransform( unsigned int i ) const
   {
-    return m_TransformList[i];
+      return m_TransformList[i];
   }
 
   /** Set the transformation parameters for a slice. */
   void SetSliceParameters( unsigned int i, const ParametersType & parameters )
   {
-    m_TransformList[i] -> SetParameters( parameters );
+    this->m_TransformList[i] -> SetParameters( parameters );
     this -> Modified();
   }
 
   /** Get the parameters for a slice. */
   virtual ParametersType GetSliceParameters(unsigned int i)
   {
-      return m_TransformList[i]->GetParameters();
+      return this->m_TransformList[i]->GetParameters();
   }
 
   /** Initialize with the identity. */
   void Initialize();
 
   /** Initialize with a transformation. */
-  void Initialize( TransformBase * t );
+  void Initialize( TransformType * t );
 
   /** Set the Fixed Parameters. */
   void SetFixedParameters( const ParametersType & fp );

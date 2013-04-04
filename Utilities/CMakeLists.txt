@@ -11,6 +11,7 @@ INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Maths)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/ImageFilters)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Registration)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Tractography)
+INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Visualization)
 
 ADD_EXECUTABLE(btkModifyImageUsingLookUpTable btkModifyImageUsingLookUpTable.cxx)
 TARGET_LINK_LIBRARIES(btkModifyImageUsingLookUpTable ${ITK_LIBRARIES})
@@ -65,8 +66,10 @@ TARGET_LINK_LIBRARIES(btkResampleLabelsByInjection ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkSimulateStandardViewFromIsotropicImage btkSimulateStandardViewFromIsotropicImage.cxx)
 TARGET_LINK_LIBRARIES(btkSimulateStandardViewFromIsotropicImage ${ITK_LIBRARIES})
 
-#ADD_EXECUTABLE(btkSimulateLowResolutionImage btkSimulateLowResolutionImage.cxx)
-#TARGET_LINK_LIBRARIES(btkSimulateLowResolutionImage ${ITK_LIBRARIES})
+ADD_EXECUTABLE(btkSimulateLowResolutionImage btkSimulateLowResolutionImage.cxx
+${fbrain_SOURCE_DIR}/Code/Transformations/btkRandomSliceBySliceTransformGenerator.h
+${fbrain_SOURCE_DIR}/Code/Transformations/btkRandomSliceBySliceTransformGenerator.cxx)
+TARGET_LINK_LIBRARIES(btkSimulateLowResolutionImage btkMathsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkAverageImagesWithReference btkAverageImagesWithReference.cxx)
 TARGET_LINK_LIBRARIES(btkAverageImagesWithReference ${ITK_LIBRARIES})
@@ -141,7 +144,7 @@ ADD_EXECUTABLE(btkSimulateMotionSliceBySlice btkSimulateMotionSliceBySlice.cxx
     ${fbrain_SOURCE_DIR}/Code/Registration/btkSliceBySliceRigidRegistration.h
     ${fbrain_SOURCE_DIR}/Code/Registration/btkSliceBySliceAffineRegistration.h
 )
-TARGET_LINK_LIBRARIES(btkSimulateMotionSliceBySlice ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkSimulateMotionSliceBySlice btkMathsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkImageSubtract btkImageSubtract.cxx)
 TARGET_LINK_LIBRARIES(btkImageSubtract ${ITK_LIBRARIES})
@@ -221,6 +224,18 @@ TARGET_LINK_LIBRARIES(btkFSLToITKTransform ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkViewer btkViewer.cxx)
 TARGET_LINK_LIBRARIES(btkViewer btkToolsLibrary btkDiffusionLibrary ${ITK_LIBARIES} vtkHybrid vtkWidgets)
 
+ADD_EXECUTABLE(btkLocalHistogramMatching btkLocalHistogramMatching.cxx)
+TARGET_LINK_LIBRARIES(btkLocalHistogramMatching btkToolsLibrary ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkWeightImageOfPatches btkWeightImageOfPatches.cxx)
+TARGET_LINK_LIBRARIES(btkWeightImageOfPatches btkToolsLibrary ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE( btkSlicesMotionViewer btkSlicesMotionViewer.cxx
+${Code_SOURCE_DIR}/Visualization/btkRenderPolydata.cxx
+${Code_SOURCE_DIR}/Visualization/btkRenderPolydata.h)
+TARGET_LINK_LIBRARIES(btkSlicesMotionViewer btkMathsLibrary ${ITK_LIBRARIES} vtkHybrid)
+
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -235,6 +250,7 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkBinarizeLabels
                 btkResampleLabelsByInjection
                 btkSimulateStandardViewFromIsotropicImage
+                btkSimulateLowResolutionImage
                 btkAverageImagesWithReference
                 btkImageInjection
                 btkImageSimilarity
@@ -274,6 +290,10 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkColorFiberTractsByOrientation
                 btkComputeSoftMaskUsingOrthogonalImages
                 btkFSLToITKTransform
+                btkLocalHistogramMatching
+                btkWeightImageOfPatches
+                btkSlicesMotionViewer
+                btkViewer
         DESTINATION bin)
 
 

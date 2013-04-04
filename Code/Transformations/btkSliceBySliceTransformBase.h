@@ -89,7 +89,7 @@ public:
    // itkNewMacro(Self);
 
     /** Run-time type information (and related methods). */
-    itkTypeMacro( SliceBySliceTransformBase, Transform );
+    itkTypeMacro( SliceBySliceTransformBase, itk::MatrixOffsetTransformBase );
 
     /** Method to transform a point. */
     virtual OutputPointType TransformPoint(const InputPointType& p ) const = 0;
@@ -140,8 +140,8 @@ public:
     /** Initialize with the identity. */
     virtual void Initialize() = 0;
 
-    /** Initialize with a transform. */
-    virtual void Initialize(TransformType* t) = 0;
+   // /** Initialize with a transform. */
+    //virtual void Initialize(TransformType* t) = 0;
 //    {
 //        typename ImageType::SizeType size = this->m_Image -> GetLargestPossibleRegion().GetSize();
 

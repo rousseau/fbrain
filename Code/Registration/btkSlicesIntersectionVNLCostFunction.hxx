@@ -53,13 +53,18 @@
 
 #include "btkMacro.h"
 #include "btkEulerSliceBySliceTransform.h"
-#include "btkCenteredEulerSliceBySliceTransform.h"
 #include "btkImageHelper.h"
 #include "btkMathFunctions.h"
 
 
-#include  "cfloat"
+#include "cfloat"
 #include "sstream"
+#include "numeric"
+
+
+//#include "itkJoinImageFilter.h"
+//#include "itkImageToHistogramFilter.h"
+//#include "itkMinimumMaximumImageCalculator.h"
 
 namespace btk
 {
@@ -94,12 +99,18 @@ public:
     typedef itk::ImageRegionConstIteratorWithIndex< ImageType >  ConstIterator;
     typedef itk::ImageRegionIteratorWithIndex< MaskType >  MaskIterator;
 
-    //typedef itk::Euler3DTransform<double> TransformType;
-    typedef itk::CenteredEuler3DTransform<double> TransformType;
-    //typedef btk::EulerSliceBySliceTransform<double,3,VoxelType> SliceBySliceTransformType;
-    typedef btk::CenteredEulerSliceBySliceTransform<double, 3, VoxelType> SliceBySliceTransformType;
+    typedef itk::Euler3DTransform<double> TransformType;
+   typedef btk::EulerSliceBySliceTransform<double,3,VoxelType> SliceBySliceTransformType;
 
     typedef itk::ContinuousIndex<double, 3 > ContinuousIndexType;
+
+//    typedef itk::JoinImageFilter< ImageType, ImageType >  JoinFilterType;
+
+//    typedef typename JoinFilterType::OutputImageType               VectorImageType;
+
+//    typedef typename itk::Statistics::ImageToHistogramFilter< VectorImageType >  HistogramFilterType;
+
+//    typedef itk::MinimumMaximumImageCalculator<ImageType> MinMaxFilter;
 
     /** Get/Set Method for the verboseMode */
     btkGetMacro(VerboseMode, bool);
@@ -126,6 +137,10 @@ public:
     btkSetMacro(NumberOfPointsOfLine, int);
     btkGetMacro(NumberOfPointsOfLine, int);
 
+    /** Set/Get the center of the transform (default, middle of the volume ) */
+    btkSetMacro(CenterOfTransform, typename ImageType::PointType);
+    btkGetMacro(CenterOfTransform, typename ImageType::PointType);
+
     /** Constructor */
     SlicesIntersectionVNLCostFunction(unsigned int dim);
     SlicesIntersectionVNLCostFunction(){}
@@ -136,60 +151,63 @@ public:
     /** Cost Function */
     double f(const vnl_vector<double> &x) const;
 
-    virtual vnl_vector<double>GetGradient(vnl_vector<double> const& x,double stepsize = 10e-8) const;
+    virtual vnl_vector<double>GetGradient(vnl_vector<double> const& x,double stepsize = 0.05) const;
      /** Intialization */
      void Initialize();
 
+     /** Get If the last evaluation of cost function has intersection or not */
+     btkGetMacro(Intersection, bool);
 
-//     /** Set the reference slice (for the reference coordinate system) */
-//     btkSetMacro(ReferenceCoordSlice, int);
-
-//     /** Set the reference stack (for the reference coordinate system) */
-//     btkSetMacro(ReferenceCoordImage, int);
 
 
 protected:
 
-     /** ComputeDifference between two voxels */
-      inline double SquareDifference(double ReferenceVoxel, double MovingVoxel) const
+     /** Compute squared Difference between two voxels */
+      inline double SquaredDifference(VoxelType ReferenceVoxel, VoxelType MovingVoxel) const
       {
           return (double)( (ReferenceVoxel - MovingVoxel ) * (ReferenceVoxel - MovingVoxel ) );
       }
+      /** Compute Absolute Difference between two voxels */
+      inline double AbsoluteDifference(VoxelType ReferenceVoxel, VoxelType MovingVoxel) const
+      {
+          return (double)( std::abs(ReferenceVoxel - MovingVoxel ));
+      }
+
+	  //Cette fonction est complètement inutile !!!!!!!!!!! -----------------------------------------------
+      /** Compute the square root difference between two voxels */
+      inline double RootSquaredDifference(VoxelType ReferenceVoxel, VoxelType MovingVoxel) const
+      {
+          return (double)( std::sqrt((ReferenceVoxel - MovingVoxel) * (ReferenceVoxel - MovingVoxel )));
+      }
+      /** Found starting and ending point of an intersection line (if existing) */
+      bool FoundIntersectionPoints(unsigned int _fixedImage, unsigned int _fixedSlice, typename ImageType::PointType &Point1, typename ImageType::PointType &Point2) const;
+
 
 
 
 private :
 
-    bool m_VerboseMode;
+    bool m_VerboseMode; /** Boolean to activate, desactivate the verbose mode */
 
-    typename ImageType::Pointer m_ReferenceImage;
-    typename ImageType::Pointer m_MovingImage;
+    TransformType::Pointer m_X; /** Transformation with parameters found by the optimizer */
+    TransformType::Pointer m_InverseX; /** Inverse of the transformation */
 
-    typename Interpolator::Pointer m_ReferenceInterpolator;
-    typename Interpolator::Pointer m_MovingInterpolator;
+    TransformType::ParametersType m_Parameters; /** Parameters found by optimizer */
 
-    MaskType::Pointer m_ReferenceMask;
-    MaskType::Pointer m_MovingMask;
+    int m_MovingSliceNum; /** Moving slice num */
+    int m_MovingImageNum;/** Moving image num */
+    int m_NumberOfImages;/** Number of images */
 
-    TransformType::Pointer m_Transform;
-    //typename SliceBySliceTransformType::Pointer m_Transform;
 
-    TransformType::ParametersType m_Parameters;
+    std::vector<typename ImageType::Pointer> m_Images; /** Vector of pointer of images */
+    std::vector<typename SliceBySliceTransformType::Pointer> m_Transforms; /** Vector of pointer of transformations. Warning: if you want to use transformation of moving image use m_X instead! */
+    std::vector<typename SliceBySliceTransformType::Pointer> m_InverseTransforms; /** Vector of inverse transforms */
+    std::vector<MaskType::Pointer> m_Masks; /** Vector of Masks */
+    std::vector<typename Interpolator::Pointer> m_Interpolators; /** Vector of interpolators */
+    int m_NumberOfPointsOfLine; /** Number Of points of the intersection line (currently unused) */
 
-    //typename ImageType::PointType
-    std::vector<double> m_CenterOfMovingSlice;
-    int m_MovingSliceNum;
-    int m_MovingImageNum;
-    int m_NumberOfImages;
-//    int m_ReferenceCoordSlice;
-//    int m_ReferenceCoordImage;
-
-    std::vector<typename ImageType::Pointer> m_Images;
-    std::vector<typename SliceBySliceTransformType::Pointer> m_Transforms;
-    std::vector<typename SliceBySliceTransformType::Pointer> m_InverseTransforms;
-    std::vector<MaskType::Pointer> m_Masks;
-    std::vector<typename Interpolator::Pointer> m_Interpolators;
-    int m_NumberOfPointsOfLine;
+    typename ImageType::PointType m_CenterOfTransform;
+    mutable bool m_Intersection; /** Return true if the moving slice has intersections or not. This variable is mutable while we modify it into a const function (f()) */
 
 
 };

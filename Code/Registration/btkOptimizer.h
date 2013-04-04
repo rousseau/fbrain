@@ -36,11 +36,15 @@
 #define _btkOptimizer_h
 
 #include "itkSingleValuedNonLinearOptimizer.h"
-#include "itkSmartPointer.h"
-#include "itkSingleValuedCostFunction.h"
 
 namespace btk
 {
+/**
+ * Base class for Optimizer
+ *
+ * @author Marc Schweitzer
+ * \ingroup Registration
+ */
 class Optimizer : public itk::SingleValuedNonLinearOptimizer
 {
 public:
@@ -60,48 +64,52 @@ public:
         /** InternalParameters typedef. */
         typedef   vnl_vector< double > InternalParametersType;
 
-        /** Type of the Cost Function   */
-        typedef  itk::SingleValuedCostFunction  CostFunctionType;
-        typedef  CostFunctionType::Pointer CostFunctionPointer;
+        /** Type of Measure */
 
-        /** Return Current Value */
-        itkGetConstReferenceMacro(CurrentCost, MeasureType);
-        MeasureType GetValue() const { return this->GetCurrentCost(); }
+        typedef CostFunctionType::MeasureType MeasureType;
 
-        virtual void StartOptimization(void);
+        /** Start optimization. */
+        virtual void StartOptimization()
+        {
+
+        }
 
         /** When users call StartOptimization, this value will be set false.
-         * By calling StopOptimization, this flag will be set true, and
-         * optimization will stop at the next iteration. */
-        void StopOptimization()
-        { m_Stop = true; }
+             * By calling StopOptimization, this flag will be set true, and
+             * optimization will stop at the next iteration. */
+        void StopOptimization(void)
+        {
+            m_Stop = true;
+        }
 
-        /** Plug in a Cost Function into the optimizer  */
-        virtual void SetCostFunction(CostFunctionType *costFunction);
 
-        const std::string GetStopConditionDescription() const;
+        /** Get the reason for termination */
+        virtual const std::string GetStopConditionDescription() const
+        {
+            return m_StopConditionDescription.str();
+        }
 
-        itkSetMacro( MaximumNumberOfIterations, unsigned int );
-        itkGetConstMacro( MaximumNumberOfIterations, unsigned int );
+        virtual void SetCurrentPosition(const ParametersType &param)
+        {
+            this->m_CurrentPosition = param;
+        }
+
 
     protected:
         Optimizer();
         virtual ~Optimizer();
-        void PrintSelf(std::ostream &os, itk::Indent indent) const;
+        void PrintSelf(std::ostream &os, itk::Indent indent) const
+        {
+            Superclass::PrintSelf(os, indent);
+        }
 
-    protected:
-
-        MeasureType m_CurrentValue;
-        MeasureType m_CurrentCost;
 
         bool m_Stop;
 
-        unsigned int m_MaximumNumberOfIterations;
-        unsigned int m_CurrentIteration;
-
-        std::ostringstream m_StopConditionDescription;
+       std::ostringstream m_StopConditionDescription;
 
 };
+
 }// namespace
 
 #endif

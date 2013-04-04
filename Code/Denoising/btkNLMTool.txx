@@ -207,7 +207,6 @@ void NLMTool<T>::SetOptimizationStrategy(int o)
         m_varianceImage->FillBuffer(0);
 
         int x,y,z;
-        //FIXME : This is going to take a huge set of time, we should use iterator instead !
         #pragma omp parallel for private(x,y,z) schedule(dynamic)
 
         for(z=0; z < (int)m_size[2]; z++)
@@ -441,9 +440,10 @@ void NLMTool<T>::SetLocalSmoothing(float beta)
 }
 
 template <typename T>
-void NLMTool<T>::GetOutput(itkTPointer & outputImage)
+typename NLMTool<T>::itkTPointer
+NLMTool<T>::GetOutput()
 {
-  outputImage = m_outputImage;
+  return m_outputImage;
 }
 
 template <typename T>

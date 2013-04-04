@@ -50,6 +50,7 @@
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkNumericTraits.h"
+#include "itkVector.h"
 
 namespace btk
 {
@@ -172,6 +173,14 @@ namespace btk
              * @return A deep copy of the image parameter.
              */
             static typename TImageOutput::Pointer DeepCopy(typename TImageInput::ConstPointer image);
+
+            /**
+             * @brief Check if two images are orthogonals
+             * @param two image pointers
+             * @return A boolean, true if they are orthogonal, false if not.
+             */
+
+            static bool AreOrthos(typename TImageInput::Pointer image1, typename TImageInput::Pointer image2, float threshold = 0.5);
     };
 
 } // namespace btk

@@ -68,8 +68,8 @@ ReadTransform(std::string _fileName)
         throw excpt;
     }
     TransformListType transforms = reader->GetTransformList();
-//    itkTReader::TransformListType::const_iterator titr = transforms->begin();
-//    TransformPointerType trans = dynamic_cast< TTransform * >( titr->GetPointer() );
+    //    itkTReader::TransformListType::const_iterator titr = transforms->begin();
+    //    TransformPointerType trans = dynamic_cast< TTransform * >( titr->GetPointer() );
     TransformPointerType trans = static_cast< TTransform * >( transforms->front().GetPointer() );
     std::cout << " done! " << std::endl;
 
@@ -110,9 +110,9 @@ ReadTransform(std::vector< std::string >& _fileNames)
             throw excpt;
         }
         TransformListType tlist = reader->GetTransformList();
-//        itkTReader::TransformListType::const_iterator titr = tlist->begin();
+        //        itkTReader::TransformListType::const_iterator titr = tlist->begin();
         //transforms[i] = TransformType::New();
-//        TransformPointerType trans = dynamic_cast< TTransform * >( titr->GetPointer() );
+        //        TransformPointerType trans = dynamic_cast< TTransform * >( titr->GetPointer() );
         TransformPointerType trans = static_cast< TTransform * >( tlist->front().GetPointer() );
         transforms[i] = trans;
         std::cout << " done! " << std::endl;
@@ -124,7 +124,7 @@ ReadTransform(std::vector< std::string >& _fileNames)
 
 //---------------------------------------------------------------------------------
 template <class TTransform>
-void IOTransformHelper< TTransform >::WriteTransform(TransformPointerType _transform, std::string _fileName)
+void IOTransformHelper< TTransform >::WriteTransform(TransformPointerType _transform, const std::string _fileName)
 {
 
     itkTWriter::Pointer writer = itkTWriter::New();
@@ -155,22 +155,25 @@ void IOTransformHelper< TTransform >::WriteTransform(std::vector< TransformPoint
     {
         for(int i = 0; i< _transforms.size(); i++)
         {
-            itkTWriter::Pointer writer = itkTWriter::New();
-            writer->SetInput(_transforms[i]);
-            writer->SetFileName(_fileNames[i].c_str());
-            try
-            {
-                std::cout << "Writing " << _fileNames[i].c_str() << " ... " ; std::cout.flush();
-                writer->Update();
-                std::cout << " done! " << std::endl;
-            }
-            catch(itk::ExceptionObject & excpt)
-            {
-                std::cerr << "Error while saving transform" << std::endl;
-                std::cerr << excpt << std::endl;
-                std::cout << "[FAILED]" << std::endl;
-                throw excpt;
-            }
+
+
+            WriteTransform(_transforms[i],_fileNames[i]);
+            //            itkTWriter::Pointer writer = itkTWriter::New();
+            //            writer->SetInput(_transforms[i]);
+            //            writer->SetFileName(_fileNames[i].c_str());
+            //            try
+            //            {
+            //                std::cout << "Writing " << _fileNames[i].c_str() << " ... " ; std::cout.flush();
+            //                writer->Update();
+            //                std::cout << " done! " << std::endl;
+            //            }
+            //            catch(itk::ExceptionObject & excpt)
+            //            {
+            //                std::cerr << "Error while saving transform" << std::endl;
+            //                std::cerr << excpt << std::endl;
+            //                std::cout << "[FAILED]" << std::endl;
+            //                throw excpt;
+            //            }
         }
     }
     else

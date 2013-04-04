@@ -405,7 +405,7 @@ int main( int argc, char *argv[] )
 
   typedef itk::Euler3DTransform<double> EulerTransformType;
   EulerTransformType::Pointer transform = EulerTransformType::New();
-  transform -> SetRotationMatrix( NQ );
+  transform -> SetMatrix( NQ );
 
   typedef btk::DiffusionGradientTable< SequenceType > GradientTableType;
   GradientTableType::Pointer gradientTable = GradientTableType::New();

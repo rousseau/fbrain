@@ -80,13 +80,15 @@ int main(int argc, char *argv[])
         // Define command line arguments
         TCLAP::MultiArg< std::string > inputLabelFileNamesArg("i", "input", "Input label filenames", true, "string", cmd);
         TCLAP::ValueArg< std::string > outputTissueFileNameArg("o", "output", "Output filename", false, "outputTissue.nii.gz", "string", cmd);
+	    TCLAP::SwitchArg               noBackgroundArg("n","nobackground","No background map is provided", cmd, false);
 
         // Parse arguments
         cmd.parse(argc, argv);
 
         // Get back arguments' values
-        std::vector< std::string > inputLabelFileNames = inputLabelFileNamesArg.getValue();
-        std::string               outputTissueFileName = outputTissueFileNameArg.getValue();
+        std::vector< std::string > inputLabelFileNames  = inputLabelFileNamesArg.getValue();
+        std::string                outputTissueFileName = outputTissueFileNameArg.getValue();
+	    bool                       noBackground         = noBackgroundArg.getValue();
 
 
         //
@@ -103,14 +105,17 @@ int main(int argc, char *argv[])
         {
             throw std::string("The input images do not have the same physical space !");
         }
-
+		if(noBackground == true)
+			std::cout<<"No background map has been provided."<<std::endl;
+		else
+			std::cout<<"A background map has been provided."<<std::endl;	
 
         //
         // Processing image
         //
 
         std::cout << "Processing images..." << std::endl;
-
+/*
         // Normalize images
         ProbabilityMap::Pointer normalizationImage = btk::ImageHelper< ProbabilityMap >::CreateNewImageFromPhysicalSpaceOf(inputs[0].GetPointer());
 
@@ -133,7 +138,7 @@ int main(int argc, char *argv[])
 
             inputs[i] = divideFilter->GetOutput();
         } // for each image
-
+*/
 
         // Create a new tissue map
         TissueSegmentation::Pointer outputTissues = btk::ImageHelper< ProbabilityMap,TissueSegmentation >::CreateNewImageFromPhysicalSpaceOf(inputs[0].GetPointer());
@@ -152,7 +157,11 @@ int main(int argc, char *argv[])
                     index[0] = x; index[1] = y; index[2] = z;
 
                     ProbabilityMap::PixelType maxValue = inputs[0]->GetPixel(index);
-                    TissueSegmentation::PixelType label = static_cast< TissueSegmentation::PixelType >(0);
+                    TissueSegmentation::PixelType label;
+                    if(noBackground == true)
+                    	label = static_cast< TissueSegmentation::PixelType >(1);
+					else
+						label = static_cast< TissueSegmentation::PixelType >(0);
 
                     for(unsigned int i = 1; i < inputs.size(); i++)
                     {
@@ -161,10 +170,15 @@ int main(int argc, char *argv[])
                         if(value > maxValue)
                         {
                             maxValue = value;
-                            label    = static_cast< TissueSegmentation::PixelType >(i);
+                            if(noBackground == true)
+                            	label    = static_cast< TissueSegmentation::PixelType >(i+1);
+                            else
+                            	label    = static_cast< TissueSegmentation::PixelType >(i);
+                            
                         }
                     } // for each image
-
+					if(fabs(maxValue)<0.0001)
+						label = 0;
                     outputTissues->SetPixel(index, label);
                 } // for each voxel
             } // for each line
