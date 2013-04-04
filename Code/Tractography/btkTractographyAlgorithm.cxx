@@ -45,7 +45,6 @@
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkImageMaskSpatialObject.h"
 #include "itkCastImageFilter.h"
-#include "itkAddImageFilter.h"
 
 // VTK includes
 #include "vtkPolyData.h"
@@ -59,7 +58,6 @@ typedef itk::NearestNeighborInterpolateImageFunction< btk::TractographyAlgorithm
 typedef itk::ImageRegionIteratorWithIndex< btk::TractographyAlgorithm::LabelImage > LabelIterator;
 typedef itk::ImageMaskSpatialObject< btk::TractographyAlgorithm::LabelImage::ImageDimension > LabelSpatialObject;
 typedef itk::CastImageFilter< btk::TractographyAlgorithm::LabelImage,LabelSpatialObject::ImageType > LabelSpatialObjectCaster;
-typedef itk::AddImageFilter< btk::TractographyAlgorithm::ProbabilityMap > AddImageFilter;
 
 // Mutex used by this filter in multi-threaded processing
 static itk::SimpleFastMutexLock mutex;

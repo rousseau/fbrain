@@ -44,10 +44,10 @@
 // Local includes
 #include "btkMacro.h"
 #include "btkTractographyAlgorithm.h"
-#include "tmp/btkParticle.h"
-#include "tmp/btkImportanceDensity.h"
-#include "tmp/btkLikelihoodDensity.h"
-#include "tmp/btkPriorDensity.h"
+#include "btkParticle.h"
+#include "btkImportanceDensity.h"
+#include "btkLikelihoodDensity.h"
+#include "btkPriorDensity.h"
 
 namespace btk
 {
