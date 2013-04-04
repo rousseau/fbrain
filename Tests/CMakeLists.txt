@@ -1,12 +1,12 @@
 PROJECT(Tests)
 INCLUDE_REGULAR_EXPRESSION("^.*$")
 
-INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Diffusion ${fbrain_SOURCE_DIR}/Code/InputOutput ${fbrain_SOURCE_DIR}/Code/Tools ${fbrain_SOURCE_DIR}/Code/Maths)
+INCLUDE_DIRECTORIES(${fbrain_SOURCE_DIR}/Code/Diffusion ${fbrain_SOURCE_DIR}/Code/InputOutput ${fbrain_SOURCE_DIR}/Code/Tools ${fbrain_SOURCE_DIR}/Code/Maths ${fbrain_SOURCE_DIR}/Code/Tractography ${fbrain_SOURCE_DIR}/Code/Denoising)
 
 #---- VTK SandBox ----------------------------------------------------------------------------
 
 ADD_EXECUTABLE(btkVTKSandBox btkVTKSandBox.cxx)
-TARGET_LINK_LIBRARIES(btkVTKSandBox ${ITK_LIBRARIES} btkToolsLibrary btkMathsLibrary btkDiffusionLibrary vtkHybrid)
+TARGET_LINK_LIBRARIES(btkVTKSandBox ${ITK_LIBRARIES} btkToolsLibrary btkMathsLibrary btkDenoisingLibrary btkDiffusionLibrary btkTractographyLibrary vtkHybrid)
 
 #---- Diffusion sequence ---------------------------------------------------------------------
 
