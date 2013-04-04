@@ -102,9 +102,8 @@ class TractographyAlgorithm : public itk::ProcessObject
         virtual void Update();
 
         /**
-         * @brief Accessor to output estimated fibers
-         * @param label Label corresponding to fibers
-         * @return Estimated fibers which seeds have label label.
+         * @brief Accessor to output estimated fibers.
+         * @return Estimated fibers for each label.
          */
         virtual std::vector< vtkSmartPointer< vtkAppendPolyData > > GetOutputFiber() const;
 
@@ -149,6 +148,7 @@ class TractographyAlgorithm : public itk::ProcessObject
         /**
          * @brief Propagate using the tractography algorithm at a seed point.
          * @param point Seed point.
+         * @return Fiber path estimate of the current seed.
          */
         virtual vtkSmartPointer< vtkPolyData > PropagateSeed(Self::PhysicalPoint point) = 0;
 

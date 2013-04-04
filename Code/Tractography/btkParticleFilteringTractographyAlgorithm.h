@@ -44,6 +44,10 @@
 // Local includes
 #include "btkMacro.h"
 #include "btkTractographyAlgorithm.h"
+#include "tmp/btkParticle.h"
+#include "tmp/btkImportanceDensity.h"
+#include "tmp/btkLikelihoodDensity.h"
+#include "tmp/btkPriorDensity.h"
 
 namespace btk
 {
@@ -62,10 +66,26 @@ class ParticleFilteringTractographyAlgorithm : public TractographyAlgorithm
         typedef itk::SmartPointer< const Self >        ConstPointer;
 
         typedef Superclass::PhysicalPoint PhysicalPoint;
+        typedef itk::Image< double,3 >    ProbabilityMap;
 
         itkNewMacro(Self);
 
         itkTypeMacro(ParticleFilteringTractographyAlgorithm, TractographyAlgorithm);
+
+        btkSetMacro(NumberOfParticles, unsigned int);
+        btkGetMacro(NumberOfParticles, unsigned int);
+
+        btkSetMacro(ParticleStepSize, double);
+        btkGetMacro(ParticleStepSize, double);
+
+        btkSetMacro(ResamplingThreshold, double);
+        btkGetMacro(ResamplingThreshold, double);
+
+        btkSetMacro(CurveConstraint, double);
+        btkGetMacro(CurveConstraint, double);
+
+        btkSetMacro(ThresholdAngle, double);
+        btkGetMacro(ThresholdAngle, double);
 
     protected:
         /**
@@ -81,6 +101,11 @@ class ParticleFilteringTractographyAlgorithm : public TractographyAlgorithm
         virtual void PrintSelf(std::ostream &os, itk::Indent indent) const;
 
         /**
+         * @brief Initialize the filter.
+         */
+        virtual void Initialize();
+
+        /**
          * @brief Propagate using the tractography algorithm at a seed point.
          * @param point Seed point.
          */
@@ -88,11 +113,89 @@ class ParticleFilteringTractographyAlgorithm : public TractographyAlgorithm
 
     private:
         /**
-         * @brief Propagate a seed using the Euler method (Runke-Kutta method at order 1).
+         * @brief Propagate a seed using a particle filter.
          * @param points Vector of points initilized with the coordinates of the seed.
          * @param nextDirection First direction of propagation.
          */
         void PropagateSeed(std::vector< Self::PhysicalPoint > &points, btk::GradientDirection nextDirection);
+
+        /**
+         * @brief Resampling function of the particles' cloud.
+         * @param cloud Cloud of particles to resample.
+         * @param numberOfActiveParticles Number of currently active particles
+         */
+        void ResampleParticlesCloud(std::vector< Particle > &cloud, unsigned int numberOfActiveParticles);
+
+        /**
+         * @brief Save the particles' cloud in file (filename si 'cloud-[world coordinates]-pathlength.vtk').
+         * @param cloud Particles' cloud to save in file.
+         */
+        void SaveCloud(std::vector< Particle > &cloud);
+
+        /**
+         * @brief Compute a probability map from a cloud of particles.
+         * @param cloud Cloud of particles defining the probability.
+         */
+        void ComputeProbabilityMap(std::vector< Particle > &cloud);
+
+        /**
+         * @brief Computethe maximum a posteriori of the particles' cloud.
+         * @param map Points of maximum a posteriori path.
+         * @param cloud Cloud of particles.
+         * @param numberOfIterations Number of iterations of the particles' cloud.
+         */
+        void ComputeMaximumAPosteriori(std::vector< Self::PhysicalPoint > &map, std::vector< Particle > &cloud, unsigned int numberOfIterations);
+
+    private:
+        /**
+         * @brief Number of particles used for the particle filter.
+         */
+        unsigned int m_NumberOfParticles;
+
+        /**
+         * @brief Displacement step of a particle (in mm).
+         */
+        double m_ParticleStepSize;
+
+        /**
+         * @brief Initial weight of the particles.
+         */
+        double m_InitialWeight;
+
+        /**
+         * @brief Resampling threshold of the process.
+         */
+        double m_ResamplingThreshold;
+
+        /**
+         * @brief Curve constraint (concentration of the prior von Mises-Fisher density).
+         */
+        double m_CurveConstraint;
+
+        /**
+         * @brief Angle threshold (the next mean direction of importance density is searched in the solid angle around the previous mean).
+         */
+        double m_ThresholdAngle;
+
+        /**
+         * @brief Importance probability density.
+         */
+        ImportanceDensity m_ImportanceDensity;
+
+        /**
+         * @brief Likelihood probability density.
+         */
+        LikelihoodDensity m_LikelihoodDensity;
+
+        /**
+         * @brief Prior probability density.
+         */
+        PriorDensity m_PriorDensity;
+
+        /**
+         * @brief Probability map of clouds of particles.
+         */
+        ProbabilityMap::Pointer m_ProbabilityMap;
 };
 
 } // namespace btk

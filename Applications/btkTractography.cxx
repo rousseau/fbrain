@@ -52,6 +52,9 @@
 #include "btkFileHelper.h"
 #include "btkDiffusionSequence.h"
 #include "btkDiffusionSequenceHelper.h"
+#include "btkDiffusionSignal.h"
+#include "btkDiffusionSequenceToDiffusionSignalFilter.h"
+#include "btkPseudoResidualsVarianceCalculator.h"
 #include "btkImageHelper.h"
 #include "btkDiffusionTensorReconstructionFilter.h"
 #include "btkSphericalHarmonicsDiffusionDecompositionFilter.h"
@@ -60,6 +63,7 @@
 #include "btkOrientationDiffusionFunctionModel.h"
 #include "btkTractographyAlgorithm.h"
 #include "btkStreamlineTractographyAlgorithm.h"
+#include "btkParticleFilteringTractographyAlgorithm.h"
 #include "btkCommandProgressUpdate.h"
 #include "btkPolyDataColorLinesByOrientation.h"
 
@@ -87,11 +91,20 @@ int main(int argc, char *argv[])
         TCLAP::ValueArg< std::string >        modelFileNameArg("", "model", "Model image", false, "", "string", cmd);
         TCLAP::ValueArg< std::string > outputFileNamePrefixArg("o", "output", "Prefix of the filenames of the outputs", false, "tractography", "string", cmd);
         TCLAP::SwitchArg            colorByLocalOrientationArg("", "local_orientation_color", "Color the output fibers by local orientation instead of mean orientation", cmd);
+        TCLAP::ValueArg< unsigned int >     modelResolutionArg("", "model_resolution", "Resolution of the model (default: 300 points)", false, 300, "positive integer", cmd);
 
-        TCLAP::ValueArg< float >       stepSizeArg("", "step_size", "Step size between two points of the solution", false, 0.5, "positive real", cmd);
-        TCLAP::ValueArg< float >    seedSpacingArg("", "seed_spacing", "Spacing between two seeds (in mm)", false, 1, "positive real", cmd);
-        TCLAP::SwitchArg                 useRK4Arg("", "RK4", "Use the Runge-Kutta method at order 4 instead of Euler's methods for path computing in streamline algorithm", cmd, false);
-        TCLAP::ValueArg< float > thresholdAngleArg("", "threshold_angle", "Threshold angle (in degrees) between two successive displacements", false, 75, "positive real", cmd);
+        TCLAP::ValueArg< unsigned int >      shModelOrderArg("", "sh_model_order", "Order of the SH (spherical harmonics) model (default: 4, min,max: 2,8)", false, 4, "even integer between 2 and 8", cmd);
+        TCLAP::ValueArg< double >   shModelRegularizationArg("", "sh_model_regularization", "Regularization of the SH (spherical harmonics) model estimation (default: 0.006)", false, 0.006, "positive real", cmd);
+
+        TCLAP::ValueArg< float >       stepSizeArg("", "step_size", "Step size between two points of the solution (default: 0.5 mm)", false, 0.5, "positive real", cmd);
+        TCLAP::ValueArg< float >    seedSpacingArg("", "seed_spacing", "Spacing between two seeds (in mm) (default: 1 mm)", false, 1, "positive real", cmd);
+        TCLAP::ValueArg< float > thresholdAngleArg("", "threshold_angle", "Threshold angle (in degrees) between two successive displacements (default: 75 degrees)", false, 75, "positive real", cmd);
+
+        TCLAP::SwitchArg doNotUseRK4Arg("", "no_RK4", "Do not use the Runge-Kutta method at order 4 instead of Euler's methods for path computing in streamline algorithm", cmd, false);
+
+        TCLAP::ValueArg< unsigned int > numberOfParticlesArg("", "number_of_particles", "Number of particles used by the particle filtering (default: 200)", false, 200, "positive integer", cmd);
+        TCLAP::ValueArg< double >     resamplingThresholdArg("", "resampling_threshold", "Resampling threshold of the particle filtering in percent (between 0 and 1) (default: 5% of the number of particles)", false, 0.05, "real between 0 and 1", cmd);
+        TCLAP::ValueArg< double >         curveConstraintArg("", "curve_constraint", "Curve constraint of the particle filtering ; it is the concentration parameter of the von Mises-Fisher density (default: 30)", false, 30.0, "positive real", cmd);
 
         // Parsing arguments
         cmd.parse(argc, argv);
@@ -108,11 +121,20 @@ int main(int argc, char *argv[])
         std::string        modelFileName = modelFileNameArg.getValue();
         std::string outputFileNamePrefix = outputFileNamePrefixArg.getValue();
         bool     colorByLocalOrientation = colorByLocalOrientationArg.getValue();
+        unsigned int     modelResolution = modelResolutionArg.getValue();
+
+        unsigned int    shModelOrder = shModelOrderArg.getValue();
+        double shModelRegularization = shModelRegularizationArg.getValue();
 
         float       stepSize = stepSizeArg.getValue();
-        bool          useRK4 = useRK4Arg.getValue();
         float thresholdAngle = 0.017453292519943 * thresholdAngleArg.getValue();
         float    seedSpacing = seedSpacingArg.getValue();
+
+        bool useRK4 = !doNotUseRK4Arg.getValue();
+
+        unsigned int numberOfParticles = numberOfParticlesArg.getValue();
+        double     resamplingThreshold = resamplingThresholdArg.getValue();
+        double         curveConstraint = curveConstraintArg.getValue();
 
 
         //
@@ -122,6 +144,21 @@ int main(int argc, char *argv[])
         btk::DiffusionSequence::Pointer         dwiSequence = btk::DiffusionSequenceHelper::ReadSequence(dwiSequenceFileName);
         btk::TractographyAlgorithm::MaskImage::Pointer mask = btk::ImageHelper< btk::TractographyAlgorithm::MaskImage >::ReadImage(maskFileName);
         btk::TractographyAlgorithm::LabelImage::Pointer roi = btk::ImageHelper< btk::TractographyAlgorithm::LabelImage >::ReadImage(roiFileName);
+
+
+        //
+        // Compute diffusion signal
+        //
+
+        btkCoutMacro("Compute diffusion signal...");
+
+        btk::DiffusionSequenceToDiffusionSignalFilter::Pointer sequenceToSignalFilter = btk::DiffusionSequenceToDiffusionSignalFilter::New();
+        sequenceToSignalFilter->SetInput(dwiSequence);
+        sequenceToSignalFilter->Update();
+
+        btk::DiffusionSignal::Pointer signal = sequenceToSignalFilter->GetOutput();
+
+        btkCoutMacro("done.");
 
 
         //
@@ -160,7 +197,7 @@ int main(int argc, char *argv[])
             btk::TensorModel::Pointer tensorModel = btk::TensorModel::New();
             tensorModel->SetInputModelImage(tensorImage);
             tensorModel->SetBValue(dwiSequence->GetBValues()[1]);
-            tensorModel->SetSphericalResolution(300);
+            tensorModel->SetSphericalResolution(modelResolution);
             tensorModel->Update();
 
             model = tensorModel;
@@ -174,9 +211,13 @@ int main(int argc, char *argv[])
             if(modelFileName.empty() || !btk::FileHelper::FileExist(modelFileName))
             {
                 btkCoutMacro("Estimating spherical harmonics Q-Ball modeling...");
+                btkCoutMacro("\tModel order: " << shModelOrder);
+                btkCoutMacro("\tModel regularization: " << shModelRegularization);
 
                 btk::SphericalHarmonicsDiffusionDecompositionFilter::Pointer decompositionFilter = btk::SphericalHarmonicsDiffusionDecompositionFilter::New();
                 decompositionFilter->SetInput(dwiSequence);
+                decompositionFilter->SetSphericalHarmonicsOrder(shModelOrder);
+                decompositionFilter->SetRegularizationParameter(shModelRegularization);
                 decompositionFilter->Update();
 
                 shCoefficientsImage = decompositionFilter->GetOutput();
@@ -193,10 +234,12 @@ int main(int argc, char *argv[])
                 shCoefficientsImage = btk::ImageHelper< btk::SphericalHarmonicsDiffusionDecompositionFilter::OutputImageType >::ReadImage(modelFileName);
             }
 
+            btkCoutMacro("\tModel resolution: " << modelResolution);
+
             btk::OrientationDiffusionFunctionModel::Pointer odfModel = btk::OrientationDiffusionFunctionModel::New();
             odfModel->SetInputModelImage(shCoefficientsImage);
             odfModel->SetBValue(dwiSequence->GetBValues()[1]);
-            odfModel->SetSphericalResolution(300);
+            odfModel->SetSphericalResolution(modelResolution);
             odfModel->Update();
 
             model = odfModel;
@@ -211,26 +254,53 @@ int main(int argc, char *argv[])
 
         btk::TractographyAlgorithm::Pointer algorithm = NULL;
 
-//        if(streamlineAlgorithm)
+        if(streamlineAlgorithm)
         {
             btkCoutMacro("Setting up streamline algorithm...");
+            btkCoutMacro("\tStep size: " << stepSize << " mm");
+            btkCoutMacro("\tThreshold angle: " << 57.295779513083289*thresholdAngle << " °");
+            btkCoutMacro("\tUse " << (useRK4 ? "order 4" : "order 1") << " runge kutta");
 
             btk::StreamlineTractographyAlgorithm::Pointer strAlgorithm = btk::StreamlineTractographyAlgorithm::New();
             strAlgorithm->SetStepSize(stepSize);
             strAlgorithm->UseRungeKuttaOrder4(useRK4);
             strAlgorithm->SetThresholdAngle(thresholdAngle);
-            strAlgorithm->SetSeedSpacing(seedSpacing);
 
             algorithm = strAlgorithm;
 
             btkCoutMacro("done.");
         }
-//        else // Particle filtering algorithm
-//        {
-//            btkCoutMacro("Setting up particle filtering algorithm...");
+        else // Particle filtering algorithm
+        {
+            btkCoutMacro("Setting up particle filtering algorithm...");
+            btkCoutMacro("\tNumber of particles: " << numberOfParticles);
+            btkCoutMacro("\tStep size: " << stepSize << " mm");
+            btkCoutMacro("\tResampling threshold: " << 100.0*resamplingThreshold << "%");
+            btkCoutMacro("\tThreshold angle: " << 57.295779513083289*thresholdAngle << " °");
+            btkCoutMacro("\tCurve constraint: " << curveConstraint);
 
-//            btkCoutMacro("done.");
-//        }
+            btk::ParticleFilteringTractographyAlgorithm::Pointer filterAlgorithm = btk::ParticleFilteringTractographyAlgorithm::New();
+            filterAlgorithm->SetNumberOfParticles(numberOfParticles);
+            filterAlgorithm->SetParticleStepSize(stepSize);
+            filterAlgorithm->SetResamplingThreshold(resamplingThreshold*numberOfParticles);
+            filterAlgorithm->SetCurveConstraint(curveConstraint);
+            filterAlgorithm->SetThresholdAngle(thresholdAngle);
+
+            algorithm = filterAlgorithm;
+
+            btkCoutMacro("done.");
+
+            btkCoutMacro("Estimate noise variance...");
+
+            btk::PseudoResidualsVarianceCalculator::Pointer noiseVarianceCalculator = btk::PseudoResidualsVarianceCalculator::New();
+            noiseVarianceCalculator->SetInputImage(signal);
+            noiseVarianceCalculator->SetMaskImage(mask);
+            noiseVarianceCalculator->Compute();
+
+            signal->SetPseudoResidualsStdDeviation(noiseVarianceCalculator->GetPseudoResidualsStdDeviation());
+
+            btkCoutMacro("done.");
+        }
 
         btkCoutMacro("Processing...");
 
@@ -239,11 +309,12 @@ int main(int argc, char *argv[])
         algorithm->AddObserver(itk::ProgressEvent(), observer);
 
         // Process
-        algorithm->SetDiffusionSequence(dwiSequence);
+        algorithm->SetDiffusionSignal(signal);
         algorithm->SetDiffusionModel(model);
         algorithm->SetMask(mask);
         algorithm->SetRegionsOfInterest(roi);
         algorithm->SetSeedLabels(labels);
+        algorithm->SetSeedSpacing(seedSpacing);
         algorithm->Update();
 
         btkCoutMacro("done.");

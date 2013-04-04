@@ -45,9 +45,13 @@
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkImageMaskSpatialObject.h"
 #include "itkCastImageFilter.h"
+#include "itkAddImageFilter.h"
 
 // VTK includes
 #include "vtkPolyData.h"
+
+// Local includes
+#include "btkImageHelper.h"
 
 // Types used by this filter
 typedef itk::ResampleImageFilter< btk::TractographyAlgorithm::LabelImage,btk::TractographyAlgorithm::LabelImage > LabelResampler;
@@ -55,6 +59,7 @@ typedef itk::NearestNeighborInterpolateImageFunction< btk::TractographyAlgorithm
 typedef itk::ImageRegionIteratorWithIndex< btk::TractographyAlgorithm::LabelImage > LabelIterator;
 typedef itk::ImageMaskSpatialObject< btk::TractographyAlgorithm::LabelImage::ImageDimension > LabelSpatialObject;
 typedef itk::CastImageFilter< btk::TractographyAlgorithm::LabelImage,LabelSpatialObject::ImageType > LabelSpatialObjectCaster;
+typedef itk::AddImageFilter< btk::TractographyAlgorithm::ProbabilityMap > AddImageFilter;
 
 // Mutex used by this filter in multi-threaded processing
 static itk::SimpleFastMutexLock mutex;
@@ -181,7 +186,7 @@ void TractographyAlgorithm::ThreadedGenerateData(const LabelImage::RegionType &r
                 vtkSmartPointer< vtkPolyData > currentFiber = NULL;
 
                 // Start tractography from seed point
-                currentFiber = PropagateSeed(point);
+                currentFiber = this->PropagateSeed(point);
 
                 // Save data
                 mutex.Lock();

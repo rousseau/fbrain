@@ -207,28 +207,7 @@ ADD_EXECUTABLE(btkTractography btkTractography.cxx
 )
 TARGET_LINK_LIBRARIES(btkTractography btkToolsLibrary btkMathsLibrary btkDiffusionLibrary btkTractographyLibrary btkDenoisingLibrary ${ITK_LIBRARIES} vtkHybrid)
 
-ADD_EXECUTABLE(btkODFParticleFilterTractography btkODFParticleFilterTractography.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkTypes.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkCartesianCoordinates.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkCartesianCoordinates.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalCoordinates.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalCoordinates.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkVector.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkVector.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkDirection.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkDirection.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkPoint.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkPoint.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSignalExtractor.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkSignalExtractor.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSignal.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkSignal.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalHarmonics.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalHarmonics.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSHModel.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkSHModel.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSHModelEstimator.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkSHModelEstimator.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkAPrioriDensity.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkAPrioriDensity.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkLikelihoodDensity.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkLikelihoodDensity.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkImportanceDensity.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkImportanceDensity.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkParticle.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkParticle.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkParticleFilter.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkParticleFilter.h
-)
-TARGET_LINK_LIBRARIES(btkODFParticleFilterTractography btkToolsLibrary ${ITK_LIBRARIES} vtkHybrid)
-
 INSTALL(TARGETS
-    btkODFParticleFilterTractography
     btkTractography
 DESTINATION bin)
 

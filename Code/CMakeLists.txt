@@ -95,6 +95,13 @@ SET(DENOISING_LIBRARY_HEADER
     ${DENOISING_LIBRARY_SOURCE_DIR}/btkPseudoResidualsVarianceCalculator.h
 )
 
+SET(DENOISING_LIBRARY_SOURCES
+    ${DENOISING_LIBRARY_SOURCE_DIR}/btkPseudoResidualsVarianceCalculator.cxx
+)
+
+ADD_LIBRARY(btkDenoisingLibrary STATIC ${DENOISING_LIBRARY_HEADER} ${DENOISING_LIBRARY_SOURCES})
+#TARGET_LINK_LIBRARIES(btkDenoisingLibrary btkToolsLibrary ${ITK_LIBRARIES})
+
 #---- Diffusion library -----------------------------------------------------------------
 
 SET(DIFFUSION_LIBRARY_HEADER
@@ -136,10 +143,10 @@ SET(TRACTOGRAPHY_LIBRARY_HEADER
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkStreamlineTractographyAlgorithm.h
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkParticleFilteringTractographyAlgorithm.h
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkPolyDataColorLinesByOrientation.h
-    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/tmp/btkParticle.h
-    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/tmp/btkImportanceDensity.h
-    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/tmp/btkLikelihoodDensity.h
-    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/tmp/btkPriorDensity.h
+    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkParticle.h
+    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkImportanceDensity.h
+    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkLikelihoodDensity.h
+    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkPriorDensity.h
 )
 
 SET(TRACTOGRAPHY_LIBRARY_SOURCES
@@ -147,10 +154,10 @@ SET(TRACTOGRAPHY_LIBRARY_SOURCES
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkStreamlineTractographyAlgorithm.cxx
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkParticleFilteringTractographyAlgorithm.cxx
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkPolyDataColorLinesByOrientation.cxx
-    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/tmp/btkParticle.cxx
-    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/tmp/btkImportanceDensity.cxx
-    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/tmp/btkLikelihoodDensity.cxx
-    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/tmp/btkPriorDensity.cxx
+    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkParticle.cxx
+    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkImportanceDensity.cxx
+    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkLikelihoodDensity.cxx
+    ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}/btkPriorDensity.cxx
 )
 
 ADD_LIBRARY(btkTractographyLibrary STATIC ${TRACTOGRAPHY_LIBRARY_HEADER} ${TRACTOGRAPHY_LIBRARY_SOURCES})
