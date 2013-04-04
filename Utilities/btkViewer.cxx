@@ -302,6 +302,7 @@ int main(int argc, char *argv[])
     // Options
     TCLAP::ValueArg< double > percentageOfSamplePointsArg("", "percent_of_sample_points", "Percentage of sample points used for modeling display", false, 0.1, "real between 0 and 1", cmd);
     TCLAP::ValueArg< unsigned int > SphericalResolutionArg("", "spherical_resolution", "Spherical resolution used for modeling display", false, 100, "positive integer", cmd);
+    TCLAP::SwitchArg meanDirectionsOnlyArg("", "mean_directions_only", "Precompute only mean directions of the modeling and not the all functions (faster)", cmd);
 
     // Parse command line
     cmd.parse(argc, argv);
@@ -312,6 +313,7 @@ int main(int argc, char *argv[])
 
     double  percentageOfSamplePoints = percentageOfSamplePointsArg.getValue();
     unsigned int SphericalResolution = SphericalResolutionArg.getValue();
+    bool          meanDirectionsOnly = meanDirectionsOnlyArg.getValue();
 
 
     //
@@ -374,10 +376,14 @@ int main(int argc, char *argv[])
 
     btkCoutMacro("Sampling model volume ...");
     btkTicTocInit();
-    btkTic();
-    // Build model image
-    std::vector< std::vector< vtkSmartPointer< vtkActor > > > models = buildModelImage(model, inputSequence, percentageOfSamplePoints, inputMask);
-    btkToc();
+    std::vector< std::vector< vtkSmartPointer< vtkActor > > > models;
+    if(!meanDirectionsOnly)
+    {
+        btkTic();
+        // Build model image
+        models = buildModelImage(model, inputSequence, percentageOfSamplePoints, inputMask);
+        btkToc();
+    }
     btkTic();
     // Build model mean directions
     std::vector< std::vector< vtkSmartPointer< vtkActor > > > meanDirections = buildModelDirections(model, inputSequence, percentageOfSamplePoints, inputMask);
