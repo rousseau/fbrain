@@ -235,6 +235,9 @@ ${Code_SOURCE_DIR}/Visualization/btkRenderPolydata.cxx
 ${Code_SOURCE_DIR}/Visualization/btkRenderPolydata.h)
 TARGET_LINK_LIBRARIES(btkSlicesMotionViewer btkMathsLibrary ${ITK_LIBRARIES} vtkHybrid)
 
+ADD_EXECUTABLE( btkTriangleMesh btkTriangleMesh.cxx )
+TARGET_LINK_LIBRARIES(btkTriangleMesh vtkHybrid ${VTK_LIBRARIES})
+
 
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
@@ -294,6 +297,7 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkWeightImageOfPatches
                 btkSlicesMotionViewer
                 btkViewer
+               btkTriangleMesh
         DESTINATION bin)
 
 
