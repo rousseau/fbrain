@@ -57,7 +57,134 @@ maxAge = btkPatientsTools.maxAge(btkAtlasData.patients)
 
 
 #############################################################################
-#                1. Kernel regression over time on shapes                   #
+#                1. Bandwidth estimation (Cross Validation)                 #
+#############################################################################
+
+# Cost function
+def BandwidthCostFunction(h, patients):
+	jobs = []
+
+	# Estimate the expected value at each ti
+	for patient_i in patients:
+		weightsSum = 0
+		weights    = {}
+
+		for patient in patients:
+			if patient != patient_i:
+				weights[patient[0]] = btkGaussianKernel.Compute(float(patient_i[1]), float(patient[1]), h)
+				weightsSum += weights[patient[0]]
+
+		outputAffine = '/tmp/AtlasShapeInverse_{0}.txt'.format(patient_i[0])
+		outputField  = '/tmp/AtlasShapeInverse_{0}.nii.gz'.format(patient_i[0])
+
+		goRegressionAffine = '{0}{1} -o {2} '.format(btkAtlasData.BtkBinaryDir, btkAtlasData.WeightedSumAffine, outputAffine)
+		goRegressionField  = '{0}{1} -o {2} '.format(btkAtlasData.BtkBinaryDir, btkAtlasData.WeightedSum, outputField)
+
+		for patient in patients:
+			if patient != patient_i:
+				affine = '{0}/{1}toTemplateAffine.txt'.format(btkAtlasData.templatePath, patient[0])
+				field  = '{0}/{1}toTemplateInverseWarp.nii.gz'.format(btkAtlasData.templatePath, patient[0])
+
+				goRegressionAffine += '-i {0} -w {1} '.format(affine, weights[patient[0]]/weightsSum)
+				goRegressionField  += '-i {0} -w {1} '.format(field, weights[patient[0]]/weightsSum)
+
+		goRegressionAffine += ' > {0}_{1}.log 2> {0}_{1}.errlog'.format(outputAffine, btkAtlasData.WeightedSumAffine)
+		goRegressionField  += ' > {0}_{1}.log 2> {0}_{1}.errlog'.format(outputField, btkAtlasData.WeightedSum)
+
+		jobs.append(goRegressionAffine)
+		jobs.append(goRegressionField)
+
+	if btkAtlasData.scriptOn:
+		pool.map(os.system, jobs)
+	else:
+		for job in jobs:
+			print '\t{0}'.format(job)
+
+	# Compare between expected value and actual value
+	value = 0
+
+	for patient_i in patients:
+		outputAffine = '/tmp/AtlasShapeInverse_{0}.txt'.format(patient_i[0])
+		outputField  = '/tmp/AtlasShapeInverse_{0}.nii.gz'.format(patient_i[0])
+
+		affine = '{0}/{1}toTemplateAffine.txt'.format(btkAtlasData.templatePath, patient_i[0])
+		field  = '{0}/{1}toTemplateInverseWarp.nii.gz'.format(btkAtlasData.templatePath, patient_i[0])
+
+		affineFileName = '/tmp/distanceAffine_{0}.txt'.format(patient_i[0])
+		fieldFileName  = '/tmp/distanceField_{0}.txt'.format(patient_i[0])
+
+		goComputeDistanceAffine = '{0}{1} {2} {3} > /dev/null 2> {4}'.format(btkAtlasData.BtkBinaryDir, btkAtlasData.ComputeDistAffine, outputAffine, affine, affineFileName)
+		goComputeDistanceField  = '{0}{1} {2} {3} > /dev/null 2> {4}'.format(btkAtlasData.BtkBinaryDir, btkAtlasData.ComputeDistImage, outputField, field, fieldFileName)
+
+		if btkAtlasData.scriptOn:
+			os.system(goComputeDistanceAffine)
+			os.system(goComputeDistanceField)
+
+			distance = 0
+
+			affineFile = open(affineFileName, 'r')
+			lines = affineFile.readlines()
+			distance = distance + float(lines[0])
+			affineFile.close()
+
+			fieldFile  = open(fieldFileName, 'r')
+			lines = fieldFile.readlines()
+			distance = distance + float(lines[0])
+			fieldFile.close()
+
+			value = value + distance*distance
+		else:
+			print goComputeDistanceAffine
+			print goComputeDistanceField
+
+	return (value/len(patients))*(value/len(patients))
+
+
+# Cost function derivative
+def BandwidthCostFunctionDerivative(h, patients):
+	delta = 0.1
+
+	f_x   = BandwidthCostFunction(h, patients)
+	f_xph = BandwidthCostFunction(h+delta, patients)
+
+	return (f_xph - f_x) / delta
+
+
+# Estimation of h parameter if needed
+if btkAtlasData.bandwith > 0.0:
+	print 'Smoothing parameter set to {0}.'.format(btkAtlasData.bandwith)
+else:
+	print 'Estimating smoothing parameter...'
+
+#	for h in numpy.arange(0.5, 10, 0.5):
+#		print h,'\t',BandwidthCostFunction(h,btkAtlasData.patients)#,'\t',BandwidthCostFunctionDerivative(h,btkAtlasData.patients)
+
+	# Optimize h parameter using gradient descent
+	btkAtlasData.bandwith = 1
+	step = 0.2
+	epsilon = 0.01
+	maxIteration = 100
+	df = BandwidthCostFunctionDerivative(btkAtlasData.bandwith, btkAtlasData.patients)
+	k = 0
+	print df, '\t', btkAtlasData.bandwith
+
+	while abs(df) > epsilon and k < 20:
+		btkAtlasData.bandwith = btkAtlasData.bandwith - step * df
+		df = BandwidthCostFunctionDerivative(btkAtlasData.bandwith, btkAtlasData.patients)
+		k = k+1
+		print df, '\t', btkAtlasData.bandwith
+
+	print 'done.'
+	print 'Smoothing parameter set to {0}.'.format(btkAtlasData.bandwith)
+
+
+# Clean temporary parameters
+if btkAtlasData.scriptOn:
+	os.system('rm -f /tmp/AtlasShapeInverse_* /tmp/distanceAffine_* /tmp/distanceField_*')
+
+
+#############################################################################
+#                2. Kernel regression over time on shapes                   #
 #############################################################################
 
 print 'Performing kernel regression over time on shapes...'
@@ -102,7 +229,7 @@ print 'done.'
 
 
 #############################################################################
-#             2. Kernel regression over time on appearance                  #
+#             3. Kernel regression over time on appearance                  #
 #############################################################################
 
 print 'Performing kernel regression over time on appearance...'
