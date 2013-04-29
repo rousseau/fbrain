@@ -64,6 +64,7 @@ SET(MATHS_LIBRARY_HEADER
     ${MATHS_LIBRARY_SOURCE_DIR}/btkProbabilityDensity.h
     ${MATHS_LIBRARY_SOURCE_DIR}/btkNormalProbabilityDensity.h
     ${MATHS_LIBRARY_SOURCE_DIR}/btkVonMisesFisherProbabilityDensity.h
+    ${MATHS_LIBRARY_SOURCE_DIR}/btkCurvatures.h
 )
 
 SET(MATHS_LIBRARY_SOURCES
@@ -75,6 +76,7 @@ SET(MATHS_LIBRARY_SOURCES
     ${MATHS_LIBRARY_SOURCE_DIR}/btkHistogram.cxx
     ${MATHS_LIBRARY_SOURCE_DIR}/btkNormalProbabilityDensity.cxx
     ${MATHS_LIBRARY_SOURCE_DIR}/btkVonMisesFisherProbabilityDensity.cxx
+    ${MATHS_LIBRARY_SOURCE_DIR}/btkCurvatures.cxx
 )
 
 ADD_LIBRARY(btkMathsLibrary STATIC ${MATHS_LIBRARY_HEADER} ${MATHS_LIBRARY_SOURCES})
