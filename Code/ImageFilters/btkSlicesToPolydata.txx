@@ -49,7 +49,7 @@
 namespace btk
 {
 template<typename TImage>
-SlicesToPolyData< TImage >::SlicesToPolyData()
+SlicesToPolyData< TImage >::SlicesToPolyData():m_BeginSlice(0),m_EndingSlice(0)
 {
     m_Output = NULL;
     m_Transform = NULL;
@@ -90,8 +90,19 @@ SlicesToPolyData< TImage >::Update()
     vtkSmartPointer< vtkCellArray > Lines = vtkSmartPointer< vtkCellArray >::New();
     vtkSmartPointer< vtkPolyLine > line = vtkSmartPointer< vtkPolyLine >::New();
 
+    if(m_EndingSlice > size[2])
+    {
+        btkException("Ending slice > size Z of image !");
+    }
+
     // for each slices
-    for(unsigned int z = 0; z < size[2]; z++)
+    if(m_EndingSlice == 0 && m_BeginSlice == 0)
+    {
+        m_EndingSlice = size[2];
+    }
+
+
+    for(unsigned int z = m_BeginSlice; z < m_EndingSlice; z++)
     {
         typename ImageType::IndexType corner1, corner2, corner3, corner4;
 

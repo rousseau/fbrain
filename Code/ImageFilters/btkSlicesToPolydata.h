@@ -91,6 +91,13 @@ public:
         /** Get Output PolyData */
         btkGetMacro(Output,vtkSmartPointer< vtkPolyData > );
 
+        /** Set The begining slice and Ending slice (default all slice will be add in the polydata */
+        btkSetMacro(BeginSlice, unsigned int);
+        btkGetMacro(BeginSlice, unsigned int);
+        btkSetMacro(EndingSlice, unsigned int);
+        btkGetMacro(EndingSlice, unsigned int);
+
+
 
     protected :
         /** Initialize Method to call before Update() */
@@ -105,6 +112,9 @@ public:
         Transform* m_Transform; /** itk::Transform (needed) */
 
         vtkSmartPointer< vtkPolyData > m_Output; /** Pointer to the output polydata */
+
+        unsigned int m_BeginSlice;
+        unsigned int m_EndingSlice;
 
 
 };
