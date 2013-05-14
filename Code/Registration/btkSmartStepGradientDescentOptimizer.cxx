@@ -55,6 +55,8 @@ void SmartStepGradientDescentOptimizer::StartOptimization()
 
     unsigned int NumberOfParameters = this->m_CostFunction->GetNumberOfParameters();
 
+    //std::cout<<"Optimizer number of parameters : "<<NumberOfParameters<<std::endl;
+
     if(m_OptimizeAllParameters)
     {
         m_OptimizedParameters.SetSize(NumberOfParameters);
@@ -143,7 +145,15 @@ void SmartStepGradientDescentOptimizer::StartOptimization()
             this->SetCurrentPosition(x);
             this->m_CurrentValue = newCost;
             cost = newCost;
+
         }
+        //----------------------------------
+        else
+        {
+            this->SetCurrentPosition(m_X);
+            this->m_CurrentValue = cost;
+        }
+        //--------------------------------
         
 		//Should be in the previous brackets? -----------------
         m_X = x;
