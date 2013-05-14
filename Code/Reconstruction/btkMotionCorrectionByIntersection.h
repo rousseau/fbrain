@@ -81,7 +81,6 @@ class MotionCorrectionByIntersection
 {
 public:
     /** Typedefs  */
-
     typedef TImage ImageType;
     typedef typename ImageType::PixelType Pixel;
     typedef typename ImageType::RegionType ImageRegion;
