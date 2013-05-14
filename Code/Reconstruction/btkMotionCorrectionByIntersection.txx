@@ -463,17 +463,17 @@ void MotionCorrectionByIntersection<TImage>::Update()
 
 
 
-                if(i == 1 && g == 30 && loop == 1)
-                {
-                    std::cout<<i<<std::endl;
-                    std::cout<<g<<std::endl;
-                    std::cout<<loop<<std::endl;
-                    std::cout<<incrementLoop<<std::endl;
+//                if(i == 1 && g == 30 && loop == 1)
+//                {
+//                    std::cout<<i<<std::endl;
+//                    std::cout<<g<<std::endl;
+//                    std::cout<<loop<<std::endl;
+//                    std::cout<<incrementLoop<<std::endl;
 
-                    std::cout<<"Optimizer set to a random value "<<std::endl;
-                    initialParams[5] = 5.0;
-                    //initialParams.Fill(10.0);
-                }
+//                    std::cout<<"Optimizer set to a random value "<<std::endl;
+//                    initialParams[5] = 5.0;
+//                    //initialParams.Fill(10.0);
+//                }
                 optimizer->SetInitialPosition( initialParams );
 
 
