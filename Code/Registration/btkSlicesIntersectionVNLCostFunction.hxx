@@ -81,16 +81,15 @@ namespace btk
  * @author Marc Schweitzer
  * \ingroup Registration
  */
- /** Max of the cost function */
+
+    
+/** Max of the cost function */
 static const double MAX_COSTFUNCTION_VALUE = DBL_MAX;
 
 template <class TImage>
 class SlicesIntersectionVNLCostFunction: public vnl_cost_function
 {
 public:
-
-
-
 
     /** typedefs  */
     typedef TImage ImageType;
