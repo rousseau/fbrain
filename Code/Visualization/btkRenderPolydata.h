@@ -87,6 +87,10 @@ class RenderPolyData : public itk::Object
         virtual void SetNthPolyData(unsigned int _n, vtkSmartPointer< vtkPolyData > _PolyData );
         /** Set the color of the nth PolyData (_n need to be <= m_NumberOfPolyData) */
         virtual void SetNthPolyDataColor(unsigned int _n, std::vector<double>);
+        /** Set the width of the nth PolyData (_n need to be <= m_NumberOfPolyData) */
+        virtual void SetNthPolyDataLineWidth(unsigned int _n, float _w);
+        /** Set the size of the nth PolyData (_n need to be <= m_NumberOfPolyData) */
+        virtual void SetNthPolyDataPointSize(unsigned int _n, float _s);
         /** Set/Get Number of PolyData to render */
         virtual void SetNumberOfPolyData(unsigned int _n);
         btkGetMacro(NumberOfPolyData,unsigned int);
@@ -102,6 +106,8 @@ class RenderPolyData : public itk::Object
         std::vector< vtkSmartPointer< vtkPolyData > > m_Inputs; /** vector of inputs polydatas */
         unsigned int m_NumberOfPolyData; /** Number of PolyData to render */
         std::vector< std::vector<double> > m_Colors; /** Corresponding color of polydatas */
+        std::vector< float >    m_Widths; /** Widths of the PolyDatas (exemples if a line) */
+        std::vector< float >    m_PointSizes; /** size of points */
 
         vtkSmartPointer< vtkRenderWindow > m_RenderWindow; /** render window */
         vtkSmartPointer< vtkInteractorStyleTrackballCamera > m_Interactor; /** Interactor */
