@@ -366,7 +366,7 @@ void MotionCorrectionByIntersection<TImage>::Update()
             std::vector< unsigned int > SlicesGroup;
             SlicesGroup.resize(sizeMov[2]);
 
-            nbGroup = sizeMov[2]; //DEBUG
+            //nbGroup = sizeMov[2]; //DEBUG
 
 
             if(nbGroup >= sizeMov[2])
