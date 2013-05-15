@@ -84,8 +84,6 @@
 // Filter used for SuperResolution pipeline :
 #include "btkBiasCorrectionFilter.h"
 #include "btkMotionCorrectionFilter.h"
-#include "btkPSFEstimationFilter.h"
-#include "btkSliceRejectionFilter.h"
 #include "btkResampleImageByInjectionFilter.h"
 #include "btkImageHelper.h"
 
@@ -273,11 +271,9 @@ private:
     itkImage::SizeType    m_Size;
     itkImage::RegionType  m_Region;
 
-    btk::PSFEstimationFilter * m_PSFEstimationFilter;
     btk::MotionCorrectionFilter * m_MotionCorrectionFilter;
     btk::BiasCorrectionFilter *   m_BiasCorrectionFilter;
     btk::HighResolutionReconstructionFilter * m_HighResolutionReconstructionFilter;
-    btk::SliceRejectionFilter * m_SliceRejectionFilter;
     btk::LowToHighResFilterRigid::Pointer m_CreateRigidHighResolutionImage;
     btk::LowToHighResFilterAffine::Pointer m_CreateAffineHighResolutionImage;
     ResamplerByInjectionType::Pointer   m_ResampleByInjectionFilter;

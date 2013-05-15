@@ -93,10 +93,6 @@ ADD_EXECUTABLE(btkSuperResolutionFilterTest btkSuperResolutionFilterTest.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrection3DAffineFilter.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrection3DEulerFilter.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrection3DEulerFilter.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkSliceRejectionFilter.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkSliceRejectionFilter.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkPSFEstimationFilter.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkPSFEstimationFilter.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSimulateLRImageFilter.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSimulateLRImageFilter.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkCreateHRMaskFilter.cxx
@@ -142,10 +138,6 @@ ADD_EXECUTABLE(btk3DSuperResolution btk3DSuperResolution.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrection3DAffineFilter.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrection3DEulerFilter.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrection3DEulerFilter.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkSliceRejectionFilter.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkSliceRejectionFilter.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkPSFEstimationFilter.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkPSFEstimationFilter.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSimulateLRImageFilter.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSimulateLRImageFilter.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkCreateHRMaskFilter.cxx
