@@ -74,9 +74,9 @@ ENDIF(BUILD_TESTING)
 # Testing
 IF(BUILD_TESTING)
     ENABLE_TESTING()
-#    SUBDIRS(
-#        Tests
-#    )
+    SUBDIRS(
+        Tests
+    )
 ENDIF(BUILD_TESTING)
 
 # Documentation
