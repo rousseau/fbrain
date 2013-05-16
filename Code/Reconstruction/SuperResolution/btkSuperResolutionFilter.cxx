@@ -7,11 +7,9 @@ namespace btk
 //-----------------------------------------------------------------------------------------------------------
 SuperResolutionFilter::SuperResolutionFilter()
 {
-    m_PSFEstimationFilter = NULL;
     m_MotionCorrectionFilter = NULL;
     m_BiasCorrectionFilter = NULL;
     m_HighResolutionReconstructionFilter = NULL;
-    m_SliceRejectionFilter = NULL;
 
     m_ReconstructionType = SR;
 
@@ -21,8 +19,6 @@ SuperResolutionFilter::SuperResolutionFilter()
 
     btkCoutMacro("SuperResolutionFilter : Constructor");
 
-    m_PSFEstimationFilter = new btk::PSFEstimationFilter();
-    m_SliceRejectionFilter = new btk::SliceRejectionFilter();
     m_BiasCorrectionFilter = new btk::BiasCorrectionFilter();
 
 
@@ -32,16 +28,13 @@ SuperResolutionFilter::SuperResolutionFilter()
 //-----------------------------------------------------------------------------------------------------------
 SuperResolutionFilter::SuperResolutionFilter(int loop, float beta, int nlm)
 {
-    m_PSFEstimationFilter = new btk::PSFEstimationFilter();
-    m_SliceRejectionFilter = new btk::SliceRejectionFilter();
+
     m_BiasCorrectionFilter = new btk::BiasCorrectionFilter();
 
 }
 //-----------------------------------------------------------------------------------------------------------
 SuperResolutionFilter::SuperResolutionFilter(int loop, float beta, int nlm, TRANSFORMATION_TYPE transfoType)
 {
-    m_PSFEstimationFilter = new btk::PSFEstimationFilter();
-    m_SliceRejectionFilter = new btk::SliceRejectionFilter();
     m_BiasCorrectionFilter = new btk::BiasCorrectionFilter();
 
 }
@@ -50,12 +43,7 @@ SuperResolutionFilter::~SuperResolutionFilter()
 {
     btkCoutMacro("SuperResolutionFilter : Destructor");
 
-    if(m_PSFEstimationFilter != NULL)
-    {
-        delete m_PSFEstimationFilter;
-        m_PSFEstimationFilter = NULL;
 
-    }
 
     if(m_MotionCorrectionFilter != NULL)
     {
@@ -75,11 +63,7 @@ SuperResolutionFilter::~SuperResolutionFilter()
         m_HighResolutionReconstructionFilter = NULL;
     }
 
-    if(m_SliceRejectionFilter != NULL)
-    {
-        delete m_SliceRejectionFilter;
-        m_SliceRejectionFilter = NULL;
-    }
+
 }
 //-----------------------------------------------------------------------------------------------------------
 int SuperResolutionFilter::Update()
