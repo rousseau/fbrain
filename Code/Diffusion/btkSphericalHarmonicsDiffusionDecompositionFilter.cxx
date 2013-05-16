@@ -58,6 +58,7 @@ SphericalHarmonicsDiffusionDecompositionFilter::SphericalHarmonicsDiffusionDecom
 {
     m_SphericalHarmonicsOrder = 4;
     m_RegularizationParameter = 0.006;
+    m_EstimationType          = Self::DIFFUSION_SIGNAL;
 }
 
 //----------------------------------------------------------------------------------------
@@ -272,7 +273,32 @@ void SphericalHarmonicsDiffusionDecompositionFilter::ThreadedGenerateData(const 
 
         for(unsigned int i = 0; i < signalMatrix.Rows(); i++)
         {
-            signalMatrix(i,0) = static_cast< float >(signal[i+1]) / static_cast< float >(signal[0]);
+            if(m_EstimationType == Self::APPARENT_DIFFUSION_PROFILE)
+            {
+                double b0 = static_cast< float >(signal[0]);
+
+                if(!btkFloatingEqual(b0, 0.0))
+                {
+                    signalMatrix(i,0) = -(1.0/m_InputDiffusionSequence->GetBValues()[i+1]) * std::log(static_cast< float >(signal[i+1]) / b0);
+                }
+                else
+                {
+                    signalMatrix(i,0) = 0.0;
+                }
+            }
+            else // m_EstimationType == Self::DIFFUSION_SIGNAL
+            {
+                double b0 = static_cast< float >(signal[0]);
+
+                if(!btkFloatingEqual(b0, 0.0))
+                {
+                    signalMatrix(i,0) = static_cast< float >(signal[i+1]) / static_cast< float >(signal[0]);
+                }
+                else
+                {
+                    signalMatrix(i,0) = 0.0;
+                }
+            }
         }
 
         // Compute coefficients matrix
