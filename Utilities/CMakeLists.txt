@@ -247,6 +247,9 @@ TARGET_LINK_LIBRARIES(btkTriangleMesh vtkHybrid ${VTK_LIBRARIES})
 ADD_EXECUTABLE( btkCostFunctionTest  btkCostFunctionTest.cpp)
 TARGET_LINK_LIBRARIES(btkCostFunctionTest btkMathsLibrary ${ITK_LIBRARIES} vtkHybrid)
 
+ADD_EXECUTABLE(btkDiffusionScalarMeasurement btkDiffusionScalarMeasurement.cxx)
+TARGET_LINK_LIBRARIES(btkDiffusionScalarMeasurement btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -309,6 +312,7 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkComputeDistanceBetweenAffineTransforms
                 btkTriangleMesh
                 btkCostFunctionTest
+                btkDiffusionScalarMeasurement
         DESTINATION bin)
 
 
