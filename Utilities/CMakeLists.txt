@@ -224,6 +224,9 @@ TARGET_LINK_LIBRARIES(btkFSLToITKTransform ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkViewer btkViewer.cxx)
 TARGET_LINK_LIBRARIES(btkViewer btkToolsLibrary btkDiffusionLibrary ${ITK_LIBARIES} vtkHybrid vtkWidgets)
 
+ADD_EXECUTABLE(btkMRIViewer btkMRIViewer.cxx)
+TARGET_LINK_LIBRARIES(btkMRIViewer btkToolsLibrary ${ITK_LIBARIES} vtkHybrid vtkWidgets)
+
 ADD_EXECUTABLE(btkLocalHistogramMatching btkLocalHistogramMatching.cxx)
 TARGET_LINK_LIBRARIES(btkLocalHistogramMatching btkToolsLibrary ${ITK_LIBRARIES})
 
@@ -304,6 +307,7 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkWeightImageOfPatches
                 btkSlicesMotionViewer
                 btkViewer
+                btkMRIViewer
                 btkComputeDistanceBetweenImages
                 btkComputeDistanceBetweenAffineTransforms
                btkTriangleMesh
