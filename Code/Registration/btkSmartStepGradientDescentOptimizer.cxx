@@ -39,7 +39,9 @@ namespace btk
 {
 //-------------------------------------------------------------------------------------------------
 SmartStepGradientDescentOptimizer::SmartStepGradientDescentOptimizer(): m_MaxStep(2.0),
-    m_MinStep(0.05),m_NumberOfIterations(100),m_Epsilon(0.00005),m_OptimizeAllParameters(true),m_VerboseMode(false),m_UseBounds(false)
+    m_MinStep(0.05),m_NumberOfIterations(1000),m_Epsilon(10e-6),m_OptimizeAllParameters(true),
+    m_VerboseMode(false),m_UseBounds(false),m_Samples(100.0)
+
 {
 
 }
@@ -94,7 +96,7 @@ void SmartStepGradientDescentOptimizer::StartOptimization()
     cost = this->m_CostFunction->GetValue(m_X);
     double mu = 0.0;
 
-    double epsilon = 100.0;
+    double epsilon = 100.0; // to avoid random initialization
     this->SetCurrentPosition(m_X);
     this->m_CurrentValue = cost;
 
@@ -103,8 +105,8 @@ void SmartStepGradientDescentOptimizer::StartOptimization()
     while(i < m_NumberOfIterations &&  epsilon > m_Epsilon)
     {
 
-        mu = this->SearchStep(m_X,m_gX);
-        x = m_X + (mu * m_gX);
+        mu = this->SearchStep(m_X,m_gX); // look for the step
+        x = m_X + (mu * m_gX); // new parameters
 
         if(m_UseBounds)
         {
@@ -122,10 +124,13 @@ void SmartStepGradientDescentOptimizer::StartOptimization()
 
 
 
-        double newCost = this->m_CostFunction->GetValue(x);
+        double newCost = this->m_CostFunction->GetValue(x); // cost of the new parameters
+
 
         //epsilon = std::fabs(newCost-cost); /**** BUG ****/
         epsilon = cost - newCost;
+
+        //FIXME : epsilon should not be negative
 
         if(m_VerboseMode)
         {
@@ -186,29 +191,29 @@ double SmartStepGradientDescentOptimizer::SearchStep(ParametersType _x , Derivat
     {
         if(std::fabs(_gx[i]) > max)
         {
-            max = std::fabs(_gx[i]);
+            max = std::fabs(_gx[i]); //looking for the direction
         }
     }
 
 
     if(max == 0)
     {
-        return  0.0;
+        return  0.0; // avoid division by 0
     }
 
+    //Should we divide by max ? (if normalized max can't be > 1)
+    double maxmu = m_MaxStep/max; // compute a max step
 
-    double maxmu = m_MaxStep/max;
+    double minmu = m_MinStep/max; // compute a min step
 
-    double minmu = m_MinStep/max;
-
-    double mu = minmu;
+    double mu = minmu; // use the min step at the begining
     //double mu = maxmu;
 
-    double step = (maxmu - minmu)/20.0;
+    double step = (maxmu - minmu)/m_Samples; // sample between minmu and maxmu
 
     //double initialCost = this->m_CostFunction->GetValue(_x);
 
-
+    double lastmu = 0.0;
     newGx = mu * _gx;
     newX = _x + newGx;
     double cost = this->m_CostFunction->GetValue(newX);
@@ -224,13 +229,17 @@ double SmartStepGradientDescentOptimizer::SearchStep(ParametersType _x , Derivat
         double newCost = this->m_CostFunction->GetValue(newX);
 
         if(newCost > cost)
+        {
+            //if newCost is > cost we stop (mu is then the previous value)
+            mu = lastmu;
             break;
+        }
 
         _x = newX;
         this->m_CostFunction->GetDerivative(_x,_gx);
         _gx.normalize();
         _gx = -_gx;
-
+        lastmu = mu;
         mu+=step;
     }
 
