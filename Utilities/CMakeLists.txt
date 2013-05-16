@@ -238,7 +238,6 @@ ${Code_SOURCE_DIR}/Visualization/btkRenderPolydata.cxx
 ${Code_SOURCE_DIR}/Visualization/btkRenderPolydata.h)
 TARGET_LINK_LIBRARIES(btkSlicesMotionViewer btkMathsLibrary ${ITK_LIBRARIES} vtkHybrid)
 
-
 ADD_EXECUTABLE(btkComputeDistanceBetweenImages btkComputeDistanceBetweenImages.cxx)
 TARGET_LINK_LIBRARIES(btkComputeDistanceBetweenImages ${ITK_LIBRARIES})
 
@@ -248,6 +247,11 @@ TARGET_LINK_LIBRARIES(btkComputeDistanceBetweenAffineTransforms btkMathsLibrary 
 ADD_EXECUTABLE( btkTriangleMesh btkTriangleMesh.cxx )
 TARGET_LINK_LIBRARIES(btkTriangleMesh vtkHybrid ${VTK_LIBRARIES})
 
+ADD_EXECUTABLE( btkCostFunctionTest  btkCostFunctionTest.cpp)
+TARGET_LINK_LIBRARIES(btkCostFunctionTest btkMathsLibrary ${ITK_LIBRARIES} vtkHybrid)
+
+ADD_EXECUTABLE(btkDiffusionScalarMeasurement btkDiffusionScalarMeasurement.cxx)
+TARGET_LINK_LIBRARIES(btkDiffusionScalarMeasurement btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
 
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
@@ -310,7 +314,11 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkMRIViewer
                 btkComputeDistanceBetweenImages
                 btkComputeDistanceBetweenAffineTransforms
-               btkTriangleMesh
+                btkTriangleMesh
+                btkCostFunctionTest
+                btkDiffusionScalarMeasurement
         DESTINATION bin)
+
+
 
 

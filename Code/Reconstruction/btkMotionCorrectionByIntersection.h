@@ -41,6 +41,9 @@
 #include "itkEuler3DTransform.h"
 #include "itkDiscreteGaussianImageFilter.h"
 #include "itkContinuousIndex.h"
+#include "itkGradientDescentOptimizer.h"
+#include "itkPowellOptimizer.h"
+
 
 /* BTK */
 #include "btkEulerSliceBySliceTransform.h"
@@ -50,6 +53,7 @@
 #include "btkRigidRegistration.h"
 #include "btkSimulatedAnnealingOptimizer.h"
 #include "btkSmartStepGradientDescentOptimizer.h"
+
 
 
 /* OTHERS */
@@ -70,12 +74,13 @@ namespace btk
  * \ingroup Reconstruction
  */
 
+static const double MAX_DOUBLE = DBL_MAX;
+
 template< typename TImage>
 class MotionCorrectionByIntersection
 {
 public:
     /** Typedefs  */
-    static const double MAX_DOUBLE = DBL_MAX;
     typedef TImage ImageType;
     typedef typename ImageType::PixelType Pixel;
     typedef typename ImageType::RegionType ImageRegion;
@@ -134,10 +139,6 @@ public:
     /** Destructor */
     virtual ~MotionCorrectionByIntersection(){}
 
-	/* Francois debugging */
-	double ComputeCostFunctionValueForOneSlice(unsigned int i, unsigned int smov);
-	double ComputeOverallCostFunctionValue();
-
 protected:
     /** UpdateInfos method, called after each iteration for updating transformations parameters informations */
     virtual void UpdateInfos();
@@ -179,6 +180,7 @@ private:
     std::vector< std::vector<bool> > m_Outliers; /** Vector 2D of bool, if the value is true it is a outlier slice */
 
     unsigned int m_NumberOfParameters;
+
 
 };
 

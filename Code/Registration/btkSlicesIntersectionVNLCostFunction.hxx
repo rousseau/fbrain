@@ -49,6 +49,9 @@
 #include "itkLineConstIterator.h"
 #include "itkNeighborhoodIterator.h"
 #include "itkStatisticsImageFilter.h"
+#include "itkBSplineInterpolateImageFunction.h"
+#include "itkNearestNeighborInterpolateImageFunction.h"
+#include "itkWindowedSincInterpolateImageFunction.h"
 
 
 #include "btkMacro.h"
@@ -60,7 +63,8 @@
 #include "cfloat"
 #include "sstream"
 #include "numeric"
-
+#include "utility"
+#include "algorithm"
 
 //#include "itkJoinImageFilter.h"
 //#include "itkImageToHistogramFilter.h"
@@ -77,13 +81,15 @@ namespace btk
  * @author Marc Schweitzer
  * \ingroup Registration
  */
+
+    
+/** Max of the cost function */
+static const double MAX_COSTFUNCTION_VALUE = DBL_MAX;
+
 template <class TImage>
 class SlicesIntersectionVNLCostFunction: public vnl_cost_function
 {
 public:
-
-    /** Max of the cost function */
-    static const double MAX_COSTFUNCTION_VALUE = DBL_MAX;
 
     /** typedefs  */
     typedef TImage ImageType;
@@ -91,6 +97,9 @@ public:
     typedef itk::Image<unsigned char, 3> MaskType;
     typedef typename ImageType::RegionType ImageRegion;
     typedef itk::LinearInterpolateImageFunction< ImageType, double> Interpolator;
+    //typedef itk::BSplineInterpolateImageFunction< ImageType, double> Interpolator;
+    //typedef itk::NearestNeighborInterpolateImageFunction< ImageType, double > Interpolator;
+    //typedef itk::WindowedSincInterpolateImageFunction< ImageType, 3 > Interpolator; // ?!
     typedef itk::NeighborhoodIterator<ImageType> Neighborhood;
     typedef itk::StatisticsImageFilter<ImageType> Statistics;
 
@@ -124,6 +133,9 @@ public:
 
     /** Set method for Transforms */
     btkSetMacro(Transforms, std::vector<typename SliceBySliceTransformType::Pointer>);
+
+    btkGetMacro(Transforms, std::vector<typename SliceBySliceTransformType::Pointer>);
+
     /** Set method for Inverse transforms */
     btkSetMacro(InverseTransforms, std::vector<typename SliceBySliceTransformType::Pointer>);
 
@@ -141,6 +153,10 @@ public:
     btkSetMacro(CenterOfTransform, typename ImageType::PointType);
     btkGetMacro(CenterOfTransform, typename ImageType::PointType);
 
+    btkSetMacro(SlicesGroup, std::vector< unsigned int>);
+
+    btkSetMacro(GroupNum, unsigned int);
+
     /** Constructor */
     SlicesIntersectionVNLCostFunction(unsigned int dim);
     SlicesIntersectionVNLCostFunction(){}
@@ -151,14 +167,16 @@ public:
     /** Cost Function */
     double f(const vnl_vector<double> &x) const;
 
-    virtual vnl_vector<double>GetGradient(vnl_vector<double> const& x,double stepsize = 0.05) const;
+    void GetTransformsWithParams(const vnl_vector<double> &x) const;
+
+    virtual vnl_vector<double>GetGradient(vnl_vector<double> const& x,double stepsize = 0.8) const;
      /** Intialization */
      void Initialize();
 
      /** Get If the last evaluation of cost function has intersection or not */
      btkGetMacro(Intersection, bool);
 
-
+      inline void ComputeIntersectionsOfAllSlices();
 
 protected:
 
@@ -180,7 +198,69 @@ protected:
           return (double)( std::sqrt((ReferenceVoxel - MovingVoxel) * (ReferenceVoxel - MovingVoxel )));
       }
       /** Found starting and ending point of an intersection line (if existing) */
-      bool FoundIntersectionPoints(unsigned int _fixedImage, unsigned int _fixedSlice, typename ImageType::PointType &Point1, typename ImageType::PointType &Point2) const;
+      bool FoundIntersectionPoints(unsigned int _fixedImage, unsigned int _fixedSlice, unsigned int _movingImage, unsigned int _movingSlice, typename ImageType::PointType &Point1, typename ImageType::PointType &Point2) const;
+
+      /** Found starting and ending point of an intersection line (if existing) */
+      bool FoundIntersectionPoints2(unsigned int _fixedImage, unsigned int _fixedSlice, unsigned int _movingImage, unsigned int _movingSlice, typename ImageType::PointType &Point1, typename ImageType::PointType &Point2) const;
+
+      bool FoundIntersectionsLines(unsigned int _fixedImage, unsigned int _fixedSlice, unsigned int _movingImage, unsigned int _movingSlice,
+                              std::vector< typename ImageType::PointType > &Point1, std::vector< typename ImageType::PointType > &Point2) const;
+
+      inline std::pair< unsigned int, unsigned int > ReturnImageAndSliceFromStackIndex(unsigned int _index)const
+      {
+          unsigned int totalSize = m_Stack.size();
+          std::vector< unsigned int > sizes;
+          std::pair<unsigned int, unsigned int> imageSlice;
+          for(unsigned int i = 0; i< m_Images.size(); i++)
+          {
+              sizes.push_back(m_Images[i]->GetLargestPossibleRegion().GetSize()[2]);
+          }
+
+          unsigned int linearSize = 0;
+          unsigned int lastSize = 0;
+          for(unsigned int j = 0; j< sizes.size(); j++)
+          {
+              linearSize+=sizes[j];
+              if(_index < linearSize)
+              {
+                  imageSlice.first = j;
+                  if(j==0)
+                  {
+                     imageSlice.second = _index;
+                  }
+                  else
+                  {
+                      imageSlice.second = _index - lastSize ;
+                  }
+                break;
+              }
+              lastSize+=sizes[j];
+          }
+
+          return imageSlice;
+      }
+
+      inline unsigned int ReturnStackIndexFromImageAndSlice(std::pair< unsigned int, unsigned int > _imageAndSlice)const
+      {
+          unsigned int image = _imageAndSlice.first;
+          unsigned int slice = _imageAndSlice.second;
+          unsigned int linearSize = 0;
+          unsigned int i =0;
+          unsigned index = slice;
+          while(i!=image)
+          {
+              linearSize+=m_Images[i]->GetLargestPossibleRegion().GetSize()[2];
+              index = linearSize + slice;
+              i++;
+          }
+
+
+
+          return index;
+
+
+      }
+
 
 
 
@@ -209,7 +289,23 @@ private :
     typename ImageType::PointType m_CenterOfTransform;
     mutable bool m_Intersection; /** Return true if the moving slice has intersections or not. This variable is mutable while we modify it into a const function (f()) */
 
+    std::vector< unsigned int > m_Stack;
 
+    unsigned int m_ReferenceSlice;
+
+    std::vector< VoxelType > m_FixedLine;
+    std::vector< VoxelType > m_MovingLine;
+
+    mutable unsigned int m_NumberOfIntersections;
+
+
+    std::vector< unsigned int > m_SlicesGroup;
+    unsigned int m_GroupNum;
+
+    std::vector< std::vector< typename ImageType::PointType > > m_Points1;
+
+    std::vector< std::vector< typename ImageType::PointType > > m_Points2;
+    std::vector< std::vector< bool > > m_Intersections;
 };
 
 }

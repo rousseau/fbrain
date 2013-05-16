@@ -379,6 +379,36 @@ ImageHelper< TImageInput, TImageOutput >::AreOrthos(typename TImageInput::Pointe
     }
 
 }
+//----------------------------------------------------------------------------------------
+template < class TImageInput, class TImageOutput >
+typename TImageOutput::Pointer
+ImageHelper< TImageInput, TImageOutput >::CastImage(typename TImageInput::Pointer image)
+{
+    typename CastImageFilter::Pointer filter = CastImageFilter::New();
+    filter->SetInput(image);
+    filter->Update();
+
+    typename TImageOutput::Pointer OutputImage = filter->GetOutput();
+
+    return OutputImage;
+}
+//----------------------------------------------------------------------------------------
+template < class TImageInput, class TImageOutput >
+std::vector< typename TImageOutput::Pointer > &
+ImageHelper< TImageInput, TImageOutput >::CastImage(std::vector< typename TImageInput::Pointer> &images)
+{
+    //FIXME : memory leak about the returned vector (maybe use a itk::SmartPointer<>, or passing the vector per value)
+    std::vector< typename TImageOutput::Pointer > *ptrOutputImages = new std::vector< typename TImageOutput::Pointer >;
+    std::vector< typename TImageOutput::Pointer > &OutputImages = *ptrOutputImages;
+    OutputImages.resize(images.size());
+
+    for(int i = 0; i < images.size(); i++)
+    {
+        OutputImages[i] = CastImage(images[i]);
+    }
+
+    return OutputImages;
+}
 
 
 } // namespace btk

@@ -53,6 +53,8 @@
 #include "itkImageMaskSpatialObject.h"
 #include "itkMatrixOffsetTransformBase.h"
 #include "itkHistogramMatchingImageFilter.h"
+#include "itkResampleImageFilter.h"
+#include "itkCastImageFilter.h"
 
 /* BTK */
 #include "btkImageHelper.h"
@@ -91,6 +93,9 @@ int main(int argc, char * argv[])
     typedef btk::SliceBySliceTransformBase< double, Dimension, PixelType > TransformBaseType;
     typedef itk::ImageMaskSpatialObject< Dimension > MaskType;
     typedef itk::HistogramMatchingImageFilter<itkImage, itkImage, PixelType> HistoFilter;
+    typedef itk::ResampleImageFilter< itkImage, itkImage > RFilter;
+     typedef itk::ResampleImageFilter< itkMaskImage, itkMaskImage > RFilterMasks;
+     typedef btk::LowToHighResolutionFilter<itkMaskImage> HighResFilterMask;
 
 
     // TCLAP :
@@ -147,12 +152,15 @@ int main(int argc, char * argv[])
 
     bool computeRegistration = true;
     int ReferenceImageMatching = 0;
-    bool histogramMatching = true;
+    bool histogramMatching = false;
+
 
     for(int i = 0; i< inputsImages.size(); i++)
     {
         T[i] = TransformBase::New();
         T[i]->SetIdentity();
+
+
         Identity[i] = Transform::New();
         Identity[i]->SetImage(inputsImages[i]);
         Identity[i]->SetIdentity();
@@ -163,13 +171,16 @@ int main(int argc, char * argv[])
         transforms[i]->SetIdentity();
         transforms[i]->Initialize();
 
+        SR_filter->AddInput(inputsImages[i]);
+
+
         MaskType::Pointer mask = MaskType::New();
         mask -> SetImage( inputMasks[i] );
-        SR_filter->AddInput(inputsImages[i]);
         SR_filter->AddMask(mask);
-
         itkImage::RegionType roi = mask -> GetAxisAlignedBoundingBoxRegion();
         SR_filter -> AddRegion( roi );
+
+
         // denoising before motion correction
         if(denoisingInput)
         {
@@ -181,7 +192,100 @@ int main(int argc, char * argv[])
             inputsImages[i] = myTool.GetOutput();
         }
 
+
+
+
     }
+
+
+
+    // Construction of HighResolution image
+    std::cout<<"Perform a High Resolution image ..."<<std::endl;
+    HighResFilter::Pointer LowToHigh = HighResFilter::New();
+    LowToHigh->SetImages(inputsImages);
+    LowToHigh->SetMasks(inputMasks);
+    LowToHigh->SetTransforms(T);
+    try
+    {
+        LowToHigh -> Update();
+    }
+    catch(itk::ExceptionObject &exp)
+    {
+        std::cout<<exp<<std::endl;
+        return EXIT_FAILURE;
+    }
+
+    btk::ImageHelper< itkImage >::WriteImage(LowToHigh->GetOutput(),"BB.nii.gz");
+    /*
+    std::vector< std::string > refNames;
+    std::vector< itkImage::Pointer > refs;
+    std::vector< itkMaskImage::Pointer > refMasks;
+    refs.resize(inputsImages.size());
+    refNames.resize(inputsImages.size());
+    refMasks.resize(inputsImages.size());
+
+    refNames[0] = "a1_Grid.nii.gz";
+    refNames[1] = "a2_Grid.nii.gz";
+    refNames[2] = "c1_Grid.nii.gz";
+    refNames[3] = "s1_Grid.nii.gz";
+
+    refs =  btk::ImageHelper< itkImage >::ReadImage(refNames);
+
+
+    for(int i = 0; i< inputsImages.size(); i++)
+    {
+        RFilter::Pointer R_filter = RFilter::New();
+        R_filter->SetInput(inputsImages[i]);
+        R_filter->SetReferenceImage(refs[i]);
+        R_filter->SetOutputParametersFromImage(refs[i]);
+        R_filter->Update();
+        inputsImages[i] = R_filter->GetOutput();
+
+        std::stringstream name;
+        name<<"TMPResample"<<i<<".nii.gz";
+        btk::ImageHelper<itkImage>::WriteImage(inputsImages[i], name.str());
+        SR_filter->AddInput(inputsImages[i]);
+
+
+    }
+
+    HighResFilterMask::Pointer LowToHighM = HighResFilterMask::New();
+    LowToHighM->SetImages(inputMasks);
+    LowToHighM->SetMasks(inputMasks);
+    LowToHighM->SetTransforms(T);
+    try
+    {
+        LowToHighM -> Update();
+    }
+    catch(itk::ExceptionObject &exp)
+    {
+        std::cout<<exp<<std::endl;
+        return EXIT_FAILURE;
+    }
+
+    for(int i = 0; i< inputsImages.size(); i++)
+    {
+
+        refMasks[i] = btk::ImageHelper< itkImage, itkMaskImage>::CastImage(refs[i]);
+
+        RFilterMasks::Pointer R_filter = RFilterMasks::New();
+        R_filter->SetInput(inputMasks[i]);
+        R_filter->SetReferenceImage(refMasks[i]);
+        R_filter->SetOutputParametersFromImage(refMasks[i]);
+        R_filter->Update();
+        inputMasks[i] = R_filter->GetOutput();
+
+        btk::ImageHelper<itkMaskImage>::WriteImage(inputMasks[i], "TMPMasks.nii.gz");
+
+        MaskType::Pointer mask = MaskType::New();
+        mask -> SetImage( inputMasks[i] );
+        SR_filter->AddMask(mask);
+        itkImage::RegionType roi = mask -> GetAxisAlignedBoundingBoxRegion();
+        SR_filter -> AddRegion( roi );
+    }*/
+
+
+
     // histogram matching (useless I think)
     if(histogramMatching)
     {
@@ -239,45 +343,21 @@ int main(int argc, char * argv[])
     }
     else
     {
-        //TODO: Test if files exists or not
-       transforms =  btk::IOTransformHelper< Transform >::ReadTransform(transfoNames);
-       //transforms.resize(inputsImages.size());
-       for(int i = 0; i< transforms.size(); i ++)
-       {
-           //transforms[i] = Transform::New();
-           transforms[i]->SetImage(inputsImages[i]);
-           transforms[i]->Initialize();
-       }
+//        //TODO: Test if files exists or not
+//       transforms =  btk::IOTransformHelper< Transform >::ReadTransform(transfoNames);
+//       //transforms.resize(inputsImages.size());
+//       for(int i = 0; i< transforms.size(); i ++)
+//       {
+//           //transforms[i] = Transform::New();
+//           transforms[i]->SetImage(inputsImages[i]);
+//           transforms[i]->Initialize();
+//       }
 
     }
 
 
 
-    for(unsigned int i = 0; i< inputsImages.size(); i++)
-    {
-        for(unsigned int j=0; j< transforms[i] -> GetNumberOfSlices(); j++)
-        {
-            SR_filter-> SetTransform(i, j, transforms[i] -> GetSliceTransform(j) ) ;
-        }
-    }
 
-    // Construction of HighResolution image
-    std::cout<<"Perform a High Resolution image ..."<<std::endl;
-//    std::vector<itkImage::Pointer> images;
-//    images.resize(inputsImages.size());
-    HighResFilter::Pointer LowToHigh = HighResFilter::New();
-    LowToHigh->SetImages(inputsImages);
-    LowToHigh->SetMasks(inputMasks);
-    LowToHigh->SetTransforms(T);
-    try
-    {
-        LowToHigh -> Update();
-    }
-    catch(itk::ExceptionObject &exp)
-    {
-        std::cout<<exp<<std::endl;
-        return EXIT_FAILURE;
-    }
 
     //--------
 //    std::vector<std::string> ResampledNames(inputsImages.size());
@@ -312,7 +392,7 @@ int main(int argc, char * argv[])
 //    btk::ImageHelper<itkImage>::WriteImage(images, ResampledNames);
 
 
-
+     btk::IOTransformHelper< Transform >::WriteTransform(transforms,transfoNames);
 
 
     //-----
@@ -338,7 +418,7 @@ int main(int argc, char * argv[])
 
     try
     {
-        resampler -> Update();
+       resampler -> Update();
     }
     catch(itk::ExceptionObject &exp)
     {
@@ -347,67 +427,76 @@ int main(int argc, char * argv[])
     }
 
 
-    //btk::ImageHelper<itkImage>::WriteImage(resampler->GetOutput(), "TMP_Reconstruction.nii.gz");
+    btk::ImageHelper<itkImage>::WriteImage(resampler->GetOutput(), output);//"TMP_Reconstruction.nii.gz");
     //--------
     //
     //Super Resolution :
 
-    /*
-    std::cout<<"Performing super resolution"<<std::endl;
-    SR_filter -> UseReferenceImageOn();
-    SR_filter -> SetReferenceImage( LowToHigh->GetOutput() );
-    SR_filter -> SetIterations(25);
-    SR_filter -> SetLambda( 0.02 );
-    SR_filter -> SetPSF( SuperResolutionFilter::GAUSSIAN );
-    //SR_filter->SetOutliers(IntersectionFilter->GetOutliers());//NOT implemented yet
-    SR_filter -> Update();
+//    for(unsigned int i = 0; i< inputsImages.size(); i++)
+//    {
+//        for(unsigned int j=0; j< transforms[i] -> GetNumberOfSlices(); j++)
+//        {
+//            SR_filter-> SetTransform(i, j, transforms[i] -> GetSliceTransform(j) ) ;
+//        }
+//    }
 
 
-    //btk::ImageHelper<itkImage>::WriteImage(Output, output);
+//    std::cout<<"Performing super resolution"<<std::endl;
+//    SR_filter -> UseReferenceImageOn();
+//    SR_filter -> SetReferenceImage( LowToHigh->GetOutput() );
+//    //SR_filter->SetReferenceImage(resampler->GetOutput());
+//    SR_filter -> SetIterations(25);
+//    SR_filter -> SetLambda( 0.02 );
+//    SR_filter -> SetPSF( SuperResolutionFilter::GAUSSIAN );
+//    //SR_filter->SetOutliers(IntersectionFilter->GetOutliers());//NOT implemented yet
+//    SR_filter -> Update();
 
-    for (int i=0; i<numberOfLoops; i++)
-    {
-      std::cout<<"Loop : "<<i+1<<std::endl;
 
-      btk::NLMTool<PixelType> myTool;
-      myTool.SetInput(SR_filter -> GetOutput());
-      myTool.SetPaddingValue(0);
-      myTool.SetDefaultParameters();
-      myTool.ComputeOutput();
+//    //btk::ImageHelper<itkImage>::WriteImage(Output, output);
 
-      SR_filter -> SetReferenceImage( myTool.GetOutput() );
-      SR_filter -> Update();
-    }
-    //NLM denoising desired at the last step if number of loops > 0
-    if(numberOfLoops>0)
-    {
+//    for (int i=0; i<numberOfLoops; i++)
+//    {
+//      std::cout<<"Loop : "<<i+1<<std::endl;
 
-      btk::NLMTool<PixelType> myTool;
-      myTool.SetInput(SR_filter -> GetOutput());
-      myTool.SetPaddingValue(0);
-      myTool.SetDefaultParameters();
-      myTool.ComputeOutput();
+//      btk::NLMTool<PixelType> myTool;
+//      myTool.SetInput(SR_filter -> GetOutput());
+//      myTool.SetPaddingValue(0);
+//      myTool.SetDefaultParameters();
+//      myTool.ComputeOutput();
 
-      SR_filter -> SetReferenceImage( myTool.GetOutput() );
-      SR_filter -> Update();
-    }
+//      SR_filter -> SetReferenceImage( myTool.GetOutput() );
+//      SR_filter -> Update();
+//    }
+//    //NLM denoising desired at the last step if number of loops > 0
+//    if(numberOfLoops>0)
+//    {
 
-    btk::NLMTool<PixelType> myTool;
-    myTool.SetInput(SR_filter -> GetOutput());
-    myTool.SetPaddingValue(0);
-    myTool.SetDefaultParameters();
-    myTool.ComputeOutput();
+//      btk::NLMTool<PixelType> myTool;
+//      myTool.SetInput(SR_filter -> GetOutput());
+//      myTool.SetPaddingValue(0);
+//      myTool.SetDefaultParameters();
+//      myTool.ComputeOutput();
+
+//      SR_filter -> SetReferenceImage( myTool.GetOutput() );
+//      SR_filter -> Update();
+//    }
+
+//    btk::NLMTool<PixelType> myTool;
+//    myTool.SetInput(SR_filter -> GetOutput());
+//    myTool.SetPaddingValue(0);
+//    myTool.SetDefaultParameters();
+//    myTool.ComputeOutput();
 
     std::cout<<"Done !"<<std::endl;
-  */
+
      //TODO : Cast into unsigned short at the end !
-   itkImage::Pointer Output = itkImage::New();
+   //itkImage::Pointer Output = itkImage::New();
    //Output = myTool.GetOutput();
    //Output = LowToHigh->GetOutput(); //produces a zero image
-   Output = resampler->GetOutput();
+   //Output = resampler->GetOutput();
   
-  btk::ImageHelper<itkImage>::WriteImage(Output, output);
-  btk::IOTransformHelper< Transform >::WriteTransform(transforms,transfoNames);
+  //btk::ImageHelper<itkImage>::WriteImage(Output, output);
+
 
 
     delete IntersectionFilter;

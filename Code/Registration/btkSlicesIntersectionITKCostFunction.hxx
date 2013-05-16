@@ -145,6 +145,9 @@ class SlicesIntersectionITKCostFunction: public itk::SingleValuedCostFunction
         btkSetMacro(CenterOfTransform, typename ImageType::PointType);
         btkGetMacro(CenterOfTransform, typename ImageType::PointType);
 
+        btkSetMacro(SlicesGroup, std::vector< unsigned int >);
+        btkSetMacro(GroupNum, unsigned int);
+
 
         /** Intialization */
         void Initialize();
@@ -207,6 +210,10 @@ class SlicesIntersectionITKCostFunction: public itk::SingleValuedCostFunction
         typename ImageType::PointType m_CenterOfTransform;
 
         bool m_Intersection;
+
+        std::vector< unsigned int > m_SlicesGroup;
+
+        unsigned int m_GroupNum;
 
 
 

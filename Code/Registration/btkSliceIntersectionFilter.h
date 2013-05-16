@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 08/03/2013
+  Date: 26/04/2013
   Author(s):Marc Schweitzer (marc.schweitzer(at)unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -33,8 +33,8 @@
   
 ==========================================================================*/
 
-#ifndef BTKSLICESTOPOLYDATA_H
-#define BTKSLICESTOPOLYDATA_H
+#ifndef BTKSLICEINTERSECTIONFILTER_H
+#define BTKSLICEINTERSECTIONFILTER_H
 
 /* ITK */
 #include "itkObject.h"
@@ -46,27 +46,26 @@
 #include "vtkPolyData.h"
 
 
+
 /* BTK */
 #include "btkMacro.h"
 
 namespace btk
 {
 /**
- * This class transform an itk::Images into a vtk::PolyData.
- * The output polydata contain coutours of the input image slices.
- * Typicaly this class is used to display slice by slice movement.
+ * This class compute the intersection line between two slices
+ * The output is the starting Point and the ending point of the line
  * In order to display movement user must provide an itk::Transform, even if transform is identity.
  *
  * @author Marc Schweitzer
  * \ingroup ImageFilters
  */
 template <typename TImage>
-class SlicesToPolyData : public itk::Object
+class SliceIntersectionFilter : public itk::Object
 {
-
-public:
+    public:
         /** Typedefs */
-        typedef btk::SlicesToPolyData<TImage> Self;
+        typedef btk::SliceIntersectionFilter<TImage> Self;
         typedef itk::Object Superclass;
         typedef itk::SmartPointer< Self > Pointer;
         typedef itk::SmartPointer< const Self > ConstPointer;
@@ -74,53 +73,76 @@ public:
 
         typedef itk::Transform<double, 3,3> Transform;
 
+
         /** Method for creation through the object factory. */
         itkNewMacro(Self);
 
         /** Update Method */
-        virtual void Update();
+        inline virtual void Update();
 
-        /** Set/Get input image*/
-        btkSetMacro(Input,typename ImageType::Pointer);
-        btkGetMacro(Input, typename ImageType::Pointer);
+        /** Get/Set input Images */
+        btkSetMacro(Image1,typename ImageType::Pointer);
+        btkGetMacro(Image1,typename ImageType::Pointer);
+        btkSetMacro(Image2,typename ImageType::Pointer);
+        btkGetMacro(Image2,typename ImageType::Pointer);
+
+        /** Get/Set inputs slices  */
+        btkSetMacro(Slice1,unsigned int);
+        btkGetMacro(Slice1,unsigned int);
+        btkSetMacro(Slice2,unsigned int);
+        btkGetMacro(Slice2,unsigned int);
 
         /** Set/Get transform */
-        btkSetMacro(Transform, Transform*);
-        btkGetMacro(Transform, Transform*);
+        btkSetMacro(Transform1, Transform*);
+        btkGetMacro(Transform1, Transform*);
+        btkSetMacro(Transform2, Transform*);
+        btkGetMacro(Transform2, Transform*);
 
-        /** Get Output PolyData */
-        btkGetMacro(Output,vtkSmartPointer< vtkPolyData > );
+        /** Get if there is an intersection */
+        btkGetMacro(IsIntersection,bool);
 
-        /** Set The begining slice and Ending slice (default all slice will be add in the polydata */
-        btkSetMacro(BeginSlice, unsigned int);
-        btkGetMacro(BeginSlice, unsigned int);
-        btkSetMacro(EndingSlice, unsigned int);
-        btkGetMacro(EndingSlice, unsigned int);
+        /** Get Points */
+        btkGetMacro(Point1,typename ImageType::PointType);
+        btkGetMacro(Point2,typename ImageType::PointType);
 
 
 
-    protected :
-        /** Initialize Method to call before Update() */
-        virtual void Initialize();
-        /** Constructor */
-        SlicesToPolyData();
-        /** Destructor */
-        virtual ~SlicesToPolyData();
+    protected:
+        SliceIntersectionFilter();
+        virtual ~SliceIntersectionFilter(){}
+        inline virtual void Initialize();
+        inline virtual void CreatePlane1();
+        inline virtual void CreatePlane2();
 
-    private :
-        typename ImageType::Pointer m_Input; /** Pointer to the input image */
-        Transform* m_Transform; /** itk::Transform (needed) */
+    private:
+         unsigned int m_Slice1;
+         unsigned int m_Slice2;
 
-        vtkSmartPointer< vtkPolyData > m_Output; /** Pointer to the output polydata */
+         Transform* m_Transform1;
+         Transform* m_Transform2;
 
-        unsigned int m_BeginSlice;
-        unsigned int m_EndingSlice;
+         typename ImageType::Pointer m_Image1;
+         typename ImageType::Pointer m_Image2;
+
+         typename ImageType::PointType m_Point1;
+         typename ImageType::PointType m_Point2;
+
+         bool m_IsIntersection;
+
+
+
+         vtkSmartPointer< vtkPolyData > m_Plane1;
+         vtkSmartPointer< vtkPolyData > m_Plane2;
+
+         vtkSmartPointer< vtkPolyData > m_Line;
+
+         std::vector< std::vector< double > > m_LinePoints;
+
+
 
 
 };
+} //btk
 
-} //end namespace
-
-#include "btkSlicesToPolydata.txx"
-
-#endif // BTKSLICESTOPOLYDATA_H
+#include "btkSliceIntersectionFilter.txx"
+#endif // BTKSLICEINTERSECTIONFILTER_H

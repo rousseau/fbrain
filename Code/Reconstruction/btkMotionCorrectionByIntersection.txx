@@ -12,11 +12,11 @@ template<typename TImage>
 MotionCorrectionByIntersection<TImage>::MotionCorrectionByIntersection():m_VerboseMode(true),m_MaxLoop(3),m_VerboseDbg(false)
   ,m_CurrentError(0.0),m_UseSliceExclusion(true),m_NumberOfParameters(6)
 {
-    // Activate VerboseDbg when runngin debug mode
+    // Activate VerboseDbg when running debug mode
 #ifndef NDEBUG
-        m_VerboseDbg = true; //true
+    m_VerboseDbg = false; //true
 #else
-        m_VerboseDbg = false;
+    m_VerboseDbg = false;
 #endif
 }
 //-------------------------------------------------------------------------------------------------
@@ -85,11 +85,11 @@ void MotionCorrectionByIntersection<TImage>::Initialize()
         const double translationScale = 1.0/1000.0;
 
 
-//        //Euler angles
+        //        //Euler angles
         m_ScaleX[0] = 1.0;///rotationScale;
         m_ScaleX[1] = 1.0;///rotationScale;
         m_ScaleX[2] = 1.0;///rotationScale;
-//        //translation
+        //        //translation
         m_ScaleX[3] = translationScale;
         m_ScaleX[4] = translationScale;
         m_ScaleX[5] = translationScale;
@@ -97,7 +97,7 @@ void MotionCorrectionByIntersection<TImage>::Initialize()
 
 
         // Set the reference slice. the reference slice never move.
-        m_ReferenceStack = 1;
+        m_ReferenceStack = 0;
         m_ReferenceSlice = m_Images[m_ReferenceStack]->GetLargestPossibleRegion().GetSize()[2]/2;
 
         std::cout<<"Reference image : "<<m_ReferenceStack<<std::endl;
@@ -105,444 +105,6 @@ void MotionCorrectionByIntersection<TImage>::Initialize()
 
 
     }
-
-
-}
-//-------------------------------------------------------------------------------------------------
-template<typename TImage>
-void MotionCorrectionByIntersection<TImage>::Update()
-{
-    // initialization for the random
-    srand(time(NULL));
-
-
-    typename TransformType::ParametersType params;
-    params.set_size(m_NumberOfParameters);
-
-    // Default value for parameters
-    typename TransformType::ParametersType initialParams, simulationParams, zeroParams, MinBounds, MaxBounds;
-    // Active parameters is usefull for activate/desactivate optimization of some parameters (Tz for example)
-    typename TransformType::ParametersType ActiveParameters;
-    initialParams.set_size(m_NumberOfParameters);
-    ActiveParameters.set_size(m_NumberOfParameters);
-    zeroParams.set_size(m_NumberOfParameters);
-    zeroParams.Fill(0.0);
-    initialParams.Fill(0.0);
-    simulationParams.Fill(0.0);
-    ActiveParameters.Fill(1.0);
-
-    // Min, Max values of the parameters (for btk::SmartStepGradientDescentOptimizer)
-    MinBounds.set_size(m_NumberOfParameters);
-    MaxBounds.set_size(m_NumberOfParameters);
-
-    MinBounds[0] = MinBounds[1] = MinBounds[2] = -45; //degrees
-    MinBounds[3] = MinBounds[4] = MinBounds[5] = -20;//mm
-
-    MaxBounds[0] = MaxBounds[1] = MaxBounds[2] = 45; //degrees
-    MaxBounds[3] = MaxBounds[4] = MaxBounds[5] = 20;//mm
-
-
-
-    if(m_VerboseMode)
-    {
-        std::cout<<"Scales : "<<m_ScaleX<<std::endl;
-    }
-
-    std::string Exclusion;
-    // Terminal Display
-    (m_UseSliceExclusion) ? Exclusion = "ON" : Exclusion = "OFF";
-    std::cout<<" * ---------------------------------------- * "<<std::endl;
-    std::cout<<" * Registration by intersection of slices * "<<std::endl;
-    std::cout<<" * ---------------------------------------- * "<<std::endl<<std::endl;
-
-    std::cout<<" * ----------------! INFOS !----------------- * "<<std::endl;
-    std::cout<<"    Number of loops : "<<m_MaxLoop<<std::endl;
-    std::cout<<"    Processing Slices Exclusion : "<<Exclusion<<std::endl;
-    std::cout<<" * ---------------------------------------- * "<<std::endl<<std::endl;
-    std::cout<<"Processing ..."<<std::endl;
-
-
-    for(unsigned int i = 0; i< m_NumberOfImages; i++)
-    {
-        m_Transforms[i]->Initialize();
-        m_Transforms[i]->GetInverse(m_InverseTransforms[i]);
-    }
-
-	unsigned int loop = 0;
-	double min_Epsilon= 0.0001;
-
-	
-	double previousCost   = ComputeOverallCostFunctionValue();
-	double newCost        = previousCost + 1;
-	double current_Epsilon = min_Epsilon * std::fabs(previousCost);
-	double differenceCost = current_Epsilon + 1;
-		
-/*
- while(Diff > CurrentEpsilon){ //loop over iterations
-
-    LinMin(fbrr, fbrim, i, k0, k1);
-
-    if((this->SimilarityMeasure >= 5) && (this->SimilarityMeasure <= 8)){
-      ComputeProjection(fbrim->ProjectionImage, fbrim->Images[i], fbrim->MixImages[i], k0, k1, ImageParamForRR[i], SliceParamForRR[i],
-SliceOrder[i]);
-      ComputeMixProjection(fbrim->MixProjectionImage, fbrim->Images[i], fbrim->ProjectionImage, k0, k1, SliceOrder[i]);
-    }
-    if((this->SimilarityMeasure >= 1) && (this->SimilarityMeasure <= 4))
-      ComputeJHForBunchOfSlices(fbrim->Images[i], fbrim->MixImages[i], k0, k1, ImageParamForRR[i], SliceParamForRR[i], SliceOrder[i]);
-
-    if(this->SimilarityMeasure == 10)
-      NewSimilarity = ComputeL2ForBunchOfSlices(fbrim->Images[i], fbrim->MixImages[i], k0, k1, ImageParamForRR[i], SliceParamForRR[i],
-SliceOrder[i]);
-    else
-      NewSimilarity = Evaluate(fbrim);
-    Diff = NewSimilarity - OldSimilarity;
-    //cout<<"Old : "<<OldSimilarity<<" New :"<<NewSimilarity<<" Diff : "<<Diff<<" Current Epsilon : "<<CurrentEpsilon<<endl;
-    if(Diff>0){
-      OldSimilarity = NewSimilarity;
-      CurrentEpsilon = Epsilon * fabs(OldSimilarity);
-    }
-
-    ComputeGradient(fbrr, fbrim, i, k0, k1);
-    NormalizeGradient(i, k0, k1);
-
-  }
-  */		
-		
-		
-		
-		
-    while( loop < m_MaxLoop &&  differenceCost > current_Epsilon )
-    // Loop over number max of loop
-    //for(unsigned int loop = 0; loop < m_MaxLoop; loop++) //TODO: add a while loop, and check m_MaxLoop, AND epsilon between two loop (if a parameters change, of sum of errors).
-    {
-      
-      
-      previousCost   = ComputeOverallCostFunctionValue();
-      
-      
-      
-        //****** Multi-Resolution ****
-//        this->BlurImages(m_MaxLoop - loop);
-//        //************************************
-//        // last loop we use original images
-//        if(loop == m_MaxLoop -1)
-//        {
-            for(unsigned int i = 0; i< m_Images.size(); i++)
-            {
-                m_BlurredImages[i] = m_Images[i];
-            }
-
-//        }
-          // Uncomment this part if you want to write error per slice in a file (for matlab)
-//        std::ofstream Rx, Ry, Rz, Tx, Ty, Tz;
-//        Rx.open("RxError.txt");
-//        Ry.open("RyError.txt");
-//        Rz.open("RzError.txt");
-//        Tx.open("TxError.txt");
-//        Ty.open("TyError.txt");
-//        Tz.open("TzError.txt");
-        //************************************
-
-        std::cout<<"\rLoop N°: "<<loop+1<<" "<<std::flush;
-        // Loop Over All Images
-        for(unsigned int i = 0; i < m_NumberOfImages; i++)
-        {
-            if(m_VerboseMode)
-            {
-                std::cout<<"**************** "<<std::endl;
-                std::cout<<"Moving Image n° : "<<i<<std::endl;
-            }
-
-
-
-            typename ImageType::SizeType sizeMov = m_Images[i]->GetLargestPossibleRegion().GetSize();
-
-            unsigned int smov = 0;
-            // Loop over slice
-            for(smov = 0; smov < sizeMov[2]; smov++ )
-            {
-                //Initialize parameters with the previous value (identity at the first step)
-                typename TransformType::ParametersType p = m_Transforms[i]->GetSliceParameters(smov);
-                initialParams[0] = p[0];
-                initialParams[1] = p[1];
-                initialParams[2] = p[2];
-                // Euler 3D
-                initialParams[3] = p[3];
-                initialParams[4] = p[4];
-                initialParams[5] = p[5];
-
-                m_CurrentError = 0.0;// Initialize current error
-
-                if(m_VerboseMode)
-                {
-                    std::cout<<"Moving slice n° : "<<smov<<std::endl;
-                }
-
-                // if smov isn't the reference slice
-                if(!(smov == m_ReferenceSlice && i == m_ReferenceStack))
-                {
-                    // Initialization of the cost function
-                    typename btk::SlicesIntersectionITKCostFunction<ImageType>::Pointer f = btk::SlicesIntersectionITKCostFunction<ImageType>::New();
-                    f->SetNumberOfParameters(m_NumberOfParameters);
-                    f->SetVerboseMode(m_VerboseDbg);
-                    //f->SetImages(m_Images);
-                    f->SetImages(m_BlurredImages);
-                    f->SetMasks(m_Masks);
-                    f->SetTransforms(m_Transforms);
-                    f->SetInverseTransforms(m_InverseTransforms);
-                    f->SetMovingImageNum(i);
-                    f->SetMovingSliceNum(smov);
-                    f->Initialize();//Don't forget
-
-                    btk::SmartStepGradientDescentOptimizer::Pointer optimizer = btk::SmartStepGradientDescentOptimizer::New();// first optimizer (gradient descent)
-                    
-                    //Utilisation d'un seul optimiseur
-                    //itk::FRPROptimizer::Pointer optimizer2 = itk::FRPROptimizer::New();//second optimizer to refine result of the first one (this is a test)
-                    //TODO: Test with others itk::Optimizers (powell, amoeba...)
-
-                    //if(loop <=1) // the first and the second loop we use first optimizer
-                    //{
-
-                        optimizer->SetCostFunction(f.GetPointer());
-                        optimizer->SetNumberOfIterations(300);
-                        optimizer->SetMaxStep(1.0);
-                        optimizer->SetMinStep(0.01);
-                        optimizer->SetMinBounds(MinBounds);
-                        optimizer->SetMaxBounds(MaxBounds);
-                        optimizer->SetUseBounds(false);
-                        optimizer->SetOptimizedParameters(ActiveParameters);
-                    
-                    //For debugging purpose.
-                    /*    
-                    if(m_VerboseMode)
-                        {
-                            optimizer->SetVerboseMode(m_VerboseMode);
-                        }
-                    */
-                            
-                    //}
-                    //else // otherwise we use second one
-                    //{
-                    /*
-                        optimizer2->SetCostFunction(f.GetPointer());
-                        optimizer2->SetStepLength(0.01);
-                        optimizer2->SetMaximize(false);
-                        optimizer2->SetMaximumIteration( 200 );
-                        //optimizer2->SetToFletchReeves();
-                        optimizer2->SetToPolakRibiere();
-					*/
-                    //}
-
-
-                    optimizer->SetInitialPosition( initialParams );
-                    //optimizer2->SetInitialPosition( initialParams );
-
-                    // Before optimization we check if there are intersections
-                    // ?????????????????? pourquoi zeroParams ???????????? -> valable uniquement à la première itération
-                    double initialError = f->GetValue(zeroParams);
-
-					double before = this->ComputeOverallCostFunctionValue();					
-					std::cout<<"Before optimization, ocfv : "<<before<<std::endl;
-					std::cout<<"cfv for current slice     : "<<this->ComputeCostFunctionValueForOneSlice(i, smov)<<std::endl;
-
-
-                    // Get if the last evaluation of cost function has an intersection
-                    if(f->GetIntersection())
-                    {
-                    	
-                        // if yes we can optimize
-                        //if(loop <=1)//first optimizer
-                        //{
-                            try
-                            {
-                                optimizer->StartOptimization();
-                            }
-                            catch(itk::ExceptionObject &obj)
-                            {
-                                btkCoutMacro("Error : "<<obj);
-                            }
-                            m_CurrentError = optimizer->GetValue(); // Get The current error
-                            m_X = optimizer->GetCurrentPosition();// Get the current parameters
-                        //}
-                        /*
-                        else // second optimizer
-                        {
-                            try
-                            {
-                                optimizer2->StartOptimization();
-                            }
-                            catch(itk::ExceptionObject &obj)
-                            {
-                                btkCoutMacro("Error : "<<obj);
-                            }
-                            m_CurrentError = optimizer2->GetValue();// Get the current error
-                            m_X = optimizer2->GetCurrentPosition();// Get the current parameters
-                        }
-                        */
-
-
-                        if(m_VerboseMode)
-                        {
-                            std::cout<<"Best error : "<<m_CurrentError<<std::endl;
-                        }
-
-
-						//Save previous parameter values
-		                typename TransformType::ParametersType previousP = m_Transforms[i]->GetSliceParameters(smov);
-
-						//Set new values to evaluate the overall cost function
-						params[0] = MathFunctions::DegreesToRadians(m_X[0]);
-   						params[1] = MathFunctions::DegreesToRadians(m_X[1]);
-						params[2] = MathFunctions::DegreesToRadians(m_X[2]);
-						params[3] = m_X[3];
-						params[4] = m_X[4];
-						params[5] = m_X[5];
-						m_Transforms[i]->SetSliceParameters(smov,params);
-
-						double after = this->ComputeOverallCostFunctionValue();
-              			std::cout<<"After optimization, ocfv : "<<after<<std::endl;
-						std::cout<<"cfv for current slice     : "<<this->ComputeCostFunctionValueForOneSlice(i, smov)<<std::endl;
-						std::cout<<"value used for optimization: "<<m_CurrentError<<std::endl;
-						
-						
-						if(after > before) std::cout<<"AIE AIE AIE AIE AIE AIE AIE"<<std::endl;
-	
-						if(after > before)
-						{	    
-							//std::cout<<"Set back to previous values for params"<<std::endl;
-							m_Transforms[i]->SetSliceParameters(smov,previousP);
-						}
-
-						/*						
-						// Partie peu claire
-                        params = m_Transforms[i]->GetSliceParameters(smov);
-
-                        if(m_CurrentError == initialError) // if error is exactly the same as initial error (0 for all parameters)
-                        {
-                            // We do nothing and we take the initial parameters
-                            for(unsigned int x = 0; x< params.size(); x++)
-                            {
-                                m_X[x] = params[x];
-                            }
-                        }
-
-                        if(m_VerboseMode)
-                        {
-                            std::cout<<"Final Parameters : "<<m_X<<std::endl;
-                        }
-
-                        //We copy m_X into params and we convert degrees into radians for the sliceBySliceTransform
-                        
-                        for(unsigned int x = 0; x< params.size(); x++)
-                        {                            
-                            if(x < 3)
-                            {
-                                params[x] = MathFunctions::DegreesToRadians(m_X[x]);
-                            }
-                            else
-                                params[x] = m_X[x];
-
-
-                        }
-                      
-                        
-                        
-                        
-                        // We set the parameters into the transformation
-                        m_Transforms[i]->SetSliceParameters(smov,params);
-                        
-                        */
-                        
-
-                        // DEBUG PART: uncomment this if you want to write error in files
-                        //***********************************************
-//                        if(i == 0)
-//                        {
-//                            if(Rx.is_open())
-//                            {
-//                                Rx<<smov<<" "<<params[0]  <<std::endl;
-//                            }
-//                            if(Ry.is_open())
-//                            {
-//                                Ry<<smov<<" "<< params[1] <<std::endl;
-//                            }
-//                            if(Rz.is_open())
-//                            {
-//                                Rz<<smov<<" "<<params[2]<<std::endl;
-//                            }
-//                            // Euler 3D
-//                            if(Tx.is_open())
-//                            {
-//                                Tx<<smov<<" "<<params[3] <<std::endl;
-//                            }
-//                            if(Ty.is_open())
-//                            {
-//                                Ty<<smov<<" "<<params[4] <<std::endl;
-//                            }
-//                            if(Tz.is_open())
-//                            {
-//                                Tz<<smov<<" "<<params[5]  <<std::endl;
-//                            }
-
-//                        }
-
-                        //***********************************************
-
-                    }
-                    // UpdateInfos compute inverse of m_Transforms after each slice.
-                    // if we don't cost function is out of date and results are wrong
-                    this->UpdateInfos();
-                    m_X.fill(0.0); // reinitialize m_X
-                    
-
-
-
-					
-
-
-                }
-                m_BestError[i][smov] = m_CurrentError; // Save the current error on a vector
-
-            }
-        }
-        //DEBUG: Uncomment this part if you want save errors in files
-//        Rx.close();
-//        Ry.close();
-//        Rz.close();
-//        Tx.close();
-//        Ty.close();
-//        Tz.close();
-
-        // perform the sum of errors :
-        double error = 0.0;
-        for(unsigned int i = 0; i< m_BestError.size(); i++)
-        {
-            for(unsigned j = 0; j< m_BestError[i].size(); j++)
-            {
-                error +=m_BestError[i][j];
-            }
-        }
-        // after each loop display the sum of errors
-        std::cout<<"**** Overall Cost Function Value : "<<error<<" ****"<<std::endl;
-
-	  newCost   = ComputeOverallCostFunctionValue();
-	  differenceCost = previousCost - newCost;
-	  current_Epsilon = min_Epsilon * std::fabs(previousCost);
-	  std::cout<<"New cost : "<<newCost<<std::endl;
-	  std::cout<<"Difference between the 2 loops: "<<differenceCost<<std::endl;
-	  std::cout<<"Current epsilon : "<<current_Epsilon<<std::endl;
-	  loop++;
-	  
-    }
-    // if you want to use Outliers exclusion
-    if(m_UseSliceExclusion)
-    {
-        //this->SlicesExclusion();
-    }
-
-
-
-    std::cout<<" Done !"<<std::endl;
 
 
 }
@@ -718,46 +280,306 @@ BlurImages(double level)
 
 //-------------------------------------------------------------------------------------------------
 template<typename TImage>
-double MotionCorrectionByIntersection<TImage>::ComputeOverallCostFunctionValue()
+void MotionCorrectionByIntersection<TImage>::Update()
 {
-	double res = 0;
-	
-	for(unsigned int i = 0; i< m_Images.size(); i++)
-	{
-      for(unsigned int smov = 0; smov < m_Images[i]->GetLargestPossibleRegion().GetSize()[2]; smov++ )
-      {                
-        res += this->ComputeCostFunctionValueForOneSlice(i,smov);
-      }	
-	}
+    // initialization for the random
+    srand(time(NULL));
 
-	return res;
+
+    typename TransformType::ParametersType params;
+    params.set_size(m_NumberOfParameters);
+
+    // Default value for parameters
+    typename TransformType::ParametersType initialParams, simulationParams, zeroParams, MinBounds, MaxBounds;
+    // Active parameters is usefull for activate/desactivate optimization of some parameters (Tz for example)
+    typename TransformType::ParametersType ActiveParameters;
+    initialParams.set_size(m_NumberOfParameters);
+    ActiveParameters.set_size(m_NumberOfParameters);
+    zeroParams.set_size(m_NumberOfParameters);
+    zeroParams.Fill(0.0);
+    initialParams.Fill(0.0);
+    simulationParams.Fill(0.0);
+    ActiveParameters.Fill(1.0);
+
+    // Min, Max values of the parameters (for btk::SmartStepGradientDescentOptimizer)
+    MinBounds.set_size(m_NumberOfParameters);
+    MaxBounds.set_size(m_NumberOfParameters);
+
+    MinBounds[0] = MinBounds[1] = MinBounds[2] = -50; //degrees
+    MinBounds[3] = MinBounds[4] = MinBounds[5] = -50;//mm
+
+    MaxBounds[0] = MaxBounds[1] = MaxBounds[2] = 50; //degrees
+    MaxBounds[3] = MaxBounds[4] = MaxBounds[5] = 50;//mm
+
+
+
+    if(m_VerboseMode)
+    {
+        std::cout<<"Scales : "<<m_ScaleX<<std::endl;
+    }
+
+    std::string Exclusion;
+    // Terminal Display
+    (m_UseSliceExclusion) ? Exclusion = "ON" : Exclusion = "OFF";
+    std::cout<<" * ---------------------------------------- * "<<std::endl;
+    std::cout<<" * Registration by intersection of slices * "<<std::endl;
+    std::cout<<" * ---------------------------------------- * "<<std::endl<<std::endl;
+
+    std::cout<<" * ----------------! INFOS !----------------- * "<<std::endl;
+    std::cout<<"    Number of loops : "<<m_MaxLoop<<std::endl;
+    std::cout<<"    Processing Slices Exclusion : "<<Exclusion<<std::endl;
+    std::cout<<" * ---------------------------------------- * "<<std::endl<<std::endl;
+    std::cout<<"Processing ..."<<std::endl;
+
+
+    for(unsigned int i = 0; i< m_NumberOfImages; i++)
+    {
+        m_Transforms[i]->Initialize();
+        m_Transforms[i]->GetInverse(m_InverseTransforms[i]);
+    }
+
+    unsigned int loop = 0;
+
+    // Loop Over All Images
+
+
+    unsigned int nbGroup = 1;
+    bool stopGrouping = false;
+    bool incrementLoop=false;
+    while(!stopGrouping)
+    {
+        std::cout<<"\rLoop N°: "<<loop+1<<" "<<std::flush;
+
+
+        for(unsigned int i = 0; i < m_NumberOfImages; i++)
+        {
+            std::cout<<"Image "<<i<<std::endl;
+            if(m_VerboseMode)
+            {
+                std::cout<<"**************** "<<std::endl;
+                std::cout<<"Moving Image n° : "<<i<<std::endl;
+            }
+
+
+
+            typename ImageType::SizeType sizeMov = m_Images[i]->GetLargestPossibleRegion().GetSize();
+            std::vector< unsigned int > SlicesGroup;
+            SlicesGroup.resize(sizeMov[2]);
+
+            //nbGroup = sizeMov[2]; //DEBUG
+
+
+            if(nbGroup >= sizeMov[2])
+            {
+                nbGroup = sizeMov[2];
+                incrementLoop = true;
+                std::cout<<"start looping"<<std::endl;
+                std::cout<<"NB Group * : "<<nbGroup<<std::endl;
+            }
+            else
+            {
+                incrementLoop = false;
+                std::cout<<"NB Group : "<<nbGroup<<std::endl;
+            }
+
+            if(loop >= m_MaxLoop)
+            {
+                stopGrouping = true;
+            }
+
+
+
+            unsigned int smov = 0;
+            unsigned int referenceGroup = 1000; //avoid random initialization
+            // Loop over slice
+            for(smov = 0; smov < sizeMov[2]; smov++ )
+            {
+                SlicesGroup[smov] = smov%nbGroup;
+                if(i == m_ReferenceStack && smov == m_ReferenceSlice)
+                {
+                    //check the group of the reference slice
+                    referenceGroup = smov%nbGroup;
+                    std::cout<<"reference slice  is "<<smov<<" in image : "<<i<<" in group : "<<smov%nbGroup<<std::endl;
+                }
+
+                //std::cout<<"slice num : "<<smov<<"going to group : "<<smov%nbGroup<<std::endl;
+
+            }
+            for(unsigned int g = 0; g< nbGroup; g++)
+            {
+                //Initialize parameters with the previous value (identity at the first step)
+                for(unsigned int slice = 0; slice< sizeMov[2]; slice++)
+                {
+                    if(SlicesGroup[slice] == g)
+                    {
+
+                        typename TransformType::ParametersType p = m_Transforms[i]->GetSliceParameters(slice);
+                        initialParams[0] = p[0];
+                        initialParams[1] = p[1];
+                        initialParams[2] = p[2];
+                        // Euler 3D
+                        initialParams[3] = p[3];
+                        initialParams[4] = p[4];
+                        initialParams[5] = p[5];
+                        this->UpdateInfos();
+                        break;
+                    }
+
+                }
+
+
+
+
+                typename btk::SlicesIntersectionITKCostFunction<ImageType>::Pointer f = btk::SlicesIntersectionITKCostFunction<ImageType>::New();
+                f->SetNumberOfParameters(m_NumberOfParameters);
+                f->SetVerboseMode(m_VerboseDbg);
+                f->SetImages(m_Images);
+                //f->SetImages(m_BlurredImages);
+                f->SetMasks(m_Masks);
+                f->SetTransforms(m_Transforms);
+                f->SetInverseTransforms(m_InverseTransforms);
+                f->SetMovingImageNum(i);
+                //f->SetMovingSliceNum(smov);
+                f->SetGroupNum(g);
+                f->SetSlicesGroup(SlicesGroup);
+                f->Initialize();//Don't forget
+
+
+                btk::SmartStepGradientDescentOptimizer::Pointer optimizer = btk::SmartStepGradientDescentOptimizer::New();// first optimizer (gradient descent)
+                optimizer->SetCostFunction(f.GetPointer());
+                optimizer->SetNumberOfIterations(500);
+                optimizer->SetMaxStep(2.0);
+                optimizer->SetMinStep(0.05);
+                optimizer->SetMinBounds(MinBounds);
+                optimizer->SetMaxBounds(MaxBounds);
+                optimizer->SetUseBounds(false);
+                optimizer->SetOptimizedParameters(ActiveParameters);
+                m_CurrentError = 0.0;// Initialize current error
+
+
+                //itk::PowellOptimizer::Pointer optimizer = itk::PowellOptimizer::New();
+                //itk::GradientDescentOptimizer::Pointer optimizer = itk::GradientDescentOptimizer::New();
+                //optimizer->SetCostFunction(f.GetPointer());
+
+
+
+//                if(i == 1 && g == 30 && loop == 1)
+//                {
+//                    std::cout<<i<<std::endl;
+//                    std::cout<<g<<std::endl;
+//                    std::cout<<loop<<std::endl;
+//                    std::cout<<incrementLoop<<std::endl;
+
+//                    std::cout<<"Optimizer set to a random value "<<std::endl;
+//                    initialParams[5] = 5.0;
+//                    //initialParams.Fill(10.0);
+//                }
+                optimizer->SetInitialPosition( initialParams );
+
+
+                // Before optimization we check if there are intersections
+
+                double initialError =  f->GetValue(initialParams);
+
+                bool DoOptimization = true;
+
+                if(i == m_ReferenceStack && g == referenceGroup)
+                {
+                    DoOptimization = false;
+                    std::cout<<"No Optimization this time "<<std::endl;
+                }
+
+
+                // Get if the last evaluation of cost function has an intersection
+                if(f->GetIntersection() && DoOptimization)
+                {
+                    try
+                    {
+                        optimizer->StartOptimization();
+                    }
+                    catch(itk::ExceptionObject &obj)
+                    {
+                        btkCoutMacro("Error : "<<obj);
+                    }
+                    m_CurrentError = optimizer->GetValue(); // Get The current error
+                    m_X = optimizer->GetCurrentPosition();// Get the current parameters
+
+
+
+
+                    if(m_VerboseMode)
+                    {
+                        std::cout<<"Best error : "<<m_CurrentError<<std::endl;
+                    }
+
+
+                    //Save previous parameter values
+                    //typename TransformType::ParametersType previousP = m_Transforms[i]->GetSliceParameters(smov);
+
+                    //Set new values to evaluate the overall cost function
+                    params[0] = MathFunctions::DegreesToRadians(m_X[0]);
+                    params[1] = MathFunctions::DegreesToRadians(m_X[1]);
+                    params[2] = MathFunctions::DegreesToRadians(m_X[2]);
+                    params[3] = m_X[3];
+                    params[4] = m_X[4];
+                    params[5] = m_X[5];
+
+                    for(unsigned int slice = 0; slice< sizeMov[2]; slice++)
+                    {
+                        if(SlicesGroup[slice] == g)
+                        {
+                            m_Transforms[i]->SetSliceParameters(slice,params);
+                            m_BestError[i][slice] = m_CurrentError;
+                        }
+
+                    }
+
+                }
+                // UpdateInfos compute inverse of m_Transforms after each slice.
+                // if we don't cost function is out of date and results are wrong
+                this->UpdateInfos();
+                m_X.fill(0.0); // reinitialize m_X
+            }
+
+        }
+
+        nbGroup*=2;
+
+
+
+
+
+        // perform the sum of errors :
+        double error = 0.0;
+        for(unsigned int i = 0; i< m_BestError.size(); i++)
+        {
+            for(unsigned j = 0; j< m_BestError[i].size(); j++)
+            {
+                error +=m_BestError[i][j];
+            }
+        }
+
+        std::cout<<"Cumulated Error : "<<error<<std::endl;
+
+
+
+        if(incrementLoop)
+        {
+            loop++;
+        }
+
+    }
+
+
+
+
+
+
+    std::cout<<" Done !"<<std::endl;
 }
 
-//-------------------------------------------------------------------------------------------------
-template<typename TImage>
-double MotionCorrectionByIntersection<TImage>::ComputeCostFunctionValueForOneSlice(unsigned int i, unsigned int smov)
-{
-	double res = 0;
 
-    this->UpdateInfos();
 
-    typename btk::SlicesIntersectionITKCostFunction<ImageType>::Pointer f = btk::SlicesIntersectionITKCostFunction<ImageType>::New();
-    f->SetNumberOfParameters(m_NumberOfParameters);
-    f->SetVerboseMode(m_VerboseDbg);
-    f->SetImages(m_Images);
-    f->SetMasks(m_Masks);
-    f->SetTransforms(m_Transforms);
-    f->SetInverseTransforms(m_InverseTransforms);
-    f->SetMovingImageNum(i);
-    f->SetMovingSliceNum(smov);
-    f->Initialize();
-        
-    typename TransformType::ParametersType p = m_Transforms[i]->GetSliceParameters(smov);
-                
-    res = f->GetValue(p);
-
-	return res;
-}
 
 }//namespace
 

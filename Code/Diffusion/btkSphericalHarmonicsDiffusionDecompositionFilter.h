@@ -63,6 +63,12 @@ class SphericalHarmonicsDiffusionDecompositionFilter : public itk::ImageToImageF
 
         typedef itk::VariableSizeMatrix< float > Matrix;
 
+        typedef enum
+        {
+            DIFFUSION_SIGNAL,
+            APPARENT_DIFFUSION_PROFILE
+        } ESTIMATION_TYPE;
+
         itkNewMacro(Self);
 
         itkTypeMacro(SphericalHarmonicsDiffusionDecompositionFilter,itk::ImageToImageFilter);
@@ -78,6 +84,9 @@ class SphericalHarmonicsDiffusionDecompositionFilter : public itk::ImageToImageF
 
         btkSetMacro(RegularizationParameter, float);
         btkGetMacro(RegularizationParameter, float);
+
+        btkSetMacro(EstimationType, Self::ESTIMATION_TYPE);
+        btkGetMacro(EstimationType, Self::ESTIMATION_TYPE);
 
     protected:
         /**
@@ -152,6 +161,9 @@ class SphericalHarmonicsDiffusionDecompositionFilter : public itk::ImageToImageF
 
         /** Internal diffusion weighted image. */
         itk::VectorImage< short,3 >::Pointer m_VectorImage;
+
+        /** Estimation type (diffusion signal or apparent diffusion profile). */
+        Self::ESTIMATION_TYPE m_EstimationType;
 };
 
 } // namespace btk

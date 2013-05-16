@@ -64,7 +64,7 @@ int main( int argc, char *argv[] )
 {
     TCLAP::CmdLine cmd("Construct a polyData which outline the slices for each input images", ' ', "Unversioned");
     TCLAP::MultiArg<std::string> inputArg("i","input","input image ",true,"string",cmd);
-    TCLAP::MultiArg<std::string> tranArg("t","transform","transforms to apply",true,"string",cmd);
+    TCLAP::MultiArg<std::string> tranArg("t","transform","transforms to apply",false,"string",cmd);
     TCLAP::MultiArg<std::string> outputArg("o","output","vtk polydata",true,"string",cmd);
    TCLAP::SwitchArg  RenderArg("r","render","Open a render window with the polydatas", cmd, false);
 
@@ -82,11 +82,28 @@ int main( int argc, char *argv[] )
     transfoNames = tranArg.getValue();
     bool render = RenderArg.getValue();
 
+
+
+    inputsImages = btk::ImageHelper<itkImage>::ReadImage(input);
+
     std::vector< Transform::Pointer > transforms;
     transforms.resize(inputsImages.size());
 
-    inputsImages = btk::ImageHelper<itkImage>::ReadImage(input);
-    transforms =  btk::IOTransformHelper< Transform >::ReadTransform(transfoNames);
+    if(!transfoNames.empty())
+    {
+        transforms =  btk::IOTransformHelper< Transform >::ReadTransform(transfoNames);
+    }
+    else
+    {
+        std::cout<<"Warning : Transformations files are not set, use of identity instead."<<std::endl;
+        for(unsigned int i = 0; i< transforms.size(); i++)
+        {
+            transforms[i] = Transform::New();
+            //transforms[i]->SetIdentity();
+
+        }
+    }
+
     std::vector< vtkSmartPointer< vtkPolyData> > output(inputsImages.size());
 
     RenderP::Pointer renderer = RenderP::New();
@@ -97,6 +114,11 @@ int main( int argc, char *argv[] )
         output[i] = vtkSmartPointer< vtkPolyData >::New();
         PolyDataFilter::Pointer filter = PolyDataFilter::New();
         transforms[i]->SetImage(inputsImages[i]);
+        if(transfoNames.empty())
+        {
+            transforms[i]->Initialize();
+        }
+
         filter->SetInput(inputsImages[i]);
         filter->SetTransform(transforms[i]);
         filter->Update();

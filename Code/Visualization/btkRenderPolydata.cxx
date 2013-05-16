@@ -43,7 +43,7 @@
 #include "vtkProperty.h"
 #include "vtkCamera.h"
 
-
+#include "algorithm"
 
 
 namespace btk
@@ -68,6 +68,13 @@ void RenderPolyData::SetNumberOfPolyData(unsigned int _n)
 {
     m_Inputs.resize(_n);
     m_Colors.resize(_n);
+    m_Widths.resize(_n);
+    m_PointSizes.resize(_n);
+
+    std::fill(m_Widths.begin(),m_Widths.end(),0.0);
+    std::fill(m_PointSizes.begin(),m_PointSizes.end(),0.0);
+
+
     this->m_NumberOfPolyData = _n;
 }
 //-------------------------------------------------------------------------------------------------
@@ -76,6 +83,7 @@ SetNthPolyData(unsigned int _n, vtkSmartPointer< vtkPolyData > _PolyData )
 {
     if(_n > m_NumberOfPolyData)
     {
+        btkException("Error ! PolyData out of range, check number of PolyData !");
         //btkException("The "<<_n<<"th PolyData does not exist, only "
         //      <<this->GetNumberOfPolyData()<<" available ! check SetNumberOfPolyDatas() !");
     }
@@ -88,12 +96,35 @@ SetNthPolyDataColor(unsigned int _n, std::vector<double> _color )
 {
     if(_n > m_NumberOfPolyData)
     {
+        btkException("Error ! PolyData out of range, check number of PolyData !");
         //btkException("The "<<_n<<"th PolyData does not exist, only "
         //<<this->GetNumberOfPolyData()<<" available ! check SetNumberOfPolyDatas() !");
     }
 
     m_Colors[_n] = _color;
     //std::cout<<"color :"<<_n<<" : "<<_color<<std::endl;
+}
+//-------------------------------------------------------------------------------------------------
+void RenderPolyData::SetNthPolyDataLineWidth(unsigned int _n, float _w)
+{
+    if(_n > m_NumberOfPolyData)
+    {
+        btkException("Error ! PolyData out of range, check number of PolyData !");
+        //btkException("The "<<_n<<"th PolyData does not exist, only "
+        //<<this->GetNumberOfPolyData()<<" available ! check SetNumberOfPolyDatas() !");
+    }
+    m_Widths[_n] = _w;
+}
+//-------------------------------------------------------------------------------------------------
+void RenderPolyData::SetNthPolyDataPointSize(unsigned int _n, float _s)
+{
+    if(_n > m_NumberOfPolyData)
+    {
+        btkException("Error ! PolyData out of range, check number of PolyData !");
+        //btkException("The "<<_n<<"th PolyData does not exist, only "
+        //<<this->GetNumberOfPolyData()<<" available ! check SetNumberOfPolyDatas() !");
+    }
+    m_PointSizes[_n] = _s;
 }
 //-------------------------------------------------------------------------------------------------
 void RenderPolyData::Render()
@@ -118,6 +149,14 @@ void RenderPolyData::Render()
         double color[3] = {m_Colors[i][0],m_Colors[i][1],m_Colors[i][2]};
 
         actor_data->GetProperty()->SetColor(color);
+        if(m_Widths[i] != 0.0)
+        {
+            actor_data->GetProperty()->SetLineWidth(m_Widths[i]);
+        }
+        if(m_PointSizes[i] != 0.0)
+        {
+            actor_data->GetProperty()->SetPointSize(m_PointSizes[i]);
+        }
         m_Renderer->AddActor(actor_data);
 
     }

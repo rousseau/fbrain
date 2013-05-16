@@ -51,6 +51,7 @@
 #include "itkImageFileWriter.h"
 #include "itkNumericTraits.h"
 #include "itkVector.h"
+#include "itkCastImageFilter.h"
 
 namespace btk
 {
@@ -73,6 +74,8 @@ namespace btk
              * @brief Image writer type.
              */
             typedef itk::ImageFileWriter< TImageInput > ImageWriter;
+
+            typedef itk::CastImageFilter< TImageInput, TImageOutput> CastImageFilter;
 
 
             /**
@@ -181,6 +184,24 @@ namespace btk
              */
 
             static bool AreOrthos(typename TImageInput::Pointer image1, typename TImageInput::Pointer image2, float threshold = 0.5);
+
+            /**
+             * @brief Cast image in another type (TInputImage into TOutputImage)
+             * @param An Image Pointer (TInputImage)
+             * @return A Pointer to a TOutputImage.
+             *
+             */
+
+            static typename TImageOutput::Pointer CastImage(typename TImageInput::Pointer image);
+
+            /**
+             * @brief Cast a vector of images in another type (TInputImage into TOutputImage)
+             * @param A vector of Image Pointer (TInputImage)
+             * @return A vector of TOutputImage::Pointer.
+             *
+             */
+
+            static  std::vector< typename TImageOutput::Pointer > &CastImage(std::vector< typename TImageInput::Pointer > &images);
     };
 
 } // namespace btk
