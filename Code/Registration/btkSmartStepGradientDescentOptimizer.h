@@ -131,6 +131,10 @@ class SmartStepGradientDescentOptimizer : public btk::Optimizer
         btkSetMacro(UseBounds, bool);
         btkGetMacro(UseBounds, bool);
 
+        /** Set/Get Samples for step searching */
+        btkSetMacro(Samples, double);
+        btkGetMacro(Samples, double);
+
 
 
     protected:
@@ -179,6 +183,8 @@ class SmartStepGradientDescentOptimizer : public btk::Optimizer
 
         bool m_VerboseMode;
         bool m_UseBounds;
+
+        double m_Samples;
 
 };
 
