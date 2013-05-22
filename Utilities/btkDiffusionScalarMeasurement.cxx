@@ -44,6 +44,7 @@
 #include "itkImageRegionIterator.h"
 
 // BTK includes
+#include "btkMacro.h"
 #include "btkDiffusionSequence.h"
 #include "btkDiffusionSequenceHelper.h"
 #include "btkImageHelper.h"
@@ -94,8 +95,8 @@ int main(int argc, char * argv[])
 
         // Options
         TCLAP::ValueArg< std::string > maskFileNameArg("m", "mask", "Mask filename", false, "", "string", cmd);
-        TCLAP::ValueArg< std::string > scalarArg("", "scalar", "Scalar measurement to compute", false, "GFA", "string", cmd);
-        TCLAP::ValueArg< unsigned int > shOrderArg("", "sh_order", "Spherical harmonics order", false, 4, "positive even integer", cmd);
+        TCLAP::ValueArg< std::string > scalarArg("", "scalar", "Scalar measurement to compute (FMI, R0, R2, Rm, GA, GFA) (default: GFA)", false, "GFA", "string", cmd);
+        TCLAP::ValueArg< unsigned int > shOrderArg("", "sh_order", "Spherical harmonics order (default: 4)", false, 4, "positive even integer", cmd);
 
         // Parse arguments
         cmd.parse(argc, argv);
@@ -107,6 +108,17 @@ int main(int argc, char * argv[])
         std::string maskFileName = maskFileNameArg.getValue();
         std::string scalar       = scalarArg.getValue();
         unsigned int shOrder     = shOrderArg.getValue();
+
+
+        //
+        // Testing parameters
+        //
+
+        // Test scalar
+        if(scalar != "FMI" && scalar != "R0" && scalar != "R2" && scalar != "Rm" && scalar != "GA" && scalar != "GFA")
+        {
+            throw(std::string("Scalar is unknown !"));
+        }
 
 
         //
@@ -135,7 +147,16 @@ int main(int argc, char * argv[])
         btk::SphericalHarmonicsDiffusionDecompositionFilter::Pointer shFilter = btk::SphericalHarmonicsDiffusionDecompositionFilter::New();
         shFilter->SetInput(sequence);
         shFilter->SetSphericalHarmonicsOrder(shOrder);
-        shFilter->SetEstimationType(btk::SphericalHarmonicsDiffusionDecompositionFilter::APPARENT_DIFFUSION_PROFILE);
+
+        if(scalar == "GFA")
+        {
+            shFilter->SetEstimationType(btk::SphericalHarmonicsDiffusionDecompositionFilter::DIFFUSION_SIGNAL);
+        }
+        else // scalar != "GFA"
+        {
+            shFilter->SetEstimationType(btk::SphericalHarmonicsDiffusionDecompositionFilter::APPARENT_DIFFUSION_PROFILE);
+        }
+
         shFilter->Update();
 
         CoefficientImage::Pointer adc = shFilter->GetOutput();
@@ -351,6 +372,94 @@ int main(int argc, char * argv[])
 
                     // Set output value
                     outIt.Set(GA);
+                }
+                else
+                {
+                    outIt.Set(0.0);
+                }
+            }
+        }
+        else if(scalar == "GFA")
+        {
+            for(outIt.GoToBegin(), mIt.GoToBegin(); !outIt.IsAtEnd() && !mIt.IsAtEnd(); ++outIt, ++mIt)
+            {
+                if(mIt.Get() != 0)
+                {
+                    // Get current index
+                    ScalarImage::IndexType index = outIt.GetIndex();
+
+                    btk::OrientationDiffusionFunctionModel::ContinuousIndex cindex;
+                    cindex[0] = index[0]; cindex[1] = index[1]; cindex[2] = index[2];
+
+                    // Get ODF
+                    std::vector< float > response = adcModel->ModelAt(cindex);
+
+                    // Find min, max, mean, mean of squares and shift negative values to zero
+                    double min = DBL_MAX, max = DBL_MIN, mean = 0.0, meanSq = 0.0;
+
+                    for(unsigned int i = 0; i < response.size(); i++)
+                    {
+                        if(response[i] < 0.0)
+                        {
+                            response[i] = 0.0;
+                        }
+
+                        if(response[i] < min)
+                        {
+                            min = response[i];
+                        }
+
+                        if(response[i] > max)
+                        {
+                            max = response[i];
+                        }
+
+                        mean   += response[i];
+                        meanSq += response[i] * response[i];
+                    }
+
+                    mean /= response.size();
+
+                    // Normalize values and compute the variance
+                    double maxMinusMin = max - min;
+
+                    mean = (mean - min) / maxMinusMin;
+                    meanSq = (meanSq - min) / maxMinusMin;
+
+                    double variance = 0.0;
+
+                    for(unsigned int i = 0; i < response.size(); i++)
+                    {
+                        response[i] = (response[i] - min) / (maxMinusMin);
+
+//                        meanSq += response[i] * response[i];
+
+                        double deviation = response[i] - mean;
+                        variance       += deviation * deviation;
+                    }
+
+                    // Compute the GFA
+                    double GFA = std::sqrt( (response.size() * variance) / ((response.size()-1) * meanSq) );
+
+                    if(std::isnan(GFA))
+                    {
+                        GFA = 0.0;
+                    }
+                    if((index[0] == 52 && index[1] == 42 && index[2] == 20) || (index[0] == 48 && index[1] == 51 && index[2] == 20))
+                    {
+                        for(unsigned int i = 0; i < response.size(); i++)
+                        {
+                            btkCoutVariable(response[i]);
+                        }
+                        btkCoutVariable(mean);
+                        btkCoutVariable(meanSq);
+                        btkCoutVariable(variance);
+                        btkCoutVariable(GFA);
+                        btkCoutMacro(std::endl);
+                    }
+
+                    // Set output value
+                    outIt.Set(GFA);
                 }
                 else
                 {
