@@ -73,11 +73,14 @@
 #include "iostream"
 #include "sstream"
 #include <tclap/CmdLine.h>
-
+#include "ctime"
 
 
 int main(int argc, char * argv[])
 {
+
+    // initialization for the random
+    srand(time(NULL));
 
     const unsigned int Dimension = 3;
     typedef float PixelType;
