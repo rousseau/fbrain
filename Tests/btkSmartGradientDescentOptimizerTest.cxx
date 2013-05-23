@@ -159,7 +159,6 @@ int main(int, char* [] )
     initialPosition[0] =  100;
     initialPosition[1] = -100;
 
-    optimizer->SetCostFunction(costFunction.GetPointer());
     optimizer->SetNumberOfIterations(1000);
     optimizer->SetMaxStep(2.0);
     optimizer->SetMinStep(0.01);
