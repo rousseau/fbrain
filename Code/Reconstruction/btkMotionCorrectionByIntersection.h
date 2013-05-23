@@ -54,13 +54,10 @@
 #include "btkSimulatedAnnealingOptimizer.h"
 #include "btkSmartStepGradientDescentOptimizer.h"
 
-
-
 /* OTHERS */
 #include "cfloat"
 #include "cmath"
 #include "algorithm"
-#include "ctime"
 
 
 namespace btk

@@ -55,5 +55,19 @@ double MathFunctions::DegreesToRadians(double deg)
 {
     return(deg * M_PI/180);
 }
-
+//-------------------------------------------------------------------------------------------------
+double MathFunctions::Random()
+{
+    return static_cast< double >(rand()) / static_cast< double >(RAND_MAX);
+}
+//-------------------------------------------------------------------------------------------------
+double MathFunctions::Random(double min , double max)
+{
+    return static_cast< double >(rand())/(static_cast< double >(RAND_MAX)/std::abs(max - min)) - std::abs(min);
+}
+//-------------------------------------------------------------------------------------------------
+double MathFunctions::Round(double value)
+{
+    return floor(value + 0.5);
+}
 } // namespace btk
