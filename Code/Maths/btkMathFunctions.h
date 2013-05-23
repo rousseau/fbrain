@@ -37,6 +37,7 @@
 #define BTK_MATH_FUNCTIONS_H
 
 #include "cmath"
+#include "cstdlib"
 
 namespace btk
 {
@@ -69,6 +70,25 @@ class MathFunctions
          * @return angle in degree
          */
         static double DegreesToRadians(double deg);
+
+        /**
+         * @brief Return a random value between 0 and 1
+         * @return random value
+         */
+        static double Random();
+
+        /**
+         * @brief Return a random value between min and max
+         * @param min and max value
+         * @return random value
+         */
+        static double Random(double min, double max);
+        /**
+         * @brief Round the input value to the nearest integer
+         * @param double value to round
+         * @return double value (use only the integer part)
+         */
+        static double Round(double value);
 
 };
 
