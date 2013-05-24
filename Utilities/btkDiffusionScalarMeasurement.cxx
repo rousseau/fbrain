@@ -95,7 +95,7 @@ int main(int argc, char * argv[])
 
         // Options
         TCLAP::ValueArg< std::string > maskFileNameArg("m", "mask", "Mask filename", false, "", "string", cmd);
-        TCLAP::ValueArg< std::string > scalarArg("", "scalar", "Scalar measurement to compute (FMI, R0, R2, Rm, GA, GFA) (default: GFA)", false, "GFA", "string", cmd);
+        TCLAP::ValueArg< std::string > scalarArg("", "scalar", "Scalar measurement to compute (FMI, R0, R2, Rm, GA, MSD, GFA) (default: GFA)", false, "GFA", "string", cmd);
         TCLAP::ValueArg< unsigned int > shOrderArg("", "sh_order", "Spherical harmonics order (default: 4)", false, 4, "positive even integer", cmd);
 
         // Parse arguments
@@ -115,7 +115,7 @@ int main(int argc, char * argv[])
         //
 
         // Test scalar
-        if(scalar != "FMI" && scalar != "R0" && scalar != "R2" && scalar != "Rm" && scalar != "GA" && scalar != "GFA")
+        if(scalar != "FMI" && scalar != "R0" && scalar != "R2" && scalar != "Rm" && scalar != "GA" && scalar != "MSD" && scalar != "GFA")
         {
             throw(std::string("Scalar is unknown !"));
         }
@@ -337,6 +337,8 @@ int main(int argc, char * argv[])
         }
         else if(scalar == "GA")
         {
+            double min = DBL_MAX, max = DBL_MIN;
+
             for(outIt.GoToBegin(), mIt.GoToBegin(); !outIt.IsAtEnd() && !mIt.IsAtEnd(); ++outIt, ++mIt)
             {
                 if(mIt.Get() != 0)
@@ -356,22 +358,71 @@ int main(int argc, char * argv[])
                     for(unsigned int i = 0; i < adcResponse.size(); i++)
                     {
                         adcResponse[i] /= normCoefficient;
+                        adcResponse[i] *= adcResponse[i];
                     }
 
-                    // Compute variance
-                    double variance = (1.0/3.0) * (gentr(adcResponse) - (1.0/3.0));
+                    // Compute variance (approximation of GA)
+                    double GA = (1.0/3.0) * (gentr(adcResponse) - (1.0/3.0));
 
-                    if(std::isnan(variance))
+                    if(std::isnan(GA))
                     {
-                        variance = 0.0;
+                        GA = 0.0;
                     }
-
-                    // Maps variance from [0,infty) to [0,1]
-                    double e  = 1.0 + 1.0/(1.0 + 5000.0 * variance);
-                    double GA = 1.0 - 1.0/(1.0 + std::pow(250.0*variance, e));
 
                     // Set output value
                     outIt.Set(GA);
+
+                    if(GA < min)
+                    {
+                        min = GA;
+                    }
+
+                    if(GA > max)
+                    {
+                        max = GA;
+                    }
+                }
+                else
+                {
+                    outIt.Set(0.0);
+                }
+            }
+
+            double maxMinusMin = max - min;
+
+            for(outIt.GoToBegin(), mIt.GoToBegin(); !outIt.IsAtEnd() && !mIt.IsAtEnd(); ++outIt, ++mIt)
+            {
+                if(mIt.Get() != 0)
+                {
+                    outIt.Set(((outIt.Get() - min) / maxMinusMin)*1000.0);
+                }
+            }
+        }
+        else if(scalar == "MSD")
+        {
+            for(outIt.GoToBegin(), mIt.GoToBegin(); !outIt.IsAtEnd() && !mIt.IsAtEnd(); ++outIt, ++mIt)
+            {
+                if(mIt.Get() != 0)
+                {
+                    // Get current index
+                    ScalarImage::IndexType index = outIt.GetIndex();
+
+                    btk::OrientationDiffusionFunctionModel::ContinuousIndex cindex;
+                    cindex[0] = index[0]; cindex[1] = index[1]; cindex[2] = index[2];
+
+                    // Get ADC profile
+                    std::vector< float > adcResponse = adcModel->SignalAt(cindex);
+
+                    // Compute variance
+                    double MSD = (1.0/3.0) * (gentr(adcResponse));
+
+                    if(std::isnan(MSD))
+                    {
+                        MSD = 0.0;
+                    }
+
+                    // Set output value
+                    outIt.Set(MSD);
                 }
                 else
                 {
@@ -394,46 +445,22 @@ int main(int argc, char * argv[])
                     // Get ODF
                     std::vector< float > response = adcModel->ModelAt(cindex);
 
-                    // Find min, max, mean, mean of squares and shift negative values to zero
-                    double min = DBL_MAX, max = DBL_MIN, mean = 0.0, meanSq = 0.0;
+                    // Compute the mean and the mean squarred
+                    double mean = 0.0, meanSq = 0.0;
 
                     for(unsigned int i = 0; i < response.size(); i++)
                     {
-                        if(response[i] < 0.0)
-                        {
-                            response[i] = 0.0;
-                        }
-
-                        if(response[i] < min)
-                        {
-                            min = response[i];
-                        }
-
-                        if(response[i] > max)
-                        {
-                            max = response[i];
-                        }
-
                         mean   += response[i];
                         meanSq += response[i] * response[i];
                     }
 
                     mean /= response.size();
 
-                    // Normalize values and compute the variance
-                    double maxMinusMin = max - min;
-
-                    mean = (mean - min) / maxMinusMin;
-                    meanSq = (meanSq - min) / maxMinusMin;
-
+                    // Compute the variance
                     double variance = 0.0;
 
                     for(unsigned int i = 0; i < response.size(); i++)
                     {
-                        response[i] = (response[i] - min) / (maxMinusMin);
-
-//                        meanSq += response[i] * response[i];
-
                         double deviation = response[i] - mean;
                         variance       += deviation * deviation;
                     }
@@ -444,18 +471,6 @@ int main(int argc, char * argv[])
                     if(std::isnan(GFA))
                     {
                         GFA = 0.0;
-                    }
-                    if((index[0] == 52 && index[1] == 42 && index[2] == 20) || (index[0] == 48 && index[1] == 51 && index[2] == 20))
-                    {
-                        for(unsigned int i = 0; i < response.size(); i++)
-                        {
-                            btkCoutVariable(response[i]);
-                        }
-                        btkCoutVariable(mean);
-                        btkCoutVariable(meanSq);
-                        btkCoutVariable(variance);
-                        btkCoutVariable(GFA);
-                        btkCoutMacro(std::endl);
                     }
 
                     // Set output value
