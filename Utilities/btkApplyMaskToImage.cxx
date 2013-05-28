@@ -122,14 +122,16 @@ int main(int argc, char * argv[])
                     //read input image and mask
                     image = btk::ImageHelper<itk3DImage>::ReadImage(input_file);
 
-                    MaskImageFilter::Pointer maskImageFilter = MaskImageFilter::New();
-                    maskImageFilter->SetMaskImage(mask);
+                    btkMaskImageFilter* maskImageFilter = new btkMaskImageFilter();
+                    //maskImageFilter->SetMaskImage(mask);
+                    maskImageFilter->SetMask(mask);
                     maskImageFilter->SetInput(image);
 //                    maskImageFilter->SetThreshold(threshold);
                     maskImageFilter->Update();
 
                     //write the result
                     btk::ImageHelper<itk3DImage>::WriteImage(maskImageFilter->GetOutput(),output_file);
+                    delete maskImageFilter;
                 }
                     break;
 
