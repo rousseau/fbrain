@@ -41,7 +41,6 @@ namespace btk
 SmartStepGradientDescentOptimizer::SmartStepGradientDescentOptimizer(): m_MaxStep(5.0),
     m_MinStep(0.1),m_NumberOfIterations(1000),m_Epsilon(10e-6),m_OptimizeAllParameters(true),
     m_VerboseMode(false),m_UseBounds(false),m_Samples(20.0)
-
 {
 
 }
@@ -129,6 +128,7 @@ void SmartStepGradientDescentOptimizer::StartOptimization()
         epsilon = std::fabs(cost - newCost); //to avoid epsilon < 0 (while loop stop)
        // epsilon = cost - newCost;
 
+
         if(m_VerboseMode)
         {
             std::cout<<"******************************"<<std::endl;
@@ -212,9 +212,11 @@ double SmartStepGradientDescentOptimizer::SearchStep(ParametersType _x , Derivat
     //double initialCost = this->m_CostFunction->GetValue(_x);
 
     double lastmu = 0.0;
+
 //    newGx = mu * _gx;
 //    newX = _x + newGx;
     double cost = this->m_CostFunction->GetValue(_x);//no step
+
     //mu+=step;
 
     //std::cout<<"    *Gradient : "<<_gx<<std::endl;
