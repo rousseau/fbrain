@@ -715,6 +715,7 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
         }
     }
 
+
     if(NumberOfIntersectedVoxels == 0)
     {
         CostFunction = 0.0;
@@ -724,6 +725,7 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
     {
         m_Intersection = true;
     }
+
     return CostFunction;
     //return CostFunction * CostFunction; //squared
 
