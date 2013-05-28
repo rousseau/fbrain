@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 10/01/2013 (last updated: 22/04/2013)
+  Date: 10/01/2013 (last updated: 28/05/2013)
   Author(s): Larbi Boubchir (boubchir at unistra dot fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -74,8 +74,8 @@ typedef itk::ImageFileReader< Image4DType >  Reader4DType;
 typedef itk::Image<PixelType,Dimension-1> Image3DType;
 typedef Image3DType::Pointer Image3DPointer;
 
-// Usage: btkProbabilisticSegmentationMapBasedClustering -b inputfile.vtk -p prob_map -o outputfile.vtk
-// Example: btkProbabilisticSegmentationMapBasedClustering -b data.vtk -p 01019-natbrain4D.nii.gz -o clustering1-data.vtk
+// Usage   : btkProbabilisticSegmentationMapBasedClustering -b inputfile.vtk -p prob_map -o outputfile.vtk
+// Example : btkProbabilisticSegmentationMapBasedClustering -b data.vtk -p 01019-natbrain4D.nii.gz -o clustering1-data.vtk
 
 // main
 int main ( int argc, char *argv[] )
@@ -117,11 +117,10 @@ int main ( int argc, char *argv[] )
   Image4DType::IndexType index = input4DRegion.GetIndex();
   
   uint numberOf3Dimages = input4DSize[3];
-  //std::cout << "numberOf3Dimages: " << numberOf3Dimages << std::endl;
   
   // Number of fibers
   float number_fiber = bundle->GetNumberOfLines();
-  std::cout << "number of fibers: " << number_fiber << std::endl;
+  std::cout << "Number of fibers: " << number_fiber << std::endl;
   
   // For each fibers
   vtkIdType numberOfPoints, *pointIds;
@@ -131,11 +130,7 @@ int main ( int argc, char *argv[] )
   label_data->SetNumberOfComponents(1);
 
   std::cout << "Processing: start..." << std::endl;
-  //---------------------------------------------------------------------------------
-  // [For Test] This part is used to extract and count only the fibers that have the same label 
-  //vnl_vector<float> Label(number_fiber);
-  //unsigned int j = 0; 
-  //---------------------------------------------------------------------------------
+  //----------------------------------------------------------------------------
   
   while(lines->GetNextCell(numberOfPoints, pointIds) != 0)
   {
@@ -168,63 +163,19 @@ int main ( int argc, char *argv[] )
 	  }
     }  
   double maxlabel_point = std::max_element(label_vector.begin(), label_vector.end()) - label_vector.begin();
-  
-  // [For Test] save the labels
-  //Label[i]= maxlabel_point;
-  // std::cout << "Label(" << i << ") = " << maxlabel_point << std::endl;  //test
-  
+   
   for(int p=0; p < (int)numberOfPoints; p++)
     label_data->InsertNextTupleValue(&maxlabel_point);   
-  
-  //-------------------------------------------------------------------------
-  // [For Test] This part is used to extract only the fibers that have the same label 
-  /*if(Label[i]==17)//3 || Label[i]==5 || Label[i]==7 || Label[i]==17)
-  
-  // Label7--> Corpus-Callosum 
-  // Label 5 and 6 --> Cingulum (left and right)
-  // Label 3 and 4--> Arcuate fasciculus (left and right)
-  // Label 17 and 18--> Inferior fronto-occipital fasciculus (left and right)
-  
-  { j=j+1;
-    //std::cout << "exist " << Label[i] << std::endl;  //test
-    std::ofstream outfile;
-    std::ostringstream oss;
-    oss << "Fiber" << j << ".txt";
-    std::string filename = oss.str();
- 
-    outfile.open(filename.c_str()); 
-    for(int p=0; p < (int)numberOfPoints; p++) //For all the points of each fiber
-    {
-    // Get current point's coordinates
-    double worldCoordinates[3];
-    bundle->GetPoint(pointIds[p], worldCoordinates);
-    Image3DType::PointType idx;
-    idx[0] =  worldCoordinates[0]; 
-    idx[1] =  worldCoordinates[1]; 
-    idx[2] =  worldCoordinates[2];
-
-    outfile << idx[0] << " " << idx[1] << " " << idx[2] << std::endl;
-    }
-    outfile.close();
-  }*/
-  //-------------------------------------------------------------------------
-  
+   
   i++; //next bundle 
   }
 
-//--------------------------------------------------------------------------------
-// [For Test] This is to indicate the number of the selected fibers that have the same label   
-//std::cout << " Number of the selected fibers = " << j << std::endl;  
-// Each fiber is saved into a text file
-// Run "SimulatingFiberTracts NbFibers" to generate the VTK file
-//--------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
-// create output vtk data
+// Create the output vtk data
 bundle->GetPointData()->SetScalars(label_data);
-std::cout << "Number of tuples: " << label_data->GetNumberOfTuples() << std::endl;
-std::cout << "Number of points: " << bundle->GetPoints()->GetNumberOfPoints() << std::endl;
 
-// Save output data into VTK file
+// Save the output data into VTK file
 vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
 writer->SetInput(bundle);
 // If no filename is given for output, set it up with input name
@@ -242,7 +193,7 @@ writer->SetInput(bundle);
         writer->Write();
     }
 
-std::cout << "done." << std::endl;
+std::cout << "Save the clustering result --> done." << std::endl;
 
 return EXIT_SUCCESS;
 }
