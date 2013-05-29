@@ -253,12 +253,6 @@ TARGET_LINK_LIBRARIES(btkCostFunctionTest btkMathsLibrary ${ITK_LIBRARIES} vtkHy
 ADD_EXECUTABLE(btkDiffusionScalarMeasurement btkDiffusionScalarMeasurement.cxx)
 TARGET_LINK_LIBRARIES(btkDiffusionScalarMeasurement btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE( btkProbabilisticSegmentationMapBasedClustering  btkProbabilisticSegmentationMapBasedClustering.cxx)
-TARGET_LINK_LIBRARIES(btkProbabilisticSegmentationMapBasedClustering ${ITK_LIBRARIES} vtkHybrid)
-
-ADD_EXECUTABLE( btkDistanceFibersKMeansApproximationClustering  btkDistanceFibersKMeansApproximationClustering.cxx)
-TARGET_LINK_LIBRARIES(btkDistanceFibersKMeansApproximationClustering ${ITK_LIBRARIES} vtkHybrid vtkInfovis)
-
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -323,7 +317,5 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkTriangleMesh
                 btkCostFunctionTest
                 btkDiffusionScalarMeasurement
-		btkProbabilisticSegmentationMapBasedClustering
-		btkDistanceFibersKMeansApproximationClustering
         DESTINATION bin)
 
