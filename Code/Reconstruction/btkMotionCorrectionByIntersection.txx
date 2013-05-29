@@ -361,9 +361,6 @@ void MotionCorrectionByIntersection<TImage>::Update()
             SlicesGroup.resize(sizeMov[2]);
 
 
-            nbGroup = sizeMov[2]; //DEBUG
-
-
 
             if(nbGroup >= sizeMov[2])
             {
@@ -449,7 +446,6 @@ void MotionCorrectionByIntersection<TImage>::Update()
                 //optimizer->SetMaximumIteration(500);
 //                optimizer->SetLearningRate(0.1);
 
-
                 btk::SmartStepGradientDescentOptimizer::Pointer optimizer = btk::SmartStepGradientDescentOptimizer::New();// first optimizer (gradient descent)
                 optimizer->SetCostFunction(f.GetPointer());
                 optimizer->SetNumberOfIterations(1000);
@@ -464,43 +460,19 @@ void MotionCorrectionByIntersection<TImage>::Update()
                 optimizer->SetVerboseMode(false);
 
 
-                  //btk::SimulatedAnnealingOptimizer::Pointer optimizer = btk::SimulatedAnnealingOptimizer::New();
-//                btk::SmartStepGradientDescentOptimizer::Pointer optimizer = btk::SmartStepGradientDescentOptimizer::New();// first optimizer (gradient descent)
-////                itk::RegularStepGradientDescentOptimizer::Pointer optimizer = itk::RegularStepGradientDescentOptimizer::New();
-//                optimizer->SetCostFunction(f.GetPointer());
-////                optimizer->SetMaximumStepLength(0.8);
-////                optimizer->SetMinimumStepLength(0.01);
-////                optimizer->SetNumberOfIterations(1000);
 
-//                optimizer->SetNumberOfIterations(500);
-//                optimizer->SetMaxStep(2.0);
-//                optimizer->SetMinStep(0.05);
-//                optimizer->SetMinBounds(MinBounds);
-//                optimizer->SetMaxBounds(MaxBounds);
-//                optimizer->SetUseBounds(false);
-//                optimizer->SetOptimizedParameters(ActiveParameters);
+//DEBUG
+//                if(i == 1 && g == 30 && loop == 1)
+//                {
+//                    std::cout<<i<<std::endl;
+//                    std::cout<<g<<std::endl;
+//                    std::cout<<loop<<std::endl;
+//                    std::cout<<incrementLoop<<std::endl;
 
-
-
-                //itk::PowellOptimizer::Pointer optimizer = itk::PowellOptimizer::New();
-                //itk::GradientDescentOptimizer::Pointer optimizer = itk::GradientDescentOptimizer::New();
-//                itk::FRPROptimizer::Pointer optimizer = itk::FRPROptimizer::New();
-//                optimizer->SetCostFunction(f.GetPointer());
-//                optimizer->SetToPolakRibiere();
-
-
-
-                if(i == 1 && g == 30 && loop == 1)
-                {
-                    std::cout<<i<<std::endl;
-                    std::cout<<g<<std::endl;
-                    std::cout<<loop<<std::endl;
-                    std::cout<<incrementLoop<<std::endl;
-
-                    std::cout<<"Optimizer set to a random value "<<std::endl;
-                    //initialParams[5] = 10.0;
-                    //initialParams.Fill(10.0);
-                }
+//                    std::cout<<"Optimizer set to a random value "<<std::endl;
+//                    initialParams[5] = 5.0;
+//                    //initialParams.Fill(10.0);
+//                }
                 optimizer->SetInitialPosition( initialParams );
 
 
@@ -535,7 +507,7 @@ void MotionCorrectionByIntersection<TImage>::Update()
                     m_X = optimizer->GetCurrentPosition();// Get the current parameters
 
 
-                    if(true)//)m_VerboseMode)
+                    if(m_VerboseMode)
                     {
                         std::cout<<"slice : "<<g<<std::endl;
                         std::cout<<"initial Error : "<<initialError<<std::endl;
