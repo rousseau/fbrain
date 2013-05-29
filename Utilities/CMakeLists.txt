@@ -319,6 +319,3 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkDiffusionScalarMeasurement
         DESTINATION bin)
 
-
-
-

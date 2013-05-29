@@ -228,3 +228,16 @@ INSTALL(TARGETS
     btkLabelPropagation
     btkSSL
 DESTINATION bin)
+
+# ---- Clustering -----------------------------------------------------------------------
+
+ADD_EXECUTABLE( btkProbabilisticSegmentationMapBasedClustering  btkProbabilisticSegmentationMapBasedClustering.cxx)
+TARGET_LINK_LIBRARIES(btkProbabilisticSegmentationMapBasedClustering ${ITK_LIBRARIES} vtkHybrid)
+
+ADD_EXECUTABLE( btkDistanceFibersKMeansApproximationClustering  btkDistanceFibersKMeansApproximationClustering.cxx)
+TARGET_LINK_LIBRARIES(btkDistanceFibersKMeansApproximationClustering ${ITK_LIBRARIES} vtkHybrid vtkInfovis)
+
+INSTALL(TARGETS 
+    btkProbabilisticSegmentationMapBasedClustering
+    btkDistanceFibersKMeansApproximationClustering
+DESTINATION bin)
