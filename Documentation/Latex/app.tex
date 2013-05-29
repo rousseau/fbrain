@@ -330,3 +330,24 @@ The mask extraction can be achieved by calling directly the first following pyth
 
         Usage: Should be run by btkMaskExtraction.py or for advance user you can call like this : \texttt{btkMaskExtractionProcess.py subject exam age image01 image02 ...}
     \end{description}
+
+\subsection{Fiber tracts Clustering}
+\label{subsec:clustering}
+
+Fiber tracts clustering is used to map the well-known fiber bundles of white matter.
+This can be performed using the following applications:
+
+\begin{description}
+        \item[btkProbabilisticSegmentationMapBasedClustering] As supervised method, this program takes as input a probabilistic segmentation Map of brain tissue.\\ 
+
+	Usage: \texttt{btkProbabilisticSegmentationMapBasedClustering -b input.vtk -p prob\_map -o output.vtk}
+ 
+	\item[btkDistanceFibersKMeansApproximationClustering] ~\\
+
+	Usage: \texttt{btkDistanceFibersKMeansApproximationClustering -b input.vtk -d distance\_measure -c number\_of\_clusters -a alpha -e eps -o output.vtk} \\
+
+	Minimal usage: \texttt{btkDistanceFibersKMeansApproximationClustering -b input.vtk -d distance\_measure -c number\_of\_clusters -o output.vtk} \\
+
+	The full list of optional parameters of this method can be obtained by \texttt{btkImageReconstruction --help}
+\end{description}
+
