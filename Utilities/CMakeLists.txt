@@ -2,6 +2,7 @@ PROJECT(Utilities)
 INCLUDE_REGULAR_EXPRESSION("^.*$")
 
 INCLUDE_DIRECTORIES(${TCLAP_DIRECTORY})
+INCLUDE_DIRECTORIES(${ANN_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Reconstruction)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Diffusion)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Tools)
@@ -253,6 +254,10 @@ TARGET_LINK_LIBRARIES(btkCostFunctionTest btkMathsLibrary ${ITK_LIBRARIES} vtkHy
 ADD_EXECUTABLE(btkDiffusionScalarMeasurement btkDiffusionScalarMeasurement.cxx)
 TARGET_LINK_LIBRARIES(btkDiffusionScalarMeasurement btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkS2SSimilarity btkS2SSimilarity.cxx)
+TARGET_LINK_LIBRARIES(btkS2SSimilarity btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES} ${ANN_LIBRARY})
+
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -317,5 +322,6 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkTriangleMesh
                 btkCostFunctionTest
                 btkDiffusionScalarMeasurement
+                btkS2SSimilarity
         DESTINATION bin)
 
