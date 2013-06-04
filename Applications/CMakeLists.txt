@@ -242,14 +242,14 @@ INSTALL(TARGETS
     btkDistanceFibersKMeansApproximationClustering
 DESTINATION bin)
 
-## ---- Outliers correction -----------------------------------------------------------------------
-#ADD_EXECUTABLE(btkOutliersCorrection btkOutliersCorrection.cxx
-#    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.h
-#    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.cxx
-#    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolateImageFunctionS2S.h
-#)
-#TARGET_LINK_LIBRARIES(btkOutliersCorrection btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES} ${ANN_LIBRARY})
+# ---- Outliers correction -----------------------------------------------------------------------
+ADD_EXECUTABLE(btkOutliersCorrection btkOutliersCorrection.cxx
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.h
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.cxx
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolateImageFunctionS2S.h
+)
+TARGET_LINK_LIBRARIES(btkOutliersCorrection btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES} ${ANN_LIBRARY})
 
-#INSTALL(TARGETS
-#    btkOutliersCorrection
-#DESTINATION bin)
+INSTALL(TARGETS
+    btkOutliersCorrection
+DESTINATION bin)
