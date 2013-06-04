@@ -2,7 +2,7 @@
   
   Â© UniversitÃ© de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date:
+  Date: 03/03/2013
   Author(s):Frederic Champ (champ(at)unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and

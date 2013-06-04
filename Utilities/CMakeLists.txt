@@ -255,7 +255,7 @@ ADD_EXECUTABLE(btkDiffusionScalarMeasurement btkDiffusionScalarMeasurement.cxx)
 TARGET_LINK_LIBRARIES(btkDiffusionScalarMeasurement btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkS2SSimilarity btkS2SSimilarity.cxx)
-TARGET_LINK_LIBRARIES(btkS2SSimilarity btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES} ${ANN_LIBRARY})
+TARGET_LINK_LIBRARIES(btkS2SSimilarity btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
 
 
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
