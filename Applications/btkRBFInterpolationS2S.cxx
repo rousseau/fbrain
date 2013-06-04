@@ -56,7 +56,11 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "btkDiffusionGradientTable.h"
 #include "btkRBFInterpolateImageFunctionS2S.h"
 #include "btkFileHelper.h"
+#include "btkDiffusionSequence.h"
+#include "btkDiffusionSequenceHelper.h"
+#include "btkDiffusionSequenceFileHelper.h"
 
+typedef btk::DiffusionSequence                                    TSequence;
 
 int main( int argc, char *argv[] )
 {
@@ -137,10 +141,15 @@ int main( int argc, char *argv[] )
   typedef itk::Image< PixelType, Dimension >   SequenceType;
   typedef itk::ImageFileReader< SequenceType >  SequenceReaderType;
 
-  SequenceReaderType::Pointer sequenceReader = SequenceReaderType::New();
-  sequenceReader -> SetFileName( input.c_str() );
-  sequenceReader -> Update();
-  SequenceType::Pointer       sequence     = sequenceReader -> GetOutput();
+//  SequenceReaderType::Pointer sequenceReader = SequenceReaderType::New();
+//  sequenceReader -> SetFileName( input.c_str() );
+//  sequenceReader -> Update();
+//  SequenceType::Pointer       sequence     = sequenceReader -> GetOutput();
+
+  TSequence::Pointer  sequence = btk::DiffusionSequenceHelper::ReadSequence(input);
+  std::vector< unsigned short>           BValues       = sequence->GetBValues();
+  std::vector< btk::GradientDirection >  GradientTable = sequence->GetGradientTable();
+
 
   // Read mask for DW sequence
 
@@ -291,7 +300,9 @@ int main( int argc, char *argv[] )
   InterpolatorType::Pointer interpolator = InterpolatorType::New();
   interpolator -> SetInputImage( sequence );
   interpolator -> SetTransforms(tpath);
-  interpolator -> SetGradientTable( bvec_in.c_str() );
+  btkCoutMacro(bvec_in);
+  interpolator -> SetGradientTable( GradientTable );
+  btkCoutMacro(GradientTable[4][2]);
   interpolator -> Initialize( seqROI );
 
   typedef itk::ImageRegionIteratorWithIndex<SequenceType> IteratorType;

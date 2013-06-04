@@ -2,8 +2,9 @@
 
   © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-  Date: 23/03/2010
+  Date: 23/03/2010 modified 04/06/2013
   Author(s): Estanislao Oubel (oubel@unistra.fr)
+             Frederic Champ (champ(at)unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -36,6 +37,7 @@
 #ifndef __btkRBFInterpolateImageFunctionS2S_h
 #define __btkRBFInterpolateImageFunctionS2S_h
 
+
 // First make sure that the configuration is available.
 // This line can be removed once the optimized versions
 // gets integrated into the main directories.
@@ -54,8 +56,10 @@
 //#include "interp_rbf.h"
 
 #include "btkRBFInterpolation.h"
-
+#include "btkGradientDirection.h"
 #include "ANN.h"
+
+
 
 namespace btk
 {
@@ -106,6 +110,9 @@ public:
   typedef typename InputImageType::SizeType   ImageSizeType;
   typedef typename InputImageType::RegionType ImageRegionType;
   typedef typename InputImageType::IndexType  ImageIndexType;
+  typedef typename InputImageType::PointType ImagePointType;
+  typedef typename InputImageType::ConstPointer ImageConstPointer;
+  typedef typename InputImageType::Pointer ImagePointer;
 
   typedef typename Superclass::PointType PointType;
 
@@ -152,6 +159,8 @@ public:
 
   void SetGradientTable( const char* input );
 
+  void SetGradientTable( std::vector<btk::GradientDirection> input );
+
   void RotateGradients( );
 
   void GetGradientDirection ( unsigned int index, double &theta, double &phi );
@@ -161,7 +170,13 @@ public:
                                double r_spa, double r_gra,
                                char init) const;
 
+  virtual OutputType EvaluateAt( ImageIndexType index,
+                               double theta, double phi,
+                               double r_spa, double r_gra,
+                               char init) const;
+
   void SetInputImage(const InputImageType *ptr);
+  void SetInputImage(ImagePointer ptr);
 
   // The region used as argument for initialize is a region in the original
   // sequence. It's used to construct a tree with the points used for
