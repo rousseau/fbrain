@@ -257,8 +257,8 @@ TARGET_LINK_LIBRARIES(btkDiffusionScalarMeasurement btkToolsLibrary btkDiffusion
 ADD_EXECUTABLE(btkS2SSimilarity btkS2SSimilarity.cxx)
 TARGET_LINK_LIBRARIES(btkS2SSimilarity btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
 
-#ADD_EXECUTABLE(btkComputecurvature btkComputeCurvature.cxx)
-#TARGET_LINK_LIBRARIES(btkComputeCurvature btkMathsLibrary ${VTK_LIBRARIES} vtkHybrid)
+ADD_EXECUTABLE(btkComputeCurvature btkComputeCurvature.cxx)
+TARGET_LINK_LIBRARIES(btkComputeCurvature btkMathsLibrary ${VTK_LIBRARIES} vtkHybrid)
 
 
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
@@ -326,6 +326,6 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkCostFunctionTest
                 btkDiffusionScalarMeasurement
                 btkS2SSimilarity
-                #btkComputeCurvature
+                btkComputeCurvature
         DESTINATION bin)
 
