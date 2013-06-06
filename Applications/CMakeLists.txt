@@ -42,6 +42,7 @@ INCLUDE_DIRECTORIES(
     ${Code_SOURCE_DIR}/Registration
     ${Code_SOURCE_DIR}/Maths
     ${Code_SOURCE_DIR}/Visualization
+    ${Code_SOURCE_DIR}/ImageFilters
 )
 
 ADD_EXECUTABLE(btkImageReconstruction btkImageReconstruction.cxx
@@ -167,8 +168,7 @@ ADD_EXECUTABLE(btkRBFInterpolationS2S btkRBFInterpolationS2S.cxx
     ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
 )
 
-
-TARGET_LINK_LIBRARIES(btkRBFInterpolationS2S btkToolsLibrary ${ITK_LIBRARIES} ${ANN_LIBRARY})
+TARGET_LINK_LIBRARIES(btkRBFInterpolationS2S btkToolsLibrary  btkDiffusionLibrary ${ITK_LIBRARIES} ${ANN_LIBRARY})
 
 ADD_EXECUTABLE(btkIntersectionRegistration btkIntersectionRegistration.cxx
 ${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h
@@ -240,4 +240,29 @@ INSTALL(TARGETS
     btkTissueSegmentation
     btkLabelPropagation
     btkSSL
+DESTINATION bin)
+
+# ---- Clustering -----------------------------------------------------------------------
+
+ADD_EXECUTABLE( btkProbabilisticSegmentationMapBasedClustering  btkProbabilisticSegmentationMapBasedClustering.cxx)
+TARGET_LINK_LIBRARIES(btkProbabilisticSegmentationMapBasedClustering ${ITK_LIBRARIES} vtkHybrid)
+
+ADD_EXECUTABLE( btkDistanceFibersKMeansApproximationClustering  btkDistanceFibersKMeansApproximationClustering.cxx)
+TARGET_LINK_LIBRARIES(btkDistanceFibersKMeansApproximationClustering ${ITK_LIBRARIES} vtkHybrid vtkInfovis)
+
+INSTALL(TARGETS 
+    btkProbabilisticSegmentationMapBasedClustering
+    btkDistanceFibersKMeansApproximationClustering
+DESTINATION bin)
+
+# ---- Outliers correction -----------------------------------------------------------------------
+ADD_EXECUTABLE(btkOutliersCorrection btkOutliersCorrection.cxx
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.h
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.cxx
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolateImageFunctionS2S.h
+)
+TARGET_LINK_LIBRARIES(btkOutliersCorrection btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES} ${ANN_LIBRARY})
+
+INSTALL(TARGETS
+    btkOutliersCorrection
 DESTINATION bin)

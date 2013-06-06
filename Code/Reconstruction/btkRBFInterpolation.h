@@ -37,6 +37,7 @@
 
 #include "btkNumerical.h"
 #include "btkLUDecomposition.h"
+#include "VNLSparseLUSolverTraits.h"
 
 namespace btk
 {
@@ -121,6 +122,7 @@ struct RBF2_interp
     Int dim, n;
     const BtkMatrix<double> &pts;
     const BtkVector<double> &vals;
+    //vnl_vector< double > w;
     BtkVector<double> w;
     RBF2_fn &fn;
     Bool norm;
@@ -131,6 +133,8 @@ struct RBF2_interp
   {
     int i,j;
     double sum;
+//    vnl_sparse_matrix< double > rbf(n,n);
+//    vnl_vector< double > rhs(n);
     BtkMatrix<double> rbf(n,n);
     BtkVector<double> rhs(n);
 
@@ -140,15 +144,31 @@ struct RBF2_interp
       for (j=0;j<n;j++)
       {
         sum += (rbf[i][j] = fn.rbf(&pts[i][0],&pts[j][0]));
+        //sum += (rbf(i,j) = fn.rbf(&pts[i][0],&pts[j][0]));
+
+
 
       }
 
       if (norm)
+      {
           rhs[i] = sum*vals[i];
+          //rhs(i) = sum*vals[i];
+      }
 
       else
+      {
           rhs[i] = vals[i];
+          //rhs(i) = vals[i];
+      }
+
     }
+
+//    typedef VNLSparseLUSolverTraits<double> LUSolverType;
+//    LUSolverType * LUSolver  = new LUSolverType;
+//    LUSolver -> Solve(rbf,rhs,w);
+//    delete LUSolver;
+
     LUDecomposition lu(rbf);
     lu.solve(rhs,w);
   }
@@ -165,9 +185,12 @@ struct RBF2_interp
     {
       fval = fn.rbf(&pt[0],&pts[i][0]);
       sumw += w[i]*fval;
+      // sumw += w(i)*fval;
       sum += fval;
-    }
 
+    }
+//     std::cout<<"sum"<<sum<<std::endl;
+//     std::cout<<"sumw"<<sumw<<std::endl;
     return norm ? sumw/sum : sumw;
   }
 
@@ -179,6 +202,7 @@ struct RBF2_interp
             sum += SQR(p1[i]-p2[i]);
 
         return sqrt(sum);
+
     }
 };
 //--------------------------------------------------------------------------------------------------
@@ -239,6 +263,7 @@ struct RBF2_gauss : RBF2_fn
     for (Int i=0;i<3;i++)
         r_spa += SQR(p1[i]-p2[i]);
 
+
     r_spa = sqrt( r_spa );
 
     q1[0] = std::sin(p1[3]) * std::cos(p1[4]);//m_GradientTableCartesian[1][0];
@@ -259,8 +284,9 @@ struct RBF2_gauss : RBF2_fn
       r_ang = 1;
     }
     r_ang = std::acos(abs( r_ang ));
-
-    return exp(-0.5*SQR(r_spa/r0_spa))*exp(-0.5*SQR(r_ang/r0_ang));
+    //std::cout<<r_spa<<" - "<<r_ang<<std::endl;
+    double value = exp(-0.5*SQR(r_spa/r0_spa))*exp(-0.5*SQR(r_ang/r0_ang));
+    return value;
   }
   //*******************************************************************************************
 };
