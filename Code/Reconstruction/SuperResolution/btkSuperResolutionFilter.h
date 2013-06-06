@@ -37,250 +37,158 @@
 #define __BTK_SUPERRESOLUTIONFILTER_H__
 
 /* ITK */
+#include "itkObject.h"
 #include "itkImage.h"
-#include "itkImageDuplicator.h"
-#include "itkResampleImageFilter.h"
-#include "itkIdentityTransform.h"
-#include "itkLinearInterpolateImageFunction.h"
-#include "itkBSplineInterpolateImageFunction.h"
-#include "itkImageRegionIterator.h"
-#include "itkImageRegionIteratorWithIndex.h"
-#include "itkContinuousIndex.h"
-#include "itkBSplineInterpolationWeightFunction.h"
-#include "itkSubtractImageFilter.h"
-#include "itkAddImageFilter.h"
-#include "itkBinaryThresholdImageFilter.h"
-#include "itkAbsoluteValueDifferenceImageFilter.h"
-#include "itkStatisticsImageFilter.h"
-#include "itkExtractImageFilter.h"
-#include "itkTransformFactory.h"
-
-#include "itkAffineTransform.h"
-#include "itkEuler3DTransform.h"
-#include "itkTransformFileReader.h"
 #include "itkImageMaskSpatialObject.h"
-#include "itkMatrixOffsetTransformBase.h"
-#include "itkTransformFileReader.h"
-
-/* VNL */
-#include "vnl/vnl_sparse_matrix.h"
+#include "itkTransform.h"
+#include "itkImageRegionIteratorWithIndex.h"
+#include "vnl/vnl_vector.h"
+#include "vnl/algo/vnl_conjugate_gradient.h"
+#include "vnl/algo/vnl_levenberg_marquardt.h"
+#include "vnl/vnl_matops.h"
 
 /* BTK */
-#include "btkSliceBySliceTransform.h"
-#include "btkCreateHRMaskFilter.h"
-#include "btkSimulateLRImageFilter.h"
 #include "btkMacro.h"
-#include "btkHighResolutionReconstructionFilter.h"
-#include "btkHighResolutionIBPFilter.h"
-#include "btkHighResolutionSRFilter.h"
-#include "btkMotionCorrection3DAffineFilter.h"
-#include "btkMotionCorrection3DEulerFilter.h"
-#include "btkMotionCorrectionSliceBySliceAffineFilter.h"
-#include "btkMotionCorrectionSliceBySliceEulerFilter.h"
-//Typedefs :
-#include "btkSuperResolutionType.h"
+#include "btkSRHMatrixComputation.hxx"
+#include "btkPSF.h"
+#include "btkGaussianPSF.h"
+#include "btkBoxCarPSF.h"
+#include "btkSuperResolutionCostFunctionITKWrapper.h"
+#include "btkSuperResolutionCostFunctionVNLWrapper.hxx"
 
+/* others */
 
-// Filter used for SuperResolution pipeline :
-#include "btkBiasCorrectionFilter.h"
-#include "btkMotionCorrectionFilter.h"
-#include "btkResampleImageByInjectionFilter.h"
-#include "btkImageHelper.h"
-
-
-
-
+#include "vector"
 
 namespace btk
 {
-class SuperResolutionFilter
+class SuperResolutionFilter: public itk::Object
 {
-public:
+    public:
+
+        typedef SuperResolutionFilter           Self;
+        typedef itk::Object                     Superclass;
+        typedef itk::SmartPointer< Self >       Pointer;
+        typedef itk::SmartPointer< const Self > ConstPointer;
+
+        typedef itk::Transform< double, 3 >     TransformType;
+
+        typedef short                           PixelType;
+
+        typedef float                           PrecisionType;
+
+        typedef itk::Image< PixelType, 3 >          ImageType; // maybe a template !
+
+        typedef itk::Image< unsigned char, 3 >  ImageMaskType;
+
+        typedef ImageType::RegionType           RegionType;
+
+        typedef itk::ImageRegionIteratorWithIndex< ImageType >    Iterator;
+
+        typedef btk::SRHMatrixComputation< ImageType >  H_Filter;
+
+        typedef itk::ImageMaskSpatialObject< ImageType::ImageDimension > MaskType;
+
+        typedef btk::SuperResolutionCostFunctionVNLWrapper< ImageType > VNLCostFunction;
+
+        /** Method for creation through the object factory. */
+        itkNewMacro(Self);
+
+        /** Run-time type information (and related methods). */
+        itkTypeMacro(btk::SuperResolutionFilter, btk::SuperResolutionFilter);
 
 
-    typedef btk::ResampleImageByInjectionFilter< itkImage, itkImage  >  ResamplerByInjectionType;
+        void Update();
 
-    /** Constructor with no parameters */
-    SuperResolutionFilter();
+        /** Get/Set LR Images */
+        btkSetMacro(Images, std::vector< ImageType::Pointer > );
+        btkGetMacro(Images, std::vector< ImageType::Pointer >);
 
-    /** Constructors with parameters */
-    SuperResolutionFilter(int loop, float beta, int nlm);
-    SuperResolutionFilter(int loop, float beta, int nlm, TRANSFORMATION_TYPE transfoType);
-    // TODO : Add the others constructors with wanted parameters
-    //...
+        /** Get/Set LR Masks */
+        btkSetMacro(Masks, std::vector< ImageMaskType::Pointer > );
+        btkGetMacro(Masks, std::vector< ImageMaskType::Pointer >);
 
+        /** Get/Set Transforms */
+        btkSetMacro(Transforms, std::vector< TransformType::Pointer >);
+        btkGetMacro(Transforms, std::vector< TransformType::Pointer >);
 
-    /** Destructor */
-    ~SuperResolutionFilter();
+        /** Get/Set Reference Image */
+        btkSetMacro(ReferenceImage, ImageType::Pointer);
+        btkGetMacro(ReferenceImage, ImageType::Pointer);
 
-    /** Method called for compute the SuperResolution pipeline */
-    int Update();
+        /** Get Simulated Images */
+        btkGetMacro(SimulatedImages, std::vector< ImageType::Pointer >);
 
-    /** Method who return the High Resolution image  */
-    itkImage::Pointer GetOutput();
+        /** Get Output */
+        btkGetMacro(Output,ImageType::Pointer);
 
+        /** Use simulated images */
 
+        void ComputeSimulatedImages(bool _b = false)
+        {
+            m_ComputeSimulations = _b;
+        }
 
-    // GETTER/SETTER :
+        virtual void Initialize();
 
-    btkGetMacro(TransformsLR,std::vector< itkTransformBase::Pointer >);
-    btkSetMacro(TransformsLR,std::vector< itkTransformBase::Pointer >);
+        void AddTransform(TransformType* _t)
+        {
+            if(m_Transforms.size() >= m_Images.size())
+            {
+                btkException("Size of transformations are greater than size of input images !");
+            }
 
-
-    btkGetMacro(TransformsLRSbS,std::vector< btkSliceBySliceTransformBase::Pointer>);
-    btkSetMacro(TransformsLRSbS,std::vector< btkSliceBySliceTransformBase::Pointer>);
-
-//    btkGetMacro(TransformsLRAffine,std::vector< itkAffineTransform::Pointer >);
-//    btkSetMacro(TransformsLRAffine,std::vector< itkAffineTransform::Pointer >);
-
-//    btkGetMacro(TransformsLRAffine,std::vector< itkTransformBase::Pointer >);
-//    btkSetMacro(TransformsLRAffine,std::vector< itkTransformBase::Pointer >);
-
-
-//    btkGetMacro(TransformsLR,std::vector< itkAffineTransform::Pointer >);
-//    btkSetMacro(TransformsLR,std::vector< itkAffineTransform::Pointer >);
-
-    btkGetMacro(ImagesLR,std::vector< itkImage::Pointer > );
-    btkSetMacro(ImagesLR,std::vector< itkImage::Pointer > );
+            m_Transforms.push_back(_t);
+        }
 
 
-    btkGetMacro(ImagesMaskLR,std::vector< itkImageMask::Pointer >  );
-    btkSetMacro(ImagesMaskLR,std::vector< itkImageMask::Pointer >  );
+    protected:
 
-    btkGetMacro(MasksLR,std::vector< itkMask::Pointer >);
-    btkSetMacro(MasksLR,std::vector< itkMask::Pointer >);
+        virtual void SimulateLRImages();
+        virtual void GenerateOutputData();
+        SuperResolutionFilter();
+        virtual ~SuperResolutionFilter(){}
 
-    btkGetMacro(ImageHR, itkImage::Pointer);
-    btkSetMacro(ImageHR, itkImage::Pointer);
+    private:
 
-    btkGetMacro(ImageMaskHR, itkImageMask::Pointer);
-    btkSetMacro(ImageMaskHR, itkImageMask::Pointer);
+        H_Filter::Pointer                       m_H_Filter;
 
-    btkGetMacro(ReferenceImage, itkImage::Pointer);
-    btkSetMacro(ReferenceImage, itkImage::Pointer);
+        std::vector< TransformType::Pointer >   m_Transforms;
 
-    btkGetMacro(Nlm, int);
-    btkSetMacro(Nlm,int);
+        std::vector< ImageType::Pointer >       m_Images;
 
-    btkGetMacro(Beta, float);
-    btkSetMacro(Beta,float);
+        std::vector< RegionType >               m_Regions;
 
-    btkGetMacro(Loop, int);
-    btkSetMacro(Loop,int);
+        std::vector< ImageType::Pointer >       m_SimulatedImages;
 
-    btkGetMacro(MedianIBP, int);
-    btkSetMacro(MedianIBP,int);
+        std::vector< ImageMaskType::Pointer >   m_Masks;
 
-    btkGetMacro(Psftype, int);
-    btkSetMacro(Psftype,int);
+        std::vector< MaskType::Pointer >        m_MasksObject;
 
-    btkGetMacro(InterpolationOrderPSF, int);
-    btkSetMacro(InterpolationOrderPSF,int);
+        ImageType::Pointer                      m_ReferenceImage;
 
-    btkGetMacro(InterpolationOrderIBP, int);
-    btkSetMacro(InterpolationOrderIBP,int);
+        vnl_vector< double >                     m_X;
 
+        vnl_vector< PrecisionType >             m_Xfloat;
 
-    btkGetMacro(TransformationType, TRANSFORMATION_TYPE);
-    btkSetMacro(TransformationType, TRANSFORMATION_TYPE);
+        ImageType::RegionType                   m_ReferenceRegion;
 
-    btkGetMacro(ReconstructionType,RECONSTRUCTION_TYPE);
-    btkSetMacro(ReconstructionType,RECONSTRUCTION_TYPE);
+        btk::PSF::Pointer                       m_PSF;
 
-    btkGetMacro(RoisLR, std::vector< itkRegion >);
-    btkSetMacro(RoisLR, std::vector< itkRegion >);
+        vnl_sparse_matrix< PrecisionType >              m_H;
 
-    btkGetMacro(IterMax, unsigned int);
-    btkSetMacro(IterMax, unsigned int);
+        vnl_vector< PrecisionType >                     m_Y;
 
-    btkGetMacro(Lambda, float );
-    btkSetMacro(Lambda, float );
+        bool                                    m_ComputeSimulations;
 
-    btkSetMacro(ComputeRegistration,bool);
+        unsigned int                            m_NumberOfImages;
 
-    btkSetMacro(UseMotionCorrection,bool);
+        ImageType::Pointer                      m_Output;
 
 
 
-    void SetParameters(int Nlm, float Beta, int Loop, int MedianIBP, int PsfType,float lambda,int iterMax, int InterpolationOrderIBP, int InterpolationOrderPSF);
-    void SetDefaultParameters();
-
-protected:
-
-    void InverseTransforms();
-    void Initialize();
-    void ComputeHRImage();
-    void MotionCorrection();
-    void ResampleByInjection();
-
-private:
-
-    // !! Since use of btkMacro for get/set use a Capital letter after the m_ (ex : m_MyVariable) !!
-
-    int                       m_Psftype; // 0: 3D interpolated boxcar, 1: 3D oversampled boxcar
-    std::vector<itkImage::Pointer>   m_PSF;
-    int                       m_InterpolationOrderPSF;
-    int                       m_InterpolationOrderIBP;
-    vnl_sparse_matrix<float>  m_H;
-    vnl_vector<float>         m_Y;
-    vnl_vector<float>         m_X;
-    float                     m_PaddingValue;
-    std::vector<unsigned int> m_Offset;
-    TRANSFORMATION_TYPE m_TransformationType;
-    RECONSTRUCTION_TYPE m_ReconstructionType;
 
 
-    std::vector< itkImage::Pointer >         m_ImagesLR;
-    //Use ::Pointer instead ...
-    std::vector< itkTransformBase::Pointer >   m_TransformsLR;
-    std::vector< itkTransformBase::Pointer >    m_InverseTransformsLR;
-
-//    std::vector< itkAffineTransform::Pointer  >   m_TransformsLR;
-//    std::vector< itkAffineTransform::Pointer >    m_InverseTransformsLR;
-
-    std::vector< btkSliceBySliceTransformBase::Pointer  >   m_TransformsLRSbS;
-    std::vector< btkSliceBySliceTransformBase::Pointer >    m_InverseTransformsLRSbS;
-
-//    std::vector< itkAffineTransform::Pointer  >   m_TransformsLRAffine;
-//    std::vector< itkAffineTransform::Pointer >    m_InverseTransformsLRAffine;
-
-    std::vector< itkTransformBase::Pointer >   m_TransformsLRAffine;
-    std::vector< itkTransformBase::Pointer >    m_InverseTransformsLRAffine;
-
-    std::vector< itkImageMask::Pointer >     m_ImagesMaskLR;
-    std::vector< itkMask::Pointer >          m_MasksLR;
-    std::vector< itkRegion >                 m_RoisLR;
-    itkImage::Pointer                        m_ImageHR;
-    itkImage::Pointer                        m_OutputHRImage;
-    itkImageMask::Pointer                    m_ImageMaskHR;
-    itkMask::Pointer                         m_MaskHR;
-    itkImage::Pointer                        m_ReferenceImage;
-
-
-    int m_Nlm;
-    float m_Beta;
-    int m_Loop;
-    int m_MedianIBP;
-    unsigned int m_IterMax;
-    float m_Lambda;
-    double m_Epsilon;
-
-
-    //Image information (size, spacing etc.)
-    itkImage::SpacingType m_Spacing;
-    itkImage::SizeType    m_Size;
-    itkImage::RegionType  m_Region;
-
-    btk::MotionCorrectionFilter * m_MotionCorrectionFilter;
-    btk::BiasCorrectionFilter *   m_BiasCorrectionFilter;
-    btk::HighResolutionReconstructionFilter * m_HighResolutionReconstructionFilter;
-    btk::LowToHighResFilterRigid::Pointer m_CreateRigidHighResolutionImage;
-    btk::LowToHighResFilterAffine::Pointer m_CreateAffineHighResolutionImage;
-    ResamplerByInjectionType::Pointer   m_ResampleByInjectionFilter;
-
-
-    bool       m_ComputeRegistration;
-    bool       m_UseMotionCorrection;
 
 
 
