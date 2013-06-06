@@ -42,3 +42,15 @@ ${fbrain_SOURCE_DIR}/Code/Registration/btkOptimizer.h
 ${fbrain_SOURCE_DIR}/Code/Registration/btkOptimizer.cxx)
 TARGET_LINK_LIBRARIES(btkSmartGradientDescentOptimizerTestApp ${ITK_LIBRARIES} btkToolsLibrary)
 ADD_TEST(btkSmartGradientDescentOptimizerTest ${Tests_BINARY_DIR}/btkSmartGradientDescentOptimizerTestApp)
+
+
+ADD_EXECUTABLE(btkPSFTestApp ${fbrain_SOURCE_DIR}/Tests/btkPSFTest.cxx
+${fbrain_SOURCE_DIR}/Code/Maths/btkPSF.h
+${fbrain_SOURCE_DIR}/Code/Maths/btkPSF.cxx
+${fbrain_SOURCE_DIR}/Code/Maths/btkGaussianPSF.h
+${fbrain_SOURCE_DIR}/Code/Maths/btkGaussianPSF.cxx
+${fbrain_SOURCE_DIR}/Code/Maths/btkBoxCarPSF.h
+${fbrain_SOURCE_DIR}/Code/Maths/btkBoxCarPSF.cxx
+)
+TARGET_LINK_LIBRARIES(btkPSFTestApp ${ITK_LIBRARIES} btkToolsLibrary)
+ADD_TEST(btkPSFTest ${Tests_BINARY_DIR}/btkPSFTestApp)
