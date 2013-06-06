@@ -2,8 +2,9 @@
 
   © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-  Date: 23/03/2010
-  Author(s): Estanislao Oubel (oubel@unistra.fr)
+  Date: 23/03/2010 modified 04/06/2013
+  Author(s): Estanislao Oubel (oubel@unistra.fr),
+             Frederic Champ (champ(at)unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -66,12 +67,12 @@ template<class TInputImage, class TCoordRep>
 RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
 ::RBFInterpolateImageFunctionS2S()
 {
-  m_GradientTableCartesian = 0;
-  m_kdTreeSphere = 0;
-  m_TransformsAreSet = false;
-  m_NumberOfSlices = 0;
-  m_FirstSlice = 0;
-  m_LastSlice  = 0;
+    m_GradientTableCartesian = 0;
+    m_kdTreeSphere = 0;
+    m_TransformsAreSet = false;
+    m_NumberOfSlices = 0;
+    m_FirstSlice = 0;
+    m_LastSlice  = 0;
 }
 
 /**
@@ -81,17 +82,18 @@ template<class TInputImage, class TCoordRep>
 RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
 ::~RBFInterpolateImageFunctionS2S()
 {
-  for (unsigned int i=0; i<m_NumberOfGradients*m_NumberOfSlices; i++)
-  {
-    delete m_kdTreeSpace[i];
-  }
 
-  if (m_kdTreeSphere != 0)
-  {
-    delete m_kdTreeSphere;
-  }
+    for (unsigned int i=0; i<m_NumberOfGradients*m_NumberOfSlices; i++)
+    {
+        delete m_kdTreeSpace[i];
+    }
 
-  annClose();
+    if (m_kdTreeSphere != 0)
+    {
+        delete m_kdTreeSphere;
+    }
+
+    annClose();
 
 }
 
@@ -104,7 +106,7 @@ void
 RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
 ::PrintSelf(std::ostream& os, Indent indent) const
 {
-  this->Superclass::PrintSelf(os,indent);
+    this->Superclass::PrintSelf(os,indent);
 }
 
 template<class TInputImage, class TCoordRep>
@@ -112,47 +114,45 @@ void
 RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
 ::SetTransforms( const char* tpath )
 {
-  for (unsigned int i=1; i<m_ImageSize[3]; i++)
-  {
-
-    char fullTrafoName[255]; strcpy ( fullTrafoName,tpath );
-    char trafoName[255];
-
-    sprintf ( trafoName, "/%d.txt", i );
-    strcat ( fullTrafoName,trafoName );
-
-    TransformReaderType::Pointer transformReader = TransformReaderType::New();
-    transformReader->SetFileName( fullTrafoName );
-    transformReader->Update();
-
-    TransformListType transforms = transformReader->GetTransformList();
-
-    TransformReaderType::TransformListType::const_iterator titr =
-    transforms->begin();
-
-//    std::cout << "transform size in " << fullTrafoName << " " << transforms -> size() << std::endl;
-
-    for(unsigned int j=0; j<transforms -> size(); j++,titr++)
+    for (unsigned int i=1; i<m_ImageSize[3]; i++)
     {
-      if( !strcmp((*titr)->GetNameOfClass(),"AffineTransform") )
-        {
-        m_TransformArray[i-1][j] = dynamic_cast< TransformType * >( titr->GetPointer() );
 
-        if( !m_TransformArray[i-1][j] )//  m_kdTreeSpace = 0;
-          {
-          std::cerr << "Error reading Transform" << std::endl;
-          }
+        char fullTrafoName[255]; strcpy ( fullTrafoName,tpath );
+        char trafoName[255];
 
-        }
-      else
+        sprintf ( trafoName, "/%d.txt", i );
+        strcat ( fullTrafoName,trafoName );
+
+        TransformReaderType::Pointer transformReader = TransformReaderType::New();
+        transformReader->SetFileName( fullTrafoName );
+        transformReader->Update();
+
+        TransformListType transforms = transformReader->GetTransformList();
+
+        TransformReaderType::TransformListType::const_iterator titr =
+                transforms->begin();
+
+        for(unsigned int j=0; j<transforms -> size(); j++,titr++)
         {
-        std::cerr << "Input file does not contain an Affinr Transform" << std::endl;
+            if( !strcmp((*titr)->GetNameOfClass(),"AffineTransform") )
+            {
+                m_TransformArray[i-1][j] = dynamic_cast< TransformType * >( titr->GetPointer() );
+
+                if( !m_TransformArray[i-1][j] )//  m_kdTreeSpace = 0;
+                {
+                    std::cerr << "Error reading Transform" << std::endl;
+                }
+
+            }
+            else
+            {
+                std::cerr << "Input file does not contain an Affinr Transform" << std::endl;
+            }
         }
+
     }
 
-  }
-
-  m_TransformsAreSet = true;
+    m_TransformsAreSet = true;
 
 }
 
@@ -163,50 +163,64 @@ RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
 ::SetGradientTable( const char* input )
 {
 
-  m_GradientTableCartesian.set_size( m_ImageSize[3],3 );
-  m_OriginalGradientTable.set_size( m_ImageSize[3],3 );
+    m_GradientTableCartesian.set_size( m_ImageSize[3],3 );
+    m_OriginalGradientTable.set_size( m_ImageSize[3],3 );
 
-  // Fill gradient table in cartesian coordinates
+    // Fill gradient table in cartesian coordinates
 
-  FILE* fr;
-  fr = fopen( input, "r" );
+    FILE* fr;
+    fr = fopen( input, "r" );
 
-  float value;
-  unsigned ncol = 1;
-  unsigned nrow = 1;
+    float value;
+    unsigned ncol = 1;
+    unsigned nrow = 1;
 
-  for (unsigned int j=1; j <= 3*m_ImageSize[3]; j++)
-  {
-    if ( ( j % m_ImageSize[3] ) == 0 )
+    for (unsigned int j=1; j <= 3*m_ImageSize[3]; j++)
     {
-      fscanf( fr, "%f\n", &value);
-      m_GradientTableCartesian(nrow-1,ncol-1)=value;
-      m_OriginalGradientTable(nrow-1,ncol-1)=value;
-      nrow = 0;
-      ncol++;
-    } else
-    {
-      fscanf( fr, "%f ", &value);
-      m_GradientTableCartesian(nrow-1,ncol-1)=value;
-      m_OriginalGradientTable(nrow-1,ncol-1)=value;
+        if ( ( j % m_ImageSize[3] ) == 0 )
+        {
+            fscanf( fr, "%lf\n", &value);
+            m_GradientTableCartesian(nrow-1,ncol-1)=value;
+            m_OriginalGradientTable(nrow-1,ncol-1)=value;
+            nrow = 0;
+            ncol++;
+        } else
+        {
+            fscanf( fr, "%f ", &value);
+            m_GradientTableCartesian(nrow-1,ncol-1)=value;
+            m_OriginalGradientTable(nrow-1,ncol-1)=value;
+        }
+        nrow++;
     }
-    nrow++;
-  }
 
-  fclose (fr);
-
-/*  std::cout << "Original gradient table = " << std::endl;
-  for (unsigned int r=0; r < m_ImageSize[3]; r++)
-  {
-    for (unsigned int c=0; c < 3; c++)
-    {
-      std::cout << m_OriginalGradientTable(r,c) << " ";
-    }
-    std::cout << std::endl;
-
-  } */
+    fclose (fr);
 
 }
+
+template<class TInputImage, class TCoordRep>
+void
+RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
+::SetGradientTable( std::vector<btk::GradientDirection> input )
+{
+
+    m_GradientTableCartesian.set_size( m_ImageSize[3],3 );
+    m_OriginalGradientTable.set_size( m_ImageSize[3],3 );
+
+    for (unsigned int i=0; i < input.size(); i++)
+    {
+        for(unsigned int j= 0; j< input[i].GetVectorDimension(); j++)
+        {
+            m_GradientTableCartesian(i,j) = input[i][j];
+            m_OriginalGradientTable(i,j)  = input[i][j];
+
+        }
+
+    }
+
+}
+
+
+
 
 template<class TInputImage, class TCoordRep>
 void
@@ -214,76 +228,70 @@ RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
 ::RotateGradients()
 {
 
-  // data structure for nearest neighbor search with ANN
-  m_dataPtsSphere = annAllocPts(2*m_NumberOfGradients*m_NumberOfSlices, 3);
+    // data structure for nearest neighbor search with ANN
+    m_dataPtsSphere = annAllocPts(2*m_NumberOfGradients*m_NumberOfSlices, 3);
 
-  double x,y,z,r;
+    double x,y,z,r;
 
-  unsigned int k=0;
+    unsigned int k=0;
 
-  for (unsigned int i=1; i <= m_NumberOfGradients; i++)
-  {
-    for (unsigned int j=m_FirstSlice; j<=m_LastSlice; j++)
+    for (unsigned int i=1; i <= m_NumberOfGradients; i++)
     {
-
-      VnlMatrixType Md = m_TransformArray[i-1][j] -> GetMatrix().GetVnlMatrix();
-
-      VnlMatrixType PQd = Md;
-      VnlMatrixType NQd = Md;
-      VnlMatrixType PQNQDiffd;
-
-      for(unsigned int ni = 0; ni < 100; ni++ )
-      {
-        // Average current Qi with its inverse transpose
-        NQd = ( PQd + vnl_inverse_transpose( PQd ) ) / 2.0;
-        PQNQDiffd = NQd - PQd;
-        if( PQNQDiffd.frobenius_norm() < 1e-7 )
+        for (unsigned int j=m_FirstSlice; j<m_LastSlice; j++)
         {
-           break;
+
+            VnlMatrixType Md = m_TransformArray[i-1][j] -> GetMatrix().GetVnlMatrix();
+
+            VnlMatrixType PQd = Md;
+            VnlMatrixType NQd = Md;
+            VnlMatrixType PQNQDiffd;
+
+            for(unsigned int ni = 0; ni < 100; ni++ )
+            {
+                // Average current Qi with its inverse transpose
+                NQd = ( PQd + vnl_inverse_transpose( PQd ) ) / 2.0;
+                PQNQDiffd = NQd - PQd;
+                if( PQNQDiffd.frobenius_norm() < 1e-7 )
+                {
+                    break;
+                }
+                else
+                {
+                    PQd = NQd;
+                }
+            }
+
+            VnlVectorType grad = m_GradientTableCartesian.get_row(i);
+            VnlVectorType rotGrad = NQd*grad;
+
+            x = rotGrad(0);
+            y = rotGrad(1);
+            z = rotGrad(2);
+
+            r = std::sqrt(x*x + y*y + z*z);
+
+            // re-normalization to avoid errors due to accuracy in gradients
+            x = x/r; y = y/r; z = z/r; r=1;
+
+            // For the nearest neighbor search, we use the negative point too
+            // since they represent the same direction
+
+            m_dataPtsSphere[k][0] = x;
+            m_dataPtsSphere[k][1] = y;
+            m_dataPtsSphere[k][2] = z;
+
+            m_dataPtsSphere[ k + m_NumberOfGradients*m_NumberOfSlices ][0] = -x;
+            m_dataPtsSphere[ k + m_NumberOfGradients*m_NumberOfSlices ][1] = -y;
+            m_dataPtsSphere[ k + m_NumberOfGradients*m_NumberOfSlices ][2] = -z;
+
+            k++;
+
         }
-        else
-        {
-          PQd = NQd;
-        }
-      }
-
-      VnlVectorType grad = m_GradientTableCartesian.get_row(i);
-      VnlVectorType rotGrad = NQd*grad;
-
-      x = rotGrad(0);
-      y = rotGrad(1);
-      z = rotGrad(2);
-
-      r = std::sqrt(x*x + y*y + z*z);
-
-      // re-normalization to avoid errors due to accuracy in gradients
-      x = x/r; y = y/r; z = z/r; r=1;
-
-      // For the nearest neighbor search, we use the negative point too
-      // since they represent the same direction
-
-      m_dataPtsSphere[k][0] = x;
-      m_dataPtsSphere[k][1] = y;
-      m_dataPtsSphere[k][2] = z;
-
-      m_dataPtsSphere[ k + m_NumberOfGradients*m_NumberOfSlices ][0] = -x;
-      m_dataPtsSphere[ k + m_NumberOfGradients*m_NumberOfSlices ][1] = -y;
-      m_dataPtsSphere[ k + m_NumberOfGradients*m_NumberOfSlices ][2] = -z;
-
-      k++;
 
     }
 
-  }
 
-/*  std::cout << "[";
-  for (k=0; k<2*m_NumberOfGradients*m_NumberOfSlices; k++)
-  {
-    std::cout << m_dataPtsSphere[k][0] << " " << m_dataPtsSphere[k][1] << " " << m_dataPtsSphere[k][2] << ";" << std::endl;
-  }
-  std::cout << "]" << std::endl; */
-
-  m_kdTreeSphere = new ANNkd_tree(m_dataPtsSphere, 2*m_NumberOfGradients*m_NumberOfSlices, 3);
+    m_kdTreeSphere = new ANNkd_tree(m_dataPtsSphere, 2*m_NumberOfGradients*m_NumberOfSlices, 3);
 
 }
 
@@ -292,19 +300,22 @@ void
 RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
 ::GetGradientDirection( unsigned int index, double &theta, double &phi )
 {
-  double x,y,z,r;
+    double x,y,z,r;
 
-  x = m_OriginalGradientTable(index,0);
-  y = m_OriginalGradientTable(index,1);
-  z = m_OriginalGradientTable(index,2);
+    x = m_OriginalGradientTable(index,0);
+    y = m_OriginalGradientTable(index,1);
+    z = m_OriginalGradientTable(index,2);
 
-  r = std::sqrt(x*x + y*y + z*z);
+    r = std::sqrt(x*x + y*y + z*z);
 
-  // re-normalization to avoid errors due to accuracy in gradients
-  x = x/r; y = y/r; z = z/r; r=1;
+    // re-normalization to avoid errors due to accuracy in gradients
+    x = x/r;
+    y = y/r;
+    z = z/r;
+    r=1;
 
-  theta = std::acos(z/r);
-  phi = std::atan2(y,x);
+    theta = std::acos(z/r);
+    phi = std::atan2(y,x);
 
 }
 
@@ -314,19 +325,34 @@ void
 RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
 ::SetInputImage(const InputImageType *ptr)
 {
-  this->Superclass::SetInputImage(ptr);
-  m_ImageSize = this->GetInputImage()->GetLargestPossibleRegion().GetSize();
-  m_TransformArray.resize(m_ImageSize[3]-1);
+    this->Superclass::SetInputImage(ptr);
+    m_ImageSize = this->GetInputImage()->GetLargestPossibleRegion().GetSize();
+    m_TransformArray.resize(m_ImageSize[3]-1);
 
-  for(unsigned j=0; j<m_ImageSize[3]-1; j++)
-  {
-    m_TransformArray[j].resize(m_ImageSize[2]);
-  }
+    for(unsigned j=0; j<m_ImageSize[3]-1; j++)
+    {
+        m_TransformArray[j].resize(m_ImageSize[2]);
+    }
 
-//  std::cout << "tamanios = " << m_TransformArray.size() << " " << m_TransformArray[0].size() << std::endl;
+    m_NumberOfGradients = m_ImageSize[3]-1;
+}
 
-//  m_InverseTransformArray.resize(m_ImageSize[3]-1);
-  m_NumberOfGradients = m_ImageSize[3]-1;
+
+template<class TInputImage, class TCoordRep>
+void
+RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
+::SetInputImage(ImagePointer ptr)
+{
+    this->Superclass::SetInputImage(ptr);
+    m_ImageSize = this->GetInputImage()->GetLargestPossibleRegion().GetSize();
+    m_TransformArray.resize(m_ImageSize[3]-1);
+
+    for(unsigned j=0; j<m_ImageSize[3]-1; j++)
+    {
+        m_TransformArray[j].resize(m_ImageSize[2]);
+    }
+
+    m_NumberOfGradients = m_ImageSize[3]-1;
 }
 
 template<class TInputImage, class TCoordRep>
@@ -334,104 +360,104 @@ void
 RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
 ::Initialize( ImageRegionType & region)
 {
-  // In case of leave1out
+    // In case of leave1out
 
-  if (! m_TransformsAreSet )
-  {
-    for (unsigned int i=0; i < m_TransformArray.size(); i++)
+    if (! m_TransformsAreSet )
     {
-      for (unsigned int j=0; j< m_TransformArray[i].size(); j++)
-      {
-        m_TransformArray[i][j] = TransformType::New();
-        m_TransformArray[i][j]-> SetIdentity();
+        for (unsigned int i=0; i < m_TransformArray.size(); i++)
+        {
+            for (unsigned int j=0; j< m_TransformArray[i].size(); j++)
+            {
+                m_TransformArray[i][j] = TransformType::New();
+                m_TransformArray[i][j]-> SetIdentity();
 
-      }
-    }
-  }
-
-  ImageRegionType region2 = region;
-
-  ImageSizeType size2 = region2.GetSize();
-  ImageIndexType start2 = region2.GetIndex();
-
-  size2[3] = 1;
-  start2[3] = 1;
-
-  region2.SetSize(size2);
-  region2.SetIndex(start2);
-
-  m_NumberOfSlices = size2[2];
-  m_FirstSlice     = start2[2];
-  m_LastSlice      = start2[2] + size2[2] - 1;
-
-  this -> RotateGradients();
-
-  std::cout << m_NumberOfSlices << " " << m_FirstSlice << " " << m_LastSlice << std::endl;
-
-  IndexType index;
-  PointType point;
-  typename TransformType::OutputPointType transformedPoint;
-  typename TransformType::InputPointType spatialPoint;
-
-  m_dataPtsSpace.resize(m_NumberOfGradients*m_NumberOfSlices);
-  m_dataVals.resize(m_NumberOfGradients*m_NumberOfSlices);
-
-  m_kdTreeSpace.resize(m_NumberOfGradients*m_NumberOfSlices);
-
-  unsigned int nn = 0;
-
-  for (unsigned int n=0; n<m_NumberOfGradients; n++ )
-  {
-    for (unsigned int j=m_FirstSlice; j<=m_LastSlice; j++)
-    {
-
-      m_dataPtsSpace[nn] = annAllocPts( size2[0]*size2[1], ImageDimension-1);
-      m_dataVals[nn] = annAllocPts( size2[0]*size2[1], 1);
-
-      unsigned int i = 0;
-
-      start2[2] = j;
-      size2[2] = 1;
-
-      region2.SetIndex( start2 );
-      region2.SetSize( size2 );
-
-      IteratorType regionIt(this->GetInputImage(),region2);
-
-      for (regionIt.GoToBegin(); !regionIt.IsAtEnd(); ++regionIt)
-      {
-
-        index = regionIt.GetIndex();
-        this->GetInputImage() -> TransformIndexToPhysicalPoint(index,point);
-
-        spatialPoint[0] = point[0];
-        spatialPoint[1] = point[1];
-        spatialPoint[2] = point[2];
-
-        transformedPoint = m_TransformArray[n][j]->TransformPoint(spatialPoint);
-
-        m_dataPtsSpace[nn][i][0] = transformedPoint[0];
-        m_dataPtsSpace[nn][i][1] = transformedPoint[1];
-        m_dataPtsSpace[nn][i][2] = transformedPoint[2];
-
-        m_dataVals[nn][i][0] = regionIt.Get();
-
-        i++;
-
-      }
-
-      m_kdTreeSpace[nn] = new ANNkd_tree(m_dataPtsSpace[nn], size2[0]*size2[1], ImageDimension-1);
-
-      nn++;
-
+            }
+        }
     }
 
-    start2[3] = start2[3]+1;
+    ImageRegionType region2 = region;
+    //btkCoutMacro(region2);
+    ImageSizeType size2 = region2.GetSize();
+    ImageIndexType start2 = region2.GetIndex();
+
+    size2[3] = 1;
+    start2[3] = 1;
+
+    region2.SetSize(size2);
+    region2.SetIndex(start2);
+
+    m_NumberOfSlices = size2[2];
+    m_FirstSlice     = start2[2];
+    m_LastSlice      = start2[2] + size2[2]; //-1;
+
+    this -> RotateGradients();
+
+    //std::cout << m_NumberOfSlices << " " << m_FirstSlice << " " << m_LastSlice << std::endl;
+
+    IndexType index;
+    PointType point;
+    typename TransformType::OutputPointType transformedPoint;
+    typename TransformType::InputPointType spatialPoint;
+
+    m_dataPtsSpace.resize(m_NumberOfGradients*m_NumberOfSlices);
+    m_dataVals.resize(m_NumberOfGradients*m_NumberOfSlices);
+
+    m_kdTreeSpace.resize(m_NumberOfGradients*m_NumberOfSlices);
+
+    unsigned int nn = 0;
+
+    for (unsigned int n=0; n<m_NumberOfGradients; n++ )
+    {
+        for (unsigned int j=m_FirstSlice; j<m_LastSlice; j++)
+        {
+            m_dataPtsSpace[nn] = annAllocPts( size2[0]*size2[1], ImageDimension-1);
+            m_dataVals[nn] = annAllocPts( size2[0]*size2[1], 1);
+
+            unsigned int i = 0;
+
+            start2[2] = j;
+            size2[2] = 1;
+
+            region2.SetIndex( start2 );
+            region2.SetSize( size2 );
+
+            IteratorType regionIt(this->GetInputImage(),region2);
+
+            for (regionIt.GoToBegin(); !regionIt.IsAtEnd(); ++regionIt)
+            {
+
+                index = regionIt.GetIndex();
+                this->GetInputImage() -> TransformIndexToPhysicalPoint(index,point);
+
+                spatialPoint[0] = point[0];
+                spatialPoint[1] = point[1];
+                spatialPoint[2] = point[2];
+
+                transformedPoint = m_TransformArray[n][j]->TransformPoint(spatialPoint);
+
+                m_dataPtsSpace[nn][i][0] = transformedPoint[0];
+                m_dataPtsSpace[nn][i][1] = transformedPoint[1];
+                m_dataPtsSpace[nn][i][2] = transformedPoint[2];
+
+                m_dataVals[nn][i][0] = regionIt.Get();
+
+                i++;
+
+            }
+
+            m_kdTreeSpace[nn] = new ANNkd_tree(m_dataPtsSpace[nn], size2[0]*size2[1], ImageDimension-1);
+
+            nn++;
+
+        }
+
+        start2[3] += 1;
 
 
-  }
+    }
 
 }
+
 
 
 /**
@@ -442,107 +468,107 @@ typename RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
 ::OutputType
 RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
 ::EvaluateAtContinuousIndex(
-  const ContinuousIndexType& index) const
+        const ContinuousIndexType& index) const
 {
-  unsigned int dim;  // index over dimension
+    unsigned int dim;  // index over dimension
 
-  /**
+    /**
    * Compute base index = closet index below point
    * Compute distance from point to base index
    */
-  signed long baseIndex[ImageDimension];
-  double distance[ImageDimension];
-  long tIndex;
+    signed long baseIndex[ImageDimension];
+    double distance[ImageDimension];
+    long tIndex;
 
-  for( dim = 0; dim < ImageDimension; dim++ )
+    for( dim = 0; dim < ImageDimension; dim++ )
     {
-    // The following "if" block is equivalent to the following line without
-    // having to call floor.
-    //    baseIndex[dim] = (long) vcl_floor(index[dim] );
-    if (index[dim] >= 0.0)
-      {
-      baseIndex[dim] = (long) index[dim];
-      }
-    else
-      {
-      tIndex = (long) index[dim];
-      if (double(tIndex) != index[dim])
+        // The following "if" block is equivalent to the following line without
+        // having to call floor.
+        //    baseIndex[dim] = (long) vcl_floor(index[dim] );
+        if (index[dim] >= 0.0)
         {
-        tIndex--;
+            baseIndex[dim] = (long) index[dim];
         }
-      baseIndex[dim] = tIndex;
-      }
-    distance[dim] = index[dim] - double( baseIndex[dim] );
+        else
+        {
+            tIndex = (long) index[dim];
+            if (double(tIndex) != index[dim])
+            {
+                tIndex--;
+            }
+            baseIndex[dim] = tIndex;
+        }
+        distance[dim] = index[dim] - double( baseIndex[dim] );
     }
 
-  /**
+    /**
    * Interpolated value is the weighted sum of each of the surrounding
    * neighbors. The weight for each neighbor is the fraction overlap
    * of the neighbor pixel with respect to a pixel centered on point.
    */
-  RealType value = NumericTraits<RealType>::Zero;
+    RealType value = NumericTraits<RealType>::Zero;
 
-  typedef typename NumericTraits<InputPixelType>::ScalarRealType ScalarRealType;
-  ScalarRealType totalOverlap = NumericTraits<ScalarRealType>::Zero;
+    typedef typename NumericTraits<InputPixelType>::ScalarRealType ScalarRealType;
+    ScalarRealType totalOverlap = NumericTraits<ScalarRealType>::Zero;
 
-  for( unsigned int counter = 0; counter < m_Neighbors; counter++ )
+    for( unsigned int counter = 0; counter < m_Neighbors; counter++ )
     {
 
-    double overlap = 1.0;          // fraction overlap
-    unsigned int upper = counter;  // each bit indicates upper/lower neighbour
-    IndexType neighIndex;
+        double overlap = 1.0;          // fraction overlap
+        unsigned int upper = counter;  // each bit indicates upper/lower neighbour
+        IndexType neighIndex;
 
-    // get neighbor index and overlap fraction
-    for( dim = 0; dim < ImageDimension; dim++ )
-      {
-
-      if ( upper & 1 )
+        // get neighbor index and overlap fraction
+        for( dim = 0; dim < ImageDimension; dim++ )
         {
-        neighIndex[dim] = baseIndex[dim] + 1;
+
+            if ( upper & 1 )
+            {
+                neighIndex[dim] = baseIndex[dim] + 1;
 #ifdef ITK_USE_CENTERED_PIXEL_COORDINATES_CONSISTENTLY
-        // Take care of the case where the pixel is just
-        // in the outer upper boundary of the image grid.
-        if( neighIndex[dim] > this->m_EndIndex[dim] )
-          {
-          neighIndex[dim] = this->m_EndIndex[dim];
-          }
+                // Take care of the case where the pixel is just
+                // in the outer upper boundary of the image grid.
+                if( neighIndex[dim] > this->m_EndIndex[dim] )
+                {
+                    neighIndex[dim] = this->m_EndIndex[dim];
+                }
 #endif
-        overlap *= distance[dim];
+                overlap *= distance[dim];
+            }
+            else
+            {
+                neighIndex[dim] = baseIndex[dim];
+#ifdef ITK_USE_CENTERED_PIXEL_COORDINATES_CONSISTENTLY
+                // Take care of the case where the pixel is just
+                // in the outer lower boundary of the image grid.
+                if( neighIndex[dim] < this->m_StartIndex[dim] )
+                {
+                    neighIndex[dim] = this->m_StartIndex[dim];
+                }
+#endif
+                overlap *= 1.0 - distance[dim];
+            }
+
+            upper >>= 1;
+
         }
-      else
+
+        // get neighbor value only if overlap is not zero
+        if( overlap )
         {
-        neighIndex[dim] = baseIndex[dim];
-#ifdef ITK_USE_CENTERED_PIXEL_COORDINATES_CONSISTENTLY
-        // Take care of the case where the pixel is just
-        // in the outer lower boundary of the image grid.
-        if( neighIndex[dim] < this->m_StartIndex[dim] )
-          {
-          neighIndex[dim] = this->m_StartIndex[dim];
-          }
-#endif
-        overlap *= 1.0 - distance[dim];
+            value += static_cast<RealType>( this->GetInputImage()->GetPixel( neighIndex ) ) * overlap;
+            totalOverlap += overlap;
         }
 
-      upper >>= 1;
-
-      }
-
-    // get neighbor value only if overlap is not zero
-    if( overlap )
-      {
-      value += static_cast<RealType>( this->GetInputImage()->GetPixel( neighIndex ) ) * overlap;
-      totalOverlap += overlap;
-      }
-
-    if( totalOverlap == 1.0 )
-      {
-      // finished
-      break;
-      }
+        if( totalOverlap == 1.0 )
+        {
+            // finished
+            break;
+        }
 
     }
 
-  return ( static_cast<OutputType>( value ) );
+    return ( static_cast<OutputType>( value ) );
 }
 
 /**
@@ -577,7 +603,10 @@ RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
     spherePt[1] = std::sin(theta) * std::sin(phi);
     spherePt[2] = std::cos(theta);
 
-    k_gra = m_kdTreeSphere -> annkFRSearch(spherePt, 9*r_gra*r_gra, 0);
+    k_gra = m_kdTreeSphere -> annkFRSearch(spherePt,9*r_gra*r_gra, 0);
+
+
+    //exit(-1);
 
     ANNidxArray nnIdx_gra;
     nnIdx_gra = new ANNidx[k_gra];
@@ -593,31 +622,38 @@ RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
     unsigned int numberOfPoints = 0;
     bool fixedNN = false;
 
-//    std::cout << "Proximos al punto " << spherePt[0] << " " << spherePt[1] << " " << spherePt[2] << " : " << std::endl;
+    btkCoutVariable(k_gra);
+    // exit(-1);
+    //std::cout << "Proximos al punto " << spherePt[0] << " " << spherePt[1] << " " << spherePt[2] << " : " << std::endl;
 
     for(unsigned int j=init; j < k_gra; j++)
     {
-      unsigned int gradIndex =  nnIdx_gra[j] % (m_NumberOfGradients*m_NumberOfSlices);
+        unsigned int gradIndex =  nnIdx_gra[j] % (m_NumberOfGradients*m_NumberOfSlices);
 
-//      std::cout << "gradIndex = " << gradIndex << " " <<  m_dataPtsSphere[ nnIdx_gra[j] ][0] <<
-//      " " << m_dataPtsSphere[ nnIdx_gra[j] ][1] << " " << m_dataPtsSphere[ nnIdx_gra[j] ][2] << std::endl;
+        std::cout << "gradIndex = " << gradIndex << " " <<  m_dataPtsSphere[ nnIdx_gra[j] ][0] <<
+                     " " << m_dataPtsSphere[ nnIdx_gra[j] ][1] << " " << m_dataPtsSphere[ nnIdx_gra[j] ][2] << std::endl;
 
-      k_spa[j] = m_kdTreeSpace[gradIndex] -> annkFRSearch(spatialPt, 9*r_spa*r_spa, 0);
-      numberOfPoints += (k_spa[j] - init);
+
+        k_spa[j] = m_kdTreeSpace[gradIndex] -> annkFRSearch(spatialPt, 9*r_spa*r_spa, 0);
+        numberOfPoints += (k_spa[j] - init);
     }
+    //exit(-1);
 
     if (numberOfPoints == 0)
     {
-      std::cout << "Warning: no neighbors found in the search area. Forcing search." << std::endl;
-      for(unsigned int j=init; j < k_gra; j++)
-      {
-        unsigned int gradIndex =  nnIdx_gra[j] % (m_NumberOfGradients*m_NumberOfSlices);
+        std::cout << "Warning: no neighbors found in the search area. Forcing search." << std::endl;
+        for(unsigned int j=init; j < k_gra; j++)
+        {
+            unsigned int gradIndex =  nnIdx_gra[j] % (m_NumberOfGradients*m_NumberOfSlices);
 
-        k_spa[j] = 4;
-        numberOfPoints += (k_spa[j] - init);
-      }
-      fixedNN = true;
+            k_spa[j] = 4;
+            numberOfPoints += (k_spa[j] - init);
+        }
+        fixedNN = true;
     }
+
+    btkCoutVariable(numberOfPoints);
+    exit(-1);
 
     BtkMatrix<double> pts(numberOfPoints,5);
     BtkVector<double> y(numberOfPoints);
@@ -634,67 +670,59 @@ RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
     for(unsigned int j=init; j < k_gra; j++)
     {
 
-      if ( k_spa[j] == 0)
-      {
-        continue;
-      }
+        if ( k_spa[j] == 0)
+        {
+            continue;
+        }
 
-      x_g = m_dataPtsSphere[ nnIdx_gra[j] ][0];
-      y_g = m_dataPtsSphere[ nnIdx_gra[j] ][1];
-      z_g = m_dataPtsSphere[ nnIdx_gra[j] ][2];
-      r_g = std::sqrt(x_g*x_g + y_g*y_g + z_g*z_g);
+        x_g = m_dataPtsSphere[ nnIdx_gra[j] ][0];
+        y_g = m_dataPtsSphere[ nnIdx_gra[j] ][1];
+        z_g = m_dataPtsSphere[ nnIdx_gra[j] ][2];
+        r_g = std::sqrt(x_g*x_g + y_g*y_g + z_g*z_g);
 
-      unsigned int gradIndex =  nnIdx_gra[j] % (m_NumberOfGradients*m_NumberOfSlices);
-//      index[0] = 0; index[1] = 0; index[2] = 0; index[3] = gradIndex+1;
-//      this->GetInputImage()->TransformIndexToPhysicalPoint( index, physicalPoint );
+        unsigned int gradIndex =  nnIdx_gra[j] % (m_NumberOfGradients*m_NumberOfSlices);
+        //      index[0] = 0; index[1] = 0; index[2] = 0; index[3] = gradIndex+1;
+        //      this->GetInputImage()->TransformIndexToPhysicalPoint( index, physicalPoint );
 
-      ANNidxArray nnIdx_spa;
-      nnIdx_spa = new ANNidx[ k_spa[j] ];
+        ANNidxArray nnIdx_spa;
+        nnIdx_spa = new ANNidx[ k_spa[j] ];
 
-      ANNdistArray dists_spa;
-      dists_spa = new ANNdist[ k_spa[j] ];
+        ANNdistArray dists_spa;
+        dists_spa = new ANNdist[ k_spa[j] ];
 
-      if (fixedNN)
-      {
-        m_kdTreeSpace[gradIndex] -> annkSearch(spatialPt, k_spa[j], nnIdx_spa, dists_spa, 0);
-      } else
-       {
-         m_kdTreeSpace[gradIndex] -> annkFRSearch(spatialPt, 9*r_spa*r_spa, k_spa[j], nnIdx_spa, dists_spa, 0);
-       }
+        if (fixedNN)
+        {
+            m_kdTreeSpace[gradIndex] -> annkSearch(spatialPt, k_spa[j], nnIdx_spa, dists_spa, 0);
+        } else
+        {
+            m_kdTreeSpace[gradIndex] -> annkFRSearch(spatialPt, 9*r_spa*r_spa, k_spa[j], nnIdx_spa, dists_spa, 0);
+        }
 
-      for( unsigned int i=init; i< k_spa[j]; ++i)
-      {
+        for( unsigned int i=init; i< k_spa[j]; ++i)
+        {
 
-        spatialPoint[0] = m_dataPtsSpace[gradIndex][ nnIdx_spa[i] ][0];
-        spatialPoint[1] = m_dataPtsSpace[gradIndex][ nnIdx_spa[i] ][1];
-        spatialPoint[2] = m_dataPtsSpace[gradIndex][ nnIdx_spa[i] ][2];
+            spatialPoint[0] = m_dataPtsSpace[gradIndex][ nnIdx_spa[i] ][0];
+            spatialPoint[1] = m_dataPtsSpace[gradIndex][ nnIdx_spa[i] ][1];
+            spatialPoint[2] = m_dataPtsSpace[gradIndex][ nnIdx_spa[i] ][2];
 
-//        transformedPoint = m_InverseTransformArray[gradIndex]->TransformPoint(spatialPoint);
-//
-//        physicalPoint[0] = transformedPoint[0];
-//        physicalPoint[1] = transformedPoint[1];
-//        physicalPoint[2] = transformedPoint[2];
 
-//        this -> GetInputImage() -> TransformPhysicalPointToIndex( physicalPoint,index );
-//        y[n] = this -> GetInputImage() -> GetPixel( index );
+            y[n] = m_dataVals[gradIndex][nnIdx_spa[i]][0];
 
-        y[n] = m_dataVals[gradIndex][nnIdx_spa[i]][0];
+            // First point components are the voxel coordinates
+            pts[n][0] = spatialPoint[0];
+            pts[n][1] = spatialPoint[1];
+            pts[n][2] = spatialPoint[2];
 
-        // First point components are the voxel coordinates
-        pts[n][0] = spatialPoint[0];
-        pts[n][1] = spatialPoint[1];
-        pts[n][2] = spatialPoint[2];
+            // Last point components are the \phi and \theta gradient angles
 
-        // Last point components are the \phi and \theta gradient angles
+            pts[n][3] = std::acos(z_g/r_g);
+            pts[n][4] = std::atan2(y_g,x_g);
 
-        pts[n][3] = std::acos(z_g/r_g);
-        pts[n][4] = std::atan2(y_g,x_g);
+            n++;
+        }
 
-        n++;
-      }
-
-      delete [] nnIdx_spa;
-      delete [] dists_spa;
+        delete [] nnIdx_spa;
+        delete [] dists_spa;
 
     }
 
@@ -703,8 +731,8 @@ RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
 
     for( unsigned int i=1; i< numberOfPoints; ++i)
     {
-      if (y[i] > max_val) max_val = y[i];
-      if (y[i] < min_val) min_val = y[i];
+        if (y[i] > max_val) max_val = y[i];
+        if (y[i] < min_val) min_val = y[i];
     }
 
 
@@ -723,20 +751,121 @@ RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
 
     if ( (value<min_val) || (value>max_val) )
     {
-      value = y[0];
+        value = y[0];
     }
 
-//    if ( fixedNN )
-//    {
-//      value = 200;
-//    }
 
     // cleaning
 
     delete [] nnIdx_gra;
     delete [] dists_gra;
 
-  return ( static_cast<OutputType>( value ) );
+    return ( static_cast<OutputType>( value ) );
+
+}
+
+// ------------------------------------------------------------------------
+
+template<class TInputImage, class TCoordRep>
+typename RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
+::OutputType
+RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
+::EvaluateAt( ImageIndexType index, double theta, double phi, double r_spa, double r_gra, char init) const
+{
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Initializations
+    //
+    ImageConstPointer sequence = this->GetInputImage();
+
+    ImagePointType point4D;
+    sequence -> TransformIndexToPhysicalPoint(index, point4D);
+
+    BtkMatrix<double> pts(m_NumberOfGradients-1,5);
+    BtkVector<double> values(m_NumberOfGradients-1);
+
+    unsigned int n = 0;
+
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // For each gradient, get physical coordinates and polar coordinates
+    // for the same voxel in the spatial domain
+    //
+    for(unsigned int j=0; j <m_NumberOfGradients; j++)
+    {
+        if(j!=index[3]-1)
+        {
+            ImageIndexType index3D = index;
+            ImagePointType point3D;
+            index3D[3]=j+1;
+
+            values[n] = sequence -> GetPixel(index3D);
+            sequence -> TransformIndexToPhysicalPoint(index3D, point3D);
+
+            // First point components are the voxel coordinates
+            pts[n][0] = point3D[0];
+            pts[n][1] = point3D[1];
+            pts[n][2] = point3D[2];
+
+            // Last point components are the \phi and \theta gradient angles
+            double x,y,z,r;
+
+            x = m_OriginalGradientTable(j+1,0);
+            y = m_OriginalGradientTable(j+1,1);
+            z = m_OriginalGradientTable(j+1,2);
+            r = std::sqrt(x*x + y*y + z*z);
+
+            // re-normalization to avoid errors due to accuracy in gradients
+            x = x/r;
+            y = y/r;
+            z = z/r;
+            r=1;
+
+            double the = std::acos(z/r);
+            double ph = std::atan2(y,x);
+
+            pts[n][3] =the; //std::acos(z_g/r_g);
+            pts[n][4] =ph; //std::atan2(y_g,x_g);
+
+            n++;
+        }
+    }
+
+
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // /!\ Warning : RBF interpolator is no thread safe /!\
+    //
+    // TODO : use itk::VNLSparseLUSolverTraits
+    //
+    // Initialize the RBF interpolator with a gaussian
+    //
+    RBF2_gauss  gaussian(r_spa,r_gra);
+    RBF2_interp RBFInterpolator(pts,values,gaussian,1);
+
+
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Get the interpolated value of the voxel
+    //
+    RealType value = 0; //NumericTraits<RealType>::Zero;
+
+    BtkVector<double> pt(5);
+    pt[0] = point4D[0];
+    pt[1] = point4D[1];
+    pt[2] = point4D[2];
+    pt[3] = theta;
+    pt[4] = phi;
+
+
+    value = RBFInterpolator.interp(pt);
+
+    //////////////////////////////////////////////////////////////////////////
+    //
+    // Return the interpolated value
+    //
+    return ( static_cast<OutputType>( value ) );
+
 
 }
 

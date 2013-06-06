@@ -122,6 +122,9 @@ SET(DIFFUSION_LIBRARY_HEADER
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkOrientationDiffusionFunctionModel.h
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkDiffusionSignal.h
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkDiffusionSequenceToDiffusionSignalFilter.h
+    ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkWeightedEstimationBase.h
+    ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkWeightedEstimationFilter.h
+
 )
 
 SET(DIFFUSION_LIBRARY_SOURCES
@@ -136,6 +139,9 @@ SET(DIFFUSION_LIBRARY_SOURCES
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkOrientationDiffusionFunctionModel.cxx
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkDiffusionSignal.cxx
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkDiffusionSequenceToDiffusionSignalFilter.cxx
+    ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkWeightedEstimationBase.cxx
+    ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkWeightedEstimationFilter.cxx
+
 )
 
 ADD_LIBRARY(btkDiffusionLibrary STATIC ${DIFFUSION_LIBRARY_HEADER} ${DIFFUSION_LIBRARY_SOURCES})
