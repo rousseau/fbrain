@@ -42,6 +42,8 @@
 #include "itkPoint.h"
 #include "itkMatrix.h"
 #include "itkVector.h"
+#include "itkSize.h"
+#include "itkImage.h"
 
 #include "btkMacro.h"
 
@@ -71,6 +73,10 @@ class PSF: public itk::Object
         /** Spacing type */
         typedef itk::Vector< double,3 >  SpacingType;
 
+        typedef itk::Image< float, 3 >  ImageType;
+
+        typedef itk::Size < 3 >         SizeType;
+
         /** Method for creation through the object factory. */
         //itkNewMacro(Self);
 
@@ -78,6 +84,8 @@ class PSF: public itk::Object
         itkTypeMacro(btk::PSF, itk::Object);
 
         virtual OutputType Evaluate(const InputType & position) const = 0;
+
+        virtual void ConstructImage(SizeType _size) = 0;
 
         /** Sets the position of the PSF. */
         virtual void SetCenter(PointType center)
@@ -101,6 +109,8 @@ class PSF: public itk::Object
           m_Spacing = spacing.GetVnlVector();
         }
 
+        btkGetMacro(PsfImage,ImageType::Pointer);
+
     protected:
         PSF();
         virtual ~PSF(){}
@@ -114,6 +124,8 @@ class PSF: public itk::Object
         vnl_vector<double> m_idir;
         vnl_vector<double> m_jdir;
         vnl_vector<double> m_kdir;
+
+        ImageType::Pointer m_PsfImage;
 
 
 
