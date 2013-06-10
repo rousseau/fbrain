@@ -40,6 +40,9 @@
 
 #include "itkGaussianSpatialFunction.h"
 #include "itkFixedArray.h"
+#include "itkImage.h"
+#include "itkImageRegionIteratorWithIndex.h"
+#include "itkContinuousIndex.h"
 
 namespace btk
 {
@@ -51,6 +54,8 @@ class GaussianPSF : public btk::PSF
         typedef btk::GaussianPSF                Self;
         typedef btk::PSF                        Superclass;
 
+
+
         typedef itk::SmartPointer< Self >       Pointer;
         typedef itk::SmartPointer< const Self > ConstPointer;
 
@@ -59,6 +64,12 @@ class GaussianPSF : public btk::PSF
         typedef Superclass::DirectionType       DirectionType;
         typedef Superclass::SpacingType         SpacingType;
         typedef Superclass::PointType           PointType;
+
+        typedef itk::Image < float, 3 >         ImageType;
+        typedef itk::ImageRegionIteratorWithIndex< ImageType > itkIteratorWithIndex;
+        typedef itk::ContinuousIndex<double,3>     itkContinuousIndex;
+
+        typedef Superclass::SizeType            SizeType;
 
         /** Gaussian function type */
         typedef itk::GaussianSpatialFunction< double,
@@ -86,19 +97,25 @@ class GaussianPSF : public btk::PSF
           m_Sigma[1] = m_Spacing[1] / 2.3548;
           m_Sigma[2] = m_Spacing[2] / 2.3548;
 
-//          sigma[0] = sqrt(m_Spacing[0]*m_Spacing[0]/(8*log(2)));
-//          sigma[1] = sqrt(m_Spacing[1]*m_Spacing[1]/(8*log(2)));
-//          sigma[2] = sqrt(m_Spacing[2]*m_Spacing[2]/(8*log(2)));
-
-      //    sigma[0] = 0.5*m_Spacing[0];
-      //    sigma[1] = 0.5*m_Spacing[1];
-      //    sigma[2] = 0.5*m_Spacing[2];
-
-
-
-          //m_Gaussian -> SetSigma( m_Sigma );
-
         }
+
+        virtual void ConstructImage(SizeType _size);
+
+
+
+        void SetOrigin(ImageType::PointType _origin)
+        {
+            m_PsfImage->SetOrigin(_origin);
+        }
+
+        /** Sets the position of the PSF. */
+        virtual void SetCenter(PointType _center)
+        {
+          m_Center = _center.GetVnlVector();
+          this->SetOrigin(_center);
+        }
+
+       // btkGetMacro(PsfImage,ImageType::Pointer);
 
 
     protected:
@@ -112,6 +129,10 @@ class GaussianPSF : public btk::PSF
         GaussianFunctionType::Pointer m_Gaussian;
 
         ArrayType m_Sigma;
+
+        //ImageType::Pointer  m_PsfImage;
+
+
 
 };
 

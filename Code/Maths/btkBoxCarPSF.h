@@ -60,6 +60,7 @@ class BoxCarPSF : public btk::PSF
         typedef Superclass::DirectionType           DirectionType;
         typedef Superclass::SpacingType             SpacingType;
         typedef Superclass::PointType               PointType;
+        typedef Superclass::SizeType                SizeType;
 
         /** Method for creation through the object factory. */
         itkNewMacro(Self);
@@ -68,6 +69,8 @@ class BoxCarPSF : public btk::PSF
         itkTypeMacro(btk::BoxCarPSF, btk::PSF);
 
         virtual OutputType Evaluate(const InputType & position) const;
+
+        virtual void ConstructImage(SizeType _size){}
 
     protected:
         BoxCarPSF();

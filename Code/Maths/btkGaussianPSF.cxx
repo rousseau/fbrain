@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 
+  Date:
   Author(s):Marc Schweitzer (marc.schweitzer(at)unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -48,30 +48,18 @@ GaussianPSF::GaussianPSF()
     m_Spacing.set_size(3);
     m_Spacing.fill(1);
 
-    // Gaussian setup (ITK object)
-//    m_Gaussian = GaussianFunctionType::New();
-//    m_Gaussian -> SetNormalized(alse);//false
+    m_PsfImage = ImageType::New();
 
-    ArrayType mean;
-    mean[0] = 0; mean[1] = 0; mean[2] = 0;
-    //m_Gaussian -> SetMean( mean );
 
-    ArrayType sigma;
 
-    //Compute sigma of the Gaussian PSF
-//    m_Sigma[0] = sqrt(m_Spacing[0]*m_Spacing[0]/(8*log(2)));
-//    m_Sigma[1] = sqrt(m_Spacing[1]*m_Spacing[1]/(8*log(2)));
-//    m_Sigma[2] = sqrt(m_Spacing[2]*m_Spacing[2]/(8*log(2)));
+
+
 
     m_Sigma[0] = m_Spacing[0] / 2.3548;
     m_Sigma[1] = m_Spacing[1] / 2.3548;
     m_Sigma[2] = m_Spacing[2] / 2.3548;
 
-//    sigma[0] = 0.5*m_Spacing[0];
-//    sigma[1] = 0.5*m_Spacing[1];
-//    sigma[2] = 0.5*m_Spacing[2];
 
-    //m_Gaussian -> SetSigma( m_Sigma );
 }
 //-------------------------------------------------------------------------------------------------
 GaussianPSF::OutputType
@@ -90,7 +78,6 @@ GaussianPSF::Evaluate(const InputType & position) const
     x = diffPoint[0] = icoor;
     y = diffPoint[1] = jcoor;
     z = diffPoint[2] = kcoor;
-
     //TODO: Do an oversampling over Point !
 
 
@@ -101,10 +88,67 @@ GaussianPSF::Evaluate(const InputType & position) const
 
     value = exp(-value);
 
-   // std::cout<<value<<std::endl;
+    // std::cout<<value<<std::endl;
     //value = m_Gaussian->Evaluate(diffPoint);
 
     return(OutputType)value;
+}
+//-------------------------------------------------------------------------------------------------
+void GaussianPSF::ConstructImage(SizeType _size)
+{
+    ImageType::RegionType region;
+
+    ImageType::SizeType size;
+
+    ImageType::IndexType index;
+
+    size = _size;
+
+    index[0] = 0;
+    index[1] = 0;
+    index[2] = 0;
+
+    region.SetSize(size);
+    region.SetIndex(index);
+
+    m_PsfImage->SetRegions(region);
+    m_PsfImage->Allocate();
+    m_PsfImage->FillBuffer(0.0);
+    double sum = 0;
+
+    ImageType::IndexType hrIndex;
+
+    itkIteratorWithIndex itPSF(m_PsfImage,m_PsfImage->GetLargestPossibleRegion());
+    itkContinuousIndex hrIndexCenter;
+    hrIndexCenter[0] = (size[0]-1)/2.0;
+    hrIndexCenter[1] = (size[1]-1)/2.0;
+    hrIndexCenter[2] = (size[2]-1)/2.0;
+    for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF)
+    {
+        hrIndex = itPSF.GetIndex();
+        float x = hrIndex[0]- hrIndexCenter[0];
+        float y = hrIndex[1]- hrIndexCenter[1];
+        float z = hrIndex[2]- hrIndexCenter[2];
+        float value = (x*x)/(2*m_Sigma[0]*m_Sigma[0]) + (y*y)/(2*m_Sigma[1]*m_Sigma[1]) + (z*z)/(2*m_Sigma[2]*m_Sigma[2]);
+        itPSF.Set(exp(-value));
+
+        sum += itPSF.Get();
+    }
+
+
+    if(sum>0)
+    {
+        for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF)
+        {
+            itPSF.Set( itPSF.Get() / sum );
+            if(itPSF.Get() < 0.01)
+            {
+                itPSF.Set(0.0);
+            }
+        }
+    }
+
+
 }
 //-------------------------------------------------------------------------------------------------
 void GaussianPSF::PrintSelf(std::ostream &os, itk::Indent indent) const
