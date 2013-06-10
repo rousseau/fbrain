@@ -154,7 +154,16 @@ void SRHMatrixComputation< TImage >::Update()
 
 
       m_PSFs[im]->SetDirection(m_Images[im] -> GetDirection());
-      m_PSFs[im]->SetSpacing(m_Images[im] -> GetSpacing()); // spacing of psf should be at least equal to reference image ;
+      //m_PSFs[im]->SetSpacing(m_Images[im] -> GetSpacing());// spacing of psf should be at least equal to reference image ;
+      m_PSFs[im]->SetSpacing(m_ReferenceImage->GetSpacing());
+
+      typename ImageType::SizeType size;
+
+      size[0] = (int)ceil(m_Images[im]->GetSpacing()[0] / m_ReferenceImage->GetSpacing()[0]) +3;
+      size[1] = (int)ceil(m_Images[im]->GetSpacing()[1] / m_ReferenceImage->GetSpacing()[1]) +3;
+      size[2] = (int)ceil(m_Images[im]->GetSpacing()[2] / m_ReferenceImage->GetSpacing()[2]) +3;
+
+      m_PSFs[im]->ConstructImage(size);
 
       //Define the ROI of the current LR image
       IndexType inputIndex = m_Regions[im].GetIndex();
@@ -273,22 +282,36 @@ void SRHMatrixComputation< TImage >::Update()
           //function -> SetCenter( lrPoint );
           m_PSFs[im]->SetCenter(lrPoint);
 
+          typename PsfImageType::Pointer PSF = PsfImageType::New();
+          PSF = m_PSFs[im]->GetPsfImage();
+
+          //btk::ImageHelper< PsfImageType >::WriteImage(PSF, "GaussianPSF.nii.gz");
+          ImageRegionConstIteratorWithIndex< itk::Image< float, 3> > itPsf(PSF, PSF->GetLargestPossibleRegion());
+
+
+
           //Loop over points of the PSF
-          for(unsigned int k=0; k<deltaIndexes.size(); k++)
+          //for(unsigned int k=0; k<deltaIndexes.size(); k++)
+          for(itPsf.GoToBegin(); !itPsf.IsAtEnd(); ++itPsf)
           {
-            //Coordinates in the LR image
-            nbIndex[0] = deltaIndexes[k][0] + lrIndex[0];//0 + ...
-            nbIndex[1] = deltaIndexes[k][1] + lrIndex[1];//0 + ...
-            nbIndex[2] = deltaIndexes[k][2] + lrIndex[2];//-0.5, 0, +0.5
+//            //Coordinates in the LR image
+//            nbIndex[0] = deltaIndexes[k][0] + lrIndex[0];//0 + ...
+//            nbIndex[1] = deltaIndexes[k][1] + lrIndex[1];//0 + ...
+//            nbIndex[2] = deltaIndexes[k][2] + lrIndex[2];//-0.5, 0, +0.5
+
+              nbIndex = itPsf.GetIndex();
 
 
 
             //World coordinates using LR image header
-            m_Images[im] -> TransformContinuousIndexToPhysicalPoint( nbIndex, nbPoint );
-
+            //m_Images[im] -> TransformContinuousIndexToPhysicalPoint( nbIndex, nbPoint );
+            PSF->TransformContinuousIndexToPhysicalPoint( nbIndex, nbPoint );
             //Compute the PSF value at this point
            // lrValue = function -> Evaluate(nbPoint);
-            lrValue = m_PSFs[im]->Evaluate(nbPoint);
+            //lrValue = m_PSFs[im]->Evaluate(nbPoint);
+            lrValue = itPsf.Get();
+
+            //std::cout<<lrValue<<std::endl;
 
             if ( lrValue > 0)
             {
@@ -305,13 +328,19 @@ void SRHMatrixComputation< TImage >::Update()
               // discard the point if al least one point is out of the reference
               // image
 
-              if ( (hrContIndex[0] < start_hr[0]) || (hrContIndex[0] > end_hr[0]) ||
-                   (hrContIndex[1] < start_hr[1]) || (hrContIndex[1] > end_hr[1]) ||
-                   (hrContIndex[2] < start_hr[2]) || (hrContIndex[2] > end_hr[2]) )
-                 isInsideHR = false;
+//              if ( (hrContIndex[0] < start_hr[0]) || (hrContIndex[0] > end_hr[0]) ||
+//                   (hrContIndex[1] < start_hr[1]) || (hrContIndex[1] > end_hr[1]) ||
+//                   (hrContIndex[2] < start_hr[2]) || (hrContIndex[2] > end_hr[2]) )
+//                 isInsideHR = false;
 
-              if ( isInsideHR )
+
+
+
+//              if ( isInsideHR )
+//              {
+              if(m_OutputImageRegion.IsInside(hrContIndex))
               {
+
                 //Compute the corresponding value in the SR image -> useless
                 //Allows to compute the set of contributing neighbors
                 hrValue = interpolator -> Evaluate( transformedPoint );
@@ -353,6 +382,8 @@ void SRHMatrixComputation< TImage >::Update()
     }
 
     // Normalize H
+    std::cout<<"H rows : "<<m_H.rows()<<std::endl;
+    std::cout<<"H cols : "<<m_H.cols()<<std::endl;
     for (unsigned int i = 0; i < m_H.rows(); i++)
     {
       double sum = m_H.sum_row(i);
@@ -370,16 +401,23 @@ void SRHMatrixComputation< TImage >::Update()
       {
         (*col_iter).second = (*col_iter).second / sum;
           //std::cout<<"H: "<<(*col_iter).second <<std::endl;
+
       }
 
 
     }
+    //std::cout<<"size : "<<s<<std::endl;
+    //std::cout<<" size Y : "<<m_Y.size()<<std::endl;
 
     // Precalcule Ht*Y. Note that this is calculated as Y*H since
     // Ht*Y = (Yt*H)t and for Vnl (Yt*H)t = (Yt*H) = Y*H because
     // the vnl_vector doesn't have a 2nd dimension. This allows us
     // to save a lot of memory because we don't need to store Ht.
+
     m_H.pre_mult(m_Y,m_HtY);
+
+
+
 
     m_IsHComputed = true;
 }

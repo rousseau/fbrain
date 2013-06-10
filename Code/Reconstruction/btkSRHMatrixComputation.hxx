@@ -50,6 +50,7 @@
 #include "btkPSF.h"
 #include "btkGaussianPSF.h"
 #include "btkBoxCarPSF.h"
+#include "btkImageHelper.h"
 
 
 #include "iostream"
@@ -91,6 +92,8 @@ class SRHMatrixComputation: public itk::Object
 
         /** Const iterator typedef. */
         typedef ImageRegionConstIteratorWithIndex< ImageType >  ConstIteratorType;
+
+        typedef itk::Image< float, 3 >  PsfImageType;
 
         itkNewMacro(Self);
 
