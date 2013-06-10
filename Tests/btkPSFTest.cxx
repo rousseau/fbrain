@@ -105,6 +105,17 @@ int main (int, char* [])
     psfG->SetDirection(image->GetDirection());
     psfG->SetSpacing(image->GetSpacing());
 
+    //////////////////////////////////////////
+    ImageType::SizeType size1;
+    size1[0] = 3;
+    size1[1] = 3;
+    size1[2] = 3;
+
+    psfG->ConstructImage(size1);
+    btk::ImageHelper< ImageType >::WriteImage(psfG->GetPsfImage(),"PSFTest.nii.gz");
+
+    /////////////////////////////////////////
+
     psfBC->SetDirection(image->GetDirection());
     psfBC->SetSpacing(image->GetSpacing());
 
@@ -127,6 +138,9 @@ int main (int, char* [])
         outIt.Set((float)valueG);
         outIt2.Set((float)valueBC);
     }
+
+
+
 
     btk::ImageHelper< ImageType >::WriteImage(image,"Impulsional_Image.nii.gz");
     btk::ImageHelper< ImageType >::WriteImage(outputImG,"Gaussian_PSF.nii.gz");
