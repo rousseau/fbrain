@@ -32,7 +32,7 @@
 
 BTK stands for Baby Brain Toolkit. This toolkit is developed in the context of
 the Fbrain ERC project: ``Computational Anatomy of Fetal
-Brain''\footnote{http://lsiit-miv.u-strasbg.fr/miv/index.php?contenu=erc}. 
+Brain''\footnote{\url{http://icube-miv.unistra.fr/fr/index.php/ERC\_FBrain}}. 
 Studies about brain maturation aim at providing a better understanding of brain
 development and links between brain changes and cognitive development. Such
 studies are of great interest for diagnosis help and clinical course of
@@ -75,18 +75,12 @@ Any researcher reporting results using BTK should acknowledge this software by c
 
 \subsubsection{Dependencies}
 
-Baby Brain Toolkit (BTK) needs the following packages\footnote{BTK has been tested under Debian 5.0 and MacOSX 10.8.3}:
+Baby Brain Toolkit (BTK) needs the following packages\footnote{BTK has been tested under Debian 6.0.7 and MacOSX 10.8.3}:
 \begin{itemize}
- \item \href{http://www.cmake.org}{CMake}, \href{http://tclap.sourceforge.net}{Tclap}, \href{http://openmp.org}{OpenMP}, \href{http://www.vtk.org}{VTK}, \href{http://www.cs.umd.edu/\string~mount/ANN}{ANN} and \href{http://www.doxygen.org}{Doxygen}. These libraries can be installed using the following command line:
+ \item \href{http://www.cmake.org}{CMake}, \href{http://tclap.sourceforge.net}{Tclap}, \href{http://openmp.org}{OpenMP}, \href{http://www.vtk.org}{VTK}, \href{http://www.cs.umd.edu/\string~mount/ANN}{ANN}, \href{http://www.doxygen.org}{Doxygen} and \href{http://git-scm.com/}{Git}. These libraries can be installed using the following command line:
  \begin{itemize}
- \item for debian-based distributions: \texttt{apt-get install cmake
-cmake-curses-gui libtclap-dev libgomp1 libann-dev doxygen}
- \item for MacOSX using macports\footnote{When configuring in cmake, please use /opt/local/include for TCLAP\_DIRECTORY}: \texttt{port install cmake tclap libANN doxygen}
- \end{itemize}
- \item \href{http://git-scm.com/}{Git}: this library can be installed using the following command line :
- \begin{itemize}
- \item for debian-based distribution: \texttt{apt-get install git-core}
- \item for MacOSX using macports: \texttt{port install git-core}
+ \item for debian-based distributions: \texttt{apt-get install build-essential libgl1-mesa-dev cmake cmake-curses-gui libtclap-dev libgomp1 libann-dev  doxygen git-core}
+ \item for MacOSX using macports\footnote{When configuring in cmake, please use /opt/local/include for TCLAP\_DIRECTORY}: \texttt{port install cmake tclap libANN doxygen git-core}
  \end{itemize}
  \item \href{http://www.itk.org/ITK/resources/software.html}{Insight Toolkit (ITK) version 4.3.1}
  \begin{itemize}
