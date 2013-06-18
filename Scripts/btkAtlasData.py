@@ -137,7 +137,6 @@ modalities[OtherImage][TissueLabel]       = 0
 #############################################################################
 
 # patients = [ ('Identifier1', age1), ('Identifier2', age2), ... , ('IdentifierN', ageN) ]
-patients = [ ('ARS_Hu', 33), ('AYD_Na', 28), ('BAL_In', 32.5), ('BER_Sl', 30), ('BLA_El', 32), ('CHA_Sa', 28), ('DAH_Au', 30), ('DER_An', 26), ('ELO_Ha', 28), ('ESC_Mi', 34), ('FRE_St', 28), ('HER_Au', 32), ('HIE_Au', 28), ('KOG_Fa', 29), ('KRA_Na', 32), ('LIP_La', 33), ('MAG_Ai', 30), ('NEF_Dr', 32), ('RYC_Ca', 27), ('STR_Re', 31), ('TAB_Ar_01', 27), ('TAB_Ar_02', 30), ('TRO_Sa', 32) ]
 
 
 
@@ -146,7 +145,7 @@ patients = [ ('ARS_Hu', 33), ('AYD_Na', 28), ('BAL_In', 32.5), ('BER_Sl', 30), (
 #############################################################################
 
 # Reference patient for template creation
-patientReference = 'KOG_Fa'
+patientReference = 'Identifier1'
 
 # Working directory of template creation
 templatePath = outputPath + '/template'
