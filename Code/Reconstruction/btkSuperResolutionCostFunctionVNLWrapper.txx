@@ -1,22 +1,22 @@
 /*==========================================================================
-
+  
   © Université de Strasbourg - Centre National de la Recherche Scientifique
-
-  Date: 12/02/2010
-  Author(s): Julien Pontabry (pontabry@unistra.fr)
-
+  
+  Date: 
+  Author(s):Marc Schweitzer (marc.schweitzer(at)unistra.fr)
+  
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
   modify and/ or redistribute the software under the terms of the CeCILL-B
   license as circulated by CEA, CNRS and INRIA at the following URL
   "http://www.cecill.info".
-
+  
   As a counterpart to the access to the source code and  rights to copy,
   modify and redistribute granted by the license, users are provided only
   with a limited warranty  and the software's author,  the holder of the
   economic rights,  and the successive licensors  have only  limited
   liability.
-
+  
   In this respect, the user's attention is drawn to the risks associated
   with loading,  using,  modifying and/or developing or reproducing the
   software by the user in light of its specific status of free software,
@@ -27,47 +27,56 @@
   requirements in conditions enabling the security of their systems and/or
   data to be ensured and,  more generally, to use and operate it in the
   same conditions as regards security.
-
+  
   The fact that you are presently reading this means that you have had
   knowledge of the CeCILL-B license and that you accept its terms.
-
+  
 ==========================================================================*/
 
-#include "btkMathFunctions.h"
+#ifndef BTKSUPERRESOLUTIONCOSTFUNCTIONVNLWRAPPER_TXX
+#define BTKSUPERRESOLUTIONCOSTFUNCTIONVNLWRAPPER_TXX
+
+#include "btkSuperResolutionCostFunctionVNLWrapper.hxx"
 
 namespace btk
 {
 
-unsigned int MathFunctions::factorial(unsigned int n)
+//-------------------------------------------------------------------------------------------------
+template < class TImage >
+SuperResolutionCostFunctionVNLWrapper< TImage >::SuperResolutionCostFunctionVNLWrapper(unsigned int dim)
+    :vnl_cost_function(dim)
 {
-    if(n < 2)
-        return 1;
-    else
-        return factorial(n-1) * n;
+    m_CostFunction  = NULL;
+    m_CostFunction = btk::SuperResolutionCostFunction< TImage >::New();
+    m_CostFunction->SetNumberOfParameters(dim);
 }
 //-------------------------------------------------------------------------------------------------
-double MathFunctions::RadiansToDegrees(double rad)
+template < class TImage >
+SuperResolutionCostFunctionVNLWrapper< TImage >::~SuperResolutionCostFunctionVNLWrapper()
 {
-    return (rad * 180/M_PI);
+
 }
 //-------------------------------------------------------------------------------------------------
-double MathFunctions::DegreesToRadians(double deg)
+template < class TImage >
+double
+SuperResolutionCostFunctionVNLWrapper< TImage >::f(const vnl_vector< double >& _x)
 {
-    return(deg * M_PI/180);
+    double value = this->m_CostFunction->GetValue(_x);
+
+    return value;
 }
+
 //-------------------------------------------------------------------------------------------------
-double MathFunctions::Random()
+template < class TImage >
+void
+SuperResolutionCostFunctionVNLWrapper< TImage >::gradf(const vnl_vector< double >& _x, vnl_vector< double >& _g)
 {
-    return static_cast< double >(rand()) / static_cast< double >(RAND_MAX);
+    this->m_CostFunction->GetGradient(_x,_g);
 }
+
 //-------------------------------------------------------------------------------------------------
-double MathFunctions::Random(double min , double max)
-{
-    return static_cast< double >(rand())/(static_cast< double >(RAND_MAX)/std::abs(max - min)) - std::abs(min);
+
+
 }
-//-------------------------------------------------------------------------------------------------
-double MathFunctions::Round(double value)
-{
-    return floor(value + 0.5);
-}
-} // namespace btk
+
+#endif // BTKSUPERRESOLUTIONCOSTFUNCTIONVNLWRAPPER_TXX

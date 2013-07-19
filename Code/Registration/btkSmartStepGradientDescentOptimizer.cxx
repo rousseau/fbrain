@@ -38,10 +38,9 @@
 namespace btk
 {
 //-------------------------------------------------------------------------------------------------
-SmartStepGradientDescentOptimizer::SmartStepGradientDescentOptimizer(): m_MaxStep(2.0),
-    m_MinStep(0.05),m_NumberOfIterations(1000),m_Epsilon(10e-6),m_OptimizeAllParameters(true),
-    m_VerboseMode(false),m_UseBounds(false),m_Samples(100.0)
-
+SmartStepGradientDescentOptimizer::SmartStepGradientDescentOptimizer(): m_MaxStep(5.0),
+    m_MinStep(0.1),m_NumberOfIterations(1000),m_Epsilon(10e-6),m_OptimizeAllParameters(true),
+    m_VerboseMode(false),m_UseBounds(false),m_Samples(20.0)
 {
 
 }
@@ -57,7 +56,6 @@ void SmartStepGradientDescentOptimizer::StartOptimization()
 
     unsigned int NumberOfParameters = this->m_CostFunction->GetNumberOfParameters();
 
-    //std::cout<<"Optimizer number of parameters : "<<NumberOfParameters<<std::endl;
 
     if(m_OptimizeAllParameters)
     {
@@ -106,6 +104,7 @@ void SmartStepGradientDescentOptimizer::StartOptimization()
     {
 
         mu = this->SearchStep(m_X,m_gX); // look for the step
+
         x = m_X + (mu * m_gX); // new parameters
 
         if(m_UseBounds)
@@ -122,15 +121,13 @@ void SmartStepGradientDescentOptimizer::StartOptimization()
             }
         }
 
-
-
         double newCost = this->m_CostFunction->GetValue(x); // cost of the new parameters
 
 
         //epsilon = std::fabs(newCost-cost); /**** BUG ****/
-        epsilon = cost - newCost;
+        epsilon = std::fabs(cost - newCost); //to avoid epsilon < 0 (while loop stop)
+       // epsilon = cost - newCost;
 
-        //FIXME : epsilon should not be negative
 
         if(m_VerboseMode)
         {
@@ -155,6 +152,7 @@ void SmartStepGradientDescentOptimizer::StartOptimization()
         //----------------------------------
         else
         {
+            //FIXME : newCost should not be > to previous cost
             this->SetCurrentPosition(m_X);
             this->m_CurrentValue = cost;
         }
@@ -201,7 +199,7 @@ double SmartStepGradientDescentOptimizer::SearchStep(ParametersType _x , Derivat
         return  0.0; // avoid division by 0
     }
 
-    //Should we divide by max ? (if normalized max can't be > 1)
+
     double maxmu = m_MaxStep/max; // compute a max step
 
     double minmu = m_MinStep/max; // compute a min step
@@ -214,42 +212,68 @@ double SmartStepGradientDescentOptimizer::SearchStep(ParametersType _x , Derivat
     //double initialCost = this->m_CostFunction->GetValue(_x);
 
     double lastmu = 0.0;
-    newGx = mu * _gx;
-    newX = _x + newGx;
-    double cost = this->m_CostFunction->GetValue(newX);
-    mu+=step;
+
+//    newGx = mu * _gx;
+//    newX = _x + newGx;
+    double cost = this->m_CostFunction->GetValue(_x);//no step
+
+    //mu+=step;
 
     //std::cout<<"    *Gradient : "<<_gx<<std::endl;
    //std::cout<<"    *New Parameters : "<<newX<<std::endl;
+
+//    for(mu = minmu; mu <=maxmu;mu+=step)
+//    {
+//        newGx = mu * _gx;
+//        newX = _x + newGx;
+
+//        double newCost = this->m_CostFunction->GetValue(newX);
+
+//        if(newCost > cost)
+//        {
+//            mu = lastmu;
+//            break;
+//        }
+
+//        _x = newX;
+//        this->m_CostFunction->GetDerivative(_x,_gx);
+//        _gx.normalize();
+//        _gx = -_gx;
+//        lastmu = mu;
+//    }
+
+
+
+
+
 
     while(mu <= maxmu)
     {
         newGx = mu * _gx;
         newX = _x + newGx;
         double newCost = this->m_CostFunction->GetValue(newX);
+//        std::cout<<"    *µ : "<<mu<<std::endl;
+//        std::cout<<"    *ref cost"<<cost<<std::endl;
+//        std::cout<<"    *cost : "<<newCost<<std::endl;
 
         if(newCost > cost)
         {
-            //if newCost is > cost we stop (mu is then the previous value)
+            //if newCost is > previous cost we stop (mu is then the previous value)
+            //std::cout<<"stop step ! µ = "<<lastmu<<std::endl;
             mu = lastmu;
             break;
         }
 
         _x = newX;
-        this->m_CostFunction->GetDerivative(_x,_gx);
-        _gx.normalize();
-        _gx = -_gx;
+        //this->m_CostFunction->GetDerivative(_x,_gx);
+        //_gx.normalize();
+        //_gx = -_gx;
         lastmu = mu;
         mu+=step;
     }
 
     //std::cout<<"    *µ : "<<mu<<std::endl;
     return mu;
-
-
-
-
-
 
 
 }
@@ -311,4 +335,5 @@ SmartStepGradientDescentOptimizer::ReverseBounds(ParametersType _xIn)
 
     return xOut;
 }
+//-------------------------------------------------------------------------------------------------
 }

@@ -563,6 +563,8 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
                         the function is looking for an intersection between fixed slice (sfixed) in fixed image (ifixed)
                         and the moving one (m_MovingImageNum,m_MovingSliceNum) */
 
+                        //TODO: we can improve computed time by precomputing intersections points outside this loop (Point1, Point2 and intersection will be vectors)
+                        //Not sure if we loose time or not...
                         //ITK
                         bool intersection = this->FoundIntersectionPoints(ifixed,sfixed,m_MovingImageNum,s,Point1,Point2);
 
@@ -698,12 +700,7 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
             if(NumberOfIntersectedVoxels != 0)
             {
                 CostFunction += (SumOfIntersectedVoxels/(double)NumberOfIntersectedVoxels *1.0) ;
-                m_Intersection = true;
-            }
-            else
-            {
-                CostFunction +=  0;//MAX_COSTFUNCTION_VALUE;
-                m_Intersection = false;
+
             }
 
             if(m_VerboseMode)
@@ -719,7 +716,18 @@ double SlicesIntersectionVNLCostFunction<TImage>::f(const vnl_vector<double> &x)
     }
 
 
+    if(NumberOfIntersectedVoxels == 0)
+    {
+        CostFunction = 0.0;
+        m_Intersection = false;
+    }
+    else
+    {
+        m_Intersection = true;
+    }
+
     return CostFunction;
+    //return CostFunction * CostFunction; //squared
 
 
 }

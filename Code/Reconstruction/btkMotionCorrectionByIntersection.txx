@@ -2,8 +2,9 @@
 #define BTKMOTIONCORRECTIONBYINTERSECTION_TXX
 
 #include "btkMotionCorrectionByIntersection.h"
-
 #include "itkFRPROptimizer.h"
+#include "itkConjugateGradientOptimizer.h"
+
 
 namespace btk
 {
@@ -14,7 +15,7 @@ MotionCorrectionByIntersection<TImage>::MotionCorrectionByIntersection():m_Verbo
 {
     // Activate VerboseDbg when running debug mode
 #ifndef NDEBUG
-    m_VerboseDbg = false; //true
+    m_VerboseDbg = true;
 #else
     m_VerboseDbg = false;
 #endif
@@ -282,9 +283,6 @@ BlurImages(double level)
 template<typename TImage>
 void MotionCorrectionByIntersection<TImage>::Update()
 {
-    // initialization for the random
-    srand(time(NULL));
-
 
     typename TransformType::ParametersType params;
     params.set_size(m_NumberOfParameters);
@@ -332,11 +330,6 @@ void MotionCorrectionByIntersection<TImage>::Update()
     std::cout<<"Processing ..."<<std::endl;
 
 
-    for(unsigned int i = 0; i< m_NumberOfImages; i++)
-    {
-        m_Transforms[i]->Initialize();
-        m_Transforms[i]->GetInverse(m_InverseTransforms[i]);
-    }
 
     unsigned int loop = 0;
 
@@ -349,11 +342,12 @@ void MotionCorrectionByIntersection<TImage>::Update()
     while(!stopGrouping)
     {
         std::cout<<"\rLoop N°: "<<loop+1<<" "<<std::flush;
-
+        ActiveParameters.Fill(0.0);
 
         for(unsigned int i = 0; i < m_NumberOfImages; i++)
         {
             std::cout<<"Image "<<i<<std::endl;
+
             if(m_VerboseMode)
             {
                 std::cout<<"**************** "<<std::endl;
@@ -366,7 +360,6 @@ void MotionCorrectionByIntersection<TImage>::Update()
             std::vector< unsigned int > SlicesGroup;
             SlicesGroup.resize(sizeMov[2]);
 
-            //nbGroup = sizeMov[2]; //DEBUG
 
 
             if(nbGroup >= sizeMov[2])
@@ -414,20 +407,17 @@ void MotionCorrectionByIntersection<TImage>::Update()
                     {
 
                         typename TransformType::ParametersType p = m_Transforms[i]->GetSliceParameters(slice);
-                        initialParams[0] = p[0];
-                        initialParams[1] = p[1];
-                        initialParams[2] = p[2];
+                        initialParams[0] = btk::MathFunctions::RadiansToDegrees(p[0]);
+                        initialParams[1] = btk::MathFunctions::RadiansToDegrees(p[1]);
+                        initialParams[2] = btk::MathFunctions::RadiansToDegrees(p[2]);
                         // Euler 3D
                         initialParams[3] = p[3];
                         initialParams[4] = p[4];
                         initialParams[5] = p[5];
-                        this->UpdateInfos();
                         break;
                     }
 
                 }
-
-
 
 
                 typename btk::SlicesIntersectionITKCostFunction<ImageType>::Pointer f = btk::SlicesIntersectionITKCostFunction<ImageType>::New();
@@ -444,25 +434,34 @@ void MotionCorrectionByIntersection<TImage>::Update()
                 f->SetSlicesGroup(SlicesGroup);
                 f->Initialize();//Don't forget
 
+                //itk::PowellOptimizer::Pointer optimizer = itk::PowellOptimizer::New();
+                //itk::ConjugateGradientOptimizer::Pointer optimizer = itk::ConjugateGradientOptimizer::New();
+               //itk::RegularStepGradientDescentOptimizer::Pointer optimizer = itk::RegularStepGradientDescentOptimizer::New();
+//                itk::GradientDescentOptimizer::Pointer optimizer = itk::GradientDescentOptimizer::New();
+//                itk::FRPROptimizer::Pointer optimizer = itk::FRPROptimizer::New();
+//                optimizer->SetToPolakRibiere();
+//                optimizer->SetMaximumStepLength (0.8);
+//                optimizer->SetMinimumStepLength (0.1);
+                //optimizer->SetCostFunction(f.GetPointer());
+                //optimizer->SetMaximumIteration(500);
+//                optimizer->SetLearningRate(0.1);
 
                 btk::SmartStepGradientDescentOptimizer::Pointer optimizer = btk::SmartStepGradientDescentOptimizer::New();// first optimizer (gradient descent)
                 optimizer->SetCostFunction(f.GetPointer());
-                optimizer->SetNumberOfIterations(500);
-                optimizer->SetMaxStep(2.0);
+                optimizer->SetNumberOfIterations(1000);
+                optimizer->SetMaxStep(5.0);
                 optimizer->SetMinStep(0.05);
                 optimizer->SetMinBounds(MinBounds);
                 optimizer->SetMaxBounds(MaxBounds);
                 optimizer->SetUseBounds(false);
-                optimizer->SetOptimizedParameters(ActiveParameters);
+
+                //optimizer->SetOptimizedParameters(ActiveParameters);
                 m_CurrentError = 0.0;// Initialize current error
-
-
-                //itk::PowellOptimizer::Pointer optimizer = itk::PowellOptimizer::New();
-                //itk::GradientDescentOptimizer::Pointer optimizer = itk::GradientDescentOptimizer::New();
-                //optimizer->SetCostFunction(f.GetPointer());
+                optimizer->SetVerboseMode(false);
 
 
 
+//DEBUG
 //                if(i == 1 && g == 30 && loop == 1)
 //                {
 //                    std::cout<<i<<std::endl;
@@ -480,6 +479,7 @@ void MotionCorrectionByIntersection<TImage>::Update()
                 // Before optimization we check if there are intersections
 
                 double initialError =  f->GetValue(initialParams);
+
 
                 bool DoOptimization = true;
 
@@ -501,15 +501,18 @@ void MotionCorrectionByIntersection<TImage>::Update()
                     {
                         btkCoutMacro("Error : "<<obj);
                     }
+
+
                     m_CurrentError = optimizer->GetValue(); // Get The current error
                     m_X = optimizer->GetCurrentPosition();// Get the current parameters
 
 
-
-
                     if(m_VerboseMode)
                     {
+                        std::cout<<"slice : "<<g<<std::endl;
+                        std::cout<<"initial Error : "<<initialError<<std::endl;
                         std::cout<<"Best error : "<<m_CurrentError<<std::endl;
+                        std::cout<<"Parameters : "<<m_X<<std::endl;
                     }
 
 
