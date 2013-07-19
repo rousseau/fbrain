@@ -98,20 +98,23 @@ int main(int argc, char * argv[])
             {
                 case itk::ImageIOBase::VECTOR:
                 {
-                    typedef itk::MaskImageFilter< DisplacementField, itk3DMask > MaskFieldFilter;
+                    typedef btk::MaskImageFilter< DisplacementField, itk3DMask > MaskFieldFilter;
 
                     // read input
                     DisplacementField::Pointer field = btk::ImageHelper< DisplacementField >::ReadImage(input_file);
 
                     // process
-                    MaskFieldFilter::Pointer maskImageFilter = MaskFieldFilter::New();
-                    maskImageFilter->SetMaskImage(mask);
+                    //MaskFieldFilter::Pointer maskImageFilter = MaskFieldFilter::New();
+                     MaskFieldFilter* maskImageFilter = new MaskFieldFilter();
+                    //maskImageFilter->SetMaskImage(mask);
+                     maskImageFilter->SetMask(mask);
                     maskImageFilter->SetInput(field);
 //                    maskImageFilter->SetThreshold(threshold);
                     maskImageFilter->Update();
 
                     // write result
                     btk::ImageHelper< DisplacementField >::WriteImage(maskImageFilter->GetOutput(), output_file);
+                    delete maskImageFilter;
                 }
                     break;
 
@@ -196,14 +199,16 @@ int main(int argc, char * argv[])
 
           itk3DImagePointer output3DImage = itk3DImage::New();
           
-          MaskImageFilter::Pointer maskImageFilter = MaskImageFilter::New();
-          maskImageFilter->SetMaskImage(mask);
+          btkMaskImageFilter* maskImageFilter = new btkMaskImageFilter();
+          maskImageFilter->SetMask(mask);
           maskImageFilter->SetInput(input3DImage);
 //		  maskImageFilter->SetThreshold(threshold);
           maskImageFilter->Update();
 
           output3DImage = maskImageFilter->GetOutput();
+
           concatenator->PushBackInput(output3DImage);
+          delete maskImageFilter;
         }
 
 
