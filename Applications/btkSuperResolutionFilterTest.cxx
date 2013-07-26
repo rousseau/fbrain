@@ -122,6 +122,7 @@ int main(int argc, char * argv[])
     std::vector< itkFloatImage::Pointer > inputsLRImagesFloat;
     std::vector< ImageMaskType::Pointer >          inputsLRMasks;
     std::vector< MatrixTransformType::Pointer > transforms;
+     std::vector< MatrixTransformType::Pointer > inversetransforms;
     std::string refImage;
     std::string outImage;
 
@@ -149,7 +150,7 @@ int main(int argc, char * argv[])
     inputsLRImagesFloat.resize(numberOfImages);
     inputsLRMasks.resize(numberOfImages);
     transforms.resize(numberOfImages);
-
+    inversetransforms.resize(numberOfImages);
 
 
     inputsLRImages = btk::ImageHelper< itkImage > ::ReadImage(input);
@@ -172,9 +173,13 @@ int main(int argc, char * argv[])
         for(unsigned int i = 0; i< numberOfImages; i++)
         {
             transforms[i] = itkAffineTransformation::New();
+            inversetransforms[i] = itkAffineTransformation::New();
             dynamic_cast<itkAffineTransformation*>(transforms[i].GetPointer())->SetIdentity();
 
+            transforms[i]->GetInverse(inversetransforms[i]);
+
             SRFilter->AddTransform(transforms[i].GetPointer());
+            SRFilter->AddInverseTransform(inversetransforms[i].GetPointer());
         }
     }
     else
@@ -185,21 +190,27 @@ int main(int argc, char * argv[])
         //itk::TransformFactory<btkEulerSliceBySliceTransform>::RegisterTransform();
         itk::TransformFactory<btkOldSliceBySliceTransform>::RegisterTransform();
         std::vector< btkOldSliceBySliceTransform::Pointer > SbsTransforms;
+        std::vector< btkOldSliceBySliceTransform::Pointer > InverseSbsTransforms;
 
         typedef itk::TransformFileReader     TransformReaderType;
         typedef TransformReaderType::TransformListType* TransformListType;
 
         SbsTransforms.resize(numberOfImages);
+        InverseSbsTransforms.resize(numberOfImages);
 
         for(unsigned int i = 0; i< numberOfImages; i++)
         {
             SbsTransforms[i] = btkOldSliceBySliceTransform::New();
+            InverseSbsTransforms[i] = btkOldSliceBySliceTransform::New();
 
             SbsTransforms[i] = btk::IOTransformHelper< btkOldSliceBySliceTransform >::ReadTransform(transform[i]);
             //dynamic_cast<btkEulerSliceBySliceTransform*>(transforms[i].GetPointer())->SetImage(inputsLRImagesFloat[i]);
             SbsTransforms[i]->SetImage(inputsLRImagesFloat[i]);
 
+            SbsTransforms[i]->GetInverse(InverseSbsTransforms[i]);
+
             SRFilter->AddTransform(SbsTransforms[i].GetPointer());
+            SRFilter->AddInverseTransform(InverseSbsTransforms[i].GetPointer());
         }
 
     }
