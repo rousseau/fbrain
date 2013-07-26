@@ -98,14 +98,15 @@ int main(int argc, char * argv[])
             {
                 case itk::ImageIOBase::VECTOR:
                 {
-                    typedef itk::MaskImageFilter< DisplacementField, itk3DMask > MaskFieldFilter;
+                    typedef btk::MaskImageFilter< DisplacementField, itk3DMask > MaskFieldFilter;
 
                     // read input
                     DisplacementField::Pointer field = btk::ImageHelper< DisplacementField >::ReadImage(input_file);
 
                     // process
-                    MaskFieldFilter::Pointer maskImageFilter = MaskFieldFilter::New();
-                    maskImageFilter->SetMaskImage(mask);
+                    MaskFieldFilter* maskImageFilter =  new MaskFieldFilter();
+                    maskImageFilter->SetMask(mask);
+                    //maskImageFilter->SetMaskImage(mask);
                     maskImageFilter->SetInput(field);
 //                    maskImageFilter->SetThreshold(threshold);
                     maskImageFilter->Update();
