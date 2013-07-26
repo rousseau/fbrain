@@ -70,4 +70,40 @@ double MathFunctions::Round(double value)
 {
     return floor(value + 0.5);
 }
+//-------------------------------------------------------------------------------------------------
+double MathFunctions::Sinc(double _x)
+{
+    if(btk::btkFloatingEqual(_x, 0.0))
+    {
+        return 1.0;
+    }
+    else
+    {
+        return (sin(_x)/_x);
+    }
+}
+//-------------------------------------------------------------------------------------------------
+float MathFunctions::Sinc(float _x)
+{
+    if(btk::btkFloatingEqual((float)_x, (float)0.0))
+    {
+        return 1.0;
+    }
+    else
+    {
+        return (sin(_x)/_x);
+    }
+}
+//-------------------------------------------------------------------------------------------------
+int MathFunctions::Sinc(int _x)
+{
+    if(_x == 0)
+    {
+        return 1.0;
+    }
+    else
+    {
+        return (sin(_x)/_x);
+    }
+}
 } // namespace btk

@@ -39,6 +39,8 @@
 #include "cmath"
 #include "cstdlib"
 
+#include "btkMacro.h"
+
 namespace btk
 {
 
@@ -89,6 +91,31 @@ class MathFunctions
          * @return double value (use only the integer part)
          */
         static double Round(double value);
+
+        /**
+         * @brief Sinus Cardinal function
+         * @param x
+         * @return double value
+         */
+
+        static double Sinc(double _x);
+
+        /**
+         * @brief Sinus Cardinal function
+         * @param x
+         * @return float value
+         */
+
+        static float Sinc(float _x);
+
+        /**
+         * @brief Sinus Cardinal function
+         * @param x
+         * @return int value
+         */
+
+        static int Sinc(int _x);
+
 
 };
 
