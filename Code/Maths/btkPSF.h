@@ -74,6 +74,7 @@ class PSF: public itk::Object
         typedef itk::Vector< double,3 >  SpacingType;
 
         typedef itk::Image< float, 3 >  ImageType;
+        typedef ImageType::IndexType    IndexType;
 
         typedef itk::Size < 3 >         SizeType;
 
@@ -85,12 +86,42 @@ class PSF: public itk::Object
 
         virtual OutputType Evaluate(const InputType & position) const = 0;
 
-        virtual void ConstructImage(SizeType _size) = 0;
+        virtual void ConstructImage() = 0;
 
         /** Sets the position of the PSF. */
         virtual void SetCenter(PointType center)
         {
-          m_Center = center.GetVnlVector();
+            m_Center = center.GetVnlVector();
+            PointType origin, newOrigin,oldCenter,dist;
+            IndexType centerOfImage;
+            SizeType sizeOfImage;
+            origin = m_PsfImage->GetOrigin();
+            //sizeOfImage = m_PsfImage->GetLargestPossibleRegion().GetSize();
+//            centerOfImage[0] = (sizeOfImage[0]-1)/2.0;
+//            centerOfImage[1] = (sizeOfImage[1]-1)/2.0;
+//            centerOfImage[2] = (sizeOfImage[2]-1)/2.0;
+
+            centerOfImage[0] = (m_Size[0]-1)/2.0;
+            centerOfImage[1] = (m_Size[1]-1)/2.0;
+            centerOfImage[2] = (m_Size[2]-1)/2.0;
+
+
+
+           // m_PsfImage->TransformIndexToPhysicalPoint(centerOfImage,oldCenter);
+            //std::cout<<"origin : "<<origin<<" center : "<<oldCenter<<std::endl;
+
+            dist[0] = center[0] - oldCenter[0];
+            dist[1] = center[1] - oldCenter[1];
+            dist[2] = center[2] - oldCenter[2];
+
+            newOrigin[0] = origin[0] + dist[0];
+            newOrigin[1] = origin[1] + dist[1];
+            newOrigin[2] = origin[2] + dist[2];
+
+            //std::cout<<"new origin : "<<newOrigin<<" new center : "<<center<<std::endl;
+
+            m_PsfImage->SetOrigin(newOrigin);
+
         }
 
         /** Sets direction of the PSF. */
@@ -109,6 +140,17 @@ class PSF: public itk::Object
           m_Spacing = spacing.GetVnlVector();
         }
 
+        virtual void SetSize(SizeType _size)
+        {
+            m_Size = _size;
+        }
+
+        void SetLrSpacing(SpacingType& _spc)
+        {
+            m_LrSpacing = _spc;
+        }
+
+
         btkGetMacro(PsfImage,ImageType::Pointer);
 
     protected:
@@ -119,6 +161,7 @@ class PSF: public itk::Object
         vnl_matrix< double > m_Direction;
         vnl_vector< double > m_Center;
         vnl_vector< double > m_Spacing;
+        SizeType             m_Size;
 
 
         vnl_vector<double> m_idir;
@@ -126,6 +169,8 @@ class PSF: public itk::Object
         vnl_vector<double> m_kdir;
 
         ImageType::Pointer m_PsfImage;
+
+         SpacingType m_LrSpacing;
 
 
 

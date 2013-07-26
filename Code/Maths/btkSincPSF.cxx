@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date:
+  Date: 
   Author(s):Marc Schweitzer (marc.schweitzer(at)unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -33,12 +33,14 @@
   
 ==========================================================================*/
 
-#include "btkGaussianPSF.h"
+#include "btkSincPSF.h"
+
+#include "btkMathFunctions.h"
 
 namespace btk
 {
 
-GaussianPSF::GaussianPSF()
+SincPSF::SincPSF()
 {
     m_Direction.set_size(3,3);
 
@@ -49,21 +51,22 @@ GaussianPSF::GaussianPSF()
     m_Spacing.fill(1);
 
     m_PsfImage = ImageType::New();
-
-    m_Sigma[0] = m_Spacing[0] * m_Size[0] / 2.3548;
-    m_Sigma[1] = m_Spacing[1] * m_Size[1] / 2.3548;
-    m_Sigma[2] = m_Spacing[2] * m_Size[2] / 2.3548;
-
-
 }
 //-------------------------------------------------------------------------------------------------
-GaussianPSF::OutputType
-GaussianPSF::Evaluate(const InputType & position) const
+//-------------------------------------------------------------------------------------------------
+void SincPSF::Initialize()
 {
-
+    m_idir = m_Direction.get_column(0);
+    m_jdir = m_Direction.get_column(1);
+    m_kdir = m_Direction.get_column(2);
+}
+//-------------------------------------------------------------------------------------------------
+SincPSF::OutputType
+SincPSF::Evaluate(const InputType &position) const
+{
     vnl_vector<double> diff = position.GetVnlVector() - m_Center;
     PointType diffPoint;
-    double x , y, z;
+    double x,y,z;
 
     //Dot product between image direction and point vector (in PSF space)
     double icoor = dot_product(diff,m_idir);
@@ -73,23 +76,16 @@ GaussianPSF::Evaluate(const InputType & position) const
     x = diffPoint[0] = icoor;
     y = diffPoint[1] = jcoor;
     z = diffPoint[2] = kcoor;
-    //TODO: Do an oversampling over Point !
-
-
 
     double value = 0.0;
 
-    value = (x*x)/(2*m_Sigma[0]*m_Sigma[0]) + (y*y)/(2*m_Sigma[1]*m_Sigma[1]) + (z*z)/(2*m_Sigma[2]*m_Sigma[2]);
+    value = sin((x*x) + (y*y) + (z*z)) / ((x*x) + (y*y) + (z*z));
 
-    value = exp(-value);
+    return (OutputType)value;
 
-    // std::cout<<value<<std::endl;
-    //value = m_Gaussian->Evaluate(diffPoint);
-
-    return(OutputType)value;
 }
 //-------------------------------------------------------------------------------------------------
-void GaussianPSF::ConstructImage()
+void SincPSF::ConstructImage()
 {
     ImageType::RegionType region;
 
@@ -116,7 +112,6 @@ void GaussianPSF::ConstructImage()
     m_PsfImage->Allocate();
     m_PsfImage->FillBuffer(0.0);
     double sum = 0;
-    double sum2 = 0;
 
     ImageType::IndexType hrIndex;
 
@@ -131,13 +126,13 @@ void GaussianPSF::ConstructImage()
         float x = hrIndex[0]- hrIndexCenter[0];
         float y = hrIndex[1]- hrIndexCenter[1];
         float z = hrIndex[2]- hrIndexCenter[2];
-        float value = (x*x)/(2*m_Sigma[0]*m_Sigma[0]) + (y*y)/(2*m_Sigma[1]*m_Sigma[1]) + (z*z)/(2*m_Sigma[2]*m_Sigma[2]);
-        value = exp(-value);
+        // old version (like the definition for a sinc in multidimension)
+        //float value = sin((x*x) + (y*y) + (z*z)) / ((x*x) + (y*y) + (z*z));
+        //new version
+        float value = MathFunctions::Sinc(x) * MathFunctions::Sinc(y)
+                      * MathFunctions::Sinc(z);
+
         //std::cout<<"value : "<<value<<std::endl;
-        if(value < 0.01)
-        {
-            //value= 0.0;
-        }
         itPSF.Set(value);
 
         sum += itPSF.Get();
@@ -160,7 +155,7 @@ void GaussianPSF::ConstructImage()
 
 }
 //-------------------------------------------------------------------------------------------------
-void GaussianPSF::PrintSelf(std::ostream &os, itk::Indent indent) const
+void SincPSF::PrintSelf(std::ostream &os, itk::Indent indent) const
 {
     Superclass::PrintSelf(os,indent);
 
@@ -168,5 +163,4 @@ void GaussianPSF::PrintSelf(std::ostream &os, itk::Indent indent) const
     os << indent << "Center: " << m_Center << std::endl;
     os << indent << "Spacing: " << m_Spacing << std::endl;
 }
-
-}// end namespace
+}

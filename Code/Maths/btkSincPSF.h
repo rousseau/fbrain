@@ -33,76 +33,61 @@
   
 ==========================================================================*/
 
-#ifndef BTKBOXCARPSF_H
-#define BTKBOXCARPSF_H
-
-
+#ifndef BTKSINCPSF_H
+#define BTKSINCPSF_H
 
 #include "btkPSF.h"
 #include "btkMacro.h"
 
+
+#include "itkFixedArray.h"
 #include "itkImage.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkContinuousIndex.h"
-#include "itkBSplineInterpolateImageFunction.h"
-#include "itkLinearInterpolateImageFunction.h"
-
-
 
 namespace btk
 {
 
-class BoxCarPSF : public btk::PSF
+class SincPSF : public btk::PSF
 {
     public:
-        typedef btk::BoxCarPSF                      Self;
-        typedef btk::PSF                            Superclass;
+        typedef btk::SincPSF                    Self;
+        typedef btk::PSF                        Superclass;
+        typedef itk::SmartPointer< Self >       Pointer;
+        typedef itk::SmartPointer< const Self > ConstPointer;
 
-        typedef itk::SmartPointer< Self >           Pointer;
-        typedef itk::SmartPointer< const Self >     ConstPointer;
-
-        typedef Superclass::OutputType              OutputType;
-        typedef Superclass::InputType               InputType;
-        typedef Superclass::DirectionType           DirectionType;
-        typedef Superclass::SpacingType             SpacingType;
-        typedef Superclass::PointType               PointType;
-        typedef Superclass::SizeType                SizeType;
+        typedef Superclass::OutputType          OutputType;
+        typedef Superclass::InputType           InputType;
+        typedef Superclass::DirectionType       DirectionType;
+        typedef Superclass::SpacingType         SpacingType;
+        typedef Superclass::PointType           PointType;
 
         typedef itk::Image < float, 3 >         ImageType;
         typedef itk::ImageRegionIteratorWithIndex< ImageType > itkIteratorWithIndex;
         typedef itk::ContinuousIndex<double,3>     itkContinuousIndex;
-        typedef itk::BSplineInterpolateImageFunction<ImageType, double, double>  itkBSplineInterpolator;
-        typedef itk::LinearInterpolateImageFunction< ImageType,double> itkLinearInterpolator;
+
         /** Method for creation through the object factory. */
         itkNewMacro(Self);
 
         /** Run-time type information (and related methods). */
-        itkTypeMacro(btk::BoxCarPSF, btk::PSF);
+        itkTypeMacro(btk::SincPSF, btk::PSF);
 
         virtual OutputType Evaluate(const InputType & position) const;
 
         virtual void ConstructImage();
 
-//        virtual void SetCenter(PointType center)
-//        {
-//            Superclass::SetCenter(center);
-//        }
-
-
 
     protected:
-        BoxCarPSF();
-        virtual ~BoxCarPSF(){}
+        SincPSF();
+        virtual ~SincPSF(){}
         void PrintSelf(std::ostream& os, itk::Indent indent) const;
-
+        virtual void Initialize();
 
     private:
 
-
-
-
+        vnl_vector<double> m_idir;
+        vnl_vector<double> m_jdir;
+        vnl_vector<double> m_kdir;
 };
-
-}//end namespace
-
-#endif // BTKBOXCARPSF_H
+} //end namespace
+#endif // BTKSINCPSF_H
