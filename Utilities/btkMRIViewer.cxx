@@ -425,7 +425,7 @@ int main(int argc, char *argv[])
         vtkfield->AllocateScalars();
 
         unsigned int voxelIndex = 0;
-        unsigned int frequency = static_cast< unsigned int >(1.0/percentageOfSamplePoints);
+        unsigned int frequency = static_cast< unsigned int >(1.0/percentageOfSamplePoints);btkCoutVariable(frequency);
 
         // Fill vtk field
         for(unsigned int z = 0; z < size[2]; z++)
@@ -434,26 +434,32 @@ int main(int argc, char *argv[])
             {
                 for(unsigned int x = 0; x < size[0]; x++)
                 {
-                    float *outputPixel = static_cast< float * >(vtkfield->GetScalarPointer(x,y,z));
+                    ImageMask::IndexType index;
+                    index[0] = x; index[1] = y; index[2] = z;
 
-                    if(voxelIndex % frequency == 0)
+                    if(inputMask->GetPixel(index) > 0)
                     {
-                        DisplacementField::IndexType index;
-                        index[0] = x; index[1] = y; index[2] = z;
-                        DisplacementField::PixelType inputPixel = field->GetPixel(index);
+                        float *outputPixel = static_cast< float * >(vtkfield->GetScalarPointer(x,y,z));
 
-                        outputPixel[0] = direction(0,0) * inputPixel[0];
-                        outputPixel[1] = direction(1,1) * inputPixel[1];
-                        outputPixel[2] = direction(2,2) * inputPixel[2];
-                    }
-                    else
-                    {
-                        outputPixel[0] = 0.0;
-                        outputPixel[1] = 0.0;
-                        outputPixel[2] = 0.0;
-                    }
+                        if(voxelIndex % frequency == 0)
+                        {
+                            DisplacementField::IndexType index;
+                            index[0] = x; index[1] = y; index[2] = z;
+                            DisplacementField::PixelType inputPixel = field->GetPixel(index);
 
-                    voxelIndex++;
+                            outputPixel[0] = direction(0,0) * inputPixel[0];
+                            outputPixel[1] = direction(1,1) * inputPixel[1];
+                            outputPixel[2] = direction(2,2) * inputPixel[2];
+                        }
+                        else
+                        {
+                            outputPixel[0] = 0.0;
+                            outputPixel[1] = 0.0;
+                            outputPixel[2] = 0.0;
+                        }
+
+                        voxelIndex++;
+                    }
                 }
             }
         }
