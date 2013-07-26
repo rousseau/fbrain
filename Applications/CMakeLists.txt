@@ -70,6 +70,10 @@ ADD_EXECUTABLE(btkSuperResolution btkSuperResolution.cxx
     ${fbrain_SOURCE_DIR}/Code/Denoising/btkNLMTool.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionRigidImageFilter.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionAffineImageFilter.h
+    ${fbrain_SOURCE_DIR}/Code/Maths/btkPSF.h
+    ${fbrain_SOURCE_DIR}/Code/Maths/btkPSF.cxx
+    ${fbrain_SOURCE_DIR}/Code/Maths/btkGaussianPSF.h
+    ${fbrain_SOURCE_DIR}/Code/Maths/btkGaussianPSF.cxx
 )
 TARGET_LINK_LIBRARIES(btkSuperResolution ${ITK_LIBRARIES})
 
@@ -108,6 +112,8 @@ ADD_EXECUTABLE(btkSuperResolutionFilterTest btkSuperResolutionFilterTest.cxx
     ${fbrain_SOURCE_DIR}/Code/Maths/btkGaussianPSF.cxx
     ${fbrain_SOURCE_DIR}/Code/Maths/btkBoxCarPSF.h
     ${fbrain_SOURCE_DIR}/Code/Maths/btkBoxCarPSF.cxx
+    ${fbrain_SOURCE_DIR}/Code/Maths/btkSincPSF.h
+    ${fbrain_SOURCE_DIR}/Code/Maths/btkSincPSF.cxx
 
 
 )

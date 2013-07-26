@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date:
+  Date: 
   Author(s):Marc Schweitzer (marc.schweitzer(at)unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -33,12 +33,12 @@
   
 ==========================================================================*/
 
-#include "btkGaussianPSF.h"
-
+#include "btkHybridPSF.h"
+#include "btkMathFunctions.h"
 namespace btk
 {
-
-GaussianPSF::GaussianPSF()
+//-------------------------------------------------------------------------------------------------
+HybridPSF::HybridPSF()
 {
     m_Direction.set_size(3,3);
 
@@ -54,11 +54,53 @@ GaussianPSF::GaussianPSF()
     m_Sigma[1] = m_Spacing[1] * m_Size[1] / 2.3548;
     m_Sigma[2] = m_Spacing[2] * m_Size[2] / 2.3548;
 
+    m_Functions.resize(3);
+//    m_Functions[X] = &HybridPSF::functionSinc;
+//    m_Functions[Y] = &HybridPSF::functionSinc;
+//    m_Functions[Z] = &HybridPSF::functionGauss;
 
+    m_Functions[X] = &HybridPSF::functionBoxCar;
+    m_Functions[Y] = &HybridPSF::functionBoxCar;
+    m_Functions[Z] = &HybridPSF::functionBoxCar;
+
+    m_Axis = X;
 }
 //-------------------------------------------------------------------------------------------------
-GaussianPSF::OutputType
-GaussianPSF::Evaluate(const InputType & position) const
+float HybridPSF::functionBoxCar(float _x)
+{
+    float value = 0.0;
+
+    if(fabs(_x)<= 0.5 *m_Spacing[m_Axis])
+    {
+        value = 1.0;
+    }
+
+    return value;
+}
+//-------------------------------------------------------------------------------------------------
+float HybridPSF::functionGauss(float _x)
+{
+    float value = 0.0;
+    value = (_x*_x)/(2* m_Sigma[m_Axis] * m_Sigma[m_Axis]);
+    value = exp(-value);
+
+    return value;
+}
+//-------------------------------------------------------------------------------------------------
+float HybridPSF::functionSinc(float _x)
+{
+    float value =  MathFunctions::Sinc(_x);
+
+    if(value < 0.0)
+    {
+        value = 0.0;
+    }
+
+    return value;
+}
+//-------------------------------------------------------------------------------------------------
+HybridPSF::OutputType
+HybridPSF::Evaluate(const InputType & position) const
 {
 
     vnl_vector<double> diff = position.GetVnlVector() - m_Center;
@@ -73,23 +115,29 @@ GaussianPSF::Evaluate(const InputType & position) const
     x = diffPoint[0] = icoor;
     y = diffPoint[1] = jcoor;
     z = diffPoint[2] = kcoor;
+
+    std::vector< float > points(3);
+
+    points[0] = (float)x;
+    points[1] = (float)y;
+    points[2] = (float)z;
+
     //TODO: Do an oversampling over Point !
 
 
 
-    double value = 0.0;
+    float value = 1.0;
 
-    value = (x*x)/(2*m_Sigma[0]*m_Sigma[0]) + (y*y)/(2*m_Sigma[1]*m_Sigma[1]) + (z*z)/(2*m_Sigma[2]*m_Sigma[2]);
-
-    value = exp(-value);
-
-    // std::cout<<value<<std::endl;
-    //value = m_Gaussian->Evaluate(diffPoint);
+    for(unsigned int i = 0; i< 3; i++)
+    {
+        m_Axis = i;
+        //value *= (this->*m_Functions[i])(points[i]);
+    }
 
     return(OutputType)value;
 }
 //-------------------------------------------------------------------------------------------------
-void GaussianPSF::ConstructImage()
+void HybridPSF::ConstructImage()
 {
     ImageType::RegionType region;
 
@@ -122,21 +170,30 @@ void GaussianPSF::ConstructImage()
 
     itkIteratorWithIndex itPSF(m_PsfImage,m_PsfImage->GetLargestPossibleRegion());
     itkContinuousIndex hrIndexCenter;
-    hrIndexCenter[0] = (m_Size[0]-1)/2.0;
-    hrIndexCenter[1] = (m_Size[1]-1)/2.0;
-    hrIndexCenter[2] = (m_Size[2]-1)/2.0;
+//    hrIndexCenter[0] = (m_Size[0]-1)/2.0;
+//    hrIndexCenter[1] = (m_Size[1]-1)/2.0;
+//    hrIndexCenter[2] = (m_Size[2]-1)/2.0;
+
+    hrIndexCenter[0] = (m_Size[0])/2;
+    hrIndexCenter[1] = (m_Size[1])/2;
+    hrIndexCenter[2] = (m_Size[2])/2;
+
+    std::vector< float > points(3);
     for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF)
     {
         hrIndex = itPSF.GetIndex();
-        float x = hrIndex[0]- hrIndexCenter[0];
-        float y = hrIndex[1]- hrIndexCenter[1];
-        float z = hrIndex[2]- hrIndexCenter[2];
-        float value = (x*x)/(2*m_Sigma[0]*m_Sigma[0]) + (y*y)/(2*m_Sigma[1]*m_Sigma[1]) + (z*z)/(2*m_Sigma[2]*m_Sigma[2]);
-        value = exp(-value);
-        //std::cout<<"value : "<<value<<std::endl;
+        points[0] = hrIndex[0]- hrIndexCenter[0];
+        points[1] = hrIndex[1]- hrIndexCenter[1];
+        points[2] = hrIndex[2]- hrIndexCenter[2];
+        float value = 1.0;
+        for(unsigned int i = 0; i< 3; i++)
+        {
+            m_Axis = i;
+            value*= (this->*m_Functions[i])(points[i]);
+        }
         if(value < 0.01)
         {
-            //value= 0.0;
+            value= 0.0;
         }
         itPSF.Set(value);
 
@@ -160,7 +217,7 @@ void GaussianPSF::ConstructImage()
 
 }
 //-------------------------------------------------------------------------------------------------
-void GaussianPSF::PrintSelf(std::ostream &os, itk::Indent indent) const
+void HybridPSF::PrintSelf(std::ostream &os, itk::Indent indent) const
 {
     Superclass::PrintSelf(os,indent);
 
@@ -168,5 +225,4 @@ void GaussianPSF::PrintSelf(std::ostream &os, itk::Indent indent) const
     os << indent << "Center: " << m_Center << std::endl;
     os << indent << "Spacing: " << m_Spacing << std::endl;
 }
-
-}// end namespace
+}

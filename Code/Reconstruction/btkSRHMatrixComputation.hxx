@@ -40,7 +40,9 @@
 #include "itkTransform.h"
 #include "itkImageMaskSpatialObject.h"
 #include "itkImageRegionConstIteratorWithIndex.h"
+#include "itkImageRegionIteratorWithIndex.h"
 #include "vnl/vnl_sparse_matrix.h"
+#include "itkBSplineInterpolationWeightFunction.h"
 
 
 
@@ -50,10 +52,14 @@
 #include "btkPSF.h"
 #include "btkGaussianPSF.h"
 #include "btkBoxCarPSF.h"
+#include "btkSincPSF.h"
+#include "btkHybridPSF.h"
 #include "btkImageHelper.h"
 
 
 #include "iostream"
+#include "sstream"
+#include "limits.h"
 
 
 namespace btk
@@ -93,6 +99,9 @@ class SRHMatrixComputation: public itk::Object
         /** Const iterator typedef. */
         typedef ImageRegionConstIteratorWithIndex< ImageType >  ConstIteratorType;
 
+        /** Const iterator typedef. */
+        typedef ImageRegionIteratorWithIndex< ImageType >  IteratorType;
+
         typedef itk::Image< float, 3 >  PsfImageType;
 
         itkNewMacro(Self);
@@ -118,13 +127,14 @@ class SRHMatrixComputation: public itk::Object
         btkSetMacro(Transforms, std::vector< typename TransformType::Pointer >);
         btkGetMacro(Transforms, std::vector< typename TransformType::Pointer >);
 
-        btkGetMacro(H,vnl_sparse_matrix< PrecisionType >);
+        btkSetMacro(InverseTransforms, std::vector< typename TransformType::Pointer >);
+        btkGetMacro(InverseTransforms, std::vector< typename TransformType::Pointer >);
+
+        btkSetMacro(H,vnl_sparse_matrix< PrecisionType >*);
 
         btkSetMacro(PSF,btk::PSF::Pointer);
 
-        btkGetMacro(SimulatedImages,std::vector< typename ImageType::Pointer >);
-
-        btkGetMacro(Y,vnl_vector< PrecisionType >);
+        btkSetMacro(Y,vnl_vector< PrecisionType >*);
 
         btkSetMacro(PSFType,unsigned int);
 
@@ -136,7 +146,9 @@ class SRHMatrixComputation: public itk::Object
         }
 
 
-        void ComputeSimulatedLRImages();
+        void TestFillingOfY(); // for testing purpose
+        void TestFillingOfX(); // for testing purpose
+        void SimulateY();      //for testing purpose
 
 
     protected:
@@ -152,14 +164,15 @@ class SRHMatrixComputation: public itk::Object
            unsigned int depth;
         }m_XSize;
 
-        vnl_sparse_matrix< PrecisionType > m_H;
-        vnl_vector< PrecisionType > m_Y;
+        vnl_sparse_matrix< PrecisionType >* m_H;
+        vnl_vector< PrecisionType >* m_Y;
         vnl_vector< PrecisionType > m_SimY;
         vnl_vector< PrecisionType > m_HtY;
         vnl_vector< PrecisionType > m_X;
 
 
         std::vector< typename ImageType::Pointer > m_Images;
+        std::vector< typename ImageType::Pointer > m_ImagesFilledWithY; //for testing purpose
         std::vector< typename ImageType::Pointer > m_SimulatedImages;
         std::vector< typename MaskType::Pointer >  m_Masks;
         std::vector< RegionType >                  m_Regions;
@@ -168,6 +181,7 @@ class SRHMatrixComputation: public itk::Object
         RegionType m_OutputImageRegion;
 
         std::vector< typename TransformType::Pointer > m_Transforms;
+        std::vector< typename TransformType::Pointer > m_InverseTransforms;
 
         std::vector< std::vector< bool > > m_Outliers;
         bool                               m_UseOutliers;
@@ -179,6 +193,8 @@ class SRHMatrixComputation: public itk::Object
         std::vector< PSF::Pointer >        m_PSFs;
 
         bool                               m_IsHComputed;
+
+        unsigned int m_NumberOfLRImages;
 };
 }
 

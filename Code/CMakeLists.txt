@@ -65,6 +65,13 @@ SET(MATHS_LIBRARY_HEADER
     ${MATHS_LIBRARY_SOURCE_DIR}/btkNormalProbabilityDensity.h
     ${MATHS_LIBRARY_SOURCE_DIR}/btkVonMisesFisherProbabilityDensity.h
     ${MATHS_LIBRARY_SOURCE_DIR}/btkCurvatures.h
+    ${MATHS_LIBRARY_SOURCE_DIR}/btkPSF.h
+    ${MATHS_LIBRARY_SOURCE_DIR}/btkBoxCarPSF.h
+    ${MATHS_LIBRARY_SOURCE_DIR}/btkSincPSF.h
+    ${MATHS_LIBRARY_SOURCE_DIR}/btkGaussianPSF.h
+    ${MATHS_LIBRARY_SOURCE_DIR}/btkHybridPSF.h
+
+
 )
 
 SET(MATHS_LIBRARY_SOURCES
@@ -77,6 +84,11 @@ SET(MATHS_LIBRARY_SOURCES
     ${MATHS_LIBRARY_SOURCE_DIR}/btkNormalProbabilityDensity.cxx
     ${MATHS_LIBRARY_SOURCE_DIR}/btkVonMisesFisherProbabilityDensity.cxx
     ${MATHS_LIBRARY_SOURCE_DIR}/btkCurvatures.cxx
+    ${MATHS_LIBRARY_SOURCE_DIR}/btkPSF.cxx
+    ${MATHS_LIBRARY_SOURCE_DIR}/btkBoxCarPSF.cxx
+    ${MATHS_LIBRARY_SOURCE_DIR}/btkSincPSF.cxx
+    ${MATHS_LIBRARY_SOURCE_DIR}/btkGaussianPSF.cxx
+    ${MATHS_LIBRARY_SOURCE_DIR}/btkHybridPSF.cxx
 )
 
 ADD_LIBRARY(btkMathsLibrary STATIC ${MATHS_LIBRARY_HEADER} ${MATHS_LIBRARY_SOURCES})

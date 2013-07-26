@@ -33,12 +33,13 @@
   
 ==========================================================================*/
 
-#ifndef BTKGAUSSIANPSF_H
-#define BTKGAUSSIANPSF_H
+#ifndef BTKHYBRIDPSF_H
+#define BTKHYBRIDPSF_H
 
 #include "btkPSF.h"
+#include "btkMacro.h"
 
-#include "itkGaussianSpatialFunction.h"
+
 #include "itkFixedArray.h"
 #include "itkImage.h"
 #include "itkImageRegionIteratorWithIndex.h"
@@ -47,15 +48,11 @@
 namespace btk
 {
 
-
-class GaussianPSF : public btk::PSF
+class HybridPSF : public btk::PSF
 {
     public:
-        typedef btk::GaussianPSF                Self;
+        typedef btk::HybridPSF                    Self;
         typedef btk::PSF                        Superclass;
-
-
-
         typedef itk::SmartPointer< Self >       Pointer;
         typedef itk::SmartPointer< const Self > ConstPointer;
 
@@ -69,36 +66,33 @@ class GaussianPSF : public btk::PSF
         typedef itk::ImageRegionIteratorWithIndex< ImageType > itkIteratorWithIndex;
         typedef itk::ContinuousIndex<double,3>     itkContinuousIndex;
 
-        typedef Superclass::SizeType            SizeType;
-
-        /** Gaussian function type */
-        typedef itk::GaussianSpatialFunction< double,
-                                         3,
-                                         PointType > GaussianFunctionType;
-
         /** Array type */
         typedef itk::FixedArray< double,3 > ArrayType;
 
+        typedef float(HybridPSF::*function_type)(float); //typedef of a pointer of function (param float and return float)
+
+        enum FUNCTION_TYPE
+        {
+            BOXCAR = 0,
+            GAUSSIAN,
+            SINC
+        };
+
+
+        enum AXIS
+        {
+            X = 0,
+            Y = 1,
+            Z = 2
+        };
 
         /** Method for creation through the object factory. */
         itkNewMacro(Self);
 
         /** Run-time type information (and related methods). */
-        itkTypeMacro(btk::GaussianPSF, btk::PSF);
+        itkTypeMacro(btk::HybridPSF, btk::PSF);
 
         virtual OutputType Evaluate(const InputType & position) const;
-
-
-        virtual void SetSpacing(SpacingType spacing)
-        {
-          m_Spacing = spacing.GetVnlVector();
-          this->UpdateSigma();
-
-//          m_Sigma[0] = m_Spacing[0] / 2.3548;
-//          m_Sigma[1] = m_Spacing[1] / 2.3548;
-//          m_Sigma[2] = m_Spacing[2] / 2.3548;
-
-        }
 
         virtual void ConstructImage();
 
@@ -109,48 +103,105 @@ class GaussianPSF : public btk::PSF
             m_Sigma[2] = m_Spacing[2] * m_Size[2] / 2.3548;
         }
 
-
-
-        void SetOrigin(ImageType::PointType _origin)
-        {
-            m_PsfImage->SetOrigin(_origin);
-        }
-
         void SetSize(SizeType _size)
         {
             m_Size =  _size;
             this->UpdateSigma();
         }
+        virtual void SetSpacing(SpacingType spacing)
+        {
+          m_Spacing = spacing.GetVnlVector();
+          this->UpdateSigma();
+        }
 
-//        /** Sets the position of the PSF. */
-//        virtual void SetCenter(PointType _center)
-//        {
-//          m_Center = _center.GetVnlVector();
-//          this->SetOrigin(_center);
-//        }
 
-       // btkGetMacro(PsfImage,ImageType::Pointer);
 
+        void SetXFunction(FUNCTION_TYPE _f)
+        {
+            switch(_f)
+            {
+                case BOXCAR:
+                    m_Functions[X] = &HybridPSF::functionBoxCar;
+                    break;
+
+                case GAUSSIAN:
+                    m_Functions[X] = &HybridPSF::functionGauss;
+                    break;
+
+                case SINC:
+                    m_Functions[X] = &HybridPSF::functionSinc;
+                    break;
+
+                default:
+                    m_Functions[X] = &HybridPSF::functionBoxCar;
+                    break;
+            };
+
+
+        }
+        void SetYFunction(FUNCTION_TYPE _f)
+        {
+            switch(_f)
+            {
+                case BOXCAR:
+                    m_Functions[Y] = &HybridPSF::functionBoxCar;
+                    break;
+
+                case GAUSSIAN:
+                    m_Functions[Y] = &HybridPSF::functionGauss;
+                    break;
+
+                case SINC:
+                    m_Functions[Y] = &HybridPSF::functionSinc;
+                    break;
+
+                default:
+                    m_Functions[1] = &HybridPSF::functionBoxCar;
+                    break;
+            };
+        }
+        void SetZFunction(FUNCTION_TYPE _f)
+        {
+            switch(_f)
+            {
+                case BOXCAR:
+                    m_Functions[Z] = &HybridPSF::functionBoxCar;
+                    break;
+
+                case GAUSSIAN:
+                    m_Functions[Z] = &HybridPSF::functionGauss;
+                    break;
+
+                case SINC:
+                    m_Functions[Z] = &HybridPSF::functionSinc;
+                    break;
+
+                default:
+                    m_Functions[Z] = &HybridPSF::functionBoxCar;
+                    break;
+            };
+        }
 
     protected:
-        GaussianPSF();
-        virtual ~GaussianPSF(){}
+        HybridPSF();
+        virtual ~HybridPSF(){}
         void PrintSelf(std::ostream& os, itk::Indent indent) const;
+        virtual void Initialize(){}
 
+          float functionSinc(float _x) ;
+          float functionGauss(float _x) ;
+          float functionBoxCar(float _x);
 
     private:
 
-        GaussianFunctionType::Pointer m_Gaussian;
+        vnl_vector<double> m_idir;
+        vnl_vector<double> m_jdir;
+        vnl_vector<double> m_kdir;
 
         ArrayType m_Sigma;
 
-        SizeType m_Size;
-
-        //ImageType::Pointer  m_PsfImage;
-
-
-
+        std::vector< function_type > m_Functions;
+        mutable unsigned int m_Axis;
 };
-
-}//end namespace
-#endif // BTKGAUSSIANPSF_H
+}
+#endif // BTKHYBRIDPSF_H

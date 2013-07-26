@@ -44,7 +44,10 @@
 #include "itkImageRegionIteratorWithIndex.h"
 #include "vnl/vnl_vector.h"
 #include "vnl/algo/vnl_conjugate_gradient.h"
+#include "vnl/algo/vnl_amoeba.h"
+#include "vnl/algo/vnl_powell.h"
 #include "vnl/algo/vnl_levenberg_marquardt.h"
+#include "vnl/algo/vnl_lbfgs.h"
 #include "vnl/vnl_matops.h"
 
 /* BTK */
@@ -73,7 +76,7 @@ class SuperResolutionFilter: public itk::Object
 
         typedef itk::Transform< double, 3 >     TransformType;
 
-        typedef short                           PixelType;
+        typedef float                           PixelType;
 
         typedef float                           PrecisionType;
 
@@ -90,6 +93,7 @@ class SuperResolutionFilter: public itk::Object
         typedef itk::ImageMaskSpatialObject< ImageType::ImageDimension > MaskType;
 
         typedef btk::SuperResolutionCostFunctionVNLWrapper< ImageType > VNLCostFunction;
+        typedef itk::ImageRegionIteratorWithIndex< ImageType > itkIteratorWithIndex;
 
         /** Method for creation through the object factory. */
         itkNewMacro(Self);
@@ -111,6 +115,10 @@ class SuperResolutionFilter: public itk::Object
         /** Get/Set Transforms */
         btkSetMacro(Transforms, std::vector< TransformType::Pointer >);
         btkGetMacro(Transforms, std::vector< TransformType::Pointer >);
+
+        /** Get/Set Inverse Transforms */
+        btkSetMacro(InverseTransforms, std::vector< TransformType::Pointer >);
+        btkGetMacro(InverseTransforms, std::vector< TransformType::Pointer >);
 
         /** Get/Set Reference Image */
         btkSetMacro(ReferenceImage, ImageType::Pointer);
@@ -141,19 +149,31 @@ class SuperResolutionFilter: public itk::Object
             m_Transforms.push_back(_t);
         }
 
+        void AddInverseTransform(TransformType* _t)
+        {
+            if(m_InverseTransforms.size() >= m_Images.size())
+            {
+                btkException("Size of transformations are greater than size of input images !");
+            }
+
+            m_InverseTransforms.push_back(_t);
+        }
+
 
     protected:
 
         virtual void SimulateLRImages();
         virtual void GenerateOutputData();
         SuperResolutionFilter();
-        virtual ~SuperResolutionFilter(){}
+        virtual ~SuperResolutionFilter();
 
     private:
 
         H_Filter::Pointer                       m_H_Filter;
 
         std::vector< TransformType::Pointer >   m_Transforms;
+
+        std::vector< TransformType::Pointer >   m_InverseTransforms;
 
         std::vector< ImageType::Pointer >       m_Images;
 
@@ -175,9 +195,9 @@ class SuperResolutionFilter: public itk::Object
 
         btk::PSF::Pointer                       m_PSF;
 
-        vnl_sparse_matrix< PrecisionType >              m_H;
+        vnl_sparse_matrix< PrecisionType >*     m_H;
 
-        vnl_vector< PrecisionType >                     m_Y;
+        vnl_vector< PrecisionType >*            m_Y;
 
         bool                                    m_ComputeSimulations;
 

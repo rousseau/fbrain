@@ -51,6 +51,8 @@ ${fbrain_SOURCE_DIR}/Code/Maths/btkGaussianPSF.h
 ${fbrain_SOURCE_DIR}/Code/Maths/btkGaussianPSF.cxx
 ${fbrain_SOURCE_DIR}/Code/Maths/btkBoxCarPSF.h
 ${fbrain_SOURCE_DIR}/Code/Maths/btkBoxCarPSF.cxx
+${fbrain_SOURCE_DIR}/Code/Maths/btkSincPSF.h
+${fbrain_SOURCE_DIR}/Code/Maths/btkSincPSF.cxx
 )
-TARGET_LINK_LIBRARIES(btkPSFTestApp ${ITK_LIBRARIES} btkToolsLibrary)
+TARGET_LINK_LIBRARIES(btkPSFTestApp ${ITK_LIBRARIES} btkToolsLibrary btkMathsLibrary)
 ADD_TEST(btkPSFTest ${Tests_BINARY_DIR}/btkPSFTestApp)

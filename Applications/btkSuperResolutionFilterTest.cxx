@@ -52,6 +52,10 @@
 #include "btkSuperResolutionFilter.h"
 #include "btkIOTransformHelper.h"
 
+#include "btkApplyTransformToImageFilter.h"
+#include "btkNLMTool.h"
+
+
 /* OTHERS */
 #include "iostream"
 #include <tclap/CmdLine.h>
@@ -65,10 +69,11 @@ int main(int argc, char * argv[])
     typedef itk::Transform< double, Dimension > TransformType;
 
 
-    typedef short  PixelType;
+    typedef float  PixelType;
     //typedef short  PixelType;
 
     typedef itk::Image< PixelType, Dimension >  itkImage;
+    typedef itk::Image< float, Dimension >       itkFloatImage;// For initialization of slice by slice transforms
 
     typedef itk::Image< unsigned char, Dimension >  ImageMaskType;
     typedef itk::ImageFileReader< ImageMaskType >   MaskReaderType;
@@ -91,15 +96,18 @@ int main(int argc, char * argv[])
     typedef btk::AffineSliceBySliceTransform< double, Dimension>  btkAffineSliceBySliceTransform;
     typedef btk::EulerSliceBySliceTransform< double, Dimension>  btkEulerSliceBySliceTransform;
     typedef btk::SliceBySliceTransform<double, Dimension>   btkOldSliceBySliceTransform;
-
+    typedef btk::ApplyTransformToImageFilter<itkImage, itkImage> Resampler;
 
     // TCLAP :
     TCLAP::CmdLine cmd("Apply the new Super-Resolution pipeline. Testing Version!", ' ', "Unversioned");
 
     TCLAP::MultiArg<std::string> inputArg("i","input","Low-resolution image file",true,"string",cmd);
     TCLAP::MultiArg<std::string> maskArg("m","mask","low-resolution image mask file",false,"string",cmd);
+    TCLAP::MultiArg<std::string> transArg("t","transform","transformations",false,"string",cmd);
     TCLAP::ValueArg<std::string> refArg  ("r","reconstructed","Reconstructed image for initialization. "
                                           "Typically the output of btkImageReconstruction is used." ,false,"","string",cmd);
+
+    TCLAP::ValueArg<std::string> outArg("o","output","output image" ,false,"","string",cmd);
 
 
     //TODO: Add the others used arg
@@ -111,8 +119,10 @@ int main(int argc, char * argv[])
     //std::vector< TransformReaderType > transforms;
 
     std::vector< itkImage::Pointer > inputsLRImages;
+    std::vector< itkFloatImage::Pointer > inputsLRImagesFloat;
     std::vector< ImageMaskType::Pointer >          inputsLRMasks;
-    std::vector< itkAffineTransformation::Pointer > transforms;
+    std::vector< MatrixTransformType::Pointer > transforms;
+     std::vector< MatrixTransformType::Pointer > inversetransforms;
     std::string refImage;
     std::string outImage;
 
@@ -124,7 +134,11 @@ int main(int argc, char * argv[])
     cmd.parse( argc, argv );
     input = inputArg.getValue();
     mask = maskArg.getValue();
-    refImage = refArg.getValue().c_str();
+    refImage = refArg.getValue();
+    transform = transArg.getValue();
+    outImage = outArg.getValue();
+
+
 
 
 
@@ -133,12 +147,15 @@ int main(int argc, char * argv[])
 
 
     inputsLRImages.resize(numberOfImages);
+    inputsLRImagesFloat.resize(numberOfImages);
     inputsLRMasks.resize(numberOfImages);
     transforms.resize(numberOfImages);
-
+    inversetransforms.resize(numberOfImages);
 
 
     inputsLRImages = btk::ImageHelper< itkImage > ::ReadImage(input);
+
+    inputsLRImagesFloat = btk::ImageHelper< itkFloatImage >::ReadImage(input);
 
     inputsLRMasks = btk::ImageHelper< ImageMaskType >::ReadImage(mask);
 
@@ -151,19 +168,85 @@ int main(int argc, char * argv[])
     SRFilter->SetReferenceImage(referenceImage);
     SRFilter->ComputeSimulatedImages(true);
 
-    for(unsigned int i = 0; i< numberOfImages; i++)
+    if(transform.empty())
     {
-        transforms[i] = itkAffineTransformation::New();
-        transforms[i]->SetIdentity();
+        for(unsigned int i = 0; i< numberOfImages; i++)
+        {
+            transforms[i] = itkAffineTransformation::New();
+            inversetransforms[i] = itkAffineTransformation::New();
+            dynamic_cast<itkAffineTransformation*>(transforms[i].GetPointer())->SetIdentity();
 
-        SRFilter->AddTransform(transforms[i].GetPointer());
+            transforms[i]->GetInverse(inversetransforms[i]);
+
+            SRFilter->AddTransform(transforms[i].GetPointer());
+            SRFilter->AddInverseTransform(inversetransforms[i].GetPointer());
+        }
     }
+    else
+    {
+        //FIXME : When AffineSbs is register first, all sbs transform read are affine !!!!!
+
+        //itk::TransformFactory<btkAffineSliceBySliceTransform>::RegisterTransform();
+        //itk::TransformFactory<btkEulerSliceBySliceTransform>::RegisterTransform();
+        itk::TransformFactory<btkOldSliceBySliceTransform>::RegisterTransform();
+        std::vector< btkOldSliceBySliceTransform::Pointer > SbsTransforms;
+        std::vector< btkOldSliceBySliceTransform::Pointer > InverseSbsTransforms;
+
+        typedef itk::TransformFileReader     TransformReaderType;
+        typedef TransformReaderType::TransformListType* TransformListType;
+
+        SbsTransforms.resize(numberOfImages);
+        InverseSbsTransforms.resize(numberOfImages);
+
+        for(unsigned int i = 0; i< numberOfImages; i++)
+        {
+            SbsTransforms[i] = btkOldSliceBySliceTransform::New();
+            InverseSbsTransforms[i] = btkOldSliceBySliceTransform::New();
+
+            SbsTransforms[i] = btk::IOTransformHelper< btkOldSliceBySliceTransform >::ReadTransform(transform[i]);
+            //dynamic_cast<btkEulerSliceBySliceTransform*>(transforms[i].GetPointer())->SetImage(inputsLRImagesFloat[i]);
+            SbsTransforms[i]->SetImage(inputsLRImagesFloat[i]);
+
+            SbsTransforms[i]->GetInverse(InverseSbsTransforms[i]);
+
+            SRFilter->AddTransform(SbsTransforms[i].GetPointer());
+            SRFilter->AddInverseTransform(InverseSbsTransforms[i].GetPointer());
+        }
+
+    }
+
 
 
 
     SRFilter->SetMasks(inputsLRMasks);
     SRFilter->Initialize();
     SRFilter->Update();
+
+    referenceImage = SRFilter->GetOutput();
+
+    btk::NLMTool<float>* myTool = new btk::NLMTool<float>();
+    myTool->SetInput(referenceImage);
+    myTool->SetPaddingValue(0);
+    myTool->SetDefaultParameters();
+    myTool->ComputeOutput();
+
+    referenceImage = myTool->GetOutput();
+
+
+    for(unsigned int i = 0; i< 0; i++)
+    {
+        SRFilter->SetReferenceImage(referenceImage);
+        SRFilter->Initialize();
+        SRFilter->Update();
+
+        myTool->SetInput(referenceImage);
+        myTool->SetPaddingValue(0);
+        myTool->SetDefaultParameters();
+        myTool->ComputeOutput();
+
+        referenceImage = myTool->GetOutput();
+    }
+
 
 
     std::vector< itkImage::Pointer > simImages = SRFilter->GetSimulatedImages();
@@ -176,6 +259,8 @@ int main(int argc, char * argv[])
 
 
     btk::ImageHelper< itkImage >::WriteImage(simImages,simNames);
+
+    btk::ImageHelper< itkImage>::WriteImage(referenceImage,outImage);
 
 
 

@@ -40,7 +40,15 @@ namespace btk
 
 BoxCarPSF::BoxCarPSF()
 {
+    m_Direction.set_size(3,3);
 
+    m_Center.set_size(3);
+    m_Center.fill(0.0);
+
+    m_Spacing.set_size(3);
+    m_Spacing.fill(1);
+
+    m_PsfImage = ImageType::New();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -70,6 +78,162 @@ BoxCarPSF::Evaluate(const InputType &position) const
     }
 
     return (OutputType)value;
+
+}
+//-------------------------------------------------------------------------------------------------
+void BoxCarPSF::ConstructImage()
+{
+
+
+    ImageType::Pointer lrImage = ImageType::New();
+    ImageType::RegionType region, HrRegion;
+
+
+    ImageType::SizeType size;
+    size[0] = 3;
+    size[1] = 3;
+    size[2] = 3;
+
+    ImageType::IndexType index;
+
+    //size = _size;
+
+    index[0] = 0;
+    index[1] = 0;
+    index[2] = 0;
+
+    //region.SetSize(m_Size);
+    region.SetSize(size);
+    region.SetIndex(index);
+
+
+
+    lrImage->SetRegions(region);
+    lrImage->SetSpacing(m_LrSpacing);
+    lrImage->Allocate();
+    lrImage->FillBuffer(0.0);
+    ImageType::IndexType lrIndexCenter;
+    lrIndexCenter[0] = (size[0]-1)/2.0;
+    lrIndexCenter[1] = (size[1]-1)/2.0;
+    lrIndexCenter[2] = (size[2]-1)/2.0;
+    ImageType::PointType lrPointCenter;
+    lrImage->TransformIndexToPhysicalPoint(lrIndexCenter,lrPointCenter);
+    lrImage->SetPixel(lrIndexCenter,1.0);
+
+    ImageType::SpacingType spc;
+    spc[0] = m_Spacing[0];
+    spc[1] = m_Spacing[1];
+    spc[2] = m_Spacing[2];
+    HrRegion.SetSize(m_Size);
+    HrRegion.SetIndex(index);
+
+
+    m_PsfImage->SetRegions(HrRegion);
+    m_PsfImage->SetSpacing(spc);
+    m_PsfImage->Allocate();
+    m_PsfImage->FillBuffer(0.0);
+
+    double sum = 0;
+
+    ImageType::IndexType hrIndex;
+
+    itkIteratorWithIndex itPSF(m_PsfImage,m_PsfImage->GetLargestPossibleRegion());
+    itkContinuousIndex hrIndexCenter;
+    //ImageType::IndexType hrIndexCenter;
+    hrIndexCenter[0] = (m_Size[0]-1)/2;
+    hrIndexCenter[1] = (m_Size[1]-1)/2;
+    hrIndexCenter[2] = (m_Size[2]-1)/2;
+    //m_PsfImage->SetPixel(hrIndexCenter,1.0);
+
+    PointType hrPointCenter;
+    m_PsfImage->TransformContinuousIndexToPhysicalPoint(hrIndexCenter,hrPointCenter);
+
+    PointType hrOrigin;
+    hrOrigin[0] = lrPointCenter[0] - hrPointCenter[0];
+    hrOrigin[1] = lrPointCenter[1] - hrPointCenter[1];
+    hrOrigin[2] = lrPointCenter[2] - hrPointCenter[2];
+    m_PsfImage->SetOrigin(hrOrigin);
+
+    itkLinearInterpolator::Pointer bsInterpolator = itkLinearInterpolator::New();
+    //bsInterpolator->SetSplineOrder(1);
+    bsInterpolator->SetInputImage(lrImage);
+    unsigned int nbSamples = 20;
+    for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF)
+    {
+        sum = 0.0;
+        hrIndex = itPSF.GetIndex();
+        PointType hrPoint;
+        m_PsfImage->TransformIndexToPhysicalPoint(hrIndex,hrPoint);
+        //Continuous coordinate in LR image
+        itkContinuousIndex hrContIndex;
+        itkContinuousIndex lrContIndex;
+        lrImage->TransformPhysicalPointToContinuousIndex(hrPoint,lrContIndex);
+        int x,y,z;
+
+        for(z=0; z<nbSamples; z++)
+          for(y=0; y<nbSamples; y++)
+            for(x=0; x<nbSamples; x++)
+            {
+
+              hrContIndex[0] = hrIndex[0] - 0.5 + 1.0*x/nbSamples;
+              hrContIndex[1] = hrIndex[1] - 0.5 + 1.0*y/nbSamples;
+              hrContIndex[2] = hrIndex[2] - 0.5 + 1.0*z/nbSamples;
+
+              //Coordinate in physical space
+              m_PsfImage->TransformContinuousIndexToPhysicalPoint(hrContIndex,hrPoint);
+
+              //Continuous coordinate in LR image
+              lrImage->TransformPhysicalPointToContinuousIndex(hrPoint,lrContIndex);
+
+              sum += bsInterpolator->EvaluateAtContinuousIndex(lrContIndex);
+            }
+
+
+        itPSF.Set(sum);
+
+
+    }
+    //Normalization of the PSF
+    sum = 0;
+    for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF) sum += itPSF.Get();
+    if(sum>0)
+      for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF)
+      {
+        itPSF.Set( itPSF.Get() / sum );
+      }
+
+    //for memory saving, we limit the number of non-null voxels
+    for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF)
+    {
+      if(itPSF.Get() < 0.01)
+        itPSF.Set(0);
+    }
+    sum = 0;
+    for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF) sum += itPSF.Get();
+    if(sum>0)
+      for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF)
+      {
+          if(itPSF.Get() != 0)
+          {
+              itPSF.Set( itPSF.Get() / sum );
+          }
+          if(itPSF.Get() == 0.0)
+          {
+              //std::cout<<"0.0"<<std::endl;
+          }
+
+      }
+
+
+
+
+    hrOrigin[0] = 0;
+    hrOrigin[1] = 0;
+    hrOrigin[2] = 0;
+    m_PsfImage->SetOrigin(hrOrigin);
+
+
+
 
 }
 //-------------------------------------------------------------------------------------------------
