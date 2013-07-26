@@ -104,9 +104,6 @@ int main(int argc, char * argv[])
                     DisplacementField::Pointer field = btk::ImageHelper< DisplacementField >::ReadImage(input_file);
 
                     // process
-                    MaskFieldFilter* maskImageFilter =  new MaskFieldFilter();
-                    maskImageFilter->SetMask(mask);
-                    //maskImageFilter->SetMaskImage(mask);
 
                     //MaskFieldFilter::Pointer maskImageFilter = MaskFieldFilter::New();
                      MaskFieldFilter* maskImageFilter = new MaskFieldFilter();
