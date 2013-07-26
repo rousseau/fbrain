@@ -70,11 +70,11 @@ class SuperResolutionCostFunction: public itk::Object
         itkTypeMacro(btk::SuperResolutionCostFunction, itk::Object);
 
 
-        btkSetMacro(H,vnl_sparse_matrix< PrecisionType >);
+        btkSetMacro(H,vnl_sparse_matrix< PrecisionType >&);
 
-        btkSetMacro(HtY,vnl_vector< PrecisionType >);
+        btkSetMacro(HtY,vnl_vector< PrecisionType >&);
 
-        btkSetMacro(Y,vnl_vector< PrecisionType >);
+        btkSetMacro(Y,vnl_vector< PrecisionType >&);
 
         btkSetMacro(Lambda, PrecisionType);
 

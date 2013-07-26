@@ -78,6 +78,7 @@ GetValue(const vnl_vector<double> &_x)
 
     // Calculate the square of 1st derivatives along x, y, and z
     double reg = 0.0;
+    double regCH = 0.0;
 
     //float* kernel = new float[2];
     PrecisionType* kernel = new PrecisionType[2];
@@ -93,12 +94,12 @@ GetValue(const vnl_vector<double> &_x)
     Convol3dx(x_float, DxX, m_X_Size, kernel, 2);
     //Convol3dx(_x, DxX, m_X_Size, kernel, 2);
 
-    unsigned int i = 0;
-    //for(unsigned int i=0; i<x_float.size(); i++)
-    for(i=0; i<_x.size(); i++)
+       //for(unsigned int i=0; i<x_float.size(); i++)
+    for(unsigned int i=0; i<_x.size(); i++)
     {
         //reg += DxX[i]*DxX[i] / x_float.size();
         reg += DxX[i]*DxX[i] / _x.size();
+        regCH += 2* sqrt(1 + (DxX[i]*DxX[i]/ _x.size()))-2;
     }
     DxX.clear();
 
@@ -111,10 +112,11 @@ GetValue(const vnl_vector<double> &_x)
     Convol3dy(x_float, DyX, m_X_Size, kernel, 2);
     //Convol3dy(_x, DyX, m_X_Size, kernel, 2);
     //for(unsigned int i=0; i<x_float.size(); i++)
-    for(i=0; i<_x.size(); i++)
+    for(unsigned int i=0; i<_x.size(); i++)
     {
         //reg += DyX[i]*DyX[i] / x_float.size();
         reg += DyX[i]*DyX[i] / _x.size();
+        regCH += 2 * sqrt(1 + (DyX[i]*DyX[i]/ _x.size())) -2;
     }
     DyX.clear();
 
@@ -127,20 +129,22 @@ GetValue(const vnl_vector<double> &_x)
     Convol3dz(x_float, DzX, m_X_Size, kernel, 2);
     //Convol3dz(_x, DzX, m_X_Size, kernel, 2);
     //for(unsigned int i=0; i<x_float.size(); i++)
-    for(i=0; i<_x.size(); i++)
+    for(unsigned int i=0; i<_x.size(); i++)
     {
         //reg += DzX[i]*DzX[i] / x_float.size();
         reg += DzX[i]*DzX[i] / _x.size();
+        regCH += 2 * sqrt(1 + (DzX[i]*DzX[i]/ _x.size())) -2;
     }
     DzX.clear();
 
     delete[] kernel;
 
     // Calculate the cost function by combining both terms
+    //std::cout<<"Reg : "<<reg<<", CH reg : "<<regCH<<std::endl;
 
-    double value = mse + m_Lambda*reg;
+    double value = mse + m_Lambda*regCH;
 
-    std::cout << "error, mse, reg = " << value << " , " << mse << " , " <<reg<<" , "<< m_Lambda*reg << std::endl;
+    //std::cout << "error, mse, reg = " << value << " , " << mse << " , " <<reg<<" , "<< m_Lambda*reg << std::endl;
 
     return value;
 }
