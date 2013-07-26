@@ -39,7 +39,11 @@
 #include "btkPSF.h"
 #include "btkGaussianPSF.h"
 #include "btkBoxCarPSF.h"
+#include "btkSincPSF.h"
+#include "btkHybridPSF.h"
 #include "btkImageHelper.h"
+
+#include "vnl/vnl_sparse_matrix.h"
 
 
 #include "iostream"
@@ -50,31 +54,41 @@ int main (int, char* [])
 
     typedef itk::Image< float, 3 > ImageType;
 
+
     btk::GaussianPSF::Pointer psfG = btk::GaussianPSF::New();
     btk::BoxCarPSF::Pointer psfBC = btk::BoxCarPSF::New();
+    btk::SincPSF::Pointer psfSinc = btk::SincPSF::New();
+    btk::HybridPSF::Pointer psfHybrid = btk::HybridPSF::New();
 
 
 
     ImageType::Pointer image = ImageType::New();
     ImageType::Pointer outputImG = ImageType::New();
     ImageType::Pointer outputImBC = ImageType::New();
+    ImageType::Pointer outputImSinC = ImageType::New();
+    ImageType::Pointer outputImH = ImageType::New();
 
 
 
     ImageType::SizeType  size;
-    ImageType::SpacingType spacing;
+    ImageType::SpacingType spacing, lrSpacing;
     ImageType::IndexType index, centerI;
     index[0] = 0;
     index[1] = 0;
     index[2] = 0;
 
-    spacing[0] = 1;
-    spacing[1] = 1;
-    spacing[2] = 1;
+    spacing[0] = 0.74;
+    spacing[1] = 0.74;
+    spacing[2] = 0.74;
 
-    size[0] = 15;
-    size[1] = 15;
-    size[2] = 15;
+    lrSpacing[0] = 1.0;
+    lrSpacing[1] = 1.0;
+    lrSpacing[2] = 3.5;
+
+
+    size[0] = 6;
+    size[1] = 6;
+    size[2] = 10;
 
     centerI[0] = size[0] /2;
     centerI[1] = size[1] /2;
@@ -100,49 +114,76 @@ int main (int, char* [])
 
     itk::ImageRegionIteratorWithIndex<ImageType> it(image,image->GetLargestPossibleRegion());
     itk::ImageRegionIteratorWithIndex<ImageType> outIt(outputImG,outputImG->GetLargestPossibleRegion());
-     itk::ImageRegionIteratorWithIndex<ImageType> outIt2(outputImBC,outputImBC->GetLargestPossibleRegion());
+    itk::ImageRegionIteratorWithIndex<ImageType> outIt2(outputImBC,outputImBC->GetLargestPossibleRegion());
 
     psfG->SetDirection(image->GetDirection());
     psfG->SetSpacing(image->GetSpacing());
 
+    psfSinc->SetDirection(image->GetDirection());
+    psfSinc->SetSpacing(image->GetSpacing());
+    psfSinc->SetSize(size);
+    psfSinc->ConstructImage();
+    btk::ImageHelper< ImageType >::WriteImage(psfSinc->GetPsfImage(),"PSFSinc.nii.gz");
+    //return 0;
+
     //////////////////////////////////////////
     ImageType::SizeType size1;
-    size1[0] = 3;
-    size1[1] = 3;
-    size1[2] = 3;
+    size1[0] = 10;
+    size1[1] = 10;
+    size1[2] = 10;
 
-    psfG->ConstructImage(size1);
-    btk::ImageHelper< ImageType >::WriteImage(psfG->GetPsfImage(),"PSFTest.nii.gz");
+    psfG->SetSize(size);
+    psfG->ConstructImage();
+    btk::ImageHelper< ImageType >::WriteImage(psfG->GetPsfImage(),"PSFGaussian.nii.gz");
+
+
 
     /////////////////////////////////////////
 
+    psfHybrid->SetDirection(image->GetDirection());
+    psfHybrid->SetSpacing(image->GetSpacing());
+    psfHybrid->SetSize(size);
+    psfHybrid->SetXFunction(btk::HybridPSF::SINC);
+    psfHybrid->SetYFunction(btk::HybridPSF::SINC);
+    psfHybrid->SetZFunction(btk::HybridPSF::GAUSSIAN);
+
+    psfHybrid->ConstructImage();
+    btk::ImageHelper< ImageType >::WriteImage(psfHybrid->GetPsfImage(),"PSFHybrid.nii.gz");
+
+
+
     psfBC->SetDirection(image->GetDirection());
     psfBC->SetSpacing(image->GetSpacing());
-
-    image->FillBuffer(0.0);
-    image->SetPixel(centerI, 1.0);
-    ImageType::PointType point;
-    image->TransformIndexToPhysicalPoint(centerI,point);
-    psfG->SetCenter(point);
-    psfBC->SetCenter(point);
+    psfBC->SetSize(size);
+    psfBC->SetLrSpacing(lrSpacing);
+    psfBC->ConstructImage();
 
 
-    for(it.GoToBegin(),outIt.GoToBegin(), outIt2.GoToBegin();
-        !it.IsAtEnd(),!outIt.IsAtEnd(), !outIt2.IsAtEnd();
-        ++it,++outIt,++outIt2)
-    {
-        ImageType::PointType currentPoint;
-        image->TransformIndexToPhysicalPoint(it.GetIndex(),currentPoint);
-        double valueG = psfG->Evaluate(currentPoint);
-        double valueBC = psfBC->Evaluate(currentPoint);
-        outIt.Set((float)valueG);
-        outIt2.Set((float)valueBC);
-    }
+//    image->FillBuffer(0.0);
+//    image->SetPixel(centerI, 1.0);
+//    ImageType::PointType point;
+//    image->TransformIndexToPhysicalPoint(centerI,point);
+//    psfG->SetCenter(point);
+//    psfBC->SetCenter(point);
+
+
+//    for(it.GoToBegin(),outIt.GoToBegin(), outIt2.GoToBegin();
+//        !it.IsAtEnd(),!outIt.IsAtEnd(), !outIt2.IsAtEnd();
+//        ++it,++outIt,++outIt2)
+//    {
+//        ImageType::PointType currentPoint;
+//        image->TransformIndexToPhysicalPoint(it.GetIndex(),currentPoint);
+//        double valueG = psfG->Evaluate(currentPoint);
+//        double valueBC = psfBC->Evaluate(currentPoint);
+//        outIt.Set((float)valueG);
+//        outIt2.Set((float)valueBC);
+//    }
 
 
 
 
-    btk::ImageHelper< ImageType >::WriteImage(image,"Impulsional_Image.nii.gz");
-    btk::ImageHelper< ImageType >::WriteImage(outputImG,"Gaussian_PSF.nii.gz");
-    btk::ImageHelper< ImageType >::WriteImage(outputImBC,"BoxCar_PSF.nii.gz");
+//    btk::ImageHelper< ImageType >::WriteImage(image,"Impulsional_Image.nii.gz");
+//    btk::ImageHelper< ImageType >::WriteImage(outputImG,"Gaussian_PSF.nii.gz");
+    btk::ImageHelper< ImageType >::WriteImage(psfBC->GetPsfImage(),"BoxCar_PSF.nii.gz");
+    return 0;
 }
