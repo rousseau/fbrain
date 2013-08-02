@@ -272,6 +272,9 @@ TARGET_LINK_LIBRARIES(btkProjectPointsOnPolydata ${VTK_LIBRARIES} vtkHybrid)
 ADD_EXECUTABLE(btkSelectSeedPoint btkSelectSeedPoint.cxx)
 TARGET_LINK_LIBRARIES(btkSelectSeedPoint ${VTK_LIBRARIES} vtkHybrid)
 
+ADD_EXECUTABLE(btkLikelihoodOfSequenceEstimation btkLikelihoodOfSequenceEstimation.cxx)
+TARGET_LINK_LIBRARIES(btkLikelihoodOfSequenceEstimation ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -342,5 +345,6 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkApplyRegionGrow
                 btkProjectPointsOnPolydata
                 btkSelectSeedPoint
+                btkLikelihoodOfSequenceEstimation
         DESTINATION bin)
 
