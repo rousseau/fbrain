@@ -260,6 +260,17 @@ TARGET_LINK_LIBRARIES(btkS2SSimilarity btkToolsLibrary btkDiffusionLibrary ${ITK
 ADD_EXECUTABLE(btkComputeCurvature btkComputeCurvature.cxx)
 TARGET_LINK_LIBRARIES(btkComputeCurvature btkMathsLibrary ${VTK_LIBRARIES} vtkHybrid)
 
+ADD_EXECUTABLE(btkConvertToTXT btkConvertToTXT.cxx)
+TARGET_LINK_LIBRARIES(btkConvertToTXT ${VTK_LIBRARIES} vtkHybrid)
+
+ADD_EXECUTABLE(btkApplyRegionGrow btkApplyRegionGrow.cxx)
+TARGET_LINK_LIBRARIES(btkApplyRegionGrow btkToolsLibrary btkMathsLibrary ${VTK_LIBRARIES} vtkHybrid)
+
+ADD_EXECUTABLE(btkProjectPointsOnPolydata btkProjectPointsOnPolydata.cxx)
+TARGET_LINK_LIBRARIES(btkProjectPointsOnPolydata ${VTK_LIBRARIES} vtkHybrid)
+
+ADD_EXECUTABLE(btkSelectSeedPoint btkSelectSeedPoint.cxx)
+TARGET_LINK_LIBRARIES(btkSelectSeedPoint ${VTK_LIBRARIES} vtkHybrid)
 
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
@@ -327,5 +338,9 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkDiffusionScalarMeasurement
                 btkS2SSimilarity
                 btkComputeCurvature
+                btkConvertToTXT
+                btkApplyRegionGrow
+                btkProjectPointsOnPolydata
+                btkSelectSeedPoint
         DESTINATION bin)
 
