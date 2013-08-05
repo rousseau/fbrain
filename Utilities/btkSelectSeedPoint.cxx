@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
         input->Update();
 
 
-
+		//A QUOI SERT UN MAPPER, ETC ?
         vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
         mapper->SetInput(input);
         vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
@@ -192,6 +192,8 @@ int main(int argc, char *argv[])
 
         renwin->Render();
         iren->Start();
+		// COMMENTER CHAQUE LIGNE DE CETTE SECTION (DEPUIS MAPPER...)
+
 
         return EXIT_SUCCESS;
 
