@@ -37,14 +37,11 @@
 
 /* ITK includes */
 #include "itkVector.h"
-#include "itkListSample.h"
-#include "itkGaussianMixtureModelComponent.h"
-#include "itkExpectationMaximizationMixtureModelEstimator.h"
-#include "itkNormalVariateGenerator.h"
 #include "itkGaussianDistribution.h"
 
 /* OTHERS */
 #include <tclap/CmdLine.h>
+#include <stdlib.h>
 #include <fstream>
 #include <sstream>
 #include <algorithm>
@@ -187,17 +184,17 @@ int main(int argc, char** argv)
         TCLAP::CmdLine cmd("Sequence prediction", ' ', "1.0", true);
         TCLAP::MultiArg<std::string> patientEventMeasurementArg("p", "Patient_measurement_File","Patient measurement data for each event (possible multi inputs) ", true, "string");
         cmd.add(patientEventMeasurementArg);
-        TCLAP::MultiArg<std::string> controlEventMeasurementArg("c", "Controle_measurement_File","Control measurement data for each event (possible multi inputs) ", true, "string");
+        TCLAP::MultiArg<std::string> controlEventMeasurementArg("c", "Control_measurement_File","Control measurement data for each event (possible multi inputs) ", true, "string");
         cmd.add(controlEventMeasurementArg);
-        TCLAP::ValueArg<std::string> outputFile("o", "output", "Txt file with the probabilities of each sequence of event",true," ","string" );
-        cmd.add(outputFile);
+        TCLAP::MultiArg<std::string> outputFiles("o", "output", "Txt file with the probabilities of each sequence of event and TXT file with all the possible combinations after MCMC",true,"string" );
+        cmd.add(outputFiles);
 
         cmd.parse(argc,argv);
 
         // Store input data files in vector
         std::vector<std::string> patientsMeasurementFiles = patientEventMeasurementArg.getValue();
         std::vector<std::string> controlsMeasurementFiles = controlEventMeasurementArg.getValue();
-        std::string output = outputFile.getValue();
+        std::vector<std::string>  output = outputFiles.getValue();
 
         std::cout<< "Number of events considered: "<< patientsMeasurementFiles.size()<<"\n";
         for (unsigned int i=0; i<patientsMeasurementFiles.size(); i++)
@@ -283,10 +280,6 @@ int main(int argc, char** argv)
             measure.clear();
         }
 
-        for (int i=0; i<380; i++)
-            for(int j=0; j<5; j++)
-            {  std::cout<<C[i][j]<<'\t';
-                 std::cout<<std::endl;}
         /* =======================================================================================================================
          * Find the distribution of each event and each dataset (patients and controls)
          * =======================================================================================================================
@@ -345,9 +338,8 @@ int main(int argc, char** argv)
             std::next_permutation(row.begin(), row.end());
             for(int i=0; i<row.size(); i++)
             {
-                std::cout<<row[i]<<'\t';
                 sequences[l][i]=row[i];
-            }std::cout<<std::endl;
+            }
         }
 
         // 2. Compute the likelihood of each sequence (S)
@@ -362,7 +354,7 @@ int main(int argc, char** argv)
         }
 
         // 3. Output the probabilities per sequence in a txt file
-        std::ofstream Ofile(output.c_str());
+        std::ofstream Ofile(output[0].c_str());
         if(Ofile)
         {
             for(int i=0; i<sequences.size();i++)
@@ -374,8 +366,84 @@ int main(int argc, char** argv)
         else
             std::cerr << "ERROR, impossible to open file !" << std::endl;
 
+
+        /* ========================================================================================================================
+         * Optimization step = Markov Chains
+         * ========================================================================================================================
+         */
+        std::vector<std::vector<int> > allPossibilities(5000, std::vector<int>(NumberOfEvents,0) );
+        std::vector<int> initialS = allPossibilities[0]; // initial sequence choosed as the one with maximum likelihood
+
+        double maxLikelihoodIdx = std::distance(likelihoodPerSequence, std::max_element(likelihoodPerSequence, likelihoodPerSequence+combinations));
+
+        for (int i=0; i<initialS.size(); i++)
+        {
+            initialS[i]= sequences[maxLikelihoodIdx][i];
+        }
+
+
+
+        std::vector<int> swapS(NumberOfEvents); // Sequence S after swapping two of its positions
+        swapS = initialS;
+
+        for (int i=0; i<allPossibilities.size(); i++) // 5000 itterations
+        {
+            int rand = std::rand() % NumberOfEvents;
+
+            if(rand == 0)
+            {
+                swapS[rand] = initialS[rand+1];
+                swapS[rand+1] = initialS[rand];
+            }
+            else
+            {
+                swapS[rand] = initialS[rand-1];
+                swapS[rand-1] = initialS[rand];
+            }
+
+
+            double initialP = PXS(M,C,distributionParametersPatients,distributionParametersControls,initialS);
+            double finalP =  PXS(M,C,distributionParametersPatients,distributionParametersControls,swapS);
+            double ratio = finalP/initialP;
+            double choosedRatio = std::min(ratio,1.0);
+            double r = std::rand() %1;
+            if(r<choosedRatio)
+            {
+                initialS = swapS;
+            }
+            // store combinations
+            for (int j=0; j<initialS.size(); j++)
+            {
+                allPossibilities[i][j] = initialS[j];
+
+            }
+
+        }
+
+        // Output all the combinations in a txt file
+        std::ofstream Ofile2(output[1].c_str());
+        if(Ofile2)
+        {
+            for(int i=0; i<allPossibilities.size();i++)
+            {
+                for (int j=0; j<NumberOfEvents; j++ )
+                {
+                    Ofile2 << allPossibilities[i][j] <<  "\t" ;
+                }
+                Ofile2 << '\n';
+            }
+            Ofile2.close();
+        }
+        else
+            std::cerr << "ERROR, impossible to open second output file !" << std::endl;
+
+
     }catch (TCLAP::ArgException &e)  // catch any exceptions
     { std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; }
+
+
+
+
 
 
   return EXIT_SUCCESS;
