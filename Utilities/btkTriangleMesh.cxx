@@ -85,6 +85,11 @@ int main(int argc, char *argv[])
             std::cout << "Input file is of type vtkPolydata" << std::endl;
             std::cout << "Input file has: " << inputPolydata->GetNumberOfPoints() << " points." << std::endl;
         }
+        
+        //***********************************************************************************************************************
+        //COMMENTER TOUTE LA PARTIE SUR LE CELLCONTAINER. A QUOI CA SERT? QUEL OBJET CA CONTIENT, QUE FAIT CHAQUE FONCTION ETC.
+        //***********************************************************************************************************************
+
         typedef std::map<int,int> CellContainer;
         CellContainer cellMap;
         for (int i=0; i<inputPolydata->GetNumberOfCells(); i++)
