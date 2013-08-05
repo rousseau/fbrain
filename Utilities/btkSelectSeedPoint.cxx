@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
     try
     {
         /* 1. input image = triangle mesh polydata */
-        TCLAP::CmdLine cmd("Select a cell using mouse clic", ' ', "1.0");
+        TCLAP::CmdLine cmd("Select a cell using mouse clic on a visual rendering", ' ', "1.0");
         TCLAP::ValueArg<std::string> inputFile("i", "input_file", "Input triangulated mesh file (vtk file)", true, "", "string");
         cmd.add(inputFile);
         cmd.parse(argc,argv);
