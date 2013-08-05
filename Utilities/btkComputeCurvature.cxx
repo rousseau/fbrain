@@ -53,9 +53,9 @@ int main(int argc, char *argv[])
     try
     {
         TCLAP::CmdLine cmd("Compute curvature on a triangulated mesh.", ' ', "1.0");
-        TCLAP::ValueArg<std::string> input("i", "input_file","Input triangle mesh polydata.", true, " ", "string");
+        TCLAP::ValueArg<std::string> input("i", "input_file","Input VTK triangle mesh polydata.", true, " ", "string");
         cmd.add(input);
-        TCLAP::ValueArg<std::string> output("o", "output_file", "Output curvature polydata.", true, " ", "string");
+        TCLAP::ValueArg<std::string> output("o", "output_file", "Output VTK polydata (including curvature, tensors, normal, principal curvatures).", true, " ", "string");
         cmd.add(output);
 
         cmd.parse(argc,argv);
