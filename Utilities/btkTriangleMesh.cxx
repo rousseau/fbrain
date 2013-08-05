@@ -57,11 +57,11 @@ int main(int argc, char *argv[])
     try
     {
         // Command line arguments.
-        TCLAP::CmdLine cmd("Transfrom any input mesh into a closed polyhedral mesh of triangles.", ' ', "1.0");
+        TCLAP::CmdLine cmd("Transform any input mesh into a closed polyhedral mesh of triangles using vtkTriangleFilter.", ' ', "1.0");
 
         TCLAP::ValueArg<std::string> inputMeshArg("i", "input_file", "Input mesh file (vtk file)", true, "", "string");
         cmd.add(inputMeshArg);
-        TCLAP::ValueArg<std::string> outputMeshArg("o", "output_file","output vtk file (triangular mesh)", true,"","string");
+        TCLAP::ValueArg<std::string> outputMeshArg("o", "output_file","Output vtk file (triangular mesh, i.e. one cell = one triangle)", true,"","string");
         cmd.add(outputMeshArg);
 
         // Parse Args.
