@@ -86,16 +86,15 @@ int main(int argc, char *argv[])
             std::cout << "Input file has: " << inputPolydata->GetNumberOfPoints() << " points." << std::endl;
         }
         
-        //***********************************************************************************************************************
-        //COMMENTER TOUTE LA PARTIE SUR LE CELLCONTAINER. A QUOI CA SERT? QUEL OBJET CA CONTIENT, QUE FAIT CHAQUE FONCTION ETC.
-        //***********************************************************************************************************************
 
+        // Cell container used to store the different cell types in the input polydata
         typedef std::map<int,int> CellContainer;
         CellContainer cellMap;
         for (int i=0; i<inputPolydata->GetNumberOfCells(); i++)
         {
-            cellMap[inputPolydata->GetCellType(i)]++;
+            cellMap[inputPolydata->GetCellType(i)]++; // store each cell type encountered in the input mesh in a cell Container
         }
+        // Print the different cell types before applying conversion to triangle cells
         CellContainer::const_iterator it = cellMap.begin();
         while(it != cellMap.end())
         {
