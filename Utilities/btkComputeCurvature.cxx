@@ -55,12 +55,15 @@ int main(int argc, char *argv[])
         TCLAP::CmdLine cmd("Compute curvature on a triangulated mesh.", ' ', "1.0");
         TCLAP::ValueArg<std::string> input("i", "input_file","Input VTK triangle mesh polydata.", true, " ", "string");
         cmd.add(input);
+        TCLAP::ValueArg<int> curvT("c", "curvature_type", "Default curvature type is Barycentric, choose one for Gaussian, 2 for mean and 3 for computing principal curvatures.", false, 4, "integer");
+        cmd.add(curvT);
         TCLAP::ValueArg<std::string> output("o", "output_file", "Output VTK polydata (including curvature, tensors, normal, principal curvatures).", true, " ", "string");
         cmd.add(output);
 
         cmd.parse(argc,argv);
 
         std::string input_file = input.getValue();
+        int curvature_type = curvT.getValue();
         std::string output_file = output.getValue();
 
         // read input file (triangle + smoothed mesh)
@@ -76,32 +79,28 @@ int main(int argc, char *argv[])
         btkCurvatures *curv = btkCurvatures::New();
         curv->SetInput(polydata);
 
-        std::cout<<"Choose a curvature type: \n";
-        std::cout<<"0: barycentric curvature \n";
-        std::cout<<"1: gaussian curvature \n";
-        std::cout<<"2: mean curvature \n";
-        std::cout<<"3: principal curvatures."<<std::endl;
+        int choice =curvature_type;
 
-        int choice = -1;
-        std::cin>>choice;
-
-        switch(choice)
+        if(choice == 1)
         {
-        case 0:
-            std::cout<<"Curvature type = BARYCENTER"<<std::endl;
-            curv->SetCurvatureTypeToBar();
-            break;
-        case 1:
             std::cout<<"Curvature type = GAUSSIAN"<<std::endl;
             curv->SetCurvatureTypeToGaussian();
-            break;
-        case 2:
+        }
+        else if (choice == 2)
+        {
             std::cout<<"Curvature type = MEAN"<<std::endl;
             curv->SetCurvatureTypeToMean();
-            break;
-        case 3:
+        }
+        else if (choice == 3)
+        {
             std::cout<<"Curvature type = PRINCIPAL CURVATURES"<<std::endl;
             curv->SetCurvatureTypeToTensor();
+        }
+        else
+        {
+            std::cout<<"Possible choices: 1 (Gaussian); 2(mean) or 3(Principal curvatures)."<<std::endl;
+            std::cout<<"Curvature type = BARYCENTER"<<std::endl;
+            curv->SetCurvatureTypeToBar();
         }
 
         curv->Update();
