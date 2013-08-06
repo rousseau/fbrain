@@ -26,6 +26,11 @@ class btkRegionGrow : public vtkPolyDataAlgorithm
             m_SeedPoint = seedPoint;
         }
 
+        void setNumberOfPoints (int n)
+        {
+            m_numberOfPoints = n;
+        }
+
         IdVector GetOutput()
         {
 
@@ -49,10 +54,11 @@ class btkRegionGrow : public vtkPolyDataAlgorithm
         unsigned int m_Size;
         vtkPolyData *m_Polydata;
         vtkIdType   m_SeedPoint;
+        int m_numberOfPoints;
         unsigned int m_Nb_Loop;
 
 
-        void growing(vtkIdType m_SeedPoint);
+        void growing(vtkIdType m_SeedPoint, int m_numberOfPoints);
         IdVector getNeighbours(vtkIdType point);
         std::vector<double> getNormalVector(vtkIdType point);
         double getCurvValue(vtkIdType pointID);

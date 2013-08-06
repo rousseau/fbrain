@@ -76,11 +76,14 @@ int main(int argc, char *argv[])
         cmd.add(inputFile);
         TCLAP::ValueArg<std::string> seedCell("s","seed_cell","Seed Cell ID used for initialization of the region growing", true, "", "int");
         cmd.add(seedCell);
+        TCLAP::ValueArg<int> numberOfPoints("n", "nb_points", "Total number of points to select, default = 20 points", false, 20, "integer");
+        cmd.add(numberOfPoints);
         TCLAP::ValueArg<std::string> outputFile("o", "output_file", "Output mesh triangle file = selected points (vtk file)", true, "", "string");
         cmd.add(outputFile);
         cmd.parse(argc,argv);
         std::string input_file = inputFile.getValue();
         std::string seed_cell = seedCell.getValue();
+        int nb_points = numberOfPoints.getValue();
         std::string output_file = outputFile.getValue();
 
         // read
@@ -108,15 +111,12 @@ int main(int argc, char *argv[])
         btkRegionGrow *region = btkRegionGrow::New();
         region->setPolydata(data);
         region->setSeedPoint(seedPoint);
+        region->setNumberOfPoints(nb_points);
         region->Update();
         sillon = region->GetOutput();
-        std::cout<<"final number of points selected: "<<sillon.size()<<std::endl;
-        for(int i=0; i<sillon.size(); i++)
-        {
-            std::cout<<sillon[i]<<",";
-        }
-        std::cout << std::endl;
 
+        if (nb_points > sillon.size())
+            std::cout<< "Couldnt find more than "<<sillon.size()<< " points in the region of interest."<<std::endl;
 
 
         vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();// geometry of the point
@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
         // Visualize the polydata with the resulting points from region grow (red points)
         vtkSmartPointer<vtkPolyDataMapper> mappercurv = vtkSmartPointer<vtkPolyDataMapper>::New();
         mappercurv->SetInput(data);
-        mappercurv->ScalarVisibilityOff();
+        mappercurv->ScalarVisibilityOff(); // turn off the visibility of the mesh mapper (curv) in order to be able to see the ROI only colored
         vtkSmartPointer<vtkActor> actorcurv = vtkSmartPointer<vtkActor>::New();
         actorcurv->SetMapper(mappercurv);
 

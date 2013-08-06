@@ -119,7 +119,7 @@ bool btkRegionGrow::isInside(vtkIdType value, IdVector vec)
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-void btkRegionGrow::growing(vtkIdType m_SeedPoint )
+void btkRegionGrow::growing(vtkIdType m_SeedPoint , int m_numberOfPoints)
 {
 
     // initialize
@@ -130,8 +130,6 @@ void btkRegionGrow::growing(vtkIdType m_SeedPoint )
     double curv = getCurvValue(seedPoint);
     double vec1[3];
     double vec2[3];
-
-    std::cout<< "push back : "<<seedPoint<<std::endl;
 
     // get normal vector to seed point
     std::vector<double> normalSP;
@@ -148,7 +146,7 @@ void btkRegionGrow::growing(vtkIdType m_SeedPoint )
     // region grow
     unsigned int it = 0;
 
-    while(  it<100 && m_Size<20 )
+    while( it<100 && m_Size<m_numberOfPoints )
     {
 
         for(int i =0; i<voisins.size(); i++)
@@ -171,10 +169,10 @@ void btkRegionGrow::growing(vtkIdType m_SeedPoint )
             if( (std::fabs(curv_i) <= std::fabs(curv)) && (this->isInside(currentNeighbour, m_Vec) == false) /*&& (angle < 15)*/)
             {
                 m_SeedPoint = currentNeighbour;
-                growing(m_SeedPoint);
+                growing(m_SeedPoint, m_numberOfPoints);
             }
 
-            if(m_Size == 20)
+            if(m_Size == m_numberOfPoints)
                 break;
         it++;
 
@@ -185,8 +183,7 @@ void btkRegionGrow::growing(vtkIdType m_SeedPoint )
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-
 void btkRegionGrow::Update()
 {
-    this->growing(m_SeedPoint);
+    this->growing(m_SeedPoint, m_numberOfPoints);
 }
