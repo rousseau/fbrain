@@ -141,9 +141,6 @@ int main(int argc, char *argv[])
         output->SetPoints(points);
         output->SetVerts(verticies);
 
-        std::cout <<"n° of verts: "<< output->GetNumberOfPoints()<<std::endl;
-        std::cout <<"n° of points: "<< output->GetNumberOfVerts()<<std::endl;
-
         // write
         vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
         writer->SetInput(output);
