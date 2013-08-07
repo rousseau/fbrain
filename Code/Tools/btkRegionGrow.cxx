@@ -34,6 +34,10 @@
 ==========================================================================*/
 #include "btkRegionGrow.h"
 
+
+//*************************************
+//AICHA : ces fichiers devraient etre dans btkRegionGrow.h ???
+//*************************************
 #include "vtkSmartPointer.h"
 #include "vtkPolyData.h"
 #include "vtkIdList.h"
@@ -57,6 +61,9 @@ btkRegionGrow::btkRegionGrow()
     // init
 }
 
+//*************************************
+//AICHA : COMMENTER CETTE FONCTION ?
+//*************************************
 btkRegionGrow::IdVector btkRegionGrow::getNeighbours(vtkIdType point)
 {
     IdVector  neighboursList;
@@ -104,6 +111,10 @@ double btkRegionGrow::getCurvValue(vtkIdType pointId)
 
 }
 // ---------------------------------------------------------------------------------------------------------------------
+//*************************************
+//AICHA : A QUOI SERT CETTE FONCTION ?
+//*************************************
+
 bool btkRegionGrow::isInside(vtkIdType value, IdVector vec)
 {
     for(int i = 0; i<vec.size(); i++)
@@ -151,6 +162,10 @@ void btkRegionGrow::growing(vtkIdType m_SeedPoint , int m_numberOfPoints)
 
         for(int i =0; i<voisins.size(); i++)
         {
+        
+//*************************************
+//AICHA : COMMENTER CETTE BOUCLE?
+//*************************************
             vtkIdType currentNeighbour = voisins[i];
 
             curv_i = getCurvValue(currentNeighbour);
