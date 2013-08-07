@@ -72,7 +72,7 @@ class btkRegionGrow : public vtkPolyDataAlgorithm
             return m_Vec;
         }
 
-        void setNumberIterations(unsigned int Nb)
+        void setNumberOfIterations(unsigned int Nb)
         {
             m_Nb_Loop = Nb;
         }
@@ -85,15 +85,12 @@ class btkRegionGrow : public vtkPolyDataAlgorithm
 
 
     private:
-//*************************************
-//AICHA : A QUOI CORRESPONDENT CES VARIABLES ?
-//*************************************    
-    
-        IdVector    m_Vec;
-        unsigned int m_Size;
-        vtkPolyData *m_Polydata;
-        vtkIdType   m_SeedPoint;
-        int m_numberOfPoints;
+
+        IdVector    m_Vec; // vector of Ids that will contain the seedPoint and all the IDs selected from region growing
+        unsigned int m_Size; // size of m_Vec
+        vtkPolyData *m_Polydata; // input polydata mesh
+        vtkIdType   m_SeedPoint; // input seedPoint choosed by the user
+        int m_numberOfPoints; // final number of Points that will be find in the ROI
         unsigned int m_Nb_Loop;
 
 

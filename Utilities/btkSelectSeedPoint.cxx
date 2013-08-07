@@ -160,6 +160,7 @@ int main(int argc, char *argv[])
         std::string input_file = inputFile.getValue();
 
 
+        // Read the input file and create a vtkPolydata corresponding to the input data
         vtkSmartPointer<vtkPolyDataReader> reader = vtkSmartPointer<vtkPolyDataReader>::New();
         reader->SetFileName(input_file.c_str());
         reader->Update();
@@ -168,32 +169,40 @@ int main(int argc, char *argv[])
         input->Update();
 
 
-		//A QUOI SERT UN MAPPER, ETC ?
-        vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-        mapper->SetInput(input);
+        /* 2. Rendering a vtkPolydata */
+        /* VTK pipeline to render an object:
+         * To create the graphics objects, you typically
+         * create a rendering window to render into
+         * create a renderer
+         * create an interactor (allows you to interact with the graphics)
+         * create one or more actors (each of which is linked to a mapper)
+         * render
+         * Pipeline: Appropriate mapper fitting the data -> Actor -> Renderer -> RenderWindow -> RenderWindowInteractor
+         */
+
+        vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New(); // vtkPolyDataMapper is a class that maps polygonal data (i.e., vtkPolyData) to graphics primitives
+        mapper->SetInput(input); // the input would be the object you want to render which is here our input mesh
         vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
-        actor->SetMapper(mapper);
-        vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
-        renderer->AddActor(actor);
-        renderer->ResetCamera();
+        actor->SetMapper(mapper);// principal actor of the scene that will be displayed -> your object that was mapped by the mapper is the actor
+        vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New(); // a renderer is the stage director of the scene, it contains all the elements necessary to the scene rendering (actors, cameras, interactors, stage(= window)...)
+        renderer->AddActor(actor); // the renderer displays the actor and all the actors of the scene
+        renderer->ResetCamera();// place the camera at zero position to be centered on the actor
 
-        vtkSmartPointer<vtkRenderWindow> renwin = vtkSmartPointer<vtkRenderWindow>::New();
-        renwin->AddRenderer(renderer);
+        vtkSmartPointer<vtkRenderWindow> renwin = vtkSmartPointer<vtkRenderWindow>::New(); // window where will be displayed the scene = stage
+        renwin->AddRenderer(renderer); // the window takes as input the rendered calling all the elements of the scene (actors, camera, ...)
 
-        vtkSmartPointer<vtkRenderWindowInteractor> iren = vtkSmartPointer<vtkRenderWindowInteractor>::New();
+        vtkSmartPointer<vtkRenderWindowInteractor> iren = vtkSmartPointer<vtkRenderWindowInteractor>::New();// the interactor allows user interaction such as flipping and moving the object
         iren->SetRenderWindow(renwin);
 
-        vtkSmartPointer<MouseInteractorStyle> style = vtkSmartPointer<MouseInteractorStyle>::New();
-        style->SetDefaultRenderer(renderer);
-        style->Data = input;
+        vtkSmartPointer<MouseInteractorStyle> style = vtkSmartPointer<MouseInteractorStyle>::New(); // Optional in rendering cases , used here to create a selection through mouse click
+        style->SetDefaultRenderer(renderer);// the interactor style is added to the renderer
+        style->Data = input; // look at mouseInteractorStyle properties, the input is the object that the mouse click will operate on, outside of the points object the click will not select any cell (displays cell ID = -1 => meaning background selected)
 
 
-        iren->SetInteractorStyle(style);
+        iren->SetInteractorStyle(style);// set the interactor style (mouse click) to the interactor of the scene
 
-        renwin->Render();
-        iren->Start();
-		// COMMENTER CHAQUE LIGNE DE CETTE SECTION (DEPUIS MAPPER...)
-
+        renwin->Render();// render all
+        iren->Start(); // start the mouse interaction
 
         return EXIT_SUCCESS;
 

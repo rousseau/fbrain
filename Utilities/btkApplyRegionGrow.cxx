@@ -70,7 +70,12 @@ int main(int argc, char *argv[])
 {
     try
     {
-
+        /* Cmd lines definition:
+         * input = curvature mesh (vtk polydata)
+         * input2 = seedCell Id (use btkSelectSeedPoint)
+         * input3 = number of points needed in the ROI
+         * output = vtk file with the ROI points
+         */
         TCLAP::CmdLine cmd("Region growing calling btkRegionGrow", ' ', "1.0");
         TCLAP::ValueArg<std::string> inputFile("i", "input_file", "Input mesh triangle file corresponding to curvature mesh (vtk file)", true, "", "string");
         cmd.add(inputFile);
@@ -85,13 +90,8 @@ int main(int argc, char *argv[])
         std::string seed_cell = seedCell.getValue();
         int nb_points = numberOfPoints.getValue();
         std::string output_file = outputFile.getValue();
-//*****************************************
-// AICHA : PROGRAMME A COMMENTER !!!
-//*****************************************
 
-
-//-> read ?
-        // read
+        // read the input vtk file and store it in a vtkPolydata
         vtkSmartPointer<vtkPolyDataReader> reader = vtkSmartPointer<vtkPolyDataReader>::New();
         reader->SetFileName(input_file.c_str());
         reader->Update();
@@ -101,43 +101,45 @@ int main(int argc, char *argv[])
 
 
         // region growing
-//que fait cette fonction ? est-ce une fonctione VTK ? que font les 4 lignes suivantes ?
-        data->BuildLinks();
-        vtkIdType sp = 0;
-        std::istringstream buffer(seed_cell);
+        data->BuildLinks(); // Use this vtkPolydata method to build cell links of the input polydata -> Allows to find the link between each cell of the polydata and to find the point IDs shared by some cells
+        vtkIdType sp = 0; // seedPoint initialisation
+        std::istringstream buffer(seed_cell); // get the seedCell ID from the cmd line input
         buffer >> sp ;
-        vtkIdType  npts, *choosedPoints;
 
+        vtkIdType  npts, *choosedPoints;
         vtkIdType seedPoint;
         std::cout<<"Seed Cell ID = "<<seed_cell<<std::endl;
-        data->GetCellPoints(sp,npts,choosedPoints);
-        seedPoint = choosedPoints[1];
+        data->GetCellPoints(sp,npts,choosedPoints);// find the fist point listed in the choosed Seed Cell
+        seedPoint = choosedPoints[1]; // selected point ID
+
         std::cout<<"Start region grow..."<<std::endl;
-        std::vector<vtkIdType> sillon;
+        std::vector<vtkIdType> ROI; // region of interest -> vector of point IDs selected by region growing
         btkRegionGrow *region = btkRegionGrow::New();
         region->setPolydata(data);
         region->setSeedPoint(seedPoint);
         region->setNumberOfPoints(nb_points);
+        region->setNumberOfIterations(100);
         region->Update();
-        sillon = region->GetOutput();
+        ROI = region->GetOutput();
+
+        if (nb_points > ROI.size())
+            std::cout<< "Couldnt find more than "<<ROI.size()<< " points in the region of interest."<<std::endl;
 
 
-//sillon??? -> modifier le nom de cette variable !
-        if (nb_points > sillon.size())
-            std::cout<< "Couldnt find more than "<<sillon.size()<< " points in the region of interest."<<std::endl;
-
-
+        // Store the selected points as a vtkPolydata structure of points to be exported as a .vtk file
+        // A vtk polydata is a set of geometries and topologies for data structures
+        // Points = list of coordinates only -> Can't be visualized in vtk without a topology
+        // Verticies = Topology of the points (e.g, vertex, triangle, line...)
         vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();// geometry of the point
-//???
         vtkSmartPointer<vtkVertex> vertex = vtkSmartPointer<vtkVertex>::New();
-        vtkSmartPointer<vtkCellArray> verticies = vtkSmartPointer<vtkCellArray>::New();// topology
+        vtkSmartPointer<vtkCellArray> verticies = vtkSmartPointer<vtkCellArray>::New();// create the topology to be abble to visualize the points
 
         double pointCoords[3];
 
-//que fait le programme a partir d'ici?...
-        for(int i=0; i<sillon.size(); i++)
+        // for each point ID selected in the ROI vector, we add the coordinates in the vtkPoints structure and create the appropriate topology of a vertex for those coords
+        for(int i=0; i<ROI.size(); i++)
         {
-            data->GetPoint(sillon[i],pointCoords);
+            data->GetPoint(ROI[i],pointCoords);
             points->InsertNextPoint(pointCoords);
         }
         vertex->GetPointIds()->SetNumberOfIds(points->GetNumberOfPoints());
@@ -147,24 +149,32 @@ int main(int argc, char *argv[])
         }
         verticies->InsertNextCell(vertex);
 
+        // export the output vtk file containing the vtkPolydata listing points coordinates and verticies IDs
         vtkSmartPointer<vtkPolyData> output = vtkSmartPointer<vtkPolyData>::New();
         output->SetPoints(points);
         output->SetVerts(verticies);
 
-        // write
+        // write the output file
         vtkSmartPointer<vtkPolyDataWriter> writer = vtkSmartPointer<vtkPolyDataWriter>::New();
         writer->SetInput(output);
         writer->SetFileName(output_file.c_str());
         writer->Write();
 
         // Visualize the polydata with the resulting points from region grow (red points)
+
+        /* To visulize a vtkPolydata the current pipeline is necessary:
+         * First create a mapper using the appropriate mapper type corresponding to the data type: e.g vtkPolydata will be mapped by vtkPolyDataMapper
+         * Create an actor for each mapper (if there are several objects to be rendered): a mapper for the input mesh and one for the output points : both polydatas
+         * vtkRendere will take all the actors of each object and affect them to the vtkRenderWindow created: one only renderer taking both actors
+         * vtkRenderWindow is the OpenGl window called to be created
+         * vtkRenderWindowInteractor creates a camera and allows user interaction on the window such as turning objects ...
+         *
+         */
         vtkSmartPointer<vtkPolyDataMapper> mappercurv = vtkSmartPointer<vtkPolyDataMapper>::New();
         mappercurv->SetInput(data);
         mappercurv->ScalarVisibilityOff(); // turn off the visibility of the mesh mapper (curv) in order to be able to see the ROI only colored
         vtkSmartPointer<vtkActor> actorcurv = vtkSmartPointer<vtkActor>::New();
         actorcurv->SetMapper(mappercurv);
-
-//commenter le code du rendu, ou sinon donner des references VTK vers des exemples ...
         vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
         vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
         renderWindow->AddRenderer(renderer);
@@ -175,12 +185,12 @@ int main(int argc, char *argv[])
         vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
         mapper->SetInput(output);
         mapper->ScalarVisibilityOff();
-
         vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
         actor->SetMapper(mapper);
         actor->GetProperty()->SetPointSize(5);
         actor->GetProperty()->SetColor(1,0,0);
         renderer->AddActor(actor);
+
         renderWindow->Render();
         renderWindowInteractor->Start();
 
