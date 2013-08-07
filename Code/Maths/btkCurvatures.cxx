@@ -1,7 +1,45 @@
+/*==========================================================================
+
+  © Université de Strasbourg - Centre National de la Recherche Scientifique
+
+  Date: 08/04/2013
+  Author(s): Aïcha Bentaieb (abentaieb@unistra.fr)
+
+  This software is governed by the CeCILL-B license under French law and
+  abiding by the rules of distribution of free software.  You can  use,
+  modify and/ or redistribute the software under the terms of the CeCILL-B
+  license as circulated by CEA, CNRS and INRIA at the following URL
+  "http://www.cecill.info".
+
+  As a counterpart to the access to the source code and  rights to copy,
+  modify and redistribute granted by the license, users are provided only
+  with a limited warranty  and the software's author,  the holder of the
+  economic rights,  and the successive licensors  have only  limited
+  liability.
+
+  In this respect, the user's attention is drawn to the risks associated
+  with loading,  using,  modifying and/or developing or reproducing the
+  software by the user in light of its specific status of free software,
+  that may mean  that it is complicated to manipulate,  and  that  also
+  therefore means  that it is reserved for developers  and  experienced
+  professionals having in-depth computer knowledge. Users are therefore
+  encouraged to load and test the software's suitability as regards their
+  requirements in conditions enabling the security of their systems and/or
+  data to be ensured and,  more generally, to use and operate it in the
+  same conditions as regards security.
+
+  The fact that you are presently reading this means that you have had
+  knowledge of the CeCILL-B license and that you accept its terms.
+
+==========================================================================*/
 
 // BTK includes
 #include "btkCurvatures.h"
 
+
+//---------------------------------
+// AICHA: pourquoi ces fichiers ne sont-ils pas inclus dans btkCurvatures.h?
+//---------------------------------
 // VTK includes
 #include "vtkVersion.h"
 #include "vtkPolyData.h"
@@ -40,6 +78,12 @@ void btkCurvatures::GetCurvatureTensor(vtkPolyData *input)
         vtkErrorMacro("No points or cells to operate on");
         return;
     }
+
+
+//---------------------------------
+// AICHA: PLEASE DETAILS THE MEANING OF EACH VARIABLE (when it's not obvious .. like c0, c1, c2? etc)
+//---------------------------------
+
 
     // Create and allocate data for computation
     input->BuildLinks();
@@ -98,6 +142,9 @@ void btkCurvatures::GetCurvatureTensor(vtkPolyData *input)
     for(int i=0; i<numberOfVerticies; i++)
     {
 
+//---------------------------------
+// AICHA: pourquoi trois appels ? -> detailler ce que fait chaque fonction
+//---------------------------------		
         input->GetPointCells(i,numberOfCellsContainingVertex, cellIds); // get all cells containing i
         input->GetPoint(i,vertex_i);
         normals->GetTuple(i,normalVectorToVertex);
@@ -143,7 +190,7 @@ void btkCurvatures::GetCurvatureTensor(vtkPolyData *input)
             edge_ij[0] = vertex_j[0]-vertex_i[0];
             edge_ij[1] = vertex_j[1]-vertex_i[1];
             edge_ij[2] = vertex_j[2]-vertex_i[2];
-            // Projection of edge_ij onto the tangeant plane at the normal to vertex_i
+            // Projection of edge_ij onto the tangent plane at the normal to vertex_i
             dotProductOfNormalsToVertex = vtkMath::Dot(normalVectorToVertex,edge_ij);
             projectionVector_ij[0] = edge_ij[0] - normalVectorToVertex[0]*dotProductOfNormalsToVertex;
             projectionVector_ij[1] = edge_ij[1] - normalVectorToVertex[1]*dotProductOfNormalsToVertex;
@@ -152,6 +199,11 @@ void btkCurvatures::GetCurvatureTensor(vtkPolyData *input)
             // normal curvature in direction ij
             directionalCurv_ij = 2.0*dotProductOfNormalsToVertex/vtkMath::Norm(edge_ij);
             // matrix M_vi = directionalCurv_ij*totalArea_ij*projectionVector*projectionVector^t
+            
+//---------------------------------
+// AICHA: D'OU VIENT LA FORMULE DE M? Ref?
+//---------------------------------
+            
             M_vi[0][0] += totalTriangleAreas*directionalCurv_ij*projectionVector_ij[0]*projectionVector_ij[0];
             M_vi[1][0] += totalTriangleAreas*directionalCurv_ij*projectionVector_ij[1]*projectionVector_ij[0];
             M_vi[2][0] += totalTriangleAreas*directionalCurv_ij*projectionVector_ij[2]*projectionVector_ij[0];
@@ -393,6 +445,10 @@ int btkCurvatures::RequestData(
   vtkInformationVector *outputVector)
 {
   // get the info objects
+//---------------------------------
+// AICHA: c'est quoi l'info d'un objet???????
+//---------------------------------  
+  
   vtkInformation *inInfo = inputVector[0]->GetInformationObject(0);
   vtkInformation *outInfo = outputVector->GetInformationObject(0);
 
