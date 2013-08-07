@@ -59,6 +59,7 @@
 #include "vtkStreamingDemandDrivenPipeline.h"
 
 // VTK standard use for filters implementation
+
 vtkCxxRevisionMacro(btkCurvatures, "$Revision: 1.15 $");
 vtkStandardNewMacro(btkCurvatures);
 
