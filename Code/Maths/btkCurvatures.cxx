@@ -79,14 +79,8 @@ void btkCurvatures::GetCurvatureTensor(vtkPolyData *input)
         return;
     }
 
-
-//---------------------------------
-// AICHA: PLEASE DETAILS THE MEANING OF EACH VARIABLE (when it's not obvious .. like c0, c1, c2? etc)
-//---------------------------------
-
-
     // Create and allocate data for computation
-    input->BuildLinks();
+    input->BuildLinks(); // Need to build cell links in order to have access to each cell of the polydata
     int numberOfVerticies = input->GetNumberOfPoints();
     vtkSmartPointer<vtkIdList> neighboursList = vtkSmartPointer<vtkIdList>::New();
     unsigned short numberOfCellsContainingVertex;
@@ -115,12 +109,13 @@ void btkCurvatures::GetCurvatureTensor(vtkPolyData *input)
     double eigenvec0[3];
     double eigenvec1[3];
     double eigenvec2[3];
-    double c0[3], c1[3], c2[3];
+    double c0[3], c1[3], c2[3]; // stores the result of the cross product of each eigenvector (eigenvec0, eigenvec1, eigenvec2) with the normal vector to the computed vertex
     double lambda1 = 0.0, lambda2=0.0; // eigenvalues
     double K_1 = 0.0; // maximal direction curvature
     double K_2 = 0.0; // minimal direction curvature
     double S_i[3][3]; // curvature tensor
     double T_1[3], T_2[3]; // the two remaining eigenvectors of M_vi defining the principal directions
+    /* Initialisation of the output arrays that will contain the tensor, the principal, minimal and maximal curvatures */
     vtkDoubleArray* curvatureTensor = vtkDoubleArray::New();
     curvatureTensor->SetName("Curvature Tensor");
     curvatureTensor->SetNumberOfComponents(9);
@@ -135,19 +130,16 @@ void btkCurvatures::GetCurvatureTensor(vtkPolyData *input)
     minCurvature->SetNumberOfTuples(numberOfVerticies);
     vtkDoubleArray* principalCurvatures = vtkDoubleArray::New();
     principalCurvatures->SetName("Principal Curvatures");
-    principalCurvatures->SetNumberOfComponents(2);
+    principalCurvatures->SetNumberOfComponents(2); // k1 and k2 are the principal curvatures to be stored in this array
     principalCurvatures->SetNumberOfTuples(numberOfVerticies);
 
     // main loop
     for(int i=0; i<numberOfVerticies; i++)
     {
 
-//---------------------------------
-// AICHA: pourquoi trois appels ? -> detailler ce que fait chaque fonction
-//---------------------------------		
-        input->GetPointCells(i,numberOfCellsContainingVertex, cellIds); // get all cells containing i
-        input->GetPoint(i,vertex_i);
-        normals->GetTuple(i,normalVectorToVertex);
+        input->GetPointCells(i,numberOfCellsContainingVertex, cellIds); // get all cells containing i and store their ids in cellIds list -> Used to find the vertices sharing cells with the current vertex i
+        input->GetPoint(i,vertex_i); // get the coordinates of the vertex i and store it in the array vertex_i[3]
+        normals->GetTuple(i,normalVectorToVertex); // get the normal vector to the vertex i (store it in normalVectorToVertex[3])
 
         // Reset the neighbours list and the Matrix M_vi for each vertex i
         neighboursList->Reset();
@@ -159,22 +151,23 @@ void btkCurvatures::GetCurvatureTensor(vtkPolyData *input)
             }
         }
 
-        // find the neighbours of i
+        // find the neighbours of i - the neighbours share common cells - all the verticies listed in a cell where i is contained are neighbours of i
         for(int c=0; c<numberOfCellsContainingVertex; c++)
         {
-            input->GetCellPoints(cellIds[c], numberOfPointsInCell, points);
+            input->GetCellPoints(cellIds[c], numberOfPointsInCell, points); // get all the points of the cell Id c
             for(int j=0; j<numberOfPointsInCell; j++)
             {
-                if(points[j] != i)
+                if(points[j] != i) // for all the points different from i
                 {
-                    neighboursList->InsertNextId(points[j]);
+                    neighboursList->InsertNextId(points[j]); // listing all the neighbours Ids (neighboursList)
                 }
             }
         }
 
-        // compute the edge projection on the tangeant plane to normal to vertex_i
+        // compute the edge projection on the tangeant plane to the normal to vertex_i
         for(int j=0; j<(neighboursList->GetNumberOfIds()); j++ )
         {
+            // for each neighbour j of i, get the coordinates to find the three points of the triangle where i is contributing : all the (i,j,k) triangles
             if(j == neighboursList->GetNumberOfIds()-1)
             {
                 input->GetPoint(neighboursList->GetId(j), vertex_j);
@@ -185,25 +178,31 @@ void btkCurvatures::GetCurvatureTensor(vtkPolyData *input)
                 input->GetPoint(neighboursList->GetId(j), vertex_j);
                 input->GetPoint(neighboursList->GetId(j+1), vertex_k);
             }
+
+            // the area of each triangle is used as a weighting parameter in the formulation of Taubin's tensor
             triangleArea = vtkTriangle::TriangleArea(vertex_i, vertex_j, vertex_k);
             totalTriangleAreas += triangleArea;
+
             edge_ij[0] = vertex_j[0]-vertex_i[0];
             edge_ij[1] = vertex_j[1]-vertex_i[1];
             edge_ij[2] = vertex_j[2]-vertex_i[2];
+
             // Projection of edge_ij onto the tangent plane at the normal to vertex_i
             dotProductOfNormalsToVertex = vtkMath::Dot(normalVectorToVertex,edge_ij);
             projectionVector_ij[0] = edge_ij[0] - normalVectorToVertex[0]*dotProductOfNormalsToVertex;
             projectionVector_ij[1] = edge_ij[1] - normalVectorToVertex[1]*dotProductOfNormalsToVertex;
             projectionVector_ij[2] = edge_ij[2] - normalVectorToVertex[2]*dotProductOfNormalsToVertex;
             vtkMath::Normalize(projectionVector_ij);
+
             // normal curvature in direction ij
             directionalCurv_ij = 2.0*dotProductOfNormalsToVertex/vtkMath::Norm(edge_ij);
-            // matrix M_vi = directionalCurv_ij*totalArea_ij*projectionVector*projectionVector^t
-            
-//---------------------------------
-// AICHA: D'OU VIENT LA FORMULE DE M? Ref?
-//---------------------------------
-            
+
+            /* Taubin's approxiamtion matrix M_vi = directionalCurv_ij*totalArea_ij*projectionVector*projectionVector^t
+             * M_vi is the weighted sum over all neighbours of i
+             * Article :  ESTIMATING THE TENSOR OF CURVATURE OF A SURFACE FROM A POLYHEDRAL APPROXIMATION
+             *            Gabriel Taubin
+             */
+
             M_vi[0][0] += totalTriangleAreas*directionalCurv_ij*projectionVector_ij[0]*projectionVector_ij[0];
             M_vi[1][0] += totalTriangleAreas*directionalCurv_ij*projectionVector_ij[1]*projectionVector_ij[0];
             M_vi[2][0] += totalTriangleAreas*directionalCurv_ij*projectionVector_ij[2]*projectionVector_ij[0];
@@ -227,6 +226,7 @@ void btkCurvatures::GetCurvatureTensor(vtkPolyData *input)
         vtkMath::Cross(eigenvec0,normalVectorToVertex,c0);
         vtkMath::Cross(eigenvec1,normalVectorToVertex,c1);
         vtkMath::Cross(eigenvec2,normalVectorToVertex,c2);
+        // Check which eigenvalue to consider to compute eigenvectors. As the cross product can't be completely equal to zero we set a tolerance to accept the eigenvalues
         if(vtkMath::Norm(c0)<Tolerance)
         {
             lambda1 = eigenvalues[1];
@@ -278,6 +278,7 @@ void btkCurvatures::GetCurvatureTensor(vtkPolyData *input)
 
     }// loop over all verticies
 
+    // Affect each data set with its appropriate content
     input->GetPointData()->SetTensors(curvatureTensor);
     input->GetPointData()->SetVectors(maxCurvature);
     input->GetPointData()->SetVectors(minCurvature);
@@ -305,13 +306,15 @@ void btkCurvatures::GetGaussCurvature(vtkPolyData * input)
     // Data Array initialization
     this->GetCurvatureTensor(input);
     int numberOfVerticies = input->GetNumberOfPoints();
+    // initialize the array that will contain the values of gaussian curvature
     vtkDoubleArray* gaussCurvature = vtkDoubleArray::New();
     gaussCurvature->SetName("Gauss_Curvature");
     gaussCurvature->SetNumberOfComponents(1);
     gaussCurvature->SetNumberOfTuples(numberOfVerticies);
     double *gaussCurvatureData = gaussCurvature->GetPointer(0);
+    // the gaussian curvature is computed according to the principal curvatures got from the tensor of curvature with Taubin's formulation
     vtkDoubleArray *principalCurvatures = vtkDoubleArray::New();
-    principalCurvatures = static_cast<vtkDoubleArray*>(input->GetPointData()->GetArray("Principal Curvatures"));
+    principalCurvatures = static_cast<vtkDoubleArray*>(input->GetPointData()->GetArray("Principal Curvatures"));// get the principal curvatures from computing the tensor of curvature
     double K_1 = 0.0;
     double K_2 = 0.0;
 
@@ -367,7 +370,6 @@ void btkCurvatures::GetBarCurvature(vtkPolyData *input)
     vtkDebugMacro("Start btkCurvatures::GetBarCurvature()");
     // Data Array initialization
     this->GetCurvatureTensor(input);
-//    input->BuildLinks();
     int numberOfVerticies = input->GetNumberOfPoints();
     double barycenterOfNeighbourhood[3];
     double vectorIG[3];
@@ -439,15 +441,19 @@ void btkCurvatures::GetBarCurvature(vtkPolyData *input)
 }
 
 //--------------------------------------------------------------------------------------------------------
+
+/* Standard filter implementation needed for vtk algorithm - there are three elements needed to create a new vtk pipeline:
+ * vtkInformation: class to use when passing information up or down the pipeline (or from the executive to the algorithm)
+ * vtkInformationVector class is used for storing vectors of information objects
+ * vtkDataObject: this class is used to store data of the pipeline (output points, scalars, arrays)
+ * These objects are subclasses of the main class vtkPolyDataAlgorithm called in btkCurvatures.h
+ */
+
 int btkCurvatures::RequestData(
   vtkInformation *vtkNotUsed(request),
   vtkInformationVector **inputVector,
   vtkInformationVector *outputVector)
 {
-  // get the info objects
-//---------------------------------
-// AICHA: c'est quoi l'info d'un objet???????
-//---------------------------------  
   
   vtkInformation *inInfo = inputVector[0]->GetInformationObject(0);
   vtkInformation *outInfo = outputVector->GetInformationObject(0);
