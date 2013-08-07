@@ -50,6 +50,10 @@
 #define CURVATURE_MEAN 2
 #define CURVATURE_BAR 3
 
+//-------------------------------------------
+//AICHA : pourquoi VTK_GRAPHICS_EXPORT ?
+//-------------------------------------------
+
 class VTK_GRAPHICS_EXPORT btkCurvatures : public vtkPolyDataAlgorithm
 {
 public:

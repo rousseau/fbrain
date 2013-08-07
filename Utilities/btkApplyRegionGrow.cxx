@@ -85,7 +85,12 @@ int main(int argc, char *argv[])
         std::string seed_cell = seedCell.getValue();
         int nb_points = numberOfPoints.getValue();
         std::string output_file = outputFile.getValue();
+//*****************************************
+// AICHA : PROGRAMME A COMMENTER !!!
+//*****************************************
 
+
+//-> read ?
         // read
         vtkSmartPointer<vtkPolyDataReader> reader = vtkSmartPointer<vtkPolyDataReader>::New();
         reader->SetFileName(input_file.c_str());
@@ -96,6 +101,7 @@ int main(int argc, char *argv[])
 
 
         // region growing
+//que fait cette fonction ? est-ce une fonctione VTK ? que font les 4 lignes suivantes ?
         data->BuildLinks();
         vtkIdType sp = 0;
         std::istringstream buffer(seed_cell);
@@ -115,16 +121,20 @@ int main(int argc, char *argv[])
         region->Update();
         sillon = region->GetOutput();
 
+
+//sillon??? -> modifier le nom de cette variable !
         if (nb_points > sillon.size())
             std::cout<< "Couldnt find more than "<<sillon.size()<< " points in the region of interest."<<std::endl;
 
 
         vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();// geometry of the point
+//???
         vtkSmartPointer<vtkVertex> vertex = vtkSmartPointer<vtkVertex>::New();
         vtkSmartPointer<vtkCellArray> verticies = vtkSmartPointer<vtkCellArray>::New();// topology
 
         double pointCoords[3];
 
+//que fait le programme a partir d'ici?...
         for(int i=0; i<sillon.size(); i++)
         {
             data->GetPoint(sillon[i],pointCoords);
@@ -154,6 +164,7 @@ int main(int argc, char *argv[])
         vtkSmartPointer<vtkActor> actorcurv = vtkSmartPointer<vtkActor>::New();
         actorcurv->SetMapper(mappercurv);
 
+//commenter le code du rendu, ou sinon donner des references VTK vers des exemples ...
         vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
         vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
         renderWindow->AddRenderer(renderer);
