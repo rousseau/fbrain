@@ -190,6 +190,8 @@ int main(int argc, char** argv)
         cmd.add(controlEventMeasurementArg);
         TCLAP::MultiArg<std::string> outputFiles("o", "output", "Txt file with the probabilities of each sequence of event and TXT file with all the possible combinations after MCMC",true,"string" );
         cmd.add(outputFiles);
+        TCLAP::ValueArg<int> numberOfIterations("n", "it", "Number of Iterations for MCMC computation, default = 5000", false, 5000, "integer");
+        cmd.add(numberOfIterations);
 
         cmd.parse(argc,argv);
 
@@ -197,6 +199,7 @@ int main(int argc, char** argv)
         std::vector<std::string> patientsMeasurementFiles = patientEventMeasurementArg.getValue();
         std::vector<std::string> controlsMeasurementFiles = controlEventMeasurementArg.getValue();
         std::vector<std::string>  output = outputFiles.getValue();
+        int it = numberOfIterations.getValue();
 
         std::cout<< "Number of events considered: "<< patientsMeasurementFiles.size()<<"\n";
         for (unsigned int i=0; i<patientsMeasurementFiles.size(); i++)
@@ -380,7 +383,7 @@ int main(int argc, char** argv)
          */
         std::cout << "Computing MCMC optimization ... "<< std::endl;
 
-        std::vector<std::vector<int> > allPossibilities(500, std::vector<int>(NumberOfEvents,0) );
+        std::vector<std::vector<int> > allPossibilities(it, std::vector<int>(NumberOfEvents,0) );
         std::vector<int> initialS = allPossibilities[0]; // initial sequence choosed as the one with maximum likelihood
 
         double maxLikelihoodIdx = std::distance(likelihoodPerSequence, std::max_element(likelihoodPerSequence, likelihoodPerSequence+combinations));
