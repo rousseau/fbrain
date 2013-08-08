@@ -46,6 +46,7 @@
 #include <sstream>
 #include <algorithm>
 #include <numeric>
+#include <math.h>
 
 
 
@@ -101,12 +102,13 @@ double PXS( std::vector<std::vector<double> >patientMeasurement,std::vector<std:
             for( int e=0; e<=order; e++)
             {
                 int event = sequence[e];
-                meanE = distributionParamsPatients[0][event];
-                stdevE = distributionParamsPatients[1][event];
+                meanE = distributionParamsPatients[0][event-1];
+                stdevE = distributionParamsPatients[1][event-1];
                 itk::Statistics::GaussianDistribution::Pointer gaussian = itk::Statistics::GaussianDistribution::New();
                 gaussian->SetMean(meanE);
                 gaussian->SetVariance(stdevE);
                 PEk = PEk * (gaussian->EvaluatePDF(patientMeasurement[j][event]));
+
             }
             /* Events that didnt occur */
             if (order != N-1)
@@ -114,13 +116,14 @@ double PXS( std::vector<std::vector<double> >patientMeasurement,std::vector<std:
                 for( int Ne = order+1; Ne<=N-1; Ne++)
                {
                     int Nevent = sequence[Ne];
-                    meanNE = distributionParamsControl[0][Nevent];
-                    stdevNE = distributionParamsControl[1][Nevent];
+                    meanNE = distributionParamsControl[0][Nevent-1];
+                    stdevNE = distributionParamsControl[1][Nevent-1];
                     itk::Statistics::GaussianDistribution::Pointer gaussianC = itk::Statistics::GaussianDistribution::New();
                     gaussianC->SetMean(meanNE);
                     gaussianC->SetVariance(stdevNE);
-                    PNEk = PNEk * (gaussianC->EvaluatePDF(controlMeasurement[j][Nevent]));
+                    PNEk = PNEk * (gaussianC->EvaluatePDF(controlMeasurement[j][Nevent-1]));
                }
+
             }
 
             likelihood.push_back( (PEk * PNEk)/N );
@@ -140,7 +143,6 @@ double PXS( std::vector<std::vector<double> >patientMeasurement,std::vector<std:
         patientLikelihood[i] = std::log(patientLikelihood[i]);
         P += patientLikelihood[i];
     }
-
 
     return P;
 
@@ -285,6 +287,7 @@ int main(int argc, char** argv)
          * =======================================================================================================================
          */
 
+        std::cout<<"Computing mean and stdev for each event ..."<<std::endl;
         std::vector<double> Event_i;
         std::vector<double> NEvent_i;
         std::vector<std::vector<double> > distributionParametersPatients(2, std::vector<double>(NumberOfEvents) ); // for each event, store the mean and the stdev
@@ -313,6 +316,8 @@ int main(int argc, char** argv)
 
         }
 
+        std::cout<<"done"<<std::endl;
+
         /* =======================================================================================================================
          * Fonteijn algorithm:
          * =======================================================================================================================
@@ -321,8 +326,9 @@ int main(int argc, char** argv)
         // 1. find all the possible event combinations (S)
 
         int combinations = fact(NumberOfEvents);
-        std::cout << "The n! possible permutations with"<< NumberOfEvents<<" elements: " << combinations<<std::endl;
+        std::cout << "There are "<< combinations<<" possible permutations with "<< NumberOfEvents<<" elements: " <<std::endl;
 
+        std::cout << "Likelihood per sequence computation ... "<< std::endl;
         std::vector<std::vector<int> > sequences( combinations, std::vector<int>(NumberOfEvents,0) );
         std::vector<int> row = sequences[0];
 
@@ -366,12 +372,15 @@ int main(int argc, char** argv)
         else
             std::cerr << "ERROR, impossible to open file !" << std::endl;
 
+        std::cout << "Likelihoods saved to output file 1"<< std::endl;
 
         /* ========================================================================================================================
          * Optimization step = Markov Chains
          * ========================================================================================================================
          */
-        std::vector<std::vector<int> > allPossibilities(5000, std::vector<int>(NumberOfEvents,0) );
+        std::cout << "Computing MCMC optimization ... "<< std::endl;
+
+        std::vector<std::vector<int> > allPossibilities(500, std::vector<int>(NumberOfEvents,0) );
         std::vector<int> initialS = allPossibilities[0]; // initial sequence choosed as the one with maximum likelihood
 
         double maxLikelihoodIdx = std::distance(likelihoodPerSequence, std::max_element(likelihoodPerSequence, likelihoodPerSequence+combinations));
@@ -389,7 +398,6 @@ int main(int argc, char** argv)
         for (int i=0; i<allPossibilities.size(); i++) // 5000 itterations
         {
             int rand = std::rand() % NumberOfEvents;
-
             if(rand == 0)
             {
                 swapS[rand] = initialS[rand+1];
@@ -411,6 +419,7 @@ int main(int argc, char** argv)
             {
                 initialS = swapS;
             }
+
             // store combinations
             for (int j=0; j<initialS.size(); j++)
             {
@@ -419,6 +428,7 @@ int main(int argc, char** argv)
             }
 
         }
+
 
         // Output all the combinations in a txt file
         std::ofstream Ofile2(output[1].c_str());
@@ -437,6 +447,49 @@ int main(int argc, char** argv)
         else
             std::cerr << "ERROR, impossible to open second output file !" << std::endl;
 
+        std::cout << "Possible sequences swaps saved in output file 2"<< std::endl;
+        /* ========================================================================================================================
+         * Computing variance of each order at each position from the output of MCMC
+         * ========================================================================================================================
+         */
+        std::cout << "Computing variance estimation ... "<< std::endl;
+
+        std::vector<std::vector<int> >variance(NumberOfEvents, std::vector<int>(NumberOfEvents));
+        for(int l=0; l<allPossibilities.size(); l++)
+        {
+            for( int e=0; e<NumberOfEvents; e++)
+            {
+                for(int pos=0; pos<variance.size(); pos++)
+                {
+                    if ( allPossibilities[l][e] == pos+1)
+                    {
+                        variance[pos][e] = variance[pos][e] + 1;
+                    }
+
+                }
+            }
+        }
+
+        // Output all the combinations in a txt file
+        std::ofstream Ofile3(output[2].c_str());
+        if(Ofile3)
+        {
+            for(int i=0; i<variance.size(); i++)
+            {
+                for (int j=0; j<NumberOfEvents; j++)
+                {
+                    Ofile3 << variance[i][j] <<  "\t" ;
+                }
+                Ofile3 << '\n';
+            }
+            Ofile3.close();
+        }
+        else
+            std::cerr << "ERROR, impossible to open third output file !" << std::endl;
+
+        std::cout << "Variances saved to output file 3"<< std::endl;
+
+        std::cout<< "END OF PROCESS !"<<std::endl;
 
     }catch (TCLAP::ArgException &e)  // catch any exceptions
     { std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; }
