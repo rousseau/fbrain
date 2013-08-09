@@ -107,7 +107,7 @@ double PXS( std::vector<std::vector<double> >patientMeasurement,std::vector<std:
                 itk::Statistics::GaussianDistribution::Pointer gaussian = itk::Statistics::GaussianDistribution::New();
                 gaussian->SetMean(meanE);
                 gaussian->SetVariance(stdevE);
-                PEk = PEk * (gaussian->EvaluatePDF(patientMeasurement[j][event]));
+                PEk = PEk * (gaussian->EvaluatePDF(patientMeasurement[j][event-1]));
 
             }
             /* Events that didnt occur */
