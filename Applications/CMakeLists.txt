@@ -272,3 +272,17 @@ TARGET_LINK_LIBRARIES(btkOutliersCorrection btkToolsLibrary btkDiffusionLibrary 
 INSTALL(TARGETS
     btkOutliersCorrection
 DESTINATION bin)
+
+
+# ---- Feature selection ----------------------------------------------------------------
+
+include_directories(
+    ${Code_SOURCE_DIR}/FeatureSelection
+)
+
+add_executable(btkFeatureSelection btkFeatureSelection.cxx)
+target_link_libraries(btkFeatureSelection ${ITK_LIBRARIES} btkFeatureSelectionLibrary)
+
+install(TARGETS
+    btkFeatureSelection
+DESTINATION bin)

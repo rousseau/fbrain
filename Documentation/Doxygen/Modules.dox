@@ -34,6 +34,10 @@
  * @defgroup ImageFilters Image filters
  */
 
+/**
+ * @defgroup FeatureSelection Feature selection for space reduction
+ */
+
 
 
 /**

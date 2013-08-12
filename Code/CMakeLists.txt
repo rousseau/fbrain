@@ -3,11 +3,12 @@ INCLUDE_REGULAR_EXPRESSION("^.*$")
 
 #---- Directories -----------------------------------------------------------------------
 
-SET(TOOLS_LIBRARY_SOURCE_DIR        ${Code_SOURCE_DIR}/Tools)
-SET(MATHS_LIBRARY_SOURCE_DIR        ${Code_SOURCE_DIR}/Maths)
-SET(DENOISING_LIBRARY_SOURCE_DIR    ${Code_SOURCE_DIR}/Denoising)
-SET(DIFFUSION_LIBRARY_SOURCE_DIR    ${Code_SOURCE_DIR}/Diffusion)
-SET(TRACTOGRAPHY_LIBRARY_SOURCE_DIR ${Code_SOURCE_DIR}/Tractography)
+SET(TOOLS_LIBRARY_SOURCE_DIR             ${Code_SOURCE_DIR}/Tools)
+SET(MATHS_LIBRARY_SOURCE_DIR             ${Code_SOURCE_DIR}/Maths)
+SET(DENOISING_LIBRARY_SOURCE_DIR         ${Code_SOURCE_DIR}/Denoising)
+SET(DIFFUSION_LIBRARY_SOURCE_DIR         ${Code_SOURCE_DIR}/Diffusion)
+SET(TRACTOGRAPHY_LIBRARY_SOURCE_DIR      ${Code_SOURCE_DIR}/Tractography)
+set(FEATURE_SELECTION_LIBRARY_SOURCE_DIR ${Code_SOURCE_DIR}/FeatureSelection)
 
 IF(BUILD_TESTING)
     SET(MATHS_TESTS_SOURCE_DIR ${MATHS_LIBRARY_SOURCE_DIR}/Tests)
@@ -19,6 +20,7 @@ INCLUDE_DIRECTORIES(
     ${DIFFUSION_LIBRARY_SOURCE_DIR}
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}
     ${DENOISING_LIBRARY_SOURCE_DIR}
+    ${FEATURE_SELECTION_LIBRARY_SOURCE_DIR}
 )
 
 #---- Tools library ---------------------------------------------------------------------
@@ -187,3 +189,23 @@ SET(TRACTOGRAPHY_LIBRARY_SOURCES
 
 ADD_LIBRARY(btkTractographyLibrary STATIC ${TRACTOGRAPHY_LIBRARY_HEADER} ${TRACTOGRAPHY_LIBRARY_SOURCES})
 TARGET_LINK_LIBRARIES(btkTractographyLibrary ${ITK_LIBRARIES})
+
+
+#---- Feature selection library ---------------------------------------------------------
+
+set(FEATURE_SELECTION_LIBRARY_HEADER
+    ${FEATURE_SELECTION_LIBRARY_SOURCE_DIR}/btkFeatureSelectionCostFunction.h
+    ${FEATURE_SELECTION_LIBRARY_SOURCE_DIR}/btkNadarayaWatsonReconstructionErrorFunction.h
+    ${FEATURE_SELECTION_LIBRARY_SOURCE_DIR}/btkFeatureSelectionAlgorithm.h
+    ${FEATURE_SELECTION_LIBRARY_SOURCE_DIR}/btkGreedyFeatureSelectionAlgorithm.h
+    ${FEATURE_SELECTION_LIBRARY_SOURCE_DIR}/btkFeatureSelectionCommandIterationUpdate.h
+)
+
+set(FEATURE_SELECTION_LIBRARY_SOURCES
+    ${FEATURE_SELECTION_LIBRARY_SOURCE_DIR}/btkFeatureSelectionCostFunction.cxx
+    ${FEATURE_SELECTION_LIBRARY_SOURCE_DIR}/btkNadarayaWatsonReconstructionErrorFunction.cxx
+    ${FEATURE_SELECTION_LIBRARY_SOURCE_DIR}/btkFeatureSelectionAlgorithm.cxx
+    ${FEATURE_SELECTION_LIBRARY_SOURCE_DIR}/btkGreedyFeatureSelectionAlgorithm.cxx
+)
+
+add_library(btkFeatureSelectionLibrary STATIC ${FEATURE_SELECTION_LIBRARY_HEADER} ${FEATURE_SELECTION_LIBRARY_SOURCES})
