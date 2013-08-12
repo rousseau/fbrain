@@ -34,6 +34,9 @@
 ==========================================================================*/
 #include "btkRegionGrow.h"
 
+// STL includes
+#include "cmath"
+
 // VTK includes used in functions declared below
 #include "vtkSmartPointer.h"
 #include "vtkPolyData.h"
@@ -179,7 +182,7 @@ void btkRegionGrow::growing(vtkIdType m_SeedPoint , int m_numberOfPoints)
 
 
             // Check if the curvature value between the seedPoint and the neighbouring points is filling the criterion and decrease -> in that case add the value to the list of point IDs of the ROI
-            if( (std::fabs(curv_i) <= std::fabs(curv)) && (this->isInside(currentNeighbour, m_Vec) == false) /*&& (angle < 15)*/)
+            if( (std::abs(curv_i) <= std::abs(curv)) && (this->isInside(currentNeighbour, m_Vec) == false) /*&& (angle < 15)*/)
             {
                 m_SeedPoint = currentNeighbour;
                 growing(m_SeedPoint, m_numberOfPoints); // compute the region grow from the new seedPoint (first neighbour selected)
