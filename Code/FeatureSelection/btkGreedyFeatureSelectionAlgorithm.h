@@ -51,7 +51,7 @@ namespace btk
 /**
  * @brief Genetic algorithm used for feature selection.
  * @author Julien Pontabry
- * @group FeatureSelection
+ * @ingroup FeatureSelection
  */
 class GreedyFeatureSelectionAlgorithm : public FeatureSelectionAlgorithm
 {

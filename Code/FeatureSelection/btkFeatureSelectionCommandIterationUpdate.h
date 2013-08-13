@@ -49,7 +49,7 @@ namespace btk
 /**
  * @brief Commandline iteration observer for feature selection algorithm.
  * @author Julien Pontabry
- * @group FeatureSelection
+ * @ingroup FeatureSelection
  */
 class FeatureSelectionCommandIterationUpdate : public itk::Command
 {

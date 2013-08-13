@@ -56,7 +56,7 @@ namespace btk
 /**
  * @brief Algorithm base class for feature selection of parameters.
  * @author Julien Pontabry
- * @group FeatureSelection
+ * @ingroup FeatureSelection
  */
 class FeatureSelectionAlgorithm : public itk::ProcessObject
 {

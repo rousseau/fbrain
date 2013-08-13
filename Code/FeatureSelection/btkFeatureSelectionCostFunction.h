@@ -53,7 +53,7 @@ namespace btk
 /**
  * @brief Cost function used for feature selection.
  * @author Julien Pontabry
- * @group FeatureSelection
+ * @ingroup FeatureSelection
  */
 class FeatureSelectionCostFunction : public itk::ProcessObject
 {

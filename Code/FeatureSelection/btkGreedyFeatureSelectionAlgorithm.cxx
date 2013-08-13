@@ -74,7 +74,7 @@ void GreedyFeatureSelectionAlgorithm::Update()
     bool                        stability = false;
     unsigned int numberOfActiveParameters = 0;
 
-    double minCost = 1e6 * m_CostFunction->Evaluate();
+    double minCost = m_CostFunction->Evaluate();
 
 
     while(numberOfActiveParameters <= m_MaxNumberOfParameters && !stability)

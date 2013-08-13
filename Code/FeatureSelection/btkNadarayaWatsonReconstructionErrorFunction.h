@@ -49,7 +49,7 @@ namespace btk
 /**
  * @brief Cost function for feature selection using kernels.
  * @author Julien Pontabry
- * @group FeatureSelection
+ * @ingroup FeatureSelection
  */
 class NadarayaWatsonReconstructionErrorFunction : public FeatureSelectionCostFunction
 {
