@@ -51,8 +51,9 @@ namespace btk
 {
 
 /**
- * @brief Cost function used for feature selection.
+ * @brief Base class for cost function used by feature selection algorithm.
  * @author Julien Pontabry
+ * @date 09/01/2013
  * @ingroup FeatureSelection
  */
 class FeatureSelectionCostFunction : public itk::ProcessObject

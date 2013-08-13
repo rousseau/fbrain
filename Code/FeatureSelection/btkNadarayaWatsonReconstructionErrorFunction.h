@@ -47,9 +47,13 @@ namespace btk
 {
 
 /**
- * @brief Cost function for feature selection using kernels.
+ * @brief Kernel regression based cost function used for feature selection algorithm.
  * @author Julien Pontabry
+ * @date 09/01/2013
  * @ingroup FeatureSelection
+ *
+ * This cost function is the reconstruction error of a kernel regression function.
+ * The Nadaraya-Watson estimator is used with a Gaussian kernel.
  */
 class NadarayaWatsonReconstructionErrorFunction : public FeatureSelectionCostFunction
 {

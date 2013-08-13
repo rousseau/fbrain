@@ -46,7 +46,7 @@
 namespace btk
 {
 
-GreedyFeatureSelectionAlgorithm::GreedyFeatureSelectionAlgorithm() : m_CurrentIteration(0), Superclass()
+GreedyFeatureSelectionAlgorithm::GreedyFeatureSelectionAlgorithm() : Superclass()
 {
     // ----
 }
@@ -141,7 +141,6 @@ void GreedyFeatureSelectionAlgorithm::Update()
     // Set outputs
     m_WeightsVector = new vnl_vector< short >(w);
     m_EnergyVector = new vnl_vector< double >(e);
-    m_UnexplainedVariance = minCost;
 }
 
 } // namespace btk

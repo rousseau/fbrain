@@ -54,8 +54,9 @@ namespace btk
 {
 
 /**
- * @brief Algorithm base class for feature selection of parameters.
+ * @brief Base class for feature selection algorithm.
  * @author Julien Pontabry
+ * @date 07/01/2012
  * @ingroup FeatureSelection
  */
 class FeatureSelectionAlgorithm : public itk::ProcessObject
@@ -82,7 +83,9 @@ class FeatureSelectionAlgorithm : public itk::ProcessObject
         btkGetMacro(MaxNumberOfParameters, unsigned int);
         btkSetMacro(MaxNumberOfParameters, unsigned int);
 
-        btkGetMacro(UnexplainedVariance, double);
+        btkGetMacro(CurrentIteration, unsigned int);
+
+        btkGetMacro(CurrentMessage, std::string);
 
     protected:
         /**
@@ -134,9 +137,14 @@ class FeatureSelectionAlgorithm : public itk::ProcessObject
         unsigned int m_MaxNumberOfParameters;
 
         /**
-         * @brief Unexplained variance.
+         * @brief Current iteration of the greedy iterative search.
          */
-        double m_UnexplainedVariance;
+        unsigned int m_CurrentIteration;
+
+        /**
+         * @brief Current message of the current iteration.
+         */
+        std::string m_CurrentMessage;
 };
 
 } // namespace btk

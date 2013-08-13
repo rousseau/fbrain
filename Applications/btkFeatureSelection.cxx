@@ -33,11 +33,17 @@
 
 ==========================================================================*/
 
-/*!
+/**
  * @file btkFeatureSelection.cxx
  * @author Julien Pontabry
  * @date 19/12/2012
+ * @ingroup FeatureSelection
  * @brief Space reduction program by feature selection.
+ *
+ * Reduce the space of a set of displacement fields by a greedy feature selection algorithm. The features are the vectors.
+ * As input, there should be at least the displacement fields (and eventually weights for these fields) and a mask.
+ * The program produces two outputs: a mask pointing the location of the selected features and an explained variance map,
+ * expressed as percent of total variance.
  */
 
 // TCLAP includes
@@ -71,11 +77,15 @@
 typedef itk::DisplacementFieldTransform< double,3 >::DisplacementFieldType DisplacementField;
 typedef itk::ImageRegionIterator< DisplacementField >                      DisplacementFieldIterator;
 
+
 typedef itk::Image< unsigned char,3 >         ImageMask;
 typedef itk::ImageMaskSpatialObject< 3 >      Mask;
 typedef itk::ImageRegionIterator< ImageMask > ImageMaskIterator;
 
 
+/**
+ * @brief Main function of the program.
+ */
 int main(int argc, char *argv[])
 {
     try
@@ -253,12 +263,6 @@ int main(int argc, char *argv[])
         // Get energy vector
         vnl_vector< double > &energy = *spaceReduction->GetEnergyVector();
 
-        // Compute unexplained variance
-        double    unexplainedVariance = spaceReduction->GetUnexplainedVariance();
-        double unexplainedVariancePct = 100.0 * (unexplainedVariance / energy.sum());
-
-        btkCoutMacro("\t-> Unexplained variance: " << unexplainedVariance << " (" << unexplainedVariancePct << " %).");
-
         std::cout << "done." << std::endl;
 
 
@@ -294,8 +298,8 @@ int main(int argc, char *argv[])
 
 
         // Write it
-        btk::ImageHelper< ImageMask >::WriteImage(maskOutput, outputPrefix+"_mask.nii.gz");
-        btk::ImageHelper< itk::Image< double,3 > >::WriteImage(energyOutput, outputPrefix+"_energy.nii.gz");
+        btk::ImageHelper< ImageMask >::WriteImage(maskOutput, outputPrefix+"_selected-features.nii.gz");
+        btk::ImageHelper< itk::Image< double,3 > >::WriteImage(energyOutput, outputPrefix+"_explained-variance.nii.gz");
 
         std::cout << "done." << std::endl;
     }

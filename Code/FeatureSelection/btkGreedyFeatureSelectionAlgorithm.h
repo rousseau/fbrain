@@ -49,9 +49,17 @@ namespace btk
 {
 
 /**
- * @brief Genetic algorithm used for feature selection.
+ * @brief Greedy algorithm used for feature selection.
  * @author Julien Pontabry
+ * @date 15/01/2013
  * @ingroup FeatureSelection
+ *
+ * This is an implementation of the sequential floating search forward-backward (SFS)
+ * from Pudil et al. (1994). The initial algorithm has been adapted for our purpose
+ * (search minimal set of features based on regression reconstruction error).
+ *
+ * Pudil et al. (1994) Floating search methods in feature selection. In: Pattern Recognition
+ * Letters 15.11, p. 1119-1125.
  */
 class GreedyFeatureSelectionAlgorithm : public FeatureSelectionAlgorithm
 {
@@ -64,9 +72,6 @@ class GreedyFeatureSelectionAlgorithm : public FeatureSelectionAlgorithm
         itkTypeMacro(GreedyFeatureSelectionAlgorithm,FeatureSelectionAlgorithm);
         itkNewMacro(Self);
 
-        btkGetMacro(CurrentIteration, unsigned int);
-
-        btkGetMacro(CurrentMessage, std::string);
 
         /**
          * @brief Run the algorithm.
@@ -85,17 +90,6 @@ class GreedyFeatureSelectionAlgorithm : public FeatureSelectionAlgorithm
          * @param indent Indentation.
          */
         virtual void PrintSelf(std::ostream &os, itk::Indent indent) const;
-
-    private:
-        /**
-         * @brief Current iteration of the greedy iterative search.
-         */
-        unsigned int m_CurrentIteration;
-
-        /**
-         * @brief Current message of the current iteration.
-         */
-        std::string m_CurrentMessage;
 };
 
 } // namespace btk

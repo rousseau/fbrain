@@ -39,7 +39,7 @@
 namespace btk
 {
 
-FeatureSelectionAlgorithm::FeatureSelectionAlgorithm() : m_InputParameters(NULL), m_WeightsVector(NULL), m_EnergyVector(NULL), m_MaxNumberOfParameters(10), m_UnexplainedVariance(0.0)
+FeatureSelectionAlgorithm::FeatureSelectionAlgorithm() : m_InputParameters(NULL), m_WeightsVector(NULL), m_EnergyVector(NULL), m_MaxNumberOfParameters(10), m_CurrentIteration(0), m_CurrentMessage("")
 {
     // ----
 }

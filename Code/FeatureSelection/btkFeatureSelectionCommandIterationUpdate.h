@@ -40,7 +40,7 @@
 #include "itkCommand.h"
 
 // Local includes
-#include "btkGreedyFeatureSelectionAlgorithm.h"
+#include "btkFeatureSelectionAlgorithm.h"
 
 
 namespace btk
@@ -49,6 +49,7 @@ namespace btk
 /**
  * @brief Commandline iteration observer for feature selection algorithm.
  * @author Julien Pontabry
+ * @date 19/02/2013
  * @ingroup FeatureSelection
  */
 class FeatureSelectionCommandIterationUpdate : public itk::Command
@@ -61,14 +62,24 @@ class FeatureSelectionCommandIterationUpdate : public itk::Command
         itkNewMacro(Self);
 
     public:
+        /**
+         * @brief Execute an event from a caller.
+         * @param caller Object which raised an event
+         * @param event Event which was raised
+         */
         void Execute(itk::Object *caller, const itk::EventObject & event)
         {
             Execute((const itk::Object *)caller, event);
         }
 
+        /**
+         * @brief Execute an event from a caller.
+         * @param caller Object which raised an event
+         * @param event Event which was raised
+         */
         void Execute(const itk::Object * object, const itk::EventObject & event)
         {
-            GreedyFeatureSelectionAlgorithm::ConstPointer optimizer = dynamic_cast< const GreedyFeatureSelectionAlgorithm * >(object);
+            FeatureSelectionAlgorithm::ConstPointer optimizer = dynamic_cast< const FeatureSelectionAlgorithm * >(object);
 
             if(!itk::IterationEvent().CheckEvent(&event))
             {
