@@ -85,16 +85,17 @@ int main(int argc, char *argv[])
         //
 
         // Defines the command line parser
-        TCLAP::CmdLine cmd("BTK space reduction program (space reduction by feature selection)", ' ', "1.0");
+        TCLAP::CmdLine cmd("BTK space reduction program for a set of displacement fields (space reduction by feature selection)", ' ', "1.0");
 
         // Defines arguments
-        TCLAP::MultiArg< std::string >    imagesFileNamesArg("i","image", "Input images' filenames", true, "string", cmd);
-        TCLAP::MultiArg< double >           imagesWeightsArg("w", "weight", "Input weights corresponding to images", false, "weights", cmd);
-        TCLAP::ValueArg< std::string >      maskFileNamesArg("m", "mask", "Mask filename", true, "", "string", cmd);
-        TCLAP::ValueArg< std::string > outputMaskFileNameArg("o", "output", "Output reduced mask filename", false, "reduced-mask.nii.gz", "string", cmd);
+        TCLAP::MultiArg< std::string > imagesFileNamesArg("i","image", "Input displacement field images' filenames", true, "string", cmd);
+        TCLAP::MultiArg< double >        imagesWeightsArg("w", "weight", "Input weights corresponding to images", false, "weights", cmd);
+        TCLAP::ValueArg< std::string >   maskFileNamesArg("m", "mask", "Mask filename", true, "", "string", cmd);
+        TCLAP::ValueArg< std::string >    outputPrefixArg("o", "output", "Output reduced filenames prefix", false, "reduced", "string", cmd);
 
         // Options
         TCLAP::ValueArg< unsigned int > maxNumberOfParametersArg("n", "max_number_of_parameters", "Maximal number of parameters", false, 10, "unsigned int", cmd);
+        TCLAP::ValueArg< float >              kernelBandwidthArg("b", "kernel_bandwidth", "Bandwidth of the kernel use for cost function", false, 1.0, "positive real", cmd);
 
         // Parsing arguments
         cmd.parse(argc, argv);
@@ -103,9 +104,10 @@ int main(int argc, char *argv[])
         std::vector< std::string > imagesFileNames = imagesFileNamesArg.getValue();
         std::vector< double >        imagesWeights = imagesWeightsArg.getValue();
         std::string                   maskFileName = maskFileNamesArg.getValue();
-        std::string             outputMaskFileName = outputMaskFileNameArg.getValue();
+        std::string                   outputPrefix = outputPrefixArg.getValue();
 
         unsigned int maxNumberOfParameters = maxNumberOfParametersArg.getValue();
+        float              kernelBandwidth = kernelBandwidthArg.getValue();
 
 
         //
@@ -213,7 +215,7 @@ int main(int argc, char *argv[])
         std::cout << "Processing..." << std::endl;
 
         vnl_diag_matrix< double > H(numberOfParameters*3);
-        H.fill_diagonal(1);
+        H.fill_diagonal(kernelBandwidth);
 
         // Define cost function
         btk::FeatureSelectionCostFunction::Pointer costFunction = NULL;
@@ -242,6 +244,7 @@ int main(int argc, char *argv[])
         btk::FeatureSelectionCommandIterationUpdate::Pointer observer = btk::FeatureSelectionCommandIterationUpdate::New();
         spaceReduction->AddObserver(itk::IterationEvent(), observer);
 
+        // Start reduction algorithm
         spaceReduction->Update();
 
         // Get weigths vectors
@@ -250,11 +253,11 @@ int main(int argc, char *argv[])
         // Get energy vector
         vnl_vector< double > &energy = *spaceReduction->GetEnergyVector();
 
-//        // Compute unexplained variance
-//        double    unexplainedVariance = spaceReduction->GetUnexplainedVariance();
-//        double unexplainedVariancePct = 100.0 * (unexplainedVariance / energy.sum());
+        // Compute unexplained variance
+        double    unexplainedVariance = spaceReduction->GetUnexplainedVariance();
+        double unexplainedVariancePct = 100.0 * (unexplainedVariance / energy.sum());
 
-//        btkCoutMacro("\tUnexplained variance: " << unexplainedVariance << " (" << unexplainedVariancePct << " %).");
+        btkCoutMacro("\t-> Unexplained variance: " << unexplainedVariance << " (" << unexplainedVariancePct << " %).");
 
         std::cout << "done." << std::endl;
 
@@ -263,22 +266,26 @@ int main(int argc, char *argv[])
         // Export output paramters
         //
 
-        std::cout << "Creating and saving mask image from reduced set of parameters..." << std::endl;
+        std::cout << "Creating and saving outputs from reduced set of parameters..." << std::endl;
 
-        // Create output image
-        itk::Image< double,3 >::Pointer output = btk::ImageHelper< ImageMask,itk::Image< double,3 > >::CreateNewImageFromPhysicalSpaceOf(maskImage);
-        itk::ImageRegionIterator< itk::Image< double,3 > > outputIt(output, maskedRegion);
+        // Create output images
+        ImageMask::Pointer                maskOutput = btk::ImageHelper< ImageMask >::CreateNewImageFromPhysicalSpaceOf(maskImage);
+        itk::Image< double,3 >::Pointer energyOutput = btk::ImageHelper< ImageMask,itk::Image< double,3 > >::CreateNewImageFromPhysicalSpaceOf(maskImage);
+
+        ImageMaskIterator maskOutputIt(maskOutput, maskedRegion);
+        itk::ImageRegionIterator< itk::Image< double,3 > > energyOutputIt(energyOutput, maskedRegion);
 
         // Fill it with the reduced parameters
         unsigned int i = 0;
 
-        for(maskIt.GoToBegin(), outputIt.GoToBegin(); !maskIt.IsAtEnd() && !outputIt.IsAtEnd(); ++maskIt, ++outputIt)
+        for(maskIt.GoToBegin(), maskOutputIt.GoToBegin(), energyOutputIt.GoToBegin(); !maskIt.IsAtEnd() && !maskOutputIt.IsAtEnd() && !energyOutputIt.IsAtEnd(); ++maskIt, ++maskOutputIt, ++energyOutputIt)
         {
             if(maskIt.Get() > 0)
             {
                 if(weights(i) > 0)
                 {
-                    outputIt.Set(energy(i));
+                    energyOutputIt.Set(energy(i));
+                    maskOutputIt.Set(static_cast< unsigned char >(1));
                 }
 
                 i++;
@@ -287,7 +294,8 @@ int main(int argc, char *argv[])
 
 
         // Write it
-        btk::ImageHelper< itk::Image< double,3 > >::WriteImage(output, outputMaskFileName);
+        btk::ImageHelper< ImageMask >::WriteImage(maskOutput, outputPrefix+"_mask.nii.gz");
+        btk::ImageHelper< itk::Image< double,3 > >::WriteImage(energyOutput, outputPrefix+"_energy.nii.gz");
 
         std::cout << "done." << std::endl;
     }
