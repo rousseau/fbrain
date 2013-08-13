@@ -173,6 +173,7 @@ void NadarayaWatsonReconstructionErrorFunction::Initialize()
 
 //----------------------------------------------------------------------------------------
 
+// TODO : Renvoyer une référence pour ne pas perdre de temps en copie ?
 vnl_vector< double > NadarayaWatsonReconstructionErrorFunction::NadarayaWatsonMultivariateKernelEstimator(vnl_matrix< double > &data, vnl_vector< double > &v)
 {
     vnl_vector< double > estimate(v.size(), 0.0);
@@ -195,6 +196,7 @@ vnl_vector< double > NadarayaWatsonReconstructionErrorFunction::NadarayaWatsonMu
 
 //----------------------------------------------------------------------------------------
 
+// TODO : Renvoyer une référence pour ne pas perdre de temps en copie ?
 vnl_vector< double > NadarayaWatsonReconstructionErrorFunction::NadarayaWatsonMultivariateKernelEstimatorActivation(unsigned int activatedIndex, vnl_vector< double > &v)
 {
     vnl_vector< double > estimate(v.size(), 0.0);
@@ -228,6 +230,7 @@ vnl_vector< double > NadarayaWatsonReconstructionErrorFunction::NadarayaWatsonMu
 
 //----------------------------------------------------------------------------------------
 
+// TODO : Renvoyer une référence pour ne pas perdre de temps en copie ?
 vnl_vector< double > NadarayaWatsonReconstructionErrorFunction::NadarayaWatsonMultivariateKernelEstimatorDesactivation(unsigned int desactivatedIndex, vnl_vector< double > &v)
 {
     vnl_vector< double > estimate(v.size(), 0.0);
