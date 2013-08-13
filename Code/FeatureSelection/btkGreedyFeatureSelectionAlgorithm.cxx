@@ -71,13 +71,12 @@ void GreedyFeatureSelectionAlgorithm::Update()
 
 
     // 2. While parameters can be added without increasing the cost function
-    bool                        stability = false;
     unsigned int numberOfActiveParameters = 0;
 
     double minCost = m_CostFunction->Evaluate();
 
 
-    while(numberOfActiveParameters <= m_MaxNumberOfParameters && !stability)
+    while(numberOfActiveParameters <= m_MaxNumberOfParameters)
     {
         std::stringstream message;
 
@@ -95,13 +94,14 @@ void GreedyFeatureSelectionAlgorithm::Update()
         {
             if(w(i) != 1) // do not check already activated paramters
             {
-                costsadd[i] = 1e6 * m_CostFunction->EvaluateActivation(i);
+                costsadd[i] = m_CostFunction->EvaluateActivation(i);
             }
         } // for each parameter
 
         // Search for minimal solution (if it exists)
         std::vector< double >::iterator itadd = std::min_element(costsadd.begin(), costsadd.end());
 
+        // When found, get the value and the index
         if(*itadd < minCost)
         {
             minCost = *itadd;
@@ -109,98 +109,36 @@ void GreedyFeatureSelectionAlgorithm::Update()
         }
 
 
-        // 2.2. Check the stability
-        if(index_add == numberOfParameters)
-        {
-            stability = true;
+        // Add parameter with the minimal cost
+        w(index_add)              = 1;
+        e(index_add)              = oldCost - minCost;
+        numberOfActiveParameters += 1;
+        m_CostFunction->ActivateParameters(index_add);
 
-            message << "\tCannot find a parameter to add (initial cost function: " << minCost << ")" << std::endl;
-        }
-        else // index_add != numberOfParameters
-        {
-            w(index_add)              = 1;
-            e(index_add)              = oldCost - minCost;
-            numberOfActiveParameters += 1;
-            m_CostFunction->ActivateParameters(index_add);
+        // Fill output messages
+        message << "\tFound one parameter to add (" << index_add+1 << ") with cost equal to " << minCost << std::endl;
+        message << "\tUnexplained variance: " << minCost << " (" << 100.0 * (minCost / (minCost + e.sum())) << " %)" << std::endl;
 
-            message << "\tFound one parameter to add (" << index_add+1 << ") with cost equal to " << minCost << std::endl;
-            message << "\tUnexplained variance: " << minCost << " (" << 100.0 * (minCost / (minCost + e.sum())) << " %)" << std::endl;
-
-//            if(100.0 * (minCost / (minCost + e.sum())) < 1.0)
-//            {
-//                stability = true;
-//            }
-
-
-            // 2.3 Remove parameters until the cost function cannot be decreased
-            bool removeStability = false;
-
-            while(!removeStability)
-            {
-                unsigned int index = numberOfParameters;
-
-                std::vector< double > costssub(numberOfParameters, minCost);
-
-                oldCost = minCost;
-
-                #pragma omp parallel for default(shared) schedule(dynamic)
-                for(unsigned int i = 0; i < numberOfParameters; i++)
-                {
-                    if(w(i) == 1 && i != index_add) // check only activated parameters not added recently
-                    {
-                        costssub[i] = 1e6 * m_CostFunction->EvaluateDesactivation(i);
-                    }
-                } // for each parameter
-
-                // Search for minimal solution (if it exists)
-                std::vector< double >::iterator itsub = std::min_element(costssub.begin(), costssub.end());
-
-                if(*itsub < minCost)
-                {
-                    minCost = *itsub;
-                    index = std::distance(costssub.begin(), itsub);
-                }
-
-                // 2.4. Check the stability
-                if(index == numberOfParameters)
-                {
-                    removeStability = true;
-
-                    message << "\tCannot find a parameter to remove (initial cost function: " << minCost << ")" << std::endl;
-                }
-                else // index != numberOfParameters
-                {
-                    w(index)                  = 0;
-                    e(index)                  = oldCost - minCost;
-                    numberOfActiveParameters -= 1;
-                    m_CostFunction->DesactivateParameters(index);
-
-                    message << "\tFound one parameter to remove (" << index+1 << ") with cost equal to " << minCost << std::endl;
-                    message << "\tUnexplained variance: " << minCost << " (" << 100.0 * (minCost / (minCost + e.sum())) << " %)" << std::endl;
-
-//                    if(100.0 * (minCost / (minCost + e.sum())) < 1.0)
-//                    {
-//                        removeStability = true;
-//                    }
-                }
-            } // while parameters can be removed
-        }
-
+        // Send message to observer
         m_CurrentMessage = message.str();
         this->InvokeEvent(itk::IterationEvent());
+
+        // End of the current iteration
         m_CurrentIteration++;
     } // while a parameter can be added
 
 
+    // 3. Set outputs
+
     // Set energy vector as percent of explained variance
     double energySum = e.sum() + minCost;
+
     for(unsigned int i = 0; i < e.size(); i++)
     {
         e(i) /= energySum;
     }
 
-
-    // 3. Set outputs
+    // Set outputs
     m_WeightsVector = new vnl_vector< short >(w);
     m_EnergyVector = new vnl_vector< double >(e);
     m_UnexplainedVariance = minCost;

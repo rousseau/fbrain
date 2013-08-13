@@ -242,7 +242,7 @@ vnl_vector< double > NadarayaWatsonReconstructionErrorFunction::NadarayaWatsonMu
     {
         vnl_vector< double > data = m_CurrentParameters->get_column(j);
 
-        // Activate parameter
+        // Desactivate parameter
         data(desactivatedIndex)  = 0;
         data(desactivatedIndex2) = 0;
         data(desactivatedIndex3) = 0;
