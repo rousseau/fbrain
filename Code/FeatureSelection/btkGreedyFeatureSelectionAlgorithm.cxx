@@ -71,12 +71,13 @@ void GreedyFeatureSelectionAlgorithm::Update()
 
 
     // 2. While parameters can be added without increasing the cost function
+    bool stability = false;
     unsigned int numberOfActiveParameters = 0;
 
     double minCost = m_CostFunction->Evaluate();
 
 
-    while(numberOfActiveParameters <= m_MaxNumberOfParameters)
+    while(numberOfActiveParameters <= m_MaxNumberOfParameters && !stability)
     {
         std::stringstream message;
 
@@ -108,12 +109,17 @@ void GreedyFeatureSelectionAlgorithm::Update()
             index_add = std::distance(costsadd.begin(), itadd);
         }
 
-
         // Add parameter with the minimal cost
         w(index_add)              = 1;
         e(index_add)              = oldCost - minCost;
         numberOfActiveParameters += 1;
         m_CostFunction->ActivateParameters(index_add);
+
+        // Check for stability
+        if(btkFloatingEqual(e(index_add), 0.0))
+        {
+            stability = true;
+        }
 
         // Fill output messages
         message << "\tFound one parameter to add (" << index_add+1 << ") with cost equal to " << minCost << std::endl;
