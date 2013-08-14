@@ -58,6 +58,9 @@ namespace btk
  * from Pudil et al. (1994). The initial algorithm has been adapted for our purpose
  * (search minimal set of features based on regression reconstruction error).
  *
+ * His complexity is in O(np), where n and p denotes repsectively the max number of features
+ * to select and the initial number of features.
+ *
  * Pudil et al. (1994) Floating search methods in feature selection. In: Pattern Recognition
  * Letters 15.11, p. 1119-1125.
  */
@@ -75,6 +78,7 @@ class GreedyFeatureSelectionAlgorithm : public FeatureSelectionAlgorithm
 
         /**
          * @brief Run the algorithm.
+         * @warning Some parts of the main loop are parallelized using OpenMP.
          */
         void Update();
 

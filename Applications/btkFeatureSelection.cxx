@@ -44,6 +44,18 @@
  * As input, there should be at least the displacement fields (and eventually weights for these fields) and a mask.
  * The program produces two outputs: a mask pointing the location of the selected features and an explained variance map,
  * expressed as percent of total variance.
+ *
+ * The complexity of the complete algorithm (i.e. the sequential floating search algorithm and the cost function) is in O(n p² K²),
+ * where n, p and K are respectively the number of selected features, the number of initial features and the number of samples.
+ *
+ * This program is intended to shape change analysis on brain fetuses by feature selection on displacement fields.
+ * You can find more information in the following publication:
+ *
+ * Pontabry et al. (2013) Sélection de caractéristiques pour l'étude de la maturation cérébrale, in ORASIS: journées francophones
+ * des jeunes chercheurs en vision par ordinateurs, Cluny (FRANCE), Oral presentation.
+ *
+ * @todo Use multi-resolution to improve the speedness of the program.
+ * @todo Extend the program to an arbitrary number of components.
  */
 
 // TCLAP includes

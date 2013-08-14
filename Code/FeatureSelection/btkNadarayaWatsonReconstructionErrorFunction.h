@@ -54,6 +54,8 @@ namespace btk
  *
  * This cost function is the reconstruction error of a kernel regression function.
  * The Nadaraya-Watson estimator is used with a Gaussian kernel.
+ * The complexity of this cost function is in O(K²p), where K and p are respectively the number
+ * of samples and the number of features.
  */
 class NadarayaWatsonReconstructionErrorFunction : public FeatureSelectionCostFunction
 {
@@ -93,12 +95,14 @@ class NadarayaWatsonReconstructionErrorFunction : public FeatureSelectionCostFun
         /**
          * @brief Activate parameter with index.
          * @param index Index of the parameter to activate.
+         * @warning This method is parallelized using OpenMP.
          */
         void ActivateParameters(unsigned int index);
 
         /**
          * @brief Desactivate parameter with index.
          * @param index Index of the parameter to desactivate.
+         * @warning This method is parallelized using OpenMP.
          */
         void DesactivateParameters(unsigned int index);
 
