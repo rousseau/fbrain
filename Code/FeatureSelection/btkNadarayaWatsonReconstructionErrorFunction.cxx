@@ -166,7 +166,7 @@ vnl_vector< double > NadarayaWatsonReconstructionErrorFunction::GetResiduals()
         vnl_vector< double > v = m_CurrentParameters->get_column(j);
         vnl_vector< double > d = m_InputParameters->get_column(j) - this->NadarayaWatsonMultivariateKernelEstimator(*m_CurrentParameters, v);
 
-        for(unsigned int i = 0; i < m_NumberOfParameters; i++)
+        for(unsigned int i = 0; i < m_InputParameters->rows(); i++)
         {
             d(i) = std::abs(d(i));
         }
