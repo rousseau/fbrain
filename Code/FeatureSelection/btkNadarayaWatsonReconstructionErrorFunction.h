@@ -107,6 +107,12 @@ class NadarayaWatsonReconstructionErrorFunction : public FeatureSelectionCostFun
         void DesactivateParameters(unsigned int index);
 
         /**
+         * @brief Get the residuals of the current parameters.
+         * @return A vector containing the residuals of each feature.
+         */
+        virtual vnl_vector< double > GetResiduals();
+
+        /**
          * @brief Initialize the cost function (compute some matrix and determinants).
          */
         virtual void Initialize();

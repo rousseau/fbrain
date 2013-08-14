@@ -38,7 +38,7 @@
 namespace btk
 {
 
-FeatureSelectionCostFunction::FeatureSelectionCostFunction() : m_InputParameters(NULL), m_ImagesWeightVector(NULL), m_NumberOfParameters(0), m_CurrentParameters(NULL), m_numberOfActivatedParameters(0), m_TwoTimeNumberOfParameters(0), m_NumberOfVectors(0)
+FeatureSelectionCostFunction::FeatureSelectionCostFunction() : m_InputParameters(NULL), m_ImagesWeightVector(NULL), m_NumberOfParameters(0), m_CurrentParameters(NULL), m_ExternalCurrentParameters(false), m_numberOfActivatedParameters(0), m_TwoTimeNumberOfParameters(0), m_NumberOfVectors(0)
 {
     // ----
 }
@@ -47,7 +47,7 @@ FeatureSelectionCostFunction::FeatureSelectionCostFunction() : m_InputParameters
 
 FeatureSelectionCostFunction::~FeatureSelectionCostFunction()
 {
-    if(m_CurrentParameters != NULL)
+    if(!m_ExternalCurrentParameters && m_CurrentParameters != NULL)
     {
         delete m_CurrentParameters;
         m_CurrentParameters = NULL;
@@ -71,8 +71,15 @@ void FeatureSelectionCostFunction::Initialize()
     m_NumberOfVectors           = m_InputParameters->columns();
 
     // Create a "current state" parameters set
-    m_CurrentParameters = new vnl_matrix< double >(m_NumberOfParameters*3, m_NumberOfVectors);
-    m_CurrentParameters->fill(0);
+    if(m_CurrentParameters == NULL)
+    {
+        m_CurrentParameters = new vnl_matrix< double >(m_NumberOfParameters*3, m_NumberOfVectors);
+        m_CurrentParameters->fill(0);
+    }
+    else // external pointer
+    {
+        m_ExternalCurrentParameters = true;
+    }
 }
 
 } // namespace btk

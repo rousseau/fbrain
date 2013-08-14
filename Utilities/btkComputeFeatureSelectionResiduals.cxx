@@ -2,7 +2,7 @@
 
   © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-  Date: 19/12/2012
+  Date: 18/03/2013
   Author(s): Julien Pontabry (pontabry@unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
@@ -34,28 +34,11 @@
 ==========================================================================*/
 
 /**
- * @file btkFeatureSelection.cxx
+ * @file btkComputeFeatureSelectionResiduals.cxx
  * @author Julien Pontabry
- * @date 19/12/2012
+ * @date 18/03/2013
  * @ingroup FeatureSelection
- * @brief Space reduction program by feature selection.
- *
- * Reduce the space of a set of displacement fields by a greedy feature selection algorithm. The features are the vectors.
- * As input, there should be at least the displacement fields (and eventually weights for these fields) and a mask.
- * The program produces two outputs: a mask pointing the location of the selected features and an explained variance map,
- * expressed as percent of total variance.
- *
- * The complexity of the complete algorithm (i.e. the sequential floating search algorithm and the cost function) is in O(n p² K²),
- * where n, p and K are respectively the number of selected features, the number of initial features and the number of samples.
- *
- * This program is intended to shape change analysis on brain fetuses by feature selection on displacement fields.
- * You can find more information in the following publication:
- *
- * Pontabry et al. (2013) Sélection de caractéristiques pour l'étude de la maturation cérébrale, in ORASIS: journées francophones
- * des jeunes chercheurs en vision par ordinateurs, Cluny (FRANCE), Oral presentation.
- *
- * @todo Use multi-resolution to improve the speedness of the program.
- * @todo Extend the program to an arbitrary number of components.
+ * @brief Compute the residuals of a feature selection.
  */
 
 // TCLAP includes
@@ -77,18 +60,15 @@
 #include "itkDisplacementFieldTransform.h"
 
 // Local includes
+#include "btkMacro.h"
 #include "btkImageHelper.h"
-#include "btkFeatureSelectionAlgorithm.h"
-#include "btkGreedyFeatureSelectionAlgorithm.h"
 #include "btkFeatureSelectionCostFunction.h"
 #include "btkNadarayaWatsonReconstructionErrorFunction.h"
-#include "btkFeatureSelectionCommandIterationUpdate.h"
 
 
 // Definitions
 typedef itk::DisplacementFieldTransform< double,3 >::DisplacementFieldType DisplacementField;
 typedef itk::ImageRegionIterator< DisplacementField >                      DisplacementFieldIterator;
-
 
 typedef itk::Image< unsigned char,3 >         ImageMask;
 typedef itk::ImageMaskSpatialObject< 3 >      Mask;
@@ -107,17 +87,17 @@ int main(int argc, char *argv[])
         //
 
         // Defines the command line parser
-        TCLAP::CmdLine cmd("BTK space reduction program for a set of displacement fields (space reduction by feature selection)", ' ', "1.0");
+        TCLAP::CmdLine cmd("BTK residuals computation program of space reduction", ' ', "1.0");
 
         // Defines arguments
-        TCLAP::MultiArg< std::string > imagesFileNamesArg("i","image", "Input displacement field images' filenames", true, "string", cmd);
-        TCLAP::MultiArg< double >        imagesWeightsArg("w", "weight", "Input weights corresponding to images", false, "weights", cmd);
-        TCLAP::ValueArg< std::string >   maskFileNamesArg("m", "mask", "Mask filename", true, "", "string", cmd);
-        TCLAP::ValueArg< std::string >    outputPrefixArg("o", "output", "Output reduced filenames prefix", false, "reduced", "string", cmd);
+        TCLAP::UnlabeledMultiArg< std::string > imagesFileNamesArg("image", "Input displacement field images' filenames", true, "string", cmd);
+        TCLAP::MultiArg< double >                 imagesWeightsArg("w", "weight", "Input weights corresponding to images", false, "weights", cmd);
+        TCLAP::ValueArg< std::string >            maskFileNamesArg("m", "mask", "Mask filename", true, "", "string", cmd);
+        TCLAP::ValueArg< std::string >     reducedmaskFileNamesArg("r", "reduced_mask", "Reduced mask filename", true, "", "string", cmd);
+        TCLAP::ValueArg< std::string >           outputFileNameArg("o", "output", "Output residuals filename", false, "reduction_residuals.nii.gz", "string", cmd);
 
         // Options
-        TCLAP::ValueArg< unsigned int > maxNumberOfParametersArg("n", "max_number_of_parameters", "Maximal number of parameters", false, 10, "unsigned int", cmd);
-        TCLAP::ValueArg< float >              kernelBandwidthArg("b", "kernel_bandwidth", "Bandwidth of the kernel use for cost function", false, 1.0, "positive real", cmd);
+        TCLAP::ValueArg< float > kernelBandwidthArg("b", "kernel_bandwidth", "Bandwidth of the kernel use for cost function", false, 1.0, "positive real", cmd);
 
         // Parsing arguments
         cmd.parse(argc, argv);
@@ -126,10 +106,10 @@ int main(int argc, char *argv[])
         std::vector< std::string > imagesFileNames = imagesFileNamesArg.getValue();
         std::vector< double >        imagesWeights = imagesWeightsArg.getValue();
         std::string                   maskFileName = maskFileNamesArg.getValue();
-        std::string                   outputPrefix = outputPrefixArg.getValue();
+        std::string           reducedmaskFileNames = reducedmaskFileNamesArg.getValue();
+        std::string                 outputFileName = outputFileNameArg.getValue();
 
-        unsigned int maxNumberOfParameters = maxNumberOfParametersArg.getValue();
-        float              kernelBandwidth = kernelBandwidthArg.getValue();
+        float kernelBandwidth = kernelBandwidthArg.getValue();
 
 
         //
@@ -161,7 +141,16 @@ int main(int argc, char *argv[])
         // Test if images and mask are in the same space
         if(!btk::ImageHelper< DisplacementField,ImageMask >::IsInSamePhysicalSpace(images[0],maskImage, 10e-5))
         {
-            btkException("Input images and the mask image are not in the same physical space !");
+            btkException("Input images and mask image are not in the same physical space !");
+        }
+
+        // Read reduced mask image
+        ImageMask::Pointer reducedMaskImage = btk::ImageHelper< ImageMask >::ReadImage(reducedmaskFileNames);
+
+        // Test if images and mask are in the same space
+        if(!btk::ImageHelper< DisplacementField,ImageMask >::IsInSamePhysicalSpace(images[0],reducedMaskImage, 10e-5))
+        {
+            btkException("Input images and reduced mask image are not in the same physical space !");
         }
 
 
@@ -180,22 +169,29 @@ int main(int argc, char *argv[])
         Mask::RegionType maskedRegion = mask->GetAxisAlignedBoundingBoxRegion();
 
         // Compute the number of parameters
-        unsigned int numberOfParameters = 0;
+        unsigned int numberOfParameters = 0, numberOfReducedParameters = 0;
         ImageMaskIterator maskIt(maskImage, maskedRegion);
+        ImageMaskIterator reducedMaskIt(reducedMaskImage, maskedRegion);
 
-        for(maskIt.GoToBegin(); !maskIt.IsAtEnd(); ++maskIt)
+        for(maskIt.GoToBegin(), reducedMaskIt.GoToBegin(); !maskIt.IsAtEnd() && !reducedMaskIt.IsAtEnd(); ++maskIt, ++reducedMaskIt)
         {
             if(maskIt.Get() > 0)
             {
                 numberOfParameters++;
+
+                if(reducedMaskIt.Get() > 0)
+                {
+                    numberOfReducedParameters++;
+                }
             }
         } // for each voxels
 
-        btkCoutMacro("\tThere are " << numberOfParameters << " parameters and " << images.size() << " learning samples.");
+        btkCoutMacro("\tThere are " << numberOfParameters << " initial parameters and " << numberOfReducedParameters << " reduced parameters.");
 
 
         // Build input parameters
         vnl_matrix< double > Y(numberOfParameters*3, images.size());
+        vnl_matrix< double > X(numberOfReducedParameters*3, images.size());
         vnl_vector< double > w(images.size());
         unsigned int j = 0;
 
@@ -205,11 +201,11 @@ int main(int argc, char *argv[])
             w(j) = imagesWeights[j];
 
             // Fill parameters
-            unsigned int i = 0;
+            unsigned int i = 0, i2 = 0;
 
             DisplacementFieldIterator imageIt(*image, maskedRegion);
 
-            for(maskIt.GoToBegin(), imageIt.GoToBegin(); !maskIt.IsAtEnd() && !imageIt.IsAtEnd(); ++maskIt, ++imageIt)
+            for(maskIt.GoToBegin(), reducedMaskIt.GoToBegin(), imageIt.GoToBegin(); !maskIt.IsAtEnd() && !reducedMaskIt.IsAtEnd() && !imageIt.IsAtEnd(); ++maskIt, ++reducedMaskIt, ++imageIt)
             {
                 if(maskIt.Get() > 0)
                 {
@@ -217,6 +213,14 @@ int main(int argc, char *argv[])
                     Y(i+numberOfParameters,j) = imageIt.Get()[1];
                     Y(i+2*numberOfParameters,j) = imageIt.Get()[2];
                     i++;
+
+                    if(reducedMaskIt.Get() > 0)
+                    {
+                        X(i2,j) = imageIt.Get()[0];
+                        X(i2+numberOfReducedParameters,j) = imageIt.Get()[1];
+                        X(i2+2*numberOfReducedParameters,j) = imageIt.Get()[2];
+                        i2++;
+                    }
                 }
             } // for each voxels
 
@@ -226,6 +230,7 @@ int main(int argc, char *argv[])
 
         // Clean memory
         mask = NULL;
+        reducedMaskImage = NULL;
 
         std::cout << "done." << std::endl;
 
@@ -236,7 +241,8 @@ int main(int argc, char *argv[])
 
         std::cout << "Processing..." << std::endl;
 
-        vnl_diag_matrix< double > H(numberOfParameters*3);
+        // Compute bandwidth matrix inverse
+        vnl_diag_matrix< double > H(numberOfReducedParameters*3);
         H.fill_diagonal(kernelBandwidth);
 
         // Define cost function
@@ -248,72 +254,46 @@ int main(int argc, char *argv[])
         kernelCostFunction->SetImagesWeightVector(&w);
         costFunction = kernelCostFunction;
 
-        // Define optimizer for feature selection
-        btk::FeatureSelectionAlgorithm::Pointer spaceReduction = NULL;
+        // Initialize cost function
+        costFunction->SetInputParameters(&Y);
+        costFunction->SetCurrentParameters(&X);
+        costFunction->Initialize();
 
-        // Use greedy algorithm
-        btk::GreedyFeatureSelectionAlgorithm::Pointer greedySpaceReduction = btk::GreedyFeatureSelectionAlgorithm::New();
-        spaceReduction = greedySpaceReduction;
-
-        btkCoutMacro("\tWill use a greedy algorithm (sequential floating forward-backward search).");
-
-        // Set general paramters for optimizer
-        spaceReduction->SetInputParameters(&Y);
-        spaceReduction->SetCostFunction(costFunction);
-        spaceReduction->SetMaxNumberOfParameters(maxNumberOfParameters);
-
-        // Set a command-line observer
-        btk::FeatureSelectionCommandIterationUpdate::Pointer observer = btk::FeatureSelectionCommandIterationUpdate::New();
-        spaceReduction->AddObserver(itk::IterationEvent(), observer);
-
-        // Start reduction algorithm
-        spaceReduction->Update();
-
-        // Get weigths vectors
-        vnl_vector< short > &weights = *spaceReduction->GetWeightsVector();
-
-        // Get energy vector
-        vnl_vector< double > &energy = *spaceReduction->GetEnergyVector();
+        // Compute residuals
+        vnl_vector< double > residuals = costFunction->GetResiduals();
 
         std::cout << "done." << std::endl;
 
 
         //
-        // Export output paramters
+        // Writing output
         //
 
-        std::cout << "Creating and saving outputs from reduced set of parameters..." << std::endl;
+        typedef itk::Image< double,3 >                    ResidualImage;
+        typedef itk::ImageRegionIterator< ResidualImage > ResidualImageIterator;
 
-        // Create output images
-        ImageMask::Pointer                maskOutput = btk::ImageHelper< ImageMask >::CreateNewImageFromPhysicalSpaceOf(maskImage);
-        itk::Image< double,3 >::Pointer energyOutput = btk::ImageHelper< ImageMask,itk::Image< double,3 > >::CreateNewImageFromPhysicalSpaceOf(maskImage);
 
-        ImageMaskIterator maskOutputIt(maskOutput, maskedRegion);
-        itk::ImageRegionIterator< itk::Image< double,3 > > energyOutputIt(energyOutput, maskedRegion);
+        ResidualImage::Pointer residualsImage = btk::ImageHelper< ImageMask,ResidualImage >::CreateNewImageFromPhysicalSpaceOf(maskImage);
 
-        // Fill it with the reduced parameters
         unsigned int i = 0;
 
-        for(maskIt.GoToBegin(), maskOutputIt.GoToBegin(), energyOutputIt.GoToBegin(); !maskIt.IsAtEnd() && !maskOutputIt.IsAtEnd() && !energyOutputIt.IsAtEnd(); ++maskIt, ++maskOutputIt, ++energyOutputIt)
+        ResidualImageIterator imageIt(residualsImage, maskedRegion);
+
+        for(maskIt.GoToBegin(), imageIt.GoToBegin(); !maskIt.IsAtEnd() && !imageIt.IsAtEnd(); ++maskIt, ++imageIt)
         {
             if(maskIt.Get() > 0)
             {
-                if(weights(i) > 0)
-                {
-                    energyOutputIt.Set(energy(i));
-                    maskOutputIt.Set(static_cast< unsigned char >(1));
-                }
-
+                imageIt.Set(residuals(i) + residuals(i+numberOfParameters) + residuals(i+2*numberOfParameters));
                 i++;
             }
-        } // for each voxels
+            else // maskIt.Get <= 0
+            {
+                imageIt.Set(0.0);
+            }
+        }
 
-
-        // Write it
-        btk::ImageHelper< ImageMask >::WriteImage(maskOutput, outputPrefix+"_selected-features.nii.gz");
-        btk::ImageHelper< itk::Image< double,3 > >::WriteImage(energyOutput, outputPrefix+"_explained-variance.nii.gz");
-
-        std::cout << "done." << std::endl;
+        // Write file
+        btk::ImageHelper< ResidualImage >::WriteImage(residualsImage, outputFileName);
     }
     catch(TCLAP::ArgException &exception)
     {

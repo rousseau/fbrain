@@ -13,6 +13,7 @@ INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/ImageFilters)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Registration)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Tractography)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Visualization)
+include_directories(${Code_SOURCE_DIR}/FeatureSelection)
 
 ADD_EXECUTABLE(btkModifyImageUsingLookUpTable btkModifyImageUsingLookUpTable.cxx)
 TARGET_LINK_LIBRARIES(btkModifyImageUsingLookUpTable ${ITK_LIBRARIES})
@@ -275,6 +276,9 @@ TARGET_LINK_LIBRARIES(btkSelectSeedPoint ${VTK_LIBRARIES} vtkHybrid)
 ADD_EXECUTABLE(btkLikelihoodOfSequenceEstimation btkLikelihoodOfSequenceEstimation.cxx)
 TARGET_LINK_LIBRARIES(btkLikelihoodOfSequenceEstimation ${ITK_LIBRARIES})
 
+add_executable(btkComputeFeatureSelectionResiduals btkComputeFeatureSelectionResiduals.cxx)
+target_link_libraries(btkComputeFeatureSelectionResiduals btkFeatureSelectionLibrary ${ITK_LIBRARIES})
+
 
 
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
@@ -348,5 +352,6 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkProjectPointsOnPolydata
                 btkSelectSeedPoint
                 btkLikelihoodOfSequenceEstimation
+                btkComputeFeatureSelectionResiduals
         DESTINATION bin)
 

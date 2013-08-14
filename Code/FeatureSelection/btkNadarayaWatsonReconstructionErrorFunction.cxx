@@ -156,6 +156,29 @@ double NadarayaWatsonReconstructionErrorFunction::EvaluateDesactivation(unsigned
 
 //----------------------------------------------------------------------------------------
 
+vnl_vector< double > NadarayaWatsonReconstructionErrorFunction::GetResiduals()
+{
+    vnl_vector< double > residuals(m_InputParameters->rows());
+    residuals.fill(0.0);
+
+    for(unsigned int j = 0; j < m_NumberOfVectors; j++)
+    {
+        vnl_vector< double > v = m_CurrentParameters->get_column(j);
+        vnl_vector< double > d = m_InputParameters->get_column(j) - this->NadarayaWatsonMultivariateKernelEstimator(*m_CurrentParameters, v);
+
+        for(unsigned int i = 0; i < m_NumberOfParameters; i++)
+        {
+            d(i) = std::abs(d(i));
+        }
+
+        residuals += d * m_ImagesWeightVector->get(j);
+    }
+
+    return residuals;
+}
+
+//----------------------------------------------------------------------------------------
+
 void NadarayaWatsonReconstructionErrorFunction::Initialize()
 {
     Superclass::Initialize();
@@ -175,7 +198,7 @@ void NadarayaWatsonReconstructionErrorFunction::Initialize()
 
 vnl_vector< double > NadarayaWatsonReconstructionErrorFunction::NadarayaWatsonMultivariateKernelEstimator(vnl_matrix< double > &data, vnl_vector< double > &v)
 {
-    vnl_vector< double > estimate(v.size(), 0.0);
+    vnl_vector< double > estimate(m_InputParameters->rows(), 0.0);
 
     double sumOfWeights = 0;
 

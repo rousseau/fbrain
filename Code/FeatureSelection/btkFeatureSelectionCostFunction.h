@@ -73,6 +73,9 @@ class FeatureSelectionCostFunction : public itk::ProcessObject
         btkSetMacro(ImagesWeightVector, vnl_vector< double > *);
         btkGetMacro(ImagesWeightVector, vnl_vector< double > *);
 
+        btkSetMacro(CurrentParameters, vnl_matrix< double > *);
+        btkGetMacro(CurrentParameters, vnl_matrix< double > *);
+
         /**
          * @brief Evaluate the cost function with activated vectors.
          * @return Value of the cost function with activated vectors.
@@ -104,6 +107,12 @@ class FeatureSelectionCostFunction : public itk::ProcessObject
          * @param index Index of the parameter to desactivate.
          */
         virtual void DesactivateParameters(unsigned int index) = 0;
+
+        /**
+         * @brief Get the residuals of the current parameters.
+         * @return A vector containing the residuals of each feature.
+         */
+        virtual vnl_vector< double > GetResiduals() = 0;
 
         /**
          * @brief Initialize the cost function.
@@ -148,6 +157,11 @@ class FeatureSelectionCostFunction : public itk::ProcessObject
          * @brief Current parameters activated.
          */
         vnl_matrix< double > *m_CurrentParameters;
+
+        /**
+         * @brief Define if the current parameters activated have been set manualy.
+         */
+        bool m_ExternalCurrentParameters;
 
         /**
          * @brief Number of activated parameters.
