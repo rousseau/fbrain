@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date:
+  Date: 27/05/2013
   Author(s):Marc Schweitzer (marc.schweitzer(at)unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -38,15 +38,17 @@
 namespace btk
 {
 
-GaussianPSF::GaussianPSF()
+GaussianPSF::GaussianPSF():Superclass::PSF()
 {
-    m_Direction.set_size(3,3);
+//    m_Direction.set_size(3,3);
 
-    m_Center.set_size(3);
-    m_Center.fill(0.0);
+//    m_Center.set_size(3);
+//    m_Center.fill(0.0);
 
-    m_Spacing.set_size(3);
-    m_Spacing.fill(1);
+//    m_Spacing.set_size(3);
+//    m_Spacing.fill(1);
+
+
 
     m_PsfImage = ImageType::New();
 
@@ -61,6 +63,7 @@ GaussianPSF::OutputType
 GaussianPSF::Evaluate(const InputType & position) const
 {
 
+    //NOTE: This fonction is deprecated.
     vnl_vector<double> diff = position.GetVnlVector() - m_Center;
     PointType diffPoint;
     double x , y, z;
@@ -84,7 +87,7 @@ GaussianPSF::Evaluate(const InputType & position) const
     value = exp(-value);
 
     // std::cout<<value<<std::endl;
-    //value = m_Gaussian->Evaluate(diffPoint);
+    //value = m_Gaussian->Evaluate(diffPoint); //NOTE : Old version
 
     return(OutputType)value;
 }
@@ -93,11 +96,8 @@ void GaussianPSF::ConstructImage()
 {
     ImageType::RegionType region;
 
-    //ImageType::SizeType size;
 
     ImageType::IndexType index;
-
-    //size = _size;
 
     index[0] = 0;
     index[1] = 0;
@@ -131,9 +131,13 @@ void GaussianPSF::ConstructImage()
         float x = hrIndex[0]- hrIndexCenter[0];
         float y = hrIndex[1]- hrIndexCenter[1];
         float z = hrIndex[2]- hrIndexCenter[2];
+        // Compute the Gaussian value
         float value = (x*x)/(2*m_Sigma[0]*m_Sigma[0]) + (y*y)/(2*m_Sigma[1]*m_Sigma[1]) + (z*z)/(2*m_Sigma[2]*m_Sigma[2]);
         value = exp(-value);
+
         //std::cout<<"value : "<<value<<std::endl;
+
+        // Threshold
         if(value < 0.01)
         {
             //value= 0.0;
@@ -143,7 +147,7 @@ void GaussianPSF::ConstructImage()
         sum += itPSF.Get();
     }
 
-
+    //Normalization
     if(sum>0)
     {
         for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF)

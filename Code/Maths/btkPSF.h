@@ -52,7 +52,10 @@
 
 namespace btk
 {
-
+/**
+ * @brief PSF is a base class for PSF images (gaussian, boxcar...)
+ * ! PSF is a pure virtual class, it can not be instancied !
+ */
 class PSF: public itk::Object
 {
     public:
@@ -84,11 +87,15 @@ class PSF: public itk::Object
         /** Run-time type information (and related methods). */
         itkTypeMacro(btk::PSF, itk::Object);
 
+        /** (! deprecated !)
+         * Evaluate Method compute the value at a desired position
+         * (this method should be redefined in subclasses) */
         virtual OutputType Evaluate(const InputType & position) const = 0;
 
+        /** Construct the PSF image (this method should be redefined in subclasses) */
         virtual void ConstructImage() = 0;
 
-        /** Sets the position of the PSF. */
+        /** Sets the center position of the PSF. */
         virtual void SetCenter(PointType center)
         {
             m_Center = center.GetVnlVector();
@@ -150,11 +157,13 @@ class PSF: public itk::Object
             m_LrSpacing = _spc;
         }
 
-
+        /** Get the psf Image */
         btkGetMacro(PsfImage,ImageType::Pointer);
 
     protected:
+        /** Constructor */
         PSF();
+        /** Destructor */
         virtual ~PSF(){}
         void PrintSelf(std::ostream& os, itk::Indent indent) const;
 
@@ -170,7 +179,7 @@ class PSF: public itk::Object
 
         ImageType::Pointer m_PsfImage;
 
-         SpacingType m_LrSpacing;
+        SpacingType m_LrSpacing;
 
 
 

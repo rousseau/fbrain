@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 
+  Date: 19/08/2013
   Author(s):Marc Schweitzer (marc.schweitzer(at)unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -48,6 +48,10 @@
 
 #include "iostream"
 
+/**
+ * @brief PSF Test, write images of each PSF type
+ *
+ */
 int main (int, char* [])
 {
     std::cout<<"PSF Test"<<std::endl;

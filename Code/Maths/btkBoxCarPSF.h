@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 
+  Date: 28/05/2013
   Author(s):Marc Schweitzer (marc.schweitzer(at)unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -51,7 +51,17 @@
 
 namespace btk
 {
-
+/**
+ * @brief BoxCarPSF is used for represent a BoxCar PSF, the support of the PSF is an image.
+ * A common use of this class is :
+ * - first construct the image with the correct parameters (center, size, spacing...)
+ * - Get the Psf Image previously constructed
+ * - iterate over the image to get the values
+ *
+ * NOTE : The Evaluate Method is currently not correct.
+ * TODO : An Evaluate Method for compute the value of a point
+ * (for example iterate over the image and break when the iterated point == point we wanted, then return the value of this point )
+ */
 class BoxCarPSF : public btk::PSF
 {
     public:
@@ -79,26 +89,20 @@ class BoxCarPSF : public btk::PSF
         /** Run-time type information (and related methods). */
         itkTypeMacro(btk::BoxCarPSF, btk::PSF);
 
+        /** (! Deprecated !) Evaluate method */
         virtual OutputType Evaluate(const InputType & position) const;
 
+        /** Construct Image */
         virtual void ConstructImage();
-
-//        virtual void SetCenter(PointType center)
-//        {
-//            Superclass::SetCenter(center);
-//        }
-
 
 
     protected:
+        /** Constructor */
         BoxCarPSF();
+        /** Destructor */
         virtual ~BoxCarPSF(){}
+        /** Print */
         void PrintSelf(std::ostream& os, itk::Indent indent) const;
-
-
-    private:
-
-
 
 
 };

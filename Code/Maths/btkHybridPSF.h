@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 
+  Date: 28/05/2013
   Author(s):Marc Schweitzer (marc.schweitzer(at)unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -47,7 +47,18 @@
 
 namespace btk
 {
-
+/**
+ * @brief Hybrid PSF represent several PSF fonction, one fonction on each axes.
+ * For example a boxcar on x, and a gaussian on y and z.
+ * * A common use of this class is :
+ * - first construct the image with the correct parameters (center, size, spacing, fonction for each axis)
+ * - Get the Psf Image previously constructed
+ * - iterate over the image to get the values
+ *
+ * NOTE : The Evaluate Method is currently not correct.
+ * TODO : An Evaluate Method for compute the value of a point
+ * (for example iterate over the image and break when the iterated point == point we wanted, then return the value of this point )
+ */
 class HybridPSF : public btk::PSF
 {
     public:
@@ -69,8 +80,10 @@ class HybridPSF : public btk::PSF
         /** Array type */
         typedef itk::FixedArray< double,3 > ArrayType;
 
-        typedef float(HybridPSF::*function_type)(float); //typedef of a pointer of function (param float and return float)
+        /** typedef of a pointer of function (param float and return float) */
+        typedef float(HybridPSF::*function_type)(float);
 
+        /** Type of fonction */
         enum FUNCTION_TYPE
         {
             BOXCAR = 0,
@@ -78,7 +91,7 @@ class HybridPSF : public btk::PSF
             SINC
         };
 
-
+        /** AXIS (X,Y,Z) */
         enum AXIS
         {
             X = 0,
@@ -92,30 +105,34 @@ class HybridPSF : public btk::PSF
         /** Run-time type information (and related methods). */
         itkTypeMacro(btk::HybridPSF, btk::PSF);
 
+        /** (! deprecated !) Evaluate Method */
         virtual OutputType Evaluate(const InputType & position) const;
 
+        /** Construct Image */
         virtual void ConstructImage();
 
+        /** Update Sigma with spacing and size (for the gaussian function) */
         virtual void UpdateSigma()
         {
             m_Sigma[0] = m_Spacing[0] * m_Size[0] / 2.3548;
             m_Sigma[1] = m_Spacing[1] * m_Size[1] / 2.3548;
             m_Sigma[2] = m_Spacing[2] * m_Size[2] / 2.3548;
         }
-
+        /** Set Size */
         void SetSize(SizeType _size)
         {
             m_Size =  _size;
             this->UpdateSigma();
         }
+        /** Set Spacing */
         virtual void SetSpacing(SpacingType spacing)
         {
-          m_Spacing = spacing.GetVnlVector();
-          this->UpdateSigma();
+            m_Spacing = spacing.GetVnlVector();
+            this->UpdateSigma();
         }
 
 
-
+        /** Set X axis fonction, _f is a FONCTION_TYPE */
         void SetXFunction(FUNCTION_TYPE _f)
         {
             switch(_f)
@@ -139,6 +156,7 @@ class HybridPSF : public btk::PSF
 
 
         }
+        /** Set Y axis fonction, _f is a FONCTION_TYPE */
         void SetYFunction(FUNCTION_TYPE _f)
         {
             switch(_f)
@@ -160,6 +178,7 @@ class HybridPSF : public btk::PSF
                     break;
             };
         }
+        /** Set Z axis fonction, _f is a FONCTION_TYPE */
         void SetZFunction(FUNCTION_TYPE _f)
         {
             switch(_f)
@@ -183,14 +202,20 @@ class HybridPSF : public btk::PSF
         }
 
     protected:
+        /** Constructor */
         HybridPSF();
+        /** Destructor */
         virtual ~HybridPSF(){}
+        /** Print */
         void PrintSelf(std::ostream& os, itk::Indent indent) const;
+        /** Intitialize (empty) */
         virtual void Initialize(){}
-
-          float functionSinc(float _x) ;
-          float functionGauss(float _x) ;
-          float functionBoxCar(float _x);
+        /** Sinc fonction */
+        float functionSinc(float _x) ;
+        /** Gaussian fonction */
+        float functionGauss(float _x) ;
+        /** BoxCar fonction */
+        float functionBoxCar(float _x);
 
     private:
 
@@ -198,10 +223,10 @@ class HybridPSF : public btk::PSF
         vnl_vector<double> m_jdir;
         vnl_vector<double> m_kdir;
 
-        ArrayType m_Sigma;
+        ArrayType m_Sigma; /** Axis */
 
-        std::vector< function_type > m_Functions;
-        mutable unsigned int m_Axis;
+        std::vector< function_type > m_Functions; /** Vector of fonctions, one for each axis */
+        mutable unsigned int m_Axis; /** Axis */
 };
 }
 #endif // BTKHYBRIDPSF_H
