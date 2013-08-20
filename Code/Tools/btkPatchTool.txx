@@ -159,8 +159,11 @@ void PatchTool<T1,T2>::ComputeSearchRegion(Patch<T1> & inputPatch, typename itkT
     
     int d = (start[i] + size[i]) - m_ImageSize[i]; //if the region is not fully inside the image
     if(d>0){
-      size[i] = size[i] - d;
-      if(size[i] < 0) size[i] = 0;
+//      size[i] = size[i] - d;
+      if(static_cast< int >(size[i]) - d < 0)
+      {
+          size[i] = 0;
+      }
     }    
   }
   region.SetSize( size );
@@ -265,7 +268,7 @@ void PatchTool<T1,T2>::ComputeNeighbourWeights(Patch<T1> & inputPatch, std::vect
     		  else
     		  	stdDevRatio = inputPatch.GetStdDevValue() / neighbourPatches[i].GetStdDevValue(); 		  
 
-			  if( (meanRatio > m_ParamPatchSelectionMethod) && (meanRatio < 1/m_ParamPatchSelectionMethod) && (stdDevRatio > 0.5) || (stdDevRatio < 2) )
+              if( ((meanRatio > m_ParamPatchSelectionMethod) && (meanRatio < 1/m_ParamPatchSelectionMethod) && (stdDevRatio > 0.5)) || (stdDevRatio < 2) )
 			    w = exp( - ComputeL2NormBetweenPatches(inputPatch, neighbourPatches[i]) / smoothing);
 
 			  weights[i] = w;
