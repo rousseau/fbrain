@@ -4,6 +4,7 @@
 
   Date: 12/11/2010
   Author(s): Estanislao Oubel (oubel@unistra.fr)
+             Marc Schweitzer (marc.schweitzer(at)unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -130,10 +131,10 @@ public:
   /**  Type of the transform . */
   //typedef   MatrixOffsetTransformBase< double, 3 >          TransformType;
   //typedef AffineTransform< double , 3>                    TransformType;
-  typedef Euler3DTransform< double >                    TransformType;
-  typedef typename TransformType::Pointer               TransformPointer;
+  typedef Euler3DTransform< double >                    RigidTransformType;
+  typedef typename RigidTransformType::Pointer               TransformPointer;
   /**  Type of the transform parameters. */
-  typedef  TransformType::ParametersType                ParametersType;
+  typedef  RigidTransformType::ParametersType                ParametersType;
 
   /**  Type of the transform initializer. The transform initializer is used to
    * provide an initial rigid transformation computed from the image masks. This
@@ -141,7 +142,7 @@ public:
    * images fall outside of the metric's capture region.
    * */
   typedef CenteredTransformInitializer<
-                                    TransformType,
+                                    RigidTransformType,
                                     ImageMaskType,
                                     ImageMaskType >  TransformInitializerType;
 
@@ -159,30 +160,30 @@ public:
   /**  Optimizer's scales typedef support. */
   typedef OptimizerType::ScalesType 										OptimizerScalesType;
 
-  /** Set/Get transform. */
-  itkGetObjectMacro(Transform, TransformType);
+//  /** Set/Get transform. */
+//  itkGetObjectMacro(Transform, TransformType);
 
-  /** Set/Get transform center. */
-  itkSetMacro(TransformCenter, PointType);
+//  /** Set/Get transform center. */
+//  itkSetMacro(TransformCenter, PointType);
 
-  virtual PointType GetTransformCenter() const
-    { return m_Transform -> GetCenter(); }
+//  virtual PointType GetTransformCenter() const
+//    { return m_Transform -> GetCenter(); }
 
-    /** Set/Get iterations. */
-  itkSetMacro(Iterations, unsigned int);
-  itkGetMacro(Iterations, unsigned int);
+//    /** Set/Get iterations. */
+//  itkSetMacro(Iterations, unsigned int);
+//  itkGetMacro(Iterations, unsigned int);
 
-  /** Set/Get observer status. */
-  itkSetMacro(EnableObserver, bool);
-  itkGetMacro(EnableObserver, bool);
+//  /** Set/Get observer status. */
+//  itkSetMacro(EnableObserver, bool);
+//  itkGetMacro(EnableObserver, bool);
 
-  /** Set/Get image mask for fixed image. */
-  itkSetObjectMacro(FixedImageMask, ImageMaskType);
-  itkGetObjectMacro(FixedImageMask, ImageMaskType);
+//  /** Set/Get image mask for fixed image. */
+//  itkSetObjectMacro(FixedImageMask, ImageMaskType);
+//  itkGetObjectMacro(FixedImageMask, ImageMaskType);
 
-  /** Set/Get image mask for moving image. */
-  itkSetObjectMacro(MovingImageMask, ImageMaskType);
-  itkGetObjectMacro(MovingImageMask, ImageMaskType);
+//  /** Set/Get image mask for moving image. */
+//  itkSetObjectMacro(MovingImageMask, ImageMaskType);
+//  itkGetObjectMacro(MovingImageMask, ImageMaskType);
 
   /** Initialization is performed with the provided transform. */
   virtual void InitializeWithTransform()
@@ -200,6 +201,11 @@ public:
 
   itkGetObjectMacro(Optimizer, OptimizerType);
 
+  virtual RigidTransformType* GetTransform()
+  {
+      return dynamic_cast<RigidTransformType*>(Superclass::m_Transform.GetPointer());
+  }
+
 protected:
   RigidRegistration();
   virtual ~RigidRegistration() {};
@@ -212,27 +218,27 @@ private:
   RigidRegistration(const Self&); //purposely not implemented
   void operator=(const Self&); //purposely not implemented
 
-  MetricPointer        m_Metric;
-  OptimizerPointer     m_Optimizer;
-  TransformPointer     m_Transform;
-  InterpolatorPointer  m_Interpolator;
+//  MetricPointer        m_Metric;
+//  OptimizerPointer     m_Optimizer;
+//  TransformPointer     m_Transform;
+//  InterpolatorPointer  m_Interpolator;
 
-  ParametersType       m_InitialTransformParameters;
+//  ParametersType       m_InitialTransformParameters;
 
-  ImageMaskPointer     m_FixedImageMask;
-  ImageMaskPointer     m_MovingImageMask;
+//  ImageMaskPointer     m_FixedImageMask;
+//  ImageMaskPointer     m_MovingImageMask;
 
-  MaskPointer          m_FixedMask;
+//  MaskPointer          m_FixedMask;
 
-  PointType            m_TransformCenter;
+//  PointType            m_TransformCenter;
 
   bool m_InitializeWithMask;
   bool m_InitializeWithTransform;
 
-  unsigned int m_Iterations;
-  bool         m_EnableObserver;
+//  unsigned int m_Iterations;
+//  bool         m_EnableObserver;
 
-  CommandIterationUpdate::Pointer  m_Observer;
+//  CommandIterationUpdate::Pointer  m_Observer;
 };
 
 
