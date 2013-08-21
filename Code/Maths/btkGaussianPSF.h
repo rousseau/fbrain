@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 
+  Date: 27/05/2013
   Author(s):Marc Schweitzer (marc.schweitzer(at)unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -38,7 +38,6 @@
 
 #include "btkPSF.h"
 
-#include "itkGaussianSpatialFunction.h"
 #include "itkFixedArray.h"
 #include "itkImage.h"
 #include "itkImageRegionIteratorWithIndex.h"
@@ -47,7 +46,18 @@
 namespace btk
 {
 
-
+/**
+ * @brief Gaussian PSF represent a Gaussian PSF, the support is an image.
+ * Sigma is computed with the spacing and the size of the image.
+ * A common use of this class is :
+ * - first construct the image with the correct parameters (center, size, spacing...)
+ * - Get the Psf Image previously constructed
+ * - iterate over the image to get the values
+ *
+ * NOTE : The Evaluate Method is currently not correct.
+ * TODO : An Evaluate Method for compute the value of a point
+ * (for example iterate over the image and break when the iterated point == point we wanted, then return the value of this point )
+ */
 class GaussianPSF : public btk::PSF
 {
     public:
@@ -71,11 +81,6 @@ class GaussianPSF : public btk::PSF
 
         typedef Superclass::SizeType            SizeType;
 
-        /** Gaussian function type */
-        typedef itk::GaussianSpatialFunction< double,
-                                         3,
-                                         PointType > GaussianFunctionType;
-
         /** Array type */
         typedef itk::FixedArray< double,3 > ArrayType;
 
@@ -86,22 +91,16 @@ class GaussianPSF : public btk::PSF
         /** Run-time type information (and related methods). */
         itkTypeMacro(btk::GaussianPSF, btk::PSF);
 
-        virtual OutputType Evaluate(const InputType & position) const;
-
-
-        virtual void SetSpacing(SpacingType spacing)
+        /** Set Spacing */
+        virtual void SetSpacing(SpacingType _spacing)
         {
-          m_Spacing = spacing.GetVnlVector();
+          m_Spacing = _spacing.GetVnlVector();
           this->UpdateSigma();
-
-//          m_Sigma[0] = m_Spacing[0] / 2.3548;
-//          m_Sigma[1] = m_Spacing[1] / 2.3548;
-//          m_Sigma[2] = m_Spacing[2] / 2.3548;
-
         }
-
+        /** Construct the Gaussian PSF image */
         virtual void ConstructImage();
 
+        /** Compute the Sigma (FWHM is used) */
         virtual void UpdateSigma()
         {
             m_Sigma[0] = m_Spacing[0] * m_Size[0] / 2.3548;
@@ -110,43 +109,25 @@ class GaussianPSF : public btk::PSF
         }
 
 
-
-        void SetOrigin(ImageType::PointType _origin)
-        {
-            m_PsfImage->SetOrigin(_origin);
-        }
-
+        /** Set Size of the image */
         void SetSize(SizeType _size)
         {
             m_Size =  _size;
             this->UpdateSigma();
         }
 
-//        /** Sets the position of the PSF. */
-//        virtual void SetCenter(PointType _center)
-//        {
-//          m_Center = _center.GetVnlVector();
-//          this->SetOrigin(_center);
-//        }
-
-       // btkGetMacro(PsfImage,ImageType::Pointer);
-
-
     protected:
+        /** Constructor */
         GaussianPSF();
+        /** Destructor */
         virtual ~GaussianPSF(){}
+        /** Print */
         void PrintSelf(std::ostream& os, itk::Indent indent) const;
 
 
     private:
 
-        GaussianFunctionType::Pointer m_Gaussian;
-
-        ArrayType m_Sigma;
-
-        SizeType m_Size;
-
-        //ImageType::Pointer  m_PsfImage;
+        ArrayType m_Sigma; /** Sigma */
 
 
 

@@ -105,9 +105,6 @@ class HybridPSF : public btk::PSF
         /** Run-time type information (and related methods). */
         itkTypeMacro(btk::HybridPSF, btk::PSF);
 
-        /** (! deprecated !) Evaluate Method */
-        virtual OutputType Evaluate(const InputType & position) const;
-
         /** Construct Image */
         virtual void ConstructImage();
 
@@ -219,12 +216,7 @@ class HybridPSF : public btk::PSF
 
     private:
 
-        vnl_vector<double> m_idir;
-        vnl_vector<double> m_jdir;
-        vnl_vector<double> m_kdir;
-
-        ArrayType m_Sigma; /** Axis */
-
+        ArrayType m_Sigma; /** Sigma */
         std::vector< function_type > m_Functions; /** Vector of fonctions, one for each axis */
         mutable unsigned int m_Axis; /** Axis */
 };

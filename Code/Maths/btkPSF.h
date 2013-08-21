@@ -87,11 +87,6 @@ class PSF: public itk::Object
         /** Run-time type information (and related methods). */
         itkTypeMacro(btk::PSF, itk::Object);
 
-        /** (! deprecated !)
-         * Evaluate Method compute the value at a desired position
-         * (this method should be redefined in subclasses) */
-        virtual OutputType Evaluate(const InputType & position) const = 0;
-
         /** Construct the PSF image (this method should be redefined in subclasses) */
         virtual void ConstructImage() = 0;
 
@@ -114,7 +109,7 @@ class PSF: public itk::Object
 
 
 
-           // m_PsfImage->TransformIndexToPhysicalPoint(centerOfImage,oldCenter);
+            m_PsfImage->TransformIndexToPhysicalPoint(centerOfImage,oldCenter);
             //std::cout<<"origin : "<<origin<<" center : "<<oldCenter<<std::endl;
 
             dist[0] = center[0] - oldCenter[0];
