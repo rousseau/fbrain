@@ -279,15 +279,8 @@ TARGET_LINK_LIBRARIES(btkLikelihoodOfSequenceEstimation ${ITK_LIBRARIES})
 add_executable(btkComputeFeatureSelectionResiduals btkComputeFeatureSelectionResiduals.cxx)
 target_link_libraries(btkComputeFeatureSelectionResiduals btkFeatureSelectionLibrary ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE( btkCreate4DEmptyImageFromReferenceImage  btkCreate4DEmptyImageFromReferenceImage.cxx)
-TARGET_LINK_LIBRARIES(btkCreate4DEmptyImageFromReferenceImage ${ITK_LIBRARIES} vtkHybrid)
-
-ADD_EXECUTABLE( btkQuantifyClusteredRegions  btkQuantifyClusteredRegions.cxx)
-TARGET_LINK_LIBRARIES(btkQuantifyClusteredRegions ${ITK_LIBRARIES} vtkHybrid)
-
-ADD_EXECUTABLE( btkUpdateLabelTractography  btkUpdateLabelTractography.cxx)
-TARGET_LINK_LIBRARIES(btkUpdateLabelTractography ${ITK_LIBRARIES} vtkHybrid)
-
+add_executable(btkComputeCoefficientOfDeterminationForAtlas btkComputeCoefficientOfDeterminationtForAtlas.cxx)
+target_link_libraries(btkComputeCoefficientOfDeterminationForAtlas btkToolsLibrary ${ITK_LIBRARIES})
 
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
@@ -361,8 +354,6 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkSelectSeedPoint
                 btkLikelihoodOfSequenceEstimation
                 btkComputeFeatureSelectionResiduals
-		btkCreate4DEmptyImageFromReferenceImage
-		btkQuantifyClusteredRegions
-		btkUpdateLabelTractography
+                btkComputeCoefficientOfDeterminationForAtlas
         DESTINATION bin)
 

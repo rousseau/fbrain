@@ -75,7 +75,7 @@ int main(int argc, char * argv[] )
 
      ConstIterator floatIt(floatImage, floatImage->GetLargestPossibleRegion());
 
-     for(shortIt.GoToBegin(), floatIt.GoToBegin(); !shortIt.IsAtEnd(), !floatIt.IsAtEnd(); ++shortIt, ++floatIt)
+     for(shortIt.GoToBegin(), floatIt.GoToBegin(); !shortIt.IsAtEnd() && !floatIt.IsAtEnd(); ++shortIt, ++floatIt)
      {
          if(floatIt.Get() > threshold )
          {

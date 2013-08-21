@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
 
                     double MPE = 0.0; // Mean Percentage Error
 
-                    for(referenceIt.GoToBegin(),correctedIt.GoToBegin();!referenceIt.IsAtEnd(),!correctedIt.IsAtEnd();++referenceIt, ++correctedIt)
+                    for(referenceIt.GoToBegin(), correctedIt.GoToBegin(); !referenceIt.IsAtEnd() && !correctedIt.IsAtEnd(); ++referenceIt, ++correctedIt)
                     {
                         double value1 = static_cast< double >(referenceIt.Get());
                         double value2 = static_cast< double >(correctedIt.Get());

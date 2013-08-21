@@ -68,7 +68,7 @@ int main(int argc, char** argv)
     float                    threshold        = thresholdArg.getValue();
     //ITK declaration
     const   unsigned int Dimension = 3;
-    typedef itk::Image< float, Dimension >    FloatImage; 
+    typedef itk::Image< float, Dimension >    FloatImage;
     typedef FloatImage::Pointer               FloatImagePointer;
     typedef FloatImage::Pointer               FloatImagePointer;
     typedef FloatImage::IndexType             IndexType;
@@ -144,7 +144,7 @@ int main(int argc, char** argv)
       for(unsigned int j=0; j!=inputImages.size(); j++)
       {
         double dotProduct = physicalZVectors[i] * physicalZVectors[j];
-        if( fabs(dotProduct < threshold) )
+        if( std::abs(dotProduct) < threshold )
         {
           orthogonalImages.push_back(j);
         }

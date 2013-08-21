@@ -103,7 +103,7 @@ void ApplyTransformToImageFilter<TImageIn,TImageOut>::Resample() throw(itk::Exce
     typename Interpolator::Pointer interpolator = Interpolator::New();
     interpolator->SetInputImage(m_InputImage);
 
-    for(it.GoToBegin(),itO.GoToBegin(); !it.IsAtEnd(),!itO.IsAtEnd(); ++it,++itO)
+    for(it.GoToBegin(), itO.GoToBegin(); !it.IsAtEnd() && !itO.IsAtEnd(); ++it, ++itO)
     {
         typename itkImage::IndexType InputIndex = it.GetIndex();
         typename itkImage::IndexType OutputIndex = itO.GetIndex();

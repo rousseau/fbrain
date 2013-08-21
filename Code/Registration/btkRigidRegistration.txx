@@ -68,7 +68,6 @@ void
 RigidRegistration<ImageType>
 ::Initialize() throw (ExceptionObject)
 {
-  Superclass::m_Transform;
   // Configure transform
   Superclass::m_Transform = RigidTransformType::New();
 
