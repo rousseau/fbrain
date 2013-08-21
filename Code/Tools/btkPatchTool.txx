@@ -164,6 +164,9 @@ void PatchTool<T1,T2>::ComputeSearchRegion(Patch<T1> & inputPatch, typename itkT
       {
           size[i] = 0;
       }
+      else
+        size[i] = size[i] - d;
+
     }    
   }
   region.SetSize( size );

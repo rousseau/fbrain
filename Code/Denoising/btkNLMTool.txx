@@ -1084,6 +1084,8 @@ void NLMTool<T>::ComputeSearchRegion(typename itkTImage::IndexType p, typename i
       {
           size[i] = 0;
       }
+      else
+        size[i] = size[i] - d;
     }
   }
   region.SetSize( size );
@@ -1127,6 +1129,8 @@ void NLMTool<T>::ComputePatchRegion(typename itkTImage::IndexType p, typename it
       {
           size[i] = 0;
       }
+      else
+        size[i] = size[i] - d;
     }
   }
   imageRegion.SetSize( size );

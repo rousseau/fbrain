@@ -701,6 +701,9 @@ void LabelFusionTool<T>::ComputePatchRegion(typename itkTImage::IndexType p, typ
       {
           size[i] = 0;
       }
+      else
+        size[i] = size[i] - d;
+
     }    
   }  
   imageRegion.SetSize( size );
@@ -736,6 +739,9 @@ void LabelFusionTool<T>::ComputeSearchRegion(typename itkTImage::IndexType p, ty
       {
           size[i] = 0;
       }
+      else
+        size[i] = size[i] - d;
+
     }    
   }
   region.SetSize( size );

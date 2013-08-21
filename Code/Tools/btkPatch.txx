@@ -161,6 +161,9 @@ void Patch<T>::ComputePatchRegion(typename itkTImage::IndexType p, typename itkT
       {
           size[i] = 0;
       }
+      else
+        size[i] = size[i] - d;
+
     }    
   }  
   imageRegion.SetSize( size );
