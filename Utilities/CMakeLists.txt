@@ -279,7 +279,8 @@ TARGET_LINK_LIBRARIES(btkLikelihoodOfSequenceEstimation ${ITK_LIBRARIES})
 add_executable(btkComputeFeatureSelectionResiduals btkComputeFeatureSelectionResiduals.cxx)
 target_link_libraries(btkComputeFeatureSelectionResiduals btkFeatureSelectionLibrary ${ITK_LIBRARIES})
 
-
+add_executable(btkComputeCoefficientOfDeterminationForAtlas btkComputeCoefficientOfDeterminationtForAtlas.cxx)
+target_link_libraries(btkComputeCoefficientOfDeterminationForAtlas btkToolsLibrary ${ITK_LIBRARIES})
 
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
@@ -353,5 +354,6 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkSelectSeedPoint
                 btkLikelihoodOfSequenceEstimation
                 btkComputeFeatureSelectionResiduals
+                btkComputeCoefficientOfDeterminationForAtlas
         DESTINATION bin)
 
