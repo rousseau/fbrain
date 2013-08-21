@@ -43,37 +43,6 @@ BoxCarPSF::BoxCarPSF(): Superclass::PSF()
 
     m_PsfImage = ImageType::New();
 }
-
-//-------------------------------------------------------------------------------------------------
-
-BoxCarPSF::OutputType
-BoxCarPSF::Evaluate(const InputType &position) const
-{
-    //NOTE: This function is deprecated
-    vnl_vector<double> diff = position.GetVnlVector() - m_Center;
-    PointType diffPoint;
-
-    //Dot product between image direction and point vector (in PSF space)
-    double icoor = dot_product(diff,m_idir);
-    double jcoor = dot_product(diff,m_jdir);
-    double kcoor = dot_product(diff,m_kdir);
-
-    diffPoint[0] = icoor;
-    diffPoint[1] = jcoor;
-    diffPoint[2] = kcoor;
-
-    double value = 0.0;
-
-    if(( fabs(icoor) <= 0.5 * m_Spacing[0] ) &&
-       ( fabs(jcoor) <= 0.5 * m_Spacing[1] ) &&
-       ( fabs(kcoor) <= 0.5 * m_Spacing[2]))
-    {
-        value = 1.0;
-    }
-
-    return (OutputType)value;
-
-}
 //-------------------------------------------------------------------------------------------------
 void BoxCarPSF::ConstructImage()
 {

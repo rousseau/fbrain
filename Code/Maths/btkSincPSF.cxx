@@ -53,31 +53,6 @@ void SincPSF::Initialize()
     m_kdir = m_Direction.get_column(2);
 }
 //-------------------------------------------------------------------------------------------------
-SincPSF::OutputType
-SincPSF::Evaluate(const InputType &position) const
-{
-    //NOTE: This fonction is deprecated
-    vnl_vector<double> diff = position.GetVnlVector() - m_Center;
-    PointType diffPoint;
-    double x,y,z;
-
-    //Dot product between image direction and point vector (in PSF space)
-    double icoor = dot_product(diff,m_idir);
-    double jcoor = dot_product(diff,m_jdir);
-    double kcoor = dot_product(diff,m_kdir);
-
-    x = diffPoint[0] = icoor;
-    y = diffPoint[1] = jcoor;
-    z = diffPoint[2] = kcoor;
-
-    double value = 0.0;
-
-    value = sin((x*x) + (y*y) + (z*z)) / ((x*x) + (y*y) + (z*z));
-
-    return (OutputType)value;
-
-}
-//-------------------------------------------------------------------------------------------------
 void SincPSF::ConstructImage()
 {
     ImageType::RegionType region;

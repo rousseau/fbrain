@@ -88,44 +88,6 @@ float HybridPSF::functionSinc(float _x)
     return value;
 }
 //-------------------------------------------------------------------------------------------------
-HybridPSF::OutputType
-HybridPSF::Evaluate(const InputType & position) const
-{
-
-    vnl_vector<double> diff = position.GetVnlVector() - m_Center;
-    PointType diffPoint;
-    double x , y, z;
-
-    //Dot product between image direction and point vector (in PSF space)
-    double icoor = dot_product(diff,m_idir);
-    double jcoor = dot_product(diff,m_jdir);
-    double kcoor = dot_product(diff,m_kdir);
-
-    x = diffPoint[0] = icoor;
-    y = diffPoint[1] = jcoor;
-    z = diffPoint[2] = kcoor;
-
-    std::vector< float > points(3);
-
-    points[0] = (float)x;
-    points[1] = (float)y;
-    points[2] = (float)z;
-
-    //TODO: Do an oversampling over Point !
-
-
-
-    float value = 1.0;
-
-    for(unsigned int i = 0; i< 3; i++)
-    {
-        m_Axis = i;
-        //value *= (this->*m_Functions[i])(points[i]);
-    }
-
-    return(OutputType)value;
-}
-//-------------------------------------------------------------------------------------------------
 void HybridPSF::ConstructImage()
 {
     ImageType::RegionType region;

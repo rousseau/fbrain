@@ -91,9 +91,6 @@ class GaussianPSF : public btk::PSF
         /** Run-time type information (and related methods). */
         itkTypeMacro(btk::GaussianPSF, btk::PSF);
 
-        /** Evaluate fonction (! deprecated !)  */
-        virtual OutputType Evaluate(const InputType & position) const;
-
         /** Set Spacing */
         virtual void SetSpacing(SpacingType _spacing)
         {

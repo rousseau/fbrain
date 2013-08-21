@@ -89,9 +89,6 @@ class BoxCarPSF : public btk::PSF
         /** Run-time type information (and related methods). */
         itkTypeMacro(btk::BoxCarPSF, btk::PSF);
 
-        /** (! Deprecated !) Evaluate method */
-        virtual OutputType Evaluate(const InputType & position) const;
-
         /** Construct Image */
         virtual void ConstructImage();
 

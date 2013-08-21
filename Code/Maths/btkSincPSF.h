@@ -82,8 +82,6 @@ class SincPSF : public btk::PSF
         /** Run-time type information (and related methods). */
         itkTypeMacro(btk::SincPSF, btk::PSF);
 
-        /** Evaluate Method (! deprecated !) */
-        virtual OutputType Evaluate(const InputType & position) const;
         /** Construct Image */
         virtual void ConstructImage();
 

@@ -105,9 +105,6 @@ class HybridPSF : public btk::PSF
         /** Run-time type information (and related methods). */
         itkTypeMacro(btk::HybridPSF, btk::PSF);
 
-        /** (! deprecated !) Evaluate Method */
-        virtual OutputType Evaluate(const InputType & position) const;
-
         /** Construct Image */
         virtual void ConstructImage();
 
