@@ -219,12 +219,7 @@ class HybridPSF : public btk::PSF
 
     private:
 
-        vnl_vector<double> m_idir;
-        vnl_vector<double> m_jdir;
-        vnl_vector<double> m_kdir;
-
-        ArrayType m_Sigma; /** Axis */
-
+        ArrayType m_Sigma; /** Sigma */
         std::vector< function_type > m_Functions; /** Vector of fonctions, one for each axis */
         mutable unsigned int m_Axis; /** Axis */
 };

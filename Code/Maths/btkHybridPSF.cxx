@@ -40,13 +40,6 @@ namespace btk
 //-------------------------------------------------------------------------------------------------
 HybridPSF::HybridPSF():Superclass::PSF()
 {
-//    m_Direction.set_size(3,3);
-
-//    m_Center.set_size(3);
-//    m_Center.fill(0.0);
-
-//    m_Spacing.set_size(3);
-//    m_Spacing.fill(1);
 
     m_PsfImage = ImageType::New();
 
@@ -55,13 +48,9 @@ HybridPSF::HybridPSF():Superclass::PSF()
     m_Sigma[2] = m_Spacing[2] * m_Size[2] / 2.3548;
 
     m_Functions.resize(3);
-//    m_Functions[X] = &HybridPSF::functionSinc;
-//    m_Functions[Y] = &HybridPSF::functionSinc;
-//    m_Functions[Z] = &HybridPSF::functionGauss;
-
-    m_Functions[X] = &HybridPSF::functionBoxCar;
-    m_Functions[Y] = &HybridPSF::functionBoxCar;
-    m_Functions[Z] = &HybridPSF::functionBoxCar;
+    m_Functions[X] = &HybridPSF::functionSinc;
+    m_Functions[Y] = &HybridPSF::functionSinc;
+    m_Functions[Z] = &HybridPSF::functionGauss;
 
     m_Axis = X;
 }
@@ -170,13 +159,18 @@ void HybridPSF::ConstructImage()
 
     itkIteratorWithIndex itPSF(m_PsfImage,m_PsfImage->GetLargestPossibleRegion());
     itkContinuousIndex hrIndexCenter;
-//    hrIndexCenter[0] = (m_Size[0]-1)/2.0;
-//    hrIndexCenter[1] = (m_Size[1]-1)/2.0;
-//    hrIndexCenter[2] = (m_Size[2]-1)/2.0;
+    hrIndexCenter[0] = (m_Size[0]-1)/2.0;
+    hrIndexCenter[1] = (m_Size[1]-1)/2.0;
+    hrIndexCenter[2] = (m_Size[2]-1)/2.0;
 
-    hrIndexCenter[0] = (m_Size[0])/2;
-    hrIndexCenter[1] = (m_Size[1])/2;
-    hrIndexCenter[2] = (m_Size[2])/2;
+    PointType hrPointCenter;
+    m_PsfImage->TransformContinuousIndexToPhysicalPoint(hrIndexCenter,hrPointCenter);
+
+    PointType hrOrigin;
+    hrOrigin[0] =  hrPointCenter[0];
+    hrOrigin[1] =  hrPointCenter[1];
+    hrOrigin[2] =  hrPointCenter[2];
+    m_PsfImage->SetOrigin(hrOrigin);
 
     std::vector< float > points(3);
     for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF)
@@ -190,10 +184,6 @@ void HybridPSF::ConstructImage()
         {
             m_Axis = i;
             value *= (this->*m_Functions[i])(points[i]); // compute the value with the corresponding fonction for the ith axis
-        }
-        if(value < 0.01)
-        {
-            value= 0.0;
         }
         itPSF.Set(value);
 
