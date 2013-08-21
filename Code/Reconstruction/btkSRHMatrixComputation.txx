@@ -43,7 +43,7 @@ namespace btk
 //-------------------------------------------------------------------------------------------------
 
 template < class TImage >
-SRHMatrixComputation< TImage >::SRHMatrixComputation():m_PSFType(0)
+SRHMatrixComputation< TImage >::SRHMatrixComputation():m_H(0),m_Y(0),m_PSF(0)
 {
 
 }
@@ -51,56 +51,25 @@ SRHMatrixComputation< TImage >::SRHMatrixComputation():m_PSFType(0)
 template< class TImage >
 void SRHMatrixComputation< TImage >::Initialize()
 {
+
     m_IsHComputed = false;
     m_NumberOfLRImages = m_Images.size();
 
     m_Regions.resize(m_NumberOfLRImages);
     m_PSFs.resize(m_NumberOfLRImages);
 
-    std::cout<<"PSF Type : "<<m_PSFType<<std::endl;
+    m_OutputImageRegion = m_ReferenceImage -> GetLargestPossibleRegion();
+
     for(unsigned int i = 0; i< m_NumberOfLRImages; i++)
     {
         //m_Regions[i] = m_Images[i]->GetLargestPossibleRegion();
         m_Regions[i] = m_Masks[i]->GetAxisAlignedBoundingBoxRegion();
-
-        if(m_PSFType == 0)
-        {
-            m_PSFs[i] = btk::GaussianPSF::New();
-            m_PSF = btk::GaussianPSF::New();
-        }
-        else if(m_PSFType == 1)
-        {
-            m_PSFs[i] = btk::BoxCarPSF::New();
-            m_PSF = btk::BoxCarPSF::New();
-        }
-        else if(m_PSFType == 2)
-        {
-            m_PSFs[i] = btk::GaussianPSF::New();
-            m_PSF = btk::GaussianPSF::New();
-        }
-        else if(m_PSFType == 3)
-        {
-            m_PSFs[i] = btk::SincPSF::New();
-            m_PSF = btk::SincPSF::New();
-        }
-        else if(m_PSFType == 4)
-        {
-            m_PSFs[i] = btk::HybridPSF::New();
-            m_PSF = btk::HybridPSF::New();
-        }
-        else
-        {
-            m_PSFs[i] = btk::GaussianPSF::New();
-            m_PSF = btk::GaussianPSF::New();
-        }
-
     }
 }
 //-------------------------------------------------------------------------------------------------
 template< class TImage >
 void SRHMatrixComputation< TImage >::Update()
 {
-
 
     this->Initialize();
 
@@ -116,7 +85,7 @@ void SRHMatrixComputation< TImage >::Update()
     itkBSplineFunction::SizeType    bsplineSize;
     RegionType                      bsplineRegion;
 
-    m_OutputImageRegion = m_ReferenceImage -> GetLargestPossibleRegion();
+
     IndexType start_hr  = m_OutputImageRegion.GetIndex();
     SizeType  size_hr   = m_OutputImageRegion.GetSize();
 
@@ -130,30 +99,8 @@ void SRHMatrixComputation< TImage >::Update()
     end_hr[1] = start_hr[1] + size_hr[1] - 1 ;
     end_hr[2] = start_hr[2] + size_hr[2] - 1 ;
 
-    // Differential continuous indexes to perform the neighborhood iteration
-    SpacingType spacing_lr = m_Images[0] -> GetSpacing();
-    SpacingType spacing_hr = m_ReferenceImage -> GetSpacing();
-
-    //spacing_lr[2] is assumed to be the lowest resolution
-    //compute the index of the PSF in the LR image resolution
-    std::vector<ContinuousIndexType> deltaIndexes;
-    int npoints =  spacing_lr[2] / (2.0 * spacing_hr[2]) ;
-    ContinuousIndexType delta;
-    delta[0] = 0.0; delta[1] = 0.0;
-
-
-    for (int i = -npoints ; i <= npoints; i++ )
-    {
-        delta[2] = i * 0.5 / (double) npoints;
-        deltaIndexes.push_back(delta);
-    }
-
     // Set size of matrices
     unsigned int ncols = m_OutputImageRegion.GetNumberOfPixels();
-
-    //m_X.set_size( ncols ); //FIXME: In this filter we don't need X !
-
-
 
     unsigned int nrows = 0;
     for(unsigned int im = 0; im < m_NumberOfLRImages; im++)
@@ -174,14 +121,16 @@ void SRHMatrixComputation< TImage >::Update()
     typename InterpolatorType::Pointer interpolator = InterpolatorType::New();
     interpolator->SetInputImage(m_ReferenceImage);
 
-    unsigned int lrLinearIndex;
-    unsigned int hrLinearIndex;
+    unsigned int lrLinearIndex = 0;
+    unsigned int hrLinearIndex = 0;
     unsigned int offset = 0;
     double psfValue;
 
 
 
     unsigned int im;
+    //FIXME : add critical part for H and PSF
+    // Not Sure that parallel for is necessary here !
     //#pragma omp parallel for private(im) schedule(dynamic)
 
     for(im = 0; im < m_Images.size(); im++)
@@ -192,6 +141,18 @@ void SRHMatrixComputation< TImage >::Update()
         SizeType lrSize = m_Images[im]->GetLargestPossibleRegion().GetSize();
         SpacingType lrSpacing = m_Images[im]->GetSpacing();
         ConstIteratorType lrIt( m_Images[im], m_Images[im]->GetLargestPossibleRegion() );
+        //Initialization of the PSF
+        m_PSF->SetDirection(m_Images[im]->GetDirection());
+        m_PSF->SetLrSpacing(lrSpacing);
+        m_PSF->SetSpacing(m_ReferenceImage->GetSpacing());
+
+        SizeType psfSize;
+        psfSize[0] = (int)ceil(m_Images[im]->GetSpacing()[0] / m_ReferenceImage->GetSpacing()[0]) + 2;
+        psfSize[1] = (int)ceil(m_Images[im]->GetSpacing()[1] / m_ReferenceImage->GetSpacing()[1]) + 2;
+        psfSize[2] = (int)ceil(m_Images[im]->GetSpacing()[2] / m_ReferenceImage->GetSpacing()[2]) + 2;
+
+        m_PSF->SetSize(psfSize);
+        m_PSF->ConstructImage();
 
         // for all voxels
         for(lrIt.GoToBegin(); !lrIt.IsAtEnd(); ++lrIt)
@@ -201,47 +162,34 @@ void SRHMatrixComputation< TImage >::Update()
             m_Images[im]->TransformIndexToPhysicalPoint(lrIndex, lrPoint);
             PointType srPoint = m_Transforms[im]->TransformPoint(lrPoint);
 
-            // if point is not in the sr image we skip it
-            if(!interpolator->IsInsideBuffer(srPoint))
-            {
-                continue;
-            }
-
             // if point is not in the mask we skip it
             if(!m_Masks[im]->GetImage()->GetPixel(lrIndex) > 0)
             {
                 continue;
             }
 
+            // if point is not in the sr image we skip it
+            if(!interpolator->IsInsideBuffer(srPoint))
+            {
+                continue;
+            }
+
             //compute the linear index corresponding to the index of lr image
-            lrLinearIndex = offset + lrIndex[0] + lrIndex[1]*lrSize[0]
-                            + lrIndex[2]*lrSize[0]*lrSize[1];
+            lrLinearIndex =  lrIndex[0] + lrIndex[1]*lrSize[0]
+                            + lrIndex[2]*lrSize[0]*lrSize[1] + offset;
 
             //Fill Y
             m_Y->operator()(lrLinearIndex) = lrIt.Get();
 
-            //Initialization of the PSF
-            m_PSF->SetDirection(m_Images[im]->GetDirection());
-            m_PSF->SetLrSpacing(lrSpacing);
-            m_PSF->SetSpacing(m_ReferenceImage->GetSpacing());
 
-            //TODO: Like Stan, but I don't understand why !
-            SizeType psfSize;
-            psfSize[0] = (int)ceil(m_Images[im]->GetSpacing()[0] / m_ReferenceImage->GetSpacing()[0]) +2;
-            psfSize[1] = (int)ceil(m_Images[im]->GetSpacing()[1] / m_ReferenceImage->GetSpacing()[1]) +2;
-            psfSize[2] = (int)ceil(m_Images[im]->GetSpacing()[2] / m_ReferenceImage->GetSpacing()[2]) +2;
-
-            m_PSF->SetSize(psfSize);
-            //We center the PSF on the physical LR point
-           // std::cout<<lrPoint<<std::endl;
-
-            m_PSF->ConstructImage();
             m_PSF->SetCenter(lrPoint);
+             //m_PSF->ConstructImage(); //We construct an image at each voxel, time-consuming !!!
+            //std::cout<<lrPoint<<std::endl;
             // Get PSF support (image)
             PSF = m_PSF->GetPsfImage();
             // Save the result (do that with a break point in debug mode,
             // otherwise PSF is saved at each voxel).
-            //btk::ImageHelper< itk::Image< float, 3 > >::WriteImage(PSF,"PSFImage.nii.gz");
+           // btk::ImageHelper< itk::Image< float, 3 > >::WriteImage(PSF,"PSFImage.nii.gz");
 
             ImageRegionConstIteratorWithIndex< itk::Image< float, 3 > > itPsf(PSF, PSF->GetLargestPossibleRegion());
             // Loop over PSF voxels
@@ -250,22 +198,17 @@ void SRHMatrixComputation< TImage >::Update()
                 IndexType psfIndex = itPsf.GetIndex();
                 PointType psfInLrSpacePoint, transformedPoint;
                 //Physical point of psf Index, in Lr Space
-                m_Images[im]->TransformIndexToPhysicalPoint(psfIndex,psfInLrSpacePoint);
+                PSF->TransformIndexToPhysicalPoint(psfIndex,psfInLrSpacePoint);
 
                 psfValue = itPsf.Get();
 
-
-                //std::cout<<"At Psf index : "<<psfIndex<<" value : "<<psfValue<<std::endl;
-
-                if(!psfValue > 0)
+                if(psfValue <= 0.0)
                 {
                     continue;
                 }
 
                 // psfPoint in sr space
-                //m_Transforms[im]->GetInverse(inverse);
-                //transformedPoint = m_Transforms[im]->TransformPoint(psfInLrSpacePoint);
-                transformedPoint = m_InverseTransforms[im]->TransformPoint(psfInLrSpacePoint);
+                transformedPoint = m_Transforms[im]->TransformPoint(psfInLrSpacePoint);
 
                 // if point is not in the sr image we skip it
                 if(interpolator->IsInsideBuffer(transformedPoint))
@@ -290,6 +233,7 @@ void SRHMatrixComputation< TImage >::Update()
 
 //                    if ( isInsideHR )
 //                    {
+
 //                      double hrValue = interpolator -> Evaluate( transformedPoint );
 
 //                      for(unsigned int n=0; n<interpolator -> GetContributingNeighbors(); n++)
@@ -297,28 +241,27 @@ void SRHMatrixComputation< TImage >::Update()
 //                        IndexType hrIndex = interpolator -> GetIndex(n);
 //                        IndexType hrDiffIndex;
 
-//                        hrDiffIndex[0] = hrIndex[0] - start_hr[0];
-//                        hrDiffIndex[1] = hrIndex[1] - start_hr[1];
-//                        hrDiffIndex[2] = hrIndex[2] - start_hr[2];
+////                        hrDiffIndex[0] = hrIndex[0] - start_hr[0];
+////                        hrDiffIndex[1] = hrIndex[1] - start_hr[1];
+////                        hrDiffIndex[2] = hrIndex[2] - start_hr[2];
 
-//                        hrLinearIndex = hrDiffIndex[0] + hrDiffIndex[1]*size_hr[0] + hrDiffIndex[2]*size_hr[0]*size_hr[1];
+//                        //hrLinearIndex = hrDiffIndex[0] + hrDiffIndex[1]*size_hr[0] + hrDiffIndex[2]*size_hr[0]*size_hr[1];
+//                        hrLinearIndex = hrIndex[0] + hrIndex[1]*size_hr[0] + hrIndex[2]*size_hr[0]*size_hr[1];
 //                        //std::cout<<"old value in H("<<lrLinearIndex<<","<<hrLinearIndex<<") : "<<m_H->operator()(lrLinearIndex, hrLinearIndex)<<std::endl;
 
-//                        m_H->operator()(lrLinearIndex, hrLinearIndex) += psfValue/* * interpolator->GetOverlap(n)*/;
+//                        m_H->operator()(lrLinearIndex, hrLinearIndex) += psfValue * interpolator->GetOverlap(n);
 
-//                        //std::cout<<"new value in H("<<lrLinearIndex<<","<<hrLinearIndex<<") : "<<m_H->operator()(lrLinearIndex, hrLinearIndex)<<std::endl;
-
-
-//                      }
-//                    }
+//                       //std::cout<<"new value in H("<<lrLinearIndex<<","<<hrLinearIndex<<") : "<<m_H->operator()(lrLinearIndex, hrLinearIndex)<<std::endl;
 
 
-                    // FRANCOIS VERSION :
+//                } //end of loop over the support region
 
-                    //std::cout<<"hrContIndex: "<<srContIndex[0]<<" "<<srContIndex[1]<<" "<<srContIndex[2]<<std::endl;
+//            }// end if bspline index inside sr image
+
+                    //FRANCOIS VERSION :
+
                     //Get the interpolation weight using itkBSplineInterpolationWeightFunction
                     bsplineFunction->Evaluate(srContIndex,bsplineWeights,bsplineStartIndex);
-                    //std::cout<<"bsplineIndex: "<<bsplineStartIndex[0]<<" "<<bsplineStartIndex[1]<<" "<<bsplineStartIndex[2]<<std::endl;
 
                     //Get the support size for interpolation
                     bsplineSize = bsplineFunction->GetSupportSize();
@@ -347,36 +290,10 @@ void SRHMatrixComputation< TImage >::Update()
 
                             //Get coordinate in HR image
                             IndexType hrIndex = itHRImage.GetIndex();
-
                             //Compute the corresponding linear index
                             hrLinearIndex = hrIndex[0] + hrIndex[1]*size_hr[0] + hrIndex[2]*size_hr[0]*size_hr[1];
-
                             //Add weight*PSFValue to the corresponding element in H
-                            //
-                            //std::cout<<"old value in H("<<lrLinearIndex<<","<<hrLinearIndex<<") : "<<m_H->operator()(lrLinearIndex, hrLinearIndex)<<std::endl;
-                            if(std::isnan(psfValue))
-                            {
-                                std::cout<<"NAN PSF"<<std::endl;
-                                btkCoutVariable(im);
-                                btkCoutVariable(lrLinearIndex);
-                                btkCoutVariable(hrLinearIndex);
-                                btkCoutVariable(weightLinearIndex);
-                                btkCoutVariable(lrIndex);
-                            }
-
-                            if(std::isnan(bsplineWeights[weightLinearIndex]))
-                            {
-                                std::cout<<"BSPLINE IS NAN"<<std::endl;
-                                btkCoutVariable(im);
-                                btkCoutVariable(lrLinearIndex);
-                                btkCoutVariable(hrLinearIndex);
-                                btkCoutVariable(weightLinearIndex);
-                                btkCoutVariable(lrIndex);
-                            }
-
-                            m_H->operator()(lrLinearIndex, hrLinearIndex) += psfValue * bsplineWeights[weightLinearIndex];
-
-                            //std::cout<<"new value in H("<<lrLinearIndex<<","<<hrLinearIndex<<") : "<<m_H->operator()(lrLinearIndex, hrLinearIndex)<<std::endl;
+                            m_H->operator()(lrLinearIndex, hrLinearIndex)  += psfValue * bsplineWeights[weightLinearIndex];
                             weightLinearIndex++;
 
                         } //end of loop over the support region
@@ -385,23 +302,17 @@ void SRHMatrixComputation< TImage >::Update()
 
                 } // if psf point is inside sr image
 
-
-
             }// for PSF voxels
-
 
         }//for voxels
 
         offset += m_Images[im]->GetLargestPossibleRegion().GetNumberOfPixels();
-        //std::cout<<"offset "<<offset<<"/"<<UINT_MAX<<std::endl;
         assert(offset < UINT_MAX);
     }//for im
 
 
 
-
-
-
+    // normalization of H
     for (unsigned int i = 0; i < m_H->rows(); i++)
     {
         double sum = 0.0;
@@ -414,35 +325,23 @@ void SRHMatrixComputation< TImage >::Update()
 
             (*col_iter).second = (*col_iter).second / sum;
 
-            //std::cout<<(*col_iter).second
-
         }
 
 
     }
 
-//    for(unsigned int i = 0; i< m_H->rows(); i++)
-//    {
-//        for(unsigned j = 0; j< m_H->cols(); j++)
-//        {
-//            std::cout<<m_H->operator()(i,j)<<" ";
-//        }
-
-//        std::cout<<std::endl;
-//    }
 
 
     m_IsHComputed = true;
-
-
     std::cout<<"H computed !"<<std::endl;
-    // DEBUG :
-    std::cout<<"Testing Y, X and simulated Y..."<<std::endl;
-    this->TestFillingOfY();
-    this->TestFillingOfX();
-    this->SimulateY();
-}
 
+    // DEBUG :
+//    std::cout<<"Testing Y, X and simulated Y..."<<std::endl;
+//    //this->TestFillingOfY();
+//    this->TestFillingOfX();
+//    this->SimulateY();
+
+}
 //-------------------------------------------------------------------------------------------------
 template< class TImage >
 void
@@ -526,11 +425,16 @@ SRHMatrixComputation< TImage >::SimulateY()
     }
 
     vnl_vector< PrecisionType > SimY;
-    SimY.set_size(m_Y->size());
+
 
     m_H->mult(m_X, SimY);
 
+
+    std::cout<<"Simulation Y is 0 : "<<SimY.is_zero()<<std::endl;
+    std::cout<<"x is 0 : "<<m_X.is_zero()<<std::endl;
+
     // H should previoulsy be computed
+
     m_SimulatedImages.resize(m_NumberOfLRImages);
     unsigned int offset = 0;
 
@@ -546,9 +450,14 @@ SRHMatrixComputation< TImage >::SimulateY()
         {
             IndexType lrIndex = it.GetIndex();
 
-            unsigned int lrLinearIndex = offset + lrIndex[0] +lrIndex[1]*lrSize[0]+ lrIndex[2]*lrSize[0]*lrSize[1];
-
+            unsigned int lrLinearIndex = lrIndex[0] +lrIndex[1]*lrSize[0]+ lrIndex[2]*lrSize[0]*lrSize[1] + offset;
+            assert(lrLinearIndex < UINT_MAX);
             it.Set(SimY(lrLinearIndex));
+
+//            if(SimY(lrLinearIndex) != 0)
+//            {
+//                std::cout<<SimY(lrLinearIndex)<<std::endl;
+//            }
         }
         offset += m_Images[i]->GetLargestPossibleRegion().GetNumberOfPixels();
 
@@ -559,4 +468,6 @@ SRHMatrixComputation< TImage >::SimulateY()
         btk::ImageHelper< ImageType >::WriteImage(m_SimulatedImages[i], name.str());
     }
 }
+
+
 }//namespace

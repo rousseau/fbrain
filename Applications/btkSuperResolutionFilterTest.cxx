@@ -43,6 +43,12 @@
 /* BTK */
 
 #include "btkMacro.h"
+#include "btkPSF.h"
+#include "btkGaussianPSF.h"
+#include "btkBoxCarPSF.h"
+#include "btkSincPSF.h"
+#include "btkHybridPSF.h"
+
 #include "btkSliceBySliceTransform.h"
 #include "btkImageHelper.h"
 #include "btkFileHelper.h"
@@ -59,6 +65,37 @@
 /* OTHERS */
 #include "iostream"
 #include <tclap/CmdLine.h>
+
+btk::PSF::Pointer ChoosePSF(unsigned int _psf)
+{
+    btk::PSF::Pointer p = NULL;
+
+    switch(_psf)
+    {
+        case 0:
+            p = btk::BoxCarPSF::New();
+            break;
+
+        case 1:
+            p = btk::GaussianPSF::New();
+            break;
+
+        case 2:
+            p = btk::SincPSF::New();
+            break;
+
+        case 3:
+            p = btk::HybridPSF::New();
+            break;
+
+        default:
+            p = btk::GaussianPSF::New();
+            break;
+    }
+
+    return p;
+
+}
 
 int main(int argc, char * argv[])
 {
@@ -99,22 +136,29 @@ int main(int argc, char * argv[])
     typedef btk::ApplyTransformToImageFilter<itkImage, itkImage> Resampler;
 
     // TCLAP :
-    TCLAP::CmdLine cmd("Apply the new Super-Resolution pipeline. Testing Version!", ' ', "Unversioned");
+    TCLAP::CmdLine cmd("Apply the new Super-Resolution pipeline !", ' ', "v2");
 
     TCLAP::MultiArg<std::string> inputArg("i","input","Low-resolution image file",true,"string",cmd);
     TCLAP::MultiArg<std::string> maskArg("m","mask","low-resolution image mask file",false,"string",cmd);
     TCLAP::MultiArg<std::string> transArg("t","transform","transformations",false,"string",cmd);
     TCLAP::ValueArg<std::string> refArg  ("r","reconstructed","Reconstructed image for initialization. "
                                           "Typically the output of btkImageReconstruction is used." ,false,"","string",cmd);
+    TCLAP::MultiArg<std::string> simArg("s","sim","Simulated Low-Resolution Images",false,"string",cmd);
 
     TCLAP::ValueArg<std::string> outArg("o","output","output image" ,false,"","string",cmd);
 
 
-    //TODO: Add the others used arg
+    TCLAP::ValueArg<unsigned int> loopArg("","loop","Number of loop for super-resolution (default 1)" ,false,1,"uint",cmd);
+
+    TCLAP::ValueArg<float> lambdaArg("","lambda","Regularisation term (default 0.01)" ,false,0.01,"float",cmd);
+
+    TCLAP::ValueArg<unsigned int> psfArg("","psf","Psf type -> 0 : BoxCar, 1: Gaussian (default), 2: Sinc, 3 : hybrid (sinc on x & y, gaussian on z)" ,false,1,"uint",cmd);
+
 
     std::vector< std::string > input;
     std::vector< std::string > mask;
     std::vector< std::string > transform;
+    std::vector< std::string > simulation;
 
     //std::vector< TransformReaderType > transforms;
 
@@ -137,12 +181,16 @@ int main(int argc, char * argv[])
     refImage = refArg.getValue();
     transform = transArg.getValue();
     outImage = outArg.getValue();
+    simulation = simArg.getValue();
 
 
-
-
+    unsigned int loop = loopArg.getValue();
 
     int numberOfImages = input.size();
+
+    unsigned int psf = psfArg.getValue();
+
+    float lambda = lambdaArg.getValue();
 
 
 
@@ -166,7 +214,20 @@ int main(int argc, char * argv[])
     SRFilter->SetImages(inputsLRImages);
 
     SRFilter->SetReferenceImage(referenceImage);
-    SRFilter->ComputeSimulatedImages(true);
+
+    SRFilter->SetPSF(ChoosePSF(psf));
+
+    SRFilter->SetLambda(lambda);
+
+    if(!simulation.empty())
+    {
+        SRFilter->ComputeSimulatedImages(true);
+    }
+    else
+    {
+        SRFilter->ComputeSimulatedImages(false);
+    }
+
 
     if(transform.empty())
     {
@@ -217,6 +278,7 @@ int main(int argc, char * argv[])
 
 
 
+    std::cout<<"Loop : "<<1<<std::endl;
 
     SRFilter->SetMasks(inputsLRMasks);
     SRFilter->Initialize();
@@ -233,8 +295,10 @@ int main(int argc, char * argv[])
     referenceImage = myTool->GetOutput();
 
 
-    for(unsigned int i = 0; i< 0; i++)
+    for(unsigned int i = 1; i< loop; i++)
     {
+        std::cout<<"Loop : "<<i+1<<std::endl;
+
         SRFilter->SetReferenceImage(referenceImage);
         SRFilter->Initialize();
         SRFilter->Update();
@@ -248,22 +312,20 @@ int main(int argc, char * argv[])
     }
 
 
-
-    std::vector< itkImage::Pointer > simImages = SRFilter->GetSimulatedImages();
-
-    std::vector< std::string > simNames(3);
-
-    simNames[0] = "Sim1.nii.gz";
-    simNames[1] = "Sim2.nii.gz";
-    simNames[2] = "Sim3.nii.gz";
+    if(!simulation.empty())
+    {
+       std::cout<<"Simulated Low Resolution..."<<std::endl;
+       std::vector< itkImage::Pointer > simImages = SRFilter->GetSimulatedImages();
+       btk::ImageHelper< itkImage >::WriteImage(simImages,simulation);
+    }
 
 
-    btk::ImageHelper< itkImage >::WriteImage(simImages,simNames);
+
 
     btk::ImageHelper< itkImage>::WriteImage(referenceImage,outImage);
 
 
-
+    delete myTool;
 
 
     return EXIT_SUCCESS;

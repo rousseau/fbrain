@@ -7,10 +7,13 @@
 namespace btk
 {
 //-----------------------------------------------------------------------------------------------------------
-SuperResolutionFilter::SuperResolutionFilter()
+SuperResolutionFilter::SuperResolutionFilter():m_Lambda(0.01),m_ComputeSimulations(false)
 {
     m_H =NULL;
     m_Y = NULL;
+    m_H_Filter = NULL;
+    m_H_Filter = H_Filter::New();
+
 }
 //-----------------------------------------------------------------------------------------------------------
 SuperResolutionFilter::~SuperResolutionFilter()
@@ -24,9 +27,10 @@ SuperResolutionFilter::~SuperResolutionFilter()
 //-----------------------------------------------------------------------------------------------------------
 void SuperResolutionFilter::Initialize()
 {
-    m_H_Filter = H_Filter::New();
-    m_H= new vnl_sparse_matrix< PrecisionType >();
+
+    m_H = new vnl_sparse_matrix< PrecisionType >();
     m_Y = new vnl_vector< PrecisionType >();
+
 
     m_NumberOfImages  = m_Images.size();
 
@@ -77,70 +81,41 @@ void SuperResolutionFilter::Update()
 
     m_H_Filter->SetMasks(m_MasksObject);
 
-    //m_H_Filter->SetPSF(m_PSF);
-
-    m_H_Filter->SetPSFType(0);
-
     m_H_Filter->Update();
 
-
-    std::cout<<"H computed !"<<std::endl;
-
-    // TODO: Minimization of m_X
     // such as Min(f(y - H*x) + lambda g(x))
     vnl_vector< PrecisionType > HtY;
-    //HtY.set_size(m_Y.size());
-    //std::cout<<m_H.rows()<<std::endl;
-    std::cout<<m_Y->size()<<std::endl;
     m_H->pre_mult(*m_Y,HtY);
-
-    // to see first initialization of H
-    //this->SimulateLRImages();
-
-
 
     VNLCostFunction CostFunction = VNLCostFunction(m_X.size());
 
     CostFunction.GetCostFunction()->SetH(*m_H);
-    CostFunction.GetCostFunction()->SetLambda(0.01);
+    CostFunction.GetCostFunction()->SetLambda(m_Lambda);
     CostFunction.GetCostFunction()->SetY(*m_Y);
     CostFunction.GetCostFunction()->SetSRSize(m_ReferenceImage->GetLargestPossibleRegion().GetSize());
 
     CostFunction.GetCostFunction()->SetHtY(HtY);
 
-    vnl_lbfgs optimizer(CostFunction);
-    //optimizer.set_max_iterations(20);
-    optimizer.set_max_function_evals(50);
-//   vnl_conjugate_gradient optimizer(CostFunction);
-//    optimizer.set_max_function_evals(20);
+   vnl_conjugate_gradient optimizer(CostFunction);
+   optimizer.set_max_function_evals(20);
 
     // Start minimization
 
-
-
     std::cout<<"Start minimization... "<<std::endl;
     optimizer.set_verbose(true);
-    //optimizer.minimize(m_X);
-
-    //std::cout<<"Error : "<<optimizer.get_start_error()<<"/"<<optimizer.get_end_error()<<std::endl;
+    optimizer.minimize(m_X);
 
 
-    //optimizer.diagnose_outcome();
+    optimizer.diagnose_outcome();
 
     m_Xfloat = vnl_matops::d2f(m_X);
+
     if(m_ComputeSimulations)
     {
         this->SimulateLRImages();
     }
 
-
-
       m_X.clear();
-
-
-
-
-
 
     // Generate the output
 
@@ -160,13 +135,7 @@ void SuperResolutionFilter::SimulateLRImages()
     // H should previoulsy be computed
     vnl_vector< PrecisionType > simY;
 
-    std::cout<<m_H->cols()<<std::endl;
-    std::cout<<m_H->rows()<<std::endl;
-
-    //std::cout<<m_X.size()<<std::endl;
-
     m_H->mult(m_Xfloat,simY);
-
 
     //Temporary variables
 
@@ -190,42 +159,9 @@ void SuperResolutionFilter::SimulateLRImages()
             itSim.Set(simY[lrLinearIndex]);
         }
         offset += m_SimulatedImages[im]->GetLargestPossibleRegion().GetNumberOfPixels();
-
-        //offset+= m_Regions[im].GetNumberOfPixels();
     }
 
-//    for (unsigned int im = 0; im < m_NumberOfImages; im++)
-//    {
-//      ImageType::IndexType absIndex;
 
-//      ImageType::IndexType start = m_Regions[im].GetIndex();
-//      ImageType::SizeType  size  = m_Regions[im].GetSize();
-//      unsigned int nvoxels = m_Regions[im].GetNumberOfPixels();
-//      ImageType::IndexType diffIndex;
-
-//      for( unsigned int i=0; i<nvoxels; i++)
-//      {
-
-//        diffIndex[2] = i / (size[0]*size[1]);
-
-//        diffIndex[1] = i - diffIndex[2]*size[0]*size[1];
-//        diffIndex[1] = diffIndex[1] / size[0];
-
-//        diffIndex[0] = i - diffIndex[2]*size[0]*size[1] - diffIndex[1]*size[0];
-
-//        absIndex[0] = diffIndex[0] + start[0];
-//        absIndex[1] = diffIndex[1] + start[1];
-//        absIndex[2] = diffIndex[2] + start[2];
-
-//        m_SimulatedImages[im]->SetPixel(absIndex,simY[i + offset]);
-
-//      }
-
-//      offset = offset + nvoxels;
-
-//    }
-
-    //m_X.clear();
 }
 //-----------------------------------------------------------------------------------------------------------
 void SuperResolutionFilter::GenerateOutputData()
@@ -258,7 +194,7 @@ void SuperResolutionFilter::GenerateOutputData()
     ImageType::SizeType  hrSize  = outputRegion.GetSize();
 
 
-    //ENH: If we iterate over output image and we check the value of the current index
+    //TODO: If we iterate over output image and we check the value of the current index
     // in m_x(doing the inverse conversion), it may be faster.
 
     for (unsigned int i = 0; i<m_Xfloat.size(); i++)
@@ -281,7 +217,7 @@ void SuperResolutionFilter::GenerateOutputData()
     }
 
 
-   btk::ImageHelper< ImageType >::WriteImage(m_Output,"test.nii.gz");
+   //btk::ImageHelper< ImageType >::WriteImage(m_Output,"test.nii.gz");
 
     //m_X.clear();
 }

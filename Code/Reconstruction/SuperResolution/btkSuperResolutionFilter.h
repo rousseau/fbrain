@@ -44,18 +44,12 @@
 #include "itkImageRegionIteratorWithIndex.h"
 #include "vnl/vnl_vector.h"
 #include "vnl/algo/vnl_conjugate_gradient.h"
-#include "vnl/algo/vnl_amoeba.h"
-#include "vnl/algo/vnl_powell.h"
-#include "vnl/algo/vnl_levenberg_marquardt.h"
-#include "vnl/algo/vnl_lbfgs.h"
 #include "vnl/vnl_matops.h"
 
 /* BTK */
 #include "btkMacro.h"
 #include "btkSRHMatrixComputation.hxx"
 #include "btkPSF.h"
-#include "btkGaussianPSF.h"
-#include "btkBoxCarPSF.h"
 #include "btkSuperResolutionCostFunctionITKWrapper.h"
 #include "btkSuperResolutionCostFunctionVNLWrapper.hxx"
 
@@ -65,10 +59,26 @@
 
 namespace btk
 {
+/**
+ * @class SuperResolutionFilter
+ * @brief SuperResolutionFilter is a filter that handle the super-resolution process.
+ * - First it call the H matrix filter (for compute H)
+ * - Then it call the cost function that compute Min(f(y-Hx) + lambda g(x))
+ * - The cost function is connected to the vnl optimizer
+ * - Finally it generate the output (super-resolution image)
+ * - Optionaly low resolution simulated image can be generated (for testing)
+ *
+ * The implemented method is similar to the one described in:
+ *
+ * F. Rousseau,  K. Kim,  C. Studholme,  M. Koob,  J.-L. Dietemann
+ * On Super-Resolution for Fetal Brain MRI, Medical Image Computing and Computer
+ * Assisted Intervention Pékin, Chine, pp. 355--362, Springer-Verlag, Lecture
+ * Notes in Computer Science, Vol. 6362, doi:10.1007/978-3-642-15745-5, 2010
+ */
 class SuperResolutionFilter: public itk::Object
 {
     public:
-
+        /** Typedefs */
         typedef SuperResolutionFilter           Self;
         typedef itk::Object                     Superclass;
         typedef itk::SmartPointer< Self >       Pointer;
@@ -80,7 +90,7 @@ class SuperResolutionFilter: public itk::Object
 
         typedef float                           PrecisionType;
 
-        typedef itk::Image< PixelType, 3 >          ImageType; // maybe a template !
+        typedef itk::Image< PixelType, 3 >          ImageType; // TODO : template ?
 
         typedef itk::Image< unsigned char, 3 >  ImageMaskType;
 
@@ -130,15 +140,20 @@ class SuperResolutionFilter: public itk::Object
         /** Get Output */
         btkGetMacro(Output,ImageType::Pointer);
 
+        /** Set Lambda */
+        btkSetMacro(Lambda,float);
+
         /** Use simulated images */
 
-        void ComputeSimulatedImages(bool _b = false)
+        void ComputeSimulatedImages(bool _b)
         {
             m_ComputeSimulations = _b;
         }
 
+        /** Initialize must be called before Update() */
         virtual void Initialize();
 
+        /** Add Transformation */
         void AddTransform(TransformType* _t)
         {
             if(m_Transforms.size() >= m_Images.size())
@@ -149,6 +164,7 @@ class SuperResolutionFilter: public itk::Object
             m_Transforms.push_back(_t);
         }
 
+        /** Add Inverse transformation */
         void AddInverseTransform(TransformType* _t)
         {
             if(m_InverseTransforms.size() >= m_Images.size())
@@ -159,12 +175,21 @@ class SuperResolutionFilter: public itk::Object
             m_InverseTransforms.push_back(_t);
         }
 
+        /** Set PSF to the H matrix filter  */
+        void SetPSF(btk::PSF::Pointer _p)
+        {
+            m_H_Filter->SetPSF(_p);
+        }
+
 
     protected:
-
+        /** Simulate LR Images with the precalculated H */
         virtual void SimulateLRImages();
+        /** Generate the output image */
         virtual void GenerateOutputData();
+        /** Constructor */
         SuperResolutionFilter();
+        /** Destructor */
         virtual ~SuperResolutionFilter();
 
     private:
@@ -187,7 +212,7 @@ class SuperResolutionFilter: public itk::Object
 
         ImageType::Pointer                      m_ReferenceImage;
 
-        vnl_vector< double >                     m_X;
+        vnl_vector< double >                    m_X;
 
         vnl_vector< PrecisionType >             m_Xfloat;
 
@@ -205,13 +230,7 @@ class SuperResolutionFilter: public itk::Object
 
         ImageType::Pointer                      m_Output;
 
-
-
-
-
-
-
-
+        float                                   m_Lambda;
 
 
 };//end class
