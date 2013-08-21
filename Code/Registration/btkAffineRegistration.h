@@ -4,6 +4,7 @@
 
   Date: 14/04/2010
   Author(s): Estanislao Oubel (oubel@unistra.fr)
+             Marc Schweitzer (marc.schweitzer(at)unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -44,7 +45,6 @@
 #include "itkMattesMutualInformationImageToImageMetric.h"
 #include "itkNormalizedCorrelationImageToImageMetric.h"
 #include "itkImageMaskSpatialObject.h"
-
 #include "itkNumericTraits.h"
 #include "btkUserMacro.h"
 
@@ -66,7 +66,7 @@ using namespace itk;
  */
 
 template <typename TImage>
-class AffineRegistration :public btk::Registration <TImage >
+class AffineRegistration :public btk::Registration < TImage >
 {
 public:
   /** Standard class typedefs. */
@@ -123,9 +123,9 @@ public:
   /**  Type of the Transform . */
   typedef AffineTransform<
                           double,
-                          ImageType::ImageDimension >   TransformType;
-  typedef typename TransformType::Pointer               TransformPointer;
-  typedef typename TransformType::ParametersType        ParametersType;
+                          ImageType::ImageDimension >   AffineTransformType;
+  typedef typename AffineTransformType::Pointer               TransformPointer;
+  typedef typename AffineTransformType::ParametersType        ParametersType;
 
   /**  Type of the Interpolator. */
   typedef LinearInterpolateImageFunction<
@@ -140,35 +140,35 @@ public:
 
   /** Method that initiates the registration. */
 
-  /** Set/Get transform center. */
-  itkSetMacro(TransformCenter, PointType);
+//  /** Set/Get transform center. */
+//  itkSetMacro(TransformCenter, PointType);
 
-  virtual PointType GetTransformCenter() const
-    { return m_Transform -> GetCenter(); }
+//  virtual PointType GetTransformCenter() const
+//    { return m_Transform -> GetCenter(); }
 
-  //itkGetObjectMacro(Transform, TransformType);
+//  //itkGetObjectMacro(Transform, TransformType);
 
-  virtual TransformType* GetTransform()
+  virtual AffineTransformType* GetTransform()
   {
-      return static_cast<TransformType*>(m_Transform);
+      return dynamic_cast<AffineTransformType*>(Superclass::m_Transform.GetPointer());
   }
 
 
-  itkSetObjectMacro(FixedImageMask, ImageMaskType);
-  itkGetObjectMacro(FixedImageMask, ImageMaskType);
+//  itkSetObjectMacro(FixedImageMask, ImageMaskType);
+//  itkGetObjectMacro(FixedImageMask, ImageMaskType);
 
-  /** Set/Get iterations. */
-  itkSetMacro(Iterations, unsigned int);
-  itkGetMacro(Iterations, unsigned int);
+//  /** Set/Get iterations. */
+//  itkSetMacro(Iterations, unsigned int);
+//  itkGetMacro(Iterations, unsigned int);
 
-  /** Set/Get observer status. */
-  itkSetMacro(EnableObserver, bool);
-  itkGetMacro(EnableObserver, bool);
+//  /** Set/Get observer status. */
+//  itkSetMacro(EnableObserver, bool);
+//  itkGetMacro(EnableObserver, bool);
 
-  itkSetObjectMacro(FixedMask,MaskType);
-  itkGetObjectMacro(FixedMask,MaskType);
+//  itkSetObjectMacro(FixedMask,MaskType);
+//  itkGetObjectMacro(FixedMask,MaskType);
 
-  itkGetObjectMacro(Optimizer, OptimizerType);
+//  itkGetObjectMacro(Optimizer, OptimizerType);
 
   /** Initialization is performed with the provided transform. */
   virtual void InitializeWithTransform(){};
@@ -192,21 +192,21 @@ private:
   AffineRegistration(const Self&); //purposely not implemented
   void operator=(const Self&); //purposely not implemented
 
-  MetricPointer        m_Metric;
-  OptimizerPointer     m_Optimizer;
-  TransformPointer     m_Transform;
-  InterpolatorPointer  m_Interpolator;
+//  MetricPointer        m_Metric;
+//  OptimizerPointer     m_Optimizer;
+//  TransformPointer     m_Transform;
+//  InterpolatorPointer  m_Interpolator;
 
-  unsigned int m_Iterations;
-  bool m_EnableObserver;
+//  unsigned int m_Iterations;
+//  bool m_EnableObserver;
 
-  ImageMaskPointer m_FixedImageMask;
+//  ImageMaskPointer m_FixedImageMask;
 
-  MaskPointer          m_FixedMask;
+//  MaskPointer          m_FixedMask;
 
-  CommandIterationUpdate::Pointer  m_Observer;
+//  CommandIterationUpdate::Pointer  m_Observer;
 
-  PointType                 m_TransformCenter;
+//  PointType                 m_TransformCenter;
 };
 
 

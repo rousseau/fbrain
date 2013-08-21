@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 
+  Date: 28/05/2013
   Author(s):Marc Schweitzer (marc.schweitzer(at)unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -38,15 +38,15 @@
 namespace btk
 {
 //-------------------------------------------------------------------------------------------------
-HybridPSF::HybridPSF()
+HybridPSF::HybridPSF():Superclass::PSF()
 {
-    m_Direction.set_size(3,3);
+//    m_Direction.set_size(3,3);
 
-    m_Center.set_size(3);
-    m_Center.fill(0.0);
+//    m_Center.set_size(3);
+//    m_Center.fill(0.0);
 
-    m_Spacing.set_size(3);
-    m_Spacing.fill(1);
+//    m_Spacing.set_size(3);
+//    m_Spacing.fill(1);
 
     m_PsfImage = ImageType::New();
 
@@ -189,7 +189,7 @@ void HybridPSF::ConstructImage()
         for(unsigned int i = 0; i< 3; i++)
         {
             m_Axis = i;
-            value*= (this->*m_Functions[i])(points[i]);
+            value *= (this->*m_Functions[i])(points[i]); // compute the value with the corresponding fonction for the ith axis
         }
         if(value < 0.01)
         {

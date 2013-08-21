@@ -156,8 +156,14 @@ void Patch<T>::ComputePatchRegion(typename itkTImage::IndexType p, typename itkT
     
     int d = (start[i] + size[i]) - m_ImageSize[i]; //if the region is not fully inside the image
     if(d>0){
-      size[i] = size[i] - d;
-      if(size[i] < 0) size[i] = 0;
+//      size[i] = size[i] - d;
+      if(static_cast< int >(size[i]) - d < 0)
+      {
+          size[i] = 0;
+      }
+      else
+        size[i] = size[i] - d;
+
     }    
   }  
   imageRegion.SetSize( size );

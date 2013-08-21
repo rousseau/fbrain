@@ -690,11 +690,8 @@ void OrientationDiffusionFunctionModel::ComputeModelSharpMatrix()
 
     double coefficient = 4.0 * m_BValue * std::sqrt(lambda2 * lambda1);
 
-    if(m_SphericalHarmonicsOrder >= 0)
-    {
-        double coefficientOfOrder = (1.0 / std::pow(alpha,0.5)) * 2.0 * asinSqrtAlpha;
-        m_ModelSharpMatrix(0,0) = coefficient / coefficientOfOrder;
-    }
+    double coefficientOfOrderZero = (1.0 / std::pow(alpha,0.5)) * 2.0 * asinSqrtAlpha;
+    m_ModelSharpMatrix(0,0) = coefficient / coefficientOfOrderZero;
 
     if(m_SphericalHarmonicsOrder >= 2)
     {

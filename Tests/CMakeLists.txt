@@ -56,3 +56,9 @@ ${fbrain_SOURCE_DIR}/Code/Maths/btkSincPSF.cxx
 )
 TARGET_LINK_LIBRARIES(btkPSFTestApp ${ITK_LIBRARIES} btkToolsLibrary btkMathsLibrary)
 ADD_TEST(btkPSFTest ${Tests_BINARY_DIR}/btkPSFTestApp)
+
+ADD_EXECUTABLE(btkRegistrationTestApp ${fbrain_SOURCE_DIR}/Tests/btkRegistrationTest.cxx
+)
+TARGET_LINK_LIBRARIES(btkRegistrationTestApp ${ITK_LIBRARIES} btkToolsLibrary btkMathsLibrary)
+ADD_TEST(btkRegistrationTest ${Tests_BINARY_DIR}/btkRegistrationTestApp)
+

@@ -233,19 +233,19 @@ int main(int argc, char * argv[])
     referenceImage = myTool->GetOutput();
 
 
-    for(unsigned int i = 0; i< 0; i++)
-    {
-        SRFilter->SetReferenceImage(referenceImage);
-        SRFilter->Initialize();
-        SRFilter->Update();
+//    for(unsigned int i = 0; i < 10; i++)
+//    {
+//        SRFilter->SetReferenceImage(referenceImage);
+//        SRFilter->Initialize();
+//        SRFilter->Update();
 
-        myTool->SetInput(referenceImage);
-        myTool->SetPaddingValue(0);
-        myTool->SetDefaultParameters();
-        myTool->ComputeOutput();
+//        myTool->SetInput(referenceImage);
+//        myTool->SetPaddingValue(0);
+//        myTool->SetDefaultParameters();
+//        myTool->ComputeOutput();
 
-        referenceImage = myTool->GetOutput();
-    }
+//        referenceImage = myTool->GetOutput();
+//    }
 
 
 
