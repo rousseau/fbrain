@@ -40,13 +40,6 @@ namespace btk
 
 BoxCarPSF::BoxCarPSF(): Superclass::PSF()
 {
-//    m_Direction.set_size(3,3);
-
-//    m_Center.set_size(3);
-//    m_Center.fill(0.0);
-
-//    m_Spacing.set_size(3);
-//    m_Spacing.fill(1);
 
     m_PsfImage = ImageType::New();
 }
@@ -155,10 +148,10 @@ void BoxCarPSF::ConstructImage()
     hrOrigin[2] = lrPointCenter[2] - hrPointCenter[2];
     m_PsfImage->SetOrigin(hrOrigin);
 
-    itkLinearInterpolator::Pointer bsInterpolator = itkLinearInterpolator::New();
-    //bsInterpolator->SetSplineOrder(1);
+    itkBSplineInterpolator::Pointer bsInterpolator = itkBSplineInterpolator::New();
+    bsInterpolator->SetSplineOrder(0);
     bsInterpolator->SetInputImage(lrImage);
-    unsigned int nbSamples = 20;
+    unsigned int nbSamples = 10;
     for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF)
     {
         sum = 0.0;
@@ -185,6 +178,8 @@ void BoxCarPSF::ConstructImage()
 
               //Continuous coordinate in LR image
               lrImage->TransformPhysicalPointToContinuousIndex(hrPoint,lrContIndex);
+
+              //std::cout<<lrContIndex<<std::endl;
 
               sum += bsInterpolator->EvaluateAtContinuousIndex(lrContIndex);
             }
@@ -218,14 +213,8 @@ void BoxCarPSF::ConstructImage()
           {
               itPSF.Set( itPSF.Get() / sum );
           }
-          if(itPSF.Get() == 0.0)
-          {
-              //std::cout<<"0.0"<<std::endl;
-          }
 
       }
-
-
 
 
     hrOrigin[0] = 0;
