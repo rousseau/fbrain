@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 14/02/2013 (last updated: 28/05/2013)
+  Date: 14/02/2013 (last updated: 21/05/2013)
   Author(s): Larbi Boubchir (boubchir at unistra dot fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -453,8 +453,7 @@ vtkIdType numberOfPoints2, *pointIds2;
 vtkSmartPointer<vtkDoubleArray> label_data = vtkSmartPointer<vtkDoubleArray>::New();
 label_data->SetNumberOfComponents(1);
 
-// NOTE: redefinition of i as int (previously defined as unsinged int line 224)
-/*int*/ i = 0;
+int i = 0; 
 while(lines2->GetNextCell(numberOfPoints2, pointIds2) != 0)
 {
 double l = clusterArray->GetValue(i);
