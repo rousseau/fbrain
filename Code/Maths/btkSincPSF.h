@@ -100,9 +100,6 @@ class SincPSF : public btk::PSF
 
     private:
 
-        vnl_vector<double> m_idir;
-        vnl_vector<double> m_jdir;
-        vnl_vector<double> m_kdir;
 };
 } //end namespace
 #endif // BTKSINCPSF_H
