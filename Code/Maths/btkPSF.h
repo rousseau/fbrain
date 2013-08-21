@@ -114,7 +114,7 @@ class PSF: public itk::Object
 
 
 
-           // m_PsfImage->TransformIndexToPhysicalPoint(centerOfImage,oldCenter);
+            m_PsfImage->TransformIndexToPhysicalPoint(centerOfImage,oldCenter);
             //std::cout<<"origin : "<<origin<<" center : "<<oldCenter<<std::endl;
 
             dist[0] = center[0] - oldCenter[0];
