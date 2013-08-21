@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 10/01/2013 (last updated: 28/05/2013)
+  Date: 10/01/2013 (last updated: 21/08/2013)
   Author(s): Larbi Boubchir (boubchir at unistra dot fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -76,7 +76,7 @@ typedef Image3DType::Pointer Image3DPointer;
 
 //
 // Usage   : btkProbabilisticSegmentationMapBasedClustering -b inputfile.vtk -p prob_map -o outputfile.vtk
-// Example : btkProbabilisticSegmentationMapBasedClustering -b data.vtk -p data-natbrain4D.nii.gz -o clustering1-data.vtk
+// Example : btkProbabilisticSegmentationMapBasedClustering -b data.vtk -p brain-tissue-segmentation-MAP.nii.gz -o clustering1-data.vtk
 
 //
 // main
@@ -84,12 +84,12 @@ int main ( int argc, char *argv[] )
 {
 
   // Define command line parser
-  TCLAP::CmdLine cmd("White-Matter Fiber Tracts Clustering based on a probabilistic segmentation Map of brain tissue");
+  TCLAP::CmdLine cmd("White-Matter Fiber Tracts Clustering Based On A Probabilistic Segmentation MAP Of Brain Tissue");
  
   // Define command line arguments
   TCLAP::ValueArg<std::string> bundleFileNameArg("b", "bundles", "Fibers bundles filename (vtk file)", true, "", "string", cmd);
-  TCLAP::ValueArg<std::string> mapFileNameArg("p", "probability-map", "Probability segmentation Map 4D image(nifti file)", true, "", "string", cmd);  
-  TCLAP::ValueArg<std::string> outputFileNameArg("o", "output", "fibers clustering (vtk file)", false, "", "string", cmd);
+  TCLAP::ValueArg<std::string> mapFileNameArg("p", "probability-map", "Probabilistic brain tissue segmentation MAP (4D image, nifti file)", true, "", "string", cmd);  
+  TCLAP::ValueArg<std::string> outputFileNameArg("o", "output", "Fibers clustering (vtk file)", false, "", "string", cmd);
 
   // Parse arguments
   cmd.parse(argc, argv);
@@ -108,7 +108,7 @@ int main ( int argc, char *argv[] )
   vtkSmartPointer<vtkPolyData> bundle = bundleReader->GetOutput();
   vtkSmartPointer<vtkCellArray> lines = bundle->GetLines();
 
-  // Load probability map (4D image)  
+  // Load probabilistic brain tissue segmentation MAP(4D image)  
   Reader4DType::Pointer reader = Reader4DType::New();
   reader->SetFileName(mapFileName);
   reader->Update();
@@ -171,9 +171,15 @@ int main ( int argc, char *argv[] )
     label_data->InsertNextTupleValue(&maxlabel_point);   
    
   i++; //next bundle 
+
+  std::cout<<"\rProcessing: "
+           <<100*(float)(i+1)/(float)number_fiber
+           <<"% "
+           <<std::flush;
+
   }
 
-std::cout << " done." << std::endl;
+std::cout << " --> done" << std::endl;
 //------------------------------------------------------------------------------
 
 // Create the output vtk data
