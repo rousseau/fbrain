@@ -94,7 +94,7 @@ MutualInformation< TImage >
         m_binMin = Moving0;
 
     }
-    for(ItFixed.GoToBegin(),ItMoving.GoToBegin();!ItFixed.IsAtEnd(),!ItMoving.IsAtEnd();++ItFixed,++ItMoving)
+    for(ItFixed.GoToBegin(), ItMoving.GoToBegin(); !ItFixed.IsAtEnd() && !ItMoving.IsAtEnd(); ++ItFixed, ++ItMoving)
     {
         PixelType FixedVal = ItFixed.Get();
         PixelType MovingVal = ItMoving.Get();

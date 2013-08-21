@@ -217,7 +217,7 @@ std::string SpatialOrientationToString(SpatialOrientation orientation)
             break;
         default:
             std::stringstream x;
-            x << (orientation & 0xff) << ", " << ((orientation >> 8) & 0xff) << ", " << ((orientation >> 16) && 0xff);
+            x << (orientation & 0xff) << ", " << ((orientation >> 8) & 0xff) << ", " << ((orientation >> 16) & 0xff);
             orientationString = x.str();
     }
 

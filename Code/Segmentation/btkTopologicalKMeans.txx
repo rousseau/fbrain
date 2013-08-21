@@ -522,7 +522,7 @@ namespace btk
 	template< typename TInputImage, typename TLabelImage>
 	void TopologicalKMeans<TInputImage, TLabelImage>::SetInputImage(const TInputImage* image)
 	{
-		SetNthInput(0, const_cast<TInputImage*>(image));
+        this->SetNthInput(0, const_cast<TInputImage*>(image));
 		
 		m_Centroids.SetSize(image->GetNumberOfComponentsPerPixel(),3); // 3 because there is three labels
 		m_Centroids.Fill(0);
@@ -531,20 +531,20 @@ namespace btk
 	template< typename TInputImage, typename TLabelImage>
 	void TopologicalKMeans<TInputImage, TLabelImage>::SetInitialSegmentation(const TLabelImage* initSeg)
 	{
-		SetNthInput(1, const_cast<TLabelImage*>(initSeg));
+        this->SetNthInput(1, const_cast<TLabelImage*>(initSeg));
 	}
 	
 	template< typename TInputImage, typename TLabelImage>
 	typename TInputImage::Pointer TopologicalKMeans<TInputImage, TLabelImage>::GetInputImage()
 	{
-		return static_cast< const TInputImage * >
+        return static_cast< TInputImage * >
 		( this->itk::ProcessObject::GetInput(0) );
 	}
 	
 	template< typename TInputImage, typename TLabelImage>
 	typename TLabelImage::Pointer TopologicalKMeans<TInputImage, TLabelImage>::GetInitialSegmentation()
 	{
-		return static_cast< const TLabelImage * >
+        return static_cast< TLabelImage * >
 		( this->itk::ProcessObject::GetInput(1) );
 	}
 }

@@ -185,51 +185,51 @@ int main(int argc, char *argv[])
                 Image::IndexType index;
 
                 index[0] = ix; index[1] = iy; index[2] = iz;
-                if(0 <= (unsigned int)index[0] && (unsigned int)index[0] < output->GetLargestPossibleRegion().GetSize(0) &&
-                   0 <= (unsigned int)index[1] && (unsigned int)index[1] < output->GetLargestPossibleRegion().GetSize(1) &&
-                   0 <= (unsigned int)index[2] && (unsigned int)index[2] < output->GetLargestPossibleRegion().GetSize(2))
+                if(0 <= index[0] && index[0] < output->GetLargestPossibleRegion().GetSize(0) &&
+                   0 <= index[1] && index[1] < output->GetLargestPossibleRegion().GetSize(1) &&
+                   0 <= index[2] && index[2] < output->GetLargestPossibleRegion().GetSize(2))
                     output->SetPixel(index, output->GetPixel(index) + (1-wz)*(1-wx)*(1-wy));
 
                 index[0] = ix; index[1] = iy+1; index[2] = iz;
-                if(0 <= (unsigned int)index[0] && (unsigned int)index[0] < output->GetLargestPossibleRegion().GetSize(0) &&
-                   0 <= (unsigned int)index[1] && (unsigned int)index[1] < output->GetLargestPossibleRegion().GetSize(1) &&
-                   0 <= (unsigned int)index[2] && (unsigned int)index[2] < output->GetLargestPossibleRegion().GetSize(2))
+                if(0 <= index[0] && index[0] < output->GetLargestPossibleRegion().GetSize(0) &&
+                   0 <= index[1] && index[1] < output->GetLargestPossibleRegion().GetSize(1) &&
+                   0 <= index[2] && index[2] < output->GetLargestPossibleRegion().GetSize(2))
                     output->SetPixel(index, output->GetPixel(index) + (1-wz)*(1-wx)*wy);
 
                 index[0] = ix+1; index[1] = iy; index[2] = iz;
-                if(0 <= (unsigned int)index[0] && (unsigned int)index[0] < output->GetLargestPossibleRegion().GetSize(0) &&
-                   0 <= (unsigned int)index[1] && (unsigned int)index[1] < output->GetLargestPossibleRegion().GetSize(1) &&
-                   0 <= (unsigned int)index[2] && (unsigned int)index[2] < output->GetLargestPossibleRegion().GetSize(2))
+                if(0 <= index[0] && index[0] < output->GetLargestPossibleRegion().GetSize(0) &&
+                   0 <= index[1] && index[1] < output->GetLargestPossibleRegion().GetSize(1) &&
+                   0 <= index[2] && index[2] < output->GetLargestPossibleRegion().GetSize(2))
                     output->SetPixel(index, output->GetPixel(index) + (1-wz)*wx*(1-wy));
 
                 index[0] = ix+1; index[1] = iy+1; index[2] = iz;
-                if(0 <= (unsigned int)index[0] && (unsigned int)index[0] < output->GetLargestPossibleRegion().GetSize(0) &&
-                   0 <= (unsigned int)index[1] && (unsigned int)index[1] < output->GetLargestPossibleRegion().GetSize(1) &&
-                   0 <= (unsigned int)index[2] && (unsigned int)index[2] < output->GetLargestPossibleRegion().GetSize(2))
+                if(0 <= index[0] && index[0] < output->GetLargestPossibleRegion().GetSize(0) &&
+                   0 <= index[1] && index[1] < output->GetLargestPossibleRegion().GetSize(1) &&
+                   0 <= index[2] && index[2] < output->GetLargestPossibleRegion().GetSize(2))
                     output->SetPixel(index, output->GetPixel(index) + (1-wz)*wx*wy);
 
                 index[0] = ix; index[1] = iy; index[2] = iz+1;
-                if(0 <= (unsigned int)index[0] && (unsigned int)index[0] < output->GetLargestPossibleRegion().GetSize(0) &&
-                   0 <= (unsigned int)index[1] && (unsigned int)index[1] < output->GetLargestPossibleRegion().GetSize(1) &&
-                   0 <= (unsigned int)index[2] && (unsigned int)index[2] < output->GetLargestPossibleRegion().GetSize(2))
+                if(0 <= index[0] && index[0] < output->GetLargestPossibleRegion().GetSize(0) &&
+                   0 <= index[1] && index[1] < output->GetLargestPossibleRegion().GetSize(1) &&
+                   0 <= index[2] && index[2] < output->GetLargestPossibleRegion().GetSize(2))
                     output->SetPixel(index, output->GetPixel(index) + wz*(1-wx)*(1-wy));
 
                 index[0] = ix; index[1] = iy+1; index[2] = iz+1;
-                if(0 <= (unsigned int)index[0] && (unsigned int)index[0] < output->GetLargestPossibleRegion().GetSize(0) &&
-                   0 <= (unsigned int)index[1] && (unsigned int)index[1] < output->GetLargestPossibleRegion().GetSize(1) &&
-                   0 <= (unsigned int)index[2] && (unsigned int)index[2] < output->GetLargestPossibleRegion().GetSize(2))
+                if(0 <= index[0] && index[0] < output->GetLargestPossibleRegion().GetSize(0) &&
+                   0 <= index[1] && index[1] < output->GetLargestPossibleRegion().GetSize(1) &&
+                   0 <= index[2] && index[2] < output->GetLargestPossibleRegion().GetSize(2))
                     output->SetPixel(index, output->GetPixel(index) + wz*(1-wx)*wy);
 
                 index[0] = ix+1; index[1] = iy; index[2] = iz+1;
-                if(0 <= (unsigned int)index[0] && (unsigned int)index[0] < output->GetLargestPossibleRegion().GetSize(0) &&
-                   0 <= (unsigned int)index[1] && (unsigned int)index[1] < output->GetLargestPossibleRegion().GetSize(1) &&
-                   0 <= (unsigned int)index[2] && (unsigned int)index[2] < output->GetLargestPossibleRegion().GetSize(2))
+                if(0 <= index[0] && index[0] < output->GetLargestPossibleRegion().GetSize(0) &&
+                   0 <= index[1] && index[1] < output->GetLargestPossibleRegion().GetSize(1) &&
+                   0 <= index[2] && index[2] < output->GetLargestPossibleRegion().GetSize(2))
                     output->SetPixel(index, output->GetPixel(index) + wz*wx*(1-wy));
 
                 index[0] = ix+1; index[1] = iy+1; index[2] = iz+1;
-                if(0 <= (unsigned int)index[0] && (unsigned int)index[0] < output->GetLargestPossibleRegion().GetSize(0) &&
-                   0 <= (unsigned int)index[1] && (unsigned int)index[1] < output->GetLargestPossibleRegion().GetSize(1) &&
-                   0 <= (unsigned int)index[2] && (unsigned int)index[2] < output->GetLargestPossibleRegion().GetSize(2))
+                if(0 <= index[0] && index[0] < output->GetLargestPossibleRegion().GetSize(0) &&
+                   0 <= index[1] && index[1] < output->GetLargestPossibleRegion().GetSize(1) &&
+                   0 <= index[2] && index[2] < output->GetLargestPossibleRegion().GetSize(2))
                     output->SetPixel(index, output->GetPixel(index) + wz*wx*wy);
             }
 

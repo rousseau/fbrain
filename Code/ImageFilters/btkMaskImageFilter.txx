@@ -75,7 +75,7 @@ MaskImageFilter<  TImageIn,  TMaskIn,  TImageOut>::Update() throw(itk::Exception
     IteratorImageOut it_output(m_Output, m_Output->GetLargestPossibleRegion());
 
     for(it_mask.GoToBegin(), it_input.GoToBegin(), it_output.GoToBegin();
-        !it_mask.IsAtEnd(), !it_input.IsAtEnd(), !it_output.IsAtEnd() ;
+        !it_mask.IsAtEnd() && !it_input.IsAtEnd() && !it_output.IsAtEnd() ;
         ++it_mask, ++it_input, ++it_output)
     {
         if(it_mask.Get() > m_Threshold)

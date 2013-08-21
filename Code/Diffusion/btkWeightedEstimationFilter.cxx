@@ -134,7 +134,7 @@ void WeightedEstimationFilter::ThreadedGenerateData(const OutputImageRegionType 
     GradientIterator It(m_GradientImage,outputRegionForThread);
     itk::ImageRegionIterator< Self::OutputImageType > outIt(this->GetOutput(), outputRegionForThread);
 
-    for(It.GoToBegin(), outIt.GoToBegin(); !It.IsAtEnd(), !outIt.IsAtEnd(); ++It, ++outIt)
+    for(It.GoToBegin(), outIt.GoToBegin(); !It.IsAtEnd() && !outIt.IsAtEnd(); ++It, ++outIt)
     {
 
 
