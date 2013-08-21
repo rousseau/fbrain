@@ -79,7 +79,7 @@ float Distance_measure(const std::vector<float>& f1,const std::vector<float>& f2
 float Orientation_measure(const std::vector<float>& f1,const std::vector<float>& f2);
 
 //
-// Distance measure (Asymmetric/symmetric Chamfer or Hausdorff distance)
+// Distance measure (Asymmetric/Symmetric Chamfer or Hausdorff distance)
 float Distance_measure(const std::vector<float>& f1,const std::vector<float>& f2,const char& type)
 {
     float distance;
@@ -99,13 +99,13 @@ float Distance_measure(const std::vector<float>& f1,const std::vector<float>& f2
                 dj.clear();
 	}	
 
-	if(type == 'C')
+	if(type == 'C') // Chamfer distance
 	{ 
 		distance = accumulate(di.begin(), di.end(),0.0)/di.size();
 	        di.clear(); 
 	}
 	
-	if(type == 'H')
+	if(type == 'H') // Hausdorff distance
 	{
 		distance = std::max_element(di.begin(), di.end()) - di.begin();
         	di.clear();
@@ -167,6 +167,7 @@ float Orientation_measure(const std::vector<float>& f1,const std::vector<float>&
 	    V2z = V2z/sqrt(pow(V2x,2) + pow(V2y,2) + pow(V2z,2));
 	    
 	    V1x = f1[3*(pas*(i+1))+0]-f1[3*(i*pas)+0]; 
+
 	    V1y = f1[3*(pas*(i+1))+1]-f1[3*(i*pas)+1]; 
 	    V1z = f1[3*(pas*(i+1))+2]-f1[3*(i*pas)+2];
 	    V1x = V1x/sqrt(pow(V1x,2) + pow(V1y,2) + pow(V1z,2));
@@ -180,9 +181,11 @@ float Orientation_measure(const std::vector<float>& f1,const std::vector<float>&
   }
 }
 
-//
-// Usage   : btkDistanceFibersKMeansApproximationClustering -b inputfile.vtk -d distance_measure -c number_of_clusters -a aplha -e eps -o outputfile.vtk
+// ---------------------------------
+// Usage   : btkDistanceFibersKMeansApproximationClustering -b inputfile.vtk -d distance_measure -c number_of_clusters -a alpha -e eps -o outputfile.vtk
+// Minimal Usage : btkDistanceFibersKMeansApproximationClustering -b inputfile.vtk -d distance_measure -c number_of_clusters -o outputfile.vtk
 // Example : btkDistanceFibersKMeansApproximationClustering -b data.vtk -d 7 -c 5 -o clustering2-data.vtk
+// ---------------------------------
 
 //
 // main
@@ -193,10 +196,10 @@ int main ( int argc, char *argv[] )
  
   // Define command line arguments
   TCLAP::ValueArg<std::string> bundleFileNameArg("b", "bundles", "Fiber tracts filename (vtk file)", true, "", "string", cmd);
-  TCLAP::ValueArg<int> ChoiceDistanceArg("d", "distance", "Distance metric", false, 1, "int",cmd);
+  TCLAP::ValueArg<int> ChoiceDistanceMetricArg("d", "distance", "Distance metric", false, 1, "int",cmd);
   TCLAP::ValueArg<int> NumberOfClustersArg("c", "clusters", "Number of clusters", false, 1, "int",cmd);
   TCLAP::ValueArg<float> AlphaArg("a", "alpha", "Parameter in [0,1]: used to control the balance between the distance and orientation similarities", false, 0.5, "float",cmd);
-  TCLAP::ValueArg<float> EpsilonArg("e", "epsilon", "Parameter in ]0,1[: used to fix the sampling parameter", false, 0.5, "float",cmd);
+  TCLAP::ValueArg<float> EpsilonArg("e", "epsilon", "Parameter in ]0,1[: used to fix the sampling parameter in the k-means approximation algorithm", false, 0.5, "float",cmd);
   TCLAP::ValueArg<std::string> outputFileNameArg("o", "output", "Fibers clustering (vtk file)", false, "", "string", cmd);
 
   // Parse arguments
@@ -205,7 +208,7 @@ int main ( int argc, char *argv[] )
   // Define command line variables
   // Get back arguments' values        
   std::string bundleFileName = bundleFileNameArg.getValue();
-  int ChoiceDistance = ChoiceDistanceArg.getValue();
+  int ChoiceDistanceMetric = ChoiceDistanceMetricArg.getValue();
   int NumberOfClusters = NumberOfClustersArg.getValue();
   float alpha = AlphaArg.getValue();
   float eps = EpsilonArg.getValue();
@@ -245,17 +248,19 @@ int main ( int argc, char *argv[] )
   i++; //next bundle 
   }
 
-std::cout << "\nNumber of fibers: " << bundle->GetNumberOfLines();
+std::cout << "\nNumber of fibers: " << bundle->GetNumberOfLines() << std::endl;
 
 //------------------------------------------------------------------------------
 // Distance data matrix
 //------------------------------------------------------------------------------
-//
-// OPTION: calculation of the threshold (--> this is applied with the case 10)
+
+//------------------------------------------------------------------------------
+// OPTION (case 10): the computation of the threshold 
+// --> this threshold is used in the case 10 to control the use (or NOT) of the parameter alpha
 //------------------------------------------------------------------------------
 vnl_matrix<float> dist( number_fiber, number_fiber );
 float maxd = 0, threshold;
-if (ChoiceDistance == 10)
+if (ChoiceDistanceMetric == 10)
 {
   for( int c = 0; c < number_fiber; ++c )
   {
@@ -279,9 +284,8 @@ std::cout << "Maximum distance between fibers: " << maxd << std::endl;
 threshold = maxd/NumberOfClusters;
 std::cout << "Threshold: " << threshold;
 }
-//
 //------------------------------------------------------------------------------
-//
+
 vnl_matrix<float> Distance_matrix( number_fiber, number_fiber );
 std::cout << std::endl;
 
@@ -289,7 +293,7 @@ for( int c = 0; c < number_fiber; ++c )
 {   
     for( int r = 0; r < number_fiber; ++r )
     { 
-	switch(ChoiceDistance) 
+	switch(ChoiceDistanceMetric) 
 	{
 		case 1: Distance_matrix(r,c) = Distance_measure(tab_data[c],tab_data[r],'C');break;
 
@@ -309,15 +313,15 @@ for( int c = 0; c < number_fiber; ++c )
 		
 		case 9: Distance_matrix(r,c) = Orientation_measure(tab_data[c],tab_data[r]); break;
 		
-		case 10: 
-		  if (dist(c,r) < threshold) Distance_matrix(r,c) = alpha*Orientation_measure(tab_data[c],tab_data[r])+((1-alpha)*dist(c,r));
+		case 10: alpha = dist(c,r)/maxd;
+		  if (dist(c,r) < threshold) Distance_matrix(r,c) = (alpha*Orientation_measure(tab_data[c],tab_data[r]))+((1-alpha)*dist(c,r));
 		  else Distance_matrix(r,c) = dist(c,r);break;
 		
 		default: std::cout<< "Error: ''the value of d must between 1 and 10'' \n. Choose 				\n" 
 				  << "(1)  Asymmetric Chamfer distance								\n"
-				  << "(2)  Symmetric Chamfer distance								\n"
-				  << "(3)  Asymmetric Hausdorff distance							\n"				  
-				  << "(4)  Symmetric Hausdorff distance								\n"
+				  << "(2)  Symmetric  Chamfer distance								\n"
+				  << "(3)  Asymmetric Hausdorff distance 							\n"				  
+				  << "(4)  Symmetric  Hausdorff distance							\n"
 				  << "(5)  Combined Chamfer-Hausdorff distances							\n"				  
 				  << "(6)  Combined Symmetric Chamfer-Symmetric Hausdorff distances				\n"
 				  << "(7)  Combined Local Orientation measure-Symmetric Chamfer distance			\n"

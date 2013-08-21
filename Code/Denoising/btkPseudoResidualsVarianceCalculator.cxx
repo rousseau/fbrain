@@ -95,7 +95,7 @@ void PseudoResidualsVarianceCalculator::Compute()
     if(m_MaskImage.IsNotNull())
     {
         // Test if image and mask are in same physical space
-        if(!btk::ImageHelper< InternalImage,MaskImage >::IsInSamePhysicalSpace(m_InputImage, m_MaskImage))
+        if(!btk::ImageHelper< InternalImage,MaskImage >::IsInSamePhysicalSpace(m_InputImage, m_MaskImage, 1e-1))
         {
             btkException("Input image and mask image are not in same physical space !");
         }

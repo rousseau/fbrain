@@ -76,7 +76,7 @@ typedef Image3DType::Pointer Image3DPointer;
 
 //
 // Usage   : btkProbabilisticSegmentationMapBasedClustering -b inputfile.vtk -p prob_map -o outputfile.vtk
-// Example : btkProbabilisticSegmentationMapBasedClustering -b data.vtk -p 01019-natbrain4D.nii.gz -o clustering1-data.vtk
+// Example : btkProbabilisticSegmentationMapBasedClustering -b data.vtk -p data-natbrain4D.nii.gz -o clustering1-data.vtk
 
 //
 // main

@@ -338,10 +338,27 @@ Fiber tracts clustering is used to map the well-known fiber bundles of white mat
 This can be performed using the following applications:
 
 \begin{description}
-        \item[btkProbabilisticSegmentationMapBasedClustering] As supervised method, this program takes as input a probabilistic segmentation Map of brain tissue.\\ 
+        \item[btkProbabilisticSegmentationMapBasedClustering] As supervised method, this program takes as input a probabilistic segmentation MAP of brain tissue which is an 4D image in \href{http://nifti.nimh.nih.gov/nifti-1}{Nifti} format.\\
 
-	Usage: \texttt{btkProbabilisticSegmentationMapBasedClustering -b input.vtk -p prob\_map -o output.vtk}
+	Usage: \texttt{btkProbabilisticSegmentationMapBasedClustering -b fiber\_tractography.vtk -p brain\_tissue\_segmentation\_map.nii.gz -o fiber\_clustering.vtk}\\
  
+	Fig.\ref{clustering1-fig} shows an example of clustering results obtained using the method above.
+
+	\begin{figure}[]
+	\centering
+        \includegraphics[width=4cm]{Tarctography1-Left-View}
+        \includegraphics[width=4cm]{Tarctography1-Anterior-View}
+        \includegraphics[width=4cm]{Tarctography1-Interior-View}
+
+        \includegraphics[width=4cm]{Clustering1-Left-View}
+        \includegraphics[width=4cm]{Clustering1-Anterior-View}
+        \includegraphics[width=4cm]{Clustering1-Interior-View}
+
+        \caption{An example of fiber tracts clustering in the whole brain using \texttt{btkProbabilisticSegmentationMapBasedClustering} method.
+        {\em The fibers from the tractography process and final clustering fiber bundles are shown in the first and second row, respectively. Three viewing angles of 3D depictions of fibers are shown (from left to right): left lateral view, anferior view and interior view. }}
+        \label{clustering1-fig}
+        \end{figure}
+
 	\item[btkDistanceFibersKMeansApproximationClustering] ~\\
 
 	Usage: \texttt{btkDistanceFibersKMeansApproximationClustering -b input.vtk -d distance\_measure -c number\_of\_clusters -a alpha -e eps -o output.vtk} \\

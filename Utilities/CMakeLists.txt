@@ -252,7 +252,7 @@ TARGET_LINK_LIBRARIES(btkTriangleMesh vtkHybrid ${VTK_LIBRARIES})
 ADD_EXECUTABLE( btkCostFunctionTest  btkCostFunctionTest.cpp)
 TARGET_LINK_LIBRARIES(btkCostFunctionTest btkMathsLibrary ${ITK_LIBRARIES} vtkHybrid)
 
-ADD_EXECUTABLE(btkDiffusionScalarMeasurement btkDiffusionScalarMeasurement.cxx)
+ADD_EXECUTABLE( btkDiffusionScalarMeasurement btkDiffusionScalarMeasurement.cxx)
 TARGET_LINK_LIBRARIES(btkDiffusionScalarMeasurement btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkS2SSimilarity btkS2SSimilarity.cxx)
@@ -279,6 +279,14 @@ TARGET_LINK_LIBRARIES(btkLikelihoodOfSequenceEstimation ${ITK_LIBRARIES})
 add_executable(btkComputeFeatureSelectionResiduals btkComputeFeatureSelectionResiduals.cxx)
 target_link_libraries(btkComputeFeatureSelectionResiduals btkFeatureSelectionLibrary ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE( btkCreate4DEmptyImageFromReferenceImage  btkCreate4DEmptyImageFromReferenceImage.cxx)
+TARGET_LINK_LIBRARIES(btkCreate4DEmptyImageFromReferenceImage ${ITK_LIBRARIES} vtkHybrid)
+
+ADD_EXECUTABLE( btkQuantifyClusteredRegions  btkQuantifyClusteredRegions.cxx)
+TARGET_LINK_LIBRARIES(btkQuantifyClusteredRegions ${ITK_LIBRARIES} vtkHybrid)
+
+ADD_EXECUTABLE( btkUpdateLabelTractography  btkUpdateLabelTractography.cxx)
+TARGET_LINK_LIBRARIES(btkUpdateLabelTractography ${ITK_LIBRARIES} vtkHybrid)
 
 
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
@@ -353,5 +361,8 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkSelectSeedPoint
                 btkLikelihoodOfSequenceEstimation
                 btkComputeFeatureSelectionResiduals
+		btkCreate4DEmptyImageFromReferenceImage
+		btkQuantifyClusteredRegions
+		btkUpdateLabelTractography
         DESTINATION bin)
 
