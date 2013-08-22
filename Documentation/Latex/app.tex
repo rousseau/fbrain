@@ -344,7 +344,7 @@ This can be performed using the following applications:
  
 	Fig.\ref{clustering1-fig} shows an example of clustering results obtained using the method above.
 
-	\begin{figure}[]
+	\begin{figure}[h]
 	\centering
         \includegraphics[width=4cm]{Tarctography1-Left-View}
         \includegraphics[width=4cm]{Tarctography1-Anterior-View}
@@ -365,6 +365,21 @@ This can be performed using the following applications:
 
 	Minimal usage: \texttt{btkDistanceFibersKMeansApproximationClustering -b input.vtk -d distance\_measure -c number\_of\_clusters -o output.vtk} \\
 
-	The full list of optional parameters of this method can be obtained by \texttt{btkImageReconstruction --help}
+	The full list of optional parameters of this method can be obtained by:\\ 
+        \texttt{btkDistanceFibersKMeansApproximationClustering --help}
+
+	Fig.\ref{clustering2-fig} shows an example of clustering results in the corpus callosum region obtained using the method above with the following input parameters: \texttt{-d 10 -c 7}.
+
+	\begin{figure}[h]
+	\centering
+        \includegraphics[width=4cm]{Corpus_Callosum-view2}
+        \includegraphics[width=4cm]{Tractography-CC-view2}
+        \includegraphics[width=4cm]{Clustering2-CC-view2}
+        \caption{An example of fiber tracts clustering in the corpus callosum using \texttt{btkProbabilisticSegmentationMapBasedClustering} method.
+        {\em The region of interest on the corpus callosum, fibers from the tractography process and final clustering fiber bundles are shown from left to right, respectively. The fibers are clustered according to anatomical regions as proposed by \href{brain.oxfordjournals.org/content/112/3/799}{Witelson}.}}
+        \label{clustering2-fig}
+        \end{figure}
+
 \end{description}
 
+\underline{NOTE}: The input and output data of these two applications are in \href{www.vtk.org/VTK/img/file-formats.pdf}{vtk} format.
