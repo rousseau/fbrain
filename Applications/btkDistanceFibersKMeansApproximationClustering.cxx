@@ -453,7 +453,7 @@ vtkIdType numberOfPoints2, *pointIds2;
 vtkSmartPointer<vtkDoubleArray> label_data = vtkSmartPointer<vtkDoubleArray>::New();
 label_data->SetNumberOfComponents(1);
 
-int i = 0; 
+i = 0;
 while(lines2->GetNextCell(numberOfPoints2, pointIds2) != 0)
 {
 double l = clusterArray->GetValue(i);
