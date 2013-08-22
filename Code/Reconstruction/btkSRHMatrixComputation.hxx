@@ -64,11 +64,20 @@
 
 namespace btk
 {
+/**
+ * @class SRHMatrixComputation
+ * @brief SRHMatrixComputation compute H matrix with a set of low resolution images,
+ * the corresponding transformations and a type of PSF.
+ *
+ * In order to manage memory H should be created and allocated outside this class and
+ * then given by reference with SetH method
+ *
+ */
 template < class TImage >
 class SRHMatrixComputation: public itk::Object
 {
     public:
-
+        /** Typdefs */
         typedef btk::SRHMatrixComputation< TImage >      Self;
         typedef itk::Object                     Superclass;
         typedef itk::SmartPointer< Self >       Pointer;
@@ -104,16 +113,14 @@ class SRHMatrixComputation: public itk::Object
 
         typedef itk::Image< float, 3 >  PsfImageType;
 
+        /** New macro */
         itkNewMacro(Self);
 
         /** Run-time type information (and related methods). */
         itkTypeMacro(btk::SRHMatrixComputation, itk::Object);
 
-
+        /** Update method (compute H) */
         virtual void Update();
-
-        virtual void Initialize();
-
 
         btkSetMacro(Images, std::vector< typename ImageType::Pointer >);
         btkGetMacro(Images, std::vector< typename ImageType::Pointer >);
@@ -136,8 +143,6 @@ class SRHMatrixComputation: public itk::Object
 
         btkSetMacro(Y,vnl_vector< PrecisionType >*);
 
-        btkSetMacro(PSFType,unsigned int);
-
 
         void SetOutliers(std::vector< std::vector< bool > > _outliers)
         {
@@ -145,15 +150,21 @@ class SRHMatrixComputation: public itk::Object
             m_UseOutliers = true;
         }
 
-
         void TestFillingOfY(); // for testing purpose
         void TestFillingOfX(); // for testing purpose
         void SimulateY();      //for testing purpose
 
 
     protected:
+
+        /** Initialize  */
+        virtual void Initialize();
+        /** Constructor */
         SRHMatrixComputation();
+        /**  Destructor*/
         virtual ~SRHMatrixComputation(){}
+        /** ToBeRemoved */
+        void ComputeH();
 
     private:
 
@@ -187,8 +198,6 @@ class SRHMatrixComputation: public itk::Object
         bool                               m_UseOutliers;
 
         PSF::Pointer                       m_PSF;
-
-        unsigned int                       m_PSFType;
 
         std::vector< PSF::Pointer >        m_PSFs;
 

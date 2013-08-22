@@ -42,13 +42,6 @@ namespace btk
 
 SincPSF::SincPSF():Superclass::PSF()
 {
-//    m_Direction.set_size(3,3);
-
-//    m_Center.set_size(3);
-//    m_Center.fill(0.0);
-
-//    m_Spacing.set_size(3);
-//    m_Spacing.fill(1);
 
     m_PsfImage = ImageType::New();
 }
@@ -58,31 +51,6 @@ void SincPSF::Initialize()
     m_idir = m_Direction.get_column(0);
     m_jdir = m_Direction.get_column(1);
     m_kdir = m_Direction.get_column(2);
-}
-//-------------------------------------------------------------------------------------------------
-SincPSF::OutputType
-SincPSF::Evaluate(const InputType &position) const
-{
-    //NOTE: This fonction is deprecated
-    vnl_vector<double> diff = position.GetVnlVector() - m_Center;
-    PointType diffPoint;
-    double x,y,z;
-
-    //Dot product between image direction and point vector (in PSF space)
-    double icoor = dot_product(diff,m_idir);
-    double jcoor = dot_product(diff,m_jdir);
-    double kcoor = dot_product(diff,m_kdir);
-
-    x = diffPoint[0] = icoor;
-    y = diffPoint[1] = jcoor;
-    z = diffPoint[2] = kcoor;
-
-    double value = 0.0;
-
-    value = sin((x*x) + (y*y) + (z*z)) / ((x*x) + (y*y) + (z*z));
-
-    return (OutputType)value;
-
 }
 //-------------------------------------------------------------------------------------------------
 void SincPSF::ConstructImage()
@@ -120,19 +88,28 @@ void SincPSF::ConstructImage()
     hrIndexCenter[0] = (m_Size[0]-1)/2.0;
     hrIndexCenter[1] = (m_Size[1]-1)/2.0;
     hrIndexCenter[2] = (m_Size[2]-1)/2.0;
+
+    PointType hrPointCenter;
+    m_PsfImage->TransformContinuousIndexToPhysicalPoint(hrIndexCenter,hrPointCenter);
+
+    PointType hrOrigin;
+    hrOrigin[0] =  hrPointCenter[0];
+    hrOrigin[1] =  hrPointCenter[1];
+    hrOrigin[2] =  hrPointCenter[2];
+    m_PsfImage->SetOrigin(hrOrigin);
+
     for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF)
     {
         hrIndex = itPSF.GetIndex();
         float x = hrIndex[0]- hrIndexCenter[0];
         float y = hrIndex[1]- hrIndexCenter[1];
         float z = hrIndex[2]- hrIndexCenter[2];
-        // old version (like the definition for a sinc in multidimension)
+        // old version (like the definition of a sinc in multidimension)
         //float value = sin((x*x) + (y*y) + (z*z)) / ((x*x) + (y*y) + (z*z));
-        //new version
+        //new version (but mathematicaly false)
         float value = MathFunctions::Sinc(x) * MathFunctions::Sinc(y)
                       * MathFunctions::Sinc(z);
 
-        //std::cout<<"value : "<<value<<std::endl;
         itPSF.Set(value);
 
         sum += itPSF.Get();

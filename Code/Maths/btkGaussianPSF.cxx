@@ -40,56 +40,12 @@ namespace btk
 
 GaussianPSF::GaussianPSF():Superclass::PSF()
 {
-//    m_Direction.set_size(3,3);
-
-//    m_Center.set_size(3);
-//    m_Center.fill(0.0);
-
-//    m_Spacing.set_size(3);
-//    m_Spacing.fill(1);
-
-
-
     m_PsfImage = ImageType::New();
 
     m_Sigma[0] = m_Spacing[0] * m_Size[0] / 2.3548;
     m_Sigma[1] = m_Spacing[1] * m_Size[1] / 2.3548;
     m_Sigma[2] = m_Spacing[2] * m_Size[2] / 2.3548;
 
-
-}
-//-------------------------------------------------------------------------------------------------
-GaussianPSF::OutputType
-GaussianPSF::Evaluate(const InputType & position) const
-{
-
-    //NOTE: This fonction is deprecated.
-    vnl_vector<double> diff = position.GetVnlVector() - m_Center;
-    PointType diffPoint;
-    double x , y, z;
-
-    //Dot product between image direction and point vector (in PSF space)
-    double icoor = dot_product(diff,m_idir);
-    double jcoor = dot_product(diff,m_jdir);
-    double kcoor = dot_product(diff,m_kdir);
-
-    x = diffPoint[0] = icoor;
-    y = diffPoint[1] = jcoor;
-    z = diffPoint[2] = kcoor;
-    //TODO: Do an oversampling over Point !
-
-
-
-    double value = 0.0;
-
-    value = (x*x)/(2*m_Sigma[0]*m_Sigma[0]) + (y*y)/(2*m_Sigma[1]*m_Sigma[1]) + (z*z)/(2*m_Sigma[2]*m_Sigma[2]);
-
-    value = exp(-value);
-
-    // std::cout<<value<<std::endl;
-    //value = m_Gaussian->Evaluate(diffPoint); //NOTE : Old version
-
-    return(OutputType)value;
 }
 //-------------------------------------------------------------------------------------------------
 void GaussianPSF::ConstructImage()
@@ -125,6 +81,16 @@ void GaussianPSF::ConstructImage()
     hrIndexCenter[0] = (m_Size[0]-1)/2.0;
     hrIndexCenter[1] = (m_Size[1]-1)/2.0;
     hrIndexCenter[2] = (m_Size[2]-1)/2.0;
+
+    PointType hrPointCenter;
+    m_PsfImage->TransformContinuousIndexToPhysicalPoint(hrIndexCenter,hrPointCenter);
+
+    PointType hrOrigin;
+    hrOrigin[0] =  hrPointCenter[0];
+    hrOrigin[1] =  hrPointCenter[1];
+    hrOrigin[2] =  hrPointCenter[2];
+    m_PsfImage->SetOrigin(hrOrigin);
+
     for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF)
     {
         hrIndex = itPSF.GetIndex();
@@ -135,13 +101,6 @@ void GaussianPSF::ConstructImage()
         float value = (x*x)/(2*m_Sigma[0]*m_Sigma[0]) + (y*y)/(2*m_Sigma[1]*m_Sigma[1]) + (z*z)/(2*m_Sigma[2]*m_Sigma[2]);
         value = exp(-value);
 
-        //std::cout<<"value : "<<value<<std::endl;
-
-        // Threshold
-        if(value < 0.01)
-        {
-            //value= 0.0;
-        }
         itPSF.Set(value);
 
         sum += itPSF.Get();
@@ -158,9 +117,6 @@ void GaussianPSF::ConstructImage()
             }
         }
     }
-
-
-
 
 }
 //-------------------------------------------------------------------------------------------------

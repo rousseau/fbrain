@@ -77,7 +77,7 @@ ADD_EXECUTABLE(btkSuperResolution btkSuperResolution.cxx
 )
 TARGET_LINK_LIBRARIES(btkSuperResolution ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkSuperResolutionFilterTest btkSuperResolutionFilterTest.cxx
+ADD_EXECUTABLE(btkSuperResolutionV2 btkSuperResolutionV2.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkSuperResolutionFilter.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkSuperResolutionFilter.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkBiasCorrectionFilter.cxx
@@ -114,11 +114,8 @@ ADD_EXECUTABLE(btkSuperResolutionFilterTest btkSuperResolutionFilterTest.cxx
     ${fbrain_SOURCE_DIR}/Code/Maths/btkBoxCarPSF.cxx
     ${fbrain_SOURCE_DIR}/Code/Maths/btkSincPSF.h
     ${fbrain_SOURCE_DIR}/Code/Maths/btkSincPSF.cxx
-
-
 )
-
-TARGET_LINK_LIBRARIES(btkSuperResolutionFilterTest btkToolsLibrary btkMathsLibrary ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkSuperResolutionV2 btkToolsLibrary btkMathsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkGroupwiseS2SDistortionCorrection btkGroupwiseS2SDistortionCorrection.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolation.h
@@ -197,7 +194,7 @@ TARGET_LINK_LIBRARIES(btkIntersectionRegistration btkToolsLibrary btkMathsLibrar
 
 INSTALL(TARGETS btkImageReconstruction
                 btkSuperResolution
-                btkSuperResolutionFilterTest
+                btkSuperResolutionV2
                 btkGroupwiseS2SDistortionCorrection
                 btkRBFInterpolationS2S
                 btkIntersectionRegistration
