@@ -282,6 +282,12 @@ target_link_libraries(btkComputeFeatureSelectionResiduals btkFeatureSelectionLib
 add_executable(btkComputeCoefficientOfDeterminationForAtlas btkComputeCoefficientOfDeterminationtForAtlas.cxx)
 target_link_libraries(btkComputeCoefficientOfDeterminationForAtlas btkToolsLibrary ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE( btkGenerateVtkFileFromFiberDataTextFiles btkGenerateVtkFileFromFiberDataTextFiles.cxx)
+TARGET_LINK_LIBRARIES(btkGenerateVtkFileFromFiberDataTextFiles ${ITK_LIBRARIES} vtkHybrid)
+
+ADD_EXECUTABLE( btkGenerateSimulatedFiber  btkGenerateSimulatedFiber.cxx)
+TARGET_LINK_LIBRARIES(btkGenerateSimulatedFiber ${ITK_LIBRARIES} vtkHybrid)
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -355,5 +361,7 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkLikelihoodOfSequenceEstimation
                 btkComputeFeatureSelectionResiduals
                 btkComputeCoefficientOfDeterminationForAtlas
+		btkGenerateVtkFileFromFiberDataTextFiles
+		btkGenerateSimulatedFiber
         DESTINATION bin)
 
