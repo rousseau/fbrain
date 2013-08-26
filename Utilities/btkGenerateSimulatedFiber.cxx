@@ -82,7 +82,7 @@ int outfilenumber = atoi( argv[5] );
   vnl_vector<double> xg(201); // 201 is the number of points for the input fiber (201='nb_points')
   vnl_vector<double> yg(201);
   vnl_vector<double> zg(201);
-  uint nb_points = 0;
+  int nb_points = 0;
   double x0,y0,z0;
   
   while(std::getline(fin, line))
