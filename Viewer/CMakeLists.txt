@@ -19,11 +19,7 @@ TARGET_LINK_LIBRARIES(btkSlicesMotionViewer btkMathsLibrary ${ITK_LIBRARIES} vtk
 ADD_EXECUTABLE(btkViewer btkViewer.cxx)
 TARGET_LINK_LIBRARIES(btkViewer btkToolsLibrary btkDiffusionLibrary ${ITK_LIBARIES} vtkHybrid vtkWidgets)
 
-ADD_EXECUTABLE(btkMRIViewer btkMRIViewer.cxx)
-TARGET_LINK_LIBRARIES(btkMRIViewer btkToolsLibrary ${ITK_LIBARIES} vtkHybrid vtkWidgets)
-
 INSTALL(TARGETS btkSlicesMotionViewer
         btkViewer
-        btkMRIViewer
         DESTINATION bin)
 
