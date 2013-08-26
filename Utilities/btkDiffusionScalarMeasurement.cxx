@@ -33,6 +33,14 @@
 
 ==========================================================================*/
 
+/**
+ * @file btkDiffusionScalarMeasurement.cxx
+ * @author Julien Pontabry
+ * @date 15/05/2013
+ * @ingroup Diffusion
+ * @brief Compute diffusion scalar.
+ */
+
 // TCLAP includes
 #include <tclap/CmdLine.h>
 
@@ -51,7 +59,7 @@
 #include "btkSphericalHarmonicsDiffusionDecompositionFilter.h"
 #include "btkOrientationDiffusionFunctionModel.h"
 
-
+// Definitions
 const unsigned int Dimension = 3;
 typedef double Scalar;
 typedef itk::Image< Scalar,Dimension >          ScalarImage;
@@ -62,6 +70,11 @@ typedef itk::Image< short,Dimension > MaskImage;
 typedef itk::ImageRegionIterator< MaskImage > MaskImageIterator;
 
 
+/**
+ * @brief Compute the generalized trace.
+ * @param response Response vector.
+ * @return The generalized trace of the response.
+ */
 double gentr(std::vector< float > &response)
 {
     double coefficient = 3.0 / (2.0 * M_PI);
@@ -77,6 +90,9 @@ double gentr(std::vector< float > &response)
 }
 
 
+/**
+ * @brief Main function of the program.
+ */
 int main(int argc, char * argv[])
 {
     try
