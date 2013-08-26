@@ -33,6 +33,13 @@
   
 ==========================================================================*/
 
+/**
+ * @file btkColorFiberTractsByOrientation.cxx
+ * @author Julien Pontabry
+ * @date 04/01/2013
+ * @brief Color the fibers (vtk polydata) by their orientation (local or global).
+ * @ingroup Diffusion
+ */
 
 // TCLAP includes
 #include "tclap/CmdLine.h"
@@ -56,7 +63,13 @@
 #include "btkPolyDataColorLinesByOrientation.h"
 
 
-// Progress function
+/**
+ * @brief Progress bar display.
+ * @param caller Object which called the progress event.
+ * @param eventId Id of the event.
+ * @param clientData Client data.
+ * @param callData Call data.
+ */
 void progress(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
     btk::PolyDataColorLinesByOrientation *filter = static_cast< btk::PolyDataColorLinesByOrientation * >(caller);
@@ -64,7 +77,9 @@ void progress(vtkObject* caller, long unsigned int eventId, void* clientData, vo
     std::cout << "\tProgress: " << static_cast< unsigned int >(filter->GetProgress()*100) << "%\r" << std::flush;
 }
 
-
+/**
+ * @brief Main function of the program.
+ */
 int main(int argc, char *argv[])
 {
     try
@@ -74,7 +89,7 @@ int main(int argc, char *argv[])
         //
 
         // Command line definition
-        TCLAP::CmdLine cmd("btkColorFiberTractsByMeanOrientation: color the fibers (polydata) by their mean orientation", ' ', "1.0", true);
+        TCLAP::CmdLine cmd("Color the fibers (polydata) by their mean orientation", ' ', "1.0", true);
 
         // Arguments
         TCLAP::ValueArg< std::string >  inputFileNameArg("i", "input", "Input polydata filename (VTK)", true, "", "string", cmd);

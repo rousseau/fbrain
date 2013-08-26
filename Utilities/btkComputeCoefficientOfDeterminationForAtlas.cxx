@@ -38,6 +38,7 @@
  * @author Julien Pontabry
  * @date 27/05/2013
  * @brief Compute the coefficient of determination for atlas built with btk scripts.
+ * @ingroup Atlas
  */
 
 // STL includes
