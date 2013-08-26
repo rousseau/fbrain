@@ -16,10 +16,10 @@ ${Code_SOURCE_DIR}/Visualization/btkRenderPolydata.cxx
 ${Code_SOURCE_DIR}/Visualization/btkRenderPolydata.h)
 TARGET_LINK_LIBRARIES(btkSlicesMotionViewer btkMathsLibrary ${ITK_LIBRARIES} vtkHybrid)
 
-ADD_EXECUTABLE(btkViewer btkViewer.cxx)
-TARGET_LINK_LIBRARIES(btkViewer btkToolsLibrary btkDiffusionLibrary ${ITK_LIBARIES} vtkHybrid vtkWidgets)
+ADD_EXECUTABLE(btkDiffusionViewer btkDiffusionViewer.cxx)
+TARGET_LINK_LIBRARIES(btkDiffusionViewer btkToolsLibrary btkDiffusionLibrary ${ITK_LIBARIES} vtkHybrid vtkWidgets)
 
 INSTALL(TARGETS btkSlicesMotionViewer
-        btkViewer
+        btkDiffusionViewer
         DESTINATION bin)
 
