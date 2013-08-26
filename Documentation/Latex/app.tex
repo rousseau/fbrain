@@ -109,56 +109,49 @@ Minimal usage: \texttt{btkRBFInterpolationS2S -i input -m mask.nii -o output
 \subsection{Tractography \cite{pontabry_probabilistic_2011}}
 \label{subsec:tracto}
 
-** TO BE MODIFIED ** : THIS SECTION CORRESPONDS TO THE FOLLOWING PROGRAMS: btkODFParticleFilterTractography, btkODFStreamlineTractography, btkTensorParticleFilterTractography, btkTensorStreamlineTractography, btkTractography.
-
     \subsubsection*{Standard usage}
         Suppose you want to perform a tractography on a diffusion weighted MRI 
 dataset. You should have a dwi image, the corresponding gradient vectors'
 coordinates, a mask of the brain white matter and a label image of the seeds.
 Assume this data is stored in files named repsectively for instance
-\texttt{data.nii.gz}, \texttt{data.bvec}, \texttt{mask.nii.gz} and
+\texttt{dwi.nii.gz}, \texttt{dwi.bval}, \texttt{dwi.bvec}, \texttt{mask.nii.gz} and
 \texttt{seeds.nii.gz}. The tractography is accomplished by the command below.
             \begin{quote}
-                \texttt{btkTractography -d data.nii.gz -m mask.nii.gz -l seeds.nii.gz}
+                \texttt{btkTractography -d dwi.nii.gz -m mask.nii.gz -r seeds.nii.gz}
             \end{quote}
         When the program terminates its task, the probability connection map and
         the fibers estimation are saved in files respectively named
 \texttt{map.nii.gz} and \texttt{fibers.vtk}. The connection map is a volume
 image of probability intensities (\texttt{i.e.} intensities between 0 and 1)
 with the same origin, orientation and spacing as the diffusion weighted image.
-The fibers are polygonal data of VTK library in world coordinates. The standard
-pipeline of the program is shown in
-Fig.~\ref{btkTractography-fig:standard-pipeline}.
-            \begin{figure}
-                \centering
-                \includegraphics[width=0.6\textwidth]{btkTractographyPipeline}
-                \caption{Standard pipeline of the btkTractography program.}
-                \label{btkTractography-fig:standard-pipeline}
-            \end{figure}
+The fibers are polygonal data of VTK library in world coordinates.
+%The standard
+%pipeline of the program is shown in
+%Fig.~\ref{btkTractography-fig:standard-pipeline}.
+%            \begin{figure}
+%                \centering
+%                \includegraphics[width=0.6\textwidth]{btkTractographyPipeline}
+%                \caption{Standard pipeline of the btkTractography program.}
+%                \label{btkTractography-fig:standard-pipeline}
+%            \end{figure}
 
         The file named \texttt{seeds.nii.gz} is a label map which is used to 
         generate seeds for the algorithm. The spacing in millimeters between
 seeds can be adjust with the option \texttt{-\hspace{0.1mm}-seed\_spacing}.
 
-        By default, Right-Anterior-Superior (RAS) coordinate system is used to 
-        ensure compatibility with Slicer3D. However, it can be forced to use
-Left-Posterior-Superior (LPS) coordinate system by using option \texttt{--lps}
-on command line.
-
-        If the DWI sequence contains more than one baseline image, the program 
-        takes the average of all baseline images. The baseline images can be
-everywhere in the sequence. It should be recognized by null vector in
-corresponding gradient's table.
+        Before doing anything, be sure that the diffusion sequence has been normalized by using the utility \texttt{btkDiffusionSequenceNormalization}.
+        
+        This program contains three different algorithms: a tensor streamline, an fODF streamline and a fODF particle filtering algorithm. The choice of the model to use is achieved by using the option \texttt{--tensor}, which set the diffusion model to tensor model. The choice of the algorithm is achieved by using the option \texttt{--streamline}, which set the algorithm to use to the streamline one.
 
     \subsubsection*{Advanced usage}
         In addition to standard arguments of \texttt{btkTractography} program, 
         there are some other parameters that let you to alter algorithm's
 behaviour. These options can be classified into three groups : model's options,
-constraints on trajectory and filter's options. The first group options allow
-you to tweak the model (for more details about it, please refer
+constraints on trajectory and tracking options. The first group options allow
+you to tweak the model (for more details about fODF modeling, please refer
 to~\cite{descoteaux_regularized_2007}). The second group options let you to
-control the particle's trajectory. These options provide prior informations to
-the algorithm. The last group options are dedicated to the particle filter
+control the fiber trajectory. These options provide prior informations to
+the algorithm. The last group options are dedicated to the tracking algorithm
 control.
 
         Since the default parameters values may work in the most of cases, they 
@@ -171,7 +164,7 @@ command
         and program's arguments are much more described below.
 
 
-    \subsubsection*{Model's order}
+    \subsubsection*{Model's order (fODF only)}
         The model's order (i.e. the spherical harmonics' order) can be specified
         by the option
             \begin{quote}
@@ -180,7 +173,7 @@ command
         for \texttt{order}$\;\in\{2,4,6,8\}$. The default value is 4. For more 
         details, please refer to~\cite{descoteaux_regularized_2007}.
 
-    \subsubsection*{Model's regularization}
+    \subsubsection*{Model's regularization (fODF only)}
         A Laplace-Beltrami regularization coefficient is used to assume a better
         estimation of the model. This coefficient can by manually modified by
 the option
@@ -236,9 +229,13 @@ successive direction only in the cone defined by this angle. This
 illustration show the principle in two dimensions.}
             \label{tracto-fig:angleThreshold}
         \end{figure}
+        
+    \subsubsection*{Trajectory interpolation method (streamline only)}
+    
+        When using streamline algorithm, by default the Runge-Kutta method at order~4 is used. The Euler's method can be used instead by setting the option \texttt{--no\_RK4}.
 
 
-    \subsubsection*{Rigidity}
+    \subsubsection*{Rigidity (particle filter only)}
         The rigidity option controls how much you want the particles to have 
         straight trajectory. You can adjust it by
             \begin{quote}
@@ -264,7 +261,7 @@ leads to a distribution focused on a point.}
         \end{figure}
 
 
-    \subsubsection*{Number of particles}
+    \subsubsection*{Number of particles (particle filter only)}
         The number of particles in the system is set by the option
             \begin{quote}
                 \texttt{-\hspace{0.1mm}-number\_of\_particles <number>} \enspace ,
@@ -276,7 +273,7 @@ long computation time and a good estimation. In general, the default number of
 particles is a good compromise between computation time and estimation.
 
 
-    \subsubsection*{Resampling threshold}
+    \subsubsection*{Resampling threshold (particle filter only)}
         This option modify the resampling threshold of the system. When the
 number of effective particles in the system falls below this resampling
 threshold, the particles are resampled according a multinomial resampling. It
