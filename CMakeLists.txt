@@ -19,6 +19,9 @@ OPTION(BUILD_DOCUMENTATION "Build the doxygen documentation" OFF)
 # Python script support
 OPTION(ENABLE_SCRIPT "Enable the use of python script in BTK." OFF)
 
+# Build Experimental programs
+OPTION(BUILD_EXPERIMENTAL "Enable the use of experimental programs in BTK " OFF)
+
 #---- Dependancies ---------------------------------------------------------------------
 
 # Find ITK
@@ -79,6 +82,14 @@ IF(BUILD_TESTING)
     )
 ENDIF(BUILD_TESTING)
 
+# Beta
+IF(BUILD_BETA)
+    SUBDIRS(
+        Experimental
+    )
+ENDIF(BUILD_BETA)
+
+
 # Documentation
 IF(BUILD_DOCUMENTATION)
     FIND_PACKAGE(Doxygen)
@@ -106,4 +117,5 @@ SUBDIRS(
     Applications
     Scripts
     Utilities
+    Viewer
 )
