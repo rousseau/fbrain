@@ -340,7 +340,7 @@ This can be performed using the following applications:
 \begin{description}
         \item[btkProbabilisticSegmentationMapBasedClustering] As supervised method, this program takes as input a probabilistic segmentation MAP of brain tissue which is an 4D image in \href{http://nifti.nimh.nih.gov/nifti-1}{Nifti} format.\\
 
-	Usage: \texttt{btkProbabilisticSegmentationMapBasedClustering -b fiber\_tractography.vtk -p brain\_tissue\_segmentation\_map.nii.gz -o fiber\_clustering.vtk}\\
+	Usage: \texttt{btkProbabilisticSegmentationMapBasedClustering -b fiber\_tractography.vtk -p 4D\_prob\_segmentation\_map.nii.gz -o fiber\_clustering.vtk}\\
  
 	Fig.\ref{clustering1-fig} shows an example of clustering results obtained using the method above.
 
@@ -359,11 +359,9 @@ This can be performed using the following applications:
         \label{clustering1-fig}
         \end{figure}
 
-	\item[btkDistanceFibersKMeansApproximationClustering] ~\\
+	\item[btkDistanceFibersKMeansApproximationClustering] As unsupervised method, this program makes it possible to cluster the fibers according to their anatomical regions using a distance metric based on the similarity between fibers.\\
 
-	Usage: \texttt{btkDistanceFibersKMeansApproximationClustering -b input.vtk -d distance\_measure -c number\_of\_clusters -a alpha -e eps -o output.vtk} \\
-
-	Minimal usage: \texttt{btkDistanceFibersKMeansApproximationClustering -b input.vtk -d distance\_measure -c number\_of\_clusters -o output.vtk} \\
+	Usage: \texttt{btkDistanceFibersKMeansApproximationClustering -b fiber\_tractography.vtk -d distance\_measure -c number\_of\_clusters -o fiber\_clustering.vtk} \\
 
 	The full list of optional parameters of this method can be obtained by:\\ 
         \texttt{btkDistanceFibersKMeansApproximationClustering --help}
