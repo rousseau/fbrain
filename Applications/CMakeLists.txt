@@ -173,31 +173,30 @@ ADD_EXECUTABLE(btkRBFInterpolationS2S btkRBFInterpolationS2S.cxx
 
 TARGET_LINK_LIBRARIES(btkRBFInterpolationS2S btkToolsLibrary  btkDiffusionLibrary ${ITK_LIBRARIES} ${ANN_LIBRARY})
 
-ADD_EXECUTABLE(btkIntersectionRegistration btkIntersectionRegistration.cxx
-${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h
-${fbrain_SOURCE_DIR}/Code/Registration/btkSlicesIntersectionVNLCostFunction.hxx
-${fbrain_SOURCE_DIR}/Code/Registration/btkSlicesIntersectionITKCostFunction.hxx
-${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLowToHighResolutionFilter.hxx
-${fbrain_SOURCE_DIR}/Code/Registration/btkOptimizer.cxx ${fbrain_SOURCE_DIR}/Code/Registration/btkOptimizer.h
-${fbrain_SOURCE_DIR}/Code/Registration/btkSimulatedAnnealingOptimizer.cxx ${fbrain_SOURCE_DIR}/Code/Registration/btkSimulatedAnnealingOptimizer.h
-${fbrain_SOURCE_DIR}/Code/Registration/btkSmartStepGradientDescentOptimizer.cxx ${fbrain_SOURCE_DIR}/Code/Registration/btkSmartStepGradientDescentOptimizer.h
-${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSRHMatrixComputation.hxx
-${fbrain_SOURCE_DIR}/Code/Maths/btkPSF.h
-${fbrain_SOURCE_DIR}/Code/Maths/btkPSF.cxx
-${fbrain_SOURCE_DIR}/Code/Maths/btkGaussianPSF.h
-${fbrain_SOURCE_DIR}/Code/Maths/btkGaussianPSF.cxx
-${fbrain_SOURCE_DIR}/Code/Maths/btkBoxCarPSF.h
-${fbrain_SOURCE_DIR}/Code/Maths/btkBoxCarPSF.cxx
-)
+#ADD_EXECUTABLE(btkIntersectionRegistration btkIntersectionRegistration.cxx
+#${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h
+#${fbrain_SOURCE_DIR}/Code/Registration/btkSlicesIntersectionVNLCostFunction.hxx
+#${fbrain_SOURCE_DIR}/Code/Registration/btkSlicesIntersectionITKCostFunction.hxx
+#${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLowToHighResolutionFilter.hxx
+#${fbrain_SOURCE_DIR}/Code/Registration/btkOptimizer.cxx ${fbrain_SOURCE_DIR}/Code/Registration/btkOptimizer.h
+#${fbrain_SOURCE_DIR}/Code/Registration/btkSimulatedAnnealingOptimizer.cxx ${fbrain_SOURCE_DIR}/Code/Registration/btkSimulatedAnnealingOptimizer.h
+#${fbrain_SOURCE_DIR}/Code/Registration/btkSmartStepGradientDescentOptimizer.cxx ${fbrain_SOURCE_DIR}/Code/Registration/btkSmartStepGradientDescentOptimizer.h
+#${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSRHMatrixComputation.hxx
+#${fbrain_SOURCE_DIR}/Code/Maths/btkPSF.h
+#${fbrain_SOURCE_DIR}/Code/Maths/btkPSF.cxx
+#${fbrain_SOURCE_DIR}/Code/Maths/btkGaussianPSF.h
+#${fbrain_SOURCE_DIR}/Code/Maths/btkGaussianPSF.cxx
+#${fbrain_SOURCE_DIR}/Code/Maths/btkBoxCarPSF.h
+#${fbrain_SOURCE_DIR}/Code/Maths/btkBoxCarPSF.cxx)
 
-TARGET_LINK_LIBRARIES(btkIntersectionRegistration btkToolsLibrary btkMathsLibrary ${ITK_LIBRARIES} vtkHybrid)
+#TARGET_LINK_LIBRARIES(btkIntersectionRegistration btkToolsLibrary btkMathsLibrary ${ITK_LIBRARIES} vtkHybrid)
 
 INSTALL(TARGETS btkImageReconstruction
                 btkSuperResolution
                 btkSuperResolutionV2
                 btkGroupwiseS2SDistortionCorrection
                 btkRBFInterpolationS2S
-                btkIntersectionRegistration
+               #btkIntersectionRegistration
         DESTINATION bin)
 
 

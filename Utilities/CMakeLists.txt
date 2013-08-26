@@ -208,9 +208,6 @@ TARGET_LINK_LIBRARIES(btkWeightedSumOfAffineTransforms btkToolsLibrary btkMathsL
 ADD_EXECUTABLE(btkInverseDisplacementField btkInverseDisplacementField.cxx)
 TARGET_LINK_LIBRARIES(btkInverseDisplacementField ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE( btkConvertFSLTransform  btkConvertFSLTransform.cxx)
-TARGET_LINK_LIBRARIES(btkConvertFSLTransform ${ITK_LIBRARIES})
-
 ADD_EXECUTABLE( btkTractDensityMap  btkTractDensityMap.cxx)
 TARGET_LINK_LIBRARIES(btkTractDensityMap ${ITK_LIBRARIES} vtkHybrid)
 
@@ -220,31 +217,14 @@ TARGET_LINK_LIBRARIES(btkColorFiberTractsByOrientation btkTractographyLibrary vt
 ADD_EXECUTABLE(btkComputeSoftMaskUsingOrthogonalImages btkComputeSoftMaskUsingOrthogonalImages.cxx)
 TARGET_LINK_LIBRARIES(btkComputeSoftMaskUsingOrthogonalImages ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkFSLToITKTransform btkFSLToITKTransform.cxx)
-TARGET_LINK_LIBRARIES(btkFSLToITKTransform ${ITK_LIBRARIES})
-
-ADD_EXECUTABLE(btkViewer btkViewer.cxx)
-TARGET_LINK_LIBRARIES(btkViewer btkToolsLibrary btkDiffusionLibrary ${ITK_LIBARIES} vtkHybrid vtkWidgets)
-
-ADD_EXECUTABLE(btkMRIViewer btkMRIViewer.cxx)
-TARGET_LINK_LIBRARIES(btkMRIViewer btkToolsLibrary ${ITK_LIBARIES} vtkHybrid vtkWidgets)
-
 ADD_EXECUTABLE(btkLocalHistogramMatching btkLocalHistogramMatching.cxx)
 TARGET_LINK_LIBRARIES(btkLocalHistogramMatching btkToolsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkWeightImageOfPatches btkWeightImageOfPatches.cxx)
 TARGET_LINK_LIBRARIES(btkWeightImageOfPatches btkToolsLibrary ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE( btkSlicesMotionViewer btkSlicesMotionViewer.cxx
-${Code_SOURCE_DIR}/Visualization/btkRenderPolydata.cxx
-${Code_SOURCE_DIR}/Visualization/btkRenderPolydata.h)
-TARGET_LINK_LIBRARIES(btkSlicesMotionViewer btkMathsLibrary ${ITK_LIBRARIES} vtkHybrid)
-
 ADD_EXECUTABLE( btkTriangleMesh btkTriangleMesh.cxx )
 TARGET_LINK_LIBRARIES(btkTriangleMesh vtkHybrid ${VTK_LIBRARIES})
-
-ADD_EXECUTABLE( btkCostFunctionTest  btkCostFunctionTest.cpp)
-TARGET_LINK_LIBRARIES(btkCostFunctionTest btkMathsLibrary ${ITK_LIBRARIES} vtkHybrid)
 
 ADD_EXECUTABLE( btkDiffusionScalarMeasurement btkDiffusionScalarMeasurement.cxx)
 TARGET_LINK_LIBRARIES(btkDiffusionScalarMeasurement btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
@@ -331,20 +311,12 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkWeightedSumOfAffineTransforms
                 btkInverseDisplacementField
                 btkDistanceBetweenBinaryImages
-                btkConvertFSLTransform
                 btkTractDensityMap
                 btkColorFiberTractsByOrientation
                 btkComputeSoftMaskUsingOrthogonalImages
-                btkFSLToITKTransform
                 btkLocalHistogramMatching
                 btkWeightImageOfPatches
-                btkSlicesMotionViewer
-                btkViewer
-                btkMRIViewer
-                btkComputeDistanceBetweenImages
-                btkComputeDistanceBetweenAffineTransforms
                 btkTriangleMesh
-                btkCostFunctionTest
                 btkDiffusionScalarMeasurement
                 btkS2SSimilarity
                 btkComputeCurvature
@@ -355,7 +327,7 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkLikelihoodOfSequenceEstimation
                 btkComputeFeatureSelectionResiduals
                 btkComputeCoefficientOfDeterminationForAtlas
-		btkGenerateVtkFileFromFiberDataTextFiles
-		btkGenerateSimulatedFiber
+                btkGenerateVtkFileFromFiberDataTextFiles
+                btkGenerateSimulatedFiber
         DESTINATION bin)
 
