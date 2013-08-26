@@ -240,12 +240,6 @@ ${Code_SOURCE_DIR}/Visualization/btkRenderPolydata.cxx
 ${Code_SOURCE_DIR}/Visualization/btkRenderPolydata.h)
 TARGET_LINK_LIBRARIES(btkSlicesMotionViewer btkMathsLibrary ${ITK_LIBRARIES} vtkHybrid)
 
-ADD_EXECUTABLE(btkComputeDistanceBetweenImages btkComputeDistanceBetweenImages.cxx)
-TARGET_LINK_LIBRARIES(btkComputeDistanceBetweenImages ${ITK_LIBRARIES})
-
-ADD_EXECUTABLE(btkComputeDistanceBetweenAffineTransforms btkComputeDistanceBetweenAffineTransforms.cxx)
-TARGET_LINK_LIBRARIES(btkComputeDistanceBetweenAffineTransforms btkMathsLibrary ${ITK_LIBRARIES})
-
 ADD_EXECUTABLE( btkTriangleMesh btkTriangleMesh.cxx )
 TARGET_LINK_LIBRARIES(btkTriangleMesh vtkHybrid ${VTK_LIBRARIES})
 
