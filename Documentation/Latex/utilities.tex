@@ -114,10 +114,15 @@ transformN.txt -o anat\_reconstructed.nii.gz --mask}
 \item[btkImageSimilarity]: Calculates mean square error, mutual information, normalized correlation and normalized mutual information of two images A and B. The use of a mask is possible.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkImageSubtract}
-\item[btkImageSubtract]: Pixel-wise subtraction of two image, or one image and a constant (-i anat01.nii.gz -i anat02.nii.gz -o substraction\_image.nii.gz or -i anat.nii.gz -c value -o substraction\_image.nii.gz) (ITK filter: SubtractImageFilter).
+\item[btkImageSubtract]: Pixel-wise subtraction of two image, or one image and a constant (ITK filter: SubtractImageFilter). 
+
+Recommended usage: \texttt{btkImageSubtract-i anat01.nii.gz -i anat02.nii.gz -o substraction\_image.nii.gz }
+ or \texttt{btkImageSubtract -i anat.nii.gz -c value -o substraction\_image.nii.gz}
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkInverseDisplacementField}
-\item[btkInverseDisplacementField]: Compute the inverse of a displacement field (-i field.nii.gz -o inverse\_field.nii.gz ) (ITK filter: InverseDisplacementFieldImageFilter).
+\item[btkInverseDisplacementField]: Compute the inverse of a displacement field (ITK filter: InverseDisplacementFieldImageFilter)
+
+Recommended usage: \texttt{btkInverseDisplacementField -i field.nii.gz -o inverse\_field.nii.gz }
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkIteratedBackProjection}
 \item[btkIteratedBackProjection]: Apply iterated back projection to high resolution image using one low resolution image.
@@ -139,11 +144,17 @@ one for the final values). It can be useful to relabel a segmented image.
 format\footnote{Currently there is no nifti standard for DWI, so DW images are
 saved as a standard nifti sequence (*.nii, *.nii.gz) and two text files
 containing the b-values (.bval) and the gradient directions (.bvec).}  to the
-nrrd format (*.nhdr). Usage: \texttt{-i input.nii.gz -o output.nhdr}
+nrrd format (*.nhdr). 
+
+Recommended usage: \texttt{btkNiftiToNrrd -i input.nii.gz -o output.nhdr}
 
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkNrrdToNifti}
-\item[btkNrrdToNifti] This program convert an image from Nrrd file (*.nhdr and *.nrrd) to a Nifti file (*.nii or *.nii.gz). The conversion of a DWI image is possible by using the option \texttt{--dwi}. Usage: \texttt{-i input.nhdr -o output.nii.gz}. Usage for DWI sequence: \texttt{--dwi -i input.nhdr -o output.nii.gz}.
+\item[btkNrrdToNifti] This program convert an image from Nrrd file (*.nhdr and *.nrrd) to a Nifti file (*.nii or *.nii.gz). The conversion of a DWI image is possible by using the option \texttt{--dwi}.
+
+Recommended usage: \texttt{btkNrrdToNifti -i input.nhdr -o output.nii.gz}. 
+
+Recommended usage  for DWI sequence: \texttt{btkNrrdToNifti --dwi -i input.nhdr -o output.nii.gz}.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkPSNR}
 \item[btkPSNR]: Compute the PSNR between an input image and a reference image.
@@ -169,7 +180,7 @@ is in a random orientation with respect to the scanner. This is particularly
 important in DWI because colormaps lack of significance, which makes difficult
 the identification of specific bundles.
 
-Usage: \texttt{btkReorientDiffusionSequenceToStandard -i dwi.nii.gz -o dwi\_reoriented.nii.gz -l
+Recommended usage: \texttt{btkReorientDiffusionSequenceToStandard -i dwi.nii.gz -o dwi\_reoriented.nii.gz -l
 landmarks.fcsv}.
 
 \texttt{landmarks} is a landmarks file obtained as explained for btkReorientImageToStandard.
@@ -177,7 +188,7 @@ landmarks.fcsv}.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkReorientImageToStandard}
 \item[btkReorientImageToStandard] This program reorients a image to the standard orientation. This is necessary with fetal images since in general the fetus is in a random orientation with respect to the scanner.
-Usage: \texttt{btkReorientImageToStandard -i anat.nii.gz -o anat\_reoriented.nii.gz -l landmarks.fcsv}.
+Recommended usage: \texttt{btkReorientImageToStandard -i anat.nii.gz -o anat\_reoriented.nii.gz -l landmarks.fcsv}.
 \texttt{landmarks} is a text file containing points that define the left-right
 and the posterior-anterior directions. The points $l$ and $r$ define the left
 $\rightarrow$ right direction, and the points $p$ and $a$ define the posterior
