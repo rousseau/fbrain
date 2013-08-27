@@ -10,7 +10,7 @@ IF(USE_OMP)
 ENDIF(USE_OMP)
 
 # Warning mask
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-gnu -Wno-deprecated")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wno-gnu -Wno-deprecated")
 
 # Testing
 OPTION(BUILD_TESTING "Build testing applications" OFF)
