@@ -262,6 +262,12 @@ TARGET_LINK_LIBRARIES(btkGenerateVtkFileFromFiberDataTextFiles ${ITK_LIBRARIES} 
 ADD_EXECUTABLE( btkGenerateSimulatedFiber  btkGenerateSimulatedFiber.cxx)
 TARGET_LINK_LIBRARIES(btkGenerateSimulatedFiber ${ITK_LIBRARIES} vtkHybrid)
 
+ADD_EXECUTABLE( btkCreate4DEmptyImageFromReferenceImage btkCreate4DEmptyImageFromReferenceImage.cxx)
+TARGET_LINK_LIBRARIES(btkCreate4DEmptyImageFromReferenceImage ${ITK_LIBRARIES} vtkHybrid)
+
+ADD_EXECUTABLE( btkQuantifyClusteredRegions btkQuantifyClusteredRegions.cxx)
+TARGET_LINK_LIBRARIES(btkQuantifyClusteredRegions ${ITK_LIBRARIES} vtkHybrid)
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -329,5 +335,7 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkComputeCoefficientOfDeterminationForAtlas
                 btkGenerateVtkFileFromFiberDataTextFiles
                 btkGenerateSimulatedFiber
+		btkCreate4DEmptyImageFromReferenceImage
+		btkQuantifyClusteredRegions
         DESTINATION bin)
 

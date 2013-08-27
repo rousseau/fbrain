@@ -93,7 +93,7 @@ vtkSmartPointer<vtkPolyLine> polyLine = vtkSmartPointer<vtkPolyLine>::New();
 vtkSmartPointer<vtkCellArray> cells = vtkSmartPointer<vtkCellArray>::New();
 vtkSmartPointer<vtkPolyData> polydata = vtkSmartPointer<vtkPolyData>::New(); 
 
-uint nb=0;
+unsigned int nb=0;
 for(int f=1;f<=filenumber;f++)
 {
   std::ostringstream oss;
@@ -103,7 +103,7 @@ for(int f=1;f<=filenumber;f++)
  
   std::string line;
   
-  uint nb_points = 0;
+  unsigned int nb_points = 0;
   while(std::getline(fin, line))
     {
     double x,y,z;
