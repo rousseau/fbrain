@@ -291,14 +291,103 @@ because the search space will not be explored enough.
 \subsection{Atlas construction}
 \label{subsec:atlas}
 
-    First, the data script \emph{Scripts/btkAtlasData.py} should be copied in a directory and filled according to the dataset and the algorithms' options. Then the directory where the data script is have to be added in the python path environnement variable. For instance, in a terminal, the following command add the current directory in the python path environnement variable:
+    There are two steps for atlas construction: filling the data script and building the atlas using the scripts. The following sections describe how you can do it.
+
+    \subsubsection*{Filling the data script}
+    
+    The data script (\emph{btkAtlasData.py}) is used to give information to the executed script about the directories, the algorithms' options, which image modalities are used, etc. It has to be customized according to the data you have.
+    
+    The atlas construction scripts take as input series of images (such as T2, label images, etc.), corresponding to the patients of the dataset. The input files should be named as \emph{patientIdentifier\_modalityIden\-tifier.nii.gz} and placed in the specified directory for the modality \emph{modalityIdentifier}. There are basically two use cases: 1) you do not have any label image or 2) you have a label image.
+
+    If you are working without labels, and for instance you only have T2 image, you have to add the following piece of code in the modalities part of the script.
+    \begin{verbatim}
+        # T2 modality
+        # Identifier of the modality is T2 (input will be patientIdentifier_T2.nii.gz)
+        ModalityImage = 'T2'
+        # Initialization
+        modalities[ModalityImage] = {}
+        # T2 images will be used during registration
+        modalities[ModalityImage][UseInRegistration] = True
+        # T2 images will be used during regression
+        modalities[ModalityImage][UseInRegression]   = True
+        # The weight of T2 images is 1
+        modalities[ModalityImage][ModalityWeight]    = 1
+        # The path of T2 images is /path/to/data/T2
+        modalities[ModalityImage][ModalityDataPath]  = dataPath + '/T2'
+        # T2 is not a label
+        modalities[ModalityImage][IsTissueMap]       = False
+        # T2 is not a label, this field does not matter
+        modalities[ModalityImage][TissueLabel]       = 0
+    \end{verbatim}
+
+    If you are working with labels, and for instance you have T2 images and labels images named \emph{patientIdentifier\_Tissues.nii.gz} in the data directory \emph{/path/to/data/Tissues}. Assume the label images contains 5 labels and you want to use only 2 labels (GM and WM). So you have to add the following piece of code in the modalities part of the script.
+    \begin{verbatim}
+        # T2 modality
+        # Identifier of the modality is T2 (input will be patientIdentifier_T2.nii.gz)
+        ModalityImage = 'T2'
+        # Initialization
+        modalities[ModalityImage] = {}
+        # T2 images will be used during registration
+        modalities[ModalityImage][UseInRegistration] = True
+        # T2 images will be used during regression
+        modalities[ModalityImage][UseInRegression]   = True
+        # The weight of T2 images is 1
+        modalities[ModalityImage][ModalityWeight]    = 1
+        # The path of T2 images is /path/to/data/T2
+        modalities[ModalityImage][ModalityDataPath]  = dataPath + '/T2'
+        # T2 is not a label
+        modalities[ModalityImage][IsTissueMap]       = False
+        # T2 is not a label, this field does not matter
+        modalities[ModalityImage][TissueLabel]       = 0
+        
+        # GM modality
+        # Identifier of the modality is GM (input will be patientIdentifier_GM.nii.gz)
+        ModalityImage = 'GM'
+        # Initialization
+        modalities[ModalityImage] = {}
+        # GM images will be used during registration
+        modalities[ModalityImage][UseInRegistration] = True
+        # GM images will be used during regression
+        modalities[ModalityImage][UseInRegression]   = True
+        # The weight of GM images is 0.5
+        modalities[ModalityImage][ModalityWeight]    = 0.5
+        # The path of GM images is /path/to/data/GM
+        modalities[ModalityImage][ModalityDataPath]  = dataPath + '/GM'
+        # GM is a label
+        modalities[ModalityImage][IsTissueMap]       = True
+        # GM is the label 1
+        modalities[ModalityImage][TissueLabel]       = 1
+        
+        # WM modality
+        # Identifier of the modality is WM (input will be patientIdentifier_WM.nii.gz)
+        ModalityImage = 'WM'
+        # Initialization
+        modalities[ModalityImage] = {}
+        # WM images will be used during registration
+        modalities[ModalityImage][UseInRegistration] = True
+        # WM images will be used during regression
+        modalities[ModalityImage][UseInRegression]   = True
+        # The weight of WM images is 0.5
+        modalities[ModalityImage][ModalityWeight]    = 0.5
+        # The path of WM images is /path/to/data/WM
+        modalities[ModalityImage][ModalityDataPath]  = dataPath + '/WM'
+        # WM is a label
+        modalities[ModalityImage][IsTissueMap]       = True
+        # WM is the label 3
+        modalities[ModalityImage][TissueLabel]       = 3
+    \end{verbatim}
+
+    
+    \subsubsection*{Building atlas}
+
+    Once the data script \emph{Scripts/btkAtlasData.py} has been copied in your working directory and filled according to the dataset and the algorithms' options (see previous section for some help), the atlas has to be built using dedicated scripts. First, the directory where the data script is have to be added in the python path environnement variable. For instance, in a terminal, the following command add the current directory in the python path environnement variable:
         \begin{quote}
             \texttt{export PYTHONPATH = \$PYTHONPATH:`pwd`} \enspace .
         \end{quote}
     Finaly, the atlas construction can be achieved by calling directly the following python scripts.
 
     \begin{description}
-        \item[btkPrepareAtlasData] This optional script will split the tissue label map (named \emph{patient-name\_Tissues.nii.gz}) into separate tissue probability maps. Tissue name and label are controlled by setting up the script \emph{Scripts/btkAtlasData.py}.
+        \item[btkPrepareAtlasData] This optional script will split the tissue label map (if any and named \emph{patient-name\_Tissues.nii.gz}) into separate tissue probability maps. Tissue name and label are controlled by setting up the script \emph{Scripts/btkAtlasData.py}.
 
         Usage: \texttt{btkPrepareAtlasData.py}
 
@@ -306,7 +395,7 @@ because the search space will not be explored enough.
 
         Usage: \texttt{btkCreateTemplate.py}
 
-        \item[btkCreateLongitudinalAtlas.py] This script will use the informations contained in the data script and the output of the script btkCreateTemplate.py to produce a longitudinal atlas over gestionnal ages (in weeks) as output. So, the script btkCreateTemplate.py must be executed before using this script.
+        \item[btkCreateLongitudinalAtlas.py] This script will use the informations contained in the data script and the output of the script \emph{btkCreateTemplate.py} to produce a longitudinal atlas over gestionnal ages (in weeks) as output. So, the script \emph{btkCreateTemplate.py} must be executed before using this script.
 
         Usage: \texttt{btkCreateLongitudinalAtlas.py}
     \end{description}
