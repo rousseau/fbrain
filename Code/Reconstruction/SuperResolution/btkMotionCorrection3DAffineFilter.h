@@ -57,6 +57,13 @@
 
 namespace btk
 {
+/**
+ * @class MotionCorrection3DAffineFilter
+ * @brief The MotionCorrection3DAffineFilter class
+ * @author Marc Schweitzer
+ * @ingroup SuperResolution
+ * @warning This class may be useless...
+ */
 class MotionCorrection3DAffineFilter: public MotionCorrectionFilter
 {
 

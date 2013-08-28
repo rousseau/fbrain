@@ -47,53 +47,142 @@ knowledge of the CeCILL-B license and that you accept its terms.
 
 namespace btk
 {
+/**
+ * @class Histogram
+ * @brief The Histogram class
+ * @author François Rousseau
+ * @ingroup Maths
+ */
 class Histogram
 {
 
 public:
+    /**
+   * @brief Histogram
+   */
   Histogram();
+  /**
+    * @brief destructor
+    */
   ~Histogram();
   
 
-  
+  /**
+   * @brief Setup
+   */
   void Setup();
-  
+  /**
+   * @brief AddSample
+   * @param sample
+   */
   void AddSample(float sample);
+  /**
+   * @brief RemoveSample
+   * @param sample
+   */
   void RemoveSample(float sample);
+  /**
+   * @brief BinToValue
+   * @param bin
+   * @return
+   */
   float BinToValue(unsigned int bin);
+  /**
+   * @brief AddWeightedSample
+   * @param sample
+   * @param weight
+   */
   void AddWeightedSample(float sample, float weight);
+  /**
+   * @brief RemoveWeightedSample
+   * @param sample
+   * @param weight
+   */
   void RemoveWeightedSample(float sample, float weight);
-  
+  /**
+   * @brief ComputeCumulativeDistributionFunction
+   */
   void ComputeCumulativeDistributionFunction();
+  /**
+   * @brief ComputeInverseCumulativeDistributionFunction
+   */
   void ComputeInverseCumulativeDistributionFunction();
-  
+  /**
+   * @brief NormalizeData
+   */
   void NormalizeData();
+  /**
+   * @brief ComputeNormalizedCumulativeDistributionFunction
+   */
   void ComputeNormalizedCumulativeDistributionFunction();
+  /**
+   * @brief ComputeNormalizedInverseCumulativeDistributionFunction
+   */
   void ComputeNormalizedInverseCumulativeDistributionFunction();
-  
+  /**
+   * @brief SaveHistogram
+   * @param filename
+   */
   void SaveHistogram(const std::string & filename);
+  /**
+   * @brief SaveNormalizedHistogram
+   * @param filename
+   */
   void SaveNormalizedHistogram(const std::string & filename);
+  /**
+   * @brief SaveCumulativeDistributionFunction
+   * @param filename
+   */
   void SaveCumulativeDistributionFunction(const std::string & filename);
+  /**
+   * @brief SaveNormalizedCumulativeDistributionFunction
+   * @param filename
+   */
   void SaveNormalizedCumulativeDistributionFunction(const std::string & filename);
-  void SaveInverseCumulativeDistributionFunction(const std::string & filename);
+  /**
+   * @brief SaveInverseCumulativeDistributionFunction
+   * @param filename
+   */
+  void SaveInverseCumulativeDistributionFunction(const std::string & filename);/**
+   * @brief SaveNormalizedInverseCumulativeDistributionFunction
+   * @param filename
+   */
   void SaveNormalizedInverseCumulativeDistributionFunction(const std::string & filename);  
 
   // GET / SET
 
+  /**
+   * @brief btkGetMacro
+   */
   btkGetMacro(NormalizedInverseCumulativeDistributionFunction,std::vector<float>);
-
+  /**
+   * @brief btkGetMacro
+   */
   btkGetMacro(NormalizedCumulativeDistributionFunction,std::vector<float>);
-
+  /**
+   * @brief btkGetMacro
+   */
   btkGetMacro(ACoefficient,float);
-
+  /**
+   * @brief btkGetMacro
+   */
   btkGetMacro(BCoefficient,float);
-
+  /**
+   * @brief SetNumberOfBins
+   * @param numberOfBins
+   */
   void SetNumberOfBins(unsigned int numberOfBins);
-
+  /**
+   * @brief btkSetMacro
+   */
   btkSetMacro(SampleQuantification,unsigned int);
-
+  /**
+   * @brief btkSetMacro
+   */
   btkSetMacro(LowerBound,float);
-
+  /**
+   * @brief btkSetMacro
+   */
   btkSetMacro(UpperBound,float);
 
 

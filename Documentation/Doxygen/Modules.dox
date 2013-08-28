@@ -38,30 +38,18 @@
  * @defgroup FeatureSelection Feature selection for space reduction
  */
 
-
+/**
+* @defgroup Transformations transformations
+*/
+/**
+* @defgroup Registration Registration modules
+*/
 
 /**
- * @defgroup RegistrationFilters Registration
- * @ingroup Reconstruction
- */
+*@defgroup SuperResolution super resolution modules
+*/
 
 /**
- * @defgroup ImageFunctions Image functions
- * @ingroup Reconstruction
- */
-
-/**
- * @defgroup ImageInterpolators Image interpolators
- * @ingroup Reconstruction
- */
-
-/**
- * @defgroup SpatialFunctions Spatial functions
- * @ingroup Reconstruction
- */
-
-/**
- * @defgroup GeometricTransforms Geometric transforms
- * @ingroup Reconstruction
- */
+* @defgroup Maths Mathematics functions
+*/
 

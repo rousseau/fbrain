@@ -58,7 +58,8 @@ namespace btk
  * @author François Rousseau
  * @author Julien Pontabry
  * @author Marc Schweitzer
- * This program implements a method to compute the pseudo residuals variances based on the work of Coupé et al. described in : Coupé, P., Yger, P., Prima, S., Hellier, P., Kervrann, C., Barillot, C., 2008. An optimized blockwise nonlocal means denoising filter for 3-D magnetic resonance images. IEEE Transactions on Medical Imaging 27 (4), 425–441.
+ * @ingroup Denoising
+ * @brief This program implements a method to compute the pseudo residuals variances based on the work of Coupé et al. described in : Coupé, P., Yger, P., Prima, S., Hellier, P., Kervrann, C., Barillot, C., 2008. An optimized blockwise nonlocal means denoising filter for 3-D magnetic resonance images. IEEE Transactions on Medical Imaging 27 (4), 425–441.
  */
 class PseudoResidualsVarianceCalculator : public itk::Object
 {

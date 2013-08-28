@@ -40,10 +40,11 @@
 namespace btk
 {
 /**
- * Base class for Optimizer
+ * @class Optimizer
+ * @brief Base class for Optimizer
  *
  * @author Marc Schweitzer
- * \ingroup Registration
+ * @ingroup Registration
  */
 class Optimizer : public itk::SingleValuedNonLinearOptimizer
 {

@@ -65,13 +65,14 @@ namespace btk
 
 using namespace itk;
 
-/** \class GroupwiseS2SDistortionCorrection
- * \brief It performs a groupwise registration by using slice by slice transforms.
+/** @class GroupwiseS2SDistortionCorrection
+ * @brief It performs a groupwise registration by using slice by slice transforms.
  *
  * This class performs a groupwise registration of a set of images by using slice
  * by slice affine transforms.
  *
- * \ingroup Reconstruction
+ * @author Estanislao Oubel
+ * @ingroup Reconstruction
  */
 
 template <typename TSequence >

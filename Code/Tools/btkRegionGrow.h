@@ -42,6 +42,13 @@
 #include "vtkPolyDataAlgorithm.h"
 #define PI 3.14159265
 
+/**
+ * @class btkRegionGrow
+ * @brief The btkRegionGrow class
+ * @author Aïcha Bentaieb
+ * @ingroup Tools
+ * @todo remove btk of btkRegionGrow and add it into btk namespace !
+ */
 class btkRegionGrow : public vtkPolyDataAlgorithm
 {
 

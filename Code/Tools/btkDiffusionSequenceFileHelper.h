@@ -45,7 +45,12 @@
 
 namespace btk
 {
-
+/**
+ * @class DiffusionSequenceFileHelper
+ * @brief The DiffusionSequenceFileHelper is a helper class to handle diffusion Sequence
+ * @ingroup Tools
+ * @author Julien Pontabry
+ */
 class DiffusionSequenceFileHelper
 {
     public:

@@ -41,12 +41,12 @@
 namespace btk
 {
 
-/** \class OrientedRASImage
- * \brief
+/** @class OrientedRASImage
+ * @brief
  * Oriented image with RAS physical coordinates, as opposite of itk::Image with LPS physical coordinates.
  * itk::Image is the base class.
- *
- * \ingroup Images
+ * @author Marc Schweitzer
+ * @ingroup Images
  */
 template <class TPixel, unsigned int Dimension>
 class ITK_EXPORT OrientedRASImage : public itk::Image<TPixel, Dimension>

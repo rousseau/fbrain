@@ -63,12 +63,13 @@
 namespace btk
 {
 /**
- * \brief Perform motion correction using intersection of slices
+ * @class MotionCorrectionByIntersection
+ * @brief Perform motion correction using intersection of slices
  *
  * This class perform a registration based on intersection of othogonals slices.
  * This class is templated over the input images.
- *
- * \ingroup Reconstruction
+ * @author Marc Schweitzer
+ * @ingroup Reconstruction
  */
 
 static const double MAX_DOUBLE = DBL_MAX;

@@ -52,7 +52,12 @@
 namespace btk
 {
 
-
+/**
+ * @class EulerSliceBySliceTransform
+ * @brief Class for handle euler slice by slice transforms
+ * @ingroup Transformations
+ * @author Marc Schweitzer
+ */
 template <class TScalarType,unsigned int NDimensions=3, typename TPixelType = float >
 class EulerSliceBySliceTransform  : public SliceBySliceTransformBase<TScalarType,NDimensions, TPixelType>
 {

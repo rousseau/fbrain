@@ -66,7 +66,7 @@ RigidRegistration<ImageType>::RigidRegistration()
 template < typename ImageType >
 void
 RigidRegistration<ImageType>
-::Initialize() throw (ExceptionObject)
+::Initialize() throw (itk::ExceptionObject)
 {
   // Configure transform
   Superclass::m_Transform = RigidTransformType::New();
@@ -211,7 +211,7 @@ RigidRegistration<ImageType>
 template < typename ImageType >
 void
 RigidRegistration<ImageType>
-::PrintSelf(std::ostream& os, Indent indent) const
+::PrintSelf(std::ostream& os, itk::Indent indent) const
 {
   Superclass::PrintSelf( os, indent );
 }

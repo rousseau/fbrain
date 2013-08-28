@@ -54,10 +54,8 @@
 namespace btk
 {
 
-using namespace itk;
-
-/** \class ResampleLabelsByInjectionFilter
- * \brief Resample an image via a coordinate transform
+/** @class ResampleLabelsByInjectionFilter
+ * @brief Resample an image via a coordinate transform
  *
  * ResampleLabelsByInjectionFilter resamples an existing image through some coordinate
  * transform, interpolating via some image function.  The class is templated
@@ -76,21 +74,21 @@ using namespace itk;
  * In particular, this filter overrides
  * ProcessObject::GenerateInputRequestedRegion() and
  * ProcessObject::GenerateOutputInformation().
- *: 105
  *
- * \ingroup GeometricTransforms
+ * @author Estanislao Oubel
+ * @ingroup GeometricTransforms
  */
 template <class TInputImage, class TOutputImage,
           class TInterpolatorPrecisionType=double>
 class ResampleLabelsByInjectionFilter:
-    public ImageToImageFilter<TInputImage, TOutputImage>
+    public itk::ImageToImageFilter<TInputImage, TOutputImage>
 {
 public:
   /** Standard class typedefs. */
   typedef ResampleLabelsByInjectionFilter                Self;
-  typedef ImageToImageFilter<TInputImage,TOutputImage>  Superclass;
-  typedef SmartPointer<Self>                            Pointer;
-  typedef SmartPointer<const Self>                      ConstPointer;
+  typedef itk::ImageToImageFilter<TInputImage,TOutputImage>  Superclass;
+  typedef itk::SmartPointer<Self>                            Pointer;
+  typedef itk::SmartPointer<const Self>                      ConstPointer;
 
   typedef TInputImage                             InputImageType;
   typedef TOutputImage                            OutputImageType;
@@ -105,7 +103,7 @@ public:
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(ResampleLabelsByInjectionFilter, ImageToImageFilter);
+  itkTypeMacro(ResampleLabelsByInjectionFilter, itk::ImageToImageFilter);
 
   /** Number of dimensions. */
   itkStaticConstMacro(ImageDimension, unsigned int,
@@ -122,7 +120,7 @@ public:
   typedef std::vector< TransformPointer > TransformPointerArrayType;
 
   /** Image size typedef. */
-  typedef Size<itkGetStaticConstMacro(ImageDimension)> SizeType;
+  typedef itk::Size<itkGetStaticConstMacro(ImageDimension)> SizeType;
 
   /** Image index typedef. */
   typedef typename TOutputImage::IndexType IndexType;
@@ -146,13 +144,13 @@ public:
   typedef ImageBase<itkGetStaticConstMacro(ImageDimension)> ImageBaseType;
 
   /**Iterator typedef. */
-  typedef ImageRegionIteratorWithIndex< InputImageType >  IteratorType;
+  typedef itk::ImageRegionIteratorWithIndex< InputImageType >  IteratorType;
 
   /**Const iterator typedef. */
-  typedef ImageRegionConstIteratorWithIndex< InputImageType >  ConstIteratorType;
+  typedef itk::ImageRegionConstIteratorWithIndex< InputImageType >  ConstIteratorType;
 
   /**Neighborhood iterator typedef. */
-  typedef NeighborhoodIterator< OutputImageType >   NeighborhoodIteratorType;
+  typedef itk::NeighborhoodIterator< OutputImageType >   NeighborhoodIteratorType;
 
   /**Face calculator typedef. */
   typedef NeighborhoodAlgorithm

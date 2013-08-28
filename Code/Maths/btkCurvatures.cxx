@@ -36,10 +36,6 @@
 // BTK includes
 #include "btkCurvatures.h"
 
-
-//---------------------------------
-// AICHA: pourquoi ces fichiers ne sont-ils pas inclus dans btkCurvatures.h?
-//---------------------------------
 // VTK includes
 #include "vtkVersion.h"
 #include "vtkPolyData.h"

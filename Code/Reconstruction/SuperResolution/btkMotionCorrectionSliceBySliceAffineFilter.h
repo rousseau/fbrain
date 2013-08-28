@@ -58,6 +58,12 @@
 
 namespace btk
 {
+/**
+ * @class MotionCorrectionSliceBySLiceAffineFilter
+ * @brief Perform an affine slice by slice registration
+ * @ingroup SuperResolution
+ * @author Marc Schweitzer
+ */
 class MotionCorrectionSliceBySliceAffineFilter : public MotionCorrectionFilter
 {
 public:

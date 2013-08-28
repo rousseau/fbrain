@@ -42,15 +42,28 @@
 namespace btk
 {
 //--------------------------------------------------------------------------------------------------
+/**
+ * @brief The RBF_fn struct
+ * @ingroup Reconstruction
+ */
 struct RBF_fn
 {
     virtual double rbf(double r) = 0;
 };
 //--------------------------------------------------------------------------------------------------
-struct RBF2_fn {
+/**
+ * @brief The RBF2_fn struct
+ * @ingroup Reconstruction
+ */
+struct RBF2_fn
+{
   virtual double rbf(const double *p1, const double *p2) = 0;
 };
 //--------------------------------------------------------------------------------------------------
+/**
+ * @brief The RBF_interp struct
+ *@ingroup Reconstruction
+ */
 struct RBF_interp
 {
     int dim, n;
@@ -117,6 +130,10 @@ struct RBF_interp
     //*******************************************************************************************
 };
 //--------------------------------------------------------------------------------------------------
+/**
+ * @brief The RBF2_interp struct
+ * @ingroup Reconstruction
+ */
 struct RBF2_interp
 {
     Int dim, n;
@@ -206,6 +223,10 @@ struct RBF2_interp
     }
 };
 //--------------------------------------------------------------------------------------------------
+/**
+ * @brief The RBF_multiquadric struct
+ * @ingroup Reconstruction
+ */
 struct RBF_multiquadric : RBF_fn
 {
     double r02;
@@ -219,6 +240,10 @@ struct RBF_multiquadric : RBF_fn
     //*******************************************************************************************
 };
 //--------------------------------------------------------------------------------------------------
+/**
+ * @brief The RBF_thinplate struct
+ * @ingroup Reconstruction
+ */
 struct RBF_thinplate : RBF_fn
 {
     double r0;
@@ -232,6 +257,10 @@ struct RBF_thinplate : RBF_fn
     //*******************************************************************************************
 };
 //--------------------------------------------------------------------------------------------------
+/**
+ * @brief The RBF_gauss struct
+ * @ingroup Reconstruction
+ */
 struct RBF_gauss : RBF_fn
 {
     double r0;
@@ -245,6 +274,10 @@ struct RBF_gauss : RBF_fn
     //*******************************************************************************************
 };
 //--------------------------------------------------------------------------------------------------
+/**
+ * @brief The RBF2_gauss struct
+ * @ingroup Reconstruction
+ */
 struct RBF2_gauss : RBF2_fn
 {
   Doub r0_spa;
@@ -291,6 +324,10 @@ struct RBF2_gauss : RBF2_fn
   //*******************************************************************************************
 };
 //--------------------------------------------------------------------------------------------------
+/**
+ * @brief The RBF_inversemultiquadric struct
+ * @ingroup Reconstruction
+ */
 struct RBF_inversemultiquadric : RBF_fn
 {
     double r02;
@@ -304,6 +341,10 @@ struct RBF_inversemultiquadric : RBF_fn
     //*******************************************************************************************
 };
 //--------------------------------------------------------------------------------------------------
+/**
+ * @brief The Shep_interp struct
+ * @ingroup Reconstruction
+ */
 struct Shep_interp
 {
     Int dim, n;

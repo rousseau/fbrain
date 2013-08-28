@@ -74,6 +74,8 @@ namespace btk
  * On Super-Resolution for Fetal Brain MRI, Medical Image Computing and Computer
  * Assisted Intervention Pékin, Chine, pp. 355--362, Springer-Verlag, Lecture
  * Notes in Computer Science, Vol. 6362, doi:10.1007/978-3-642-15745-5, 2010
+ * @ingroup SuperResolution
+ * @author Marc Schweitzer
  */
 class SuperResolutionFilter: public itk::Object
 {

@@ -39,6 +39,12 @@
 
 namespace btk
 {
+/**
+ * @class MseCostFunction
+ * @brief The MseCostFunction class
+ * @author Marc Schweitzer
+ * @ingroup Registration
+ */
 class MseCostFunction: public itk::SingleValuedCostFunction
 {
 

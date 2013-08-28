@@ -47,11 +47,12 @@
 namespace btk
 {
 /**
- * This is an optimizer using Simulated Anneal Strategy.
+ * @class SimulatedAnnealingOptimizer
+ * @brief This is an optimizer using Simulated Anneal Strategy.
  * It can be used with any class inherited form itk::SingleValuedCostFunction.
  *
  * @author Marc Schweitzer
- * \ingroup Registration
+ * @ingroup Registration
  */
 class SimulatedAnnealingOptimizer : public btk::Optimizer
 {

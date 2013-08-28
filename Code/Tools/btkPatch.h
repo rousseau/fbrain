@@ -46,6 +46,8 @@ namespace btk
   /**
   * @class Patch
   * @brief 3D Patch
+  * @author François Rousseau
+  * @ingroup Tools
   */
   template<typename T>
   class Patch
