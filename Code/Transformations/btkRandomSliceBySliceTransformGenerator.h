@@ -46,7 +46,12 @@
 
 namespace btk
 {
-
+/**
+ * @class RandomSliceBySliceTransformGenerator
+ * @brief The RandomSliceBySliceTransformGenerator class compute random slicebyslice transform (for testing purpose)
+ * @ingroup Transformations
+ * @author Marc Schweitzer
+ */
 class RandomSliceBySliceTransformGenerator: public itk::Object
 {
     public:

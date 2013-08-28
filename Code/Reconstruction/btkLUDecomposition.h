@@ -40,6 +40,12 @@
 
 namespace btk
 {
+/**
+ * @class LUDecomposition
+ * @brief The LUDecomposition class
+ * @author Marc Schweitzer, Frederic Champ
+ * @ingroup Reconstruction
+ */
 class LUDecomposition
 {
 public:

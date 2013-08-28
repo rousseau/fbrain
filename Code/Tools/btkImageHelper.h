@@ -56,9 +56,10 @@
 namespace btk
 {
     /**
-     * Helper class for image management (read, write and create operations)
+     * @class ImageHelper
+     * @brief Helper class for image management (read, write and create operations)
      * @author Marc Schweitzer, Julien Pontabry
-     * \ingroup Tools
+     * @ingroup Tools
      */
     template < class TImageInput, class TImageOutput=TImageInput >
     class ImageHelper

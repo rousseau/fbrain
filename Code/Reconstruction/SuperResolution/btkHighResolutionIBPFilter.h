@@ -36,36 +36,40 @@
 #define __BTK_HIGHRESOLUTIONIBPFILTER_H__
 
 
-
-
 /* BTK */
 #include "btkHighResolutionReconstructionFilter.h"
 #include "btkMacro.h"
 #include "btkCreateHRMaskFilter.h"
 #include "btkSimulateLRImageFilter.h"
 
-
-
 /* OTHERS */
 #include "iostream"
 
 namespace btk
 {
+/**
+ * @class HighResolutionIBPFilter
+ * @brief The HighResolutionIBPFilter class
+ * @author François Rousseau, Marc Schweitzer
+ * @ingroup SuperResolution
+ */
 class HighResolutionIBPFilter : public HighResolutionReconstructionFilter
 {
 
-
 public:
-
-
-
     typedef HighResolutionReconstructionFilter SuperClass;
 
     HighResolutionIBPFilter();
     ~HighResolutionIBPFilter();
 
+    /**
+     * @brief Initialize
+     */
     void Initialize();
 
+    /**
+     * @brief Update
+     */
     virtual void Update();
 
     btkGetMacro(Nlm,int);

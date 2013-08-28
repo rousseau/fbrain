@@ -58,30 +58,24 @@
 namespace btk
 {
 
-using namespace itk;
 
-/** \class SliceBySliceRigidRegistration
- * \brief This class registers two images by using a slice by slice rigid transform.
- *
- * Full class description
- * Full class description
- * Full class description
-
- * \sa ImageRegistrationMethod
- * \ingroup RegistrationFilters
+/** @class SliceBySliceRigidRegistration
+ * @brief This class registers two images by using a slice by slice rigid transform.
+ * @ingroup Registration
+ * @author Estanislao Oubel
  */
 
 // TODO Change the template to provide two types of images (Low and High resolution)
 
 template <typename TImage>
-class SliceBySliceRigidRegistration : public ProcessObject
+class SliceBySliceRigidRegistration : public itk::ProcessObject
 {
 public:
   /** Standard class typedefs. */
   typedef SliceBySliceRigidRegistration  Self;
-  typedef ProcessObject                                Superclass;
-  typedef SmartPointer<Self>                           Pointer;
-  typedef SmartPointer<const Self>                     ConstPointer;
+  typedef itk::ProcessObject                                Superclass;
+  typedef itk::SmartPointer<Self>                           Pointer;
+  typedef itk::SmartPointer<const Self>                     ConstPointer;
 
   /** Method for creation through the object factory. */
   itkNewMacro(Self);
@@ -117,7 +111,7 @@ public:
   typedef ImageRegionIteratorWithIndex< ImageType >  IteratorType;
 
   /**  Type of the Transform . */
-  typedef Euler3DTransform< double >             				TransformType;
+  typedef itk::Euler3DTransform< double >             				TransformType;
   //typedef AffineTransform< double, 3 >                   TransformType;
   typedef typename TransformType::Pointer               TransformPointer;
   typedef  std::vector<TransformPointer>                TransformPointerArray;
@@ -130,7 +124,7 @@ public:
   typedef TransformReaderType::TransformListType*       TransformListType;
 
   /**  Type of the Interpolator. */
-  typedef LinearInterpolateImageFunction<
+  typedef itk::LinearInterpolateImageFunction<
                                     ImageType,
                                     double>             InterpolatorType;
   typedef typename InterpolatorType::Pointer            InterpolatorPointer;
@@ -175,11 +169,11 @@ public:
 protected:
   SliceBySliceRigidRegistration();
   virtual ~SliceBySliceRigidRegistration() {};
-  void PrintSelf(std::ostream& os, Indent indent) const;
+  void PrintSelf(std::ostream& os, itk::Indent indent) const;
 
   /** Initialize by setting the interconnects between the components.
    */
-  void Initialize() throw (ExceptionObject);
+  void Initialize() throw (itk::ExceptionObject);
 
 
 

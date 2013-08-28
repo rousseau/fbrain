@@ -57,36 +57,29 @@
 namespace btk
 {
 
-using namespace itk;
-
-/** \class SliceBySliceAffineRegistration
- * \brief This class registers two images by using a slice by slice affine transform.
- *
- * Full class description
- * Full class description
- * Full class description
-
- * \sa ImageRegistrationMethod
- * \ingroup RegistrationFilters
+/** @class SliceBySliceAffineRegistration
+ * @brief This class registers two images by using a slice by slice affine transform.
+ * @ingroup Registration
+ * @author Marc Schweitzer
  */
 
 // TODO Change the template to provide two types of images (Low and High resolution)
 
 template <typename TImage>
-class SliceBySliceAffineRegistration : public ProcessObject
+class SliceBySliceAffineRegistration : public itk::ProcessObject
 {
 public:
   /** Standard class typedefs. */
   typedef SliceBySliceAffineRegistration  Self;
-  typedef ProcessObject                                Superclass;
-  typedef SmartPointer<Self>                           Pointer;
-  typedef SmartPointer<const Self>                     ConstPointer;
+  typedef itk::ProcessObject                                Superclass;
+  typedef itk::SmartPointer<Self>                           Pointer;
+  typedef itk::SmartPointer<const Self>                     ConstPointer;
 
   /** Method for creation through the object factory. */
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(SliceBySliceAffineRegistration, ProcessObject);
+  itkTypeMacro(SliceBySliceAffineRegistration, itk::ProcessObject);
 
   /**  Type of the Fixed image. */
   typedef          TImage                               ImageType;
@@ -116,7 +109,7 @@ public:
   typedef ImageRegionIteratorWithIndex< ImageType >  IteratorType;
 
   /**  Type of the Transform . */
-  typedef AffineTransform< double, 3 >                  TransformType;
+  typedef itk::AffineTransform< double, 3 >                  TransformType;
   typedef typename TransformType::Pointer               TransformPointer;
   typedef  std::vector<TransformPointer>                TransformPointerArray;
 

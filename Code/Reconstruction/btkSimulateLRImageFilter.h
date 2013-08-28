@@ -57,15 +57,33 @@
 
 namespace btk
 {
+/**
+ * @class SimulateLRImageFilter
+ * @brief The SimulateLRImageFilter class
+ * @ingroup Reconstruction
+ * @author Marc Schweitzer
+ */
 class SimulateLRImageFilter
 {
 public:
 
-
+    /**
+     * @brief Constructor
+     */
     SimulateLRImageFilter();
+    /**
+      * @brief Destructor
+      **/
     ~SimulateLRImageFilter();
+    /**
+     * @brief Update method
+     */
     void Update();
 
+    /**
+     * @brief GetOutput
+     * @return vector of output LR images
+     */
     std::vector< itkImage::Pointer > GetOutput()
     {
         return m_SimulatedOutputImages;
@@ -86,9 +104,6 @@ public:
 
     btkSetMacro(Offset,std::vector< unsigned int >);
     btkGetMacro(Offset,std::vector< unsigned int >);
-
-
-
 
 
 private:

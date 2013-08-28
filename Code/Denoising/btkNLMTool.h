@@ -60,11 +60,13 @@ knowledge of the CeCILL-B license and that you accept its terms.
 namespace btk
 {
 /**
- *  This program implements a denoising method based on the work of Coupé et al. described in :
+ * @class NLM Denoising
+ * @brief This program implements a denoising method based on the work of Coupé et al. described in :
  Coupé, P., Yger, P., Prima, S., Hellier, P., Kervrann, C., Barillot, C., 2008.
  An optimized blockwise nonlocal means denoising filter for 3-D magnetic resonance images.
  IEEE Transactions on Medical Imaging 27 (4), 425–441.
  * @author François Rousseau
+ * @ingroup Denoising
  */
 template <typename TPixelType>
 class NLMTool

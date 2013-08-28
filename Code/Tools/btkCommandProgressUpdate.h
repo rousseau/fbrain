@@ -2,8 +2,8 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: DD/MM/YYYY
-  Author(s): NAME (MAIL)
+  Date: 28/08/2013
+  Author(s): Julien Pontabry (pontabry (at)unistra.fr )
   
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,

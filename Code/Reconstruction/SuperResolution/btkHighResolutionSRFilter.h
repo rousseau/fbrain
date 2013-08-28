@@ -57,7 +57,13 @@
 
 namespace btk
 {
-
+/**
+ * @class HighResolutionSRFilter
+ * @brief The HighResolutionSRFilter class
+ * @author Marc Schweitzer
+ * @ingroup SuperResolution
+ * @warning This class may be useless...
+ */
 class HighResolutionSRFilter : public HighResolutionReconstructionFilter
 {
 

@@ -48,8 +48,10 @@
 namespace btk
 {
 /**
- * Helper class for Image IO (for example read the pixel type of a unknown image)
+ * @class IOImageHelper
+ * @brief Helper class for Image IO (for example read the pixel type of a unknown image)
  * @author Marc Schweitzer
+ * @ingroup Tools
  */
 class IOImageHelper
 {

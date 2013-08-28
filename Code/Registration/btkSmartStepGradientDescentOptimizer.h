@@ -42,7 +42,8 @@
 namespace btk
 {
 /**
- * This class is a gradient descent optimizer, the step at each iteration is computed with a smart search
+ * @class SmartStepGradientDescentOptimizer
+ * @brief This class is a gradient descent optimizer, the step at each iteration is computed with a smart search
  * allong gradient direction.
  * This optimizer can be used with an itk::SingleValueCostFunction
  *

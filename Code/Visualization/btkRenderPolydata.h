@@ -59,7 +59,8 @@
 namespace btk
 {
 /**
- * Class for render one or several vtk::PolyDatas
+ * @class RenderPolyData
+ * @brief Class for render one or several vtk::PolyDatas
  * First we Set the number of PolyData to render with SetNumberOfPolyData.
  * Next we Set the Polydata with SetNthPolyData (inner a for loop for example) and we add a color with SetNthPolyDataColor
  * At the end why call Render().
@@ -67,7 +68,7 @@ namespace btk
  * Note that if we recall Render() it will be update the render window (if a polydata change for example).
  *
  * @author Marc Schweitzer
- * \ingroup Visualization
+ * @ingroup Visualization
  */
 class RenderPolyData : public itk::Object
 {

@@ -52,10 +52,17 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include <sstream>
 #include <fstream>
 
+/**
+ * @class LabelFusionTool
+ * @brief Todo
+ * @ingroup Segmentation
+ * @author François Rousseau
+ */
 template <typename T>
 class LabelFusionTool
 {
  public:
+    /** Typedefs */
   typedef typename itk::Image< T, 3> itkTImage;
   typedef typename itkTImage::Pointer itkTPointer;
   typedef typename itk::ImageDuplicator< itkTImage > itkTDuplicator;

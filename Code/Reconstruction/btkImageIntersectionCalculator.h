@@ -48,10 +48,10 @@
 namespace btk
 {
 
-/** \class ImageIntersectionCalculator
- * \brief Perform a bounding box mask, with intersection of orthogonal image
- * \sa ImageRegistrationMethod
- * \ingroup RegistrationFilters
+/** @class ImageIntersectionCalculator
+ * @brief Perform a bounding box mask, with intersection of orthogonal image
+ * @author Estanislao Oubel
+ * @ingroup Reconstruction
  */
 
 template <typename TImage>

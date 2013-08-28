@@ -54,31 +54,22 @@
 namespace btk
 {
 
-using namespace itk;
-
-/** \class Registration
- * \brief Describe the class briefly here.
- *
- * Full class description
- * Full class description
- * Full class description
-
- * \sa ImageRegistrationMethod
- * \ingroup RegistrationFilters
+/** @class Registration
+ * @brief This is a base class for doing registration
+ * @author Marc Schweitzer
+ * @ingroup Registration
  */
 
 template <typename TImage>
-class Registration :public ImageRegistrationMethod <TImage,TImage>
+class Registration :public itk::ImageRegistrationMethod <TImage,TImage>
 {
     public:
         /** Standard class typedefs. */
         typedef Registration  Self;
-        typedef ImageRegistrationMethod<TImage,TImage>       Superclass;
-        typedef SmartPointer<Self>                           Pointer;
-        typedef SmartPointer<const Self>                     ConstPointer;
+        typedef itk::ImageRegistrationMethod<TImage,TImage>       Superclass;
+        typedef itk::SmartPointer<Self>                           Pointer;
+        typedef itk::SmartPointer<const Self>                     ConstPointer;
 
-        /** Method for creation through the object factory. */
-        //itkNewMacro(Self); // pure virtual
 
         /** Run-time type information (and related methods). */
         itkTypeMacro(Registration, ImageRegistrationMethod);
@@ -88,18 +79,18 @@ class Registration :public ImageRegistrationMethod <TImage,TImage>
         typedef typename ImageType::Pointer                   ImagePointer;
 
         /**  Type of the image mask. */
-        typedef Image< unsigned char, 3 >                     ImageMaskType;
+        typedef itk::Image< unsigned char, 3 >                     ImageMaskType;
         typedef typename ImageMaskType::Pointer               ImageMaskPointer;
 
         /**  Type of the image mask spatial object. */
-        typedef ImageMaskSpatialObject< 3 >                   MaskType;
+        typedef itk::ImageMaskSpatialObject< 3 >                   MaskType;
         typedef typename MaskType::Pointer                    MaskPointer;
 
         typedef typename ImageType::PointType                 PointType;
 
 
         /**  Type of the metric. */
-        /**  Type of the metric.
+        /**
    * --------------------- /!\ Warning /!\ ------------------------------
    *
    * - itk::MattesMutualInformationImageToImageMetric is NOT THREAD SAFE....
@@ -113,7 +104,7 @@ class Registration :public ImageRegistrationMethod <TImage,TImage>
         //                                    ImageType >   MetricType;
 
 
-        typedef NormalizedCorrelationImageToImageMetric<
+        typedef itk::NormalizedCorrelationImageToImageMetric<
         ImageType,
         ImageType >   MetricType;
 
@@ -126,39 +117,18 @@ class Registration :public ImageRegistrationMethod <TImage,TImage>
         typedef itk::Transform< double, ImageType::ImageDimension,
                                         ImageType::ImageDimension > TransformType;
         typedef typename TransformType::Pointer               TransformPointer;
+
         typedef typename TransformType::ParametersType        ParametersType;
 
         /**  Type of the optimizer. */
-        typedef RegularStepGradientDescentOptimizer           OptimizerType;
+        typedef itk::RegularStepGradientDescentOptimizer           OptimizerType;
 
         /**  Type of the interpolator. */
-        typedef LinearInterpolateImageFunction<
+        typedef itk::LinearInterpolateImageFunction<
                                           ImageType,
                                           double>             InterpolatorType;
         typedef typename InterpolatorType::Pointer            InterpolatorPointer;
 
-
-        //virtual TransformType* GetTransform(){};
-
-        //  virtual void SetFixedImageMask(ImageMaskType *imMask)
-        //  {
-        //      m_FixedImageMask = imMask;
-        //  };
-        //  virtual ImageMaskType* GetFixedImageMask()
-        //  {
-        //      return m_FixedImageMask.GetPointer();
-        //  };
-
-        //  virtual void SetIterations(const unsigned int it){};
-        //  virtual unsigned int GetIterations(){};
-
-        //  virtual void SetEnableObserver(const bool arg){};
-        //  virtual bool GetEnableObserver(){};
-
-        //  virtual OptimizerType* GetOptimizer(){};
-
-        //  virtual void SetMovingImageMask(ImageMaskType* imMask){};
-        //  virtual ImageMaskType* GetMovingImageMask(){};
 
         /** Method that initiates the registration. */
 
@@ -208,7 +178,7 @@ class Registration :public ImageRegistrationMethod <TImage,TImage>
         Registration(){};
         virtual ~Registration() {};
 
-        virtual void PrintSelf(std::ostream& os, Indent indent) const
+        virtual void PrintSelf(std::ostream& os, itk::Indent indent) const
         {
             Superclass::PrintSelf( os, indent );
         }
@@ -216,7 +186,7 @@ class Registration :public ImageRegistrationMethod <TImage,TImage>
 
         /** Initialize by setting the interconnects between the components.
    */
-        virtual void Initialize() throw (ExceptionObject)
+        virtual void Initialize() throw (itk::ExceptionObject)
         {
             Superclass::Initialize();
         }
@@ -242,8 +212,6 @@ class Registration :public ImageRegistrationMethod <TImage,TImage>
     private:
         Registration(const Self&); //purposely not implemented
         void operator=(const Self&); //purposely not implemented
-
-
 
 
 };

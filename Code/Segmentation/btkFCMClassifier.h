@@ -47,7 +47,9 @@ knowledge of the CeCILL-B license and that you accept its terms.
 namespace btk
 {
 	/**
-	* FCM class for fuzzy classification
+    * @class FCMClassifier
+    * @brief FCM class for fuzzy classification
+    * @ingroup Segmentation
 	* @author Benoit Caldairou
 	*/
 	
