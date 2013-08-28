@@ -52,10 +52,17 @@
 
 namespace btk
 {
+/**
+ * @class BiasCorrectionFilter
+ * @brief The BiasCorrectionFilter class
+ * @ingroup SuperResolution
+ * @author Marc Schweitzer
+ * @warning THIS CLASS NEED TO BE IMPLEMENTED
+ */
 class BiasCorrectionFilter
 {
 public:
-    /* Typedefs */
+    /** Typedefs */
 
     typedef float PixelType;
     typedef itk::Image< PixelType, 3>         itkImage;
@@ -64,8 +71,17 @@ public:
     typedef itk::Image< unsigned char, 3 >     itkImageMask;
     typedef itk::ImageMaskSpatialObject< 3 >   itkMask;
 
+    /**
+     * @brief Constructor
+     */
     BiasCorrectionFilter();
+    /**
+      *@brief Destructor
+      */
     ~BiasCorrectionFilter();
+    /**
+     * @brief Update method
+     */
     void Update();
 
 
@@ -94,7 +110,6 @@ public:
     btkSetMacro(ReferenceImage, itkImage::Pointer);
 
 protected:
-private:
 
     std::vector< itkImage::Pointer >         m_ImagesLR;
     std::vector< TransformType::Pointer  >   m_TransformsLR;

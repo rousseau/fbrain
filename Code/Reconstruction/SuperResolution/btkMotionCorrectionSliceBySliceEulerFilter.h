@@ -58,10 +58,16 @@
 
 namespace btk
 {
+/**
+ * @class MotionCorrectionSliceBySliceEulerFilter
+ * @brief Perform a rigid slice by slice registration
+ * @ingroup SuperResolution
+ * @author Marc Schweitzer
+ */
 class MotionCorrectionSliceBySliceEulerFilter : public MotionCorrectionFilter
 {
 public:
-
+    /** typedefs */
     typedef btk::SliceBySliceRigidRegistration< itkImage > SliceBySliceRegistration;
 
     typedef MotionCorrectionSliceBySliceEulerFilter   Self;
@@ -69,7 +75,9 @@ public:
 
     MotionCorrectionSliceBySliceEulerFilter();
     ~MotionCorrectionSliceBySliceEulerFilter();
-
+    /**
+      * @brief Update
+      */
      virtual void Update();
 
 
@@ -77,7 +85,10 @@ public:
 
     //btkSetMacro(TransformsLR,std::vector< btkSliceBySliceTransformBase::Pointer >);
     //btkGetMacro(TransformsLR, std::vector< btkSliceBySliceTransformBase::Pointer >);
-
+    /**
+     * @brief GetOutputTransformsLR
+     * @return a vector of slice by slice transform base
+     */
     virtual std::vector< btkSliceBySliceTransformBase::Pointer> GetOutputTransformsLR()
     {
         return m_OutputTransformsLR;
@@ -86,8 +97,13 @@ public:
 
 
 protected:
-
+    /**
+      * @brief Initialize
+      */
      virtual void Initialize();
+    /**
+      * @brief DoRegistration
+      */
      virtual void DoRegistration();
 
 

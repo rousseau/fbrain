@@ -58,6 +58,12 @@
 
 namespace btk
 {
+/**
+ * @brief The HighResolutionReconstructionFilter class
+ * @ingroup SuperResolution
+ * @author Marc Schweitzer
+ * @warning Maybe useless
+ */
 class HighResolutionReconstructionFilter
 {
     //TODO: Maybe we should create sub-class of this one for doing several type of reconstruction !
