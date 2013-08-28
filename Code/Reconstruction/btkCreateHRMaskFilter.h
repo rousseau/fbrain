@@ -67,10 +67,16 @@
 
 namespace btk
 {
+/**
+ * @class CreateHRMaskFilter
+ * @brief The CreateHRMaskFilter class, create High resolution Mask with set of low resolution images
+ * @author Marc Schweitzer
+ * @ingroup Reconstruction
+ */
 class CreateHRMaskFilter
 {
 public:
-
+    /** Typedefs */
     typedef itk::Euler3DTransform<double> EulerTransformType;
     typedef EulerTransformType::Pointer EulerTransformPointerType;
     typedef std::vector< std::vector< EulerTransformPointerType > > EulerTransformArrayType;
@@ -78,41 +84,82 @@ public:
 
 
 public :
+
+    /**
+     * @brief Constructor
+     */
     CreateHRMaskFilter();
+    /**
+      * @brief Destructor
+      */
     ~CreateHRMaskFilter();
+    /**
+     * @brief Update method
+     */
     void Update();
 
+    /**
+     * @brief GetOutput
+     * @return HR mask image
+     */
     itkImage::Pointer GetOutput()
     {
         return m_MaskHRImage;
     }
 
-
+    /**
+     * @brief btkGetMacro set of LR images
+     */
     btkGetMacro(InputLRImages,std::vector< itkImage::Pointer >);
+    /**
+     * @brief btkSetMacro set of LR images
+     */
     btkSetMacro(InputLRImages,std::vector< itkImage::Pointer >);
 
+    /**
+     * @brief btkGetMacro set of transformations
+     */
     btkGetMacro(Transforms, std::vector< itkTransformBase::Pointer >);
+    /**
+     * @brief btkSetMacro set of transformations
+     */
     btkSetMacro(Transforms, std::vector< itkTransformBase::Pointer >);
 
 //    btkGetMacro(Transforms, std::vector< itkAffineTransform::Pointer >);
 //    btkSetMacro(Transforms, std::vector< itkAffineTransform::Pointer >);
-
+    /**
+     * @brief btkGetMacro
+     */
     btkGetMacro(TransformsAffine, std::vector< itkAffineTransform::Pointer >);
+    /**
+     * @brief btkSetMacro
+     */
     btkSetMacro(TransformsAffine, std::vector< itkAffineTransform::Pointer >);
-
+    /**
+     * @brief btkGetMacro
+     */
     btkGetMacro(TransformsSbS, std::vector< btkEulerSliceBySliceTransform::Pointer >);
+    /**
+     * @brief btkSetMacro
+     */
     btkSetMacro(TransformsSbS, std::vector< btkEulerSliceBySliceTransform::Pointer >);
-
+    /**
+     * @brief btkGetMacro
+     */
     btkGetMacro(HRImage,itkImage::Pointer);
+    /**
+     * @brief btkSetMacro
+     */
     btkSetMacro(HRImage, itkImage::Pointer);
 
+    /**
+     * @brief btkGetMacro
+     */
     btkGetMacro(TransformType,TRANSFORMATION_TYPE);
+    /**
+     * @brief btkSetMacro
+     */
     btkSetMacro(TransformType,TRANSFORMATION_TYPE);
-
-
-
-
-
 
 
 protected:

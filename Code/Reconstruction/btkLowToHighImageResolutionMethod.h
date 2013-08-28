@@ -57,8 +57,8 @@ namespace btk
 
 using namespace itk;
 
-/** \class LowToHighImageResolutionMethod
- * \brief Class for obtaining an isovoxel image from low resolution images.
+/** @class LowToHighImageResolutionMethod
+ * @brief Class for obtaining an isovoxel image from low resolution images.
  *
  * Class for obtaining an isovoxel image from different low resolution images
  * by applying affine registration and averaging. First step of the method
@@ -69,8 +69,8 @@ using namespace itk;
  * for reconstruction of high-resolution in utero fetal MR brain images. Acad
  * Radiol 13(9) (Sep 2006) 1072–1081
 
- * \sa ImageRegistrationMethod
- * \ingroup RegistrationFilters
+ * @author Estanislao Oubel
+ * \ingroup Reconstruction
  */
 
 // TODO Change the template to provide two types of images (Low and High resolution)

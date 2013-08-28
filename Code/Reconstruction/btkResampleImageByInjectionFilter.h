@@ -54,10 +54,8 @@
 namespace btk
 {
 
-using namespace itk;
-
-/** \class ResampleImageByInjectionFilter
- * \brief Resample an image via a coordinate transform
+/** @class ResampleImageByInjectionFilter
+ * @brief Resample an image via a coordinate transform
  *
  * ResampleImageByInjectionFilter resamples an existing image through some coordinate
  * transform, interpolating via some image function.  The class is templated
@@ -76,21 +74,21 @@ using namespace itk;
  * In particular, this filter overrides
  * ProcessObject::GenerateInputRequestedRegion() and
  * ProcessObject::GenerateOutputInformation().
- *: 105
+ * @author Estanislao Oubel
  *
- * \ingroup GeometricTransforms
+ * @ingroup Reconstruction
  */
 template <class TInputImage, class TOutputImage,
           class TInterpolatorPrecisionType=double>
 class ResampleImageByInjectionFilter:
-    public ImageToImageFilter<TInputImage, TOutputImage>
+    public itk::ImageToImageFilter<TInputImage, TOutputImage>
 {
 public:
   /** Standard class typedefs. */
   typedef ResampleImageByInjectionFilter                Self;
-  typedef ImageToImageFilter<TInputImage,TOutputImage>  Superclass;
-  typedef SmartPointer<Self>                            Pointer;
-  typedef SmartPointer<const Self>                      ConstPointer;
+  typedef itk::ImageToImageFilter<TInputImage,TOutputImage>  Superclass;
+  typedef itk::SmartPointer<Self>                            Pointer;
+  typedef itk::SmartPointer<const Self>                      ConstPointer;
 
   /** Number of dimensions. */
   itkStaticConstMacro(ImageDimension, unsigned int, TOutputImage::ImageDimension);
@@ -103,15 +101,15 @@ public:
   typedef typename OutputImageType::Pointer       OutputImagePointer;
 
 
-  typedef Image<float,ImageDimension>    FloatImageType;
+  typedef itk::Image<float,ImageDimension>    FloatImageType;
   typedef typename FloatImageType::Pointer FloatImagePointer;
 
   /** Type of the image mask. */
-  typedef Image< unsigned char, ImageDimension >    ImageMaskType;
+  typedef itk::Image< unsigned char, ImageDimension >    ImageMaskType;
   typedef typename ImageMaskType::Pointer ImageMaskPointer;
 
   /** Type of the mask. */
-  typedef ImageMaskSpatialObject< ImageDimension >  MaskType;
+  typedef itk::ImageMaskSpatialObject< ImageDimension >  MaskType;
 
   typedef typename InputImageType::RegionType     InputImageRegionType;
   typedef std::vector<InputImageRegionType>       InputImageRegionVectorType;
@@ -124,7 +122,7 @@ public:
 
 
   /** Image size typedef. */
-  typedef Size<itkGetStaticConstMacro(ImageDimension)> SizeType;
+  typedef itk::Size<itkGetStaticConstMacro(ImageDimension)> SizeType;
 
   /** Image index typedef. */
   typedef typename TOutputImage::IndexType IndexType;
@@ -145,7 +143,7 @@ public:
   typedef typename TOutputImage::DirectionType DirectionType;
 
   /** base type for images of the current ImageDimension */
-  typedef ImageBase<itkGetStaticConstMacro(ImageDimension)> ImageBaseType;
+  typedef itk::ImageBase<itkGetStaticConstMacro(ImageDimension)> ImageBaseType;
 
   /** Type of the slice by slice transform. */
   typedef SliceBySliceTransformBase< double, ImageDimension,InputPixelType > TransformType;
@@ -155,22 +153,22 @@ public:
 
 
   /**Iterator typedef. */
-  typedef ImageRegionIteratorWithIndex< InputImageType >  IteratorType;
+  typedef itk::ImageRegionIteratorWithIndex< InputImageType >  IteratorType;
 
   /**Const iterator typedef. */
-  typedef ImageRegionConstIteratorWithIndex< InputImageType >  ConstIteratorType;
+  typedef itk::ImageRegionConstIteratorWithIndex< InputImageType >  ConstIteratorType;
 
   /**Const float iterator typedef. */
-  typedef ImageRegionConstIteratorWithIndex< FloatImageType >  ConstFloatIteratorType;
+  typedef itk::ImageRegionConstIteratorWithIndex< FloatImageType >  ConstFloatIteratorType;
 
   /**Neighborhood iterator typedef. */
-  typedef NeighborhoodIterator< OutputImageType >  NeighborhoodIteratorType;
+  typedef itk::NeighborhoodIterator< OutputImageType >  NeighborhoodIteratorType;
 
   /**Float neighborhood iterator typedef. */
-  typedef NeighborhoodIterator< FloatImageType >   FloatNeighborhoodIteratorType;
+  typedef itk::NeighborhoodIterator< FloatImageType >   FloatNeighborhoodIteratorType;
 
   /**Face calculator typedef. */
-  typedef NeighborhoodAlgorithm
+  typedef itk::NeighborhoodAlgorithm
   ::ImageBoundaryFacesCalculator< FloatImageType > FaceCalculatorType;
   typedef typename FaceCalculatorType::FaceListType FaceListType;
 
@@ -292,7 +290,7 @@ protected:
   ResampleImageByInjectionFilter( void );
   ~ResampleImageByInjectionFilter( void ) {};
 
-  void PrintSelf( std::ostream& os, Indent indent ) const;
+  void PrintSelf( std::ostream& os, itk::Indent indent ) const;
 
   /** ResampleImageFilter cannot be implemented as a multithreaded filter.  Therefore,
    * this implementation only provides a GenerateData() routine that allocates output

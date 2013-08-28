@@ -71,6 +71,8 @@ namespace btk
  *
  * In order to manage memory H should be created and allocated outside this class and
  * then given by reference with SetH method
+ * @author Marc Schweitzer
+ * @ingroup SuperResolution
  *
  */
 template < class TImage >

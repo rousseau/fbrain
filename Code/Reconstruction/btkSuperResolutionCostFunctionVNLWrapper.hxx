@@ -42,7 +42,12 @@
 
 namespace btk
 {
-
+/**
+ *@class SuperResolutionCostFunctionVNLWrapper
+ * @brief Wrapper to use SuperResolutionCostFunction with a VNL Optimizer
+ * @author Marc Schweitzer
+ * @ingroup SuperResolution
+ */
 template < class TImage >
 class SuperResolutionCostFunctionVNLWrapper : public vnl_cost_function
 {

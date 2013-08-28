@@ -42,21 +42,47 @@
 #include "btkSuperResolutionDataManager.h"
 #include "btkSuperResolutionTools.h"
 
-
+/**
+ * @class SuperResolutionManager
+ * @brief The SuperResolutionManager class
+ * @ingroup Reconstruction
+ * @author François Rousseau
+ */
 class SuperResolutionManager
 {
 public:
+    /** Typedefs */
   typedef float PixelType;
   typedef itk::Image<PixelType, 3>           itkImage;
   typedef itkImage::Pointer                  itkPointer;  
   typedef itk::ImageDuplicator< itkImage >   itkDuplicator;
-  
+    /**
+   * @brief data
+   */
   SuperResolutionDataManager    data;
+  /**
+   * @brief tool
+   */
   SuperResolutionTools          tool;
-  
+  /**
+   * @brief Initialize
+   */
   void Initialize();
+  /**
+   * @brief SimulateLRImages
+   */
   void SimulateLRImages();
+  /**
+   * @brief IteratedBackProjection
+   * @param loops
+   * @param nlm
+   * @param beta
+   * @param medianIBP
+   */
   void IteratedBackProjection(int & loops, int & nlm, float & beta, int & medianIBP);
+  /**
+   * @brief PseudoInverse
+   */
   void PseudoInverse();
 };
 
