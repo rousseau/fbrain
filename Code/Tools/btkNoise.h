@@ -47,6 +47,8 @@ namespace btk
   /**
   * @class Noise
   * @brief Noise estimation
+  * @author François Rousseau
+  * @ingroup Tools
   */
   template<typename T>
   class Noise
