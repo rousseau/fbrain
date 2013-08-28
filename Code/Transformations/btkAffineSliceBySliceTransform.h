@@ -52,7 +52,12 @@
 namespace btk
 {
 
-
+/**
+ * @class AffineSliceBySliceTransform
+ * @brief Class for handle affine slice by slice transform
+ * @ingroup Transformations
+ * @author Marc Schweitzer
+ */
 template <class TScalarType,unsigned int NDimensions=3, typename TPixelType = float>
 class AffineSliceBySliceTransform  : public SliceBySliceTransformBase<TScalarType,NDimensions, TPixelType>
 {

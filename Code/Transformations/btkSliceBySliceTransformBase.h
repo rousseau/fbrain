@@ -44,6 +44,12 @@
 
 namespace btk
 {
+/**
+ * @class SliceBySliceTransformBase
+ * @brief Base class for slicebyslice transformation, inheritate from an itk::Transform to keep genericity
+ * @ingroup Transformations
+ * @author Marc Schweitzer
+ */
 template < class TScalarType, unsigned int NDimensions=3, typename TPixelType = float >
 class SliceBySliceTransformBase : public itk::MatrixOffsetTransformBase<TScalarType,NDimensions, NDimensions> //public itk::Transform<TScalarType,NDimensions,NDimensions>
 {
