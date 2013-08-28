@@ -268,6 +268,9 @@ TARGET_LINK_LIBRARIES(btkCreate4DEmptyImageFromReferenceImage ${ITK_LIBRARIES} v
 ADD_EXECUTABLE( btkQuantifyClusteredRegions btkQuantifyClusteredRegions.cxx)
 TARGET_LINK_LIBRARIES(btkQuantifyClusteredRegions ${ITK_LIBRARIES} vtkHybrid)
 
+add_executable(btkApplyTransformToDiffusionSequence btkApplyTransformToDiffusionSequence.cxx)
+target_link_libraries(btkApplyTransformToDiffusionSequence btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -337,5 +340,6 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkGenerateSimulatedFiber
 		btkCreate4DEmptyImageFromReferenceImage
 		btkQuantifyClusteredRegions
+                btkApplyTransformToDiffusionSequence
         DESTINATION bin)
 
