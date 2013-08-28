@@ -143,6 +143,7 @@ Finally, go to the build folder of VTK (VTK-build) and type \texttt{make} at the
 \begin{itemize}
  \item Get the BTK sources: \texttt{git clone https://github.com/rousseau/fbrain.git }
  \item Then:
+\end{itemize}
 \begin{verbatim}
 mkdir fbrain-build
 cd fbrain-build
@@ -158,7 +159,16 @@ then :
 \begin{verbatim}
 make
 \end{verbatim}
-\end{itemize}
+If you want generate the doxygen documentation the BUILD\_DOCUMENTATION option must be set to ON in CMake configuration :
+\begin{verbatim}
+ BUILD_DOCUMENTATION = ON
+\end{verbatim}
+Then for generating the documentation run :
+\begin{verbatim}
+ make doc
+\end{verbatim}
+
+
 
 Most of the programs of the BTK suite use the OpenMP library for multi-threading
 purpose\footnote{Please note that the current Apple compiler (llvm gcc 4.2.1) does not take into account OpenMP.}. The number of cores used can be tuned using the following command line
