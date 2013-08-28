@@ -4,7 +4,7 @@
 
 \begin{description}
  \item[btkNLMDenoising] This program applies a non-local mean filter to a 3D
-image  for denoising purpose. Usage: \texttt{-i anat.nii.gz -o anat\_nlm.nii.gz }
+image  for denoising purpose. Usage: \texttt{-i ana.nii.gz -o ana\_nlm.nii.gz }
 . The best results are usually obtained by using a mask
 (or a padding value). This is an implementation of the method proposed by Coup\'e \textit{et al.} in \cite{coupe_2008}.
 \end{description}
@@ -23,12 +23,13 @@ obtained by using a mask (or a padding value).
  \item[btkImageReconstruction] This program allows to obtain a
 high-resolution image from a set of low-resolution images, typically
 axial, coronal, and sagittal acquisitions~(similar to \cite{rousseau_registration_2006}). \\\\
-Minimal usage: \texttt{btkImageReconstruction -i anta01.nii.gz $\cdots$ -i anatN.nii.gz \\\ -o
-anat\_reconstructed.nii.gz --box}. 
+Minimal usage: \texttt{btkImageReconstruction -i ana01.nii.gz $\cdots$ -i anaN.nii.gz \\\ -o
+ana\_reconstructed.nii.gz --box}. 
 
-Recommended usage: \texttt{btkImageReconstruction -i anat01.nii.gz $\cdots$ -i anatN.nii.gz
--m mask01.nii.gz $\cdots$ -m maskN.nii.gz -o anat\_reconstructed.nii.gz --mask}. The use of a mask provide
-better results since it allows an accuratelly estimation of the initial
+Recommended usage: \texttt{btkImageReconstruction -i ana01.nii.gz $\cdots$ -i anaN.nii.gz\\
+-m mask01.nii.gz $\cdots$ -m maskN.nii.gz -o ana\_reconstructed.nii.gz --mask}. 
+
+The use of a mask provide better results since it allows an accurate estimation of the initial
 transform, and constrains the registration to the region of interest.
 
 The full list of optional parameters of the method can be obtained by
@@ -52,7 +53,9 @@ The full list of optional parameters of the method can be obtained by
         \end{itemize}
         as described in~\cite{caldairou_segmentation_2011}.
         
-        Usage: \texttt{btkTissueSegmentation -i anat.nii.gz -s intracranian\_volume.nii.gz -l brainstem\_segmentation.nii.gz -l cerebellum\_segmentation.nii.gz -o brain\_segmentation.nii.gz -o cortex\_segmentation.nii.gz}
+        Usage: \texttt{btkTissueSegmentation -i ana.nii.gz -s intracranian\_volume.nii.gz \\
+        -l brainstem\_segmentation.nii.gz -l cerebellum\_segmentation.nii.gz \\
+        -o brain\_segmentation.nii.gz -o cortex\_segmentation.nii.gz}
 \end{description}
 
 \begin{description}
@@ -69,7 +72,8 @@ This can be performed in BTK by using the two following applications.
 \item[btkGroupwiseS2SDistortionCorrection] It performs a groupwise
 slice-by-slice registration of the image components of the sequence.
 
-Minimal usage: \texttt{btkGroupwiseS2SDistortionCorrection -i dwi\_normalized.nii.gz -o dwi\_reconstructed.nii.gz -t transform\_folder}.
+Minimal usage: \texttt{btkGroupwiseS2SDistortionCorrection -i dwi\_normalized.nii.gz \\
+-o dwi\_reconstructed.nii.gz -t transform\_folder}.
 
 \begin{itemize}
  \item[-i] dwi sequence noramlized (Utilities/btkSequenceNormalization).
@@ -90,8 +94,8 @@ generated from the application of slice-by-slice transforms. To this end,
 radial basis functions are used. By default, the output has isotropic
 voxels of size equal to the in-plane resolution of the input.
 
-Minimal usage: \texttt{btkRBFInterpolationS2S -i dwi\_normalized.nii.gz -m mask.nii.gz -o dwi\_interpolated.nii.gz
--t transformation\_folder}.
+Minimal usage: \texttt{btkRBFInterpolationS2S -i dwi\_normalized.nii.gz -m mask.nii.gz \\
+-o dwi\_interpolated.nii.gz -t transformation\_folder}.
 
 \begin{itemize}
  \item[-i] dwi sequence normalized
@@ -111,7 +115,7 @@ Minimal usage: \texttt{btkRBFInterpolationS2S -i dwi\_normalized.nii.gz -m mask.
         Suppose you want to perform a tractography on a diffusion weighted MRI 
 dataset. You should have a dwi image, the corresponding gradient vectors'
 coordinates, a mask of the brain white matter and a label image of the seeds.
-Assume this data is stored in files named repsectively for instance
+Assume this data is stored in files named respectively for instance
 \texttt{dwi.nii.gz}, \texttt{dwi.bval}, \texttt{dwi.bvec}, \texttt{mask.nii.gz} and
 \texttt{seeds.nii.gz}. The tractography is accomplished by the command below.
             \begin{quote}
@@ -463,5 +467,3 @@ This can be performed using the following applications:
         \end{figure}
 
 \end{description}
-
-\underline{NOTE}: The input and output data of these two applications are in \href{www.vtk.org/VTK/img/file-formats.pdf}{vtk} format.

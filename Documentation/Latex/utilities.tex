@@ -93,9 +93,9 @@ to perform a new image reconstruction (computationally expensive) after
 modification of the input images (some filtering for example) or an involuntary
 deletion of the reconstructed image.
 
-Recommended usage: \texttt{btkImageInjection -i anat01.nii.gz $\cdots$ -i
-anatN.nii.gz -m mask01.nii.gz $\cdots$ -m maskN.nii.gz -t transform01.txt $\cdots$ -t
-transformN.txt -o anat\_reconstructed.nii.gz --mask}
+Recommended usage: \texttt{btkImageInjection -i ana01.nii.gz $\cdots$ -i
+anaN.nii.gz -m mask01.nii.gz $\cdots$ -m maskN.nii.gz -t transform01.txt $\cdots$ -t
+transformN.txt -o ana\_reconstructed.nii.gz --mask}
 
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkImageMorphologicalClosing}
@@ -113,8 +113,8 @@ transformN.txt -o anat\_reconstructed.nii.gz --mask}
 \addcontentsline{toc}{subsection}{btkImageSubtract}
 \item[btkImageSubtract]: Pixel-wise subtraction of two image, or one image and a constant (ITK filter: SubtractImageFilter). 
 
-Recommended usage: \texttt{btkImageSubtract-i anat01.nii.gz -i anat02.nii.gz -o substraction\_image.nii.gz }
- or \texttt{btkImageSubtract -i anat.nii.gz -c value -o substraction\_image.nii.gz}
+Recommended usage: \texttt{btkImageSubtract-i ana01.nii.gz -i ana02.nii.gz -o substraction\_image.nii.gz }
+ or \texttt{btkImageSubtract -i ana.nii.gz -c value -o substraction\_image.nii.gz}
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkInverseDisplacementField}
 \item[btkInverseDisplacementField]: Compute the inverse of a displacement field (ITK filter: InverseDisplacementFieldImageFilter)
@@ -185,7 +185,7 @@ landmarks.fcsv}.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkReorientImageToStandard}
 \item[btkReorientImageToStandard] This program reorients a image to the standard orientation. This is necessary with fetal images since in general the fetus is in a random orientation with respect to the scanner.
-Recommended usage: \texttt{btkReorientImageToStandard -i anat.nii.gz -o anat\_reoriented.nii.gz -l landmarks.fcsv}.
+Recommended usage: \texttt{btkReorientImageToStandard -i ana.nii.gz -o ana\_reoriented.nii.gz -l landmarks.fcsv}.
 \texttt{landmarks} is a text file containing points that define the left-right
 and the posterior-anterior directions. The points $l$ and $r$ define the left
 $\rightarrow$ right direction, and the points $p$ and $a$ define the posterior
