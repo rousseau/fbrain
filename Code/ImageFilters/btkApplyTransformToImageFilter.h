@@ -56,9 +56,10 @@
 namespace btk
 {
 /**
- * Class for apply a transformation to an image, templated on input and output image
+ * @class ApplyTransformToImageFilter
+ * @brief Class for apply a transformation to an image, templated on input and output image
  * @author Marc Schweitzer
- * \ingroup ImageFilters
+ * @ingroup ImageFilters
  */
 template <typename TImageIn, typename TImageOut>
 class ApplyTransformToImageFilter : public itk::Object
@@ -129,5 +130,4 @@ class ApplyTransformToImageFilter : public itk::Object
 }
 
 #include "btkApplyTransformToImageFilter.txx"
-
-#endif // BTKWarpTRANSFORMTOIMAGEFILTER_H
+#endif // __BTK_APPLYTRANSFORMTOIMAGEFILTER_H__
