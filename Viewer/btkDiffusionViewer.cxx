@@ -411,8 +411,8 @@ int main(int argc, char *argv[])
     TCLAP::ValueArg< std::string > inputMaskFileNameArg("m", "mask", "Mask filename", false, "", "string", cmd);
 
     // Options
-    TCLAP::ValueArg< double > percentageOfSamplePointsArg("", "percent_of_sample_points", "Percentage of sample points used for modeling display", false, 0.1, "real between 0 and 1", cmd);
-    TCLAP::ValueArg< unsigned int > SphericalResolutionArg("", "spherical_resolution", "Spherical resolution used for modeling display", false, 100, "positive integer", cmd);
+    TCLAP::ValueArg< double > percentageOfSamplePointsArg("", "percent_of_sample_points", "Percentage of sample points used for modeling display (default: 0.1)", false, 0.1, "real between 0 and 1", cmd);
+    TCLAP::ValueArg< unsigned int > SphericalResolutionArg("", "spherical_resolution", "Spherical resolution used for surface reconstruction (default: 100)", false, 100, "positive integer", cmd);
     TCLAP::SwitchArg meanDirectionsOnlyArg("", "mean_directions_only", "Precompute only mean directions of the modeling and not the all functions (faster)", cmd);
 
     // Parse command line
@@ -1008,10 +1008,11 @@ std::vector< vtkSmartPointer< vtkActor > > displayDirections(std::vector< btk::G
 {
     double p0[3] = { 0, 0, 0 };
     double p1[3];
-    std::vector< vtkSmartPointer< vtkActor > > actors;
+    std::vector< vtkSmartPointer< vtkActor > > actors(directions.size(), NULL);
 
 //    btkCoutVariable(directions.size());
 
+    // NOTE : parallel computing does not improve computation time there.
     for(unsigned int i = 0; i < directions.size(); i++)
     {
 //        btkCoutVariable(directions[i]);
@@ -1034,7 +1035,7 @@ std::vector< vtkSmartPointer< vtkActor > > displayDirections(std::vector< btk::G
         vtkSmartPointer< vtkActor > actor = vtkSmartPointer< vtkActor >::New();
         actor->SetMapper(mapper);
 
-        actors.push_back(actor);
+        actors[i] = actor;
     }
 
     return actors;
@@ -1098,9 +1099,6 @@ vtkSmartPointer< vtkImagePlaneWidget > displaySequence(btk::DiffusionSequence::P
 
 std::vector< std::vector< vtkSmartPointer< vtkActor > > > &buildModelImage(btk::DiffusionModel::Pointer model, btk::DiffusionSequence::Pointer sequence, double factor, ImageMask::Pointer mask)
 {
-    // Create vector of actors
-    std::vector< std::vector< vtkSmartPointer< vtkActor > > > *actors = new std::vector< std::vector< vtkSmartPointer< vtkActor > > >;
-
     // Set size and spacing
     btk::DiffusionSequence::SizeType size = sequence->GetLargestPossibleRegion().GetSize();
     size[0] *= factor; size[1] *= factor;
@@ -1108,11 +1106,13 @@ std::vector< std::vector< vtkSmartPointer< vtkActor > > > &buildModelImage(btk::
     btk::DiffusionSequence::SpacingType spacing = sequence->GetSpacing();
     spacing[0] /= factor; spacing[1] /= factor;
 
+    // Create vector of actors
+    std::vector< std::vector< vtkSmartPointer< vtkActor > > > *actors = new std::vector< std::vector< vtkSmartPointer< vtkActor > > >(size[2], std::vector< vtkSmartPointer< vtkActor > >());
+
     // Build all surfaces
+//    #pragma omp parallel for // NOTE : This does not improve the computation time
     for(unsigned int z = 0; z < size[2]; z++)
     {
-        actors->push_back(std::vector< vtkSmartPointer< vtkActor > >());
-
         for(unsigned int x = 0; x < size[0]; x++)
         {
             for(unsigned int y = 0; y < size[1]; y++)
@@ -1138,9 +1138,6 @@ std::vector< std::vector< vtkSmartPointer< vtkActor > > > &buildModelImage(btk::
 
 std::vector< std::vector< vtkSmartPointer< vtkActor > > > &buildModelDirections(btk::DiffusionModel::Pointer model, btk::DiffusionSequence::Pointer sequence, double factor, ImageMask::Pointer mask)
 {
-    // Create vector of actors
-    std::vector< std::vector< vtkSmartPointer< vtkActor > > > *actors = new std::vector< std::vector< vtkSmartPointer< vtkActor > > >;
-
     // Set size and spacing
     btk::DiffusionSequence::SizeType size = sequence->GetLargestPossibleRegion().GetSize();
     size[0] *= factor; size[1] *= factor;
@@ -1148,11 +1145,13 @@ std::vector< std::vector< vtkSmartPointer< vtkActor > > > &buildModelDirections(
     btk::DiffusionSequence::SpacingType spacing = sequence->GetSpacing();
     spacing[0] /= factor; spacing[1] /= factor;
 
+    // Create vector of actors
+    std::vector< std::vector< vtkSmartPointer< vtkActor > > > *actors = new std::vector< std::vector< vtkSmartPointer< vtkActor > > >(size[2], std::vector< vtkSmartPointer< vtkActor > >());
+
     // Build all surfaces
+//    #pragma omp parallel for // NOTE : This does not improve the computation time.
     for(unsigned int z = 0; z < size[2]; z++)
     {
-        actors->push_back(std::vector< vtkSmartPointer< vtkActor > >());
-
         for(unsigned int x = 0; x < size[0]; x++)
         {
             for(unsigned int y = 0; y < size[1]; y++)

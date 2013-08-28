@@ -26,7 +26,9 @@ Note that the only required arguments are the inputs and outputs.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkDiffusionViewer}
 \item[btkDiffusionViewer]: Useful for diffusion dataset visualization (memory consuming). The option \texttt{--percent\_of\_sample\_points} can be used to set the percent of points (of the number of voxels) being sampled for modelling display. This can be useful for memory saving and spacing control between model representations. An other useful option is the input mask (\texttt{-m}) used to mask a part of the image.
-Once the display window is opened, you can move the slice up and down by using the corresponding arrows of your keyboard. To display the mean directions and the modelling, you can use respectively the touch 'd' and 'm' of your keyboard.
+Once the display window is opened, you can move the slice up and down by using the corresponding arrows of your keyboard. To display the mean directions and the modelling, you can use respectively the touch 'd' and 'm' of your keyboard. You can move the view by pointing the mouse outside of the image and then moving the mouse while keeping the left button of the mouse pressed.
+
+Example usage: \texttt{btkDiffusionViewer -i dwi.nii.gz -m mask.nii.gz}
 %------------------------------------------------------------------------------
 
 \end{description}
