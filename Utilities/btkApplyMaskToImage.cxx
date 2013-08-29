@@ -35,7 +35,6 @@
 
 /* ITK */
 #include "itkImage.h"
-#include "itkMaskImageFilter.h"
 #include "itkImageIOBase.h"
 #include "itkExtractImageFilter.h"
 #include "itkJoinSeriesImageFilter.h"
@@ -82,7 +81,6 @@ int main(int argc, char * argv[])
     typedef itk::Image<PixelType, 3> itk3DImage;
     typedef itk::Image<PixelType, 4> itk4DImage;
     typedef itk::Image<float, 3> itk3DMask;
-    typedef itk::MaskImageFilter<itk3DImage,itk3DMask, itk3DImage> MaskImageFilter;
     typedef btk::MaskImageFilter<itk3DImage, itk3DMask> btkMaskImageFilter;
     
     itk3DMask::Pointer mask   = itk3DMask::New();
