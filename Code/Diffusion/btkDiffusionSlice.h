@@ -42,7 +42,7 @@
 
 // Local includes
 #include "btkGradientDirection.h"
-#include "btkPixel.h"
+#include "btkAffineTransform.h"
 
 
 namespace btk
@@ -58,48 +58,75 @@ class DiffusionSlice : public itk::Image< short, 3 >
 {
     public:
         typedef DiffusionSlice                  Self;
-        typedef itk::Image< short, 3>           SuperClass;
+        typedef itk::Image< short, 3>           Superclass;
         typedef itk::SmartPointer< Self>        Pointer;
         typedef itk::SmartPointer< const Self>  ConstPointer;
 
-        typedef itk::AffineTransform<double,3>  TransformType;
+        /** Transform typedefs; */
+        typedef AffineTransform<double,3>       TransformType;
         typedef TransformType::Pointer          TransformPointer;
 
+         /** Vector typedefs; */
         typedef itk::Vector<double, 3>          VectorType;
 
-        //typedef Superclass::PointType           PointType;
+        /** Diffusion parameters typedef.; */
         typedef unsigned int                    BValueType;
-
         typedef GradientDirection               GradType;
 
         itkNewMacro(Self);
         itkTypeMacro(DiffusionSlice, itk::Image);
 
-        void SetImage(Superclass::Pointer image);
 
+        /**
+         * @brief Set Slice image.
+         * @param image Input slice image.
+         */
+        void SetImage(Superclass::ConstPointer image);
 
+        /**
+         * @brief Set the gradient direction of the slice.
+         * @param gradientDirection The Gradient direction of the slice.
+         */
         void SetGradientDirection(GradientDirection gradientDirection)
         {
             m_GradientDirection = gradientDirection;
         }
 
+        /**
+         * @brief Get the gradient direction of the slice.
+         * @return gradientDirection The Gradient direction of the slice.
+         */
         GradientDirection GetGradientDirection()
         {
             return m_GradientDirection;
         }
 
+        /**
+         * @brief Set/Get the B-value of the slice.
+         */
         btkSetMacro(BValue, BValueType);
         btkGetMacro(BValue, BValueType);
 
+        /**
+         * @brief Set Outliers status of the slice.
+         * @param OutlierStatus Boolean of outliers status.
+         */
         btkSetMacro(OutlierStatus, bool);
 
+        /**
+         * @brief Get Outliers status of the slice.
+         * @return OutlierStatus Boolean of outliers status.
+         */
         bool IsOutlier()
         {
             return m_OutlierStatus;
         }
 
+        /**
+         * @brief Transform the slice.
+         * @return transform Affine transformation.
+         */
         void Transform(TransformPointer transform);
-
 
     protected:
 
@@ -121,12 +148,14 @@ class DiffusionSlice : public itk::Image< short, 3 >
         virtual void PrintSelf(std::ostream &os, itk::Indent indent) const;
 
     private:
+        /** Slice gradient direction */
         GradientDirection           m_GradientDirection;
+
+        /** Slice B-value */
         BValueType                  m_BValue;
+
+        /** Outliers status */
         bool                        m_OutlierStatus;
-
-
-
 
 };
 

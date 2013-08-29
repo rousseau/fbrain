@@ -2,7 +2,7 @@
   
   Â© UniversitÃ© de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 
+  Date:
   Author(s):Marc Schweitzer (marc.schweitzer(at)unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -34,6 +34,7 @@
 ==========================================================================*/
 
 #include "btkDiffusionSlice.h"
+#include "btkImageHelper.h"
 
 namespace btk
 {
@@ -71,13 +72,13 @@ void DiffusionSlice::PrintSelf(std::ostream &os, itk::Indent indent) const
 
 }
 
-void DiffusionSlice::SetImage(Superclass::Pointer image)
+void DiffusionSlice::SetImage(Superclass::ConstPointer image)
 {
-    DiffusionSlice::Graft(image);
 
-    // By default itk set extracted image origin as the same as the input image
-    // Set following line is to avoid this. Then when you call "TransformIndexToPhysicalPoint"
-    // you will have the correct physical point;
+    this->Initialize();
+    this->Graft(image);
+
+    // Correct physical point use as origin;
     DiffusionSlice::RegionType region= this->GetLargestPossibleRegion();
     DiffusionSlice::IndexType originIndex = region.GetIndex();
 
@@ -85,6 +86,7 @@ void DiffusionSlice::SetImage(Superclass::Pointer image)
     originPoint[0] = this->m_Spacing[0]*originIndex[0];
     originPoint[1] = this->m_Spacing[1]*originIndex[1];
     originPoint[2] = this->m_Spacing[2]*originIndex[2];
+
 
     originPoint =this->m_Direction*originPoint; // rotate in the physical space
     this->m_Origin+=originPoint.GetVectorFromOrigin(); // set offset
@@ -96,69 +98,30 @@ void DiffusionSlice::SetImage(Superclass::Pointer image)
 
 void DiffusionSlice::Transform(TransformPointer transform)
 {
-
     TransformPointer inverse = TransformType::New(); // itk transform norm: output-to-input transform
     transform->GetInverse(inverse);
 
-//    TransformType::MatrixType matrix = inverse -> GetMatrix(); // Get Rotation Matrix
-//    this->m_Direction=matrix*this->m_Direction; // Combine rotations
-
-//    TransformType::OffsetType offset = inverse -> GetOffset(); // Get Offset (translation
-//    this->m_Origin+= offset;
-
-    /////////////////////////////////////////////////////////////////////////////
-    //  From "compose" of itkMatrixOffsetTransformBase
-    ////////////////////////////////////////////////////////////////////////////
-    //    if( pre )
-    //      {
-    //      m_Offset = m_Matrix * other->m_Offset + m_Offset;
-    //      m_Matrix = m_Matrix * other->m_Matrix;
-    //      }
-    //    else
-    //      {
-    //      m_Offset = other->m_Matrix * m_Offset + other->m_Offset;
-    //      m_Matrix = other->m_Matrix * m_Matrix;
-    //      }
-
-    TransformType::OffsetType offset = inverse -> GetOffset(); // Get Offset (translation
+    TransformType::OffsetType offset = inverse -> GetOffset(); // Ge Offset (translation)
     TransformType::MatrixType matrix = inverse -> GetMatrix(); // Get Rotation Matrix
 
-    Self::PointType offsetPoint;
+    PointType offsetPoint;
     offsetPoint[0]=offset[0];
     offsetPoint[1]=offset[1];
     offsetPoint[2]=offset[2];
 
+    // Transform origin
+    this->m_Origin =   matrix *m_Origin + offset;
 
-//    m_Origin    = m_Direction*offsetPoint + m_Origin.GetVectorFromOrigin();
-//    m_Direction = m_Direction * matrix;
+    // Basis change and transform direction
+    this->m_Direction = m_Direction*(m_InverseDirection * matrix * m_Direction);
+    this->m_InverseDirection = m_Direction.GetInverse();
+    this->ComputeIndexToPhysicalPointMatrices();
 
-    m_Origin    = matrix * m_Origin + offset;
-    m_Direction = matrix * m_Direction;
-    ////////////////////////////////////////////////////////////////////////////
-
-
-
+    // Rotate gradient direction
     this->m_GradientDirection = matrix*this->m_GradientDirection;
     this->m_GradientDirection.Normalize();
 
-
-//    Point3DType Pont3D;
-//    Pont3D[0] = m_Spacing[0]*x;
-//    Pont3D[1] = m_Spacing[1]*y;
-//    Pont3D[2] = 0;
-
-
-//    Pont3D =m_Orientation*Pont3D; // rotate in the physical space
-//    Pont3D+=m_Origin.GetVectorFromOrigin(); // set offset
-
-//    Pont3D=m_Transform -> TransformPoint(Pont3D);
-
-//    Pixel pixel;
-//    pixel.SetValue(m_ValueArray[x+y*m_Size2D[0]]);
-//    pixel.SetPoint(Pont3D);
-
 }
-
 
 
 } //end namespace btk
