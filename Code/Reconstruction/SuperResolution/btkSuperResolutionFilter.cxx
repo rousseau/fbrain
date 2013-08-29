@@ -67,6 +67,7 @@ void SuperResolutionFilter::Initialize()
 void SuperResolutionFilter::Update()
 {
 
+    // H computation
     m_H_Filter->SetImages(m_Images);
 
     m_H_Filter->SetH(m_H);
@@ -83,18 +84,23 @@ void SuperResolutionFilter::Update()
 
     m_H_Filter->Update();
 
+
     // such as Min(f(y - H*x) + lambda g(x))
     vnl_vector< PrecisionType > HtY;
+    // Premult H with Y
+    //Since m_H is a pointer to H matrix H_Filter don't need to return it !!
     m_H->pre_mult(*m_Y,HtY);
 
+
+    // Cost Function
     VNLCostFunction CostFunction = VNLCostFunction(m_X.size());
 
-    CostFunction.GetCostFunction()->SetH(*m_H);
+    CostFunction.GetCostFunction()->SetH(*m_H);//Set H
     CostFunction.GetCostFunction()->SetLambda(m_Lambda);
     CostFunction.GetCostFunction()->SetY(*m_Y);
     CostFunction.GetCostFunction()->SetSRSize(m_ReferenceImage->GetLargestPossibleRegion().GetSize());
 
-    CostFunction.GetCostFunction()->SetHtY(HtY);
+    CostFunction.GetCostFunction()->SetHtY(HtY); //Set the precomputed HtY
 
    vnl_conjugate_gradient optimizer(CostFunction);
    optimizer.set_max_function_evals(20);
@@ -105,9 +111,10 @@ void SuperResolutionFilter::Update()
     optimizer.set_verbose(true);
     optimizer.minimize(m_X);
 
-
+    //display optimizer result
     optimizer.diagnose_outcome();
 
+    // convert X into float (maybe not needed)
     m_Xfloat = vnl_matops::d2f(m_X);
 
     if(m_ComputeSimulations)
@@ -115,12 +122,14 @@ void SuperResolutionFilter::Update()
         this->SimulateLRImages();
     }
 
-      m_X.clear();
+
+     m_X.clear();
 
     // Generate the output
 
     this->GenerateOutputData();
 
+   // clear all
     m_H->clear();
     m_Y->clear();
     HtY.clear();

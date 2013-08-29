@@ -50,7 +50,9 @@
 #include "btkMacro.h"
 #include "btkSRHMatrixComputation.hxx"
 #include "btkPSF.h"
-#include "btkSuperResolutionCostFunctionITKWrapper.h"
+//#include "btkSuperResolutionCostFunctionITKWrapper.h"
+//NOTE : Use ITK Wrapper when you want to use btkSuperResolutioCostFunction with an
+// itk optimizer, and use VNL Wrapper when you want to use a VNL Optimizer
 #include "btkSuperResolutionCostFunctionVNLWrapper.hxx"
 
 /* others */

@@ -66,6 +66,7 @@
 #include "iostream"
 #include <tclap/CmdLine.h>
 
+// Fonction for initialize PSF
 btk::PSF::Pointer ChoosePSF(unsigned int _psf)
 {
     btk::PSF::Pointer p = NULL;
@@ -200,7 +201,7 @@ int main(int argc, char * argv[])
     transforms.resize(numberOfImages);
     inversetransforms.resize(numberOfImages);
 
-
+    // Reading datas
     inputsLRImages = btk::ImageHelper< itkImage > ::ReadImage(input);
 
     inputsLRImagesFloat = btk::ImageHelper< itkFloatImage >::ReadImage(input);
@@ -209,6 +210,7 @@ int main(int argc, char * argv[])
 
     referenceImage = btk::ImageHelper< itkImage > ::ReadImage(refImage);
 
+    //Super Resolution Filter
     btk::SuperResolutionFilter::Pointer SRFilter = btk::SuperResolutionFilter::New();
 
     SRFilter->SetImages(inputsLRImages);
@@ -219,6 +221,7 @@ int main(int argc, char * argv[])
 
     SRFilter->SetLambda(lambda);
 
+    //If  simulation
     if(!simulation.empty())
     {
         SRFilter->ComputeSimulatedImages(true);
@@ -228,7 +231,7 @@ int main(int argc, char * argv[])
         SRFilter->ComputeSimulatedImages(false);
     }
 
-
+    //if not transforms, we set identity
     if(transform.empty())
     {
         for(unsigned int i = 0; i< numberOfImages; i++)
@@ -243,13 +246,17 @@ int main(int argc, char * argv[])
             SRFilter->AddInverseTransform(inversetransforms[i].GetPointer());
         }
     }
+    //if transforms we read it
     else
     {
         //FIXME : When AffineSbs is register first, all sbs transform read are affine !!!!!
 
         //itk::TransformFactory<btkAffineSliceBySliceTransform>::RegisterTransform();
         //itk::TransformFactory<btkEulerSliceBySliceTransform>::RegisterTransform();
+
+        //only SliceBySliceTransform, or EulerSLiceBySLiceTransform (the names are different, but it the same transforms)
         itk::TransformFactory<btkOldSliceBySliceTransform>::RegisterTransform();
+
         std::vector< btkOldSliceBySliceTransform::Pointer > SbsTransforms;
         std::vector< btkOldSliceBySliceTransform::Pointer > InverseSbsTransforms;
 
@@ -264,13 +271,17 @@ int main(int argc, char * argv[])
             SbsTransforms[i] = btkOldSliceBySliceTransform::New();
             InverseSbsTransforms[i] = btkOldSliceBySliceTransform::New();
 
+            //Reading
             SbsTransforms[i] = btk::IOTransformHelper< btkOldSliceBySliceTransform >::ReadTransform(transform[i]);
             //dynamic_cast<btkEulerSliceBySliceTransform*>(transforms[i].GetPointer())->SetImage(inputsLRImagesFloat[i]);
+            //Set the corresponding image in the transform (necessary for slice by slice...)
             SbsTransforms[i]->SetImage(inputsLRImagesFloat[i]);
 
             SbsTransforms[i]->GetInverse(InverseSbsTransforms[i]);
 
+            //Add transform in SR filter
             SRFilter->AddTransform(SbsTransforms[i].GetPointer());
+            //Add inverse too
             SRFilter->AddInverseTransform(InverseSbsTransforms[i].GetPointer());
         }
 
@@ -282,10 +293,14 @@ int main(int argc, char * argv[])
 
     SRFilter->SetMasks(inputsLRMasks);
     SRFilter->Initialize();
+
+    //Perform super resolution
     SRFilter->Update();
 
+    //Get Output image
     referenceImage = SRFilter->GetOutput();
 
+    //Denoising
     btk::NLMTool<float>* myTool = new btk::NLMTool<float>();
     myTool->SetInput(referenceImage);
     myTool->SetPaddingValue(0);
@@ -294,7 +309,7 @@ int main(int argc, char * argv[])
 
     referenceImage = myTool->GetOutput();
 
-
+    //iterative process
     for(unsigned int i = 1; i< loop; i++)
     {
         std::cout<<"Loop : "<<i+1<<std::endl;
@@ -312,6 +327,7 @@ int main(int argc, char * argv[])
     }
 
 
+    //if simulation, we write it
     if(!simulation.empty())
     {
        std::cout<<"Simulated Low Resolution..."<<std::endl;
@@ -319,13 +335,13 @@ int main(int argc, char * argv[])
        btk::ImageHelper< itkImage >::WriteImage(simImages,simulation);
     }
 
-
+    //Write the final SR image
     btk::ImageHelper< itkImage>::WriteImage(referenceImage,outImage);
 
-
+    //since btk::NLMTool has not smart pointer
     delete myTool;
 
-
+    //end
     return EXIT_SUCCESS;
 
 }
