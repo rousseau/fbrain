@@ -145,7 +145,11 @@ class SRHMatrixComputation: public itk::Object
 
         btkSetMacro(Y,vnl_vector< PrecisionType >*);
 
-
+        /**
+         * @brief SetOutliers
+         * @param _outliers is a vector of vector of boolean
+         * @todo Outliers are not implemented yet !
+         */
         void SetOutliers(std::vector< std::vector< bool > > _outliers)
         {
             m_Outliers = _outliers;
