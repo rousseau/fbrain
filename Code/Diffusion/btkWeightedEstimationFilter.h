@@ -2,7 +2,7 @@
   
   Â© UniversitÃ© de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 04/06/2013
+  Date: 20/08/2013
   Author(s):Frederic Champ (champ(at)unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -36,20 +36,24 @@
 #ifndef BTKWEIGHTEDESTIMATIONFILTER_H
 #define BTKWEIGHTEDESTIMATIONFILTER_H
 
+
 // ITK includes
 #include "itkImageToImageFilter.h"
-#include "itkVariableSizeMatrix.h"
-#include "itkGradientImageFilter.h"
-#include "itkImageRegionIteratorWithIndex.h"
-#include "itkEllipsoidInteriorExteriorSpatialFunction.h"
+#include "itkNeighborhoodIterator.h"
+#include "itkImageRegionIterator.h"
+#include "itkAffineTransform.h"
 
 // Local includes
 #include "btkDiffusionSequence.h"
 #include "btkWeightedEstimationBase.h"
+#include "btkDiffusionDataset.h"
+#include "btkDiffusionSlice.h"
+
 
 
 namespace btk
 {
+
 /**
  * @brief Weighted spherical harmonics decomposition and model estimation (diffusion sequence).
  * @author Frederic Champ
@@ -64,27 +68,20 @@ class WeightedEstimationFilter : public itk::ImageToImageFilter< DiffusionSequen
         typedef itk::SmartPointer< Self >                                       Pointer;
         typedef itk::SmartPointer< const Self >                                 ConstPointer;
 
-        itkNewMacro(Self);
-        itkTypeMacro(WeightedEstimationFilter,itk::ImageToImageFilter);
+        /** Diffusion dataset typedefs. */
+        typedef DiffusionDataset                                                DatasetType;
+        typedef DatasetType::Pointer                                            DatasetPointer;
+        typedef DatasetType::DataVectorType::iterator                           DataIterator;
 
-        /** DiffusionSequence types definitions */
-        typedef DiffusionSequence                                               TSequence;
-        typedef TSequence::Pointer                                              SequencePointer;
-        typedef TSequence::ConstPointer                                         SequenceConstPointer;
-        typedef TSequence::IndexType                                            SequenceIndexType;
+         /** Point and index typedef. */
+        typedef itk::Point<double,3>                                            Point3DType;
+        typedef itk::Index<3>                                                   Index3DType;
 
-        /** Gradient image types definitions */
-        typedef itk::GradientImageFilter< itk::Image<short,4>, float>           GradientFilterType;
-        typedef GradientFilterType::Pointer                                     GradientFilterPointer;
-        typedef itk::Image< itk::CovariantVector< float, 4 >, 4 >               TGradient;
-        typedef TGradient::Pointer                                              GradientPointer;
-        typedef itk::ImageRegionConstIteratorWithIndex<TGradient>               GradientIterator;
-        typedef TGradient::PointType                                            GradPoint;
+        /** Transform typedefs. */
+        typedef itk::AffineTransform< double,3 >                                TransformType;
 
-        /** Ellispoid function types definitions */
-        typedef itk::EllipsoidInteriorExteriorSpatialFunction<3>                EllipsoidFunctionType;
-        typedef EllipsoidFunctionType::Pointer                                  EllipsoidFunctionPointer;
-        typedef EllipsoidFunctionType::InputType                                EllipsoidFunctionVector;
+        /** Neighborhood iterator typedefs. */
+        typedef itk::NeighborhoodIterator<itk::Image<short,3> >     NeighborhoodIterator;
 
         /** Type of Spherical Harmonics Diffusion Decomposition */
         typedef WeightedEstimationBase                                          WeightedEstimationType;
@@ -92,39 +89,23 @@ class WeightedEstimationFilter : public itk::ImageToImageFilter< DiffusionSequen
 
         /** Containers definition */
         typedef btk::DiffusionSequence::GradientTable                           GradientTableType;
-        typedef std::vector<SequenceIndexType>                                  IndexVectorType;
-        typedef std::vector< std::vector<bool> >                                boolIndexesVector;
-        typedef std::vector<float>                                              VectorType;
+        typedef std::vector<float>                                             VectorType;
 
 
-        /**
-         * @brief Set/Get booleans vector. lines = number of slices, columuns = number of volumes
-         * for each slice of each volumes you have a boolean: true if the slice is an outliers false otherwise.
-         */
-        btkSetMacro(BoolIndexes, boolIndexesVector);
-        btkGetMacro(BoolIndexes, boolIndexesVector);
+        itkNewMacro(Self);
+        itkTypeMacro(WeightedEstimationFilter,itk::ImageToImageFilter);
 
         /**
-         * @brief Set/Get Sigma in case you use the WSH method (default = 1.0).
+         * @brief Set input diffusion dataset.
+         * @param dataset Input diffusion dataset.
          */
-        btkSetMacro(Sigma, float);
-        btkGetMacro(Sigma, float);
+        void SetDiffusionDataset(DatasetPointer dataset);
 
         /**
-         * @brief Set/Get ellipsoid size factor in case you use the WSH method (default = 1.0).
+         * @brief Set Radius.
+         * @param Radius The radius of Neighborhood search.
          */
-        btkSetMacro(EllipsoidSize, float);
-        btkGetMacro(EllipsoidSize, float);
-
-        /** Set/Get the verbose mod */
-        btkSetMacro(VerboseMod, bool);
-        btkGetMacro(VerboseMod, bool);
-
-        /**
-         * @brief Set input diffusion sequence.
-         * @param InputSequence Input diffusion sequence.
-         */
-        void SetInputSequence(SequenceConstPointer InputSequence);
+        btkSetMacro(Radius,double);
 
 
     protected:
@@ -162,14 +143,14 @@ class WeightedEstimationFilter : public itk::ImageToImageFilter< DiffusionSequen
 
     private:
 
-        /** verbose mod */
-        bool                m_VerboseMod;
+        /** The radius of Neighborhood search */
+        double  m_Radius;
 
-        /** Sigma */
-        float               m_Sigma;
+         /** Input Diffusion dataset */
+        DatasetPointer                    m_Dataset;
 
-        /** Ellipsoid Size */
-        float               m_EllipsoidSize;
+         /** Output sequence */
+        Self::OutputImageType::Pointer    m_OutputSequence;
 
         /** Percentage of progression */
         float               m_Percent;
@@ -178,25 +159,11 @@ class WeightedEstimationFilter : public itk::ImageToImageFilter< DiffusionSequen
         unsigned int        m_NbLoop;
 
         /** Size of the input sequence */
-        TSequence::SizeType m_Size4D;
-
-        /** Outliers Indexes */
-        boolIndexesVector   m_BoolIndexes;
-
-        /** Gradient Table */
-        GradientTableType   m_GradientTable;
-
-        /**  InputSequence */
-        SequencePointer     m_InputSequence;
-
-        /** Gradient Image */
-        GradientPointer     m_GradientImage;
-
-
-
-
+        DiffusionSequence::SizeType m_Size4D;
 
 
 };
-}// end namespace btk
-#endif // BTKWEIGHTEDDECOMPOSITIONFILTER_H
+
+} // end namespace btk
+
+#endif // BTKWEIGHTEDESTIMATIONFILTER_H

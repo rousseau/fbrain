@@ -50,7 +50,7 @@ namespace btk
 
 /**
  * @brief Compute the spherical harmonics decomposition model to diffusion sequence and signal estimation.
- * Use modified par of btkSphericalHarmonicsDiffusionDecompositionFilter and btkOrientationDiffusionFunctionModel
+ * Use modified part of btkSphericalHarmonicsDiffusionDecompositionFilter and btkOrientationDiffusionFunctionModel
  * @author Frederic CHAMP
  * @ingroup Diffusion
  */
