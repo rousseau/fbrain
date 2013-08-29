@@ -53,6 +53,7 @@ namespace btk
 {
 /** @class BoxCarPSF
  * @brief BoxCarPSF is used for represent a BoxCar PSF, the support of the PSF is an image.
+ *
  * A common use of this class is :
  * - first construct the image with the correct parameters (center, size, spacing...)
  * - Get the Psf Image previously constructed

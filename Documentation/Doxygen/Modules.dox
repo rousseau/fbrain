@@ -1,6 +1,3 @@
-/**
- * @defgroup Mathematics Mathematics
- */
 
 /**
  * @defgroup Tractography Tractography
@@ -35,21 +32,21 @@
  */
 
 /**
- * @defgroup FeatureSelection Feature selection for space reduction
+ * @defgroup FeatureSelection Feature selection
  */
 
 /**
-* @defgroup Transformations transformations
+* @defgroup Transformations Transformations
 */
 /**
-* @defgroup Registration Registration modules
-*/
-
-/**
-*@defgroup SuperResolution super resolution modules
+* @defgroup Registration Registration
 */
 
 /**
-* @defgroup Maths Mathematics functions
+*@defgroup SuperResolution Super-resolution
+*/
+
+/**
+* @defgroup Maths Mathematics
 */
 

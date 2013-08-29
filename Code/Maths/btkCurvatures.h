@@ -38,14 +38,16 @@
 
 #include "vtkPolyDataAlgorithm.h"
 
+// enum ?
 #define CURVATURE_TENSOR 0
 #define CURVATURE_GAUSS 1
 #define CURVATURE_MEAN 2
 #define CURVATURE_BAR 3
 
 /** @class Curvatures
- * @brief  This algorithm computes different types of curvatures on triangular mesh polydata. The curvature
- * is set to be Gaussian, Barycentric, Mean or Principal direction curvatures.
+ * @brief  This algorithm computes different types of curvatures on triangular mesh polydata.
+ *
+ * The curvature is set to be Gaussian, Barycentric, Mean or Principal direction curvatures.
  * The curvature tensor is computed based on Taubin Curvature tensor ( ESTIMATING THE TENSOR OF
  * CURVATURE OF A SURFACE FROM A POLYHEDRAL APPROXIMATION -Gabriel Taubin)
  * @author Aïcha Bentaieb
