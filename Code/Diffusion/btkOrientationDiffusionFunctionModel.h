@@ -93,6 +93,14 @@ class OrientationDiffusionFunctionModel : public btk::DiffusionModel
         virtual float ModelAt(ContinuousIndex cindex, btk::GradientDirection direction);
 
         /**
+         * @brief Get modeling at continuous index and gradient direction.
+         * @param cindex Location in the image space.
+         * @param directions Gradient directions were the model response is wanted.
+         * @return Model response in direction direction at cindex in image space.
+         */
+        virtual std::vector< float > ModelAt(ContinuousIndex cindex, std::vector< btk::GradientDirection > &directions);
+
+        /**
          * @brief Get modeling at continuous index.
          * @param cindex Location in the image space.
          * @return Model response at cindex in image space.
@@ -106,6 +114,14 @@ class OrientationDiffusionFunctionModel : public btk::DiffusionModel
          * @return Model response in direction direction at point in physical space.
          */
         virtual float ModelAt(PhysicalPoint point, btk::GradientDirection direction);
+
+        /**
+         * @brief Get modeling at physical point and gradient direction.
+         * @param point Point in the physical space.
+         * @param directions Gradient directions were the model response is wanted.
+         * @return Model response in direction direction at point in physical space.
+         */
+        virtual std::vector< float > ModelAt(PhysicalPoint point, std::vector< btk::GradientDirection > &directions);
 
         /**
          * @brief Get modeling at physical point.
@@ -123,6 +139,14 @@ class OrientationDiffusionFunctionModel : public btk::DiffusionModel
         virtual float SignalAt(ContinuousIndex cindex, btk::GradientDirection direction);
 
         /**
+         * @brief Get signal at continuous index and gradient direction.
+         * @param cindex Location in the image space.
+         * @param directions Gradient directions were the model response is wanted.
+         * @return Signal response in direction direction at cindex in image space.
+         */
+        virtual std::vector< float > SignalAt(ContinuousIndex cindex, std::vector< btk::GradientDirection > &directions);
+
+        /**
          * @brief Get signal at continuous index.
          * @param cindex Location in the image space.
          * @return Signal response at cindex in image space.
@@ -136,6 +160,14 @@ class OrientationDiffusionFunctionModel : public btk::DiffusionModel
          * @return Signal response in direction direction at point in physical space.
          */
         virtual float SignalAt(PhysicalPoint point, btk::GradientDirection direction);
+
+        /**
+         * @brief Get signal at physical point and gradient direction.
+         * @param point Point in the physical space.
+         * @param directions Gradient directions were the model response is wanted.
+         * @return Signal response in direction direction at point in physical space.
+         */
+        virtual std::vector< float > SignalAt(PhysicalPoint point, std::vector< GradientDirection > &directions);
 
         /**
          * @brief Get signal at physical point.
@@ -176,7 +208,14 @@ class OrientationDiffusionFunctionModel : public btk::DiffusionModel
          */
         virtual std::vector< btk::GradientDirection > MeanDirectionsAt(ContinuousIndex cindex, btk::GradientDirection vector, float angle);
 
+        /**
+         * @brief Activate the sharp model (by spherical deconvolution).
+         */
         void UseSharpModelOn();
+
+        /**
+         * @brief Desactivate the sharp model (by spherical deconvolution).
+         */
         void UseSharpModelOff();
 
     protected:
@@ -206,12 +245,28 @@ class OrientationDiffusionFunctionModel : public btk::DiffusionModel
         virtual float ModelAt(ModelImage::PixelType shCoefficients, btk::GradientDirection direction);
 
         /**
+         * @brief Compute model from a diffusion tensor in a particular direction.
+         * @param tensor Diffusion tensor.
+         * @param directions Gradient directions.
+         * @return Model response in direction direction computed from diffusion tensor tensor.
+         */
+        virtual std::vector< float > ModelAt(ModelImage::PixelType shCoefficients, std::vector< btk::GradientDirection > &directions);
+
+        /**
          * @brief Compute signal from a diffusion tensor in a particular direction.
          * @param tensor Diffusion tensor.
          * @param direction Gradient direction.
          * @return Signal response in direction direction computed from diffusion tensor tensor.
          */
         virtual float SignalAt(ModelImage::PixelType shCoefficients, btk::GradientDirection direction);
+
+        /**
+         * @brief Compute signal from a diffusion tensor in a particular direction.
+         * @param tensor Diffusion tensor.
+         * @param directions Gradient directions.
+         * @return Signal response in direction direction computed from diffusion tensor tensor.
+         */
+        virtual std::vector< float > SignalAt(ModelImage::PixelType shCoefficients, std::vector< btk::GradientDirection > &directions);
 
         /**
          * @brief Convert a point in physical space of input model image to a continuous index.
@@ -221,10 +276,19 @@ class OrientationDiffusionFunctionModel : public btk::DiffusionModel
         virtual ContinuousIndex TransformPhysicalPointToContinuousIndex(PhysicalPoint point);
 
     private:
+        /**
+         * @brief Compute the legendre matrix of the model.
+         */
         void ComputeLegendreMatrix();
 
+        /**
+         * @brief Compute the spherical harmonics basis matrix of the model.
+         */
         void ComputeSphericalHarmonicsMatrix();
 
+        /**
+         * @brief Compute the sharp matrix of the model (by spherical deconvolution).
+         */
         void ComputeModelSharpMatrix();
 
     private:
@@ -243,16 +307,34 @@ class OrientationDiffusionFunctionModel : public btk::DiffusionModel
          */
         InterpolateModelFunction::Pointer m_ModelImageFunction;
 
+        /**
+         * @brief Number of spherical harmonics coefficients used (depend on the order).
+         */
         unsigned int m_NumberOfSHCoefficients;
 
+        /**
+         * @brief Order of the spherical harmonics decomposition.
+         */
         unsigned int m_SphericalHarmonicsOrder;
 
+        /**
+         * @brief Flag for sharp model activation.
+         */
         bool m_UseSharpModel;
 
+        /**
+         * @brief Legendre matrix of the model.
+         */
         Self::Matrix m_LegendreMatrix;
 
+        /**
+         * @brief Spherical harmonics basis matrix of the model.
+         */
         Self::Matrix m_SphericalHarmonicsBasisMatrix;
 
+        /**
+         * @brief Sharp matrix of the model (by spherical deconvolution).
+         */
         Self::Matrix m_ModelSharpMatrix;
 };
 

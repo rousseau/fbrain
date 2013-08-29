@@ -6,8 +6,11 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 # Parallel computing
 OPTION(USE_OMP "Use OpenMP" ON)
 IF(USE_OMP)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp  ")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 ENDIF(USE_OMP)
+
+# Warning mask
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wno-gnu -Wno-deprecated")
 
 # Testing
 OPTION(BUILD_TESTING "Build testing applications" OFF)
@@ -18,6 +21,9 @@ OPTION(BUILD_DOCUMENTATION "Build the doxygen documentation" OFF)
 
 # Python script support
 OPTION(ENABLE_SCRIPT "Enable the use of python script in BTK." OFF)
+
+# Build Experimental programs
+OPTION(BUILD_EXPERIMENTAL "Enable the use of experimental programs in BTK " OFF)
 
 #---- Dependancies ---------------------------------------------------------------------
 
@@ -74,10 +80,18 @@ ENDIF(BUILD_TESTING)
 # Testing
 IF(BUILD_TESTING)
     ENABLE_TESTING()
-#    SUBDIRS(
-#        Tests
-#    )
+    SUBDIRS(
+        Tests
+    )
 ENDIF(BUILD_TESTING)
+
+# Beta
+IF(BUILD_EXPERIMENTAL)
+    SUBDIRS(
+        Experimental
+    )
+ENDIF(BUILD_EXPERIMENTAL)
+
 
 # Documentation
 IF(BUILD_DOCUMENTATION)
@@ -90,10 +104,21 @@ IF(BUILD_DOCUMENTATION)
     ENDIF(DOXYGEN_FOUND)
 ENDIF(BUILD_DOCUMENTATION)
 
+# Uninstall command
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+    IMMEDIATE @ONLY)
+
+add_custom_target(uninstall
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+
+
 # Executables
 SUBDIRS(
     Code
     Applications
     Scripts
     Utilities
+    Viewer
 )

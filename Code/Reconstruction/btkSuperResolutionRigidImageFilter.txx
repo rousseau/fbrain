@@ -57,7 +57,7 @@ SuperResolutionRigidImageFilter<TInputImage, TOutputImage   ,TInterpolatorPrecis
   m_Size.Fill( 0 );
   m_OutputStartIndex.Fill( 0 );
 
-  m_DefaultPixelValue = 0;
+  m_DefaultPixelValue = itk::NumericTraits< PixelType >::ZeroValue();
 
   m_Iterations = 30;
   m_Lambda = 0.1;
@@ -230,7 +230,7 @@ SuperResolutionRigidImageFilter<TInputImage,TOutputImage   ,TInterpolatorPrecisi
 
   outputPtr -> SetRegions(outputRegion);
   outputPtr -> Allocate();
-  outputPtr -> FillBuffer(0);
+  outputPtr -> FillBuffer(m_DefaultPixelValue);
 
   outputPtr -> SetOrigin( referenceImage -> GetOrigin() );
   outputPtr -> SetSpacing( referenceImage -> GetSpacing() );
@@ -239,11 +239,13 @@ SuperResolutionRigidImageFilter<TInputImage,TOutputImage   ,TInterpolatorPrecisi
   IndexType hrIndex;
   IndexType hrStart = m_OutputImageRegion.GetIndex();
   SizeType  hrSize  = m_OutputImageRegion.GetSize();
-  IndexType hrDiffIndex;
 
 
+  //ENH: If we iterate over output image and we check the value of the current index
+  // in m_x(doing the inverse conversion), it may be faster.
   for (unsigned int i = 0; i<m_x.size(); i++)
   {
+    IndexType hrDiffIndex;
     hrDiffIndex[2] = i / (hrSize[0]*hrSize[1]);
 
     hrDiffIndex[1] = i - hrDiffIndex[2]*hrSize[0]*hrSize[1];
@@ -260,7 +262,7 @@ SuperResolutionRigidImageFilter<TInputImage,TOutputImage   ,TInterpolatorPrecisi
 
   }
 
-  return;
+  m_x.clear();
 }
 
 // TODO: We are not requiring any image region since we are using several inputs.
@@ -299,7 +301,7 @@ SuperResolutionRigidImageFilter<TInputImage,TOutputImage   ,TInterpolatorPrecisi
   inputRegion = inputPtr->GetLargestPossibleRegion();
   inputPtr->SetRequestedRegion(inputRegion);
 
-  return;
+
 }
 
 /**
@@ -393,7 +395,7 @@ SuperResolutionRigidImageFilter<TInputImage,TOutputImage   ,TInterpolatorPrecisi
     outputPtr->SetSpacing( m_OutputSpacing );
     outputPtr->SetDirection( m_OutputDirection );
     }
-  return;
+
 }
 
 /**

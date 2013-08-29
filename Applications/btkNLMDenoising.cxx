@@ -170,7 +170,7 @@ int main(int argc, char** argv)
     
     myTool.ComputeOutput();
 
-    myTool.GetOutput(outputImage);
+    outputImage = myTool.GetOutput();
 
     //Write the result
     WriterType::Pointer writer = WriterType::New();

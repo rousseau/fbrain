@@ -58,8 +58,10 @@
 #include "btkSliceBySliceTransformBase.h"
 #include "btkAffineSliceBySliceTransform.h"
 #include "btkEulerSliceBySliceTransform.h"
+#include "btkCenteredEulerSliceBySliceTransform.h"
 #include "btkIOTransformHelper.h"
 #include "btkApplyTransformToImageFilter.h"
+
 
 
 /* OTHERS */
@@ -87,6 +89,7 @@ int main (int argc, char* argv[])
     typedef btk::AffineSliceBySliceTransform< double, Dimension>  btkAffineSliceBySliceTransform;
     typedef btk::EulerSliceBySliceTransform< double, Dimension>  btkEulerSliceBySliceTransform;
     typedef btk::SliceBySliceTransform<double, Dimension>   btkOldSliceBySliceTransform;
+    typedef btk::CenteredEulerSliceBySliceTransform<double , Dimension> btkCenteredEulerSliceBySliceTransform;
 
     typedef btk::ApplyTransformToImageFilter<itkImage, itkImage> Resampler;
 
@@ -98,6 +101,7 @@ int main (int argc, char* argv[])
     TCLAP::CmdLine cmd("Apply the new Super-Resolution pipeline. Testing Version!", ' ', "Unversioned");
     TCLAP::ValueArg<int> dimArg("d","dimension","Dimension of input image",false,3,"int",cmd);
     TCLAP::ValueArg<std::string> inputArg("i","input","Input Image file",true,"","string",cmd);
+    TCLAP::ValueArg<std::string> refArg("r","reference","Reference Image file",true,"","string",cmd);
     TCLAP::ValueArg<std::string> transfoArg("t","transfo","Transform file",true,"","string",cmd);
     TCLAP::ValueArg<std::string> outArg  ("o","output","Super resolution output image",true,"","string",cmd);
     TCLAP::SwitchArg invArg  ("","inv","inverse the transformation", cmd, false);
@@ -108,6 +112,7 @@ int main (int argc, char* argv[])
     std::string inputFileImage = inputArg.getValue();
     std::string inputFileTransform = transfoArg.getValue();
     std::string outputFileImage = outArg.getValue();
+    std::string referenceFileImage = refArg.getValue();
 
     bool inverseTheTransform = invArg.getValue();
 
@@ -120,9 +125,11 @@ int main (int argc, char* argv[])
     itk::TransformFactory< btkEulerSliceBySliceTransform >::RegisterTransform();
     itk::TransformFactory< btkOldSliceBySliceTransform >::RegisterTransform();
     itk::TransformFactory< btkAffineSliceBySliceTransform >::RegisterTransform();
+    itk::TransformFactory< btkCenteredEulerSliceBySliceTransform >::RegisterTransform();
 
 
     itkImage::Pointer inputImage = btk::ImageHelper<itkImage>::ReadImage(inputFileImage);
+    itkImage::Pointer referenceImage = btk::ImageHelper<itkImage>::ReadImage(referenceFileImage);
 
     MatrixTransformType::Pointer transform;
     MatrixTransformType::Pointer inverse ;
@@ -181,6 +188,27 @@ int main (int argc, char* argv[])
         }
 
     }
+    else if(strcmp(className,"CenteredEulerSliceBySliceTransform") == 0 )
+    {
+
+        if(inverseTheTransform)
+        {
+            inverse = btkCenteredEulerSliceBySliceTransform::New();
+            btkCenteredEulerSliceBySliceTransform::Pointer inverseTransform = btkCenteredEulerSliceBySliceTransform::New();
+
+            inverseTransform = static_cast<btkCenteredEulerSliceBySliceTransform*>(titr->GetPointer());
+            inverseTransform->SetImage(inputImage);
+            inverseTransform->GetInverse(static_cast<btkCenteredEulerSliceBySliceTransform* >(inverse.GetPointer()));
+        }
+        else
+        {
+            transform = btkCenteredEulerSliceBySliceTransform::New();
+            transform = static_cast<btkCenteredEulerSliceBySliceTransform*>(titr->GetPointer());
+            static_cast<btkCenteredEulerSliceBySliceTransform*>(transform.GetPointer())->SetImage(inputImage);
+
+        }
+
+    }
     else
     {
         if(inverseTheTransform)
@@ -201,6 +229,7 @@ int main (int argc, char* argv[])
     Resampler::Pointer resampler = Resampler::New();
 
     resampler->SetInputImage(inputImage);
+    resampler->SetReferenceImage(referenceImage);
     if(inverseTheTransform)
     {
         resampler->SetTransform(inverse);

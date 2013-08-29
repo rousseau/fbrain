@@ -52,10 +52,17 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include <sstream>
 #include <fstream>
 
+/**
+ * @class LabelFusionTool
+ * @brief Todo
+ * @ingroup Segmentation
+ * @author François Rousseau
+ */
 template <typename T>
 class LabelFusionTool
 {
  public:
+    /** Typedefs */
   typedef typename itk::Image< T, 3> itkTImage;
   typedef typename itkTImage::Pointer itkTPointer;
   typedef typename itk::ImageDuplicator< itkTImage > itkTDuplicator;
@@ -423,7 +430,7 @@ void LabelFusionTool<T>::SetSmoothing(float beta)
 	    
 	  sigma2 += ei*ei;
 	  count ++;
-          if(fabs(ei>0))
+//          if(fabs(ei>0))
             vecei.push_back(fabs(ei));
         }
       }
@@ -696,8 +703,14 @@ void LabelFusionTool<T>::ComputePatchRegion(typename itkTImage::IndexType p, typ
     
     int d = (start[i] + size[i]) - m_size[i]; //if the region is not fully inside the image
     if(d>0){
-      size[i] = size[i] - d;
-      if(size[i] < 0) size[i] = 0;
+//      size[i] = size[i] - d;
+      if(static_cast< int >(size[i]) - d < 0)
+      {
+          size[i] = 0;
+      }
+      else
+        size[i] = size[i] - d;
+
     }    
   }  
   imageRegion.SetSize( size );
@@ -728,8 +741,14 @@ void LabelFusionTool<T>::ComputeSearchRegion(typename itkTImage::IndexType p, ty
     
     int d = (start[i] + size[i]) - m_size[i]; //if the region is not fully inside the image
     if(d>0){
-      size[i] = size[i] - d;
-      if(size[i] < 0) size[i] = 0;
+//      size[i] = size[i] - d;
+      if(static_cast< int >(size[i]) - d < 0)
+      {
+          size[i] = 0;
+      }
+      else
+        size[i] = size[i] - d;
+
     }    
   }
   region.SetSize( size );

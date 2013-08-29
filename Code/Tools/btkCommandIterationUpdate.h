@@ -4,6 +4,7 @@
 
   Date: 23/05/2012
   Author(s): Marc Schweitzer (marc.schweitzer(at)unistra.fr)
+             Julien Pontabry (pontabry@unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -32,7 +33,10 @@
   knowledge of the CeCILL-B license and that you accept its terms.
 
 ==========================================================================*/
+
+// ITK includes
 #include "itkCommand.h"
+#include "itkRegularStepGradientDescentOptimizer.h"
 
 #ifndef __BTK_COMMANDITERATIONUPDATE_H__
 #define __BTK_COMMANDITERATIONUPDATE_H__
@@ -42,37 +46,38 @@ namespace btk
 
 class CommandIterationUpdate : public itk::Command
 {
-public:
-  typedef  CommandIterationUpdate   Self;
-  typedef  itk::Command             Superclass;
-  typedef itk::SmartPointer<Self>  Pointer;
-  itkNewMacro( Self );
-protected:
-  CommandIterationUpdate() {};
-public:
-  typedef itk::RegularStepGradientDescentOptimizer     OptimizerType;
-  typedef   const OptimizerType   *    OptimizerPointer;
+    public:
+        typedef CommandIterationUpdate    Self;
+        typedef itk::Command              Superclass;
+        typedef itk::SmartPointer< Self > Pointer;
 
-  void Execute(itk::Object *caller, const itk::EventObject & event)
-    {
-      Execute( (const itk::Object *)caller, event);
-    }
+        itkNewMacro(Self);
 
-  void Execute(const itk::Object * object, const itk::EventObject & event)
-    {
-      OptimizerPointer optimizer = dynamic_cast< OptimizerPointer >( object );
+    public:
+        typedef itk::RegularStepGradientDescentOptimizer RegularStepGradientDescentOptimizer;
 
-      if( ! itk::IterationEvent().CheckEvent( &event ) )
-      {
-        return;
-      }
+        void Execute(itk::Object *caller, const itk::EventObject & event)
+        {
+            Execute((const itk::Object *)caller, event);
+        }
 
-      std::cout <<"Iteration : "<< optimizer->GetCurrentIteration() << " |  ";
-      std::cout <<"Step : " << optimizer -> GetCurrentStepLength() << "  | ";
-      std::cout << "Value :" << optimizer->GetValue() << "  | ";
+        void Execute(const itk::Object * object, const itk::EventObject & event)
+        {
+            RegularStepGradientDescentOptimizer::ConstPointer optimizer = dynamic_cast< const RegularStepGradientDescentOptimizer * >(object);
 
-      std::cout <<"Position : "<< optimizer->GetCurrentPosition() << std::endl;
-    }
+            if(!itk::IterationEvent().CheckEvent(&event))
+            {
+                return;
+            }
+
+            std::cout << "Iteration "<< optimizer->GetCurrentIteration() << std::endl;
+            std::cout << "\tStep: " << optimizer -> GetCurrentStepLength() << std::endl;
+            std::cout << "\tMetric value:" << optimizer->GetValue() << std::endl;
+            std::cout << "\tParameters: " << optimizer->GetCurrentPosition() << std::endl;
+        }
+
+    protected:
+        CommandIterationUpdate(){};
 };
 
 }// Namespace btk

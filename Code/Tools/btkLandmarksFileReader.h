@@ -51,7 +51,12 @@
 
 namespace btk
 {
-
+    /**
+     * @class btkLandmarksFileReader
+     * @brief The btkLandmarksFileReader class
+     * @author Julien Pontabry
+     * @ingroup Tools
+     */
     class btkLandmarksFileReader : public itk::LightObject
     {
         public:

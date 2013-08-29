@@ -4,6 +4,7 @@
 
   Date: 14/04/2010
   Author(s): Estanislao Oubel (oubel@unistra.fr)
+             Marc Schweitzer (marc.schweitzer(at)unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -42,8 +43,8 @@
 #include "itkLinearInterpolateImageFunction.h"
 #include "itkAffineTransform.h"
 #include "itkMattesMutualInformationImageToImageMetric.h"
+#include "itkNormalizedCorrelationImageToImageMetric.h"
 #include "itkImageMaskSpatialObject.h"
-
 #include "itkNumericTraits.h"
 #include "btkUserMacro.h"
 
@@ -51,28 +52,21 @@
 namespace btk
 {
 
-using namespace itk;
-
-/** \class AffineRegistration
- * \brief Describe the class briefly here.
- *
- * Full class description
- * Full class description
- * Full class description
-
- * \sa ImageRegistrationMethod
- * \ingroup RegistrationFilters
+/** @class AffineRegistration
+ * @brief This class is usefull to do affine registration
+ * @author Marc Schweitzer
+ * @ingroup Registration
  */
 
 template <typename TImage>
-class AffineRegistration :public btk::Registration <TImage >
+class AffineRegistration :public btk::Registration < TImage >
 {
 public:
   /** Standard class typedefs. */
   typedef AffineRegistration  Self;
   typedef btk::Registration<TImage>   Superclass;
-  typedef SmartPointer<Self>                           Pointer;
-  typedef SmartPointer<const Self>                     ConstPointer;
+  typedef itk::SmartPointer<Self>                           Pointer;
+  typedef itk::SmartPointer<const Self>                     ConstPointer;
 
   /** Method for creation through the object factory. */
   itkNewMacro(Self);
@@ -85,11 +79,11 @@ public:
   typedef typename ImageType::Pointer                   ImagePointer;
 
   /**  Type of the image mask. */
-  typedef Image< unsigned char, 3 >                     ImageMaskType;
+  typedef itk::Image< unsigned char, 3 >                     ImageMaskType;
   typedef typename ImageMaskType::Pointer               ImageMaskPointer;
 
   /**  Type of the image mask spatial object. */
-  typedef ImageMaskSpatialObject< 3 >                   MaskType;
+  typedef itk::ImageMaskSpatialObject< 3 >                   MaskType;
   typedef typename MaskType::Pointer                    MaskPointer;
 
   typedef typename ImageType::PointType                 PointType;
@@ -99,69 +93,53 @@ public:
   typedef typename ImageType::RegionType                RegionType;
 
 
+  /**  Type of the metric.
+   * --------------------- /!\ Warning /!\ ------------------------------
+   *
+   * - itk::MattesMutualInformationImageToImageMetric is NOT THREAD SAFE....
+   *
+   * ---------------------------------------------------------------------
+   *
+   * typedef MattesMutualInformationImageToImageMetric<
+   */
 
-  /**  Type of the metric. */
-  typedef MattesMutualInformationImageToImageMetric<
+  typedef itk::NormalizedCorrelationImageToImageMetric<
                                           ImageType,
                                           ImageType >   MetricType;
+
   typedef typename MetricType::Pointer                  MetricPointer;
+
 
   typedef typename MetricType::FixedImageMaskType   FixedImageMaskType;
   typedef typename FixedImageMaskType::Pointer     FixedImageMaskPointer;
 
   /**  Type of the Transform . */
-  typedef AffineTransform<
+  typedef itk::AffineTransform<
                           double,
-                          ImageType::ImageDimension >   TransformType;
-  typedef typename TransformType::Pointer               TransformPointer;
-  typedef typename TransformType::ParametersType        ParametersType;
+                          ImageType::ImageDimension >   AffineTransformType;
+  typedef typename AffineTransformType::Pointer               TransformPointer;
+  typedef typename AffineTransformType::ParametersType        ParametersType;
 
   /**  Type of the Interpolator. */
-  typedef LinearInterpolateImageFunction<
+  typedef itk::LinearInterpolateImageFunction<
                                     ImageType,
                                     double>             InterpolatorType;
   typedef typename InterpolatorType::Pointer            InterpolatorPointer;
 
   /**  Type of the optimizer. */
-  typedef RegularStepGradientDescentOptimizer           OptimizerType;
+  typedef itk::RegularStepGradientDescentOptimizer           OptimizerType;
   typedef typename OptimizerType::Pointer               OptimizerPointer;
   typedef OptimizerType::ScalesType 					OptimizerScalesType;
 
-  /** Method that initiates the registration. */
-
-  /** Set/Get transform center. */
-  itkSetMacro(TransformCenter, PointType);
-
-  virtual PointType GetTransformCenter() const
-    { return m_Transform -> GetCenter(); }
-
-  //itkGetObjectMacro(Transform, TransformType);
-
-  virtual TransformType* GetTransform()
+  virtual AffineTransformType* GetTransform()
   {
-      return static_cast<TransformType*>(m_Transform);
+      return dynamic_cast<AffineTransformType*>(Superclass::m_Transform.GetPointer());
   }
 
 
-  itkSetObjectMacro(FixedImageMask, ImageMaskType);
-  itkGetObjectMacro(FixedImageMask, ImageMaskType);
-
-  /** Set/Get iterations. */
-  itkSetMacro(Iterations, unsigned int);
-  itkGetMacro(Iterations, unsigned int);
-
-  /** Set/Get observer status. */
-  itkSetMacro(EnableObserver, bool);
-  itkGetMacro(EnableObserver, bool);
-
-  itkSetObjectMacro(FixedMask,MaskType);
-  itkGetObjectMacro(FixedMask,MaskType);
-
-  itkGetObjectMacro(Optimizer, OptimizerType);
 
   /** Initialization is performed with the provided transform. */
   virtual void InitializeWithTransform(){};
-
 
   /** Initialization is performed with the provided image masks. */
   virtual void InitializeWithMask(){};
@@ -171,31 +149,16 @@ public:
 protected:
   AffineRegistration();
   virtual ~AffineRegistration() {};
-  virtual void PrintSelf(std::ostream& os, Indent indent) const;
+  virtual void PrintSelf(std::ostream& os, itk::Indent indent) const;
 
   /** Initialize by setting the interconnects between the components.
    */
-  virtual void Initialize() throw (ExceptionObject);
+  virtual void Initialize() throw (itk::ExceptionObject);
 
 private:
   AffineRegistration(const Self&); //purposely not implemented
   void operator=(const Self&); //purposely not implemented
 
-  MetricPointer        m_Metric;
-  OptimizerPointer     m_Optimizer;
-  TransformPointer     m_Transform;
-  InterpolatorPointer  m_Interpolator;
-
-  unsigned int m_Iterations;
-  bool m_EnableObserver;
-
-  ImageMaskPointer m_FixedImageMask;
-
-  MaskPointer          m_FixedMask;
-
-  CommandIterationUpdate::Pointer  m_Observer;
-
-  PointType                 m_TransformCenter;
 };
 
 

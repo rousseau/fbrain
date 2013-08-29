@@ -33,8 +33,8 @@
 
 ==========================================================================*/
 
-#ifndef BTKSLICESINTERSECTIONITKCOSTFUNCTION_HXX
-#define BTKSLICESINTERSECTIONITKCOSTFUNCTION_HXX
+#ifndef BTK_SLICESINTERSECTIONITKCOSTFUNCTION_HXX
+#define BTK_SLICESINTERSECTIONITKCOSTFUNCTION_HXX
 
 #include "itkSingleValuedCostFunction.h"
 #include "itkImage.h"
@@ -43,9 +43,11 @@
 #include "itkEuler3DTransform.h"
 #include "itkImageRegionConstIteratorWithIndex.h"
 #include "itkImageRegionConstIterator.h"
+#include "itkMultipleValuedCostFunction.h"
 
 #include "btkMacro.h"
 #include "btkEulerSliceBySliceTransform.h"
+#include "btkCenteredEulerSliceBySliceTransform.h"
 #include "btkSlicesIntersectionVNLCostFunction.hxx"
 
 #include  "cfloat"
@@ -53,6 +55,12 @@
 
 namespace btk
 {
+/**
+ * @class SlicesIntersectionITKCostFunction
+ * @brief Adaptor for using btk::SlicesIntersectionVNLCostFunction with itk::Optimizers
+ * @author Marc Schweitzer
+ * @ingroup Registration
+ */
 template<class TImage>
 class SlicesIntersectionITKCostFunction: public itk::SingleValuedCostFunction
 {
@@ -75,6 +83,7 @@ class SlicesIntersectionITKCostFunction: public itk::SingleValuedCostFunction
         //typedef itk::MatrixOffsetTransformBase<double, 3> TransformType;
         typedef itk::Euler3DTransform<double> TransformType;
         typedef btk::EulerSliceBySliceTransform<double,3,VoxelType> SliceBySliceTransformType;
+        //typedef btk::CenteredEulerSliceBySliceTransform<double, 3, VoxelType> SliceBySliceTransformType;
 
         /** Run-time type information (and related methods). */
         itkTypeMacro(SlicesIntersectionITKCostFunction, CostFunction);
@@ -133,6 +142,13 @@ class SlicesIntersectionITKCostFunction: public itk::SingleValuedCostFunction
             Changing this number will introduce some error */
         btkSetMacro(NumberOfParameters,unsigned int);
 
+        /** Set/Get the center of the transform (default, middle of the volume ) */
+        btkSetMacro(CenterOfTransform, typename ImageType::PointType);
+        btkGetMacro(CenterOfTransform, typename ImageType::PointType);
+
+        btkSetMacro(SlicesGroup, std::vector< unsigned int >);
+        btkSetMacro(GroupNum, unsigned int);
+
 
         /** Intialization */
         void Initialize();
@@ -140,12 +156,23 @@ class SlicesIntersectionITKCostFunction: public itk::SingleValuedCostFunction
         /** New method for creating an object using a factory. */
         itkNewMacro(Self);
 
+        /** Get if the last evaluation has intersection or not  */
+        bool GetIntersection()
+        {
+            return m_VNLCostFunction->GetIntersection();
+        }
 
+        /** Get pointer of the vnl cost function */
+
+        SlicesIntersectionVNLCostFunction<ImageType>* GetVNLPointer()
+        {
+            return m_VNLCostFunction;
+        }
 
     protected:
 
         SlicesIntersectionITKCostFunction();
-        virtual ~SlicesIntersectionITKCostFunction() {}
+        virtual ~SlicesIntersectionITKCostFunction();
 
     private :
 
@@ -178,8 +205,16 @@ class SlicesIntersectionITKCostFunction: public itk::SingleValuedCostFunction
         std::vector<typename Interpolator::Pointer> m_Interpolators;
         float m_lambda;
 
-        SlicesIntersectionVNLCostFunction<ImageType> m_VNLCostFunction;
+        SlicesIntersectionVNLCostFunction<ImageType>* m_VNLCostFunction;
         unsigned int m_NumberOfParameters;
+
+        typename ImageType::PointType m_CenterOfTransform;
+
+        bool m_Intersection;
+
+        std::vector< unsigned int > m_SlicesGroup;
+
+        unsigned int m_GroupNum;
 
 
 

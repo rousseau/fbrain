@@ -6,6 +6,7 @@ INCLUDE_DIRECTORIES(
     ${Code_SOURCE_DIR}/Tools
     ${Code_SOURCE_DIR}/Maths
     ${Code_SOURCE_DIR}/Transformations
+    ${Code_SOURCE_DIR}/Visualization
 
 )
 
@@ -39,6 +40,9 @@ INCLUDE_DIRECTORIES(
     ${Code_SOURCE_DIR}/Segmentation
     ${Code_SOURCE_DIR}/Transformations
     ${Code_SOURCE_DIR}/Registration
+    ${Code_SOURCE_DIR}/Maths
+    ${Code_SOURCE_DIR}/Visualization
+    ${Code_SOURCE_DIR}/ImageFilters
 )
 
 ADD_EXECUTABLE(btkImageReconstruction btkImageReconstruction.cxx
@@ -54,12 +58,6 @@ ADD_EXECUTABLE(btkImageReconstruction btkImageReconstruction.cxx
 )
 TARGET_LINK_LIBRARIES(btkImageReconstruction btkToolsLibrary ${ITK_LIBRARIES})
 
-
-ADD_EXECUTABLE(btkLabelPropagation btkLabelPropagation.cxx
-    ${fbrain_SOURCE_DIR}/Code/Segmentation/btkLabelPropagationTool.h
-)
-TARGET_LINK_LIBRARIES(btkLabelPropagation ${ITK_LIBRARIES})
-
 ADD_EXECUTABLE(btkSuperResolution btkSuperResolution.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionAffineImageFilter.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionRigidImageFilter.h
@@ -72,10 +70,14 @@ ADD_EXECUTABLE(btkSuperResolution btkSuperResolution.cxx
     ${fbrain_SOURCE_DIR}/Code/Denoising/btkNLMTool.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionRigidImageFilter.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSuperResolutionAffineImageFilter.h
+    ${fbrain_SOURCE_DIR}/Code/Maths/btkPSF.h
+    ${fbrain_SOURCE_DIR}/Code/Maths/btkPSF.cxx
+    ${fbrain_SOURCE_DIR}/Code/Maths/btkGaussianPSF.h
+    ${fbrain_SOURCE_DIR}/Code/Maths/btkGaussianPSF.cxx
 )
 TARGET_LINK_LIBRARIES(btkSuperResolution ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkSuperResolutionFilterTest btkSuperResolutionFilterTest.cxx
+ADD_EXECUTABLE(btkSuperResolutionV2 btkSuperResolutionV2.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkSuperResolutionFilter.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkSuperResolutionFilter.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkBiasCorrectionFilter.cxx
@@ -96,10 +98,6 @@ ADD_EXECUTABLE(btkSuperResolutionFilterTest btkSuperResolutionFilterTest.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrection3DAffineFilter.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrection3DEulerFilter.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrection3DEulerFilter.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkSliceRejectionFilter.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkSliceRejectionFilter.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkPSFEstimationFilter.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkPSFEstimationFilter.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSimulateLRImageFilter.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSimulateLRImageFilter.h
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkCreateHRMaskFilter.cxx
@@ -108,11 +106,16 @@ ADD_EXECUTABLE(btkSuperResolutionFilterTest btkSuperResolutionFilterTest.cxx
     ${fbrain_SOURCE_DIR}/Code/Registration/btkMseCostFunction.h
     ${fbrain_SOURCE_DIR}/Code/Registration/btkSliceBySliceRigidRegistration.h
     ${fbrain_SOURCE_DIR}/Code/Registration/btkSliceBySliceAffineRegistration.h
-    #${fbrain_SOURCE_DIR}/Code/Transformations/btkSliceBySliceTransform.h
-    #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkMseCostFunction.h
+    ${fbrain_SOURCE_DIR}/Code/Maths/btkPSF.h
+    ${fbrain_SOURCE_DIR}/Code/Maths/btkPSF.cxx
+    ${fbrain_SOURCE_DIR}/Code/Maths/btkGaussianPSF.h
+    ${fbrain_SOURCE_DIR}/Code/Maths/btkGaussianPSF.cxx
+    ${fbrain_SOURCE_DIR}/Code/Maths/btkBoxCarPSF.h
+    ${fbrain_SOURCE_DIR}/Code/Maths/btkBoxCarPSF.cxx
+    ${fbrain_SOURCE_DIR}/Code/Maths/btkSincPSF.h
+    ${fbrain_SOURCE_DIR}/Code/Maths/btkSincPSF.cxx
 )
-
-TARGET_LINK_LIBRARIES(btkSuperResolutionFilterTest btkToolsLibrary btkMathsLibrary ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkSuperResolutionV2 btkToolsLibrary btkMathsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkGroupwiseS2SDistortionCorrection btkGroupwiseS2SDistortionCorrection.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolation.h
@@ -124,44 +127,40 @@ ADD_EXECUTABLE(btkGroupwiseS2SDistortionCorrection btkGroupwiseS2SDistortionCorr
 TARGET_LINK_LIBRARIES(btkGroupwiseS2SDistortionCorrection btkToolsLibrary ${ITK_LIBRARIES} ${ANN_LIBRARY})
 
 
-ADD_EXECUTABLE(btk3DSuperResolution btk3DSuperResolution.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkSuperResolutionFilter.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkSuperResolutionFilter.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkBiasCorrectionFilter.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkBiasCorrectionFilter.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLowToHighImageResolutionMethod.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkHighResolutionReconstructionFilter.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkHighResolutionIBPFilter.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkHighResolutionSRFilter.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkHighResolutionReconstructionFilter.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkHighResolutionIBPFilter.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkHighResolutionSRFilter.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrectionFilter.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrectionSliceBySliceAffineFilter.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrectionSliceBySliceAffineFilter.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrectionSliceBySliceEulerFilter.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrectionSliceBySliceEulerFilter.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrection3DAffineFilter.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrection3DAffineFilter.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrection3DEulerFilter.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrection3DEulerFilter.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkSliceRejectionFilter.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkSliceRejectionFilter.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkPSFEstimationFilter.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkPSFEstimationFilter.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSimulateLRImageFilter.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSimulateLRImageFilter.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkCreateHRMaskFilter.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkCreateHRMaskFilter.h
-    ${fbrain_SOURCE_DIR}/Code/Transformations/btkSliceBySliceTransform.h
-    ${fbrain_SOURCE_DIR}/Code/Registration/btkMseCostFunction.h
-    ${fbrain_SOURCE_DIR}/Code/Registration/btkSliceBySliceRigidRegistration.h
-    ${fbrain_SOURCE_DIR}/Code/Registration/btkSliceBySliceAffineRegistration.h
+#ADD_EXECUTABLE(btk3DSuperResolution btk3DSuperResolution.cxx
+ #   ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkSuperResolutionFilter.cxx
+  #  ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkSuperResolutionFilter.h
+   # ${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkBiasCorrectionFilter.cxx
+    #${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkBiasCorrectionFilter.h
+    #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLowToHighImageResolutionMethod.h
+    #${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkHighResolutionReconstructionFilter.h
+    #${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkHighResolutionIBPFilter.h
+    #${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkHighResolutionSRFilter.h
+    #${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkHighResolutionReconstructionFilter.cxx
+    #${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkHighResolutionIBPFilter.cxx
+    #${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkHighResolutionSRFilter.cxx
+    #${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrectionFilter.h
+    #${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrectionSliceBySliceAffineFilter.h
+    #${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrectionSliceBySliceAffineFilter.cxx
+    #${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrectionSliceBySliceEulerFilter.h
+    #${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrectionSliceBySliceEulerFilter.cxx
+    #${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrection3DAffineFilter.h
+    #${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrection3DAffineFilter.cxx
+    #${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrection3DEulerFilter.h
+    #${fbrain_SOURCE_DIR}/Code/Reconstruction/SuperResolution/btkMotionCorrection3DEulerFilter.cxx
+    #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSimulateLRImageFilter.cxx
+    #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSimulateLRImageFilter.h
+    #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkCreateHRMaskFilter.cxx
+    #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkCreateHRMaskFilter.h
+    #${fbrain_SOURCE_DIR}/Code/Transformations/btkSliceBySliceTransform.h
+    #${fbrain_SOURCE_DIR}/Code/Registration/btkMseCostFunction.h
+    #${fbrain_SOURCE_DIR}/Code/Registration/btkSliceBySliceRigidRegistration.h
+    #${fbrain_SOURCE_DIR}/Code/Registration/btkSliceBySliceAffineRegistration.h
     #${fbrain_SOURCE_DIR}/Code/Transformations/btkSliceBySliceTransform.h
     #${fbrain_SOURCE_DIR}/Code/Reconstruction/btkMseCostFunction.h
-)
+#)
 
-TARGET_LINK_LIBRARIES(btk3DSuperResolution btkToolsLibrary ${ITK_LIBRARIES})
+#TARGET_LINK_LIBRARIES(btk3DSuperResolution btkToolsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkRBFInterpolationS2S btkRBFInterpolationS2S.cxx
     ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolation.h
@@ -172,24 +171,32 @@ ADD_EXECUTABLE(btkRBFInterpolationS2S btkRBFInterpolationS2S.cxx
     ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
 )
 
+TARGET_LINK_LIBRARIES(btkRBFInterpolationS2S btkToolsLibrary  btkDiffusionLibrary ${ITK_LIBRARIES} ${ANN_LIBRARY})
 
-TARGET_LINK_LIBRARIES(btkRBFInterpolationS2S btkToolsLibrary ${ITK_LIBRARIES} ${ANN_LIBRARY})
+#ADD_EXECUTABLE(btkIntersectionRegistration btkIntersectionRegistration.cxx
+#${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h
+#${fbrain_SOURCE_DIR}/Code/Registration/btkSlicesIntersectionVNLCostFunction.hxx
+#${fbrain_SOURCE_DIR}/Code/Registration/btkSlicesIntersectionITKCostFunction.hxx
+#${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLowToHighResolutionFilter.hxx
+#${fbrain_SOURCE_DIR}/Code/Registration/btkOptimizer.cxx ${fbrain_SOURCE_DIR}/Code/Registration/btkOptimizer.h
+#${fbrain_SOURCE_DIR}/Code/Registration/btkSimulatedAnnealingOptimizer.cxx ${fbrain_SOURCE_DIR}/Code/Registration/btkSimulatedAnnealingOptimizer.h
+#${fbrain_SOURCE_DIR}/Code/Registration/btkSmartStepGradientDescentOptimizer.cxx ${fbrain_SOURCE_DIR}/Code/Registration/btkSmartStepGradientDescentOptimizer.h
+#${fbrain_SOURCE_DIR}/Code/Reconstruction/btkSRHMatrixComputation.hxx
+#${fbrain_SOURCE_DIR}/Code/Maths/btkPSF.h
+#${fbrain_SOURCE_DIR}/Code/Maths/btkPSF.cxx
+#${fbrain_SOURCE_DIR}/Code/Maths/btkGaussianPSF.h
+#${fbrain_SOURCE_DIR}/Code/Maths/btkGaussianPSF.cxx
+#${fbrain_SOURCE_DIR}/Code/Maths/btkBoxCarPSF.h
+#${fbrain_SOURCE_DIR}/Code/Maths/btkBoxCarPSF.cxx)
 
-ADD_EXECUTABLE(btkIntersectionRegistration btkIntersectionRegistration.cxx
-${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h
-${fbrain_SOURCE_DIR}/Code/Registration/btkSlicesIntersectionVNLCostFunction.hxx
-${fbrain_SOURCE_DIR}/Code/Registration/btkSlicesIntersectionITKCostFunction.hxx
-${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLowToHighResolutionFilter.hxx)
-
-TARGET_LINK_LIBRARIES(btkIntersectionRegistration btkToolsLibrary btkMathsLibrary ${ITK_LIBRARIES})
+#TARGET_LINK_LIBRARIES(btkIntersectionRegistration btkToolsLibrary btkMathsLibrary ${ITK_LIBRARIES} vtkHybrid)
 
 INSTALL(TARGETS btkImageReconstruction
-                btkLabelPropagation
                 btkSuperResolution
-                btkSuperResolutionFilterTest
+                btkSuperResolutionV2
                 btkGroupwiseS2SDistortionCorrection
                 btkRBFInterpolationS2S
-                btkIntersectionRegistration
+               #btkIntersectionRegistration
         DESTINATION bin)
 
 
@@ -197,79 +204,71 @@ INSTALL(TARGETS btkImageReconstruction
 # ---- Tractography ---------------------------------------------------------------------
 
 INCLUDE_DIRECTORIES(
+    ${Code_SOURCE_DIR}/Denoising
     ${Code_SOURCE_DIR}/Diffusion
     ${Code_SOURCE_DIR}/Tractography
-    ${Code_SOURCE_DIR}/DtiParticleFilteringTractography
 )
 
-ADD_EXECUTABLE(btkTractography btkTractography.cxx)
-TARGET_LINK_LIBRARIES(btkTractography btkToolsLibrary btkMathsLibrary btkDiffusionLibrary btkTractographyLibrary ${ITK_LIBRARIES} vtkHybrid)
-
-ADD_EXECUTABLE(btkODFParticleFilterTractography btkODFParticleFilterTractography.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkTypes.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkCartesianCoordinates.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkCartesianCoordinates.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalCoordinates.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalCoordinates.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkVector.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkVector.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkDirection.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkDirection.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkPoint.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkPoint.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSignalExtractor.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkSignalExtractor.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSignal.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkSignal.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalHarmonics.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalHarmonics.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSHModel.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkSHModel.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSHModelEstimator.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkSHModelEstimator.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkAPrioriDensity.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkAPrioriDensity.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkLikelihoodDensity.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkLikelihoodDensity.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkImportanceDensity.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkImportanceDensity.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkParticle.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkParticle.h
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkParticleFilter.cxx ${fbrain_SOURCE_DIR}/Code/Tractography/btkParticleFilter.h
+ADD_EXECUTABLE(btkTractography btkTractography.cxx
+    ${Code_SOURCE_DIR}/Denoising/btkPseudoResidualsVarianceCalculator.h
 )
-TARGET_LINK_LIBRARIES(btkODFParticleFilterTractography btkToolsLibrary ${ITK_LIBRARIES} vtkHybrid)
+TARGET_LINK_LIBRARIES(btkTractography btkToolsLibrary btkMathsLibrary btkDiffusionLibrary btkTractographyLibrary btkDenoisingLibrary ${ITK_LIBRARIES} vtkHybrid)
 
-ADD_EXECUTABLE(btkTensorParticleFilterTractography btkTensorParticleFilterTractography.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkCartesianCoordinates.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalCoordinates.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkVector.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkDirection.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkPoint.cxx
-    ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPSignalExtractor.cxx
-    ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPSignal.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalHarmonics.cxx
-    ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPAPrioriDensity.cxx
-    ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPLikelihoodDensity.cxx
-    ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPImportanceDensity.cxx
-    ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPParticle.cxx
-    ${fbrain_SOURCE_DIR}/Code/DtiParticleFilteringTractography/btkDTFPParticleFilter.cxx
+ADD_EXECUTABLE(btkAtlasBasedFiberLabeling btkAtlasBasedFiberLabeling.cxx
 )
-TARGET_LINK_LIBRARIES(btkTensorParticleFilterTractography btkToolsLibrary ${ITK_LIBRARIES} vtkHybrid)
-
-ADD_EXECUTABLE(btkODFStreamlineTractography btkODFStreamlineTractography.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkCartesianCoordinates.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalCoordinates.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkVector.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkDirection.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkPoint.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSignalExtractor.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSignal.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSphericalHarmonics.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSHModel.cxx
-    ${fbrain_SOURCE_DIR}/Code/Tractography/btkSHModelEstimator.cxx
-)
-TARGET_LINK_LIBRARIES(btkODFStreamlineTractography btkToolsLibrary ${ITK_LIBRARIES} vtkHybrid)
+TARGET_LINK_LIBRARIES(btkAtlasBasedFiberLabeling ${ITK_LIBRARIES} vtkHybrid)
 
 INSTALL(TARGETS
-    btkODFParticleFilterTractography
-    btkODFStreamlineTractography
-    btkTensorParticleFilterTractography
     btkTractography
+    btkAtlasBasedFiberLabeling
 DESTINATION bin)
 
 # ---- Segmentation ---------------------------------------------------------------------
 
-ADD_EXECUTABLE(btkTissueSegmentation btkTissueSegmentation.cxx
-    ${fbrain_SOURCE_DIR}/Code/Segmentation/btkTopologicalKMeans.h
+ADD_EXECUTABLE(btkLabelPropagation btkLabelPropagation.cxx
+    ${fbrain_SOURCE_DIR}/Code/Segmentation/btkLabelPropagationTool.h
 )
-TARGET_LINK_LIBRARIES(btkTissueSegmentation ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkLabelPropagation ${ITK_LIBRARIES})
 
 INSTALL(TARGETS
-    btkTissueSegmentation
+    btkLabelPropagation
+DESTINATION bin)
+
+# ---- Clustering -----------------------------------------------------------------------
+
+ADD_EXECUTABLE( btkProbabilisticSegmentationMapBasedClustering  btkProbabilisticSegmentationMapBasedClustering.cxx)
+TARGET_LINK_LIBRARIES(btkProbabilisticSegmentationMapBasedClustering ${ITK_LIBRARIES} vtkHybrid)
+
+ADD_EXECUTABLE( btkDistanceFibersKMeansApproximationClustering  btkDistanceFibersKMeansApproximationClustering.cxx)
+TARGET_LINK_LIBRARIES(btkDistanceFibersKMeansApproximationClustering ${ITK_LIBRARIES} vtkHybrid vtkInfovis)
+
+INSTALL(TARGETS 
+    btkProbabilisticSegmentationMapBasedClustering
+    btkDistanceFibersKMeansApproximationClustering
+DESTINATION bin)
+
+# ---- Outliers correction -----------------------------------------------------------------------
+ADD_EXECUTABLE(btkOutliersCorrection btkOutliersCorrection.cxx
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.h
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.cxx
+    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolateImageFunctionS2S.h
+)
+TARGET_LINK_LIBRARIES(btkOutliersCorrection btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES} ${ANN_LIBRARY})
+
+INSTALL(TARGETS
+    btkOutliersCorrection
+DESTINATION bin)
+
+
+# ---- Feature selection ----------------------------------------------------------------
+
+include_directories(
+    ${Code_SOURCE_DIR}/FeatureSelection
+)
+
+add_executable(btkFeatureSelection btkFeatureSelection.cxx)
+target_link_libraries(btkFeatureSelection ${ITK_LIBRARIES} btkFeatureSelectionLibrary)
+
+install(TARGETS
+    btkFeatureSelection
 DESTINATION bin)

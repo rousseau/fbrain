@@ -46,15 +46,21 @@
 #include "btkLegendrePolynomialTest.h"
 #include "btkMathFunctionsTest.h"
 #include "btkSphericalHarmonicsTest.h"
+#include "btkNormalProbabilityDensityTest.h"
+#include "btkVonMisesFisherProbabilityDensityTest.h"
 
 
 int main(int argc, char *argv[])
 {
     CppUnit::TextUi::TestRunner runner;
+
     runner.addTest(btk::MatrixOperationsTest::suite());
     runner.addTest(btk::LegendrePolynomialTest::suite());
     runner.addTest(btk::MathFunctionsTest::suite());
     runner.addTest(btk::SphericalHarmonicsTest::suite());
+    runner.addTest(btk::NormalProbabilityDensityTest::suite());
+    runner.addTest(btk::VonMisesFisherProbabilityDensityTest::suite());
+
     runner.setOutputter(new CppUnit::CompilerOutputter(&runner.result(), std::cerr));
 
     return runner.run() ? EXIT_SUCCESS : EXIT_FAILURE;

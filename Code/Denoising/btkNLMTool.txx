@@ -207,7 +207,6 @@ void NLMTool<T>::SetOptimizationStrategy(int o)
         m_varianceImage->FillBuffer(0);
 
         int x,y,z;
-        //FIXME : This is going to take a huge set of time, we should use iterator instead !
         #pragma omp parallel for private(x,y,z) schedule(dynamic)
 
         for(z=0; z < (int)m_size[2]; z++)
@@ -339,7 +338,6 @@ void NLMTool<T>::SetSmoothing(float beta)
     //since we have use to use a neighborhood around the current voxel, we neglect the border to avoid slow tests.
 
     #pragma omp parallel for private(x,y,z) schedule(dynamic)
-
     for(z=1;z<(int)m_size[2]-1;z++)
     {
         for(y=1;y<(int)m_size[1]-1;y++)
@@ -356,10 +354,10 @@ void NLMTool<T>::SetSmoothing(float beta)
                     double ei = ComputePseudoResidual(pixelIndex);
 
                     #pragma omp critical
-                    if(fabs(ei>0))
-                    {
+//                    if(fabs(ei>0))
+//                    {
                         vecei.push_back(fabs(ei));
-                    }
+//                    }
                 }
             }
         }
@@ -416,10 +414,10 @@ void NLMTool<T>::SetLocalSmoothing(float beta)
                             if( m_maskImage->GetPixel(neighbourPixelIndex) > 0)
                             {
                                 ei = ComputePseudoResidualSafely(neighbourPixelIndex);
-                                if(fabs(ei>0))
-                                {
+//                                if(fabs(ei>0))
+//                                {
                                     vecei.push_back(fabs(ei));
-                                }
+//                                }
                             }
 
 
@@ -441,9 +439,10 @@ void NLMTool<T>::SetLocalSmoothing(float beta)
 }
 
 template <typename T>
-void NLMTool<T>::GetOutput(itkTPointer & outputImage)
+typename NLMTool<T>::itkTPointer
+NLMTool<T>::GetOutput()
 {
-  outputImage = m_outputImage;
+  return m_outputImage;
 }
 
 template <typename T>
@@ -1080,11 +1079,13 @@ void NLMTool<T>::ComputeSearchRegion(typename itkTImage::IndexType p, typename i
     int d = (start[i] + size[i]) - m_size[i]; //if the region is not fully inside the image
     if(d>0)
     {
-      size[i] = size[i] - d;
-      if(size[i] < 0)
+//      size[i] = size[i] - d;
+      if(static_cast< int >(size[i]) - d < 0)
       {
           size[i] = 0;
       }
+      else
+        size[i] = size[i] - d;
     }
   }
   region.SetSize( size );
@@ -1123,11 +1124,13 @@ void NLMTool<T>::ComputePatchRegion(typename itkTImage::IndexType p, typename it
     int d = (start[i] + size[i]) - m_size[i]; //if the region is not fully inside the image
     if(d>0)
     {
-      size[i] = size[i] - d;
-      if(size[i] < 0)
+//      size[i] = size[i] - d;
+      if(static_cast< int >(size[i]) - d < 0)
       {
           size[i] = 0;
       }
+      else
+        size[i] = size[i] - d;
     }
   }
   imageRegion.SetSize( size );

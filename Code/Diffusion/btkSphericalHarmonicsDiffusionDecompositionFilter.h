@@ -63,6 +63,12 @@ class SphericalHarmonicsDiffusionDecompositionFilter : public itk::ImageToImageF
 
         typedef itk::VariableSizeMatrix< float > Matrix;
 
+        typedef enum
+        {
+            DIFFUSION_SIGNAL,
+            APPARENT_DIFFUSION_PROFILE
+        } ESTIMATION_TYPE;
+
         itkNewMacro(Self);
 
         itkTypeMacro(SphericalHarmonicsDiffusionDecompositionFilter,itk::ImageToImageFilter);
@@ -79,6 +85,9 @@ class SphericalHarmonicsDiffusionDecompositionFilter : public itk::ImageToImageF
         btkSetMacro(RegularizationParameter, float);
         btkGetMacro(RegularizationParameter, float);
 
+        btkSetMacro(EstimationType, Self::ESTIMATION_TYPE);
+        btkGetMacro(EstimationType, Self::ESTIMATION_TYPE);
+
     protected:
         /**
          * @brief Constructor.
@@ -91,9 +100,19 @@ class SphericalHarmonicsDiffusionDecompositionFilter : public itk::ImageToImageF
         virtual ~SphericalHarmonicsDiffusionDecompositionFilter();
 
         /**
-         * @brief Run the filter and generate output data.
+         * @brief Pre-processing.
          */
-        virtual void GenerateData();
+        virtual void BeforeThreadedGenerateData();
+
+        /**
+         * @brief Allocate correctly the output image.
+         */
+        virtual void AllocateOutputs();
+
+        /**
+         * @brief The execute method for each thread.
+         */
+        virtual void ThreadedGenerateData(const OutputImageRegionType &outputRegionForThread, itk::ThreadIdType threadId);
 
         /**
          * @brief Print a message on output stream.
@@ -139,6 +158,12 @@ class SphericalHarmonicsDiffusionDecompositionFilter : public itk::ImageToImageF
 
         /** Transition matrix for linear regression. */
         Self::Matrix m_TransitionMatrix;
+
+        /** Internal diffusion weighted image. */
+        itk::VectorImage< short,3 >::Pointer m_VectorImage;
+
+        /** Estimation type (diffusion signal or apparent diffusion profile). */
+        Self::ESTIMATION_TYPE m_EstimationType;
 };
 
 } // namespace btk

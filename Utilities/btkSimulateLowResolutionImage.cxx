@@ -2,8 +2,9 @@
 
   © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-  Date: 24/05/2011
+  Date: v1 : 24/05/2011 v2 : 20/03/2013
   Author(s): Estanislao Oubel (oubel@unistra.fr)
+             Marc Schweitzer (marc.schweitzer(at)unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -33,173 +34,185 @@
 
 ==========================================================================*/
 
-#if defined(_MSC_VER)
-#pragma warning ( disable : 4786 )
-#endif
-
-#include "itkEuler3DTransform.h"
-
+/* ITK */
 #include "itkImage.h"
-#include "itkImageFileReader.h"
-#include "itkImageFileWriter.h"
-
 #include "itkImageMaskSpatialObject.h"
 
-#include "itkTransformFileReader.h"
-#include "itkTransformFactory.h"
-#include "btkSliceBySliceTransform.h"
+/* BTK */
+#include "btkEulerSliceBySliceTransform.h"
+#include "btkSimulateLowResolutionImagesFilter.hxx"
+#include "btkImageHelper.h"
+#include "btkIOTransformHelper.h"
+#include "btkRandomSliceBySliceTransformGenerator.h"
 
-#include "btkSuperResolutionImageFilter.h"
+/* TCLAP */
+#include "tclap/CmdLine.h"
 
-#include <tclap/CmdLine.h>
+
+
+// typedefs
+const unsigned int                                                      Dimension = 3;
+typedef btk::EulerSliceBySliceTransform< double, Dimension >            TransformType;
+typedef float                                                           PixelType;
+typedef itk::Image< PixelType, Dimension >                              ImageType;
+typedef itk::Image< unsigned char, Dimension >                          ImageMaskType;
+typedef itk::ImageMaskSpatialObject< Dimension >                        MaskType;
+typedef ImageType::RegionType                                           RegionType;
+typedef std::vector< RegionType >                                       RegionArrayType;
+typedef btk::SimulateLowResolutionImagesFilter< ImageType, ImageType >  ResamplerType;
 
 int main( int argc, char *argv[] )
 {
 
-  try {
+    try {
 
-  const char *inputFile = NULL;
-  const char *maskFile  = NULL;
-  const char *transformFile = NULL;
-  const char *simFile  = NULL;
-  const char *refFile  = NULL;
+        std::vector<std::string> inputFile;
+        std::vector<std::string> maskFile;
+        std::vector<std::string> transformFile;
+        std::vector<std::string> simFile;
+        std::string refFile;
 
-  // Parse arguments
+        // Parse arguments
 
-  TCLAP::CmdLine cmd("Simulates a low resolution image from a high resolution "
-      "image (reconstructed, super-resolution, or acquired) and a known "
-      "transformation between both images. The use of either a boxcar or a Gaussian "
-      "kernel (default) is possible.", ' ', "Unversioned");
+        TCLAP::CmdLine cmd("Simulates a low resolution image from a high resolution "
+                           "image (reconstructed, super-resolution, or acquired) and a "
+                           "transformation between both images (transformation can be set or randomly computed)."
+                           , ' ', "Unversioned");
 
-  TCLAP::ValueArg<std::string> inputArg("i","input","Low-resolution image file.",
-      true,"","string",cmd);
-  TCLAP::ValueArg<std::string> maskArg("m","mask","Low-resolution image mask file.",
-      false,"","string",cmd);
-  TCLAP::ValueArg<std::string> refArg  ("r","reconstructed","Reconstructed image. "
-      "Typically the output of btkImageReconstruction is used." ,true,"","string",cmd);
-  TCLAP::ValueArg<std::string> outArg  ("o","output","Super resolution output image",
-      true,"","string",cmd);
-  TCLAP::SwitchArg  boxcarSwitchArg("","boxcar","A boxcar-shaped PSF is assumed "
-      "as imaging model (by default a Gaussian-shaped PSF is employed.).",false);
-  TCLAP::ValueArg<std::string> transArg("t","transform","transform file",false,
-      "","string",cmd);
+        TCLAP::MultiArg<std::string> inputArg("i","input","Low-resolution image file",true,"string",cmd);
+        TCLAP::MultiArg<std::string> maskArg("m","mask","Low-resolution image mask file.",true ,"string",cmd);
+        TCLAP::MultiArg<std::string> outArg  ("o","output","Simulated Images",true,"string",cmd);
+        TCLAP::MultiArg<std::string> transArg("t","transform","transform file",false,"string",cmd);
+        TCLAP::ValueArg<std::string> refArg  ("r","reconstructed","Reconstructed image.Typically the output of btkImageReconstruction is used." ,true,"","string",cmd);
 
-  // Parse the argv array.
-  cmd.parse( argc, argv );
+        TCLAP::ValueArg<float> rotArg  ("","rotMax","Maximum angle in degree for random rotation (min = -max)" ,false,5,"float",cmd);
+        TCLAP::ValueArg<float> traArg  ("","transMax","Maximum value in milimeter for random translation (min = -max)" ,false,5,"float",cmd);
 
-  inputFile = inputArg.getValue().c_str();
-  maskFile = maskArg.getValue().c_str();
-  refFile = refArg.getValue().c_str();
-  simFile = outArg.getValue().c_str();
-  transformFile = transArg.getValue().c_str();
+        TCLAP::ValueArg<unsigned int> levelArg  ("","level","level of motion (1: 1/5 slices, 2: 3/5 slices, 3: 4/5 slices, 4 all slices)" ,false,2,"float",cmd);
 
-  // typedefs
-  const   unsigned int    Dimension = 3;
-  typedef btk::SliceBySliceTransform< double, Dimension > TransformType;
-  itk::TransformFactory<TransformType>::RegisterTransform();
-
-  typedef float  PixelType;
-
-  typedef itk::Image< PixelType, Dimension >  ImageType;
-  typedef ImageType::Pointer                  ImagePointer;
-  typedef std::vector<ImagePointer>           ImagePointerArray;
-
-  typedef itk::Image< unsigned char, Dimension >  ImageMaskType;
-  typedef itk::ImageFileReader< ImageMaskType > MaskReaderType;
-  typedef itk::ImageMaskSpatialObject< Dimension > MaskType;
-
-  typedef ImageType::RegionType               RegionType;
-  typedef std::vector< RegionType >           RegionArrayType;
-
-  typedef itk::ImageFileReader< ImageType >   ImageReaderType;
-  typedef itk::ImageFileWriter< ImageType >   WriterType;
-
-  typedef itk::TransformFileReader     TransformReaderType;
-  typedef TransformReaderType::TransformListType * TransformListType;
-
-  typedef btk::SuperResolutionImageFilter< ImageType, ImageType >  ResamplerType;
-  ResamplerType::Pointer resampler = ResamplerType::New();
-
-  // Filter setup
-
-  ImageType::IndexType  roiIndex;
-  ImageType::SizeType   roiSize;
-
-  // add image
-  ImageReaderType::Pointer imageReader = ImageReaderType::New();
-  imageReader -> SetFileName( inputFile );
-  imageReader -> Update();
-  resampler   -> AddInput( imageReader -> GetOutput() );
-
-  // add region
-  if ( strcmp(maskFile,"") != 0 )
-  {
-    MaskReaderType::Pointer maskReader = MaskReaderType::New();
-    maskReader -> SetFileName( maskFile );
-    maskReader -> Update();
-
-    MaskType::Pointer mask = MaskType::New();
-    mask -> SetImage( maskReader -> GetOutput() );
-
-    RegionType roi = mask -> GetAxisAlignedBoundingBoxRegion();
-    roiIndex = roi.GetIndex();
-    roiSize  = roi.GetSize();
-
-  } else
-      {
-        roiSize  = imageReader -> GetOutput() -> GetLargestPossibleRegion().GetSize();
-        roiIndex = imageReader -> GetOutput() -> GetLargestPossibleRegion().GetIndex();
-      }
-
-  RegionType imageRegion;
-  imageRegion.SetIndex(roiIndex);
-  imageRegion.SetSize (roiSize);
-  resampler -> AddRegion( imageRegion );
+        TCLAP::SwitchArg  VerboseArg("v","verbose","verbose Mode", cmd, false);
+        TCLAP::SwitchArg  UseTransformArg("","UseTransform","Use existing transformations", cmd, false);
 
 
-  if ( strcmp(transformFile,"") != 0 )
-  {
-    TransformReaderType::Pointer transformReader = TransformReaderType::New();
-    transformReader -> SetFileName( transformFile );
-    transformReader -> Update();
+        std::cout<<"Simulate Low resolution image with transformation "<<std::endl;
 
-    TransformListType transforms = transformReader->GetTransformList();
-    TransformReaderType::TransformListType::const_iterator titr = transforms->begin();
-    TransformType::Pointer trans = dynamic_cast< TransformType * >( titr->GetPointer() );
 
-    for(unsigned int j=0; j< trans -> GetNumberOfSlices(); j++)
-      resampler -> SetTransform(0, j, trans -> GetSliceTransform(j) ) ;
-  }
+        // Parse the argv array.
+        cmd.parse( argc, argv );
 
-  // Set reference image
+        inputFile = inputArg.getValue();
+        maskFile = maskArg.getValue();
+        refFile = refArg.getValue();
+        simFile = outArg.getValue();
+        transformFile = transArg.getValue();
 
-  ImageReaderType::Pointer refReader = ImageReaderType::New();
-  refReader -> SetFileName( refFile );
-  refReader -> Update();
+        float rotMax = rotArg.getValue();
+        float traMax = traArg.getValue();
 
-  resampler -> UseReferenceImageOn();
-  resampler -> SetReferenceImage( refReader -> GetOutput() );
+        unsigned int level = levelArg.getValue();
 
-  if ( boxcarSwitchArg.isSet() )
-    resampler -> SetPSF( ResamplerType::BOXCAR );
-  resampler -> CreateH();
+        bool UseTransforms = UseTransformArg.getValue();
+        bool verbose = VerboseArg.getValue();
 
-  // Write simulated image
 
-  WriterType::Pointer writer =  WriterType::New();
-  writer -> SetFileName( simFile );
-  writer -> SetInput( resampler -> GetSimulatedImage(0) );
+        ResamplerType::Pointer resampler = ResamplerType::New();
+        // Filter setup
 
-  if ( strcmp(simFile,"") != 0)
-  {
-    std::cout << "Writing " << simFile << " ... ";
-    writer -> Update();
-    std::cout << "done." << std::endl;
-  }
+        ImageType::IndexType  roiIndex;
+        ImageType::SizeType   roiSize;
 
-  } catch (TCLAP::ArgException &e)  // catch any exceptions
-  { std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; }
+        std::vector< ImageType::Pointer > inputImages;
+        std::vector< ImageType::Pointer > outputImages;
+        std::vector< ImageMaskType::Pointer > maskImages;
+        std::vector< TransformType::Pointer> transforms;
 
-  return EXIT_SUCCESS;
+        ImageType::Pointer refImage;
+
+
+
+
+        // Reading inputs
+        inputImages = btk::ImageHelper< ImageType >::ReadImage(inputFile);
+        maskImages = btk::ImageHelper< ImageMaskType >::ReadImage(maskFile);
+        refImage = btk::ImageHelper< ImageType >::ReadImage(refFile);
+
+        if(UseTransforms)
+        {
+          // Read transformation
+          transforms = btk::IOTransformHelper<TransformType>::ReadTransform(transformFile);
+        }
+        else
+        {
+            transforms.resize(inputImages.size());
+        }
+
+        for(unsigned int i =0; i< inputImages.size(); i++)
+        {
+            if(!UseTransforms)
+            {
+                //Random Slice by Slice transform Generator
+                btk::RandomSliceBySliceTransformGenerator::Pointer  randomTransformGenerator = btk::RandomSliceBySliceTransformGenerator::New();
+                randomTransformGenerator->SetImage(inputImages[i]);
+                randomTransformGenerator->SetMaxTranslation(traMax);
+                randomTransformGenerator->SetMaxRotation(rotMax);
+                randomTransformGenerator->SetLevel(level);
+                randomTransformGenerator->SetVerboseMode(verbose);
+                randomTransformGenerator->Update();
+                //transforms[i] = TransformType::New();
+                transforms[i] = randomTransformGenerator->GetTransform();
+            }
+
+
+
+            resampler->AddInput(inputImages[i]);
+
+            MaskType::Pointer mask = MaskType::New();
+            mask -> SetImage( maskImages[i] );
+
+            RegionType roi = mask -> GetAxisAlignedBoundingBoxRegion();
+            roiIndex = roi.GetIndex();
+            roiSize  = roi.GetSize();
+
+            RegionType imageRegion;
+            imageRegion.SetIndex(roiIndex);
+            imageRegion.SetSize (roiSize);
+
+            transforms[i]->SetImage(inputImages[i]);
+
+            resampler->SetTransform(i,transforms[i]);
+        }
+
+
+
+        // Set reference image
+
+
+        resampler -> SetReferenceImage( refImage );
+
+        //Process
+        resampler ->Update();
+
+        outputImages.resize(inputImages.size());
+
+        for(unsigned int i = 0; i< inputImages.size(); i++)
+        {
+            outputImages[i] = resampler->GetSimulatedImage(i);
+        }
+
+
+        btk::ImageHelper< ImageType >::WriteImage(outputImages,simFile);
+        if(!UseTransforms)
+        {
+            btk::IOTransformHelper< TransformType >::WriteTransform(transforms,transformFile);
+        }
+
+    }
+    catch (TCLAP::ArgException &e)  // catch any exceptions
+    {
+        std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;
+
+    }
+
+    return EXIT_SUCCESS;
 }
 

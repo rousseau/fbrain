@@ -37,19 +37,33 @@
 
 #include "btkNumerical.h"
 #include "btkLUDecomposition.h"
+#include "VNLSparseLUSolverTraits.h"
 
 namespace btk
 {
 //--------------------------------------------------------------------------------------------------
+/**
+ * @brief The RBF_fn struct
+ * @ingroup Reconstruction
+ */
 struct RBF_fn
 {
     virtual double rbf(double r) = 0;
 };
 //--------------------------------------------------------------------------------------------------
-struct RBF2_fn {
+/**
+ * @brief The RBF2_fn struct
+ * @ingroup Reconstruction
+ */
+struct RBF2_fn
+{
   virtual double rbf(const double *p1, const double *p2) = 0;
 };
 //--------------------------------------------------------------------------------------------------
+/**
+ * @brief The RBF_interp struct
+ *@ingroup Reconstruction
+ */
 struct RBF_interp
 {
     int dim, n;
@@ -116,11 +130,16 @@ struct RBF_interp
     //*******************************************************************************************
 };
 //--------------------------------------------------------------------------------------------------
+/**
+ * @brief The RBF2_interp struct
+ * @ingroup Reconstruction
+ */
 struct RBF2_interp
 {
     Int dim, n;
     const BtkMatrix<double> &pts;
     const BtkVector<double> &vals;
+    //vnl_vector< double > w;
     BtkVector<double> w;
     RBF2_fn &fn;
     Bool norm;
@@ -131,6 +150,8 @@ struct RBF2_interp
   {
     int i,j;
     double sum;
+//    vnl_sparse_matrix< double > rbf(n,n);
+//    vnl_vector< double > rhs(n);
     BtkMatrix<double> rbf(n,n);
     BtkVector<double> rhs(n);
 
@@ -140,15 +161,31 @@ struct RBF2_interp
       for (j=0;j<n;j++)
       {
         sum += (rbf[i][j] = fn.rbf(&pts[i][0],&pts[j][0]));
+        //sum += (rbf(i,j) = fn.rbf(&pts[i][0],&pts[j][0]));
+
+
 
       }
 
       if (norm)
+      {
           rhs[i] = sum*vals[i];
+          //rhs(i) = sum*vals[i];
+      }
 
       else
+      {
           rhs[i] = vals[i];
+          //rhs(i) = vals[i];
+      }
+
     }
+
+//    typedef VNLSparseLUSolverTraits<double> LUSolverType;
+//    LUSolverType * LUSolver  = new LUSolverType;
+//    LUSolver -> Solve(rbf,rhs,w);
+//    delete LUSolver;
+
     LUDecomposition lu(rbf);
     lu.solve(rhs,w);
   }
@@ -165,9 +202,12 @@ struct RBF2_interp
     {
       fval = fn.rbf(&pt[0],&pts[i][0]);
       sumw += w[i]*fval;
+      // sumw += w(i)*fval;
       sum += fval;
-    }
 
+    }
+//     std::cout<<"sum"<<sum<<std::endl;
+//     std::cout<<"sumw"<<sumw<<std::endl;
     return norm ? sumw/sum : sumw;
   }
 
@@ -179,9 +219,14 @@ struct RBF2_interp
             sum += SQR(p1[i]-p2[i]);
 
         return sqrt(sum);
+
     }
 };
 //--------------------------------------------------------------------------------------------------
+/**
+ * @brief The RBF_multiquadric struct
+ * @ingroup Reconstruction
+ */
 struct RBF_multiquadric : RBF_fn
 {
     double r02;
@@ -195,6 +240,10 @@ struct RBF_multiquadric : RBF_fn
     //*******************************************************************************************
 };
 //--------------------------------------------------------------------------------------------------
+/**
+ * @brief The RBF_thinplate struct
+ * @ingroup Reconstruction
+ */
 struct RBF_thinplate : RBF_fn
 {
     double r0;
@@ -208,6 +257,10 @@ struct RBF_thinplate : RBF_fn
     //*******************************************************************************************
 };
 //--------------------------------------------------------------------------------------------------
+/**
+ * @brief The RBF_gauss struct
+ * @ingroup Reconstruction
+ */
 struct RBF_gauss : RBF_fn
 {
     double r0;
@@ -221,6 +274,10 @@ struct RBF_gauss : RBF_fn
     //*******************************************************************************************
 };
 //--------------------------------------------------------------------------------------------------
+/**
+ * @brief The RBF2_gauss struct
+ * @ingroup Reconstruction
+ */
 struct RBF2_gauss : RBF2_fn
 {
   Doub r0_spa;
@@ -238,6 +295,7 @@ struct RBF2_gauss : RBF2_fn
 
     for (Int i=0;i<3;i++)
         r_spa += SQR(p1[i]-p2[i]);
+
 
     r_spa = sqrt( r_spa );
 
@@ -259,12 +317,17 @@ struct RBF2_gauss : RBF2_fn
       r_ang = 1;
     }
     r_ang = std::acos(abs( r_ang ));
-
-    return exp(-0.5*SQR(r_spa/r0_spa))*exp(-0.5*SQR(r_ang/r0_ang));
+    //std::cout<<r_spa<<" - "<<r_ang<<std::endl;
+    double value = exp(-0.5*SQR(r_spa/r0_spa))*exp(-0.5*SQR(r_ang/r0_ang));
+    return value;
   }
   //*******************************************************************************************
 };
 //--------------------------------------------------------------------------------------------------
+/**
+ * @brief The RBF_inversemultiquadric struct
+ * @ingroup Reconstruction
+ */
 struct RBF_inversemultiquadric : RBF_fn
 {
     double r02;
@@ -278,6 +341,10 @@ struct RBF_inversemultiquadric : RBF_fn
     //*******************************************************************************************
 };
 //--------------------------------------------------------------------------------------------------
+/**
+ * @brief The Shep_interp struct
+ * @ingroup Reconstruction
+ */
 struct Shep_interp
 {
     Int dim, n;

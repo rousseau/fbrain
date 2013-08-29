@@ -86,6 +86,16 @@ void DiffusionTensorReconstructionFilter::Update()
     btk::DiffusionSequence::RegionType          region = this->m_InputDiffusionSequence->GetLargestPossibleRegion();
     ExtractImageFilter::Pointer                extract = ExtractImageFilter::New();
 
+    if(gradientTable.size() != region.GetSize(3))
+    {
+        throw(std::string("There is a mismatch between the number of gradient directions and gradient images ! Cannot estimate tensors !"));
+    }
+
+    if(gradientTable.size() < 6)
+    {
+        throw(std::string("There are less than 6 gradient directions ! Cannot estimate tensors !"));
+    }
+
     // Get the reference image
     region.SetSize(3,0);
     extract->SetInput(this->m_InputDiffusionSequence);
@@ -139,8 +149,9 @@ void DiffusionTensorReconstructionFilter::Update()
     // ITK consider that there is only on b-value for the whole gradient table.
     this->SetBValue(this->m_InputDiffusionSequence->GetBValues()[1]);
 
-    // Needed until netlib/dsvdc.c has been fixed.
-    this->SetNumberOfThreads(1);
+    // WARNING: check if there is no more bugs with netlib/dsvdc.c
+//    // Needed until netlib/dsvdc.c has been fixed.
+//    this->SetNumberOfThreads(1);
 
     // Evaluate tensors
     Superclass::Update();

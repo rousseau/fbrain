@@ -48,7 +48,12 @@
 
 namespace btk
 {
-
+/**
+ *@class ResampleImagesToBiggestImageFilter
+ *@brief Resample images int space of the bigest one
+ *@author Julien Pontabry
+ *@ingroup ImageFilter
+ */
 template< class TImage >
 class ResampleImagesToBiggestImageFilter : public itk::ImageToImageFilter< TImage,TImage >
 {

@@ -32,7 +32,7 @@
 
 BTK stands for Baby Brain Toolkit. This toolkit is developed in the context of
 the Fbrain ERC project: ``Computational Anatomy of Fetal
-Brain''\footnote{http://lsiit-miv.u-strasbg.fr/miv/index.php?contenu=erc}. 
+Brain''\footnote{\url{http://icube-miv.unistra.fr/fr/index.php/ERC\_FBrain}}. 
 Studies about brain maturation aim at providing a better understanding of brain
 development and links between brain changes and cognitive development. Such
 studies are of great interest for diagnosis help and clinical course of
@@ -75,22 +75,16 @@ Any researcher reporting results using BTK should acknowledge this software by c
 
 \subsubsection{Dependencies}
 
-Baby Brain Toolkit (BTK) needs the following packages\footnote{BTK has been tested under Debian 5.0 and MacOSX 10.6.8}:
+Baby Brain Toolkit (BTK) needs the following packages\footnote{BTK has been tested under Debian 6.0.7 and MacOSX 10.8.3}:
 \begin{itemize}
- \item \href{http://www.cmake.org}{CMake}, \href{http://tclap.sourceforge.net}{Tclap}, \href{http://openmp.org}{OpenMP}, \href{http://www.vtk.org}{VTK}, \href{http://www.cs.umd.edu/\string~mount/ANN}{ANN} and \href{http://www.doxygen.org}{Doxygen}. These libraries can be installed using the following command line:
+ \item \href{http://www.cmake.org}{CMake}, \href{http://tclap.sourceforge.net}{Tclap}, \href{http://openmp.org}{OpenMP}, \href{http://www.cs.umd.edu/\string~mount/ANN}{ANN}, \href{http://www.doxygen.org}{Doxygen} and \href{http://git-scm.com/}{Git}. These libraries can be installed using the following command line:
  \begin{itemize}
- \item for debian-based distributions: \texttt{apt-get install cmake
-cmake-curses-gui libtclap-dev libgomp1 libvtk5-dev libann-dev doxygen}
- \item for MacOSX using macports\footnote{When configuring in cmake, please use /opt/local/include for TCLAP\_DIRECTORY}: \texttt{port install cmake tclap vtk5 libANN doxygen}
+ \item for debian-based distributions: \texttt{apt-get install build-essential libgl1-mesa-dev libxt-dev cmake cmake-curses-gui libtclap-dev libgomp1 libann-dev  doxygen git-core}
+ \item for MacOSX using macports\footnote{When configuring in cmake, please use /opt/local/include for TCLAP\_DIRECTORY}: \texttt{port install cmake tclap libANN doxygen git-core}
  \end{itemize}
- \item \href{http://git-scm.com/}{Git}: this library can be installed using the following command line :
+ \item \href{http://www.itk.org/ITK/resources/software.html}{Insight Toolkit (ITK) version 4.3.1}
  \begin{itemize}
- \item for debian-based distribution: \texttt{apt-get install git-core}
- \item for MacOSX using macports: \texttt{port install git-core}
- \end{itemize}
- \item \href{http://www.itk.org/ITK/resources/software.html}{Insight Toolkit (ITK) version 4}
- \begin{itemize}
- \item Download the tar.gz archive of ITK v4.0
+ \item Download the tar.gz archive of ITK v4.3.1
  \item Extract the archive 
  \item Then open a terminal and type :
  \end{itemize}
@@ -107,16 +101,40 @@ BUILD_TESTING = OFF
 CMAKE_BUILD_TYPE = Release
 ITK_USE_REVIEW = ON
 ITK_BUILD_ALL_MODULES = ON
-ITKV3_COMPATIBILITY = ON
 BUILD_DOCUMENTATION = OFF
 \end{verbatim}
 Then press \texttt{[c]} to configure and \texttt{[g]} to generate the make file.
 Finally, go to the build folder of ITK (ITK-build) and type \texttt{make} at the prompt to obtain the final build of ITK.
+   \item \href{http://www.vtk.org/VTK/resources/software.html#previous}{Visualization ToolKit (VTK) version 5.10.1 }\footnote{Please note that this version of VTK can be installed on Mac OSX using macports.}
+ \begin{itemize}
+ \item Download the tar.gz archive of VTK v5.10.1
+ \item Extract the archive 
+ \item Then open a terminal and type :
+ \end{itemize}
+\begin{verbatim}
+mkdir VTK-build
+cd VTK-build
+ccmake ../(your-VTK-Source-folder)/
+\end{verbatim}
+This will bring up the CMake configuration screen. Press \texttt{[c]} for
+configure and then use \texttt{[t]} to toggle the advanced mode. Make the
+following changes:
+\begin{verbatim}
+BUILD_TESTING = OFF
+BUILD_EXAMPLE = OFF
+CMAKE_BUILD_TYPE = Release
+VTK_USE_INFOVIS = ON
+VTK_USE_RENDERING = ON
+
+\end{verbatim}
+
+Then press \texttt{[c]} to configure and \texttt{[g]} to generate the make file.
+Finally, go to the build folder of VTK (VTK-build) and type \texttt{make} at the prompt to obtain the final build of VTK.
  \item \href{http://www.python.org/}{Python}, \href{http://numpy.scipy.org/}{Numpy} (Optional)
  These libraries can be installed using the following command line:
  \begin{itemize}
      \item for debian-based distributions: \texttt{apt-get install python python-numpy}
-     \item for MacOSX using *** TODO ***
+     \item for MacOSX, numpy can be easily installed using \href{http://fonnesbeck.github.com/ScipySuperpack/}{ScipySuperpack}.
  \end{itemize}
 \end{itemize}
 
@@ -124,13 +142,32 @@ Finally, go to the build folder of ITK (ITK-build) and type \texttt{make} at the
 \begin{itemize}
  \item Get the BTK sources: \texttt{git clone https://github.com/rousseau/fbrain.git }
  \item Then:
+\end{itemize}
 \begin{verbatim}
 mkdir fbrain-build
 cd fbrain-build
 ccmake ../fbrain
+\end{verbatim}
+Make the following changes on the CMake configuration screen :
+\begin{verbatim}
+ITK_DIR = (YOUR-ITK-BUILD-FOLDER)
+VTK_DIR = (YOUR-VTK-BUILD-FOLDER)
+CMAKE_BUILD_TYPE = Release
+\end{verbatim}
+then :
+\begin{verbatim}
 make
 \end{verbatim}
-\end{itemize}
+If you want generate the doxygen documentation the BUILD\_DOCUMENTATION option must be set to ON in CMake configuration :
+\begin{verbatim}
+ BUILD_DOCUMENTATION = ON
+\end{verbatim}
+Then for generating the documentation run :
+\begin{verbatim}
+ make doc
+\end{verbatim}
+
+
 
 Most of the programs of the BTK suite use the OpenMP library for multi-threading
 purpose\footnote{Please note that the current Apple compiler (llvm gcc 4.2.1) does not take into account OpenMP.}. The number of cores used can be tuned using the following command line
@@ -138,6 +175,7 @@ purpose\footnote{Please note that the current Apple compiler (llvm gcc 4.2.1) do
 \input{pipeline}
 \input{app}
 \input{utilities}
+\input{viewers}
 
 \section*{Acknowledgment}
 \small{The research leading to these results has received funding from the

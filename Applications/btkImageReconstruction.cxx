@@ -271,7 +271,7 @@ int main( int argc, char *argv[] )
 
   if ( boxSwitchArg.isSet() )
   {
-    intersectionCalculator -> Compute();
+    intersectionCalculator -> Update();
   }
 
   // Set roi according to the provided arguments
@@ -419,7 +419,6 @@ int main( int argc, char *argv[] )
 
         try
           {
-          //rigid3DRegistration[im] -> StartRegistration();// FIXME : in ITK4 StartRegistration() is replaced by Update()
           rigid3DRegistration[im]->Update();
           }
         catch( itk::ExceptionObject & err )

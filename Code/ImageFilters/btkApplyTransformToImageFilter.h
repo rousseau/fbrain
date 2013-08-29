@@ -39,57 +39,88 @@
 /* ITK */
 #include "itkObject.h"
 #include "itkImage.h"
-#include "itkResampleImageFilter.h"
+#include "itkLinearInterpolateImageFunction.h"
+#include "itkBSplineInterpolateImageFunction.h"
 #include "itkTransform.h"
 #include "itkMatrixOffsetTransformBase.h"
 #include "itkSmartPointer.h"
+#include "itkImageRegionIteratorWithIndex.h"
+#include "itkContinuousIndex.h"
+
 
 /* BTK */
 
 #include "btkMacro.h"
+#include "btkImageHelper.h"
 
 namespace btk
 {
+/**
+ * @class ApplyTransformToImageFilter
+ * @brief Class for apply a transformation to an image, templated on input and output image
+ * @author Marc Schweitzer
+ * @ingroup ImageFilters
+ */
 template <typename TImageIn, typename TImageOut>
 class ApplyTransformToImageFilter : public itk::Object
 {
 
-public:
-    typedef TImageIn itkImage;
-    typedef typename itkImage::Pointer itkImagePointer;
-    typedef TImageOut itkImageOut;
-    typedef typename itkImageOut::Pointer itkImageOutPointer;
-    typedef itk::Transform<double, 3,3> itkTransform;
-    typedef itk::ResampleImageFilter<itkImage,itkImageOut> Resampler;
+    public:
+        /** Typedefs */
+        typedef TImageIn itkImage;
+        typedef typename itkImage::Pointer itkImagePointer;
+        typedef TImageOut itkImageOut;
+        typedef typename itkImageOut::Pointer itkImageOutPointer;
+        typedef itk::Transform<double, 3,3> itkTransform;
+        typedef itk::LinearInterpolateImageFunction<itkImage> Interpolator;
+        typedef itk::ImageRegionIteratorWithIndex<itkImage> IteratorIn;
+        typedef itk::ImageRegionIteratorWithIndex<itkImageOut> IteratorOut;
+        typedef itk::ContinuousIndex<itkImage> ContinuousIndexIn;
+        typedef itk::ContinuousIndex<itkImageOut> ContinuousIndexOut;
 
-    typedef ApplyTransformToImageFilter Self;
-    typedef itk::SmartPointer<Self>         Pointer;
-    typedef itk::SmartPointer<const Self>     ConstPointer;
+        typedef ApplyTransformToImageFilter Self;
+        typedef itk::SmartPointer<Self>         Pointer;
+        typedef itk::SmartPointer<const Self>     ConstPointer;
 
-    /** Method for creation through the object factory. */
-    itkNewMacro(Self);
+        /** Method for creation through the object factory. */
+        itkNewMacro(Self);
+        /** Update Method */
+        virtual void Update();
+        /** Initialize Method to call before Update() */
+        virtual void Initialize();
 
-    virtual void Update();
-    virtual void Initialize();
+        /** Set/Get Input Image */
+        btkSetMacro(InputImage,itkImagePointer);
+        btkGetMacro(InputImage,itkImagePointer);
 
-    btkSetMacro(InputImage,itkImagePointer);
-    btkGetMacro(InputImage,itkImagePointer);
+        /** Set/Get Reference Image */
+        btkSetMacro(ReferenceImage, itkImagePointer);
+        btkGetMacro(ReferenceImage, itkImagePointer);
 
-    btkGetMacro(OutputImage,itkImageOut*);
+        /** Get Output Image (result of the filter) */
+        btkGetMacro(OutputImage,itkImageOutPointer);
+
+        /** Set Transform to Apply */
+        btkSetMacro(Transform, itkTransform*);
 
 
-    btkSetMacro(Transform, itkTransform*);
+    protected:
+        /** Constructor */
+        ApplyTransformToImageFilter();
+        /** Destructor */
+        virtual ~ApplyTransformToImageFilter();
+        /** Resample method, called by Update(),  it can throw an exception */
+        virtual void Resample() throw(itk::ExceptionObject &);
 
-
-protected:
-    ApplyTransformToImageFilter();
-    virtual ~ApplyTransformToImageFilter();
-
-private:
-    itkImagePointer m_InputImage;
-    itkImageOut* m_OutputImage;
-    itkTransform* m_Transform;
-    typename Resampler::Pointer m_Resampler;
+    private:
+        /** SmartPointer on Input Image */
+        itkImagePointer m_InputImage;
+        /** SmartPointer on Reference Image */
+        itkImagePointer m_ReferenceImage;
+        /** SmartPointer on Output Image */
+        itkImageOutPointer m_OutputImage;
+        /** Pointer to an itk::Transform */
+        itkTransform* m_Transform;
 
 
 
@@ -99,5 +130,4 @@ private:
 }
 
 #include "btkApplyTransformToImageFilter.txx"
-
-#endif // BTKWarpTRANSFORMTOIMAGEFILTER_H
+#endif // __BTK_APPLYTRANSFORMTOIMAGEFILTER_H__

@@ -80,17 +80,17 @@
   libraries can be installed using the following command line: 
   \begin{itemize}
   \item for debian-based distributions: \texttt{apt-get install cmake
-  cmake-curses-gui libtclap-dev libgomp1 libvtk5-dev libann-dev doxygen}
-  \item for MacOSX using macports\footnote{When configuring in cmake, please use /opt/local/include for TCLAP\_DIRECTORY}: \texttt{port install cmake tclap vtk5 libANN doxygen}
+  cmake-curses-gui libtclap-dev libgomp1 libann-dev doxygen}
+  \item for MacOSX using macports\footnote{When configuring in cmake, please use /opt/local/include for TCLAP\_DIRECTORY}: \texttt{port install cmake tclap libANN doxygen}
   \end{itemize}
   \item Install Git: this library can be installed using the following command line : 
   \begin{itemize}
   \item for debian-based distribution: \texttt{apt-get install git-core}
   \item for MacOSX using macports: \texttt{port install git-core}
   \end{itemize}
-  \item \href{http://www.itk.org/ITK/resources/software.html}{Insight Toolkit (ITK) version 4}
+  \item \href{http://www.itk.org/ITK/resources/software.html}{Insight Toolkit (ITK) version 4.3.1}
   \begin{itemize}
-  \item Download the tar.gz archive of ITK v4.0
+  \item Download the tar.gz archive of ITK v4.3.1
   \item Extract the archive 
   \item Then open a terminal and type :
   \end{itemize}
@@ -104,14 +104,43 @@
   following changes:
   \begin{verbatim}
   BUILD_TESTING = OFF
-  CMAKE_BUILD_TYPE = Release
   ITK_USE_REVIEW = ON
   ITK_BUILD_ALL_MODULES = ON
   ITKV3_COMPATIBILITY = ON
   BUILD_DOCUMENTATION = OFF
+  CMAKE_BUILD_TYPE = Release
+  \end{verbatim}
+  Or for debugging and development purpose :
+  \begin{verbatim}
+  CMAKE_BUILD_TYPE = Debug
+
   \end{verbatim}
   Then press \texttt{[c]} to configure and \texttt{[g]} to generate the make file.
   Finally, go to the build folder of ITK (ITK-build) and type \texttt{make} at the prompt to obtain the final build of ITK.
+   \item \href{http://www.vtk.org/VTK/resources/software.html#previous}{Visualization ToolKit (VTK) version 5.10.1 }
+ \begin{itemize}
+ \item Download the tar.gz archive of VTK v5.10.1
+ \item Extract the archive 
+ \item Then open a terminal and type :
+ \end{itemize}
+  \begin{verbatim}
+  mkdir VTK-build
+  cd VTK-build
+  ccmake ../(your-VTK-Source-folder)/
+  \end{verbatim}
+  This will bring up the CMake configuration screen. Press \texttt{[c]} for
+  configure and then use \texttt{[t]} to toggle the advanced mode. Make the
+  following changes:
+  \begin{verbatim}
+  BUILD_TESTING = OFF
+  BUILD_EXAMPLE = OFF
+  CMAKE_BUILD_TYPE = Release
+  \end{verbatim}
+  Or for debugging and developement purpose :
+  \begin{verbatim}
+  CMAKE_BUILD_TYPE = Debug
+
+\end{verbatim}
 
   \end{itemize}
 
@@ -135,7 +164,29 @@
   mkdir fbrain-build
   cd fbrain-build
   ccmake ../fbrain
+  \end{verbatim}
+  Make the following changes on the CMake configuration screen :
+  \begin{verbatim}
+  ITK_DIR = (YOUR-ITK-BUILD-FOLDER)
+  VTK_DIR = (YOUR-VTK-BUILD-FOLDER)
+  CMAKE_BUILD_TYPE = Release
+  \end{verbatim}
+  Or for debugging and developement purpose :
+  \begin{verbatim}
+  CMAKE_BUILD_TYPE = Debug
+  \end{verbatim}
+  then :
+  \begin{verbatim}
   make
+  \end{verbatim}
+
+  If you want generate the doxygen documentation the BUILD\_DOCUMENTATION option must be set to ON in CMake configuration :
+  \begin{verbatim}
+  BUILD_DOCUMENTATION = ON
+  \end{verbatim}
+  Then for generating the documentation run :
+  \begin{verbatim}
+  make doc
   \end{verbatim}
 
   \end{itemize}

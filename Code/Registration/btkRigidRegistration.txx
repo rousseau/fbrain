@@ -4,6 +4,7 @@
 
   Date: 12/11/2010
   Author(s): Estanislao Oubel (oubel@unistra.fr)
+             Marc Schweitzer (marc.schweitzer(at)unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -47,10 +48,10 @@ namespace btk
 template < typename ImageType >
 RigidRegistration<ImageType>::RigidRegistration()
 {
-  m_Iterations = 200;
-  m_EnableObserver = false;
-  m_FixedImageMask = 0;
-  m_MovingImageMask = 0;
+  Superclass::m_Iterations = 200;
+  Superclass::m_EnableObserver = false;
+  Superclass::m_FixedImageMask = 0;
+  Superclass::m_MovingImageMask = 0;
 
   m_InitializeWithTransform = false;
   m_InitializeWithMask = false;
@@ -65,19 +66,21 @@ RigidRegistration<ImageType>::RigidRegistration()
 template < typename ImageType >
 void
 RigidRegistration<ImageType>
-::Initialize() throw (ExceptionObject)
+::Initialize() throw (itk::ExceptionObject)
 {
-
-
   // Configure transform
-  m_Transform = TransformType::New();
+  Superclass::m_Transform = RigidTransformType::New();
+
+  Superclass::m_Interpolator = InterpolatorType::New();
+  Superclass::m_Metric = MetricType::New();
+  Superclass::m_Optimizer = OptimizerType::New();
 
   if (m_InitializeWithMask)
   {
 
     TransformInitializerType::Pointer initializer = TransformInitializerType::New();
 
-    initializer -> SetTransform( m_Transform );
+    initializer -> SetTransform( dynamic_cast<RigidTransformType*>(Superclass::m_Transform.GetPointer()));
 
     // TODO Perhaps here I could add methods to set masks (as spatial objects)
     // and then recover images by using the GetImage() method.
@@ -89,8 +92,8 @@ RigidRegistration<ImageType>
 
   } else if (m_InitializeWithTransform)
     {
-      m_Transform -> SetParameters( this -> GetInitialTransformParameters() );
-      m_Transform -> SetCenter( this -> GetTransformCenter() );
+      Superclass::m_Transform -> SetParameters( this -> GetInitialTransformParameters() );
+      dynamic_cast<RigidTransformType*>(Superclass::m_Transform.GetPointer())-> SetCenter( this -> GetTransformCenter() );
     } else
       {
 
@@ -106,45 +109,41 @@ RigidRegistration<ImageType>
 
         this -> GetFixedImage() -> TransformIndexToPhysicalPoint(centerIndex, rotationCenter);
 
-        m_Transform -> SetIdentity();
-        m_Transform -> SetCenter( rotationCenter );
+        dynamic_cast<RigidTransformType*>(Superclass::m_Transform.GetPointer())-> SetIdentity();
+        dynamic_cast<RigidTransformType*>(Superclass::m_Transform.GetPointer())-> SetCenter( rotationCenter );
 
       }
 
-  this -> SetInitialTransformParameters( m_Transform -> GetParameters() );
+  this -> SetInitialTransformParameters( Superclass::m_Transform -> GetParameters() );
 
 
 
-  m_Interpolator = InterpolatorType::New();
-  m_Metric = MetricType::New();
-  m_Optimizer = OptimizerType::New();
 
   // Configure metric
-  if (m_FixedImageMask)
+  if (Superclass::m_FixedImageMask)
   {
-    m_FixedMask = MaskType::New();
-    m_FixedMask -> SetImage( this -> GetFixedImageMask() );
-    m_Metric -> SetFixedImageMask( m_FixedMask );
+    Superclass::m_FixedMask = MaskType::New();
+    Superclass::m_FixedMask -> SetImage( this -> GetFixedImageMask() );
+    Superclass::m_Metric -> SetFixedImageMask( Superclass::m_FixedMask );
   }
 
   // FIXME Uncomment if MI is used instead of NC
-  m_Metric -> SetNumberOfHistogramBins( 64 );
-  m_Metric -> UseAllPixelsOn();
-  m_Metric -> SetNumberOfSpatialSamples(0.5*this -> GetFixedImageRegion().GetNumberOfPixels());
+  //m_Metric -> SetNumberOfHistogramBins( 64 );
+  //m_Metric -> UseAllPixelsOn();
+  Superclass::m_Metric -> SetNumberOfSpatialSamples(0.5*this -> GetFixedImageRegion().GetNumberOfPixels());
 
 
-  if(std::string(m_Transform->GetNameOfClass()) == "Euler3DTransform")
+  if(std::string(Superclass::m_Transform->GetNameOfClass()) == "Euler3DTransform")
   {
       // Configure optimizer
 
-      m_Optimizer->MinimizeOn();
-      //m_Optimizer->MaximizeOn();
-      m_Optimizer->SetMaximumStepLength( 0.1 );
-      m_Optimizer->SetMinimumStepLength( 0.001 );
-      m_Optimizer->SetNumberOfIterations( m_Iterations );
-      m_Optimizer->SetRelaxationFactor( 0.8 );
+      Superclass::m_Optimizer->MinimizeOn();
+      Superclass::m_Optimizer->SetMaximumStepLength( 0.1 );
+      Superclass::m_Optimizer->SetMinimumStepLength( 0.001 );
+      Superclass::m_Optimizer->SetNumberOfIterations( Superclass::m_Iterations );
+      Superclass::m_Optimizer->SetRelaxationFactor( 0.8 );
 
-      OptimizerScalesType optimizerScales( m_Transform -> GetNumberOfParameters() );
+      OptimizerScalesType optimizerScales( Superclass::m_Transform -> GetNumberOfParameters() );
 
       optimizerScales[0] =  1.0;
       optimizerScales[1] =  1.0;
@@ -152,54 +151,54 @@ RigidRegistration<ImageType>
       optimizerScales[3] =  1.0/100.0;
       optimizerScales[4] =  1.0/100.0;
       optimizerScales[5] =  1.0/100.0;
-      m_Optimizer->SetScales( optimizerScales );
+      Superclass::m_Optimizer->SetScales( optimizerScales );
   }
-  else if(std::string(m_Transform->GetNameOfClass()) == "AffineTransform")
-  {
-      m_Optimizer->MinimizeOn();
-      m_Optimizer->SetMaximumStepLength( 0.2 );
-      m_Optimizer->SetMinimumStepLength( 0.0001 );
-      m_Optimizer->SetNumberOfIterations( m_Iterations );
-      m_Optimizer->SetGradientMagnitudeTolerance(0.00001);
+//  else if(std::string(Superclass::m_Transform->GetNameOfClass()) == "AffineTransform")
+//  {
+//      Superclass::m_Optimizer->MinimizeOn();
+//      Superclass::m_Optimizer->SetMaximumStepLength( 0.2 );
+//      Superclass::m_Optimizer->SetMinimumStepLength( 0.0001 );
+//      Superclass::m_Optimizer->SetNumberOfIterations( Superclass::m_Iterations );
+//      Superclass::m_Optimizer->SetGradientMagnitudeTolerance(0.00001);
 
-      OptimizerScalesType optimizerScales( m_Transform->GetNumberOfParameters() );
+//      OptimizerScalesType optimizerScales( Superclass::m_Transform->GetNumberOfParameters() );
 
-      optimizerScales[0] =  1.0;
-      optimizerScales[1] =  1.0;
-      optimizerScales[2] =  1.0;
-      optimizerScales[3] =  1.0;
-      optimizerScales[4] =  1.0;
-      optimizerScales[5] =  1.0;
-      optimizerScales[6] =  1.0;
-      optimizerScales[7] =  1.0;
-      optimizerScales[8] =  1.0;
-      optimizerScales[9] =  1/1000.0;
-      optimizerScales[10] =  1/1000.0;
-      optimizerScales[11] =  1/1000.0;
-      m_Optimizer->SetScales( optimizerScales );
+//      optimizerScales[0] =  1.0;
+//      optimizerScales[1] =  1.0;
+//      optimizerScales[2] =  1.0;
+//      optimizerScales[3] =  1.0;
+//      optimizerScales[4] =  1.0;
+//      optimizerScales[5] =  1.0;
+//      optimizerScales[6] =  1.0;
+//      optimizerScales[7] =  1.0;
+//      optimizerScales[8] =  1.0;
+//      optimizerScales[9] =  1/1000.0;
+//      optimizerScales[10] =  1/1000.0;
+//      optimizerScales[11] =  1/1000.0;
+//      Superclass::m_Optimizer->SetScales( optimizerScales );
 
 
-  }
+//  }
   else
   {
-      throw(std::string("Wrong type of Transform ! Only Euler3D and Affine transform are accepted."));
+      throw(std::string("Wrong type of Transform ! Only Euler3D are accepted."));
   }
 
 
-  m_Observer = CommandIterationUpdate::New();
+  Superclass::m_Observer = CommandIterationUpdate::New();
 
-  if (m_EnableObserver)
+  if (Superclass::m_EnableObserver)
   {
-    m_Optimizer -> AddObserver( itk::IterationEvent(), m_Observer );
+    Superclass::m_Optimizer -> AddObserver( itk::IterationEvent(), Superclass::m_Observer );
   }
 
 
 
   // Connect components
-  this->SetTransform( this -> m_Transform );
-  this->SetMetric( this -> m_Metric );
-  this->SetOptimizer( this -> m_Optimizer );
-  this->SetInterpolator( this -> m_Interpolator );
+  this->SetTransform( Superclass::m_Transform );
+  this->SetMetric( Superclass::m_Metric );
+  this->SetOptimizer( Superclass::m_Optimizer );
+  this->SetInterpolator( Superclass::m_Interpolator );
 
 
   Superclass::Initialize();
@@ -212,7 +211,7 @@ RigidRegistration<ImageType>
 template < typename ImageType >
 void
 RigidRegistration<ImageType>
-::PrintSelf(std::ostream& os, Indent indent) const
+::PrintSelf(std::ostream& os, itk::Indent indent) const
 {
   Superclass::PrintSelf( os, indent );
 }

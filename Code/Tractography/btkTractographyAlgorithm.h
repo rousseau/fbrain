@@ -45,6 +45,7 @@
 #include "itkProcessObject.h"
 #include "itkImage.h"
 #include "itkPoint.h"
+#include "itkFastMutexLock.h"
 
 // VTK includes
 #include "vtkSmartPointer.h"
@@ -52,7 +53,7 @@
 
 // Local includes
 #include "btkMacro.h"
-#include "btkDiffusionSequence.h"
+#include "btkDiffusionSignal.h"
 #include "btkDiffusionModel.h"
 
 namespace btk
@@ -71,14 +72,14 @@ class TractographyAlgorithm : public itk::ProcessObject
         typedef itk::SmartPointer< Self >       Pointer;
         typedef itk::SmartPointer< const Self > ConstPointer;
 
-        typedef itk::Image< short,3 > MaskImage;
-        typedef itk::Image< short,3 > LabelImage;
-        typedef itk::Point< float,3 > PhysicalPoint;
+        typedef itk::Image< short,3 >  MaskImage;
+        typedef itk::Image< short,3 >  LabelImage;
+        typedef itk::Point< double,3 > PhysicalPoint;
 
         itkTypeMacro(TractographyAlgorithm,itk::ProcessObject);
 
-        btkSetMacro(DiffusionSequence, btk::DiffusionSequence::Pointer);
-        btkGetMacro(DiffusionSequence, btk::DiffusionSequence::Pointer);
+        btkSetMacro(DiffusionSignal, btk::DiffusionSignal::Pointer);
+        btkGetMacro(DiffusionSignal, btk::DiffusionSignal::Pointer);
 
         btkSetMacro(DiffusionModel, btk::DiffusionModel::Pointer);
         btkGetMacro(DiffusionModel, btk::DiffusionModel::Pointer);
@@ -101,9 +102,8 @@ class TractographyAlgorithm : public itk::ProcessObject
         virtual void Update();
 
         /**
-         * @brief Accessor to output estimated fibers
-         * @param label Label corresponding to fibers
-         * @return Estimated fibers which seeds have label label.
+         * @brief Accessor to output estimated fibers.
+         * @return Estimated fibers for each label.
          */
         virtual std::vector< vtkSmartPointer< vtkAppendPolyData > > GetOutputFiber() const;
 
@@ -126,16 +126,37 @@ class TractographyAlgorithm : public itk::ProcessObject
         virtual void ResampleLabelImage();
 
         /**
+         * @brief Initialize the filter.
+         */
+        virtual void Initialize();
+
+        /**
+         * @brief Split the requested region of the label image (for parallel processing).
+         */
+        virtual unsigned int SplitRequestedRegion(unsigned int i, unsigned int num, LabelImage::RegionType &splitRegion);
+
+        /**
+         * @brief Callback routine used by the threading library.
+         */
+        static ITK_THREAD_RETURN_TYPE ThreaderCallback(void *arg);
+
+        /**
+         * @brief The execute method for each thread.
+         */
+        virtual void ThreadedGenerateData(const LabelImage::RegionType &region, itk::ThreadIdType threadId);
+
+        /**
          * @brief Propagate using the tractography algorithm at a seed point.
          * @param point Seed point.
+         * @return Fiber path estimate of the current seed.
          */
-        virtual void PropagateSeed(Self::PhysicalPoint point) = 0;
+        virtual vtkSmartPointer< vtkPolyData > PropagateSeed(Self::PhysicalPoint point) = 0;
 
     protected:
         /**
          * @brief Diffusion sequence used as measured observations in algorithm.
          */
-        btk::DiffusionSequence::Pointer m_DiffusionSequence;
+        btk::DiffusionSignal::Pointer m_DiffusionSignal;
 
         /**
          * @brief Diffusion modeling used in algorithm.
@@ -148,9 +169,12 @@ class TractographyAlgorithm : public itk::ProcessObject
         Self::MaskImage::Pointer m_Mask;
 
         /**
-         * @brief Space memory for current fiber under construction.
+         * @brief Internal structure used for passing image data into the threading library.
          */
-        vtkSmartPointer< vtkPolyData > m_CurrentFiber;
+        struct ThreadStruct
+        {
+            Self::Pointer Filter;
+        };
 
     private:
         /**
@@ -177,6 +201,11 @@ class TractographyAlgorithm : public itk::ProcessObject
          * @brief Indices of labels corresponding to output solutions.
          */
         std::vector< int > m_OutputIndicesOfLabels;
+
+        /**
+         * @brief Progress step corresponding to how amount is added to the progress bar for each seed.
+         */
+        double m_ProgressStep;
 };
 
 } // namespace btk

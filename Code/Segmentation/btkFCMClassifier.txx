@@ -303,26 +303,26 @@ namespace btk
 	template< typename TGreyImage, typename TLabelImage, typename TFuzzyImage>
 	void FCMClassifier<TGreyImage, TLabelImage, TFuzzyImage>::SetGreyImage(const TGreyImage* image)
 	{
-		SetNthInput(0, const_cast<TGreyImage*>(image));
+        this->SetNthInput(0, const_cast<TGreyImage*>(image));
 	}
 	
 	template< typename TGreyImage, typename TLabelImage, typename TFuzzyImage>
 	void FCMClassifier<TGreyImage, TLabelImage, TFuzzyImage>::SetMaskImage(const TLabelImage* mask)
 	{
-		SetNthInput(1, const_cast<TLabelImage*>(mask));
+        this->SetNthInput(1, const_cast<TLabelImage*>(mask));
 	}
 	
 	template< typename TGreyImage, typename TLabelImage, typename TFuzzyImage>
 	typename TGreyImage::Pointer FCMClassifier<TGreyImage, TLabelImage, TFuzzyImage>::GetGreyImage()
 	{
-		return static_cast< const TGreyImage * >
+        return static_cast< TGreyImage * >
 		( this->itk::ProcessObject::GetInput(0) );
 	}
 	
 	template< typename TGreyImage, typename TLabelImage, typename TFuzzyImage>
 	typename TLabelImage::Pointer FCMClassifier<TGreyImage, TLabelImage, TFuzzyImage>::GetMaskImage()
 	{
-		return static_cast< const TLabelImage * >
+        return static_cast< TLabelImage * >
 		( this->itk::ProcessObject::GetInput(1) );
 	}
 }

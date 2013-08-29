@@ -31,22 +31,6 @@ The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-B license and that you accept its terms.
 */
 
-  //Principle of the algorithm: apply a midway histogram equalization to all input images 
-  //See these papers: 
-  //Cox et al. Dynamic histogram warping of image pairs for constant image brightness, ICIP 1995
-  //Delon, Midway Image Equalization, Journal of Mathematical Imaging and Vision (JMIV), vol.21, no.2, pp.119-134, 2004.
-  
-  //Algorithm:
-  //Rescale all images between 0 and 1
-  //Compute the histograms of each image
-  //Compute the cumulative distribution functions (cdf) H_i
-  //Compute the inverse cdf
-  //Average all the inverse cdf 
-  //Inverse this mean inverse cdf (called H_new)
-  //Inverse H_new
-  //Apply to all images H_new^-1 o H_i
-  
-  
 #ifndef btkMidwayImageEqualization_H
 #define btkMidwayImageEqualization_H
 
@@ -66,24 +50,58 @@ knowledge of the CeCILL-B license and that you accept its terms.
  
 namespace btk
 {
+/**
+ *@class MidwayImageEqualization
+ *@brief   Principle of the algorithm: apply a midway histogram equalization to all input images
+  See these papers:
+  Cox et al. Dynamic histogram warping of image pairs for constant image brightness, ICIP 1995
+  Delon, Midway Image Equalization, Journal of Mathematical Imaging and Vision (JMIV), vol.21, no.2, pp.119-134, 2004.
 
+  Algorithm:
+  Rescale all images between 0 and 1
+  Compute the histograms of each image
+  Compute the cumulative distribution functions (cdf) H_i
+  Compute the inverse cdf
+  Average all the inverse cdf
+  Inverse this mean inverse cdf (called H_new)
+  Inverse H_new
+  Apply to all images H_new^-1 o H_i
+
+ *@author François Rousseau
+ *@ingroup ImageFilter
+ */
 template <typename TPixelType>
 class MidwayImageEqualization
 {
 
 public:
-  
+  /** Typedefs */
   typedef typename itk::Image< TPixelType, 3> itkTImage;
   typedef typename itkTImage::Pointer itkTPointer;
   typedef typename itk::ImageDuplicator< itkTImage > itkTDuplicator;
   typedef typename itk::ImageRegionIterator< itkTImage > itkTIterator;
 
 
-  
+  /** Set NUmber of Bins */
   void SetNumberOfBins(unsigned int n);
+  /** Set Sample Quantification */
   void SetSampleQuantification(unsigned int n);
   //TODO: "Do" is not a very explicit function name, change for Update and a OverRide of Update for the reference !
+  /**
+   * @brief Do
+   * @param inputImages
+   * @param maskImages
+   * @param outputImages
+   */
   void Do(std::vector<itkTPointer> inputImages, std::vector<itkTPointer> maskImages, std::vector<itkTPointer> outputImages);
+  /**
+   * @brief DoWithReference
+   * @param inputImages
+   * @param refImages
+   * @param maskImages
+   * @param maskRefImages
+   * @param outputImages
+   */
   void DoWithReference(std::vector<itkTPointer> inputImages, std::vector<itkTPointer> refImages, std::vector<itkTPointer> maskImages, std::vector<itkTPointer> maskRefImages, std::vector<itkTPointer> outputImages);
 
 private:

@@ -52,8 +52,11 @@
 
 namespace btk
 {
-using namespace std;
 
+using namespace std;
+/**
+  * @brief This file contain some usefull numerical functions
+  */
 //----------------------------------------------------------------------------------------------
 template<class T>
 inline T SQR(const T _a)
@@ -118,32 +121,37 @@ inline void SWAP(T &_a, T &_b)
 }
 //----------------------------------------------------------------------------------------------
 //TODO: Create a file and a class for btkError
+//FIXME : Compilations errors when include btkNumerical and do a throw !!
 
-#ifndef _USEBTKERRORCLASS_
-#define throw(message) \
-{printf("ERROR: %s\n     in file %s at line %d\n", message,__FILE__,__LINE__); throw(1);}
-#else
-struct BtkError
-{
-    char *message;
-    char *file;
-    int line;
-    BtkError(char *m, char *f, int l) : message(m), file(f), line(l) {}
-};
-#define throw(message) throw(BtkError(message,__FILE__,__LINE__));
-void BtkCatch(BtkError err)
-{
-    printf("ERROR: %s\n     in file %s at line %d\n",
-        err.message, err.file, err.line);
-    exit(1);
-}
-#endif
+//#ifndef _USEBTKERRORCLASS_
+//#define throw(message) \
+//{printf("ERROR: %s\n     in file %s at line %d\n", message,__FILE__,__LINE__); throw(1);}
+//#else
+//struct BtkError
+//{
+//    char *message;
+//    char *file;
+//    int line;
+//    BtkError(char *m, char *f, int l) : message(m), file(f), line(l) {}
+//};
+//#define throw(message) throw(BtkError(message,__FILE__,__LINE__));
+//void BtkCatch(BtkError err)
+//{
+//    printf("ERROR: %s\n     in file %s at line %d\n",
+//        err.message, err.file, err.line);
+//    exit(1);
+//}
+//#endif
 //----------------------------------------------------------------------------------------------
 #ifdef _USESTDVECTOR_
 #define BtkVector vector
 #else
 //----------------------------------------------------------------------------------------------
 template <class T>
+/**
+ * @brief The BtkVector class
+ * @ingroup Reconstruction
+ */
 class BtkVector
 {
 public:
@@ -278,6 +286,10 @@ BtkVector<T>::~BtkVector()
 
 #endif //ifdef _USESTDVECTOR_
 //----------------------------------------------------------------------------------------------
+/**
+ * @brief btkMatrix
+ *@ingroup Reconstruction
+ */
 template <class T>
 class BtkMatrix
 {
@@ -500,6 +512,10 @@ BtkMatrix<T>::~BtkMatrix()
 }
 //----------------------------------------------------------------------------------------------
 template <class T>
+/**
+ * @brief The BtkMat3D class
+ * @ingroup Reconstruction
+ */
 class BtkMat3D
 {
 

@@ -61,83 +61,27 @@ ModalityDataPath  = 'DataPath'
 IsTissueMap       = 'IsTissueMap'
 TissueLabel       = 'TissueLabel'
 
-# T2 modality
-T2Image = 'T2'
-modalities[T2Image] = {}
-modalities[T2Image][UseInRegistration] = True
-modalities[T2Image][UseInRegression]   = True
-modalities[T2Image][ModalityWeight]    = 1
-modalities[T2Image][ModalityDataPath]  = dataPath + '/T2'
-modalities[T2Image][IsTissueMap]       = False
-modalities[T2Image][TissueLabel]       = 0
+## There you can put all the modalities you need, following the example below.
 
-# GM modality
-GMImage = 'GM'
-modalities[GMImage] = {}
-modalities[GMImage][UseInRegistration] = True
-modalities[GMImage][UseInRegression]   = True
-modalities[GMImage][ModalityWeight]    = 1
-modalities[GMImage][ModalityDataPath]  = dataPath + '/GM'
-modalities[GMImage][IsTissueMap]       = True
-modalities[GMImage][TissueLabel]       = 1
+## Modality example
+# ModalityImage = 'ModalityID'                                            # Identifier of the modality
+# modalities[ModalityImage] = {}                                          # Initialization
+# modalities[ModalityImage][UseInRegistration] = True                     # Is the modality used during registration ?
+# modalities[ModalityImage][UseInRegression]   = True                     # Is the modality used during regression ?
+# modalities[ModalityImage][ModalityWeight]    = 1                        # The weight of the modality (normalized after)
+# modalities[ModalityImage][ModalityDataPath]  = dataPath + '/ModalityID' # The path to modality
+# modalities[ModalityImage][IsTissueMap]       = False                    # Is the modality a label
+# modalities[ModalityImage][TissueLabel]       = 0                        # If the modality is a label, which number in tissue map ?
 
-# WM modality
-WMImage = 'WM'
-modalities[WMImage] = {}
-modalities[WMImage][UseInRegistration] = True
-modalities[WMImage][UseInRegression]   = True
-modalities[WMImage][ModalityWeight]    = 1
-modalities[WMImage][ModalityDataPath]  = dataPath + '/WM'
-modalities[WMImage][IsTissueMap]       = True
-modalities[WMImage][TissueLabel]       = 2
-
-# Cervelet modality
-CerveletImage = 'Cervelet'
-modalities[CerveletImage] = {}
-modalities[CerveletImage][UseInRegistration] = True
-modalities[CerveletImage][UseInRegression]   = True
-modalities[CerveletImage][ModalityWeight]    = 1
-modalities[CerveletImage][ModalityDataPath]  = dataPath + '/Cervelet'
-modalities[CerveletImage][IsTissueMap]       = True
-modalities[CerveletImage][TissueLabel]       = 3
-
-# Brainstem modality
-BrainstemImage = 'Brainstem'
-modalities[BrainstemImage] = {}
-modalities[BrainstemImage][UseInRegistration] = True
-modalities[BrainstemImage][UseInRegression]   = True
-modalities[BrainstemImage][ModalityWeight]    = 1
-modalities[BrainstemImage][ModalityDataPath]  = dataPath + '/Brainstem'
-modalities[BrainstemImage][IsTissueMap]       = True
-modalities[BrainstemImage][TissueLabel]       = 4
-
-# CSF modality
-CSFImage = 'CSF'
-modalities[CSFImage] = {}
-modalities[CSFImage][UseInRegistration] = False
-modalities[CSFImage][UseInRegression]   = True
-modalities[CSFImage][ModalityWeight]    = 0
-modalities[CSFImage][ModalityDataPath]  = dataPath + '/CSF'
-modalities[CSFImage][IsTissueMap]       = True
-modalities[CSFImage][TissueLabel]       = 5
-
-# Other modality
-OtherImage = 'Other'
-modalities[OtherImage] = {}
-modalities[OtherImage][UseInRegistration] = False
-modalities[OtherImage][UseInRegression]   = True
-modalities[OtherImage][ModalityWeight]    = 0
-modalities[OtherImage][ModalityDataPath]  = dataPath + '/Other'
-modalities[OtherImage][IsTissueMap]       = True
-modalities[OtherImage][TissueLabel]       = 0
 
 
 #############################################################################
 #                               Patients                                    #
 #############################################################################
 
+## There you can fill the patients information, following the example below.
+
 # patients = [ ('Identifier1', age1), ('Identifier2', age2), ... , ('IdentifierN', ageN) ]
-patients = [ ('ARS_Hu', 33), ('AYD_Na', 28), ('BAL_In', 32.5), ('BER_Sl', 30), ('BLA_El', 32), ('CHA_Sa', 28), ('DAH_Au', 30), ('DER_An', 26), ('ELO_Ha', 28), ('ESC_Mi', 34), ('FRE_St', 28), ('HER_Au', 32), ('HIE_Au', 28), ('KOG_Fa', 29), ('KRA_Na', 32), ('LIP_La', 33), ('MAG_Ai', 30), ('NEF_Dr', 32), ('RYC_Ca', 27), ('STR_Re', 31), ('TAB_Ar_01', 27), ('TAB_Ar_02', 30), ('TRO_Sa', 32) ]
 
 
 
@@ -146,7 +90,7 @@ patients = [ ('ARS_Hu', 33), ('AYD_Na', 28), ('BAL_In', 32.5), ('BER_Sl', 30), (
 #############################################################################
 
 # Reference patient for template creation
-patientReference = 'KOG_Fa'
+patientReference = 'Identifier1'
 
 # Working directory of template creation
 templatePath = outputPath + '/template'
@@ -186,6 +130,8 @@ BinarizeMaps         = 'btkBinarizeTissueProbabilityMaps'
 InverseField         = 'btkInverseDisplacementField'
 CropUsingMask        = 'btkCropImageUsingMask'
 HistogramMatching    = 'btkHistogramMatching'
+ComputeDistAffine    = 'btkComputeDistanceBetweenAffineTransforms'
+ComputeDistImage     = 'btkComputeDistanceBetweenImages'
 
 AntsBinaryDir    = ''
 ANTS             = 'ANTS'

@@ -38,12 +38,14 @@
 #include "itkImage.h"
 #include "itkResampleImageFilter.h"
 #include "itkAffineTransform.h"
+#include "itkMatrixOffsetTransformBase.h"
 #include "itkNearestNeighborInterpolateImageFunction.h"
 #include "itkContinuousIndex.h"
 #include "itkImageRegionConstIteratorWithIndex.h"
 
 /* BTK */
 #include "btkImageHelper.h"
+#include "btkIOTransformHelper.h"
 
 /* OTHERS */
 #include "iostream"
@@ -60,7 +62,7 @@ int main(int argc, char * argv[])
     typedef itk::Image<short, Dimension>                      Image;
     typedef Image::IndexType                         IndexType;
     typedef itk::ResampleImageFilter<Image,Image>             FilterType;
-    typedef itk::AffineTransform< double, Dimension >         TransformType;
+    typedef itk::MatrixOffsetTransformBase< double, Dimension >         TransformType;
     typedef itk::ImageRegionConstIteratorWithIndex< Image >   ConstIteratorType;
 
     //TCLAP Commands for arguments
@@ -105,25 +107,46 @@ int main(int argc, char * argv[])
         ref_size=refImage->GetLargestPossibleRegion().GetSize();
 
         // Calculate center of reference image in voxel coordinates
-        itk::ContinuousIndex< double,Dimension > center_ref,read_point,barycentre;
+        itk::ContinuousIndex< double,Dimension > read_point,barycentre, barycentre_ref;
 
-        for (int i=0;i<=2;i++)
+        // Calculate barycenter of reference image
+        ConstIteratorType It_ref( refImage, refImage->GetLargestPossibleRegion());
+        double x_mean,y_mean,z_mean;
+        x_mean = y_mean = z_mean = 0.0;
+        int number_of_points= 0;
+
+        for ( It_ref.GoToBegin(); !It_ref.IsAtEnd(); ++It_ref)
         {
-            center_ref[i]=(double)ref_size[i]/2.0;
+            read_point=It_ref.GetIndex();
+            if (It_ref.Get() > 0)
+            {
+                x_mean=x_mean+read_point[0];
+                y_mean=y_mean+read_point[1];
+                z_mean=z_mean+read_point[2];
+                ++number_of_points;
+            }
         }
+
+        x_mean=x_mean/number_of_points;
+        y_mean=y_mean/number_of_points;
+        z_mean=z_mean/number_of_points;
+
+        barycentre_ref[0]=x_mean;
+        barycentre_ref[1]=y_mean;
+        barycentre_ref[2]=z_mean;
+
 
 
         // Calculate barycenter of input image
         ConstIteratorType It( image, image->GetLargestPossibleRegion());
-        std::cout<<"Processing the barycenter of "<<inputFileImage<<std::flush;
-        double x_mean,y_mean,z_mean;
-        x_mean = y_mean = z_mean = 0;
-        int number_of_points=0;
+        std::cout<<"Processing the barycenter of "<<inputFileImage<<std::endl;
+        x_mean = y_mean = z_mean = 0.0;
+        number_of_points=0;
 
         for ( It.GoToBegin(); !It.IsAtEnd(); ++It)
         {
             read_point=It.GetIndex();
-            if (It.Get()!=0)
+            if (It.Get() > 0)
             {
                 x_mean=x_mean+read_point[0];
                 y_mean=y_mean+read_point[1];
@@ -145,16 +168,18 @@ int main(int argc, char * argv[])
         image->TransformContinuousIndexToPhysicalPoint(barycentre,pi);
 
         Image::PointType pr;
-        refImage->TransformContinuousIndexToPhysicalPoint(center_ref,pr);
+        refImage->TransformContinuousIndexToPhysicalPoint(barycentre_ref,pr);
 
         std::cout<<"Apply translation..."<<std::flush;
         // Processing Translation
         FilterType::Pointer filter = FilterType::New();
         TransformType::Pointer transform = TransformType::New();
+        transform->SetIdentity();
 
         TransformType::OutputVectorType translation;
         translation=pi-pr;
-        transform->Translate( translation );
+        std::cout<<"Barycenter : "<<pi<<std::endl;
+        transform->SetOffset( translation );
 
         //std::cout<<transform;
 
@@ -170,13 +195,7 @@ int main(int argc, char * argv[])
 
         btk::ImageHelper<Image>::WriteImage(filter->GetOutput() ,outputFileImage);
 
-        // Write Transform file
-        //TODO: If We Set a itk::AffineTransform<double, 3> with a identity and we set translation to the SetOffset function we should have the same result
-        translationFile.open(translationFileName.c_str(), std::ios::out);
-        translationFile <<"Transform : MatrixOffsetTransformBase_double_3_3" << std::endl;
-        translationFile <<"Parameters: 1 0 0 0 1 0 0 0 1 "<<translation[0]<<" " << translation[1]<<" "<<translation[2]<< std::endl;
-        translationFile <<"FixedParameters: 0 0 0" << std::endl;
-        translationFile.close();
+        btk::IOTransformHelper<TransformType>::WriteTransform(transform,translationFileName);
 
     }
     catch(itk::ExceptionObject &error)

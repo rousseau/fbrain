@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
         TCLAP::MultiArg< float >              weightsArg("w", "weight", "Image weight (default: 1/N)", false, "string", cmd);
         TCLAP::ValueArg< std::string > outputFileNameArg("o", "output", "Output image filename (default: \"out.nii.gz\")", false, "out.nii.gz", "string", cmd);
 
-        TCLAP::SwitchArg  noNormalizationArg("", "no_normalization", "Desactivate the normalization of the weights (default: false)", cmd);
+        TCLAP::SwitchArg  noNormalizationArg("", "no_normalization", "Desactivate the normalization of the weights (default: false -> meaning that there is a normalization of weights)", cmd, false);
     
         // Parse the args.
         cmd.parse(argc, argv);

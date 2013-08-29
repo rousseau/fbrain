@@ -1,105 +1,109 @@
-/*
-Copyright or © or Copr. Université de Strasbourg - Centre National de la Recherche Scientifique
+/*==========================================================================
 
-15 june 2010
-< pontabry at unistra dot fr >
+  © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-This software is governed by the CeCILL-B license under French law and
-abiding by the rules of distribution of free software. You can use,
-modify and/ or redistribute the software under the terms of the CeCILL-B
-license as circulated by CEA, CNRS and INRIA at the following URL
-"http://www.cecill.info".
+  Date: 07/03/2013
+  Author(s): Julien Pontabry (pontabry@unistra.fr)
 
-As a counterpart to the access to the source code and rights to copy,
-modify and redistribute granted by the license, users are provided only
-with a limited warranty and the software's author, the holder of the
-economic rights, and the successive licensors have only limited
-liability.
+  This software is governed by the CeCILL-B license under French law and
+  abiding by the rules of distribution of free software.  You can  use,
+  modify and/ or redistribute the software under the terms of the CeCILL-B
+  license as circulated by CEA, CNRS and INRIA at the following URL
+  "http://www.cecill.info".
 
-In this respect, the user's attention is drawn to the risks associated
-with loading, using, modifying and/or developing or reproducing the
-software by the user in light of its specific status of free software,
-that may mean that it is complicated to manipulate, and that also
-therefore means that it is reserved for developers and experienced
-professionals having in-depth computer knowledge. Users are therefore
-encouraged to load and test the software's suitability as regards their
-requirements in conditions enabling the security of their systems and/or
-data to be ensured and, more generally, to use and operate it in the
-same conditions as regards security.
+  As a counterpart to the access to the source code and  rights to copy,
+  modify and redistribute granted by the license, users are provided only
+  with a limited warranty  and the software's author,  the holder of the
+  economic rights,  and the successive licensors  have only  limited
+  liability.
 
-The fact that you are presently reading this means that you have had
-knowledge of the CeCILL-B license and that you accept its terms.
-*/
+  In this respect, the user's attention is drawn to the risks associated
+  with loading,  using,  modifying and/or developing or reproducing the
+  software by the user in light of its specific status of free software,
+  that may mean  that it is complicated to manipulate,  and  that  also
+  therefore means  that it is reserved for developers  and  experienced
+  professionals having in-depth computer knowledge. Users are therefore
+  encouraged to load and test the software's suitability as regards their
+  requirements in conditions enabling the security of their systems and/or
+  data to be ensured and,  more generally, to use and operate it in the
+  same conditions as regards security.
 
+  The fact that you are presently reading this means that you have had
+  knowledge of the CeCILL-B license and that you accept its terms.
 
-#ifndef BTK_LIKELIHOODDENSITY_H
-#define BTK_LIKELIHOODDENSITY_H
+==========================================================================*/
 
-    // STL includes
-    #include "vector"
-    #include "string"
+#ifndef BTK_LIKELIHOOD_DENSITY_H
+#define BTK_LIKELIHOOD_DENSITY_H
 
-    // Local includes
-    #include "btkTypes.h"
-    #include "btkPoint.h"
-    #include "btkDirection.h"
-    #include "btkSHModel.h"
-    #include "btkSignal.h"
+// ITK incluudes
+#include "itkPoint.h"
 
+// Local includes
+#include "btkGradientDirection.h"
+#include "btkDiffusionModel.h"
+#include "btkDiffusionSignal.h"
 
-    namespace btk
-    {
+namespace btk
+{
 
-    /**
-     * @class LikelihoodDensity
-     * @brief Likelihood density
-     * @author Julien Pontabry
-     * @ingroup Tractography
-     * Likelihood density for particle filter (using MRI data and associated Q-ball HS model)
-     */
-    class LikelihoodDensity
-    {
-        public:
-            /**
-             * @brief Constructor
-             * Build likelihood density with normal density, MRI data and associated Q-ball HS model
-             * @param d Normal density
-             * @param signal Signal data
-             * @param model Q-ball HS model
-             */
-            LikelihoodDensity(Signal *signal, SHModel *model);
+/**
+ * @brief Likelihood density for particle filtering.
+ * @author Julien Pontabry
+ * @ingroup Tractography
+ */
+class LikelihoodDensity
+{
+    public:
+        typedef itk::Point< double,3 > PhysicalPoint;
 
-            /**
-             * @brief Compute density
-             * Compute density with given point, current vector and mean direction
-             * @param uk Direction we want to compute probability
-             * @param xk Point in euclidian space
-             * @param mean Mean direction
-             * @return Likelihood probability
-             */
-            Real compute(Direction uk, Point xk, Direction mean);
+        /**
+         * @brief Constructor.
+         */
+        LikelihoodDensity();
 
-        private:
-            /**
-             * @brief Compute a normal density
-             * @param sigma Standard deviation of the normal density
-             * @param x Variable of the normal density
-             * @return Value of the normal density N(x | 0,sigma)
-             */
-			Real computeNormalDensity(Real sigma, Real x);
+        /**
+         * @brief Constructor.
+         * @param signal Diffusion signal.
+         * @param model Diffusion model.
+         */
+        LikelihoodDensity(DiffusionSignal::Pointer signal, DiffusionModel::Pointer model);
 
+        /**
+         * @brief Evaluate the likelihood probability density.
+         * @param vk Direction vector to evaluate.
+         * @param pk Location in the volume.
+         * @param mu Mean direction for simulation.
+         * @return The value of the likelihood function at pk, in direction vk with a given mean.
+         */
+        double Evaluate(GradientDirection vk, PhysicalPoint xk, GradientDirection mu);
 
-        private:
-            Signal  *m_signal;     /**< Signal data */
-            SHModel *m_model;      /**< Q-ball HS model */
+    private:
+        /**
+         * @brief Evaluate the logarithm of the normal centered probability density.
+         * @param sigma Standard deviation of the probability.
+         * @param x Point of evaluation
+         * @return The value of the distribution in x.
+         */
+        inline double EvaluateNormalCenteredLogDensity(double sigma, double x);
 
-            std::vector<Direction> *m_directions;    /**< Gradients directions */
-            std::vector<Real>      *m_sigmas;        /**< noise's standard deviations */
+    private:
+        /**
+         * @brief Diffusion model.
+         */
+        DiffusionModel::Pointer m_Model;
 
-			Real m_logSqrt2PI;  /**< Precomputed constant */
-    };
+        /**
+         * @brief Diffusion signal.
+         */
+        DiffusionSignal::Pointer m_Signal;
 
-    } // namespace btk
+        /**
+         * @brief Precomputed constant.
+         */
+        static const double m_logSqrt2Pi = 0.918938533204673;
+};
 
-#endif /* BTK_LIKELIHOODDENSITY_H */
+} // namespace btk
 
+#endif // BTK_LIKELIHOOD_DENSITY_H

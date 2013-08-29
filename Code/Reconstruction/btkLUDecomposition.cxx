@@ -17,21 +17,34 @@ LUDecomposition::LUDecomposition(BtkMatrix<double> &a) : n(a.nrows()), lu(a), ar
         big=0.0;
 
         for (j=0;j<n;j++)
-            if ((temp=abs(lu[i][j])) > big)
+        {
+            if ((temp=(std::abs(lu[i][j])) > big))
+            {
                 big=temp;
+            }
+
+        }
+
 
         if (big == 0.0)
+        {
             throw("Singular matrix in LUdcmp");
+            std::cout<<"Singular matrix in LUdcmp"<<std::endl;
+            exit(-1);
+        }
 
         vv[i]=1.0/big;
+
     }
+
 
     for (k=0;k<n;k++)
     {
         big=0.0;
         for (i=k;i<n;i++)
         {
-            temp=vv[i]*abs(lu[i][k]);
+            temp=vv[i]*(std::abs(lu[i][k]));
+
 
             if (temp > big)
             {
@@ -47,6 +60,7 @@ LUDecomposition::LUDecomposition(BtkMatrix<double> &a) : n(a.nrows()), lu(a), ar
                 temp=lu[imax][j];
                 lu[imax][j]=lu[k][j];
                 lu[k][j]=temp;
+
             }
 
             d = -d;
@@ -103,6 +117,7 @@ void LUDecomposition::solve(BtkVector<double> &b, BtkVector<double> &x)
         x[i]=sum/lu[i][i];
     }
 }
+
 //----------------------------------------------------------------------------------------
 void LUDecomposition::solve(BtkMatrix<double> &b, BtkMatrix<double> &x)
 {

@@ -45,10 +45,11 @@
 namespace btk
 {
 /**
- * Helper class for Reading and Writing Transforms
+ * @class IOTransformHelper
+ * @brief Helper class for Reading and Writing Transforms
  * This Class is templated over Transform Type, it is used only for reading (the read class while be cast into Templated argument)
  * @author Marc Schweitzer
- *
+ * @ingroup Tools
  */
 template <class TTransform /*= itk::Transform<double, 3 >*/ >
 class IOTransformHelper
@@ -87,7 +88,7 @@ public :
      * @param A pointer to the transform
      * @param The name of the transform file
      */
-    static void WriteTransform(TransformPointerType transform, std::string fileName );
+    static void WriteTransform(TransformPointerType transform, const std::string fileName );
     /**
      * @brief Write a array of transforms
      * @param A array of pointer of transform

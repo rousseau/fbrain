@@ -188,7 +188,7 @@ int main(int argc, char** argv)
       duplicator->SetInputImage( inputImages[i] );
       duplicator->Update();
       biasImages[i] = duplicator->GetOutput();
-      biasImages[i]->FillBuffer(1);
+      biasImages[i]->FillBuffer(1.0);
       
       std::cout<<"Compute the differential bias\n";
       for(unsigned int k=0;k<numberOfImages-1;k++){
@@ -213,7 +213,9 @@ int main(int argc, char** argv)
       itkIterator itBias(biasImages[i],biasImages[i]->GetLargestPossibleRegion());
       for(itBias.GoToBegin(); !itBias.IsAtEnd(); ++itBias)
         itBias.Set( pow(itBias.Get(),p) );
+
       
+
         
       std::cout<<"Compute the output image\n";
       itkDivideFilter::Pointer divide = itkDivideFilter::New();

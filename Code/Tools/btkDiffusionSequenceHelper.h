@@ -46,8 +46,10 @@
 namespace btk
 {
     /**
-     * Helper class for diffusion sequence management (read, write and create operations)
+     * @class DiffusionSequenceHelper
+     * @brief Helper class for diffusion sequence management (read, write and create operations)
      * @author Julien Pontabry
+     * @ingroup Tools
      */
     class DiffusionSequenceHelper
     {

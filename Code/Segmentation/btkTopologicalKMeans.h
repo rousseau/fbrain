@@ -47,8 +47,10 @@ knowledge of the CeCILL-B license and that you accept its terms.
 namespace btk
 {
 	/**
-	* FCM class for fuzzy classification
+    * @class TopologicalKMeans
+    * @brief Topological K Means
 	* @author Benoit Caldairou
+    * @ingroup Segmentation
 	*/
 	
 	template <class TInputImage, class TLabelImage>

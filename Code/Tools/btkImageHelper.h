@@ -50,12 +50,16 @@
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkNumericTraits.h"
+#include "itkVector.h"
+#include "itkCastImageFilter.h"
 
 namespace btk
 {
     /**
-     * Helper class for image management (read, write and create operations)
+     * @class ImageHelper
+     * @brief Helper class for image management (read, write and create operations)
      * @author Marc Schweitzer, Julien Pontabry
+     * @ingroup Tools
      */
     template < class TImageInput, class TImageOutput=TImageInput >
     class ImageHelper
@@ -71,6 +75,8 @@ namespace btk
              * @brief Image writer type.
              */
             typedef itk::ImageFileWriter< TImageInput > ImageWriter;
+
+            typedef itk::CastImageFilter< TImageInput, TImageOutput> CastImageFilter;
 
 
             /**
@@ -114,7 +120,23 @@ namespace btk
              * @param defaultValue Default value of pixel in new image.
              * @return New image in the same physical space.
              */
-            static typename TImageOutput::Pointer CreateNewImageFromPhysicalSpaceOf(typename TImageInput::ConstPointer image, typename TImageOutput::PixelType defaultValue=itk::NumericTraits< typename TImageOutput::PixelType >::ZeroValue());
+            static typename TImageOutput::Pointer CreateNewImageFromPhysicalSpaceOf(typename TImageInput::Pointer image, typename TImageOutput::PixelType defaultValue=itk::NumericTraits< typename TImageOutput::PixelType >::ZeroValue());
+
+            /**
+             * @brief Create a new image in the same physical space of a current image.
+             * @param image Image of which physical space will be used for creation.
+             * @param defaultValue Default value of pixel in new image.
+             * @return New image in the same physical space.
+             */
+            static typename TImageOutput::Pointer CreateNewImageFromPhysicalSpaceOfConst(typename TImageInput::ConstPointer image, typename TImageOutput::PixelType defaultValue=itk::NumericTraits< typename TImageOutput::PixelType >::ZeroValue());
+
+            /**
+             * @brief Create new images in the same physical space of current images.
+             * @param images Vector of images of which physical space will be used for creation.
+             * @param defaultValue Default value of pixel in new image.
+             * @return Vector of new images in the same physical space.
+             */
+            static std::vector< typename TImageOutput::Pointer > &CreateNewImageFromPhysicalSpaceOfConst(std::vector< typename TImageInput::ConstPointer > &images, typename TImageOutput::PixelType defaultValue=itk::NumericTraits< typename TImageOutput::PixelType >::ZeroValue());
 
             /**
              * @brief Create new images in the same physical space of current images.
@@ -130,7 +152,7 @@ namespace btk
              * @param secondImage Second Image.
              * @return True if the two images are in the same physical space, false otherwise.
              */
-            static bool IsInSamePhysicalSpace(typename TImageInput::Pointer firstImage, typename TImageInput::Pointer secondImage, double epsilon = 10e-7);
+            static bool IsInSamePhysicalSpace(typename TImageInput::Pointer firstImage, typename TImageOutput::Pointer secondImage, double epsilon = 10e-7);
 
             /**
              * @brief Test if images are in the same physical space.
@@ -155,6 +177,32 @@ namespace btk
              * @return A deep copy of the image parameter.
              */
             static typename TImageOutput::Pointer DeepCopy(typename TImageInput::ConstPointer image);
+
+            /**
+             * @brief Check if two images are orthogonals
+             * @param two image pointers
+             * @return A boolean, true if they are orthogonal, false if not.
+             */
+
+            static bool AreOrthos(typename TImageInput::Pointer image1, typename TImageInput::Pointer image2, float threshold = 0.5);
+
+            /**
+             * @brief Cast image in another type (TInputImage into TOutputImage)
+             * @param An Image Pointer (TInputImage)
+             * @return A Pointer to a TOutputImage.
+             *
+             */
+
+            static typename TImageOutput::Pointer CastImage(typename TImageInput::Pointer image);
+
+            /**
+             * @brief Cast a vector of images in another type (TInputImage into TOutputImage)
+             * @param A vector of Image Pointer (TInputImage)
+             * @return A vector of TOutputImage::Pointer.
+             *
+             */
+
+            static  std::vector< typename TImageOutput::Pointer > &CastImage(std::vector< typename TImageInput::Pointer > &images);
     };
 
 } // namespace btk

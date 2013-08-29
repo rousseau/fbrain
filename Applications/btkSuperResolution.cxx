@@ -222,7 +222,7 @@ int main( int argc, char *argv[] )
     myTool.ComputeOutput();
     
     ImagePointer outputImage = ImageType::New();
-    myTool.GetOutput(outputImage);
+    outputImage = myTool.GetOutput();
 
     resampler -> SetReferenceImage( outputImage );
     resampler -> Update();
@@ -237,7 +237,7 @@ int main( int argc, char *argv[] )
     myTool.ComputeOutput();
     
     ImagePointer outputImage = ImageType::New();
-    myTool.GetOutput(outputImage);
+    outputImage = myTool.GetOutput();
         
     resampler -> SetReferenceImage( outputImage );    
   }

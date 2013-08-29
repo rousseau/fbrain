@@ -43,7 +43,7 @@
 namespace btk
 {
 
-GradientDirection::GradientDirection(float x, float y, float z)
+GradientDirection::GradientDirection(double x, double y, double z)
 {
     (*this)[0] = x;
     (*this)[1] = y;
@@ -54,14 +54,26 @@ GradientDirection::GradientDirection(float x, float y, float z)
 
 //----------------------------------------------------------------------------------------
 
+GradientDirection::GradientDirection(const Superclass &d)
+{
+    (*this)[0] = d[0];
+    (*this)[1] = d[1];
+    (*this)[2] = d[2];
+
+    this->UpdateSphericalCoordinates();
+}
+
+//----------------------------------------------------------------------------------------
+
 GradientDirection::GradientDirection()
 {
+    // NOTE : this seems not working
     Self::Self(0,0,0);
 }
 
 //----------------------------------------------------------------------------------------
 
-GradientDirection::GradientDirection(float theta, float phi) : m_SphericalDirection(theta, phi, 1.0f)
+GradientDirection::GradientDirection(double theta, double phi) : m_SphericalDirection(theta, phi, 1.0f)
 {
     Self::UpdateCartesianCoordinates();
 }
@@ -124,6 +136,13 @@ void GradientDirection::UpdateSphericalCoordinates()
     }
 
     this->m_SphericalDirection = btk::SphericalDirection(theta, phi, rau);
+}
+
+//----------------------------------------------------------------------------------------
+
+bool GradientDirection::IsNull() const
+{
+    return ( (*this)[0] == 0 && (*this)[1] == 0 && (*this)[2] == 0 );
 }
 
 } // namespace btk

@@ -25,7 +25,7 @@ SliceBySliceRigidRegistration<ImageType>
 template < typename ImageType >
 void
 SliceBySliceRigidRegistration<ImageType>
-::Initialize() throw (ExceptionObject)
+::Initialize() throw (itk::ExceptionObject)
 {
   // Configure registration
 
@@ -144,7 +144,7 @@ SliceBySliceRigidRegistration<ImageType>
 template < typename ImageType >
 void
 SliceBySliceRigidRegistration<ImageType>
-::PrintSelf(std::ostream& os, Indent indent) const
+::PrintSelf(std::ostream& os, itk::Indent indent) const
 {
   Superclass::PrintSelf( os, indent );
 }

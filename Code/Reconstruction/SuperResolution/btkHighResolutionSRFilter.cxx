@@ -217,7 +217,7 @@ void HighResolutionSRFilter::DoAffineReconstruction()
       m_NlmTools->ComputeOutput();
 
       itkImage::Pointer outputImage = itkImage::New();
-      m_NlmTools->GetOutput(outputImage);
+      outputImage = m_NlmTools->GetOutput();
 
       resampler -> SetReferenceImage( outputImage );
       resampler -> Update();
@@ -232,7 +232,7 @@ void HighResolutionSRFilter::DoAffineReconstruction()
       m_NlmTools->ComputeOutput();
 
       itkImage::Pointer outputImage = itkImage::New();
-      m_NlmTools->GetOutput(outputImage);
+      outputImage = m_NlmTools->GetOutput();
 
       resampler -> SetReferenceImage( outputImage );
     }
@@ -321,7 +321,7 @@ void HighResolutionSRFilter::DoRigidReconstruction()
       m_NlmTools->ComputeOutput();
 
       itkImage::Pointer outputImage = itkImage::New();
-      m_NlmTools->GetOutput(outputImage);
+      outputImage = m_NlmTools->GetOutput();
 
       resampler -> SetReferenceImage( outputImage );
       resampler -> Update();
@@ -336,7 +336,7 @@ void HighResolutionSRFilter::DoRigidReconstruction()
       m_NlmTools->ComputeOutput();
 
       itkImage::Pointer outputImage = itkImage::New();
-      m_NlmTools->GetOutput(outputImage);
+      outputImage = m_NlmTools->GetOutput();
 
       resampler -> SetReferenceImage( outputImage );
     }

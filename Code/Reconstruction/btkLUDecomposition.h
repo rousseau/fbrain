@@ -2,8 +2,9 @@
 
   © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-  Date: 14/05/2012
+  Date: 14/05/2012 modified 04/06/2013
   Author(s): Marc Schweitzer (marc.schweitzer(at)unistra.fr)
+             Frederic Champ  (champ(at)unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -39,6 +40,12 @@
 
 namespace btk
 {
+/**
+ * @class LUDecomposition
+ * @brief The LUDecomposition class
+ * @author Marc Schweitzer, Frederic Champ
+ * @ingroup Reconstruction
+ */
 class LUDecomposition
 {
 public:

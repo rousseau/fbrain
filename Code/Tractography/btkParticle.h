@@ -1,204 +1,200 @@
-/*
-Copyright or © or Copr. Université de Strasbourg - Centre National de la Recherche Scientifique
+/*==========================================================================
 
-31 march 2010
-< pontabry at unistra dot fr >
+  © Université de Strasbourg - Centre National de la Recherche Scientifique
 
-This software is governed by the CeCILL-B license under French law and
-abiding by the rules of distribution of free software. You can use,
-modify and/ or redistribute the software under the terms of the CeCILL-B
-license as circulated by CEA, CNRS and INRIA at the following URL
-"http://www.cecill.info".
+  Date: 07/03/2013
+  Author(s): Julien Pontabry (pontabry@unistra.fr)
 
-As a counterpart to the access to the source code and rights to copy,
-modify and redistribute granted by the license, users are provided only
-with a limited warranty and the software's author, the holder of the
-economic rights, and the successive licensors have only limited
-liability.
+  This software is governed by the CeCILL-B license under French law and
+  abiding by the rules of distribution of free software.  You can  use,
+  modify and/ or redistribute the software under the terms of the CeCILL-B
+  license as circulated by CEA, CNRS and INRIA at the following URL
+  "http://www.cecill.info".
 
-In this respect, the user's attention is drawn to the risks associated
-with loading, using, modifying and/or developing or reproducing the
-software by the user in light of its specific status of free software,
-that may mean that it is complicated to manipulate, and that also
-therefore means that it is reserved for developers and experienced
-professionals having in-depth computer knowledge. Users are therefore
-encouraged to load and test the software's suitability as regards their
-requirements in conditions enabling the security of their systems and/or
-data to be ensured and, more generally, to use and operate it in the
-same conditions as regards security.
+  As a counterpart to the access to the source code and  rights to copy,
+  modify and redistribute granted by the license, users are provided only
+  with a limited warranty  and the software's author,  the holder of the
+  economic rights,  and the successive licensors  have only  limited
+  liability.
 
-The fact that you are presently reading this means that you have had
-knowledge of the CeCILL-B license and that you accept its terms.
-*/
+  In this respect, the user's attention is drawn to the risks associated
+  with loading,  using,  modifying and/or developing or reproducing the
+  software by the user in light of its specific status of free software,
+  that may mean  that it is complicated to manipulate,  and  that  also
+  therefore means  that it is reserved for developers  and  experienced
+  professionals having in-depth computer knowledge. Users are therefore
+  encouraged to load and test the software's suitability as regards their
+  requirements in conditions enabling the security of their systems and/or
+  data to be ensured and,  more generally, to use and operate it in the
+  same conditions as regards security.
+
+  The fact that you are presently reading this means that you have had
+  knowledge of the CeCILL-B license and that you accept its terms.
+
+==========================================================================*/
 
 #ifndef BTK_PARTICLE_H
 #define BTK_PARTICLE_H
 
-    // STL includes
-    #include "vector"
-    #include "ostream"
+// STL includes
+#include "vector"
 
-    // Local includes
-    #include "btkTypes.h"
-    #include "btkPoint.h"
-    #include "btkVector.h"
+// ITK includes
+#include "itkPoint.h"
 
+// Local includes
+#include "btkGradientDirection.h"
 
-    namespace btk
-    {
+namespace btk
+{
+
+/**
+ * @brief Particle of particle filtering.
+ * @author Julien Pontabry
+ * @ingroup Tractography
+ */
+class Particle
+{
+    public:
+        typedef Particle         Self;
+        typedef itk::LightObject Superclass;
+
+        typedef itk::Point< double,3 > PhysicalPoint;
 
         /**
-         * @class Particle
-         * @brief Particle of particle filter
-         * @author Julien Pontabry
-         * @ingroup Tractography
+         * @brief Constructor.
          */
-        class Particle
-        {
-            public:
-                /**
-                 * @brief Constructor
-                 * @param p Point where the particle starts
-                 */
-                Particle(Point p);
+        Particle();
 
-                /**
-                 * @brief Set the weight of the particle
-                 * @param w Weight
-                 */
-                void setWeight(Real w);
+        /**
+         * @brief Copy constructor.
+         * @param p Particle to copy.
+         */
+        Particle(const Self &p);
 
-                /**
-                 * @brief Add vector to particle's vector path and move it
-                 * @param v Vector
-                 * @param mask Image mask
-                 * @return 0 if p is out of the mask, 1 if p is in the mask and 2 if p is in the exclusion mask
-                 */
-                char addToPath(Vector v, Mask::Pointer mask);
+        /**
+         * @brief Contructor with initialization to first point.
+         * @param p First point of the particle's path.
+         */
+        Particle(PhysicalPoint p);
 
-                /**
-                 * @brief Get particle's weight
-                 * @return Weight of the particle
-                 */
-                Real   weight() const;
+        /**
+         * @brief Get the last point of the particle's path.
+         * @return Last point of the particle's path.
+         */
+        PhysicalPoint GetLastPoint() const;
 
-                /**
-                 * @brief Set particle's last weight
-                 * @param w Weight to set
-                 */
-                 void SetLastWeight(Real w);
+        /**
+         * @brief Get the last direction of the particle's path.
+         * @return Last direction of the particle's path.
+         */
+        GradientDirection GetLastDirection() const;
 
-                /**
-                 * @brief Get last point of the particle
-                 * @return Last particle's point
-                 */
-                Point  lastPoint() const;
+        /**
+         * @brief Get the last weight of the particle.
+         * @return Last weight of the particle.
+         */
+        double GetLastWeight() const;
 
-                /**
-                 * @brief Set last position of the particle
-                 * @param p Point to set
-                 */
-                 void SetLastPoint(Point p);
+        /**
+         * @brief Test if particle is active (if propagation has not been stopped).
+         * @return True if the particle is active, false otherwise.
+         */
+        bool IsActive() const;
 
-                /**
-                 * @brief Get last vector of the particle
-                 * @return Last particle's vector
-                 */
-                Vector lastVector() const;
+        /**
+         * @brief Add displacement to path.
+         * @param v Displacement vector at this step.
+         * @param p Position of the particle after displacement.
+         * @param w Weight of the the particle at this step.
+         */
+        void AddToPath(GradientDirection v, PhysicalPoint p, double w);
 
-                /**
-                 * @brief Set last displacement vector of the particle
-                 * @param v Vector to set
-                 */
-                 void SetLastVector(Vector v);
+        /**
+         * @brief Desactivate the particle (stop its propagation).
+         */
+        void Desactivate();
 
-                /**
-                 * @brief Get a point on path
-                 * @param i Number of the point on the path
-                 * @return Point on particle's path
-                 */
-                Point  getPoint(unsigned int i) const;
+        /**
+         * @brief Get the position of the particle at step i.
+         * @param i Step of the particle
+         * @return Point representing position of the particle at given step.
+         */
+        PhysicalPoint GetPointAtStep(unsigned int i) const;
 
-                /**
-                 * @brief Get a vector on path
-                 * @param i Number of the vector on the path
-                 * @return Vector on particle's path
-                 */
-                Vector getVector(unsigned int i) const;
+        /**
+         * @brief Get the weight of the particle at step i.
+         * @param i Step of the particle.
+         * @return Weight of the particle at the given step.
+         */
+        double GetWeightAtStep(unsigned int i) const;
 
-                /**
-                 * @brief Get the weight on path
-                 * @param i Number of the weight on the path
-                 * @return Weight on particle's path
-                 */
-                Real getWeight(unsigned int i) const;
+        /**
+         * @brief Get the length of the path.
+         * @return The number of points of the particle's path.
+         */
+        unsigned int GetPathLength() const;
 
-                /**
-                 * @brief Add log likelihood to path
-                 * @param likelihood Log likelihood value
-                 */
-                 void addLikelihood(Real likelihood);
+        /**
+         * @brief Get displacement vector of the particle at step i.
+         * @param i Step of the particle.
+         * @return Displacement vector of the particle at given step.
+         */
+        GradientDirection GetVectorAtStep(unsigned int i) const;
 
-                /**
-                 * @brief Get the computed log likelihood on path
-                 * @param k Step number on the path
-                 * @return Log likelihood of path at step k
-                 */
-                 Real getLikelihood(unsigned int k) const;
+        /**
+         * @brief Normalize the last weight with a normalization coefficient.
+         * @param normalizationCoefficient Normalization coefficient.
+         */
+        void NormalizeLastWeightWith(double normalizationCoefficient);
 
-                /**
-                 * @brief Get path's length
-                 * @return Particle's path length
-                 */
-                unsigned int length() const;
+        /**
+         * @brief Resample the particle at the specified point and with the specified weight.
+         * @param p New position of the particle.
+         * @param w New weight of the particle.
+         */
+        void Resample(PhysicalPoint p, double w);
 
-                /**
-                 * @brief Get if this particle is outside the mask
-                 * @return True if the particle is outside, false otherwise
-                 */
-                 bool isOutside();
+        /**
+         * @brief Add the likelihood to the current step of particle's path.
+         * @param likelihood Likelihood density value.
+         */
+        void AddLikelihood(double likelihood);
 
-                /**
-                 * @brief Get if this particle is active
-                 * @return True if the particle is active, false otherwise
-                 */
-                 bool isActive();
+        /**
+         * @brief Get the likelihood log at given step.
+         * @param i Step of the particle
+         * @return The likelihood value at given step.
+         */
+        double GetLikelihoodAtStep(unsigned int i) const;
 
-                /**
-                 * @brief Set if this particle is active
-                 * @param outside False if the particle should be inactive
-                 */
-                void setActive(bool active);
+    private:
+        /**
+         * @brief Points of the particle's path.
+         */
+        std::vector< PhysicalPoint > m_Points;
 
+        /**
+         * @brief Displacements vectors of the particle's path.
+         */
+        std::vector< GradientDirection > m_Directions;
 
-                /**
-                 * @brief Put particle on stream
-                 * @param os Stream to put particle on
-                 * @param p Particle to put
-                 * @return Stream with particle put on
-                 */
-                friend std::ostream &operator<<(std::ostream &os, Particle p);
+        /**
+         * @brief Weights of the particle's path.
+         */
+        std::vector< double > m_Weights;
 
-            private:
-                /**
-                 * @brief Test if a point is in a mask
-                 * @param p Point to test
-                 * @param mask Image mask
-                 * @return 0 if p is out of the mask, 1 if p is in the mask and 2 if p is in the exclusion mask
-                 */
-                char IsInside(Point p, Mask::Pointer mask);
+        /**
+         * @brief True if the particle is active, false otherwise.
+         */
+        bool m_IsActive;
 
-            private:
-                bool m_active; /**< Particle's active state */
-                bool m_outside; /**< Particle's outside mask state */
+        /**
+         * @brief Likelihood log of particle.
+         */
+        std::vector< double > m_LikelihoodLog;
+};
 
-                std::vector<Real>   m_weight;   /**< Particule's weights */
-                std::vector<Point>  m_points;   /**< Set of particle's points on path */
-                std::vector<Vector> m_vectors;  /**< Set of particle's vectors on path */
-                std::vector<Real>   m_likelihood;   /**< Log likelihood on path */
-        };
-
-    } // namespace btk
+} // namespace btk
 
 #endif // BTK_PARTICLE_H
-

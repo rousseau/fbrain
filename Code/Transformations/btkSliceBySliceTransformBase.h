@@ -44,6 +44,12 @@
 
 namespace btk
 {
+/**
+ * @class SliceBySliceTransformBase
+ * @brief Base class for slicebyslice transformation, inheritate from an itk::Transform to keep genericity
+ * @ingroup Transformations
+ * @author Marc Schweitzer
+ */
 template < class TScalarType, unsigned int NDimensions=3, typename TPixelType = float >
 class SliceBySliceTransformBase : public itk::MatrixOffsetTransformBase<TScalarType,NDimensions, NDimensions> //public itk::Transform<TScalarType,NDimensions,NDimensions>
 {
@@ -89,7 +95,7 @@ public:
    // itkNewMacro(Self);
 
     /** Run-time type information (and related methods). */
-    itkTypeMacro( SliceBySliceTransformBase, Transform );
+    itkTypeMacro( SliceBySliceTransformBase, itk::MatrixOffsetTransformBase );
 
     /** Method to transform a point. */
     virtual OutputPointType TransformPoint(const InputPointType& p ) const = 0;
@@ -140,8 +146,8 @@ public:
     /** Initialize with the identity. */
     virtual void Initialize() = 0;
 
-    /** Initialize with a transform. */
-    virtual void Initialize(TransformType* t) = 0;
+   // /** Initialize with a transform. */
+    //virtual void Initialize(TransformType* t) = 0;
 //    {
 //        typename ImageType::SizeType size = this->m_Image -> GetLargestPossibleRegion().GetSize();
 
@@ -189,6 +195,8 @@ public:
   protected:
       /** Default constructor. Otherwise we get a run time warning from itkTransform. */
     SliceBySliceTransformBase() : Superclass( 0 ) {}
+
+    virtual ~SliceBySliceTransformBase(){}
 
   private:
     /** List of transforms. */

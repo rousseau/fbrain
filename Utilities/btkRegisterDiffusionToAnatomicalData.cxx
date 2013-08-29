@@ -42,7 +42,7 @@
 #include "sstream"
 
 // TCLAP includes
-#include <tclap/CmdLine.h>
+#include "tclap/CmdLine.h"
 
 // ITK includes
 #include "itkImage.h"
@@ -51,16 +51,11 @@
 #include "itkEuler3DTransform.h"
 
 #include "itkImageRegistrationMethod.h"
-#include "itkMattesMutualInformationImageToImageMetric.h"
+#include "itkNormalizedCorrelationImageToImageMetric.h"
 #include "itkRegularStepGradientDescentOptimizer.h"
 
 #include "itkLinearInterpolateImageFunction.h"
-#include "itkNearestNeighborInterpolateImageFunction.h"
 #include "itkBSplineInterpolateImageFunction.h"
-
-#include "itkImageFileReader.h"
-#include "itkImageFileWriter.h"
-#include "itkTransformFileWriter.h"
 
 #include "itkExtractImageFilter.h"
 
@@ -71,48 +66,44 @@
 #include "itkJoinSeriesImageFilter.h"
 
 #include "itkAffineTransform.h"
-#include "itkMatrixOffsetTransformBase.h"
-#include "itkTransformFileReader.h"
-#include "itkTransformFileWriter.h"
-#include "itkTransformFactory.h"
 
 // Local includes
 #include "btkFileHelper.h"
 #include "btkImageHelper.h"
+#include "btkIOTransformHelper.h"
 #include "btkCommandIterationUpdate.h"
 #include "btkMacro.h"
 #include "btkDiffusionGradientTable.h"
+#include "btkDiffusionSequence.h"
+#include "btkDiffusionSequenceHelper.h"
 
 
 // Image and sequence definitions
-typedef short PixelType;
+typedef short                                   PixelType;
 typedef itk::Image< PixelType,3 >               Image;
-typedef itk::Image< PixelType,4 >               Sequence;
+typedef btk::DiffusionSequence                  Sequence;
 typedef itk::Image< unsigned char,3 >           ImageMask;
 typedef itk::ImageMaskSpatialObject< 3 >        Mask;
 typedef btk::DiffusionGradientTable< Sequence > GradientTable;
 
 // Registration objects definitions
-typedef double PrecisionType;
-typedef itk::MatrixOffsetTransformBase< PrecisionType,3,3 >           Transform;
-typedef itk::AffineTransform< PrecisionType,3 >                       AffineTransform;
-typedef itk::TransformFileReader                                      AffineTransformFileReader;
-typedef itk::TransformFileWriter                                      AffineTransformFileWriter;
-typedef itk::Euler3DTransform< PrecisionType >                        EulerTransform;
-typedef itk::RegularStepGradientDescentOptimizer                      RegularStepGradientDescentOptimizer;
-typedef itk::ImageRegistrationMethod< Image,Image >                   RegistrationMethod;
-typedef RegistrationMethod::ParametersType                            RegistrationParameters;
-typedef itk::MattesMutualInformationImageToImageMetric< Image,Image > MattesMutualInformationMetric;
+typedef double                                                      PrecisionType;
+typedef itk::AffineTransform< PrecisionType,3 >                     AffineTransform;
+typedef itk::Euler3DTransform< PrecisionType >                      EulerTransform;
+typedef itk::RegularStepGradientDescentOptimizer                    RegularStepGradientDescentOptimizer;
+typedef itk::ImageRegistrationMethod< Image,Image >                 RegistrationMethod;
+typedef RegistrationMethod::ParametersType                          RegistrationParameters;
+typedef itk::NormalizedCorrelationImageToImageMetric< Image,Image > NormalizedCorrelationMetric;
+
 
 // Interpolators definitions
-typedef itk::LinearInterpolateImageFunction< Image,PrecisionType >                LinearInterpolator;
-typedef itk::NearestNeighborInterpolateImageFunction< Image,PrecisionType >       NearestNeighborInterpolator;
-typedef itk::BSplineInterpolateImageFunction< Image,PrecisionType,PrecisionType > BSplineInterpolator;
+typedef itk::LinearInterpolateImageFunction< Image,PrecisionType >          LinearInterpolator;
+typedef itk::BSplineInterpolateImageFunction< Image,PrecisionType,PrecisionType >   BSplineInterpolator;
 
 // Filters definitions
-typedef itk::ExtractImageFilter< Sequence,Image >    SequenceExtractor;
-typedef itk::JoinSeriesImageFilter< Image,Sequence > ImageSequenceJoiner;
-typedef itk::ResampleImageFilter< Image,Image >      ImageResampler;
+typedef itk::ExtractImageFilter< Sequence,Image >                      SequenceExtractor;
+typedef itk::JoinSeriesImageFilter< Image,Sequence >                   ImageSequenceJoiner;
+typedef itk::ResampleImageFilter< Image,Image >                        ImageResampler;
 
 
 int main(int argc, char *argv[])
@@ -124,16 +115,16 @@ int main(int argc, char *argv[])
         //
 
         // Define command line object for program
-        TCLAP::CmdLine cmd("Registers diffusion sequence to anatomical data.", ' ', "1.0");
+        TCLAP::CmdLine cmd("Registers diffusion sequence to anatomical data.", ' ', "2.0");
 
         // Define arguments
-        TCLAP::ValueArg<std::string>  inputSequenceFileNameArg("i", "input", "Input diffusion sequence", true, "", "string", cmd);
-        TCLAP::ValueArg<std::string> outputSequenceFileNameArg("o", "output", "Registred output diffusion sequence", true, "", "string", cmd);
-        TCLAP::ValueArg<std::string> referenceImageFileNameArg("r", "reference", "Anatomical image, reference for registration", true, "", "string", cmd);
+        TCLAP::ValueArg< std::string >  inputSequenceFileNameArg("d", "diffusion_sequence", "Input diffusion sequence", true, "", "string", cmd);
+        TCLAP::ValueArg< std::string > outputSequenceFileNameArg("o", "output", "Registred output diffusion sequence", true, "", "string", cmd);
+        TCLAP::ValueArg< std::string > anatomicalImageFileNameArg("a", "anatomical", "Anatomical image", true, "", "string", cmd);
 
-        TCLAP::ValueArg<std::string> maskImageFileNameArg("m", "mask", "Mask image for baseline image of diffusion sequence", false, "", "string", cmd);
-        TCLAP::ValueArg<std::string> transformFileNameArg("t", "transformation", "Transformation from diffusion sequence to anatomical reference", false, "", "string", cmd);
-        TCLAP::ValueArg<std::string> initialTransformFileNameArg("", "initial_transform", "Initial affine transformation to apply", false, "", "string", cmd);
+        TCLAP::ValueArg< std::string > maskImageFileNameArg("m", "mask", "Mask image for baseline image of diffusion sequence", false, "", "string", cmd);
+        TCLAP::ValueArg< std::string > transformFileNameArg("t", "output_transformation", "Output transformation from diffusion sequence to anatomical", false, "", "string", cmd);
+        TCLAP::ValueArg< std::string > initialTransformFileNameArg("", "initial_transform", "Initial affine transformation to apply", false, "", "string", cmd);
 
         TCLAP::SwitchArg verboseModeArg("v", "verbose", "Verbose mode", cmd, false);
 
@@ -143,7 +134,7 @@ int main(int argc, char *argv[])
         // Get back arguments' values
         std::string  inputSequenceFileName = inputSequenceFileNameArg.getValue();
         std::string outputSequenceFileName = outputSequenceFileNameArg.getValue();
-        std::string referenceImageFileName = referenceImageFileNameArg.getValue();
+        std::string     anatomicalFileName = anatomicalImageFileNameArg.getValue();
 
         std::string        maskImageFileName = maskImageFileNameArg.getValue();
         std::string        transformFileName = transformFileNameArg.getValue();
@@ -153,11 +144,35 @@ int main(int argc, char *argv[])
 
 
         //
-        // Preprocessing
+        // Read transforms
         //
 
-        // Register the transformation
-        itk::TransformFactory< Transform >::RegisterTransform();
+
+        // Read transformation if file exist
+        bool transformProvided = false;
+        AffineTransform::Pointer finalTransform = AffineTransform::New();
+        finalTransform->SetIdentity();
+
+        if(!transformFileName.empty() && btk::FileHelper::FileExist(transformFileName))
+        {
+            transformProvided = true;
+            finalTransform    = btk::IOTransformHelper< AffineTransform >::ReadTransform(transformFileName);
+        }
+
+
+        // Read initial transform if provided (and file exist)
+        AffineTransform::Pointer initialTransform = AffineTransform::New();
+        initialTransform->SetIdentity();
+
+        if(!initialTransformFileName.empty() && btk::FileHelper::FileExist(initialTransformFileName))
+        {
+            initialTransform = btk::IOTransformHelper< AffineTransform >::ReadTransform(initialTransformFileName);
+        }
+
+
+        //
+        // Read images
+        //
 
         // Set B-values and gradients' filenames according to diffusion sequences' filenames
         std::string     inputSequenceFileNameRadix = btk::FileHelper::GetRadixOf(inputSequenceFileName);
@@ -166,60 +181,41 @@ int main(int argc, char *argv[])
 
         std::string     outputSequenceFileNameRadix = btk::FileHelper::GetRadixOf(outputSequenceFileName);
         std::string outputSequenceGradientsFileName = outputSequenceFileNameRadix + ".bvec";
-        std::string   outputSequenceBValuesFileName = outputSequenceFileNameRadix + ".bval";
 
-        // Read transformation if file exist
-        bool transformProvided = false;
-        AffineTransform::Pointer finalTransform;
 
-        if(!transformFileName.empty())
+        // Test if mandatory files exists
+        if(!btk::FileHelper::FileExist(inputSequenceFileName) || !btk::FileHelper::FileExist(inputSequenceBValuesFileName) || !btk::FileHelper::FileExist(inputSequenceGradientsFileName))
         {
-            if(btk::FileHelper::FileExist(transformFileName))
-            {
-                transformProvided = true;
-
-                // Read transformation file (ITK style)
-                AffineTransformFileReader::Pointer reader = AffineTransformFileReader::New();
-                reader->SetFileName(transformFileName);
-                reader->Update();
-                finalTransform = static_cast< AffineTransform* >(reader->GetTransformList()->front().GetPointer());
-            }
+            btkException("Some input sequence files are missing or path or name is wrong (name.nii.gz, name.bvec and name.bval are mandatory) !");
         }
 
-        // Read initial transform if provided (and file exist)
-        // TODO test if file exists
-        AffineTransform::Pointer initialTransform = AffineTransform::New();
-        initialTransform->SetIdentity();
-
-        if(!initialTransformFileName.empty())
+        if(!btk::FileHelper::FileExist(anatomicalFileName))
         {
-            // Read transformation file (ITK style)
-            AffineTransformFileReader::Pointer reader = AffineTransformFileReader::New();
-            reader->SetFileName(initialTransformFileName);
-            reader->Update();
-            initialTransform = static_cast< AffineTransform* >(reader->GetTransformList()->front().GetPointer());
+            btkException("The anatomical filename or path is wrong !");
         }
-
-        // TODO Test if files do exist
 
 
         // Read input images
-        Image::Pointer   referenceImage = btk::ImageHelper< Image >::ReadImage(referenceImageFileName);
-        Sequence::Pointer inputSequence = btk::ImageHelper< Sequence >::ReadImage(inputSequenceFileName);
+        Image::Pointer   anatomicalImage = btk::ImageHelper< Image >::ReadImage(anatomicalFileName);
+        Sequence::Pointer  inputSequence = btk::DiffusionSequenceHelper::ReadSequence(inputSequenceFileName);
 
         // Read mask if any
-        Mask::Pointer mask;
-        if(!maskImageFileName.empty())
+        Mask::Pointer mask = Mask::New();
+        if(!maskImageFileName.empty() && btk::FileHelper::FileExist(maskImageFileName))
         {
             ImageMask::Pointer imageMask = btk::ImageHelper< ImageMask >::ReadImage(maskImageFileName);
 
-            mask = Mask::New();
             mask->SetImage(imageMask);
         }
 
+
+        //
+        // Preprocessing
+        //
+
         std::cout << "Preparing registration..." << std::endl;
 
-        // Extract baseline from diffusion sequence
+        // Extract baseline image from diffusion sequence
         Sequence::RegionType extractionRegion = inputSequence->GetLargestPossibleRegion();
         extractionRegion.SetSize(3, 0);
 
@@ -230,6 +226,9 @@ int main(int argc, char *argv[])
         extractor->Update();
 
         Image::Pointer baselineImage = extractor->GetOutput();
+
+        Image::Pointer  fixedImage = baselineImage;
+        Image::Pointer movingImage = anatomicalImage;
 
         std::cout << "done." << std::endl;
 
@@ -244,34 +243,27 @@ int main(int argc, char *argv[])
 
             // Define registration method
             RegistrationMethod::Pointer registration = RegistrationMethod::New();
-            registration->SetFixedImage(baselineImage);
-            registration->SetMovingImage(referenceImage);
+            registration->SetFixedImage(fixedImage);
+            registration->SetMovingImage(movingImage);
 
             // Define initial transformation
             initialTransform->GetInverse(initialTransform);
             registration->SetTransform(initialTransform);
 
             // Define metric used for registration
-            MattesMutualInformationMetric::Pointer metric = MattesMutualInformationMetric::New();
+            NormalizedCorrelationMetric::Pointer metric = NormalizedCorrelationMetric::New();
             registration->SetMetric(metric);
 
             // Define image region for registration
             Image::RegionType fixedImageRegion;
 
-            if(!maskImageFileName.empty())
+            // Define masked region
+            if(!maskImageFileName.empty() && btk::FileHelper::FileExist(maskImageFileName))
             {
-                // Read mask image
-                ImageMask::Pointer imageMask = btk::ImageHelper< ImageMask >::ReadImage(maskImageFileName);
-
-                // Create mask object
-                Mask::Pointer mask = Mask::New();
-                mask->SetImage(imageMask);
-
-                // Set mask
                 fixedImageRegion = mask->GetAxisAlignedBoundingBoxRegion();
                 metric->SetFixedImageMask(mask);
             }
-            else // no mask provided
+            else // there is no mask
             {
                 fixedImageRegion = baselineImage->GetLargestPossibleRegion();
             }
@@ -299,12 +291,11 @@ int main(int argc, char *argv[])
             RegularStepGradientDescentOptimizer::Pointer optimizer = RegularStepGradientDescentOptimizer::New();
             registration->SetOptimizer(optimizer);
 
-            optimizer->MaximizeOn();
-//            optimizer->MinimizeOn();
-            optimizer->SetMaximumStepLength(0.2);
-            optimizer->SetMinimumStepLength(0.0001);
+            optimizer->SetMaximumStepLength(1);
+            optimizer->SetMinimumStepLength(1e-5);
             optimizer->SetNumberOfIterations(10000);
-            optimizer->SetGradientMagnitudeTolerance(0.00001);
+            optimizer->SetGradientMagnitudeTolerance(1e-5);
+            optimizer->MinimizeOn();
 
             RegularStepGradientDescentOptimizer::ScalesType optimizerScales(initialTransform->GetNumberOfParameters());
             optimizerScales[0] =  1.0;
@@ -316,14 +307,14 @@ int main(int argc, char *argv[])
             optimizerScales[6] =  1.0;
             optimizerScales[7] =  1.0;
             optimizerScales[8] =  1.0;
-            optimizerScales[9] =  1.0;
-            optimizerScales[10] =  1.0;
-            optimizerScales[11] =  1.0;
+            optimizerScales[9] =  1.0/1000.0;
+            optimizerScales[10] =  1.0/1000.0;
+            optimizerScales[11] =  1.0/1000.0;
             optimizer->SetScales(optimizerScales);
 
             // Define interpolation used for registration
             LinearInterpolator::Pointer interpolator = LinearInterpolator::New();
-            interpolator->SetInputImage(referenceImage);
+            interpolator->SetInputImage(movingImage);
             registration->SetInterpolator(interpolator);
 
             // Define the command observer in verbose mode
@@ -339,6 +330,13 @@ int main(int argc, char *argv[])
             // Get the final transformation parameters
             RegistrationParameters finalParameters = registration->GetLastTransformParameters();
 
+            if(verboseMode)
+            {
+                std::cout << "Optimizer stopped !" << std::endl;
+                std::cout << "\t" << optimizer->GetStopConditionDescription() << std::endl;
+                std::cout << "\tFinal parameters: " << finalParameters << std::endl;
+            }
+
             // Get the final transform
             finalTransform = AffineTransform::New();
             finalTransform->SetCenter(centerPoint);
@@ -347,7 +345,7 @@ int main(int argc, char *argv[])
 
             std::cout << "done." << std::endl;
         }
-        else // no transformation provided
+        else // transformation provided
         {
             finalTransform->Compose(initialTransform, true);
         }
@@ -365,7 +363,7 @@ int main(int argc, char *argv[])
         joiner->SetSpacing(1);
 
         // Each image of diffusion sequence is warped to anatomical reference and resampled
-        for(unsigned int i = 0; i < inputSequence->GetLargestPossibleRegion().GetSize(3) && i < 1; i++)
+        for(unsigned int i = 0; i < inputSequence->GetLargestPossibleRegion().GetSize(3); i++)
         {
             // Define the current region of interest (1 image is sequence) for extractor
             Sequence::RegionType currentRegion = inputSequence->GetLargestPossibleRegion();
@@ -380,7 +378,7 @@ int main(int argc, char *argv[])
             resampler->SetTransform(finalTransform);
             resampler->SetInput(extractor->GetOutput());
             resampler->SetUseReferenceImage(true);
-            resampler->SetReferenceImage(referenceImage);
+            resampler->SetReferenceImage(anatomicalImage);
             resampler->SetDefaultPixelValue(0);
 
             // Define interpolation
@@ -394,6 +392,12 @@ int main(int argc, char *argv[])
         }
 
         joiner->Update();
+
+        Sequence::Pointer outputSequence = joiner->GetOutput();
+
+        // Set diffusion information
+        outputSequence->SetBValues(inputSequence->GetBValues());
+        outputSequence->SetGradientTable(inputSequence->GetGradientTable());
 
         std::cout << "done." << std::endl;
 
@@ -432,7 +436,7 @@ int main(int argc, char *argv[])
 
         // Define rigid transformation for gradient table reorientation
         EulerTransform::Pointer gradientTableTransform = EulerTransform::New();
-        gradientTableTransform->SetRotationMatrix(NQ);
+        gradientTableTransform->SetMatrix(NQ);
 
         // Load input gradient table, rotate and save to new gradient table file
         GradientTable::Pointer inputGradientTable = GradientTable::New();
@@ -450,32 +454,24 @@ int main(int argc, char *argv[])
         //
 
         // Save diffusion sequence
-        btk::ImageHelper< Sequence >::WriteImage(joiner->GetOutput(), outputSequenceFileName);
+        btk::DiffusionSequenceHelper::WriteSequence(outputSequence, outputSequenceFileName);
 
         // Save gradient table
         inputGradientTable->SaveToFile(outputSequenceGradientsFileName.c_str());
 
-        // Save b-values
-        std::stringstream stream;
-        stream << "cp " << inputSequenceBValuesFileName << " " << outputSequenceBValuesFileName;
-        std::system(stream.str().c_str());
-
         // Save transformation (if asked)
-        if(!transformFileName.empty())
+        if(!transformFileName.empty() && !transformProvided)
         {
-            AffineTransformFileWriter::Pointer transformWriter = AffineTransformFileWriter::New();
-            transformWriter->SetFileName(transformFileName);
-            transformWriter->AddTransform(finalTransform);
-            transformWriter->Update();
+            btk::IOTransformHelper< AffineTransform >::WriteTransform(finalTransform, transformFileName);
         }
     }
-    catch(itk::ExceptionObject &exception)// TODO: manage exceptions
+    catch(itk::ExceptionObject &exception)
     {
         std::cerr << "ITK error:" << std::endl;
         std::cerr << exception << std::endl;
         exit(EXIT_FAILURE);
     }
 
-  return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
 

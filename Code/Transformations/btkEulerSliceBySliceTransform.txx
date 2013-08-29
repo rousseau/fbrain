@@ -52,15 +52,19 @@ EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>
     OutputPointType Tp( p );
 
     typename ImageType::IndexType index;
-    m_Image -> TransformPhysicalPointToIndex( Tp , index);
+    bool isInside = this->m_Image -> TransformPhysicalPointToIndex( Tp , index);
 
-    if(index[2] < 0 || index[2] > m_TransformList.size() -1 )
+//    if(index[2] < 0 || index[2] > m_TransformList.size()-1 )// looks like an infinite plane on Z axis
+//    {
+//        Tp = p;
+//    }
+    if(!isInside) //if point is not inside the image we don't transform it
     {
-        Tp = p;
+        Tp =p;
     }
     else
     {
-        Tp = m_TransformList[ index[2] ] -> TransformPoint( Tp );
+        Tp = this->m_TransformList[ index[2] ] -> TransformPoint( Tp );
     }
 
     return Tp;
@@ -161,7 +165,7 @@ void
 EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
 SetImage( ImageType * image)
 {
-    m_Image = image;
+    this->m_Image = image;
 }
 
 template <class TScalarType,unsigned int NDimensions, typename TPixelType>
@@ -192,6 +196,7 @@ Initialize()
 
         m_TransformList[i] = TransformType::New();
         m_TransformList[i] -> SetIdentity();
+        m_TransformList[i]->SetRotation(0.0,0.0,0.0);
         m_TransformList[i] -> SetCenter(centerPoint);
     }
 
@@ -201,7 +206,7 @@ Initialize()
 template <class TScalarType,unsigned int NDimensions, typename TPixelType>
 void
 EulerSliceBySliceTransform<TScalarType,NDimensions,TPixelType>::
-Initialize( TransformBase * t )
+Initialize( TransformType * t )
 {
     typename ImageType::SizeType size = m_Image -> GetLargestPossibleRegion().GetSize();
 
@@ -343,6 +348,7 @@ GetInverse(Self* inverse)const
 {
     inverse->SetFixedParameters(this->GetFixedParameters());
     inverse->SetImage(this->m_Image.GetPointer());
+    //inverse->Initialize();
 
     for(int i = 0; i< m_NumberOfSlices; i++)
     {

@@ -38,6 +38,7 @@
 
 // STL includes
 #include "string"
+#include "algorithm"
 
 // ITK includes
 #include "itkImage.h"
@@ -69,40 +70,39 @@ int main(int argc, char *argv[])
 
         TCLAP::ValueArg< std::string >  inputFileNameArg("i", "input", "Input image", true, "", "string", cmd);
         TCLAP::ValueArg< std::string > outputFileNameArg("o", "output", "Output image", true, "", "string", cmd);
-        TCLAP::ValueArg< short >                labelArg("l", "label", "Label value", true, 0, "natural", cmd);
+        //TCLAP::ValueArg< short >                labelArg("l", "label", "Label value", true, 0, "short", cmd);
+	TCLAP::MultiArg< short >                labelArg("l", "label", "Label value", true, "short", cmd);
 
         // Parse the command line
         cmd.parse( argc, argv );
 
         std::string inputFileName  = inputFileNameArg.getValue();
         std::string outputFileName = outputFileNameArg.getValue();
-        short                label = labelArg.getValue();
+        //short                label = labelArg.getValue();
+	std::vector<short> labels = labelArg.getValue();
 
 
         //
         // Read input image
         //
-
         LabelImage::ConstPointer inputImage = btk::ImageHelper< LabelImage >::ReadConstImage(inputFileName);
 
 
         //
         // Create new image from input
         //
-
-        LabelImage::Pointer outputImage = btk::ImageHelper< LabelImage >::CreateNewImageFromPhysicalSpaceOf(inputImage);
+        LabelImage::Pointer outputImage = btk::ImageHelper< LabelImage >::CreateNewImageFromPhysicalSpaceOfConst(inputImage);
 
 
         //
         // Binarize label
         //
-
         LabelImageIterator outputIt(outputImage, outputImage->GetLargestPossibleRegion());
         LabelImageConstIterator inputIt(inputImage, inputImage->GetLargestPossibleRegion());
 
         for(inputIt.GoToBegin(), outputIt.GoToBegin(); !inputIt.IsAtEnd() && !outputIt.IsAtEnd(); ++inputIt, ++outputIt)
         {
-            if(inputIt.Get() == label)
+	  if( std::find(labels.begin(), labels.end(), inputIt.Get()) != labels.end() ) 
             {
                 outputIt.Set(1);
             }

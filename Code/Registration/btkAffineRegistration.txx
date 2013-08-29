@@ -4,6 +4,7 @@
 
   Date: 14/04/2010
   Author(s): Estanislao Oubel (oubel@unistra.fr)
+             Marc Schweitzer (marc.schweitzer(at)unistra.fr)
 
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -48,9 +49,9 @@ template < typename ImageType >
 AffineRegistration<ImageType>
 ::AffineRegistration()
 {
-  m_Iterations = 300;
-  m_EnableObserver = false;
-  m_FixedImageMask = 0;
+  Superclass::m_Iterations = 300;
+  Superclass::m_EnableObserver = false;
+  Superclass::m_FixedImageMask = 0;
 }
 
 /*
@@ -59,38 +60,38 @@ AffineRegistration<ImageType>
 template < typename ImageType >
 void
 AffineRegistration<ImageType>
-::Initialize() throw (ExceptionObject)
+::Initialize() throw (itk::ExceptionObject)
 {
 
-  m_Transform = TransformType::New();
-  m_Interpolator = InterpolatorType::New();
-  m_Metric = MetricType::New();
-  m_Optimizer = OptimizerType::New();
+  Superclass::m_Transform = AffineTransformType::New();
+  Superclass::m_Interpolator = InterpolatorType::New();
+  Superclass::m_Metric = MetricType::New();
+  Superclass::m_Optimizer = OptimizerType::New();
 
   // Configure metric
 
 
-  if (m_FixedImageMask)
+  if (Superclass::m_FixedImageMask)
   {
-    m_FixedMask = MaskType::New();
-    m_FixedMask -> SetImage( this -> GetFixedImageMask() );
-    m_Metric -> SetFixedImageMask( m_FixedMask );
+    Superclass::m_FixedMask = MaskType::New();
+    Superclass::m_FixedMask -> SetImage( this -> GetFixedImageMask() );
+    Superclass::m_Metric -> SetFixedImageMask( Superclass::m_FixedMask );
   }
 
-
-  m_Metric->SetNumberOfHistogramBins( 24 );
-  m_Metric->UseAllPixelsOn();
+  // FIXME Uncomment if MI is used instead of NC
+  //m_Metric->SetNumberOfHistogramBins( 24 );
+  //m_Metric->UseAllPixelsOn();
 
   // Configure optimizer
 
-  m_Optimizer->MinimizeOn();
-  //m_Optimizer->MaximizeOn();
-  m_Optimizer->SetMaximumStepLength( 0.2 );
-  m_Optimizer->SetMinimumStepLength( 0.001 );
-  m_Optimizer->SetNumberOfIterations( m_Iterations );
-  m_Optimizer->SetRelaxationFactor( 0.8 );
+  Superclass::m_Optimizer->MinimizeOn();
+  //Superclass::m_Optimizer->MaximizeOn();
+  Superclass::m_Optimizer->SetMaximumStepLength( 0.2 );
+  Superclass::m_Optimizer->SetMinimumStepLength( 0.001 );
+  Superclass::m_Optimizer->SetNumberOfIterations( Superclass::m_Iterations );
+  Superclass::m_Optimizer->SetRelaxationFactor( 0.8 );
 
-  OptimizerScalesType optimizerScales( m_Transform -> GetNumberOfParameters() );
+  OptimizerScalesType optimizerScales(Superclass::m_Transform -> GetNumberOfParameters() );
 
   optimizerScales[0] =  1.0;
   optimizerScales[1] =  1.0;
@@ -105,13 +106,13 @@ AffineRegistration<ImageType>
   optimizerScales[10] =  1.0 / 1000.0;
   optimizerScales[11] =  1.0 / 1000.0;
 
-  m_Optimizer->SetScales( optimizerScales );
+  Superclass::m_Optimizer->SetScales( optimizerScales );
 
-  m_Observer = CommandIterationUpdate::New();
+  Superclass::m_Observer = CommandIterationUpdate::New();
 
-  if (m_EnableObserver)
+  if (Superclass::m_EnableObserver)
   {
-    m_Optimizer -> AddObserver( itk::IterationEvent(), m_Observer );
+    Superclass::m_Optimizer -> AddObserver( itk::IterationEvent(), Superclass::m_Observer );
   }
 
   // Configure transform
@@ -126,10 +127,10 @@ AffineRegistration<ImageType>
   centerIndex[1] = fixedImageRegionIndex[1] + fixedImageRegionSize[1] / 2.0;
   centerIndex[2] = fixedImageRegionIndex[2] + fixedImageRegionSize[2] / 2.0;
 
-  this -> GetFixedImage() -> TransformIndexToPhysicalPoint(centerIndex, rotationCenter);
+  this -> GetFixedImage()->TransformIndexToPhysicalPoint(centerIndex, rotationCenter);
 
-  m_Transform -> SetIdentity();
-  m_Transform -> SetCenter( rotationCenter );
+  dynamic_cast<AffineTransformType*>(Superclass::m_Transform.GetPointer())->SetIdentity();
+  dynamic_cast<AffineTransformType*>(Superclass::m_Transform.GetPointer())->SetCenter( rotationCenter );
 
   // Connect components
 
@@ -139,7 +140,7 @@ AffineRegistration<ImageType>
   this->SetInterpolator( this -> m_Interpolator );
 
   if (this -> GetInitialTransformParameters().GetSize() == 1)
-    this -> SetInitialTransformParameters( m_Transform -> GetParameters() );
+    this -> SetInitialTransformParameters( Superclass::m_Transform -> GetParameters() );
 
   Superclass::Initialize();
 
@@ -151,7 +152,7 @@ AffineRegistration<ImageType>
 template < typename ImageType >
 void
 AffineRegistration<ImageType>
-::PrintSelf(std::ostream& os, Indent indent) const
+::PrintSelf(std::ostream& os, itk::Indent indent) const
 {
   Superclass::PrintSelf( os, indent );
 }

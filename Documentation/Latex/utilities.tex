@@ -6,10 +6,10 @@
 
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkApplyMaskToImage}
-\item[btkApplyMaskToImage]: Mask an image with a mask (ITK filter: MaskImageFilter).
+\item[btkApplyMaskToImage]: Multiply an image with a mask.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkApplyTransformationToImage}
-\item[btkApplyTransformationToImage]: Apply an ITK or BTK transformation on a image (old btkWarpTransformationToImage).
+\item[btkApplyTransformationToImage]: Resample an image using a reference and a transformation (itk or btk).
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkAverage3DImages}
 \item[btkAverage3DImages]: Compute the mean (and variance) image of a set of 3D images.
@@ -26,25 +26,35 @@
 \addcontentsline{toc}{subsection}{btkBinarizeTissueProbabilityMaps}
 \item[btkBinarizeTissueProbabilityMaps]: Binarize a set of probability maps ([0,1]) into a short image (by taking the max probability at each voxel).
 %------------------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{btkColorFiberTractsByOrientation}
+\item[btkColorFiberTractsByOrientation]: Color the fibers (polydata) by their orientation (local or global).
+%------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkComputeChamferDistance}
 \item[btkComputeChamferDistance]: Compute the chamfer distance.
+%------------------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{btkComputeCoefficientOfDeterminationForAtlas}
+\item[btkComputeCoefficientOfDeterminationForAtlas]: Compute the coefficient of determination ($\text{R}^2$) for atlas made with regression script (see Atlas part of this document).
+%------------------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{btkComputeFeatureSelectionResiduals}
+\item[btkComputeFeatureSelectionResiduals]: Compute the residuals of the feature selection algorithm (norm of the reconstruction error).
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkComputeOverlap}
 \item[btkComputeOverlap]: Compute the overlap (Dice coefficient and Jaccard index) between two label images.
 %------------------------------------------------------------------------------
-\addcontentsline{toc}{subsection}{btkConvertFSLTransform}
-\item[btkConvertFSLTransform]: Convert a FSL matrix to a ITK Affine Transform, specify $--inverse$ do the opposite
+\addcontentsline{toc}{subsection}{btkComputeSoftMaskUsingOrthogonalImages}
+\item[btkComputeSoftMaskUsingOrthogonalImages]: Compute soft masks of a set of images using the geometry of protocol acquisition (\textit{i.e.} orthogonal images).
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkConvertGradientTable}
 \item[btkConvertGradientTable]: Transform gradients from world to image coordinates.
-
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkCropImageUsingMask}
 \item[btkCropImageUsingMask] This program crops one (3D or 4D) image using a 3D mask.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkDifferentialBiasCorrection}
-\item[btkDifferentialBiasCorrection]: Differential bias correction method for $n$ images (Leung et al. Neuroimage 2012) 
-
+\item[btkDifferentialBiasCorrection]: Differential bias correction method for $n$ images (Leung et al. Neuroimage 2012). 
+%------------------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{btkDiffusionScalarMeasurement}
+\item[btkDiffusionScalarMeasurement]: Compute diffusion scalars (tensors and high-order; e.g. FA, GFA, GA, FMI, etc.)
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkDistanceBetweenBinaryImages}
 \item[btkDistanceBetweenBinaryImages]: Compute Hausdorff and Mean Contour Distances between two binary images (ITK Filters: HausdorffDistanceImageFilter and ContourMeanDistanceImageFilter).
@@ -57,6 +67,15 @@
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkFCMClassification}
 \item[btkFCMClassification]: Fuzzy C-means classification algorithm.
+%------------------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{btkFSLToITKTransform}
+\item[btkFSLToITKTransform]: Convert a FSL transform to the ITK standard transform ($--inverse$ do the opposite).
+%------------------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{btkGenerateSimulatedFiber}
+\item[btkGenerateSimulatedFiber]: Generate a simulated fiber from coordinates of points stored into a text file. 
+%------------------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{btkGenerateVtkFileFromFiberDataTextFiles}
+\item[btkGenerateVtkFileFromFiberDataTextFiles]: Generate a \href{www.vtk.org/VTK/img/file-formats.pdf}{VTK} file of fibers from data stored into several text files, and visualize it.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkHistogramMatching}
 \item[btkHistogramMatching]: Normalize the grayscale values of one image using a reference image by histogram matching (ITK filter: HistogramMatchingImageFilter).
@@ -74,9 +93,9 @@ to perform a new image reconstruction (computationally expensive) after
 modification of the input images (some filtering for example) or an involuntary
 deletion of the reconstructed image.
 
-Recommended usage: \texttt{btkImageInjection -i image1 $\cdots$ -i
-imageN -m mask1 $\cdots$ -m maskN -t transform1 $\cdots$ -t
-transformN -o output --mask}
+Recommended usage: \texttt{btkImageInjection -i ana01.nii.gz $\cdots$ -i
+anaN.nii.gz -m mask01.nii.gz $\cdots$ -m maskN.nii.gz -t transform01.txt $\cdots$ -t
+transformN.txt -o ana\_reconstructed.nii.gz --mask}
 
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkImageMorphologicalClosing}
@@ -92,10 +111,15 @@ transformN -o output --mask}
 \item[btkImageSimilarity]: Calculates mean square error, mutual information, normalized correlation and normalized mutual information of two images A and B. The use of a mask is possible.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkImageSubtract}
-\item[btkImageSubtract]: Pixel-wise subtraction of two image, or one image and a constant (-i im1 -i im2 -o result or -i im1 -c value -o result) (ITK filter: SubtractImageFilter).
+\item[btkImageSubtract]: Pixel-wise subtraction of two image, or one image and a constant (ITK filter: SubtractImageFilter). 
+
+Recommended usage: \texttt{btkImageSubtract-i ana01.nii.gz -i ana02.nii.gz -o substraction\_image.nii.gz }
+ or \texttt{btkImageSubtract -i ana.nii.gz -c value -o substraction\_image.nii.gz}
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkInverseDisplacementField}
-\item[btkInverseDisplacementField]: Compute the inverse of a displacement field (-i field -o inverse\_field) (ITK filter: InverseDisplacementFieldImageFilter).
+\item[btkInverseDisplacementField]: Compute the inverse of a displacement field (ITK filter: InverseDisplacementFieldImageFilter)
+
+Recommended usage: \texttt{btkInverseDisplacementField -i field.nii.gz -o inverse\_field.nii.gz }
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkIteratedBackProjection}
 \item[btkIteratedBackProjection]: Apply iterated back projection to high resolution image using one low resolution image.
@@ -117,11 +141,17 @@ one for the final values). It can be useful to relabel a segmented image.
 format\footnote{Currently there is no nifti standard for DWI, so DW images are
 saved as a standard nifti sequence (*.nii, *.nii.gz) and two text files
 containing the b-values (.bval) and the gradient directions (.bvec).}  to the
-nrrd format (*.nhdr). Usage: \texttt{-i input -o output.nhdr}
+nrrd format (*.nhdr). 
+
+Recommended usage: \texttt{btkNiftiToNrrd -i input.nii.gz -o output.nhdr}
 
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkNrrdToNifti}
-\item[btkNrrdToNifti] This program convert an image from Nrrd file (*.nhdr and *.nrrd) to a Nifti file (*.nii or *.nii.gz). The conversion of a DWI image is possible by using the option \texttt{--dwi}. Usage: \texttt{-i input.nhdr -o output.nii.gz}. Usage for DWI sequence: \texttt{--dwi -i input.nhdr -o output.nii.gz}.
+\item[btkNrrdToNifti] This program convert an image from Nrrd file (*.nhdr and *.nrrd) to a Nifti file (*.nii or *.nii.gz). The conversion of a DWI image is possible by using the option \texttt{--dwi}.
+
+Recommended usage: \texttt{btkNrrdToNifti -i input.nhdr -o output.nii.gz}. 
+
+Recommended usage  for DWI sequence: \texttt{btkNrrdToNifti --dwi -i input.nhdr -o output.nii.gz}.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkPSNR}
 \item[btkPSNR]: Compute the PSNR between an input image and a reference image.
@@ -147,15 +177,15 @@ is in a random orientation with respect to the scanner. This is particularly
 important in DWI because colormaps lack of significance, which makes difficult
 the identification of specific bundles.
 
-Usage: \texttt{btkReorientDiffusionSequenceToStandard -i image -o output -l
-landmarks}.
+Recommended usage: \texttt{btkReorientDiffusionSequenceToStandard -i dwi.nii.gz -o dwi\_reoriented.nii.gz -l
+landmarks.fcsv}.
 
 \texttt{landmarks} is a landmarks file obtained as explained for btkReorientImageToStandard.
 
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkReorientImageToStandard}
 \item[btkReorientImageToStandard] This program reorients a image to the standard orientation. This is necessary with fetal images since in general the fetus is in a random orientation with respect to the scanner.
-Usage: \texttt{btkReorientImageToStandard -i image -o output -l landmarks}.
+Recommended usage: \texttt{btkReorientImageToStandard -i ana.nii.gz -o ana\_reoriented.nii.gz -l landmarks.fcsv}.
 \texttt{landmarks} is a text file containing points that define the left-right
 and the posterior-anterior directions. The points $l$ and $r$ define the left
 $\rightarrow$ right direction, and the points $p$ and $a$ define the posterior
@@ -209,20 +239,29 @@ identify the left and right sides of the brain in the 2D views.
 \addcontentsline{toc}{subsection}{btkSetStandardCoorSystem}
 \item[btkSetStandardCoorSystem]: Sets the direction to the identity, and the origin to the center of the image.
 %------------------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{btkSimulateLowResolutionImage}
+\item[btkSimulateLowResolutionImage]: Simulates a low resolution image from a high resolution image (reconstructed, super-resolution, or acquired) and a transformation between both images (transformation can be set or randomly computed)
+.%------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkSimulateMotionSliceBySlice}
 \item[btkSimulateMotionSliceBySlice]: Apply transformations on slices of input image.
 %------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkSimulateStandardViewFromIsotropicImage}
 \item[btkSimulateStandardViewFromIsotropicImage]: Simulates standard acquisitions (axial, coronal, and sagital) from an isovoxel by using an observational model. This is useful for example to assess the performance of reconstruction algorithms according to the subsampling factor (the reconstructed image from the simulated images is then compared to the isovoxel image). 
 %------------------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{btkSimulateStandardViewsFromImage}
+\item[btkSimulateStandardViewsFromImage]: Compute a low resolution image from a high resolution image by using a generative model (old version of btkSimulateStandardViewFromIsotropicImage )
+.%------------------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{btkTractDensityMap}
+\item[btkTractDensityMap]: Create tract density images using set of fibers as input.
+%------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkTranslateImageOverTemplate}
 \item[btkTranslateImageOverTemplate]: Usefull for the extraction mask pipeline, it will translate the center of image (or barycenter of masked image) on the center of the template image.
 %------------------------------------------------------------------------------
-\addcontentsline{toc}{subsection}{btkWeightedSum}
-\item[btkWeightedMean]: Compute a weighted mean of 3D images (no check for normalized weights!).
-%------------------------------------------------------------------------------
 \addcontentsline{toc}{subsection}{btkWeightedSumOfAffineTransforms}
 \item[btkWeightedSumOfAffineTransforms]: Compute a weighted mean of affine transforms (no check for normalized weights!).
+%------------------------------------------------------------------------------
+\addcontentsline{toc}{subsection}{btkWeightedSumOfImages}
+\item[btkWeightedSumOfImages]: Compute a weighted mean of 3D images (no check for normalized weights!).
 %------------------------------------------------------------------------------
 
 

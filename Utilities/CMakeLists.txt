@@ -2,15 +2,18 @@ PROJECT(Utilities)
 INCLUDE_REGULAR_EXPRESSION("^.*$")
 
 INCLUDE_DIRECTORIES(${TCLAP_DIRECTORY})
+INCLUDE_DIRECTORIES(${ANN_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Reconstruction)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Diffusion)
-INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/InputOutput)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Tools)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Transformations)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Segmentation)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Maths)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/ImageFilters)
 INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Registration)
+INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Tractography)
+INCLUDE_DIRECTORIES(${Code_SOURCE_DIR}/Visualization)
+include_directories(${Code_SOURCE_DIR}/FeatureSelection)
 
 ADD_EXECUTABLE(btkModifyImageUsingLookUpTable btkModifyImageUsingLookUpTable.cxx)
 TARGET_LINK_LIBRARIES(btkModifyImageUsingLookUpTable ${ITK_LIBRARIES})
@@ -34,12 +37,12 @@ ADD_EXECUTABLE(btkSetStandardCoorSystem btkSetStandardCoorSystem.cxx
 TARGET_LINK_LIBRARIES(btkSetStandardCoorSystem ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkPrintImageInfo btkPrintImageInfo.cxx)
-TARGET_LINK_LIBRARIES(btkPrintImageInfo ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkPrintImageInfo ${ITK_LIBRARIES} btkToolsLibrary btkDiffusionLibrary)
 
 ADD_EXECUTABLE(btkRegisterDiffusionToAnatomicalData btkRegisterDiffusionToAnatomicalData.cxx
     ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
  )
-TARGET_LINK_LIBRARIES(btkRegisterDiffusionToAnatomicalData btkToolsLibrary ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkRegisterDiffusionToAnatomicalData btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkNrrdToNifti btkNrrdToNifti.cxx)
 TARGET_LINK_LIBRARIES(btkNrrdToNifti btkToolsLibrary ${ITK_LIBRARIES})
@@ -51,7 +54,7 @@ ADD_EXECUTABLE(btkExtractOneImageFromSequence btkExtractOneImageFromSequence.cxx
 TARGET_LINK_LIBRARIES(btkExtractOneImageFromSequence ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkCropImageUsingMask btkCropImageUsingMask.cxx)
-TARGET_LINK_LIBRARIES(btkCropImageUsingMask btkToolsLibrary ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkCropImageUsingMask btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkBinarizeLabels btkBinarizeLabels.cxx )
 TARGET_LINK_LIBRARIES(btkBinarizeLabels ${ITK_LIBRARIES})
@@ -65,8 +68,10 @@ TARGET_LINK_LIBRARIES(btkResampleLabelsByInjection ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkSimulateStandardViewFromIsotropicImage btkSimulateStandardViewFromIsotropicImage.cxx)
 TARGET_LINK_LIBRARIES(btkSimulateStandardViewFromIsotropicImage ${ITK_LIBRARIES})
 
-#ADD_EXECUTABLE(btkSimulateLowResolutionImage btkSimulateLowResolutionImage.cxx)
-#TARGET_LINK_LIBRARIES(btkSimulateLowResolutionImage ${ITK_LIBRARIES})
+ADD_EXECUTABLE(btkSimulateLowResolutionImage btkSimulateLowResolutionImage.cxx
+${fbrain_SOURCE_DIR}/Code/Transformations/btkRandomSliceBySliceTransformGenerator.h
+${fbrain_SOURCE_DIR}/Code/Transformations/btkRandomSliceBySliceTransformGenerator.cxx)
+TARGET_LINK_LIBRARIES(btkSimulateLowResolutionImage btkMathsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkAverageImagesWithReference btkAverageImagesWithReference.cxx)
 TARGET_LINK_LIBRARIES(btkAverageImagesWithReference ${ITK_LIBRARIES})
@@ -100,7 +105,7 @@ ADD_EXECUTABLE(btkSequenceNormalization btkSequenceNormalization.cxx
     #${fbrain_SOURCE_DIR}/Code/Registration/btkAffineRegistration.h
     #${fbrain_SOURCE_DIR}/Code/Registration/btkRigidRegistration.h
  )
-TARGET_LINK_LIBRARIES(btkSequenceNormalization btkToolsLibrary ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkSequenceNormalization btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkRescaleIntensity btkRescaleIntensity.cxx)
 TARGET_LINK_LIBRARIES(btkRescaleIntensity btkToolsLibrary ${ITK_LIBRARIES})
@@ -141,7 +146,7 @@ ADD_EXECUTABLE(btkSimulateMotionSliceBySlice btkSimulateMotionSliceBySlice.cxx
     ${fbrain_SOURCE_DIR}/Code/Registration/btkSliceBySliceRigidRegistration.h
     ${fbrain_SOURCE_DIR}/Code/Registration/btkSliceBySliceAffineRegistration.h
 )
-TARGET_LINK_LIBRARIES(btkSimulateMotionSliceBySlice ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkSimulateMotionSliceBySlice btkMathsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkImageSubtract btkImageSubtract.cxx)
 TARGET_LINK_LIBRARIES(btkImageSubtract ${ITK_LIBRARIES})
@@ -203,8 +208,77 @@ TARGET_LINK_LIBRARIES(btkWeightedSumOfAffineTransforms btkToolsLibrary btkMathsL
 ADD_EXECUTABLE(btkInverseDisplacementField btkInverseDisplacementField.cxx)
 TARGET_LINK_LIBRARIES(btkInverseDisplacementField ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE( btkConvertFSLTransform  btkConvertFSLTransform.cxx)
-TARGET_LINK_LIBRARIES(btkConvertFSLTransform ${ITK_LIBRARIES})
+ADD_EXECUTABLE( btkTractDensityMap  btkTractDensityMap.cxx)
+TARGET_LINK_LIBRARIES(btkTractDensityMap ${ITK_LIBRARIES} vtkHybrid)
+
+ADD_EXECUTABLE(btkColorFiberTractsByOrientation btkColorFiberTractsByOrientation.cxx)
+TARGET_LINK_LIBRARIES(btkColorFiberTractsByOrientation btkTractographyLibrary vtkHybrid)
+
+ADD_EXECUTABLE(btkComputeSoftMaskUsingOrthogonalImages btkComputeSoftMaskUsingOrthogonalImages.cxx)
+TARGET_LINK_LIBRARIES(btkComputeSoftMaskUsingOrthogonalImages ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkLocalHistogramMatching btkLocalHistogramMatching.cxx)
+TARGET_LINK_LIBRARIES(btkLocalHistogramMatching btkToolsLibrary ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkWeightImageOfPatches btkWeightImageOfPatches.cxx)
+TARGET_LINK_LIBRARIES(btkWeightImageOfPatches btkToolsLibrary ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE( btkTriangleMesh btkTriangleMesh.cxx )
+TARGET_LINK_LIBRARIES(btkTriangleMesh vtkHybrid ${VTK_LIBRARIES})
+
+ADD_EXECUTABLE( btkDiffusionScalarMeasurement btkDiffusionScalarMeasurement.cxx)
+TARGET_LINK_LIBRARIES(btkDiffusionScalarMeasurement btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkS2SSimilarity btkS2SSimilarity.cxx)
+TARGET_LINK_LIBRARIES(btkS2SSimilarity btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkComputeCurvature btkComputeCurvature.cxx)
+TARGET_LINK_LIBRARIES(btkComputeCurvature btkMathsLibrary ${VTK_LIBRARIES} vtkHybrid)
+
+ADD_EXECUTABLE(btkConvertToTXT btkConvertToTXT.cxx)
+TARGET_LINK_LIBRARIES(btkConvertToTXT ${VTK_LIBRARIES} vtkHybrid)
+
+ADD_EXECUTABLE(btkApplyRegionGrow btkApplyRegionGrow.cxx)
+TARGET_LINK_LIBRARIES(btkApplyRegionGrow btkToolsLibrary btkMathsLibrary ${VTK_LIBRARIES} vtkHybrid)
+
+ADD_EXECUTABLE(btkProjectPointsOnPolydata btkProjectPointsOnPolydata.cxx)
+TARGET_LINK_LIBRARIES(btkProjectPointsOnPolydata ${VTK_LIBRARIES} vtkHybrid)
+
+ADD_EXECUTABLE(btkSelectSeedPoint btkSelectSeedPoint.cxx)
+TARGET_LINK_LIBRARIES(btkSelectSeedPoint ${VTK_LIBRARIES} vtkHybrid)
+
+ADD_EXECUTABLE(btkLikelihoodOfSequenceEstimation btkLikelihoodOfSequenceEstimation.cxx)
+TARGET_LINK_LIBRARIES(btkLikelihoodOfSequenceEstimation ${ITK_LIBRARIES})
+
+add_executable(btkComputeFeatureSelectionResiduals btkComputeFeatureSelectionResiduals.cxx)
+target_link_libraries(btkComputeFeatureSelectionResiduals btkFeatureSelectionLibrary ${ITK_LIBRARIES})
+
+add_executable(btkComputeCoefficientOfDeterminationForAtlas btkComputeCoefficientOfDeterminationForAtlas.cxx)
+target_link_libraries(btkComputeCoefficientOfDeterminationForAtlas btkToolsLibrary ${ITK_LIBRARIES})
+
+
+ADD_EXECUTABLE( btkGenerateVtkFileFromFiberDataTextFiles btkGenerateVtkFileFromFiberDataTextFiles.cxx)
+TARGET_LINK_LIBRARIES(btkGenerateVtkFileFromFiberDataTextFiles ${ITK_LIBRARIES} vtkHybrid)
+
+ADD_EXECUTABLE( btkGenerateSimulatedFiber  btkGenerateSimulatedFiber.cxx)
+TARGET_LINK_LIBRARIES(btkGenerateSimulatedFiber ${ITK_LIBRARIES} vtkHybrid)
+
+ADD_EXECUTABLE( btkCreate4DEmptyImageFromReferenceImage btkCreate4DEmptyImageFromReferenceImage.cxx)
+TARGET_LINK_LIBRARIES(btkCreate4DEmptyImageFromReferenceImage ${ITK_LIBRARIES} vtkHybrid)
+
+ADD_EXECUTABLE( btkQuantifyClusteredRegions btkQuantifyClusteredRegions.cxx)
+TARGET_LINK_LIBRARIES(btkQuantifyClusteredRegions ${ITK_LIBRARIES} vtkHybrid)
+
+add_executable(btkApplyTransformToDiffusionSequence btkApplyTransformToDiffusionSequence.cxx)
+target_link_libraries(btkApplyTransformToDiffusionSequence btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
+
+
+add_executable(btkApplyAffineTransformToFibers btkApplyAffineTransformToFibers.cxx)
+target_link_libraries(btkApplyAffineTransformToFibers btkToolsLibrary ${ITK_LIBRARIES} vtkHybrid)
+
+ADD_EXECUTABLE(btkResolutionSampler btkResolutionSampler.cxx)
+TARGET_LINK_LIBRARIES(btkResolutionSampler  ${ITK_LIBRARIES})
+
 
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
@@ -216,10 +290,11 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkNrrdToNifti
                 btkNiftiToNrrd
                 btkExtractOneImageFromSequence
-                btkCropImageUsingMask
+                btkCropImageUsingMask 
                 btkBinarizeLabels
                 btkResampleLabelsByInjection
                 btkSimulateStandardViewFromIsotropicImage
+                btkSimulateLowResolutionImage
                 btkAverageImagesWithReference
                 btkImageInjection
                 btkImageSimilarity
@@ -254,7 +329,28 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkWeightedSumOfAffineTransforms
                 btkInverseDisplacementField
                 btkDistanceBetweenBinaryImages
-                btkConvertFSLTransform
+                btkTractDensityMap
+                btkColorFiberTractsByOrientation
+                btkComputeSoftMaskUsingOrthogonalImages
+                btkLocalHistogramMatching
+                btkWeightImageOfPatches
+                btkTriangleMesh
+                btkDiffusionScalarMeasurement
+                btkS2SSimilarity
+                btkComputeCurvature
+                btkConvertToTXT
+                btkApplyRegionGrow
+                btkProjectPointsOnPolydata
+                btkSelectSeedPoint
+                btkLikelihoodOfSequenceEstimation
+                btkComputeFeatureSelectionResiduals
+                btkComputeCoefficientOfDeterminationForAtlas
+                btkGenerateVtkFileFromFiberDataTextFiles
+                btkGenerateSimulatedFiber
+		btkCreate4DEmptyImageFromReferenceImage
+		btkQuantifyClusteredRegions
+                btkApplyTransformToDiffusionSequence
+                btkApplyAffineTransformToFibers
+                btkResolutionSampler
         DESTINATION bin)
-
 

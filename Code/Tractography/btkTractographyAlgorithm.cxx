@@ -43,20 +43,30 @@
 #include "itkResampleImageFilter.h"
 #include "itkNearestNeighborInterpolateImageFunction.h"
 #include "itkImageRegionIteratorWithIndex.h"
+#include "itkImageMaskSpatialObject.h"
+#include "itkCastImageFilter.h"
 
 // VTK includes
 #include "vtkPolyData.h"
 
+// Local includes
+#include "btkImageHelper.h"
 
+// Types used by this filter
 typedef itk::ResampleImageFilter< btk::TractographyAlgorithm::LabelImage,btk::TractographyAlgorithm::LabelImage > LabelResampler;
 typedef itk::NearestNeighborInterpolateImageFunction< btk::TractographyAlgorithm::LabelImage,double > LabelInterpolator;
 typedef itk::ImageRegionIteratorWithIndex< btk::TractographyAlgorithm::LabelImage > LabelIterator;
+typedef itk::ImageMaskSpatialObject< btk::TractographyAlgorithm::LabelImage::ImageDimension > LabelSpatialObject;
+typedef itk::CastImageFilter< btk::TractographyAlgorithm::LabelImage,LabelSpatialObject::ImageType > LabelSpatialObjectCaster;
+
+// Mutex used by this filter in multi-threaded processing
+static itk::SimpleFastMutexLock mutex;
 
 
 namespace btk
 {
 
-TractographyAlgorithm::TractographyAlgorithm() : m_SeedSpacing(1)
+TractographyAlgorithm::TractographyAlgorithm() : m_RegionsOfInterest(NULL), m_SeedSpacing(1), m_SeedLabels(), m_OutputFibers(), m_OutputIndicesOfLabels(), m_DiffusionSignal(NULL), m_DiffusionModel(NULL), m_Mask(NULL), Superclass()
 {
     // ----
 }
@@ -72,9 +82,82 @@ void TractographyAlgorithm::PrintSelf(std::ostream &os, itk::Indent indent) cons
 
 void TractographyAlgorithm::Update()
 {
-    Self::ResampleLabelImage();
+    // Initialize filter
+    this->Initialize();
 
-    LabelIterator it(m_RegionsOfInterest, m_RegionsOfInterest->GetLargestPossibleRegion());
+    // Resample label image to seed spacing
+    this->ResampleLabelImage();
+
+    // Select the region on which will be applied the algorithm
+    LabelSpatialObjectCaster::Pointer objectCaster = LabelSpatialObjectCaster::New();
+    objectCaster->SetInput(m_RegionsOfInterest);
+    objectCaster->Update();
+    LabelSpatialObject::Pointer object = LabelSpatialObject::New();
+    object->SetImage(objectCaster->GetOutput());
+    m_RegionsOfInterest->SetRequestedRegion(object->GetAxisAlignedBoundingBoxRegion());
+
+    // Initialize the progress bar
+    this->SetProgress(0);
+    m_ProgressStep = 1.0 / static_cast< double >(m_RegionsOfInterest->GetRequestedRegion().GetNumberOfPixels());
+
+    // Set up the multithreaded processing
+    ThreadStruct str;
+    str.Filter = this;
+
+    this->GetMultiThreader()->SetNumberOfThreads(this->GetNumberOfThreads());
+    this->GetMultiThreader()->SetSingleMethod(this->ThreaderCallback, &str);
+
+    // Multithread the execution
+    this->GetMultiThreader()->SingleMethodExecute();
+
+    // Update progress to 1
+    this->SetProgress(1);
+    this->InvokeEvent(itk::ProgressEvent());
+}
+
+//----------------------------------------------------------------------------------------
+
+void TractographyAlgorithm::Initialize()
+{
+    // ----
+}
+
+//----------------------------------------------------------------------------------------
+
+ITK_THREAD_RETURN_TYPE TractographyAlgorithm::ThreaderCallback(void *arg)
+{
+    ThreadStruct *str;
+    itk::ThreadIdType  total, threadId, threadCount;
+
+    threadId    = ( (itk::MultiThreader::ThreadInfoStruct *)( arg ) )->ThreadID;
+    threadCount = ( (itk::MultiThreader::ThreadInfoStruct *)( arg ) )->NumberOfThreads;
+
+    str = (ThreadStruct *)( ( (itk::MultiThreader::ThreadInfoStruct *)( arg ) )->UserData );
+
+    // execute the actual method with appropriate roi region
+    // first find out how many pieces extent can be split into.
+    LabelImage::RegionType splitRegion;
+    total = str->Filter->SplitRequestedRegion(threadId, threadCount, splitRegion);
+
+    if (threadId < total)
+    {
+        str->Filter->ThreadedGenerateData(splitRegion, threadId);
+    }
+    // else
+    //   {
+    //   otherwise don't use this thread. Sometimes the threads dont
+    //   break up very well and it is just as efficient to leave a
+    //   few threads idle.
+    //   }
+
+    return ITK_THREAD_RETURN_VALUE;
+}
+
+//----------------------------------------------------------------------------------------
+
+void TractographyAlgorithm::ThreadedGenerateData(const LabelImage::RegionType &region, itk::ThreadIdType threadId)
+{
+    LabelIterator it(m_RegionsOfInterest, region);
 
     unsigned int numberOfSelectedLabels = m_SeedLabels.size();
 
@@ -97,13 +180,15 @@ void TractographyAlgorithm::Update()
 
             if(m_Mask->GetPixel(maskIndex)  != 0)
             {
-                // Initialize output
-                m_CurrentFiber = NULL;
+                // Initialize vector
+                vtkSmartPointer< vtkPolyData > currentFiber = NULL;
 
                 // Start tractography from seed point
-                PropagateSeed(point);
+                currentFiber = this->PropagateSeed(point);
 
                 // Save data
+                mutex.Lock();
+
                 for(int l = m_OutputFibers.size(); l < label; l++)
                 {
                     m_OutputIndicesOfLabels.push_back(-1);
@@ -115,13 +200,21 @@ void TractographyAlgorithm::Update()
                     m_OutputIndicesOfLabels[label-1] = m_OutputFibers.size()-1;
                 }
 
-                if(m_CurrentFiber != NULL)
+                if(currentFiber != NULL)
                 {
-                    m_OutputFibers[m_OutputIndicesOfLabels[label-1]]->AddInput(m_CurrentFiber);
+                    m_OutputFibers[m_OutputIndicesOfLabels[label-1]]->AddInput(currentFiber);
                 }
+
+                mutex.Unlock();
             }
         }
-    } // for each seed
+
+        // Update progress
+        mutex.Lock();
+        this->SetProgress(this->GetProgress() + m_ProgressStep);
+        this->InvokeEvent(itk::ProgressEvent());
+        mutex.Unlock();
+    } // for each seed in region
 }
 
 //----------------------------------------------------------------------------------------
@@ -145,6 +238,63 @@ void TractographyAlgorithm::ResampleLabelImage()
     resampler->Update();
 
     m_RegionsOfInterest = resampler->GetOutput();
+}
+
+//----------------------------------------------------------------------------------------
+
+unsigned int TractographyAlgorithm::SplitRequestedRegion(unsigned int i, unsigned int num, LabelImage::RegionType &splitRegion)
+{
+    // Get the output pointer
+    LabelImage *labelPtr = m_RegionsOfInterest.GetPointer();
+
+    const LabelImage::SizeType &requestedRegionSize = labelPtr->GetRequestedRegion().GetSize();
+
+    int splitAxis;
+    LabelImage::IndexType splitIndex;
+    LabelImage::SizeType splitSize;
+
+    // Initialize the splitRegion to the output requested region
+    splitRegion = labelPtr->GetRequestedRegion();
+    splitIndex = splitRegion.GetIndex();
+    splitSize = splitRegion.GetSize();
+
+    // split on the outermost dimension available
+    splitAxis = labelPtr->GetImageDimension() - 1;
+    while ( requestedRegionSize[splitAxis] == 1 )
+    {
+        --splitAxis;
+        if ( splitAxis < 0 )
+        { // cannot split
+            itkDebugMacro("  Cannot Split");
+            return 1;
+        }
+    }
+
+    // determine the actual number of pieces that will be generated
+    LabelImage::SizeType::SizeValueType range = requestedRegionSize[splitAxis];
+    unsigned int valuesPerThread = itk::Math::Ceil< unsigned int >(range / (double)num);
+    unsigned int maxThreadIdUsed = itk::Math::Ceil< unsigned int >(range / (double)valuesPerThread) - 1;
+
+    // Split the region
+    if ( i < maxThreadIdUsed )
+    {
+        splitIndex[splitAxis] += i * valuesPerThread;
+        splitSize[splitAxis] = valuesPerThread;
+    }
+    if ( i == maxThreadIdUsed )
+    {
+        splitIndex[splitAxis] += i * valuesPerThread;
+        // last thread needs to process the "rest" dimension being split
+        splitSize[splitAxis] = splitSize[splitAxis] - i * valuesPerThread;
+    }
+
+    // set the split region ivars
+    splitRegion.SetIndex(splitIndex);
+    splitRegion.SetSize(splitSize);
+
+    itkDebugMacro("  Split Piece: " << splitRegion);
+
+    return maxThreadIdUsed + 1;
 }
 
 //----------------------------------------------------------------------------------------

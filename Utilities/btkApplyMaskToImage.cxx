@@ -35,25 +35,29 @@
 
 /* ITK */
 #include "itkImage.h"
-#include "itkMaskImageFilter.h"
 #include "itkImageIOBase.h"
 #include "itkExtractImageFilter.h"
 #include "itkJoinSeriesImageFilter.h"
+#include "itkDisplacementFieldTransform.h"
 
 /* BTK */
 #include "btkImageHelper.h"
+#include "btkMaskImageFilter.h"
 
 /* OTHERS */
 #include "iostream"
 #include <tclap/CmdLine.h>
 
+typedef itk::DisplacementFieldTransform< double,3 >::DisplacementFieldType DisplacementField;
+
 
 int main(int argc, char * argv[])
 {
     TCLAP::CmdLine cmd("btkApplyMaskToImage: Apply a 3D mask(non-zero values) to a 3D or 4D image", ' ', "1.0", true);
-    TCLAP::ValueArg<std::string> inputImageArg("i","image_file","input image file (short)",true,"","string", cmd);
-    TCLAP::ValueArg<std::string> outputImageArg("o","output_file","output image file (short)",true,"","string", cmd);
-    TCLAP::ValueArg<std::string> inputMaskArg("m","mask_file","filename of the mask image (dimension = 3)",false,"","string", cmd);
+    TCLAP::ValueArg<std::string> inputImageArg("i","input","input image file (short)",true,"","string", cmd);
+    TCLAP::ValueArg<std::string> outputImageArg("o","output","output image file (short)",true,"","string", cmd);
+    TCLAP::ValueArg<std::string> inputMaskArg("m","mask","filename of the mask image (dimension = 3)",false,"","string", cmd);
+    TCLAP::ValueArg<float> thresholdArg("t","threshold","threshold for mask value (pixesl in mask who are strictly greater than threshold value are taken into acount",false,0.5,"float", cmd);
 
     // Parse the args.
     cmd.parse( argc, argv );    
@@ -62,6 +66,7 @@ int main(int argc, char * argv[])
     std::string input_file       = inputImageArg.getValue();
     std::string output_file      = outputImageArg.getValue();
     std::string mask_file        = inputMaskArg.getValue();
+    float threshold = thresholdArg.getValue();
 
 
     //Determine the input image dimension
@@ -75,30 +80,68 @@ int main(int argc, char * argv[])
     typedef short PixelType;
     typedef itk::Image<PixelType, 3> itk3DImage;
     typedef itk::Image<PixelType, 4> itk4DImage;
-    typedef itk::Image<unsigned char, 3> itk3DMask;
-    typedef itk::MaskImageFilter<itk3DImage,itk3DMask, itk3DImage> MaskImageFilter;
+    typedef itk::Image<float, 3> itk3DMask;
+    typedef btk::MaskImageFilter<itk3DImage, itk3DMask> btkMaskImageFilter;
     
     itk3DMask::Pointer mask   = itk3DMask::New();
     mask  = btk::ImageHelper<itk3DMask>::ReadImage(mask_file);
 
     
+    try{
     switch(Dimension)
     {
       case 3:
       {
-        itk3DImage::Pointer image = itk3DImage::New();
+            switch(imageIO->GetPixelType())
+            {
+                case itk::ImageIOBase::VECTOR:
+                {
+                    typedef btk::MaskImageFilter< DisplacementField, itk3DMask > MaskFieldFilter;
 
-        //read input image and mask
-        image = btk::ImageHelper<itk3DImage>::ReadImage(input_file);
-    
-        MaskImageFilter::Pointer maskImageFilter = MaskImageFilter::New();
-        maskImageFilter->SetMaskImage(mask);        
-        maskImageFilter->SetInput(image);
-        maskImageFilter->Update();
+                    // read input
+                    DisplacementField::Pointer field = btk::ImageHelper< DisplacementField >::ReadImage(input_file);
 
-        //write the result
-        btk::ImageHelper<itk3DImage>::WriteImage(maskImageFilter->GetOutput(),output_file);
-           
+                    // process
+
+                    //MaskFieldFilter::Pointer maskImageFilter = MaskFieldFilter::New();
+                     MaskFieldFilter* maskImageFilter = new MaskFieldFilter();
+                    //maskImageFilter->SetMaskImage(mask);
+                     maskImageFilter->SetMask(mask);
+                    maskImageFilter->SetInput(field);
+//                    maskImageFilter->SetThreshold(threshold);
+                    maskImageFilter->Update();
+
+                    // write result
+                    btk::ImageHelper< DisplacementField >::WriteImage(maskImageFilter->GetOutput(), output_file);
+                    delete maskImageFilter;
+                }
+                    break;
+
+                case itk::ImageIOBase::SCALAR:
+                {
+                    itk3DImage::Pointer image = itk3DImage::New();
+
+                    //read input image and mask
+                    image = btk::ImageHelper<itk3DImage>::ReadImage(input_file);
+
+                    btkMaskImageFilter* maskImageFilter = new btkMaskImageFilter();
+                    //maskImageFilter->SetMaskImage(mask);
+                    maskImageFilter->SetMask(mask);
+                    maskImageFilter->SetInput(image);
+//                    maskImageFilter->SetThreshold(threshold);
+                    maskImageFilter->Update();
+
+                    //write the result
+                    btk::ImageHelper<itk3DImage>::WriteImage(maskImageFilter->GetOutput(),output_file);
+                    delete maskImageFilter;
+                }
+                    break;
+
+                default:
+                {
+                    throw(std::string("Unrecognized pixel type !"));
+                }
+            }
       }
         break;
       case 4:
@@ -137,9 +180,10 @@ int main(int argc, char * argv[])
         concatenator->SetSpacing( reader->GetOutput()->GetSpacing()[3] );
 
         itk4DImage::IndexType start = input4DRegion.GetIndex();
-        uint numberOf3Dimages = input4DSize[3];
+
+        unsigned int numberOf3Dimages = input4DSize[3];
     
-        for (uint i = 0; i < numberOf3Dimages; i++){
+        for (unsigned int i = 0; i < numberOf3Dimages; i++){
 
           start[3] = i;
 
@@ -154,13 +198,16 @@ int main(int argc, char * argv[])
 
           itk3DImagePointer output3DImage = itk3DImage::New();
           
-          MaskImageFilter::Pointer maskImageFilter = MaskImageFilter::New();
-          maskImageFilter->SetMaskImage(mask);
+          btkMaskImageFilter* maskImageFilter = new btkMaskImageFilter();
+          maskImageFilter->SetMask(mask);
           maskImageFilter->SetInput(input3DImage);
+//		  maskImageFilter->SetThreshold(threshold);
           maskImageFilter->Update();
+
           output3DImage = maskImageFilter->GetOutput();
 
           concatenator->PushBackInput(output3DImage);
+          delete maskImageFilter;
         }
 
 
@@ -174,6 +221,12 @@ int main(int argc, char * argv[])
         break;
       default:
         std::cout<<"Only dimension equal to 3 or 4 is supported.\n";      
+    }
+    }
+    catch(std::string &message)
+    {
+        std::cout << "Exception: " << message << std::endl;
+        return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;

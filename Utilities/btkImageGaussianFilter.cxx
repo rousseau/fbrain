@@ -74,6 +74,8 @@ int main(int argc, char *argv[])
         // Set up arguments
         TCLAP::ValueArg< std::string > inputFileNameArg("i", "input_image", "Input image filename", true, "", "string", cmd);
         TCLAP::ValueArg< std::string > outputFileNameArg("o", "output_image", "Output image filename", false, "Blurred-image.nii.gz", "string", cmd);
+        TCLAP::ValueArg< float >       varianceArg      ("v","variance","variance of the gaussian (default is 1)",false,1.0,"float",cmd);  
+
 
         // Parse arguments
         cmd.parse(argc, argv);
@@ -81,7 +83,7 @@ int main(int argc, char *argv[])
         // Get the parsed values
         std::string inputFileName  = inputFileNameArg.getValue();
         std::string outputFileName = outputFileNameArg.getValue();
-
+				float inputVariance        = varianceArg.getValue();
 
         //
         // Read image
@@ -98,9 +100,9 @@ int main(int argc, char *argv[])
         filter->SetInput(inputImage);
 
         ImageGaussianFilter::ArrayType variance;
-        variance[0] = 1.0;
-        variance[1] = 1.0;
-        variance[2] = 1.0;
+        variance[0] = inputVariance;
+        variance[1] = inputVariance;
+        variance[2] = inputVariance;
         filter->SetVariance(variance);
 
         filter->SetUseImageSpacingOff();
