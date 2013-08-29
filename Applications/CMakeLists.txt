@@ -225,23 +225,13 @@ DESTINATION bin)
 
 # ---- Segmentation ---------------------------------------------------------------------
 
-ADD_EXECUTABLE(btkTissueSegmentation btkTissueSegmentation.cxx
-    ${fbrain_SOURCE_DIR}/Code/Segmentation/btkTopologicalKMeans.h
-)
-TARGET_LINK_LIBRARIES(btkTissueSegmentation ${ITK_LIBRARIES})
-
 ADD_EXECUTABLE(btkLabelPropagation btkLabelPropagation.cxx
     ${fbrain_SOURCE_DIR}/Code/Segmentation/btkLabelPropagationTool.h
 )
 TARGET_LINK_LIBRARIES(btkLabelPropagation ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkSSL btkSSL.cxx)
-TARGET_LINK_LIBRARIES(btkSSL btkToolsLibrary ${ITK_LIBRARIES})
-
 INSTALL(TARGETS
-    btkTissueSegmentation
     btkLabelPropagation
-    btkSSL
 DESTINATION bin)
 
 # ---- Clustering -----------------------------------------------------------------------
