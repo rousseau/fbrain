@@ -66,7 +66,7 @@ int main( int argc, char *argv[] )
     TCLAP::MultiArg<std::string> inputArg("i","input","input image ",true,"string",cmd);
     TCLAP::MultiArg<std::string> tranArg("t","transform","transforms to apply",false,"string",cmd);
     TCLAP::MultiArg<std::string> outputArg("o","output","vtk polydata",true,"string",cmd);
-   TCLAP::SwitchArg  RenderArg("r","render","Open a render window with the polydatas", cmd, false);
+    TCLAP::SwitchArg  RenderArg("r","render","Open a render window with the polydatas", cmd, false);
 
 
     std::vector< std::string > input;

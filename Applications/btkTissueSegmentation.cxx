@@ -175,7 +175,10 @@ int main(int argc, char **argv)
 		std::cout<<"Fills holes in LCR..."<<std::endl;
 		lcrClosing(brainSegmentation);
 		std::cout<<"Holes filed"<<std::endl<<std::endl;
-		
+
+        std::cout<<"Saves output brain segmentation image"<<std::endl;
+        LabelHelperType::WriteImage(brainSegmentation, brainSegmentationFile);
+
 		/* ---------------------------------------------------------------------------------- Cortex Segmentation -------------------------------------------------------------------------------*/
 		//Create Black Top Hat Image
 		std::cout<<"Creates black top hat image..."<<std::endl;
@@ -251,8 +254,7 @@ int main(int argc, char **argv)
 		std::cout<<"Holes filed"<<std::endl<<std::endl;
 		
 		/* ------------------------------------------------------------------------- Outputs Writing ---------------------------------------------------------------------------------------------*/
-		std::cout<<"Saves output images..."<<std::endl;
-		LabelHelperType::WriteImage(brainSegmentation, brainSegmentationFile);
+        std::cout<<"Saves output cortex segmentation image"<<std::endl;
 		LabelHelperType::WriteImage(cortexSegmentation, cortexSegmentationFile);
 		std::cout<<"Output images saved"<<std::endl<<std::endl;
 	}

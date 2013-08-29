@@ -86,18 +86,18 @@ namespace btk
 		//Algorithm
 		if(m_LcrOrCortex)
 		{
-			//Compute Centroids and Initialise the brain segmentation
+            std::cout<<"Compute Centroids and Initialise the brain segmentation\n";
 			ComputeCentroids(inputImage, initSeg, 1);
 			InitBrainSegmentation(initSeg, finalSeg);
 		}
 		else
 		{
-			//Initialise the cortex segmentation and compute the initial centroids
+            std::cout<<"Initialise the cortex segmentation and compute the initial centroids\n";
 			InitCortexSegmentation(initSeg, finalSeg);
 			ComputeCentroids(inputImage, finalSeg);
 		}
 		
-		//Runs Topological K-Means
+        std::cout<<"Running Topological K-Means\n";
 		RunSegmentation(inputImage, finalSeg);
 		
 		return;
@@ -106,6 +106,7 @@ namespace btk
 	template< typename TInputImage, typename TLabelImage>
 	void TopologicalKMeans<TInputImage, TLabelImage>::ComputeCentroids(typename TInputImage::Pointer inputImage, typename TLabelImage::Pointer segImage, bool initLCRCentroids)
 	{
+        std::cout<<"Computing centroids\n";
 		// 3 centroids vector because there is three spheres in this model
 		m_Centroids.SetSize(inputImage->GetNumberOfComponentsPerPixel(),3);
 		m_Centroids.Fill(0);
@@ -116,14 +117,16 @@ namespace btk
 		itk::VariableLengthVector<unsigned int> sum_voxel;
 		sum_voxel.SetSize(inputImage->GetNumberOfComponentsPerPixel());
 		sum_voxel.Fill(0);
-		
+
 		for(inputImageIterator.GoToBegin(), segImageIterator.GoToBegin(); !inputImageIterator.IsAtEnd(); ++inputImageIterator, ++segImageIterator)
 		{
-			if(segImageIterator.Get() != 0)
+            if(segImageIterator.Get() > 0)
 			{
 				for(unsigned int i=0; i<m_Centroids.Rows(); i++)
+                {
 					m_Centroids(i,segImageIterator.Get()-1) += inputImageIterator.Get()[i];
-				sum_voxel[segImageIterator.Get()-1]++;
+                }
+                sum_voxel[segImageIterator.Get()-1]++;
 			}
 		}
 		
@@ -196,6 +199,7 @@ namespace btk
 		
 		for(brainSegmentationIterator.GoToBegin(), distanceImageIterator.GoToBegin(), cortexSegmentationInitialisationIterator.GoToBegin(); !brainSegmentationIterator.IsAtEnd(); ++brainSegmentationIterator, ++distanceImageIterator, ++cortexSegmentationInitialisationIterator)
 		{
+            cortexSegmentationInitialisationIterator.Set(0);
 			if(brainSegmentationIterator.Get() != 0)
 			{
 				if(brainSegmentationIterator.Get() == 1)
@@ -241,6 +245,7 @@ namespace btk
 		typename TLabelImage::Pointer borderImage;
 		
 		unsigned int numLabelChange2 = 1;
+        unsigned int iteration = 1;
 		
 		//While some voxels have changed after the computation of centroids
 		while(numLabelChange2 != 0)
@@ -266,8 +271,11 @@ namespace btk
 				numLabelChange += ClassifyBorderVoxel(inputImage, segImage, borderImage, 3);
 				
 				numLabelChange2 += numLabelChange;
-			}
-			
+
+                std::cout<<"Number of changes : "<<numLabelChange<<" (iteration #"<<iteration<<")\n";
+                iteration++;
+            }
+
 			//Only one loop in case of the brain segmentation, since we already know the centroids by the FCM classification (and so are already optimal)
 			if(m_LcrOrCortex) {break;}
 			else {ComputeCentroids(inputImage, segImage);}
@@ -518,7 +526,7 @@ namespace btk
 		return maskFilter->GetOutput();
 	}
 	
-	/* ----------------------------------------------Input Acces-------------------------------------------- */
+    /* ----------------------------------------------Input Access-------------------------------------------- */
 	template< typename TInputImage, typename TLabelImage>
 	void TopologicalKMeans<TInputImage, TLabelImage>::SetInputImage(const TInputImage* image)
 	{
