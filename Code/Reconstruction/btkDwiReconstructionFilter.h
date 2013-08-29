@@ -49,7 +49,6 @@
 #include "btkDiffusionDataset.h"
 #include "btkDiffusionSequence.h"
 #include "btkResolutionSamplerFilter.h"
-#include "btkAffineTransform.h"
 #include "btkWeightedSumOfImagesFilter.h"
 
 namespace btk
@@ -120,7 +119,7 @@ class DwiReconstructionFilter: public itk::ProcessObject
         typedef InterpolatorType::Pointer                               InterPolatorPointer;
 
         /** Transform typedefs. */
-        typedef AffineTransform< double,3 >                             TransformType;
+        typedef itk::AffineTransform< double,3 >                        TransformType;
         typedef TransformType::Pointer                                  TransformPointer;
 
         /** Extractor typedefs. */
