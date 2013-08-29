@@ -47,7 +47,6 @@
 #include "btkDiffusionSequence.h"
 #include "btkWeightedEstimationBase.h"
 #include "btkDiffusionDataset.h"
-#include "btkDiffusionSlice.h"
 
 
 
@@ -56,6 +55,7 @@ namespace btk
 
 /**
  * @brief Weighted spherical harmonics decomposition and model estimation (diffusion sequence).
+ *
  * @author Frederic Champ
  * @ingroup Diffusion
  */
@@ -71,7 +71,7 @@ class WeightedEstimationFilter : public itk::ImageToImageFilter< DiffusionSequen
         /** Diffusion dataset typedefs. */
         typedef DiffusionDataset                                                DatasetType;
         typedef DatasetType::Pointer                                            DatasetPointer;
-        typedef DatasetType::DataVectorType::iterator                           DataIterator;
+        typedef DatasetType::Iterator                                           DataIterator;
 
          /** Point and index typedef. */
         typedef itk::Point<double,3>                                            Point3DType;

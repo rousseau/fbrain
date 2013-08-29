@@ -55,10 +55,21 @@ namespace btk
 {
 
 /**
-  * @brief Slice by slice registration for DWIs
+  * @brief Volume to volume and slice by slice registration for DWIs
+  *
+  * The volume to volume registration work with an diffusion sequence as input and an image of
+  * white matter as reference.
+  *
+  * This method use a powell optimizer and the mattes mutual information as metric.
+  *
+  * The avoid the mise overlapping, the method loop through the image resolution.
+  * The first resolution is 8 mm per voxel's side and 2 mm a the least.
+  * A registration is computed for each resolution updating transformations.
+  *
+  * This can be change to have a better precision.
   *
   * @author Frederic Champ
-  * @ingroup Registration
+  * @ingroup Reconstruction
   *
   */
 

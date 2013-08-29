@@ -53,7 +53,6 @@ WeightedEstimationBase::WeightedEstimationBase() : Superclass()
     m_SphericalHarmonicsOrder = 4;
     m_RegularizationParameter = 0.006;
     m_Sigma = 1.0;
-    m_QueryValue = 0.0;
     m_SphericalResolution = 100;
 }
 
@@ -82,9 +81,7 @@ void WeightedEstimationBase::ComputeWeightedMatrix()
     for(unsigned int i = 0; i<m_numberOfNeighbors; i++)
     {
 
-        float GlobalDistance=0.0;
         float SpatialDistance=0.0;
-        float IntensityDistance=0.0;
         double    weight;
         ////////////////////////////////////////////////////////////////////////////
         //
@@ -97,51 +94,12 @@ void WeightedEstimationBase::ComputeWeightedMatrix()
 
         ////////////////////////////////////////////////////////////////////////////
         //
-        // Normalized intensity distance
-        //
-        if(m_VMax!=m_VMin)
-        {
-
-            float vJ = (m_VMax -  m_SignalValues[i] )/(m_VMax-m_VMin);
-            if(m_QueryValue != 0.0)
-            {
-                float vI = (m_VMax -  m_QueryValue )/(m_VMax-m_VMin);
-                IntensityDistance =  std::fabs( vJ - vI);
-            }
-            else
-            {
-                IntensityDistance = vJ;
-            }
-        }
-
-        GlobalDistance=(SpatialDistance+IntensityDistance);
-
-        if(SpatialDistance!=0.0 && IntensityDistance !=0.0)
-        {
-            GlobalDistance/=2.0;
-        }
-
-        ////////////////////////////////////////////////////////////////////////////
-        //
         // kernel computation
         //
+        SpatialDistance/=m_Sigma; // Fixed at 1 ...
 
-        GlobalDistance*=m_Sigma;
-
-        // Triweight
-//        if(GlobalDistance >1)
-//        {
-//            weight =0.0;
-//        }
-//        else
-//        {
-//            // triweight (best result)
-//            weight = 35.0/32.0*pow(1-pow(std::fabs(GlobalDistance),2),3);
-//        }
-        // Gaussian Kernel
-        weight = std::exp(-0.5*  (GlobalDistance*GlobalDistance));
-
-
+        //Gaussian kernel
+        weight = std::exp(-0.5*  (SpatialDistance*SpatialDistance));
 
         m_WeightsMatrix[i][i]= weight;
     }
@@ -282,24 +240,13 @@ void WeightedEstimationBase::Update()
 
     ////////////////////////////////////////////////////////////////////////////
     //
-    // Max-Min search of spatial distance and intensity
+    // Max-Min search of spatial distance
     //
-    m_VMax = m_SignalValues[0];
-    m_VMin = m_SignalValues[0];
-
     m_DMax = m_NeighborsDistances[0];
     m_DMin = m_NeighborsDistances[0];
 
     for(unsigned int j = 0; j < m_NeighborsDistances.size(); j++)
     {
-        if(m_SignalValues[j]>m_VMax)
-        {
-            m_VMax=m_SignalValues[j];
-        }
-        if(m_SignalValues[j]<m_VMin)
-        {
-            m_VMin=m_SignalValues[j];
-        }
 
         if(m_NeighborsDistances[j]>m_DMax)
         {

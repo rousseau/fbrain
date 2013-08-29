@@ -51,7 +51,7 @@ OutlierCorrectionFilter<TImage>::OutlierCorrectionFilter()
     m_InputSequence = TSequence::New();
     m_Delimiter=";";
     m_Method ="SH";
-    m_Rgra = 0.15;
+    m_Rgra = 0.10;
     m_Radius = 0.0;
 
 }
@@ -484,7 +484,10 @@ OutlierCorrectionFilter<TImage>::CorrectOutliers(SequenceConstPointer InputSeque
             Slice3DSize[3]=1; //treat each outliers separatly
 
             unsigned int i;
-            #pragma omp parallel for private(i) schedule(dynamic)
+            ///////////////////////////////////////////////////////////////////////////
+            // Not thread safe !!!!! and doesn't work
+            ///////////////////////////////////////////////////////////////////////////
+//            #pragma omp parallel for private(i) schedule(dynamic)
             for(i=0; i < m_OutliersIndexes.size(); i++)
             {
                 SequenceRegionType SliceRegion;
@@ -505,9 +508,12 @@ OutlierCorrectionFilter<TImage>::CorrectOutliers(SequenceConstPointer InputSeque
 
                     float value = Interpolator -> EvaluateAt(index4D, theta, phi, rspa, m_Rgra, 0);
                     It.Set((short)value);
+                    btkCoutMacro(value);
 
                 }
+
             }
+         btkCoutMacro(" Don't work any more ... : problem with the RBF interpolation");
 
         }
     }

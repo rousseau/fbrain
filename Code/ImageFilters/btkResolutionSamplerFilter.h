@@ -50,6 +50,12 @@
 namespace btk
 {
 
+/**
+  * @brief Resample a 3D image with a specific resolution in mm by voxel's sides.
+  *
+  * @author Frederic Champ
+  * @ingroup Reconstruction
+  */
 template <class TImage>
 class ResolutionSamplerFilter : public itk::ResampleImageFilter< TImage,TImage >
 {

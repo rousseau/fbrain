@@ -49,6 +49,12 @@ namespace btk
 
 /**
  * @brief Represent a diffusion weighted slice of MRI dataset.
+ *
+ * it's an tk::Image< short, 3> with:
+ *      - A gradient direction
+ *      - A B-value
+ *      - An outliers status
+ *
  * @author Frederic Champ
  * @ingroup Diffusion
  */

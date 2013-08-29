@@ -132,19 +132,22 @@ int main(int argc, char *argv[])
         SizeType   size = region.GetSize();
 
         //////////////////////////////////////////////////////////////////////////
-        //
         // Correct outliers
-        //
+        //////////////////////////////////////////////////////////////////////////
         OutlierCorrectionType::Pointer Outlier = OutlierCorrectionType::New();
         Outlier -> SetInputSequence(inputSequence.GetPointer());
         if(similaritiesFileNameArg.isSet())
         {
             Outlier -> WriteSimilarities(similaritiesFileName);
         }
-        Outlier -> SetRgra(rGra);
+        if(method.compare("RBF")==0)
+        {
+            throw("RBF interpolation return -nan value");
+        }
+        Outlier->SetMethod(method);  // method: SH, WSH, RBF
+        Outlier -> SetRgra(rGra); // only used for RBF interoplation
         Outlier -> SetVerboseMod(verboseMode);
-        Outlier->SetMethod(method);
-        Outlier->SetRadius(radius);
+        Outlier->SetRadius(radius); // radius of the neighbor search: only used for WSH
 
         try
         {
@@ -157,6 +160,9 @@ int main(int argc, char *argv[])
 
         TSequence::Pointer correctedSequence = Outlier->GetOutput();
 
+        //////////////////////////////////////////////////////////////////////////
+        // MPE calculation between estimation sequence and reference sequence
+        //////////////////////////////////////////////////////////////////////////
         if(mpeFileNameArg.isSet() && !referenceSequenceFileName.empty() )
         {
             std::vector<std::vector<double> > VectorMPE;
@@ -237,8 +243,6 @@ int main(int argc, char *argv[])
                 VectorMPE[i][size[3]]=mean_MPE;
             }
 
-
-
             //////////////////////////////////////////////////////////////////////////
             //
             // Write outputs
@@ -289,8 +293,14 @@ int main(int argc, char *argv[])
     }
     catch(itk::ExceptionObject &exception)
     {
+
         std::cerr << "ITK error:" << std::endl;
         std::cerr << exception << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    catch(const char* e)
+    {
+        std::cerr << e << std::endl;
         exit(EXIT_FAILURE);
     }
 }

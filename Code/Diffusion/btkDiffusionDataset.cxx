@@ -184,7 +184,7 @@ void DiffusionDataset::Initialize()
 
 
     }
-    if(hasOutliers=false)
+    if(hasOutliers==false)
     {
         btkCoutMacro("      No outliers detected ... ");
     }
@@ -195,7 +195,9 @@ void DiffusionDataset::Initialize()
 
 void DiffusionDataset::RemoveOutliers()
 {
-
+    ////////////////////////////////////////////////////////////////////////////
+    // Delete slices which have an OutlierStatus = true
+    ////////////////////////////////////////////////////////////////////////////
     for (DataVectorType::iterator it = m_Data.begin() ; it != m_Data.end(); ++it)
     {
         if((*it)->IsOutlier())

@@ -65,6 +65,9 @@ void DwiReconstructionFilter::PrintSelf(std::ostream &os, itk::Indent indent) co
 
 void DwiReconstructionFilter::Initialize()
 {
+    ////////////////////////////////////////////////////////////////////////////
+    // Used in case you whant to use the mean image as reference for slice by slice
+    ////////////////////////////////////////////////////////////////////////////
     //    m_Region4D = m_InputSequence -> GetLargestPossibleRegion();
     //    m_Size4D = m_InputSequence -> GetLargestPossibleRegion().GetSize();
     //    m_GradientImages.resize(m_Size4D[3]-1);
@@ -166,8 +169,11 @@ void DwiReconstructionFilter::Update()
             initialTransforms[i] -> SetCenter(centerPoint);
 
 
-            unsigned int startResolution = 8; // Set the start resolution (mm per voxel)
-            unsigned int lastResolution = 2;
+            ////////////////////////////////////////////////////////////////////////////
+            // Initialize loop through the image resolution
+            ////////////////////////////////////////////////////////////////////////////
+            unsigned int startResolution = 8; // Set the start resolution (mm per voxel's sides)
+            unsigned int lastResolution = 2;  // Set the last resolution
             unsigned int numberOfStep = ((startResolution -lastResolution) /2) +1;
 
             unsigned int resolution = startResolution;
@@ -209,8 +215,8 @@ void DwiReconstructionFilter::Update()
                 PowellOptimizerPointer optimizer = PowellOptimizerType::New();
                 optimizer->SetMaximize(false);
                 optimizer->SetStepLength(0.1);
-                optimizer->SetStepTolerance( 1e-3);
-                optimizer->SetValueTolerance(1e-3 );
+                optimizer->SetStepTolerance( 1e-4);
+                optimizer->SetValueTolerance(1e-4 );
                 optimizer->SetMaximumIteration( m_NumberOfIterations );
 
 

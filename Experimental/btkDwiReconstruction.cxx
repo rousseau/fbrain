@@ -52,20 +52,16 @@
 
 
 // Image and sequence definitions
-
-
-// Filters definitions
 typedef btk::DiffusionSequence                          TSequence;
 typedef itk::Image<short,3>                             TImage;
 
+// Filter definitions
 typedef itk::ExtractImageFilter< TSequence, TImage >    ExtractImageFilter;
-
-typedef btk::WeightedEstimationFilter                   EstimationType;
+typedef itk::JoinSeriesImageFilter< TImage,TSequence>   JoinerType;
 
 typedef btk::DwiReconstructionFilter                    ReconstructionType;
+typedef btk::WeightedEstimationFilter                   EstimationType;
 
-typedef itk::ExtractImageFilter<TSequence,TImage>       ExtractorType;
-typedef itk::JoinSeriesImageFilter< TImage,TSequence>   JoinerType;
 
 
 int main(int argc, char *argv[])
@@ -73,21 +69,21 @@ int main(int argc, char *argv[])
     try
     {
 
-        //
+        ////////////////////////////////////////////////////////////////////////////
         // Parse program's arguments
-        //
+        ////////////////////////////////////////////////////////////////////////////
 
         // Define command line object for program
-        TCLAP::CmdLine cmd("btkReconstruction.", ' ', "1.0");
-
+        TCLAP::CmdLine cmd("btkReconstruction", ' ', "1.0");
 
         // Define arguments
         TCLAP::ValueArg< std::string >  inputFileNameArg ("i", "input", "Input", true, "", "string", cmd);
         TCLAP::ValueArg< std::string >  refFileNameArg ("r", "ref", "ref", false, "", "string", cmd);
         TCLAP::ValueArg< std::string >  outFileNameArg ("o", "output", "output", true, "", "string", cmd);
-        TCLAP::ValueArg<bool>           volumeRegistrationArg("","volumeRegistration", "Enable volume to volume registration", false, true, "bool", cmd);
-        TCLAP::ValueArg<bool>           sliceRegistrationArg("","sliceRegistration", "Enable slice by slice registration", false, true, "bool", cmd);
+        TCLAP::SwitchArg                volumeRegistrationArg("","volumeRegistration", "Enable volume to volume registration", cmd, false);
+        TCLAP::SwitchArg                sliceRegistrationArg("","sliceRegistration", "Enable slice by slice registration", cmd, false);
         TCLAP::ValueArg<double>         radiusArg("","radius", "Only for WSH: radius of neighbor search", false, false, "double", cmd);
+
 
 
         // Parse command line
@@ -102,24 +98,41 @@ int main(int argc, char *argv[])
         bool   sliceRegistration    = sliceRegistrationArg.getValue();
         double radius               = radiusArg.getValue();
 
+
+        ////////////////////////////////////////////////////////////////////////////
+        // Check input
+        ////////////////////////////////////////////////////////////////////////////
         if(!btk::FileHelper::FileExist(inputFileName))
         {
             btkException("Input sequence file is missing or path or name is wrong (name.nii.gz is mandatory) !");
 
         }
-         TSequence::Pointer  inputSequence = btk::DiffusionSequenceHelper::ReadSequence(inputFileName);
+        TSequence::Pointer  inputSequence = btk::DiffusionSequenceHelper::ReadSequence(inputFileName);
 
+        ////////////////////////////////////////////////////////////////////////////
+        // Get input sequence parameters
+        ////////////////////////////////////////////////////////////////////////////
         TSequence::RegionType   Region = inputSequence->GetLargestPossibleRegion();
-        TSequence::IndexType    Index  = Region.GetIndex();
         TSequence::SizeType     Size   = Region.GetSize();
-
 
         std::vector< unsigned short>          BValues       = inputSequence->GetBValues();
         std::vector< btk::GradientDirection > GradientTable = inputSequence->GetGradientTable();
 
-
-        ReconstructionType::Pointer recons = ReconstructionType::New();
-        recons -> SetInputSequence(inputSequence.GetPointer());
+        ////////////////////////////////////////////////////////////////////////////
+        // Dwi reconstruction filter
+        ////////////////////////////////////////////////////////////////////////////
+        //
+        // - SetInputSequence:      Set input diffusion sequence.
+        // - SetVolumeRegistration: true if you want to compute a Volume to Volume
+        //                          registration
+        // - SetSliceRegistration:  true if you want to compute a slice by slice
+        //                          registration
+        // - GetOutput:             Return a pointer of DiffusionDataset
+        //                          (Cf. Diffusion/DiffusionDataset.h
+        // Note additional output: the registred sequence as "Registred_sequence.nii.gz"
+        //
+        ReconstructionType::Pointer Reconstruction = ReconstructionType::New();
+        Reconstruction -> SetInputSequence(inputSequence.GetPointer());
 
         if(refFileNameArg.isSet() )
         {
@@ -128,22 +141,37 @@ int main(int argc, char *argv[])
                 btkException("Reference image file is missing or path or name is wrong (name.nii.gz is mandatory) !");
             }
             TImage::Pointer     referenceImage = btk::ImageHelper<TImage>::ReadImage(refFileName);
-            recons -> SetReferenceImage(referenceImage.GetPointer());
+            Reconstruction -> SetReferenceImage(referenceImage.GetPointer());
 
         }
-        recons -> SetVolumeRegistration(volumeRegistration);
-        recons -> SetSliceRegistration(sliceRegistration);
-        recons -> Update();
+        Reconstruction -> SetVolumeRegistration(volumeRegistration);
+        Reconstruction -> SetSliceRegistration(sliceRegistration);
+        Reconstruction -> Update();
 
-        btk::DiffusionDataset::Pointer  Dataset = recons->GetOutput();
+        btk::DiffusionDataset::Pointer  Dataset = Reconstruction->GetOutput();
 
-        EstimationType::Pointer estimation = EstimationType::New();
-        estimation -> SetDiffusionDataset(recons->GetOutput());
-        estimation -> SetRadius(radius);
-        estimation -> Update();
+        ////////////////////////////////////////////////////////////////////////////
+        // Diffusion weighted estimation filter
+        ////////////////////////////////////////////////////////////////////////////
+        //
+        //   Note: the volume to volume registration work good in fetal case with
+        //         an image of white matter as reference image.
+        //         /!\ The slice by slice don't work.../!\
+        //
+        // - SetDiffusionDataset: Set a pointer of DiffusionDataset.
+        // - SetRadius:           Set the radius of the neighbor search
+        // - GetOutput:           Return a diffusion sequence without B0
+        //
+        EstimationType::Pointer Estimation = EstimationType::New();
+        Estimation -> SetDiffusionDataset(Dataset);
+        Estimation -> SetRadius(radius);
+        Estimation -> Update();
 
-        TSequence::Pointer EstimatedSequence = estimation->GetOutput();
+        TSequence::Pointer EstimatedSequence = Estimation->GetOutput();
 
+        ////////////////////////////////////////////////////////////////////////////
+        // Add B0 to the output sequence
+        ////////////////////////////////////////////////////////////////////////////
         JoinerType::Pointer OutJoiner = JoinerType::New();
         OutJoiner -> SetOrigin( 0.0 );
         OutJoiner -> SetSpacing( inputSequence -> GetSpacing()[3]);
@@ -166,6 +194,7 @@ int main(int argc, char *argv[])
         OutJoiner -> Update();
 
         TSequence::Pointer outputSequence = OutJoiner -> GetOutput();
+        btkCoutMacro(" Done.");
 
         //////////////////////////////////////////////////////////////////////////
         // Write Outputs : Normalized sequence, B-Values and B-vector

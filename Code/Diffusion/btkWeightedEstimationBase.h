@@ -90,14 +90,6 @@ class WeightedEstimationBase : public itk::ProcessObject
         btkGetMacro(RegularizationParameter, float);
 
         /**
-         * @brief Set/Get the the value of the point to be estimated
-         *        If the value is not set, weights will be only function of distance
-         * @param Value of the query point.
-         */
-        btkSetMacro(QueryValue,unsigned short);
-        btkGetMacro(QueryValue,unsigned short);
-
-        /**
          * @brief Set/Get Neighbors distances from the query point (mm).
          * @param Vector of Neighbors distances
          */
@@ -196,12 +188,6 @@ class WeightedEstimationBase : public itk::ProcessObject
         /** sigma of the kernel used to calculate wieghts */
         float m_Sigma;
 
-        /** Minimum value */
-        float m_VMin;
-
-        /** Maximum value */
-        float m_VMax;
-
         /** Minimum distance */
         float m_DMin;
 
@@ -210,9 +196,6 @@ class WeightedEstimationBase : public itk::ProcessObject
 
         /** Regularization parameter of the linear regression. */
         float m_RegularizationParameter;
-
-        /** Query pont value */
-        unsigned short      m_QueryValue;
 
         /** Order of the spherical harmonics decomposition. */
         unsigned short m_SphericalHarmonicsOrder;

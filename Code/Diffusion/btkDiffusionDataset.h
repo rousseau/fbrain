@@ -51,6 +51,33 @@
 namespace btk
 {
 
+/**
+  * @brief Data structure to stock diffusion slice
+  *
+  * The acces of slices works as a vector:
+  * the method begin() and end return() the begin and the end of the std::vector
+  * where the slices are stocked.
+  * Slices are accessible by incrementation of an iteraotr like this:
+  *
+  * for (DatasetIterator sliceIt = DiffusionDataset ->begin() ; sliceIt != DiffusionDataset -> end(); ++dataIt)
+  *     {
+  *         (*sliceIt).Print(std::cout) // printself method
+  *     }
+  *
+  * This method need the call of Initialization to get slice from the input sequence.
+  * Before intialization, a vector of affine transforms for each slice can be set as inital transforms
+  *
+  * Example :
+  *     DatasetPointer  Dataset = DatasetType::New();
+  *     Dataset -> SetInputSequence(InputSequence.GetPointer());
+  *     Dataset -> SetInitialTransforms(std::vector(itk::AffineTransform())  // optional
+  *     Dataset -> Initialize();
+  *     Dataset -> RemoveOutliers();
+  *
+  * @author Frederic Champ
+  * @ingroup Diffusion
+  *
+  */
 class DiffusionDataset : public itk::ProcessObject
 {
     public:
@@ -68,6 +95,7 @@ class DiffusionDataset : public itk::ProcessObject
         typedef DiffusionSequence::DirectionType                        Direction4DType;
         typedef DiffusionSequence::RegionType                           Region4DType;
         typedef std::vector<DiffusionSlice::Pointer>                    DataVectorType;
+        typedef DataVectorType::iterator                                Iterator;
 
          /** Extractor typedefs. */
         typedef itk::ExtractImageFilter<DiffusionSequence,ImageType>    ExtractorType;

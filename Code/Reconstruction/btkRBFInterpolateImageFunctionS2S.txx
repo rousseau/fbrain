@@ -83,7 +83,7 @@ RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
 ::~RBFInterpolateImageFunctionS2S()
 {
 
-    for (unsigned int i=0; i<m_NumberOfGradients*m_NumberOfSlices; i++)
+    for (unsigned int i=0; i<m_kdTreeSpace.size(); i++)
     {
         delete m_kdTreeSpace[i];
     }
