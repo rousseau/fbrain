@@ -42,7 +42,6 @@
 
 // Local includes
 #include "btkGradientDirection.h"
-#include "btkAffineTransform.h"
 
 
 namespace btk
@@ -63,7 +62,7 @@ class DiffusionSlice : public itk::Image< short, 3 >
         typedef itk::SmartPointer< const Self>  ConstPointer;
 
         /** Transform typedefs; */
-        typedef AffineTransform<double,3>       TransformType;
+        typedef itk::AffineTransform<double,3>  TransformType;
         typedef TransformType::Pointer          TransformPointer;
 
          /** Vector typedefs; */
