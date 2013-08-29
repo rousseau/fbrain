@@ -49,6 +49,7 @@
 #include "itkImageMaskSpatialObject.h"
 #include "itkMatrixOffsetTransformBase.h"
 
+#include "btkIOTransformHelper.h"
 
 class SuperResolutionDataManager
 {
@@ -64,10 +65,10 @@ public:
   typedef itk::ImageMaskSpatialObject< 3 >   itkMask;
   typedef itkMask::Pointer                   itkMaskPointer;
 
-  typedef itk::Rigid3DTransform<double>     itkAffineDeformation;
+  //typedef itk::Rigid3DTransform<double>     itkAffineDeformation;
   //typedef itk::AffineTransform<double,3>     itkAffineDeformation;
   typedef itk::TransformFileReader           itkTransformReader;
-  typedef itk::MatrixOffsetTransformBase<double,3,3> TransformType;
+  typedef itk::MatrixOffsetTransformBase<double,3,3> itkTransformType;
   
   itkPointer                  m_inputHRImage;
   itkPointer                  m_currentHRImage;
@@ -77,8 +78,8 @@ public:
   std::vector<itkPointer>     m_simulatedInputLRImages;
   std::vector<itkMaskPointer>  m_maskLRImages;
   std::vector<itkImage::RegionType> m_regionLRImages;
-  std::vector<itkAffineDeformation::Pointer> m_affineTransform;
-  std::vector<itkAffineDeformation::Pointer> m_inverseAffineTransform;
+  std::vector<itkTransformType::Pointer> m_affineTransform;
+  std::vector<itkTransformType::Pointer> m_inverseAffineTransform;
 
   
   
@@ -192,10 +193,11 @@ void SuperResolutionDataManager::ReadAffineTransform(std::vector<std::string> & 
     if(m_inputLRImages.size() != input_file.size())
       std::cout<<"WARNING : the number of input transforms is different to the number of LR images!!\n";
     
-    itk::TransformFactory<TransformType>::RegisterTransform();
+    itk::TransformFactory<itkTransformType>::RegisterTransform();
   
     for(unsigned int i=0;i<input_file.size();i++){
      std::cout<<"Reading Affine Transform : "<<input_file[i]<<"\n";
+     /*
      itkTransformReader::Pointer reader = itkTransformReader::New();
      reader->SetFileName(input_file[i]);
      try
@@ -207,9 +209,11 @@ void SuperResolutionDataManager::ReadAffineTransform(std::vector<std::string> & 
         std::cerr << "Error while reading the transform file" << std::endl;
         std::cerr << excp << std::endl;
         std::cerr << "[FAILED]" << std::endl;
-      } 
-      m_affineTransform[i] = static_cast<itkAffineDeformation *>( reader->GetTransformList()->front().GetPointer());  
-      m_inverseAffineTransform[i] = itkAffineDeformation::New(); 
+      }
+      */
+      m_affineTransform[i] = btk::IOTransformHelper< itkTransformType >::ReadTransform( input_file[i] );
+      //m_affineTransform[i] = static_cast<itkAffineDeformation *>( reader->GetTransformList()->front().GetPointer());
+      m_inverseAffineTransform[i] = itkTransformType::New();
       m_inverseAffineTransform[i]->SetCenter( m_affineTransform[i]->GetCenter() );   
       m_affineTransform[i]->GetInverse(m_inverseAffineTransform[i]); 
       //std::cout<<"affine transform:"<<m_affineTransform[i]<<"\n---------------\n";
@@ -226,8 +230,8 @@ void SuperResolutionDataManager::ReadAffineTransform(std::vector<std::string> & 
   {
     std::cout<<"Affine transforms are set to identity\n";
     for(unsigned int i=0;i<m_inputLRImages.size();i++){
-      m_affineTransform[i] = itkAffineDeformation::New();
-      m_inverseAffineTransform[i] = itkAffineDeformation::New();
+      m_affineTransform[i] = itkTransformType::New();
+      m_inverseAffineTransform[i] = itkTransformType::New();
       std::cout<<"affine transform:"<<m_affineTransform[i]<<"\n";
     }
   

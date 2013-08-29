@@ -54,7 +54,6 @@
 
 // Image and sequence definitions
 typedef short                                                     PixelType;
-typedef itk::Image< itk::CovariantVector< float, 4 >, 4 >         TGradient;
 typedef itk::Image< PixelType,3 >                                 TImage;
 
 typedef btk::DiffusionSequence                                    TSequence;
@@ -62,8 +61,6 @@ typedef TSequence::IndexType                                      IndexType;
 typedef TSequence::SizeType                                       SizeType;
 typedef TSequence::RegionType                                     RegionType;
 
-
-typedef std::vector< IndexType >                              IndexVectorType;
 typedef itk::ImageRegionConstIteratorWithIndex< TSequence >       SequenceIterator;
 
 // Filters definitions
@@ -95,8 +92,7 @@ int main(int argc, char *argv[])
 
         TCLAP::ValueArg<double>         rGraArg("","rgra", "Only for RBF : gaussian r_gra parameter", false, 0.15, "double", cmd);
 
-        TCLAP::ValueArg<float>          SigmaArg("","Sigma", "Only for WSH: sigma of the kernel used to calculate weight", false, 1.0, "float", cmd);
-        TCLAP::ValueArg<float>          EllipsoidArg("e","Ellipsoid_Size", "Only for WSH: size of the elliposoid", false, 1.0, "float", cmd);
+        TCLAP::ValueArg<double>          radiusArg("","radius", "Only for WSH: radius of neighbor search", false, 1.0, "double", cmd);
 
 
         TCLAP::SwitchArg verboseModeArg("v", "verbose", "Verbose mode", cmd, false);
@@ -113,8 +109,7 @@ int main(int argc, char *argv[])
         std::string method                      = methodArg.getValue();
 
         double rGra = rGraArg.getValue();
-        float sigma = SigmaArg.getValue();
-        float EllipsoidSize = EllipsoidArg.getValue();
+        double radius = radiusArg.getValue();
 
         bool verboseMode = verboseModeArg.getValue();
 
@@ -149,8 +144,7 @@ int main(int argc, char *argv[])
         Outlier -> SetRgra(rGra);
         Outlier -> SetVerboseMod(verboseMode);
         Outlier->SetMethod(method);
-        Outlier->SetSigma(sigma);
-        Outlier->SetEllipsoidSize(EllipsoidSize);
+        Outlier->SetRadius(radius);
 
         try
         {

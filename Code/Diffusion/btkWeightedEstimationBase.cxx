@@ -40,12 +40,9 @@
 #include "btkSphericalHarmonics.h"
 
 // ITK includes
-#include "itkExtractImageFilter.h"
-#include "itkImageRegionIterator.h"
-#include "itkImageRegionIteratorWithIndex.h"
-#include "itkVectorImage.h"
 #include "math.h"
 #include "float.h"
+#include "algorithm"
 
 
 namespace btk
@@ -102,7 +99,6 @@ void WeightedEstimationBase::ComputeWeightedMatrix()
         //
         // Normalized intensity distance
         //
-        //if(m_QueryValue != 0.0 && m_VMax!=m_VMin)
         if(m_VMax!=m_VMin)
         {
 
@@ -316,6 +312,7 @@ void WeightedEstimationBase::Update()
 
     }
 
+
     ////////////////////////////////////////////////////////////////////////////
     //
     // Compute Matrix
@@ -336,7 +333,6 @@ void WeightedEstimationBase::Update()
     {
         m_Coefficients[i] = coefficientsMatrix(i,0);
     }
-
 
 }
 

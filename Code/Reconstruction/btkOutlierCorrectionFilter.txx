@@ -52,8 +52,7 @@ OutlierCorrectionFilter<TImage>::OutlierCorrectionFilter()
     m_Delimiter=";";
     m_Method ="SH";
     m_Rgra = 0.15;
-    m_Sigma = 1.0;
-    m_EllipsoidSize = 1.0;
+    m_Radius = 0.0;
 
 }
 
@@ -67,13 +66,42 @@ OutlierCorrectionFilter<TImage>::~OutlierCorrectionFilter()
 
 //----------------------------------------------------------------------------------------
 
+
+template < typename TImage >
+void
+OutlierCorrectionFilter<TImage>::Initialize()
+{
+    SequenceRegionType Region4D = m_InputSequence -> GetLargestPossibleRegion();
+    m_Size4D      = Region4D.GetSize();
+
+    ////////////////////////////////////////////////////////////////////////////
+    //
+    // Allocate the corrected sequence
+    //
+    m_CorrectedSequence = btk::ImageHelper<TSequence>::DeepCopy(m_InputSequence);
+    m_CorrectedSequence -> SetBValues(m_InputSequence->GetBValues());
+    m_CorrectedSequence -> SetGradientTable(m_InputSequence->GetGradientTable());
+
+    ////////////////////////////////////////////////////////////////////////////
+    //
+    // Initialize the boolean vector of outliers.
+    //
+    m_BoolIndexes.resize(m_Size4D[2]);
+    for(unsigned int i=0; i<m_BoolIndexes.size(); i++)
+    {
+        m_BoolIndexes[i].resize(m_Size4D[3]-1,false);
+    }
+
+}
+
 template < typename TImage >
 typename OutlierCorrectionFilter<TImage>::SequencePointer
 OutlierCorrectionFilter<TImage>::ExtractOutlier(SequenceConstPointer InputSequence, std::vector<unsigned int> CorruptedVolumes, unsigned int SliceNumber)
 {
 
     ////////////////////////////////////////////////////////////////////////////
-    //
+    // Use for "SH" methos
+    ////////////////////////////////////////////////////////////////////////////
     // Initializations
     //
     SequenceRegionType InputRegion = InputSequence -> GetLargestPossibleRegion();
@@ -228,7 +256,7 @@ OutlierCorrectionFilter<TImage>::GetOutliers()  throw (ExceptionObject)
                 m_OutliersIndexes.push_back(index);
                 m_BoolIndexes[j][i]= true;
 
-                btkCoutMacro("      Slice "<<index[2]<<" - Volume "<<index[3]<<" - Similarity value = "<<Similarity[j][i]);
+                btkCoutMacro("      Slice "<<index[2]<<" - Volume "<<i+1<<" - Similarity value = "<<Similarity[j][i]);
             }
         }
     }
@@ -236,6 +264,15 @@ OutlierCorrectionFilter<TImage>::GetOutliers()  throw (ExceptionObject)
     {
         btkCoutMacro("      No outliers detected");
     }
+}
+
+template < typename TImage >
+typename OutlierCorrectionFilter<TImage>::boolIndexesVector
+OutlierCorrectionFilter<TImage>::GetBoolIndexes()
+{
+    this->GetOutliers();
+    return m_BoolIndexes;
+
 }
 
 //----------------------------------------------------------------------------------------
@@ -261,144 +298,24 @@ OutlierCorrectionFilter<TImage>::CorrectOutliers(SequenceConstPointer InputSeque
 
     unsigned int NumberOfSlices = Size4D[2];
 
-    if(m_Method.compare("SH") ==0)
+    if(m_Method.compare("WSH") ==0)
     {
-        unsigned int nb_loop=0;
-        unsigned int i;
-
-        #pragma omp parallel for private(i) schedule(dynamic)
-        for(i=0; i< NumberOfSlices; i++)
-        {
-            SequenceIndexType SliceIndex = Index4D;
-            SliceIndex[2]=i;
-
-            ////////////////////////////////////////////////////////////////////////////
-            //
-            // check if there are some outliers for this slice and get volume indexes.
-            //
-            std::vector<unsigned int> CorruptedVolumes;
-            for(unsigned int j=0; j<m_OutliersIndexes.size(); j++ )
-            {
-                if(i == m_OutliersIndexes[j][2])
-                {
-                    CorruptedVolumes.push_back(m_OutliersIndexes[j][3]);
-                }
-            }
-
-            ////////////////////////////////////////////////////////////////////////////
-            //
-            // Create a sequence of one slice without corrupted volumes if exist.
-            //
-            SequencePointer SliceSequence = ExtractOutlier(InputSequence,CorruptedVolumes,i);
-
-            ////////////////////////////////////////////////////////////////////////////
-            //
-            // Spherical harmonic decomposition
-            //
-            DecompositionPointer Decomposition = DecompositionType::New();
-            Decomposition -> SetInput(SliceSequence);
-            Decomposition -> SetSphericalHarmonicsOrder(4);
-            Decomposition -> Update();
-
-            ////////////////////////////////////////////////////////////////////////////
-            //
-            // Get signal models
-            //
-            ModelPointer  Model = ModelType::New();
-            Model -> SetInputModelImage(Decomposition->GetOutput());
-            Model -> SetBValue(BValues[1]);
-            Model -> SetSphericalResolution(300);
-            Model -> Update();
-
-            ////////////////////////////////////////////////////////////////////////////
-            //
-            // Replace outliers values by values estimated
-            //
-
-            SequenceSizeType Slice4DSize;
-            Slice4DSize[0]=Size4D[0];
-            Slice4DSize[1]=Size4D[1];
-            Slice4DSize[2]=1;
-            Slice4DSize[3]=Size4D[3];
-
-            SequenceRegionType SliceRegion;
-            SliceRegion.SetSize(Slice4DSize);
-            SliceRegion.SetIndex(SliceIndex);
-
-            SequenceIterator It (m_CorrectedSequence, SliceRegion);
-
-            for(It.GoToBegin();!It.IsAtEnd();++It)
-            {
-                IndexContinuous index3D;
-                SequenceIndexType   index4D = It.GetIndex();
-
-                index3D[0] = index4D[0];
-                index3D[1] = index4D[1];
-                index3D[2] = 0;
-
-                SequenceIndexType indexB0 = index4D;
-                indexB0[3]=0; //Because we have to multiplie the estimated signal by the B0's voxels values.
-
-                if(index4D[3]>0)
-                {
-                    It.Set(Model->SignalAt(index3D,GradientTable[index4D[3]]) * InputSequence->GetPixel(indexB0 ));
-                }
-            }
-            nb_loop++;
-            std::cout<<"\r  -> "<<nb_loop <<" slices treated (total "<< NumberOfSlices <<") ... "<<std::flush;
-        }
-        btkCoutMacro(" Done.");
-        std::cout<<std::endl;
-    }
-
-    else if(m_Method.compare("WSH") ==0)
-    {
-
-        btkCoutMacro("  Sigma = "<<m_Sigma);
-        btkCoutMacro("  Ellipsoid size = "<<m_EllipsoidSize);
-
-        ////////////////////////////////////////////////////////////
-        //
-        // Remove B0
-        //
-        JoinSequencePointer InJoiner = JoinSequenceFilter::New();
-        InJoiner -> SetOrigin( 0.0 );
-        InJoiner -> SetSpacing( InputSequence -> GetSpacing()[3]);
-
-        for(unsigned int i=1; i< m_Size4D[3]; i++)
-        {
-            SequenceRegionType  ImageRegion = InputSequence -> GetLargestPossibleRegion();
-            ImageRegion.SetSize(3,0);
-            ImageRegion.SetIndex(3,i);
-
-            ImageExtractorPointer extractor = ImageExtractor::New();
-            extractor -> SetInput(InputSequence);
-            extractor -> SetExtractionRegion(ImageRegion);
-            extractor -> SetDirectionCollapseToSubmatrix( );
-            extractor -> Update();
-
-            InJoiner -> SetInput(i-1,extractor -> GetOutput());
-        }
-        InJoiner -> Update();
-
-        SequencePointer GradientSequence = InJoiner -> GetOutput();
-        std::vector< btk::GradientDirection > NewGradientTable = InputSequence -> GetGradientTable();
-        NewGradientTable.erase(NewGradientTable.begin(),NewGradientTable.begin()+1);
-        GradientSequence -> SetGradientTable(NewGradientTable);
-
+        btkCoutMacro("  Radus = "<<m_Radius);
 
         ////////////////////////////////////////////////////////////
         //
         // Weighted Decomposition
         //
-        WeighteEstimationFilterPointer EstimationFilter = WeightedEstimationFilter::New();
-        EstimationFilter -> SetInputSequence(GradientSequence.GetPointer());
-        EstimationFilter -> SetEllipsoidSize(m_EllipsoidSize);
-        EstimationFilter -> SetBoolIndexes(m_BoolIndexes);
-        EstimationFilter -> SetVerboseMod(m_VerboseMod);
-        EstimationFilter -> SetSigma(m_Sigma);
-        EstimationFilter -> Update();
 
+        DatasetPointer  Dataset = DatasetType::New();
+        Dataset-> SetInputSequence(InputSequence.GetPointer());
+        Dataset-> Initialize();
+        Dataset->RemoveOutliers();
+
+        WeighteEstimationFilterPointer EstimationFilter = WeightedEstimationFilter::New();
+        EstimationFilter -> SetDiffusionDataset(Dataset);
+        EstimationFilter -> SetRadius(0);
+        EstimationFilter -> Update();
         SequencePointer CorrectedSequence = EstimationFilter -> GetOutput();
 
 
@@ -415,6 +332,7 @@ OutlierCorrectionFilter<TImage>::CorrectOutliers(SequenceConstPointer InputSeque
         B0Region.SetIndex(3,0);
 
         ImageExtractorPointer B0Extractor = ImageExtractor::New();
+
         B0Extractor -> SetInput(InputSequence);
         B0Extractor -> SetExtractionRegion(B0Region);
         B0Extractor -> SetDirectionCollapseToSubmatrix( );
@@ -442,62 +360,156 @@ OutlierCorrectionFilter<TImage>::CorrectOutliers(SequenceConstPointer InputSeque
         btkCoutMacro(std::endl);
 
     }
-    else if(m_Method.compare("RBF") ==0)
+    else
     {
-
-        btkCoutMacro("  Correct only outlier slices ! (old)");
-
-        double theta;
-        double phi;
-        float rspa = 1.0;
-
-        btkCoutMacro("  rspa = "<<rspa<<" ( fixed )");
-        btkCoutMacro("  rgra = "<<m_Rgra);
-
-        ////////////////////////////////////////////////////////////////////////////
-        //
-        // RBF interpolator initialization
-        //
-        RBFInterpolatorPointer Interpolator = RBFInterpolatorType::New();
-        Interpolator -> SetInputImage( m_CorrectedSequence );
-        Interpolator -> SetGradientTable(GradientTable);
-
-        ////////////////////////////////////////////////////////////////////////////
-        //
-        // Replace outliers values by values estimated
-        //
-        SequenceSizeType Slice3DSize;
-        Slice3DSize[0]=Size4D[0];
-        Slice3DSize[1]=Size4D[1];
-        Slice3DSize[2]=1;
-        Slice3DSize[3]=1; //treat each outliers separatly
-
-        unsigned int i;
-        #pragma omp parallel for private(i) schedule(dynamic)
-        for(i=0; i < m_OutliersIndexes.size(); i++)
+        this->GetOutliers();
+        if(m_Method.compare("SH") ==0)
         {
-            SequenceRegionType SliceRegion;
+            unsigned int nb_loop=0;
+            unsigned int i;
 
-            SliceRegion.SetSize(Slice3DSize);
-            SliceRegion.SetIndex(m_OutliersIndexes[i]);
-
-            Interpolator -> Initialize(SliceRegion);
-            SequenceIterator It (m_CorrectedSequence, SliceRegion);
-
-            for(It.GoToBegin();!It.IsAtEnd();++It)
+            #pragma omp parallel for private(i) schedule(dynamic)
+            for(i=0; i< NumberOfSlices; i++)
             {
-                SequencePointType point;
-                SequenceIndexType  index4D = It.GetIndex();
+                SequenceIndexType SliceIndex = Index4D;
+                SliceIndex[2]=i;
 
-                Interpolator -> GetGradientDirection(index4D[3],theta,phi);
-                m_CorrectedSequence -> TransformIndexToPhysicalPoint(index4D,point);
+                ////////////////////////////////////////////////////////////////////////////
+                //
+                // check if there are some outliers for this slice and get volume indexes.
+                //
+                std::vector<unsigned int> CorruptedVolumes;
+                for(unsigned int j=0; j<m_OutliersIndexes.size(); j++ )
+                {
+                    if(i == m_OutliersIndexes[j][2])
+                    {
+                        CorruptedVolumes.push_back(m_OutliersIndexes[j][3]);
+                    }
+                }
 
-                float value = Interpolator -> EvaluateAt(index4D, theta, phi, rspa, m_Rgra, 0);
-                It.Set((short)value);
+                ////////////////////////////////////////////////////////////////////////////
+                //
+                // Create a sequence of one slice without corrupted volumes if exist.
+                //
+                SequencePointer SliceSequence = ExtractOutlier(InputSequence,CorruptedVolumes,i);
 
+                ////////////////////////////////////////////////////////////////////////////
+                //
+                // Spherical harmonic decomposition
+                //
+                DecompositionPointer Decomposition = DecompositionType::New();
+                Decomposition -> SetInput(SliceSequence);
+                Decomposition -> SetSphericalHarmonicsOrder(4);
+                Decomposition -> Update();
+
+                ////////////////////////////////////////////////////////////////////////////
+                //
+                // Get signal models
+                //
+                ModelPointer  Model = ModelType::New();
+                Model -> SetInputModelImage(Decomposition->GetOutput());
+                Model -> SetBValue(BValues[1]);
+                Model -> SetSphericalResolution(300);
+                Model -> Update();
+
+                ////////////////////////////////////////////////////////////////////////////
+                //
+                // Replace outliers values by values estimated
+                //
+
+                SequenceSizeType Slice4DSize;
+                Slice4DSize[0]=Size4D[0];
+                Slice4DSize[1]=Size4D[1];
+                Slice4DSize[2]=1;
+                Slice4DSize[3]=Size4D[3];
+
+                SequenceRegionType SliceRegion;
+                SliceRegion.SetSize(Slice4DSize);
+                SliceRegion.SetIndex(SliceIndex);
+
+                SequenceIterator It (m_CorrectedSequence, SliceRegion);
+
+                for(It.GoToBegin();!It.IsAtEnd();++It)
+                {
+                    IndexContinuous index3D;
+                    SequenceIndexType   index4D = It.GetIndex();
+
+                    index3D[0] = index4D[0];
+                    index3D[1] = index4D[1];
+                    index3D[2] = 0;
+
+                    SequenceIndexType indexB0 = index4D;
+                    indexB0[3]=0; //Because we have to multiplie the estimated signal by the B0's voxels values.
+
+                    if(index4D[3]>0)
+                    {
+                        It.Set(Model->SignalAt(index3D,GradientTable[index4D[3]]) * InputSequence->GetPixel(indexB0 ));
+                    }
+                }
+                nb_loop++;
+                std::cout<<"\r  -> "<<nb_loop <<" slices treated (total "<< NumberOfSlices <<") ... "<<std::flush;
             }
+            btkCoutMacro(" Done.");
+            std::cout<<std::endl;
         }
 
+        else if(m_Method.compare("RBF") ==0)
+        {
+
+            btkCoutMacro("  Correct only outlier slices ! (old)");
+
+            double theta;
+            double phi;
+            float rspa = 1.0;
+
+            btkCoutMacro("  rspa = "<<rspa<<" ( fixed )");
+            btkCoutMacro("  rgra = "<<m_Rgra);
+
+            ////////////////////////////////////////////////////////////////////////////
+            //
+            // RBF interpolator initialization
+            //
+            RBFInterpolatorPointer Interpolator = RBFInterpolatorType::New();
+            Interpolator -> SetInputImage( m_CorrectedSequence );
+            Interpolator -> SetGradientTable(GradientTable);
+
+            ////////////////////////////////////////////////////////////////////////////
+            //
+            // Replace outliers values by values estimated
+            //
+            SequenceSizeType Slice3DSize;
+            Slice3DSize[0]=Size4D[0];
+            Slice3DSize[1]=Size4D[1];
+            Slice3DSize[2]=1;
+            Slice3DSize[3]=1; //treat each outliers separatly
+
+            unsigned int i;
+            #pragma omp parallel for private(i) schedule(dynamic)
+            for(i=0; i < m_OutliersIndexes.size(); i++)
+            {
+                SequenceRegionType SliceRegion;
+
+                SliceRegion.SetSize(Slice3DSize);
+                SliceRegion.SetIndex(m_OutliersIndexes[i]);
+
+                Interpolator -> Initialize(SliceRegion);
+                SequenceIterator It (m_CorrectedSequence, SliceRegion);
+
+                for(It.GoToBegin();!It.IsAtEnd();++It)
+                {
+                    SequencePointType point;
+                    SequenceIndexType  index4D = It.GetIndex();
+
+                    Interpolator -> GetGradientDirection(index4D[3],theta,phi);
+                    m_CorrectedSequence -> TransformIndexToPhysicalPoint(index4D,point);
+
+                    float value = Interpolator -> EvaluateAt(index4D, theta, phi, rspa, m_Rgra, 0);
+                    It.Set((short)value);
+
+                }
+            }
+
+        }
     }
 }
 
@@ -507,32 +519,10 @@ template < typename TImage >
 void OutlierCorrectionFilter<TImage>::Update() throw (ExceptionObject)
 {
 
-    SequenceRegionType Region4D = m_InputSequence -> GetLargestPossibleRegion();
-    m_Size4D      = Region4D.GetSize();
-
-    ////////////////////////////////////////////////////////////////////////////
-    //
-    // Allocate the corrected sequence
-    //
-    m_CorrectedSequence = btk::ImageHelper<TSequence>::DeepCopy(m_InputSequence);
-    m_CorrectedSequence -> SetBValues(m_InputSequence->GetBValues());
-    m_CorrectedSequence -> SetGradientTable(m_InputSequence->GetGradientTable());
-
-    ////////////////////////////////////////////////////////////////////////////
-    //
-    // Initialize the boolean vector of outliers.
-    //
-    m_BoolIndexes.resize(m_Size4D[2]);
-    for(unsigned int i=0; i<m_BoolIndexes.size(); i++)
-    {
-        m_BoolIndexes[i].resize(m_Size4D[3]-1,false);
-    }
-
     ////////////////////////////////////////////////////////
     //
     // Outliers exlucsion and correction
     //
-    this->GetOutliers();
     this->CorrectOutliers(m_InputSequence);
 
     ////////////////////////////////////////////////////////

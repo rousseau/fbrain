@@ -2,8 +2,8 @@
   
   Â© UniversitÃ© de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 04/06/2013
-  Author(s):Frederic Champ (champ(at)unistra.fr)
+  Date:
+  Author(s):Marc Schweitzer (marc.schweitzer(at)unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
@@ -33,14 +33,10 @@
   
 ==========================================================================*/
 
+
 #include "btkWeightedEstimationFilter.h"
+#include "iomanip"
 
-#include <iomanip>
-
-// Local inclues
-#include "btkSphericalHarmonics.h"
-#include "btkImageHelper.h"
-#include "itkSimpleFastMutexLock.h"
 
 static itk::SimpleMutexLock Mutex;
 namespace btk
@@ -48,10 +44,10 @@ namespace btk
 
 WeightedEstimationFilter::WeightedEstimationFilter() : Superclass()
 {
-    m_NbLoop = 0;
+    m_NbLoop  = 0;
     m_Percent = 0.0;
-    m_Sigma = 1.0;
-    m_EllipsoidSize = 1.0;
+    m_Radius  = 0;
+
 }
 
 //----------------------------------------------------------------------------------------
@@ -65,20 +61,16 @@ WeightedEstimationFilter::~WeightedEstimationFilter()
 
 void WeightedEstimationFilter::PrintSelf(std::ostream &os, itk::Indent indent) const
 {
-    Superclass::PrintSelf(os, indent);
+    // ----
 }
 
 //----------------------------------------------------------------------------------------
 
-void WeightedEstimationFilter::SetInputSequence(SequenceConstPointer InputSequence)
+void WeightedEstimationFilter::SetDiffusionDataset(DatasetPointer dataset)
 {
-    m_InputSequence = btk::ImageHelper<TSequence>::DeepCopy(InputSequence);
-    m_GradientTable = InputSequence -> GetGradientTable();
-    m_Size4D = m_InputSequence -> GetLargestPossibleRegion().GetSize();
-
+    m_Dataset = dataset;
     Self::SetNumberOfRequiredInputs(0);
-
-    //Self::SetNumberOfThreads(1);
+    //    Self::SetNumberOfThreads(1);
 }
 
 //----------------------------------------------------------------------------------------
@@ -89,35 +81,29 @@ void WeightedEstimationFilter::AllocateOutputs()
     //
     // Allocate memory for output image
     //
-    DiffusionSequence::RegionType           sequenceSize = m_InputSequence->GetRequestedRegion();
-    DiffusionSequence::SpacingType     sequenceSpacing = m_InputSequence->GetSpacing();
-    DiffusionSequence::PointType        sequenceOrigin = m_InputSequence->GetOrigin();
-    DiffusionSequence::DirectionType sequenceDirection = m_InputSequence->GetDirection();
+    DiffusionSequence::RegionType    sequenceRegion     = m_Dataset -> GetSequenceRegion();
+    DiffusionSequence::SpacingType   sequenceSpacing    = m_Dataset -> GetSpacing();
+    DiffusionSequence::PointType     sequenceOrigin     = m_Dataset -> GetOrigin();
+    DiffusionSequence::DirectionType sequenceDirection  = m_Dataset -> GetDirection();
 
-    Self::OutputImageType::Pointer output = Self::GetOutput();
-    output->SetRegions(sequenceSize);
-    output->SetSpacing(sequenceSpacing);
-    output->SetOrigin(sequenceOrigin);
-    output->SetDirection(sequenceDirection);
-    output->Allocate();
-    output->FillBuffer(0);
+    m_Size4D = sequenceRegion.GetSize();
+
+    m_OutputSequence = Self::GetOutput();
+
+    m_OutputSequence->SetRegions(sequenceRegion);
+    m_OutputSequence->SetSpacing(sequenceSpacing);
+    m_OutputSequence->SetOrigin(sequenceOrigin);
+    m_OutputSequence->SetDirection(sequenceDirection);
+    m_OutputSequence->Allocate();
+    m_OutputSequence->FillBuffer(0);
+
 }
 
 //----------------------------------------------------------------------------------------
 
 void WeightedEstimationFilter::BeforeThreadedGenerateData()
 {
-    ////////////////////////////////////////////////////////////////////////////
-    //
-    // Generate a gradient image
-    //
-    GradientFilterPointer gradientFilter = GradientFilterType::New();
-    gradientFilter -> SetInput(m_InputSequence );
-    gradientFilter -> SetUseImageSpacing(true);
-    gradientFilter -> SetUseImageDirection(true);
-    gradientFilter -> Update();
-
-    m_GradientImage = gradientFilter -> GetOutput();
+    // ----
 }
 
 //----------------------------------------------------------------------------------------
@@ -125,215 +111,101 @@ void WeightedEstimationFilter::BeforeThreadedGenerateData()
 void WeightedEstimationFilter::ThreadedGenerateData(const OutputImageRegionType &outputRegionForThread, itk::ThreadIdType threadId)
 {
 
-    float gradX      = 1.0;
-    float gradY      = 1.0;
-    float gradZ      = 1.0;
-    float norm       = 0.0;
-    int sizeSearch   = m_EllipsoidSize +1 ; // Search windows arount the query point
+    ////////////////////////////////////////////////////////////////////////////
+    // Set radius
+    ////////////////////////////////////////////////////////////////////////////
+    NeighborhoodIterator::RadiusType radius;
+    radius[0]= m_Radius * m_Dataset->GetSpacing()[0];
+    radius[1]= m_Radius * m_Dataset->GetSpacing()[1];
+    radius[2]= 0;
 
-    GradientIterator It(m_GradientImage,outputRegionForThread);
-    itk::ImageRegionIterator< Self::OutputImageType > outIt(this->GetOutput(), outputRegionForThread);
-
-    for(It.GoToBegin(), outIt.GoToBegin(); !It.IsAtEnd() && !outIt.IsAtEnd(); ++It, ++outIt)
+    itk::ImageRegionIterator< Self::OutputImageType > outIt(m_OutputSequence, outputRegionForThread);
+    for(outIt.GoToBegin(); !outIt.IsAtEnd(); ++outIt)
     {
+        VectorType              distanceVector;
+        VectorType              signalVector;
+        GradientTableType       directionTable;
 
+        DiffusionSequence::IndexType queryIndex4D = outIt.GetIndex();
+        DiffusionSequence::PointType queryPoint4D;
+        m_OutputSequence->TransformIndexToPhysicalPoint(queryIndex4D,queryPoint4D);
 
-        TGradient::IndexType    gradIndex = It.GetIndex();
-        VectorType        IndexVector;
-        VectorType        SignalVector;
-        GradientTableType       DirectionTable;
+        Point3DType queryPoint3D;
+        queryPoint3D[0] = queryPoint4D[0];
+        queryPoint3D[1] = queryPoint4D[1];
+        queryPoint3D[2] = queryPoint4D[2];
 
-        ////////////////////////////////////////////////////////////////////////////
-        //
-        // Get gradients values thru the 3 directions
-        // and normalize them
-        //
-        float valX= m_GradientImage->GetPixel(gradIndex)[0];
-        float valY= m_GradientImage->GetPixel(gradIndex)[1];
-        float valZ= m_GradientImage->GetPixel(gradIndex)[2];
-
-        if(valX>0.0)
+        for (DataIterator dataIt = m_Dataset ->begin() ; dataIt != m_Dataset -> end(); ++dataIt)
         {
-            gradX=valX;
-        }
-        if(valY>0.0)
-        {
-            gradY= valY;
-        }
-        if(valZ>0)
-        {
-            gradZ= valZ;
-        }
+            Index3DType index3D;
+            (*dataIt)->TransformPhysicalPointToIndex(queryPoint3D,index3D);
 
-        norm = std::sqrt(gradX*gradX+gradY*gradY+gradZ*gradZ);
-
-        ////////////////////////////////////////////////////////////////////////////
-        //
-        // Calculate semi-principal axts of the ellipsoid as the inverse of
-        // normalized gradient values multiplied by the "m_EllipsoidSize" factor.
-        //
-        if(norm !=0.0)
-        {
-            gradX = (1-std::abs(gradX/norm))*m_EllipsoidSize;
-            gradY = (1-std::abs(gradY/norm))*m_EllipsoidSize;
-            gradZ = (1-std::abs(gradZ/norm))*m_EllipsoidSize;
-        }
-        else // Find a good way
-        {
-            gradX = m_EllipsoidSize;
-            gradY = m_EllipsoidSize;
-            gradZ = m_EllipsoidSize;
-        }
-
-        ////////////////////////////////////////////////////////////////////////////
-        //
-        // Ellipsoid set up.
-        //
-        EllipsoidFunctionPointer EllipsoidFunction = EllipsoidFunctionType::New();
-
-        EllipsoidFunctionVector center;
-        center[0]=gradIndex[0];
-        center[1]=gradIndex[1];
-        center[2]=gradIndex[2];
-        EllipsoidFunction -> SetCenter(center);
-
-        ////////////////////////////////////////////////////////////////////////////
-        //
-        // To have principal axes gradX, gradY and gradZ are multiplied by 2.0
-        //
-        EllipsoidFunctionVector axesLength;
-        axesLength[0] =  gradX*2.0;
-        axesLength[1] =  gradY*2.0;
-        axesLength[2] =  gradZ*2.0;
-        EllipsoidFunction -> SetAxes(axesLength);
-
-        ////////////////////////////////////////////////////////////////////////////
-        //
-        // Set orientation of ellipsoid axes
-        //
-        double data[] = {1, 0, 0, 0, 1, 0, 0, 0, 1};
-        vnl_matrix<double> orientations (data, 3, 3);
-
-        EllipsoidFunction -> SetOrientations(orientations);
-
-        ////////////////////////////////////////////////////////////////////////////
-        //
-        // Get all neighbors inside the ellipsoid and who are are not outliers
-        //
-        for(int x=-sizeSearch; x<=sizeSearch; x++)
-        {
-            for(int y=-sizeSearch; y<=sizeSearch; y++)
+            ////////////////////////////////////////////////////////////////////////////
+            // Consider only slices which have a distance <= Radius form the queryIndex
+            ////////////////////////////////////////////////////////////////////////////
+            if(std::abs(index3D[2] ) <= std::ceil(m_Radius) &&  (*dataIt)->GetLargestPossibleRegion().IsInside(index3D))
             {
-                for(int z=-sizeSearch; z<=sizeSearch; z++)
+                index3D[2]=0;
+
+                ////////////////////////////////////////////////////////////////////////////
+                // Search the neighobr in the slice according to the radius
+                ////////////////////////////////////////////////////////////////////////////
+                NeighborhoodIterator NeighborIt(radius, *dataIt,(*dataIt)->GetRequestedRegion());
+                NeighborIt.SetLocation(index3D);
+                for (unsigned int i = 0; i < NeighborIt.Size(); ++i)
                 {
-                    // Get neighbors in the search window
-                    double NeighborIndexes[3];
-                    NeighborIndexes[0]=gradIndex[0]+x;
-                    NeighborIndexes[1]=gradIndex[1]+y;
-                    NeighborIndexes[2]=gradIndex[2]+z;
+                    ////////////////////////////////////////////////////////////////////////////
+                    // Get value and distance of the neighbor
+                    ////////////////////////////////////////////////////////////////////////////
+                    float voxelValue = static_cast<float>(NeighborIt.GetPixel(i));
 
-                    // check if the index is not out of the image
-                    if( NeighborIndexes[0] >= 0 && NeighborIndexes[0] < m_Size4D[0] &&
-                            NeighborIndexes[1] >= 0 && NeighborIndexes[1] < m_Size4D[1] &&
-                            NeighborIndexes[2] >= 0 && NeighborIndexes[2] < m_Size4D[2] )
-                    {
-                        // check if the neighbor is inside the ellipsoid
-                        bool IsInsideEllipsoid = EllipsoidFunction -> Evaluate(NeighborIndexes);
+                    Point3DType neighborPoint;
+                    (*dataIt)->TransformIndexToPhysicalPoint(index3D,neighborPoint);
+                    float distance = neighborPoint.EuclideanDistanceTo(queryPoint3D);
 
-                        if(IsInsideEllipsoid)
-                        {
-                            unsigned int SliceIndex = NeighborIndexes[2];
-                            for(unsigned int i = 0; i<m_Size4D[3]; i++)
-                            {
+                    ////////////////////////////////////////////////////////////////////////////
+                    // Add neighbor parameters in containers
+                    ////////////////////////////////////////////////////////////////////////////
+                    distanceVector.push_back(distance);
+                    signalVector.push_back(voxelValue);
+                    directionTable.push_back((*dataIt)->GetGradientDirection());
 
-                                ////////////////////////////////////////////////////////////////////////////
-                                //
-                                // If the neighobrs is not an outliers, his distance from the query point,
-                                // his value and his gradient direction are added to vectors who will be use
-                                // to compute the weighted spherical harmonics decomposition
-                                //
-                                if(!m_BoolIndexes[SliceIndex][i])
-                                {
+                } // end for NeighborIt
+            } // end slice selection NeighborIt
+        } // end for through dataset
 
-                                    GradPoint QueryPoint;
-                                    GradPoint NeighborPoint;
-                                    SequenceIndexType NeighborSequenceIndexes;
-                                    NeighborSequenceIndexes[0] = NeighborIndexes[0];
-                                    NeighborSequenceIndexes[1] = NeighborIndexes[1];
-                                    NeighborSequenceIndexes[2] = NeighborIndexes[2];
-                                    NeighborSequenceIndexes[3] = i;
-
-                                    float voxelValue = static_cast<float>(m_InputSequence -> GetPixel(NeighborSequenceIndexes));
-
-                                    m_GradientImage -> TransformIndexToPhysicalPoint(gradIndex,QueryPoint);
-                                    m_GradientImage -> TransformIndexToPhysicalPoint(NeighborSequenceIndexes,NeighborPoint) ;
-
-                                    float norm = 0.0;
-                                    for (unsigned int k=0;k<3;k++)
-                                    {
-                                        norm += (QueryPoint[k]-NeighborPoint[k])*(QueryPoint[k]-NeighborPoint[k]);
-                                    }
-                                    norm=std::sqrt(norm);
-
-                                    IndexVector.push_back(norm);
-                                    SignalVector.push_back(voxelValue);
-                                    DirectionTable.push_back(m_GradientTable[i]);
-
-                                } // end if is not outliers
-                            } // end for all volumes
-                        } // end if is inside ellipsoid
-                    } // end if is inside buffered region
-                } // end z search
-            } // end y search
-        } // end x search
-
-
-        if(m_VerboseMod)
-        {
-            btkCoutMacro("  QueryIndex : "<<gradIndex<<" is outliers ? : "<<m_BoolIndexes[gradIndex[2]][gradIndex[3]]);
-            btkCoutMacro("  Number of neighbors non outliers : "<<IndexVector.size())
-        }
-
-        if(IndexVector.size() !=0)
+        if(distanceVector.size() !=0)
         {
             ////////////////////////////////////////////////////////////////////////////
-            //
             // Spherical harmonic decomposition and Model estimation
-            //
+            ////////////////////////////////////////////////////////////////////////////
             WeightedEstimationPointer Estimation = WeightedEstimationType::New();
 
             // Weighted Spherical harmonic decomposition part
-            Estimation -> SetNeighborsDistances(IndexVector);
-            Estimation -> SetSignalValues(SignalVector);
-            Estimation -> SetGradientTable(DirectionTable);
+            Estimation -> SetNeighborsDistances(distanceVector);
+            Estimation -> SetSignalValues(signalVector);
+            Estimation -> SetGradientTable(directionTable);
             Estimation -> SetSphericalHarmonicsOrder(4);
-
-            if(!m_BoolIndexes[gradIndex[2]][gradIndex[3]])
-                Estimation -> SetQueryValue(m_InputSequence -> GetPixel(gradIndex));
-
-            Estimation -> SetSigma(m_Sigma);
             Estimation -> SetSphericalResolution(300);
             Estimation -> Initialize();
             Estimation -> Update();
 
-            outIt.Set(Estimation->SignalAt(m_GradientTable[gradIndex[3]]));
+            outIt.Set(Estimation->SignalAt(m_Dataset->GetGradientTable()[queryIndex4D[3]]));
         }
-
-        if(!m_VerboseMod)
+        else
         {
-            Mutex.Lock();
-            m_NbLoop+=1;
-            m_Percent = double(m_NbLoop)*100.0/((m_Size4D[0]*m_Size4D[1]*m_Size4D[2]*m_Size4D[3]));
-            std::cout<<"\r  -> "<<std::fixed<<std::setprecision(1)<<m_Percent<<" %";
-            std::cout<<std::fixed<<std::setprecision(5);
-            Mutex.Unlock();
+            outIt.Set(0);
         }
+
+        Mutex.Lock();
+        m_NbLoop+=1;
+        m_Percent = double(m_NbLoop)*100.0/((m_Size4D[0]*m_Size4D[1]*m_Size4D[2]*m_Size4D[3]));
+        std::cout<<"\r  -> Estimation ... "<<std::fixed<<std::setprecision(1)<<m_Percent<<" %";
+        std::cout<<std::fixed<<std::setprecision(5);
+        Mutex.Unlock();
     }
-
-
-
 }
 
-//----------------------------------------------------------------------------------------
 
-}// end namespace btk
+
+} // end namespace btk

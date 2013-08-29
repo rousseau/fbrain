@@ -57,6 +57,8 @@
 #include "btkS2SSimilarityFilter.h"
 #include "btkWeightedEstimationFilter.h"
 #include "itkEllipsoidInteriorExteriorSpatialFunction.h"
+#include "btkAffineSliceBySliceTransform.h"
+#include "btkDiffusionDataset.h"
 
 
 
@@ -100,6 +102,10 @@ class OutlierCorrectionFilter : public ProcessObject
         typedef typename TSequence::Pointer                             SequencePointer;
         typedef typename TSequence::ConstPointer                        SequenceConstPointer;
         typedef ImageRegionIteratorWithIndex< TSequence >               SequenceIterator;
+
+        /** Diffusion dataset typedefs. */
+        typedef DiffusionDataset                                        DatasetType;
+        typedef DiffusionDataset::Pointer                               DatasetPointer;
 
         typedef itk::Point<float,3u>                                    ModelPoint;
         typedef itk::ContinuousIndex<float,3u>                          IndexContinuous;
@@ -145,27 +151,29 @@ class OutlierCorrectionFilter : public ProcessObject
         typedef RBFInterpolateImageFunctionS2S<TSequence,double>        RBFInterpolatorType;
         typedef RBFInterpolatorType::Pointer                            RBFInterpolatorPointer;
 
+        /** Type of S2SSimilarity */
         typedef S2SSimilarityFilter<TImage>                             S2SSimilarityType;
         typedef typename S2SSimilarityType::Pointer                     S2SSimilarityPointer;
 
-        typedef itk::GradientImageFilter< itk::Image< short,4>, float>  GradientFilterType;
-        typedef typename GradientFilterType::Pointer                    GradientFilterPointer;
-
-
+        /** Type of WeightedEstimationFilter */
         typedef typename WeightedEstimationFilter::Pointer              WeighteEstimationFilterPointer;
 
+         /** Type of bool indexes */
         typedef std::vector< std::vector<bool> >                        boolIndexesVector;
 
-        typedef itk::EllipsoidInteriorExteriorSpatialFunction<3>        EllipsoidFunctionType;
-        typedef typename EllipsoidFunctionType::Pointer                 EllipsoidFunctionPointer;
-        typedef typename EllipsoidFunctionType::InputType               EllipsoidFunctionVector;
 
         /**
          * @brief Set input diffusion sequence.
          * @param InputSequence Input diffusion sequence.
          */
 
-        btkSetMacro(InputSequence, SequenceConstPointer);
+       // btkSetMacro(InputSequence, SequenceConstPointer);
+
+        void SetInputSequence(SequenceConstPointer InputSequence)
+        {
+            m_InputSequence = InputSequence;
+            this->Initialize();
+        }
 
 
         /**
@@ -205,18 +213,12 @@ class OutlierCorrectionFilter : public ProcessObject
          */
         btkGetMacro(OutliersIndexes, IndexVectorType);
 
-
-        /**
-         * @brief Set/Get Sigma
-         */
-        btkSetMacro(Sigma, float);
-        btkGetMacro(Sigma, float);
-
         /**
          * @brief Set/Get Ellipsoid size
          */
-        btkSetMacro(EllipsoidSize, float);
-        btkGetMacro(EllipsoidSize, float);
+        btkSetMacro(Radius, double);
+        btkGetMacro(Radius, double);
+
 
         /**
          * @brief Get output
@@ -236,6 +238,9 @@ class OutlierCorrectionFilter : public ProcessObject
             m_SimilarityFileName = SimilaritiesFileName;
         }
 
+
+        boolIndexesVector GetBoolIndexes();
+
         /**
          * @brief Update the process.
          */
@@ -251,6 +256,11 @@ class OutlierCorrectionFilter : public ProcessObject
          * @brief Destructor.
          */
         virtual ~OutlierCorrectionFilter();
+
+        /**
+         * @brief Initialize process
+         */
+        void Initialize();
 
         /**
          * @brief Detect outliers
@@ -270,10 +280,8 @@ class OutlierCorrectionFilter : public ProcessObject
 
     private:
 
-
-        float m_Sigma;
-
-        float m_EllipsoidSize;
+        /** Radius of neighbor search */
+        double m_Radius;
 
         /**  Verbose Mod */
         bool                    m_VerboseMod;
@@ -313,6 +321,8 @@ class OutlierCorrectionFilter : public ProcessObject
 
         /** Corrected Sequence */
         SequencePointer         m_CorrectedSequence;
+
+
 
 
 };

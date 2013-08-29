@@ -44,3 +44,17 @@ INSTALL(TARGETS btkIntersectionRegistration
         btkFSLToITKTransform
         DESTINATION bin)
 
+# ---- Dwi registrtion correction -----------------------------------------------------------------------
+
+ADD_EXECUTABLE(btkDwiReconstruction btkDwiReconstruction.cxx
+${Code_SOURCE_DIR}/Reconstruction/btkDwiReconstructionFilter.h
+${Code_SOURCE_DIR}/Reconstruction/btkDwiReconstructionFilter.cxx)
+
+TARGET_LINK_LIBRARIES(btkDwiReconstruction btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
+
+
+INSTALL(TARGETS
+    btkDwiReconstruction
+DESTINATION bin)
+
+

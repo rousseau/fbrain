@@ -161,7 +161,7 @@ void S2SSimilarityFilter<TImage>::Update()
 
 
 
-    #pragma omp parallel for private(i,j) schedule(dynamic)
+   // #pragma omp parallel for private(i,j) schedule(dynamic)
     for (j = m_SliceNumber; j <m_SliceNumber+m_NumberOfSlices; j++)
     {
         unsigned int VectorSliceIndex = j - m_SliceNumber;
@@ -254,7 +254,7 @@ void S2SSimilarityFilter<TImage>::Update()
             Metric -> SetFixedImage(SliceReference);
             Metric -> SetMovingImage( ImageExtractor->GetOutput() );
             Metric -> SetMethod(m_Method);
-            Metric -> SetVerboseMod(m_VerboseMod);
+            //Metric -> SetVerboseMod(m_VerboseMod);
             Metric -> Initialize();
 
             float value = std::fabs( Metric->GetValue( ) );
