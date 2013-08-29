@@ -272,8 +272,13 @@ TARGET_LINK_LIBRARIES(btkQuantifyClusteredRegions ${ITK_LIBRARIES} vtkHybrid)
 add_executable(btkApplyTransformToDiffusionSequence btkApplyTransformToDiffusionSequence.cxx)
 target_link_libraries(btkApplyTransformToDiffusionSequence btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
 
+
+add_executable(btkApplyAffineTransformToFibers btkApplyAffineTransformToFibers.cxx)
+target_link_libraries(btkApplyAffineTransformToFibers btkToolsLibrary ${ITK_LIBRARIES} vtkHybrid)
+
 ADD_EXECUTABLE(btkResolutionSampler btkResolutionSampler.cxx)
 TARGET_LINK_LIBRARIES(btkResolutionSampler  ${ITK_LIBRARIES})
+
 
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
@@ -345,6 +350,7 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
 		btkCreate4DEmptyImageFromReferenceImage
 		btkQuantifyClusteredRegions
                 btkApplyTransformToDiffusionSequence
+                btkApplyAffineTransformToFibers
                 btkResolutionSampler
         DESTINATION bin)
 

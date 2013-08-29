@@ -109,13 +109,6 @@ int main(int argc, char *argv[])
         }
          TSequence::Pointer  inputSequence = btk::DiffusionSequenceHelper::ReadSequence(inputFileName);
 
-        if(!btk::FileHelper::FileExist(outputFileName))
-        {
-            btkException("Output sequence filename is missing or path or name is wrong (name.nii.gz is mandatory) !");
-
-        }
-
-
         TSequence::RegionType   Region = inputSequence->GetLargestPossibleRegion();
         TSequence::IndexType    Index  = Region.GetIndex();
         TSequence::SizeType     Size   = Region.GetSize();
