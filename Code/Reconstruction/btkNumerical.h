@@ -52,8 +52,11 @@
 
 namespace btk
 {
-using namespace std;
 
+using namespace std;
+/**
+  * @brief This file contain some usefull numerical functions
+  */
 //----------------------------------------------------------------------------------------------
 template<class T>
 inline T SQR(const T _a)
@@ -145,6 +148,10 @@ inline void SWAP(T &_a, T &_b)
 #else
 //----------------------------------------------------------------------------------------------
 template <class T>
+/**
+ * @brief The BtkVector class
+ * @ingroup Reconstruction
+ */
 class BtkVector
 {
 public:
@@ -279,6 +286,10 @@ BtkVector<T>::~BtkVector()
 
 #endif //ifdef _USESTDVECTOR_
 //----------------------------------------------------------------------------------------------
+/**
+ * @brief btkMatrix
+ *@ingroup Reconstruction
+ */
 template <class T>
 class BtkMatrix
 {
@@ -501,6 +512,10 @@ BtkMatrix<T>::~BtkMatrix()
 }
 //----------------------------------------------------------------------------------------------
 template <class T>
+/**
+ * @brief The BtkMat3D class
+ * @ingroup Reconstruction
+ */
 class BtkMat3D
 {
 

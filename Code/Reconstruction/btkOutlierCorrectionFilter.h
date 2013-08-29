@@ -66,6 +66,7 @@ namespace btk
 {
 /**
  * @brief Detects the corrupted images and replaces the values of voxels with estimated values.
+ *
  * Values can be estimated by SH: Spherical Harmonics, WSH: Weighted Spherical Harmonics, RBF : Radial Basis Function (old).
  * @author Frederic Champ
  * @ingroup Reconstruction

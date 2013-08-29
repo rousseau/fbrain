@@ -56,9 +56,10 @@
 namespace btk
 {
 /**
- * Adaptor for using btk::SlicesIntersectionVNLCostFunction with itk::Optimizers
+ * @class SlicesIntersectionITKCostFunction
+ * @brief Adaptor for using btk::SlicesIntersectionVNLCostFunction with itk::Optimizers
  * @author Marc Schweitzer
- * \ingroup Registration
+ * @ingroup Registration
  */
 template<class TImage>
 class SlicesIntersectionITKCostFunction: public itk::SingleValuedCostFunction

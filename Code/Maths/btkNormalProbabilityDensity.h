@@ -44,7 +44,11 @@
 
 namespace btk
 {
-
+/**
+ * @class NormalProbabilityDensity
+ * @brief The NormalProbabilityDensity class
+ * @author Julien Pontabry
+ */
 class NormalProbabilityDensity : public ProbabilityDensity< double >
 {
     public:

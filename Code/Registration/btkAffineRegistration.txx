@@ -60,7 +60,7 @@ AffineRegistration<ImageType>
 template < typename ImageType >
 void
 AffineRegistration<ImageType>
-::Initialize() throw (ExceptionObject)
+::Initialize() throw (itk::ExceptionObject)
 {
 
   Superclass::m_Transform = AffineTransformType::New();
@@ -152,7 +152,7 @@ AffineRegistration<ImageType>
 template < typename ImageType >
 void
 AffineRegistration<ImageType>
-::PrintSelf(std::ostream& os, Indent indent) const
+::PrintSelf(std::ostream& os, itk::Indent indent) const
 {
   Superclass::PrintSelf( os, indent );
 }

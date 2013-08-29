@@ -44,7 +44,12 @@
 
 namespace btk
 {
-
+/**
+ * @class SuperResolutionCostFunctionITKWrapper
+ * @brief Wrapper ofr use the SuperResolutionCostFunction with an itk::Optimizer
+ * @author Marc Schweitzer
+ * @ingroup SuperResolution
+ */
 template < class TImage >
 class SuperResolutionCostFunctionITKWrapper: public itk::SingleValuedCostFunction
 {

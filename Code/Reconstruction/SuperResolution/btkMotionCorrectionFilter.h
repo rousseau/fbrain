@@ -54,6 +54,12 @@
 
 namespace btk
 {
+/**
+ * @class MotionCorrectionFilter
+ * @brief The MotionCorrectionFilter class is a base class for MotionCorrection
+ * @author Marc Schweitzer
+ * @ingroup SuperResolution
+ */
 class MotionCorrectionFilter
 {
 public:

@@ -50,10 +50,8 @@
 namespace btk
 {
 
-using namespace itk;
-
-/** \class SuperResolutionRigidImageFilter
- * \brief Super-resolution by using a set of low resolution images.and the
+/** @class SuperResolutionRigidImageFilter
+ * @brief Super-resolution by using a set of low resolution images.and the
  * reconstructed image.
  *
  * SuperResolutionRigidImageFilter allows to obtain a super-resolution image from a
@@ -67,12 +65,13 @@ using namespace itk;
  * Assisted Intervention Pékin, Chine, pp. 355--362, Springer-Verlag, Lecture
  * Notes in Computer Science, Vol. 6362, doi:10.1007/978-3-642-15745-5, 2010
  *
- * \ingroup Reconstruction
+ * @author Estanislao Oubel
+ * @ingroup Reconstruction
  */
 
 template <class TInputImage, class TOutputImage, class TInterpolatorPrecisionType=double>
 class SuperResolutionRigidImageFilter:
-    public ImageToImageFilter<TInputImage, TOutputImage>
+    public itk::ImageToImageFilter<TInputImage, TOutputImage>
 {
 public:
 
@@ -84,8 +83,8 @@ public:
   /** Standard class typedefs. */
   typedef SuperResolutionRigidImageFilter                Self;
   typedef ImageToImageFilter<TInputImage,TOutputImage>  Superclass;
-  typedef SmartPointer<Self>                            Pointer;
-  typedef SmartPointer<const Self>                      ConstPointer;
+  typedef itk::SmartPointer<Self>                            Pointer;
+  typedef itk::SmartPointer<const Self>                      ConstPointer;
 
   typedef TInputImage                             InputImageType;
   typedef TOutputImage                            OutputImageType;
@@ -96,14 +95,14 @@ public:
   typedef typename InputImageType::RegionType     InputImageRegionType;
   typedef std::vector<InputImageRegionType>       InputImageRegionVectorType;
 
-  typedef ImageMaskSpatialObject< TInputImage::ImageDimension > MaskType;
+  typedef itk::ImageMaskSpatialObject< TInputImage::ImageDimension > MaskType;
   typedef typename MaskType::Pointer   MaskPointer;
 
   /** Method for creation through the object factory. */
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(SuperResolutionRigidImageFilter, ImageToImageFilter);
+  itkTypeMacro(SuperResolutionRigidImageFilter, itk::ImageToImageFilter);
 
   /** Number of dimensions. */
   itkStaticConstMacro(ImageDimension, unsigned int,
@@ -111,7 +110,7 @@ public:
 
   /** Transform typedef. */
   //typedef TTransform    TransformType;
-  typedef Euler3DTransform<TInterpolatorPrecisionType> TransformType;
+  typedef itk::Euler3DTransform<TInterpolatorPrecisionType> TransformType;
   typedef typename TransformType::Pointer TransformPointerType;
 
   //TODO This should be replaced by a std::vector of btkSliceBySliceTransform.
@@ -119,7 +118,7 @@ public:
   typedef std::vector< std::vector<TransformPointerType> > TransformPointerArrayType;
 
   /** Image size typedef. */
-  typedef Size<itkGetStaticConstMacro(ImageDimension)> SizeType;
+  typedef itk::Size<itkGetStaticConstMacro(ImageDimension)> SizeType;
 
   /** Image index typedef support. */
   typedef typename TOutputImage::IndexType IndexType;
@@ -143,10 +142,10 @@ public:
   typedef typename TOutputImage::DirectionType DirectionType;
 
   /** base type for images of the current ImageDimension */
-  typedef ImageBase<itkGetStaticConstMacro(ImageDimension)> ImageBaseType;
+  typedef itk::ImageBase<itkGetStaticConstMacro(ImageDimension)> ImageBaseType;
 
   /**Const iterator typedef. */
-  typedef ImageRegionConstIteratorWithIndex< OutputImageType >  OutputIteratorType;
+  typedef itk::ImageRegionConstIteratorWithIndex< OutputImageType >  OutputIteratorType;
 
   /**VnlVectorType typedef. */
   typedef vnl_vector<double> VnlVectorType;
@@ -296,7 +295,7 @@ protected:
   SuperResolutionRigidImageFilter( void );
   ~SuperResolutionRigidImageFilter( void ) {};
 
-  void PrintSelf( std::ostream& os, Indent indent ) const;
+  void PrintSelf( std::ostream& os, itk::Indent indent ) const;
 
   /** ResampleImageFilter cannot be implemented as a multithreaded filter.  Therefore,
    * this implementation only provides a GenerateData() routine that allocates output

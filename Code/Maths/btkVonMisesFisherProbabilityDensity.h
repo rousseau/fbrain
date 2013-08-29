@@ -44,7 +44,12 @@
 
 namespace btk
 {
-
+/**
+ * @class VonMisesFisherProbabilityDensity
+ * @brief The VonMisesFisherProbabilityDensity class
+ * @author Julien Pontarby
+ * @ingroup Maths
+ */
 class VonMisesFisherProbabilityDensity : public ProbabilityDensity< GradientDirection >
 {
     public:

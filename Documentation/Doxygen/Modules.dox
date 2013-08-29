@@ -1,6 +1,3 @@
-/**
- * @defgroup Mathematics Mathematics
- */
 
 /**
  * @defgroup Tractography Tractography
@@ -35,33 +32,21 @@
  */
 
 /**
- * @defgroup FeatureSelection Feature selection for space reduction
- */
-
-
-
-/**
- * @defgroup RegistrationFilters Registration
- * @ingroup Reconstruction
+ * @defgroup FeatureSelection Feature selection
  */
 
 /**
- * @defgroup ImageFunctions Image functions
- * @ingroup Reconstruction
- */
+* @defgroup Transformations Transformations
+*/
+/**
+* @defgroup Registration Registration
+*/
 
 /**
- * @defgroup ImageInterpolators Image interpolators
- * @ingroup Reconstruction
- */
+*@defgroup SuperResolution Super-resolution
+*/
 
 /**
- * @defgroup SpatialFunctions Spatial functions
- * @ingroup Reconstruction
- */
-
-/**
- * @defgroup GeometricTransforms Geometric transforms
- * @ingroup Reconstruction
- */
+* @defgroup Maths Mathematics
+*/
 

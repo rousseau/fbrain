@@ -53,12 +53,16 @@
 namespace btk
 {
 /**
+ * @class PSF
  * @brief PSF is a base class for PSF images (gaussian, boxcar...)
  * ! PSF is a pure virtual class, it can not be instancied !
+ * @ingroup Maths
+ * @author Marc Schweitzer
  */
 class PSF: public itk::Object
 {
     public:
+    /** Typedefs */
         typedef btk::PSF                        Self;
         typedef itk::Object                     Superclass;
 
@@ -90,7 +94,10 @@ class PSF: public itk::Object
         /** Construct the PSF image (this method should be redefined in subclasses) */
         virtual void ConstructImage() = 0;
 
-        /** Sets the center position of the PSF. */
+        /**
+         * @brief SetCenter
+         * @param center
+         */
         virtual void SetCenter(PointType center)
         {
             m_Center = center.GetVnlVector();
@@ -126,7 +133,10 @@ class PSF: public itk::Object
 
         }
 
-        /** Sets direction of the PSF. */
+        /**
+         * @brief SetDirection
+         * @param direction
+         */
         virtual void SetDirection(DirectionType direction)
         {
             m_Direction = direction.GetVnlMatrix();
@@ -135,24 +145,34 @@ class PSF: public itk::Object
             m_kdir = m_Direction.get_column(2);
 
         }
-        /** Sets spacing. This method changes the standard deviations of the Gaussian
-         * function accordingly. */
+        /**
+         * @brief SetSpacing
+         * @param spacing
+         */
         virtual void SetSpacing(SpacingType spacing)
         {
           m_Spacing = spacing.GetVnlVector();
         }
-
+        /**
+         * @brief SetSize
+         * @param _size
+         */
         virtual void SetSize(SizeType _size)
         {
             m_Size = _size;
         }
-
+        /**
+         * @brief SetLrSpacing : set the low resolution spacing
+         * @param _spc
+         */
         void SetLrSpacing(SpacingType& _spc)
         {
             m_LrSpacing = _spc;
         }
 
-        /** Get the psf Image */
+        /**
+         * @brief btkGetMacro
+         */
         btkGetMacro(PsfImage,ImageType::Pointer);
 
     protected:

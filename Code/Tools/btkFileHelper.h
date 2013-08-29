@@ -43,7 +43,12 @@
 
 namespace btk
 {
-
+/**
+ * @class FileHelper
+ * @brief The FileHelper is a helper class for handle file (file exist, print ...)
+ * @ingroup Tools
+ * @author Julien Pontabry, Marc Schweitzer
+ */
 class FileHelper
 {
     public:
@@ -51,28 +56,28 @@ class FileHelper
         /**
          * @brief FileExist
          * @param file
-         * @return
+         * @return boolean if file exist
          */
         static bool FileExist(const std::string &file);
 
         /**
          * @brief FileExistPrintIt
          * @param file
-         * @return
+         * @return boolean
          */
         static bool FileExistPrintIt(const std::string &file);
 
         /**
          * @brief FilesExist
          * @param files
-         * @param result
+         * @param result (vector of boolean)
          */
         static void FilesExist(std::vector< std::string > &files, std::vector< bool > &result);
 
         /**
          * @brief FilesExistPrintIt
          * @param files
-         * @param result
+         * @param result (vector of boolean)
          */
         static void FilesExistPrintIt(std::vector< std::string > &files, std::vector< bool > &result);
 

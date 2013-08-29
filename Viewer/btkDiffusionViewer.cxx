@@ -33,6 +33,15 @@
 
 ==========================================================================*/
 
+/**
+ * @file btkDiffusionViewer.cxx
+ * @author Julien Pontabry
+ * @date 02/04/2013
+ * @brief Displays diffusion data (mean directions and modeling).
+ * @warning This program is very memory consuming (it depends on your diffusion dataset).
+ * @todo Add the possibility to use an anatomical image for display.
+ */
+
 // STL includes
 #include "vector"
 #include "algorithm"
@@ -96,6 +105,7 @@
 #include "btkImageHelper.h"
 
 
+// Definitions
 typedef double PrecisionType;
 
 typedef itk::Image< short,3 >                                          ImageMask;
@@ -103,22 +113,94 @@ typedef itk::ImageMaskSpatialObject< 3 >                               MaskSpati
 typedef itk::CastImageFilter< ImageMask,MaskSpatialObject::ImageType > MaskSpatialObjectCaster;
 
 
+/**
+ * @brief Reconstruction of a surface with a directionnal response.
+ * @param directions Sampling directions.
+ * @param response Response of the directionnal sampling.
+ * @param normalize Flag to normalize to 1 or not.
+ * @return An actor representing a surface (used for ODF representation for instance).
+ */
 vtkSmartPointer< vtkActor > surfaceReconstruction(std::vector< btk::GradientDirection > directions, std::vector< float > response, bool normalize=true);
+
+/**
+ * @brief Reconstruction of a directionnal density function.
+ * @param directions Sampling directions.
+ * @param response Value of the density function in directions.
+ * @return A actor representing the directionnal density (a ball).
+ * @deprecated This function is not used anymore.
+ */
 vtkSmartPointer< vtkActor > densityReconstruction(std::vector< btk::GradientDirection > directions, std::vector< PrecisionType > response);
+
+/**
+ * @brief Build raw signal representation.
+ * @param signal The diffusion signal image.
+ * @param cindex The continuous index.
+ * @return An actor representing the raw diffusion signal (by points in space).
+ * @deprecated This function is not used anymore.
+ */
 vtkSmartPointer< vtkActor > displayRawSignal(btk::DiffusionSignal::Pointer signal, btk::DiffusionModel::ContinuousIndex cindex);
+
+/**
+ * @brief Displays statistics of diffusion in standard output.
+ * @param dwi Diffusion sequence.
+ * @param cindex Continuous index.
+ * @param model The diffusion model.
+ * @deprecated This function is not used anymore.
+ */
 void displayStats(btk::DiffusionSequence::Pointer dwi, btk::DiffusionModel::ContinuousIndex cindex, btk::DiffusionModel::Pointer model);
+
+/**
+ * @brief Build mean directions of diffusion.
+ * @param directions The mean direction to build.
+ * @return An actor representing the mean directions of diffusion (tubes).
+ */
 std::vector< vtkSmartPointer< vtkActor > > displayDirections(std::vector< btk::GradientDirection > directions);
+
+/**
+ * @brief Build a 3D representation of a diffusion sequence (B0 image).
+ * @param sequence Diffusion sequence.
+ * @return An actor representing a vtk plane widget of the B0 image.
+ */
 vtkSmartPointer< vtkImagePlaneWidget > displaySequence(btk::DiffusionSequence::Pointer sequence);
+
+/**
+ * @brief Build the models.
+ * @param model The model image.
+ * @param sequence The diffusion sequence.
+ * @param factor The spacing factor between two following models.
+ * @param mask The mask image.
+ * @return Slices (vectors of vectors) of actors representing the models to display.
+ */
 std::vector< std::vector< vtkSmartPointer< vtkActor > > > &buildModelImage(btk::DiffusionModel::Pointer model, btk::DiffusionSequence::Pointer sequence, double factor, ImageMask::Pointer mask);
+
+/**
+ * @brief Build the model directions.
+ * @param model The model image.
+ * @param sequence The diffusion sequence.
+ * @param factor The spacing factor between two following actors.
+ * @param mask The mask image.
+ * @return Slices (vectors of vectors) of actors representing the model directions to display.
+ */
 std::vector< std::vector< vtkSmartPointer< vtkActor > > > &buildModelDirections(btk::DiffusionModel::Pointer model, btk::DiffusionSequence::Pointer sequence, double factor, ImageMask::Pointer mask);
 
 
+/**
+ * @brief Interaction class for viewer.
+ */
 class btkInteractorStyle : public vtkInteractorStyleTrackballCamera
 {
     public:
+        /**
+         * @brief New method.
+         * @return A new instance of class.
+         */
         static btkInteractorStyle *New();
+
         vtkTypeMacro(btkInteractorStyle, vtkInteractorStyleTrackballCamera);
 
+        /**
+         * @brief On key press connection.
+         */
         virtual void OnKeyPress()
         {
             std::string key = this->Interactor->GetKeySym();
@@ -269,6 +351,9 @@ class btkInteractorStyle : public vtkInteractorStyleTrackballCamera
         btkGetMacro(MeanDirections, std::vector< std::vector< vtkSmartPointer< vtkActor > > >);
 
     protected:
+        /**
+         * @brief Constructor.
+         */
         btkInteractorStyle()
         {
             m_DisplayModels = false;
@@ -276,16 +361,42 @@ class btkInteractorStyle : public vtkInteractorStyleTrackballCamera
         }
 
     private:
+        /**
+         * @brief Render window interactor.
+         */
         vtkSmartPointer< vtkRenderWindowInteractor > m_RendererWindowInteractor;
+
+        /**
+         * @brief Image plane widget.
+         */
         vtkSmartPointer< vtkImagePlaneWidget > m_ImagePlaneWidget;
+
+        /**
+         * @brief Precomputed slices of models.
+         */
         std::vector< std::vector< vtkSmartPointer< vtkActor > > > m_Models;
+
+        /**
+         * @brief Precomputed slices of mean directions.
+         */
         std::vector< std::vector< vtkSmartPointer< vtkActor > > > m_MeanDirections;
+
+        /**
+         * @brief Toggle for models display.
+         */
         bool m_DisplayModels;
+
+        /**
+         * @brief Toggle for mean directions display.
+         */
         bool m_DisplayMeanDirections;
 };
 vtkStandardNewMacro(btkInteractorStyle);
 
 
+/**
+ * @brief Main function of the program.
+ */
 int main(int argc, char *argv[])
 {
     //
@@ -300,8 +411,8 @@ int main(int argc, char *argv[])
     TCLAP::ValueArg< std::string > inputMaskFileNameArg("m", "mask", "Mask filename", false, "", "string", cmd);
 
     // Options
-    TCLAP::ValueArg< double > percentageOfSamplePointsArg("", "percent_of_sample_points", "Percentage of sample points used for modeling display", false, 0.1, "real between 0 and 1", cmd);
-    TCLAP::ValueArg< unsigned int > SphericalResolutionArg("", "spherical_resolution", "Spherical resolution used for modeling display", false, 100, "positive integer", cmd);
+    TCLAP::ValueArg< double > percentageOfSamplePointsArg("", "percent_of_sample_points", "Percentage of sample points used for modeling display (default: 0.1)", false, 0.1, "real between 0 and 1", cmd);
+    TCLAP::ValueArg< unsigned int > SphericalResolutionArg("", "spherical_resolution", "Spherical resolution used for surface reconstruction (default: 100)", false, 100, "positive integer", cmd);
     TCLAP::SwitchArg meanDirectionsOnlyArg("", "mean_directions_only", "Precompute only mean directions of the modeling and not the all functions (faster)", cmd);
 
     // Parse command line
@@ -897,10 +1008,11 @@ std::vector< vtkSmartPointer< vtkActor > > displayDirections(std::vector< btk::G
 {
     double p0[3] = { 0, 0, 0 };
     double p1[3];
-    std::vector< vtkSmartPointer< vtkActor > > actors;
+    std::vector< vtkSmartPointer< vtkActor > > actors(directions.size(), NULL);
 
 //    btkCoutVariable(directions.size());
 
+    // NOTE : parallel computing does not improve computation time there.
     for(unsigned int i = 0; i < directions.size(); i++)
     {
 //        btkCoutVariable(directions[i]);
@@ -923,7 +1035,7 @@ std::vector< vtkSmartPointer< vtkActor > > displayDirections(std::vector< btk::G
         vtkSmartPointer< vtkActor > actor = vtkSmartPointer< vtkActor >::New();
         actor->SetMapper(mapper);
 
-        actors.push_back(actor);
+        actors[i] = actor;
     }
 
     return actors;
@@ -987,9 +1099,6 @@ vtkSmartPointer< vtkImagePlaneWidget > displaySequence(btk::DiffusionSequence::P
 
 std::vector< std::vector< vtkSmartPointer< vtkActor > > > &buildModelImage(btk::DiffusionModel::Pointer model, btk::DiffusionSequence::Pointer sequence, double factor, ImageMask::Pointer mask)
 {
-    // Create vector of actors
-    std::vector< std::vector< vtkSmartPointer< vtkActor > > > *actors = new std::vector< std::vector< vtkSmartPointer< vtkActor > > >;
-
     // Set size and spacing
     btk::DiffusionSequence::SizeType size = sequence->GetLargestPossibleRegion().GetSize();
     size[0] *= factor; size[1] *= factor;
@@ -997,11 +1106,13 @@ std::vector< std::vector< vtkSmartPointer< vtkActor > > > &buildModelImage(btk::
     btk::DiffusionSequence::SpacingType spacing = sequence->GetSpacing();
     spacing[0] /= factor; spacing[1] /= factor;
 
+    // Create vector of actors
+    std::vector< std::vector< vtkSmartPointer< vtkActor > > > *actors = new std::vector< std::vector< vtkSmartPointer< vtkActor > > >(size[2], std::vector< vtkSmartPointer< vtkActor > >());
+
     // Build all surfaces
+//    #pragma omp parallel for // NOTE : This does not improve the computation time
     for(unsigned int z = 0; z < size[2]; z++)
     {
-        actors->push_back(std::vector< vtkSmartPointer< vtkActor > >());
-
         for(unsigned int x = 0; x < size[0]; x++)
         {
             for(unsigned int y = 0; y < size[1]; y++)
@@ -1027,9 +1138,6 @@ std::vector< std::vector< vtkSmartPointer< vtkActor > > > &buildModelImage(btk::
 
 std::vector< std::vector< vtkSmartPointer< vtkActor > > > &buildModelDirections(btk::DiffusionModel::Pointer model, btk::DiffusionSequence::Pointer sequence, double factor, ImageMask::Pointer mask)
 {
-    // Create vector of actors
-    std::vector< std::vector< vtkSmartPointer< vtkActor > > > *actors = new std::vector< std::vector< vtkSmartPointer< vtkActor > > >;
-
     // Set size and spacing
     btk::DiffusionSequence::SizeType size = sequence->GetLargestPossibleRegion().GetSize();
     size[0] *= factor; size[1] *= factor;
@@ -1037,11 +1145,13 @@ std::vector< std::vector< vtkSmartPointer< vtkActor > > > &buildModelDirections(
     btk::DiffusionSequence::SpacingType spacing = sequence->GetSpacing();
     spacing[0] /= factor; spacing[1] /= factor;
 
+    // Create vector of actors
+    std::vector< std::vector< vtkSmartPointer< vtkActor > > > *actors = new std::vector< std::vector< vtkSmartPointer< vtkActor > > >(size[2], std::vector< vtkSmartPointer< vtkActor > >());
+
     // Build all surfaces
+//    #pragma omp parallel for // NOTE : This does not improve the computation time.
     for(unsigned int z = 0; z < size[2]; z++)
     {
-        actors->push_back(std::vector< vtkSmartPointer< vtkActor > >());
-
         for(unsigned int x = 0; x < size[0]; x++)
         {
             for(unsigned int y = 0; y < size[1]; y++)

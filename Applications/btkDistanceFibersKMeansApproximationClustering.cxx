@@ -2,7 +2,7 @@
   
   © Université de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date: 14/02/2013 (last updated: 21/05/2013)
+  Date: 14/02/2013 (last updated: 27/08/2013)
   Author(s): Larbi Boubchir (boubchir at unistra dot fr)
   
   This software is governed by the CeCILL-B license under French law and
@@ -182,9 +182,9 @@ float Orientation_measure(const std::vector<float>& f1,const std::vector<float>&
 }
 
 // ---------------------------------
-// Usage   : btkDistanceFibersKMeansApproximationClustering -b inputfile.vtk -d distance_measure -c number_of_clusters -a alpha -e eps -o outputfile.vtk
-// Minimal Usage : btkDistanceFibersKMeansApproximationClustering -b inputfile.vtk -d distance_measure -c number_of_clusters -o outputfile.vtk
-// Example : btkDistanceFibersKMeansApproximationClustering -b data.vtk -d 7 -c 5 -o clustering2-data.vtk
+// Usage   : btkDistanceFibersKMeansApproximationClustering -b fiber_tracts.vtk -d distance_measure -c number_of_clusters -a alpha -e eps -o fiber_clustering.vtk
+// Minimal Usage : btkDistanceFibersKMeansApproximationClustering -b fiber_tracts.vtk -d distance_measure -c number_of_clusters -o fiber_clustering.vtk
+// Example : btkDistanceFibersKMeansApproximationClustering -b fiber_tracts.vtk -d 7 -c 5 -o clustering2-fiber_tracts.vtk
 // ---------------------------------
 
 //
@@ -192,7 +192,7 @@ float Orientation_measure(const std::vector<float>& f1,const std::vector<float>&
 int main ( int argc, char *argv[] )
 {
   // Define command line parser
-  TCLAP::CmdLine cmd("White-matter fiber tracts clustering based on a combination of the distance and orientation measures and the k-means approximation algorithm");
+  TCLAP::CmdLine cmd("White-matter fiber tracts clustering method based on a similarity metric between fibers and the k-means approximation algorithm");
  
   // Define command line arguments
   TCLAP::ValueArg<std::string> bundleFileNameArg("b", "bundles", "Fiber tracts filename (vtk file)", true, "", "string", cmd);
@@ -347,10 +347,10 @@ vnl_matrix<float> R_Distance_matrix(number_fiber,NumberOfClusters);
 R_Distance_matrix=svd.V().extract(number_fiber,NumberOfClusters,0,0);
 // leverage scores
 vnl_vector<float> Score(number_fiber);
-for(uint r=0; r<number_fiber; r++)
+for(unsigned int r=0; r<number_fiber; r++)
 {
   float s=0;
-  for(uint c=0; c<NumberOfClusters; c++)
+  for(unsigned int c=0; c<NumberOfClusters; c++)
     s+=pow(R_Distance_matrix(r,c),2);
   Score(r)=sqrt(s)/NumberOfClusters;
 }
@@ -361,11 +361,11 @@ int sp=(int)( NumberOfClusters*log(NumberOfClusters/eps)/pow(eps,2) );
 if(sp > number_fiber) sp = number_fiber;
 
 std::vector<int> rand_perm;
-for(uint i=1; i<number_fiber; ++i) rand_perm.push_back(i);
+for(i=1; i<number_fiber; ++i) rand_perm.push_back(i);
 std::random_shuffle( rand_perm.begin(), rand_perm.end() );// using built-in random generator:
 
 vnl_vector<float> idx(number_fiber);
-uint t=0;
+unsigned int t=0;
 for (std::vector<int>::iterator it=rand_perm.begin(); it!=rand_perm.end(); ++it) 
 {idx(t)=*it;t++;}
 
@@ -404,11 +404,11 @@ vtkSmartPointer<vtkKMeansStatistics> kMeansStatistics = vtkSmartPointer<vtkKMean
 kMeansStatistics->SetInput( vtkStatisticsAlgorithm::INPUT_DATA, inputData );
 
 // K-means initialization
-for(int i=0 ; i < sp; ++i) 
+for(i=0 ; i < sp; ++i) 
 kMeansStatistics->SetColumnStatus( inputData->GetColumnName( i ) , 1 );
 // You can used these two columns choosen randomly to initialize the k-means
 //kMeansStatistics->SetColumnStatus( inputData->GetColumnName( 1 ) , 1 );
-//kMeansStatistics->SetColumnStatus( inputData->GetColumnName( sp-10 ) , 1 );
+//kMeansStatistics->SetColumnStatus( inputData->GetColumnName( 11 ) , 1 );
 
 kMeansStatistics->RequestSelectedColumns();
 kMeansStatistics->SetDefaultNumberOfClusters( NumberOfClusters );

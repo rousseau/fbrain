@@ -47,7 +47,12 @@
 
 namespace btk
 {
-
+/**
+ *@class WeightedSumOfImagesFilter
+ *@brief This class do a weighted sum of images
+ *@author Julien Pontabry
+ *@ingroup ImageFilter
+ */
 template< class TImage,typename TPrecision=float >
 class WeightedSumOfImagesFilter : public itk::ImageToImageFilter< TImage,TImage >
 {

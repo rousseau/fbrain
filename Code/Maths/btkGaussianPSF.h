@@ -47,16 +47,19 @@ namespace btk
 {
 
 /**
+ * @class GaussianPSF
  * @brief Gaussian PSF represent a Gaussian PSF, the support is an image.
+ *
  * Sigma is computed with the spacing and the size of the image.
  * A common use of this class is :
  * - first construct the image with the correct parameters (center, size, spacing...)
  * - Get the Psf Image previously constructed
  * - iterate over the image to get the values
  *
- * NOTE : The Evaluate Method is currently not correct.
- * TODO : An Evaluate Method for compute the value of a point
+ * @todo An Evaluate Method for compute the value of a point
  * (for example iterate over the image and break when the iterated point == point we wanted, then return the value of this point )
+ * @author Marc Schweitzer
+ * @ingroup Maths
  */
 class GaussianPSF : public btk::PSF
 {

@@ -48,20 +48,24 @@
 namespace btk
 {
 /**
+ * @class HybridPSF
  * @brief Hybrid PSF represent several PSF fonction, one fonction on each axes.
+ *
  * For example a boxcar on x, and a gaussian on y and z.
  * * A common use of this class is :
  * - first construct the image with the correct parameters (center, size, spacing, fonction for each axis)
  * - Get the Psf Image previously constructed
  * - iterate over the image to get the values
  *
- * NOTE : The Evaluate Method is currently not correct.
- * TODO : An Evaluate Method for compute the value of a point
+ * @todo An Evaluate Method for compute the value of a point
  * (for example iterate over the image and break when the iterated point == point we wanted, then return the value of this point )
+ * @author Marc Schweitzer
+ * @ingroup Maths
  */
 class HybridPSF : public btk::PSF
 {
     public:
+        /** Typedefs */
         typedef btk::HybridPSF                    Self;
         typedef btk::PSF                        Superclass;
         typedef itk::SmartPointer< Self >       Pointer;
