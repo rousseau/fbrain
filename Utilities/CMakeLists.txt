@@ -256,6 +256,7 @@ target_link_libraries(btkComputeFeatureSelectionResiduals btkFeatureSelectionLib
 add_executable(btkComputeCoefficientOfDeterminationForAtlas btkComputeCoefficientOfDeterminationForAtlas.cxx)
 target_link_libraries(btkComputeCoefficientOfDeterminationForAtlas btkToolsLibrary ${ITK_LIBRARIES})
 
+
 ADD_EXECUTABLE( btkGenerateVtkFileFromFiberDataTextFiles btkGenerateVtkFileFromFiberDataTextFiles.cxx)
 TARGET_LINK_LIBRARIES(btkGenerateVtkFileFromFiberDataTextFiles ${ITK_LIBRARIES} vtkHybrid)
 
@@ -270,6 +271,9 @@ TARGET_LINK_LIBRARIES(btkQuantifyClusteredRegions ${ITK_LIBRARIES} vtkHybrid)
 
 add_executable(btkApplyTransformToDiffusionSequence btkApplyTransformToDiffusionSequence.cxx)
 target_link_libraries(btkApplyTransformToDiffusionSequence btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkResolutionSampler btkResolutionSampler.cxx)
+TARGET_LINK_LIBRARIES(btkResolutionSampler  ${ITK_LIBRARIES})
 
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
@@ -341,5 +345,6 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
 		btkCreate4DEmptyImageFromReferenceImage
 		btkQuantifyClusteredRegions
                 btkApplyTransformToDiffusionSequence
+                btkResolutionSampler
         DESTINATION bin)
 
