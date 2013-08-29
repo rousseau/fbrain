@@ -2,8 +2,8 @@
   
   Â© UniversitÃ© de Strasbourg - Centre National de la Recherche Scientifique
   
-  Date:
-  Author(s):Marc Schweitzer (marc.schweitzer(at)unistra.fr)
+  Date: 19/08/2013
+  Author(s): Frederic Champ (champ(at)unistra.fr)
   
   This software is governed by the CeCILL-B license under French law and
   abiding by the rules of distribution of free software.  You can  use,
