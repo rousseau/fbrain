@@ -56,7 +56,7 @@
 
 
 // Definitions
-#define INDEX(i,j) (m_NumberOfParticles*(i) + (j))
+//#define INDEX(i,j) (m_NumberOfParticles*(i) + (j))
 
 
 namespace btk
@@ -86,7 +86,7 @@ void ParticleFilteringTractographyAlgorithm::Initialize()
     m_ProbabilityMap = btk::ImageHelper< DiffusionSignal,ProbabilityMap >::CreateNewImageFromPhysicalSpaceOf(m_DiffusionSignal);
 
     // Set number of threads to 1 (multi-threading is supported by opem mp instead)
-//    this->SetNumberOfThreads(1); NOTE : now the seed propagation is not multi-threaded, so we thread on seeds instead...
+    //this->SetNumberOfThreads(1); // NOTE : now the seed propagation is not multi-threaded, so we thread on seeds instead...
 }
 
 //----------------------------------------------------------------------------------------
@@ -306,7 +306,7 @@ void ParticleFilteringTractographyAlgorithm::PropagateSeed(std::vector< Self::Ph
     // Build output
 //    this->ComputeProbabilityMap(cloud);
 //    btkTic();
-    this->ComputeMaximumAPosteriori(points, cloud, numberOfIterations);
+    this->ComputeMaximumAPosteriori(points, cloud, numberOfIterations, nextDirection);
 //    btkCoutMacro("Fin MAP.");
 //    btkToc();
 }
@@ -541,14 +541,16 @@ void ParticleFilteringTractographyAlgorithm::ComputeProbabilityMap(std::vector< 
 
 //----------------------------------------------------------------------------------------
 
-void ParticleFilteringTractographyAlgorithm::ComputeMaximumAPosteriori(std::vector< Self::PhysicalPoint > &map, std::vector< Particle > &cloud, unsigned int numberOfIterations)
+void ParticleFilteringTractographyAlgorithm::ComputeMaximumAPosteriori(std::vector< Self::PhysicalPoint > &map, std::vector< Particle > &cloud, unsigned int numberOfIterations, btk::GradientDirection nextDirection)
 {
     if(numberOfIterations > 2)
     {
         // Initialization
         unsigned int t = numberOfIterations-1;
-        std::vector< double > delta(t*numberOfIterations, 0.0);
-        std::vector< double >   psi((t-1)*numberOfIterations, 0.0);
+//        std::vector< double > delta(t*numberOfIterations, 0.0);
+        std::vector< double > delta(t*m_NumberOfParticles, 0.0);
+//        std::vector< double >   psi((t-1)*numberOfIterations, 0.0);
+        std::vector< double >   psi((t-1)*m_NumberOfParticles, 0.0);
 
         //
         // Compute delta and psi using dynamic programming
@@ -558,10 +560,12 @@ void ParticleFilteringTractographyAlgorithm::ComputeMaximumAPosteriori(std::vect
         {
             if(cloud[m].GetPathLength()-1 > 1)
             {
+                assert(INDEX(0,m) < delta.size());
                 delta[INDEX(0,m)] = std::log(m_PriorDensity.Evaluate(cloud[m].GetVectorAtStep(1), cloud[m].GetVectorAtStep(0))) + cloud[m].GetLikelihoodAtStep(0);
             }
             else // cloud[m].GetPathLength-1 <= 1
             {
+                assert(INDEX(0,m) < delta.size());
                 delta[INDEX(0,m)] = std::log(0.1 / m_NumberOfParticles);
             }
         } // for each particle
@@ -588,6 +592,7 @@ void ParticleFilteringTractographyAlgorithm::ComputeMaximumAPosteriori(std::vect
 
                             if(distance_points < 1.0 && distance_particle < 1.0)
                             {
+                                assert(INDEX(k-1,i) < delta.size());
                                 double tmp = delta[INDEX(k-1,i)] + std::log(m_PriorDensity.Evaluate(cloud[m].GetVectorAtStep(k+1), cloud[i].GetVectorAtStep(k)));
 
                                 if(tmp > max)
@@ -601,11 +606,13 @@ void ParticleFilteringTractographyAlgorithm::ComputeMaximumAPosteriori(std::vect
 
                     if(btkFloatingEqual(max, DBL_MIN)) // no maximum found
                     {
+                        assert(INDEX(k,m) < delta.size());
                         delta[INDEX(k,m)] = cloud[m].GetLikelihoodAtStep(k);
                         psi[INDEX(k-1,m)] = m;
                     }
                     else // max != MIN_REAL
                     {
+                        assert(INDEX(k,m) < delta.size());
                         delta[INDEX(k,m)] = cloud[m].GetLikelihoodAtStep(k) + max;
                         psi[INDEX(k-1,m)] = imax;
                     }
@@ -614,10 +621,15 @@ void ParticleFilteringTractographyAlgorithm::ComputeMaximumAPosteriori(std::vect
                 {
                     if(k == 1)
                     {
+                        assert(INDEX(1,m) < delta.size());
+                        assert(INDEX(0,m) < delta.size());
                         delta[INDEX(1,m)] = delta[INDEX(0,m)];
                     }
                     else // k > 1
                     {
+                        assert(INDEX(k,m) < delta.size());
+                        assert(INDEX(k-1,m) < delta.size());
+                        assert(INDEX(k-2,m) < delta.size());
                         delta[INDEX(k,m)] = delta[INDEX(k-1,m)] + std::abs(delta[INDEX(k-1,m)] - delta[INDEX(k-2,m)]);
                     }
 
@@ -638,6 +650,7 @@ void ParticleFilteringTractographyAlgorithm::ComputeMaximumAPosteriori(std::vect
 
         for(unsigned int m = 0; m < m_NumberOfParticles; m++)
         {
+            assert(INDEX(t-1,m) < delta.size());
             double tmp = delta[INDEX(t-1,m)];
 
             if(max < tmp)
@@ -648,6 +661,8 @@ void ParticleFilteringTractographyAlgorithm::ComputeMaximumAPosteriori(std::vect
         } // for each particle
 
         int len = cloud[mmax].GetPathLength()-1;
+//        PhysicalPoint backwardPoint = cloud[mmax].GetPointAtStep(len);
+//        backwardPoints.push_back(backwardPoint);
         backwardPoints.push_back(cloud[mmax].GetPointAtStep(len));
 
         for(int k = t-2; k >= 0; k--)
@@ -678,21 +693,29 @@ void ParticleFilteringTractographyAlgorithm::ComputeMaximumAPosteriori(std::vect
     }
     else if(numberOfIterations > 1)
     {
-        double maxWeight = cloud[0].GetLastWeight();
+//        double maxWeight = cloud[0].GetLastWeight();
+        double maxWeight = DBL_MIN;
         unsigned int   i = 0;
 
-        for(unsigned int m = 1; m < cloud.size(); m++)
+        for(unsigned int m = 0; m < cloud.size(); m++)
         {
-            double weight = cloud[m].GetLastWeight();
-
-            if(weight > maxWeight)
+            if(cloud[m].GetPathLength() > 1)
             {
-                weight = maxWeight;
-                i      = m;
+//                double weight = cloud[m].GetLastWeight();
+                double weight = m_PriorDensity.Evaluate(cloud[m].GetLastDirection(), nextDirection);
+
+                if(weight > maxWeight)
+                {
+                    weight = maxWeight;
+                    i      = m;
+                }
             }
         } // for each particle
 
-        map.push_back(cloud[i].GetLastPoint());
+        if(cloud[i].GetPathLength() > 1)
+        {
+            map.push_back(cloud[i].GetLastPoint());
+        }
     }
 //    else // numberOfIterations <= 1
 //    {

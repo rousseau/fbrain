@@ -79,6 +79,7 @@ GradientDirection Particle::GetLastDirection() const
 
 double Particle::GetLastWeight() const
 {
+    assert(m_Weights.size() > 0);
     return m_Weights.back();
 }
 

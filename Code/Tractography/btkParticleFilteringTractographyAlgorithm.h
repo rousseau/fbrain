@@ -143,8 +143,14 @@ class ParticleFilteringTractographyAlgorithm : public TractographyAlgorithm
          * @param map Points of maximum a posteriori path.
          * @param cloud Cloud of particles.
          * @param numberOfIterations Number of iterations of the particles' cloud.
+         * @param nextDirection First direction of the propagation.
          */
-        void ComputeMaximumAPosteriori(std::vector< Self::PhysicalPoint > &map, std::vector< Particle > &cloud, unsigned int numberOfIterations);
+        void ComputeMaximumAPosteriori(std::vector< Self::PhysicalPoint > &map, std::vector< Particle > &cloud, unsigned int numberOfIterations, btk::GradientDirection nextDirection);
+
+        inline int INDEX(int i, int j)
+        {
+            return m_NumberOfParticles*i + j;
+        }
 
     private:
         /**
