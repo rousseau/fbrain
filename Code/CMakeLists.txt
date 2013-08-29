@@ -21,6 +21,8 @@ INCLUDE_DIRECTORIES(
     ${TRACTOGRAPHY_LIBRARY_SOURCE_DIR}
     ${DENOISING_LIBRARY_SOURCE_DIR}
     ${FEATURE_SELECTION_LIBRARY_SOURCE_DIR}
+    ${Code_SOURCE_DIR}/Transformations
+    ${Code_SOURCE_DIR}/Reconstruction
 )
 
 #---- Tools library ---------------------------------------------------------------------
@@ -138,8 +140,12 @@ SET(DIFFUSION_LIBRARY_HEADER
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkOrientationDiffusionFunctionModel.h
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkDiffusionSignal.h
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkDiffusionSequenceToDiffusionSignalFilter.h
+    ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkDiffusionSlice.h
+    ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkDiffusionDataset.h
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkWeightedEstimationBase.h
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkWeightedEstimationFilter.h
+
+
 
 )
 
@@ -155,8 +161,11 @@ SET(DIFFUSION_LIBRARY_SOURCES
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkOrientationDiffusionFunctionModel.cxx
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkDiffusionSignal.cxx
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkDiffusionSequenceToDiffusionSignalFilter.cxx
+    ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkDiffusionSlice.cxx
+    ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkDiffusionDataset.cxx
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkWeightedEstimationBase.cxx
     ${DIFFUSION_LIBRARY_SOURCE_DIR}/btkWeightedEstimationFilter.cxx
+
 
 )
 
