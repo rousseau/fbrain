@@ -282,16 +282,3 @@ target_link_libraries(btkFeatureSelection ${ITK_LIBRARIES} btkFeatureSelectionLi
 install(TARGETS
     btkFeatureSelection
 DESTINATION bin)
-
-# ---- Dwi registrtion correction -----------------------------------------------------------------------
-
-ADD_EXECUTABLE(btkDwiReconstruction btkDwiReconstruction.cxx
-${Code_SOURCE_DIR}/Reconstruction/btkDwiReconstructionFilter.h
-${Code_SOURCE_DIR}/Reconstruction/btkDwiReconstructionFilter.cxx)
-
-TARGET_LINK_LIBRARIES(btkDwiReconstruction btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
-
-
-INSTALL(TARGETS
-    btkDwiReconstruction
-DESTINATION bin)
