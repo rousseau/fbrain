@@ -37,9 +37,6 @@
 #define __btkS2SSimilarityFilter_h__
 
 
-// TCLAP includes
-#include "tclap/CmdLine.h"
-
 // ITK includes
 #include "itkImage.h"
 #include "itkExtractImageFilter.h"
@@ -53,6 +50,9 @@
 #include "btkDiffusionSequenceHelper.h"
 #include "btkDiffusionSequenceFileHelper.h"
 #include "btkMutualInformation.h"
+
+//STD
+#include "iomanip"
 
 
 
