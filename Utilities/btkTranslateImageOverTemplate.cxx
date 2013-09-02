@@ -42,6 +42,7 @@
 #include "itkNearestNeighborInterpolateImageFunction.h"
 #include "itkContinuousIndex.h"
 #include "itkImageRegionConstIteratorWithIndex.h"
+#include "itkBSplineInterpolateImageFunction.h"
 
 /* BTK */
 #include "btkImageHelper.h"
@@ -71,6 +72,7 @@ int main(int argc, char * argv[])
     TCLAP::ValueArg<std::string> refArg("r","reference","Reference image file",true,"","string",cmd);
     TCLAP::ValueArg<std::string> outArg  ("o","output","Translated image",true,"","string",cmd);
     TCLAP::ValueArg<std::string> matArg  ("t","transform","Transform file (affine transform, with identity rotation and a translation)",true,"","string",cmd);
+    TCLAP::ValueArg<int>         orderArg("","order","order of the bspline interpolator (default:1)",false,1,"int", cmd);
 
     std::string  inputFileImage;
     std::string  refFileImage;
@@ -81,10 +83,11 @@ int main(int argc, char * argv[])
 
     // Parse the argv array.
     cmd.parse( argc, argv );
-    inputFileImage = inputArg.getValue();
-    refFileImage=refArg.getValue();
-    outputFileImage = outArg.getValue();
-    translationFileName=matArg.getValue();
+    inputFileImage      = inputArg.getValue();
+    refFileImage        = refArg.getValue();
+    outputFileImage     = outArg.getValue();
+    translationFileName = matArg.getValue();
+    int order           = orderArg.getValue();
 
 
     //
@@ -181,12 +184,17 @@ int main(int argc, char * argv[])
         std::cout<<"Barycenter : "<<pi<<std::endl;
         transform->SetOffset( translation );
 
+        typedef itk::BSplineInterpolateImageFunction<Image, double, double>  itkBSplineInterpolator;
+        itkBSplineInterpolator::Pointer bsInterpolator = itkBSplineInterpolator::New();
+        bsInterpolator->SetSplineOrder(order);
+
         //std::cout<<transform;
 
         filter->UseReferenceImageOn();
         filter->SetReferenceImage(refImage);
         filter->SetInput( image );
         filter->SetTransform( transform );
+        filter->SetInterpolator(bsInterpolator);
         filter->Update();
 
         std::cout<<"done !"<<std::endl;
