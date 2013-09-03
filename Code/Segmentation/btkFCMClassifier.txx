@@ -128,7 +128,7 @@ namespace btk
 		
 		//Initialisation
 		m_Centroids[0] = max;
-		m_Centroids[m_ClassNumber] = min;
+        m_Centroids[m_ClassNumber - 1] = min;
 		for(unsigned int i=1; i<m_ClassNumber-1; i++)
 		{
 			m_Centroids[i] = m_Centroids[0] + i*(max-min)/(m_ClassNumber-1);
