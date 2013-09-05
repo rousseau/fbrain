@@ -140,7 +140,7 @@ int main(int argc, char * argv[])
     TCLAP::CmdLine cmd("Apply the new Super-Resolution pipeline !", ' ', "v2");
 
     TCLAP::MultiArg<std::string> inputArg("i","input","Low-resolution image file",true,"string",cmd);
-    TCLAP::MultiArg<std::string> maskArg("m","mask","low-resolution image mask file",false,"string",cmd);
+    TCLAP::MultiArg<std::string> maskArg("m","mask","low-resolution image mask file",true,"string",cmd);
     TCLAP::MultiArg<std::string> transArg("t","transform","transformations",false,"string",cmd);
     TCLAP::ValueArg<std::string> refArg  ("r","reconstructed","Reconstructed image for initialization. "
                                           "Typically the output of btkImageReconstruction is used." ,false,"","string",cmd);
