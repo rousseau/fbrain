@@ -188,7 +188,7 @@ public:
 
 private:
     
-  std::vector<float> m_Data;
+  std::vector<unsigned int> m_Data;
   std::vector<float> m_CumulativeDistributionFunction; //not normalized
   std::vector<float> m_InverseCumulativeDistributionFunction; //not normalized
   
@@ -199,7 +199,7 @@ private:
   
   unsigned int m_NumberOfBins;
   unsigned int m_SampleQuantification;
-  float m_NumberOfSamples;
+  unsigned int m_NumberOfSamples;
   float m_LowerBound;
   float m_UpperBound;
   float m_ACoefficient;

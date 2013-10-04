@@ -68,7 +68,7 @@ void Histogram::Setup()
 void Histogram::AddSample(float sample)
 {
     //No boundary checking !
-    unsigned int bin = (int) (sample * m_ACoefficient + m_BCoefficient);
+    unsigned int bin = (unsigned int) (sample * m_ACoefficient + m_BCoefficient);
     m_Data[bin]++;
     m_NumberOfSamples++;
 }
@@ -77,7 +77,7 @@ void Histogram::AddSample(float sample)
 void Histogram::RemoveSample(float sample)
 {
     //No boundary checking !
-    unsigned int bin = (int) (sample * m_ACoefficient + m_BCoefficient);
+    unsigned int bin = (unsigned int) (sample * m_ACoefficient + m_BCoefficient);
     m_Data[bin]--;
     m_NumberOfSamples--;
 }
@@ -85,7 +85,7 @@ void Histogram::RemoveSample(float sample)
 void Histogram::AddWeightedSample(float sample, float weight)
 {
     //No boundary checking !
-    unsigned int bin = (int) (sample * m_ACoefficient + m_BCoefficient);
+    unsigned int bin = (unsigned int) (sample * m_ACoefficient + m_BCoefficient);
     m_Data[bin] += weight;
     m_NumberOfSamples += weight;
 }
@@ -94,7 +94,7 @@ void Histogram::AddWeightedSample(float sample, float weight)
 void Histogram::RemoveWeightedSample(float sample, float weight)
 {
     //No boundary checking !
-    unsigned int bin = (int) (sample * m_ACoefficient + m_BCoefficient);
+    unsigned int bin = (unsigned int) (sample * m_ACoefficient + m_BCoefficient);
     m_Data[bin] -= weight;
     m_NumberOfSamples -= weight;
 }
@@ -143,7 +143,7 @@ void Histogram::NormalizeData()
 {
     for(unsigned int i=0; i<m_NumberOfBins; i++)
     {
-        m_NormalizedData[i] = m_Data[i] / m_NumberOfSamples * (m_SampleQuantification-1);
+        m_NormalizedData[i] = (double)(m_Data[i]) / m_NumberOfSamples * (m_SampleQuantification-1);
     }
 }
 

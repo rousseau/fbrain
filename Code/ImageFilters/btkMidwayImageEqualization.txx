@@ -105,6 +105,7 @@ void MidwayImageEqualization<T>::Do(std::vector<itkTPointer> inputImages, std::v
             {
                 float inputValue = rescaledImageIt.Get()  / (maxValue*1.0);
                 histograms[i].AddSample( inputValue );
+
             }
         }
 
@@ -123,7 +124,7 @@ void MidwayImageEqualization<T>::Do(std::vector<itkTPointer> inputImages, std::v
     {
         for(unsigned int j=0; j<m_sampleQuantification; j++)
         {
-            meanNormalizedInverseCumulativeDistributionFunction[j] = histograms[i].GetNormalizedInverseCumulativeDistributionFunction()[j];
+            meanNormalizedInverseCumulativeDistributionFunction[j] += histograms[i].GetNormalizedInverseCumulativeDistributionFunction()[j];
         }
     }
     for(unsigned int j=0; j<m_sampleQuantification; j++)
@@ -140,6 +141,9 @@ void MidwayImageEqualization<T>::Do(std::vector<itkTPointer> inputImages, std::v
         itkTIterator rescaledImageIt( rescaledImages[i], rescaledImages[i]->GetLargestPossibleRegion());
         itkTIterator outputImageIt( outputImages[i], outputImages[i]->GetLargestPossibleRegion());
 
+        //temporary variable to store ncdf of the i^th histogram (to avoid calling GetNormalizedCumulativeDistributionFunction() multiple times)
+        std::vector<float> ncdf = histograms[i].GetNormalizedCumulativeDistributionFunction();
+
         for(rescaledImageIt.GoToBegin(), maskImageIt.GoToBegin(), outputImageIt.GoToBegin(); !rescaledImageIt.IsAtEnd(); ++rescaledImageIt, ++maskImageIt, ++outputImageIt)
         {
             if(maskImageIt.Get() > 0)
@@ -148,13 +152,13 @@ void MidwayImageEqualization<T>::Do(std::vector<itkTPointer> inputImages, std::v
 
                 //from pixel value to bin index
                 int inputBin = (int) (inputValue * histograms[i].GetACoefficient() + histograms[i].GetBCoefficient());
-                if(inputBin<0) inputBin=0;
-                if(inputBin>=m_numberOfBins) inputBin=m_numberOfBins-1;
+
                 //from bin index to cdf of the current image
-                float tempValue = histograms[i].GetNormalizedCumulativeDistributionFunction()[inputBin];// tempValue in [0,sampleQuantification[
+                unsigned int tempValue = (unsigned int)floor(ncdf[inputBin]);  // tempValue in [0,sampleQuantification[
 
                 //from cdf to inverse mean cdf
-                T outputValue = meanNormalizedInverseCumulativeDistributionFunction[(int)(floor(tempValue))];
+                T outputValue = meanNormalizedInverseCumulativeDistributionFunction[tempValue];
+
                 outputImageIt.Set(outputValue);
 
             }
@@ -291,7 +295,7 @@ void MidwayImageEqualization<T>::DoWithReference(std::vector<itkTPointer> inputI
     {
         for(unsigned int j=0; j<m_sampleQuantification; j++)
         {
-            meanNormalizedInverseCumulativeDistributionFunction[j] = histograms[i].GetNormalizedInverseCumulativeDistributionFunction()[j];
+            meanNormalizedInverseCumulativeDistributionFunction[j] += histograms[i].GetNormalizedInverseCumulativeDistributionFunction()[j];
         }
     }
     for(unsigned int j=0; j<m_sampleQuantification; j++)
@@ -308,6 +312,9 @@ void MidwayImageEqualization<T>::DoWithReference(std::vector<itkTPointer> inputI
         itkTIterator inputImageIt( inputImages[i], inputImages[i]->GetLargestPossibleRegion());
         itkTIterator outputImageIt( outputImages[i], outputImages[i]->GetLargestPossibleRegion());
 
+        //temporary variable to store ncdf of the i^th histogram (to avoid calling GetNormalizedCumulativeDistributionFunction() multiple times)
+        std::vector<float> ncdf = histograms[i].GetNormalizedCumulativeDistributionFunction();
+
         for(inputImageIt.GoToBegin(), maskImageIt.GoToBegin(), outputImageIt.GoToBegin(); !inputImageIt.IsAtEnd(); ++inputImageIt, ++maskImageIt, ++outputImageIt)
         {
             if(maskImageIt.Get() > 0)
@@ -318,10 +325,13 @@ void MidwayImageEqualization<T>::DoWithReference(std::vector<itkTPointer> inputI
                 int inputBin = (int) (inputValue * histograms[i].GetACoefficient() + histograms[i].GetBCoefficient());
                 if(inputBin<0) inputBin=0;
                 if(inputBin>=m_numberOfBins) inputBin=m_numberOfBins-1;
+
                 //from bin index to cdf of the current image
-                float tempValue = histograms[i].GetNormalizedCumulativeDistributionFunction()[inputBin];// tempValue in [0,sampleQuantification[
+                unsigned int tempValue = (unsigned int)floor(ncdf[inputBin]);  // tempValue in [0,sampleQuantification[
+
                 //from cdf to inverse mean cdf
-                T outputValue = meanNormalizedInverseCumulativeDistributionFunction[(int)(floor(tempValue))];
+                T outputValue = meanNormalizedInverseCumulativeDistributionFunction[tempValue];
+
                 outputImageIt.Set(outputValue);
             }
         }
