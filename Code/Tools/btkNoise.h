@@ -39,6 +39,8 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "itkLaplacianImageFilter.h"
 #include "itkCastImageFilter.h"
 
+#include "itkConvolutionImageFilter.h"
+
 #include "btkMacro.h"
 
 namespace btk
@@ -61,7 +63,7 @@ namespace btk
       typedef typename itk::ImageRegionConstIterator< itkTImage > itkConstIterator;
 	  typedef typename itkTImage::SpacingType                     itkTSpacing;  
 	      
-  	  typedef typename itk::Image< float, 3>                               itkFloatImage;
+      typedef typename itk::Image< float, 3>                               itkFloatImage;
       typedef typename itkFloatImage::Pointer                              itkFloatImagePointer;
       typedef typename itk::ImageRegionIterator< itkFloatImage >           itkFloatIterator;
 
@@ -70,12 +72,15 @@ namespace btk
   
       btkGetMacro(Sigma2Image, itkFloatImagePointer);
       btkSetMacro(Sigma2Image, itkFloatImagePointer);
+      btkGetMacro(GlobalSigma2, float);
+      btkSetMacro(GlobalSigma2, float);
 
       void ComputeGlobalSigma(itkTImagePointer & image, itkTImagePointer & mask);
 
     private:
     
       itkFloatImagePointer m_Sigma2Image; //variance of the noise
+      float                m_GlobalSigma2;//global variance of the noise
   
   };
 
