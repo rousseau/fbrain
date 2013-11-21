@@ -66,19 +66,23 @@ void GreedyFeatureSelectionAlgorithm::Update()
 
     // 1. Build an empty weighting vector as initialization
     unsigned int numberOfParameters = m_InputParameters->rows()/3;
-    vnl_vector< short > w(numberOfParameters, 0);
-    vnl_vector< double > e(numberOfParameters, 0.0);
+    vnl_vector< short > w(numberOfParameters, 0); // activation vector
+    vnl_vector< double > e(numberOfParameters, 0.0); // energy vector
 
 
-    // 2. While parameters can be added without increasing the cost function
+    // 2. While parameters can be added while decreasing the cost function
     bool stability = false;
     unsigned int numberOfActiveParameters = 0;
 
-    double minCost = m_CostFunction->Evaluate();
+    double minCost = m_CostFunction->Evaluate(); // evaluation of the cost function without any seleced parameters
 
 
     while(numberOfActiveParameters <= m_MaxNumberOfParameters && !stability)
     {
+        // Display actual cost function on error output
+        std::cerr << minCost << std::endl;
+
+
         std::stringstream message;
 
         // 2.1. Find a parameter to add (with the lesser cost)
@@ -146,7 +150,7 @@ void GreedyFeatureSelectionAlgorithm::Update()
 
     // Set outputs
     m_WeightsVector = new vnl_vector< short >(w);
-    m_EnergyVector = new vnl_vector< double >(e);
+    m_EnergyVector  = new vnl_vector< double >(e);
 }
 
 } // namespace btk
