@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
         TCLAP::CmdLine cmd("BTK space reduction program for a set of displacement fields (space reduction by feature selection)", ' ', "1.0");
 
         // Defines arguments
-        TCLAP::MultiArg< std::string > imagesFileNamesArg("i","image", "Input displacement field images' filenames", true, "string", cmd);
+        TCLAP::UnlabeledMultiArg< std::string > imagesFileNamesArg("image", "Input displacement field images' filenames", true, "string", cmd);
         TCLAP::MultiArg< double >        imagesWeightsArg("w", "weight", "Input weights corresponding to images", false, "weights", cmd);
         TCLAP::ValueArg< std::string >   maskFileNamesArg("m", "mask", "Mask filename", true, "", "string", cmd);
         TCLAP::ValueArg< std::string >    outputPrefixArg("o", "output", "Output reduced filenames prefix", false, "reduced", "string", cmd);
