@@ -110,9 +110,9 @@ class FeatureSelectionCostFunction : public itk::ProcessObject
 
         /**
          * @brief Get the residuals of the current parameters.
-         * @return A vector containing the residuals of each feature.
+         * @return A matrix containing the residuals of each feature (rows) and each image (columns).
          */
-        virtual vnl_vector< double > GetResiduals() = 0;
+        virtual vnl_matrix< double > GetResiduals() = 0;
 
         /**
          * @brief Initialize the cost function.

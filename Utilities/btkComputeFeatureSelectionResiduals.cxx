@@ -50,6 +50,7 @@
 #include "string"
 #include "vector"
 #include "cfloat"
+#include "sstream"
 
 // ITK includes
 #include "itkImage.h"
@@ -74,6 +75,56 @@ typedef itk::Image< unsigned char,3 >         ImageMask;
 typedef itk::ImageMaskSpatialObject< 3 >      Mask;
 typedef itk::ImageRegionIterator< ImageMask > ImageMaskIterator;
 
+typedef itk::Image< double,3 >                  EnergyImage;
+typedef itk::ImageRegionIterator< EnergyImage > EnergyImageIterator;
+
+typedef itk::Image< double,3 >                    ResidualImage;
+typedef itk::ImageRegionIterator< ResidualImage > ResidualImageIterator;
+
+/**
+ * @brief Sort the selected features.
+ * Features are sorted using their explained variance.
+ * @param explainedVariance Explained variance of features.
+ * @return Vector of indices corresponding to sorted features.
+ */
+vnl_vector< int > SortFeatures(vnl_vector< double > &explainedVariance)
+{
+    // Set an indices vector for selected features
+    vnl_vector< int > indices(explainedVariance.size());
+
+    for(int i = 0; i < indices.size(); i++)
+    {
+        indices(i) = i+1;
+    }
+
+    // Bubble sort
+    bool convergence;
+
+    do
+    {
+        convergence = true;
+
+        for(int i = 0; i < explainedVariance.size()-1; i++)
+        {
+            if(explainedVariance(i) < explainedVariance(i+1))
+            {
+                int     tmpI = indices(i);
+                indices(i)   = indices(i+1);
+                indices(i+1) = tmpI;
+
+                double            tmpE = explainedVariance(i);
+                explainedVariance(i)   = explainedVariance(i+1);
+                explainedVariance(i+1) = tmpE;
+
+                convergence = false;
+            }
+        }
+    } while(!convergence);
+
+    // Return indices corresponding to sorted features
+    return indices;
+}
+
 
 /**
  * @brief Main function of the program.
@@ -91,6 +142,7 @@ int main(int argc, char *argv[])
 
         // Defines arguments
         TCLAP::UnlabeledMultiArg< std::string > imagesFileNamesArg("image", "Input displacement field images' filenames", true, "string", cmd);
+        TCLAP::ValueArg< std::string >           energyFileNameArg("e", "energy", "Energy of selected features", true, "", "string", cmd);
         TCLAP::MultiArg< double >                 imagesWeightsArg("w", "weight", "Input weights corresponding to images", false, "weights", cmd);
         TCLAP::ValueArg< std::string >            maskFileNamesArg("m", "mask", "Mask filename", true, "", "string", cmd);
         TCLAP::ValueArg< std::string >     reducedmaskFileNamesArg("r", "reduced_mask", "Reduced mask filename", true, "", "string", cmd);
@@ -104,6 +156,7 @@ int main(int argc, char *argv[])
 
         // Get back arguments' values
         std::vector< std::string > imagesFileNames = imagesFileNamesArg.getValue();
+        std::string                 energyFileName = energyFileNameArg.getValue();
         std::vector< double >        imagesWeights = imagesWeightsArg.getValue();
         std::string                   maskFileName = maskFileNamesArg.getValue();
         std::string           reducedmaskFileNames = reducedmaskFileNamesArg.getValue();
@@ -139,7 +192,7 @@ int main(int argc, char *argv[])
         ImageMask::Pointer maskImage = btk::ImageHelper< ImageMask >::ReadImage(maskFileName);
 
         // Test if images and mask are in the same space
-        if(!btk::ImageHelper< DisplacementField,ImageMask >::IsInSamePhysicalSpace(images[0],maskImage, 10e-5))
+        if(!btk::ImageHelper< DisplacementField,ImageMask >::IsInSamePhysicalSpace(images[0],maskImage, 1e-4))
         {
             btkException("Input images and mask image are not in the same physical space !");
         }
@@ -148,9 +201,18 @@ int main(int argc, char *argv[])
         ImageMask::Pointer reducedMaskImage = btk::ImageHelper< ImageMask >::ReadImage(reducedmaskFileNames);
 
         // Test if images and mask are in the same space
-        if(!btk::ImageHelper< DisplacementField,ImageMask >::IsInSamePhysicalSpace(images[0],reducedMaskImage, 10e-5))
+        if(!btk::ImageHelper< DisplacementField,ImageMask >::IsInSamePhysicalSpace(images[0],reducedMaskImage, 1e-4))
         {
             btkException("Input images and reduced mask image are not in the same physical space !");
+        }
+
+        // Read energy image
+        EnergyImage::Pointer energyImage = btk::ImageHelper< EnergyImage >::ReadImage(energyFileName);
+
+        // Test if images and energy image are in the same space
+        if(!btk::ImageHelper< DisplacementField,EnergyImage >::IsInSamePhysicalSpace(images[0], energyImage, 1e-4))
+        {
+            btkException("Input images and energy image are not in the same physical space !");
         }
 
 
@@ -195,6 +257,9 @@ int main(int argc, char *argv[])
         vnl_vector< double > w(images.size());
         unsigned int j = 0;
 
+        EnergyImageIterator energyIt(energyImage, maskedRegion);
+        vnl_vector< double > energy(numberOfReducedParameters);
+
         for(std::vector< DisplacementField::Pointer >::iterator image = images.begin(); image != images.end(); image++, j++)
         {
             // Fill image weights
@@ -202,10 +267,11 @@ int main(int argc, char *argv[])
 
             // Fill parameters
             unsigned int i = 0, i2 = 0;
+            unsigned int k = 0;
 
             DisplacementFieldIterator imageIt(*image, maskedRegion);
 
-            for(maskIt.GoToBegin(), reducedMaskIt.GoToBegin(), imageIt.GoToBegin(); !maskIt.IsAtEnd() && !reducedMaskIt.IsAtEnd() && !imageIt.IsAtEnd(); ++maskIt, ++reducedMaskIt, ++imageIt)
+            for(maskIt.GoToBegin(), reducedMaskIt.GoToBegin(), energyIt.GoToBegin(), imageIt.GoToBegin(); !maskIt.IsAtEnd() && !reducedMaskIt.IsAtEnd() && !energyIt.IsAtEnd() && !imageIt.IsAtEnd(); ++maskIt, ++reducedMaskIt, ++energyIt, ++imageIt)
             {
                 if(maskIt.Get() > 0)
                 {
@@ -220,6 +286,8 @@ int main(int argc, char *argv[])
                         X(i2+numberOfReducedParameters,j) = imageIt.Get()[1];
                         X(i2+2*numberOfReducedParameters,j) = imageIt.Get()[2];
                         i2++;
+
+                        energy(k++) = energyIt.Get();
                     }
                 }
             } // for each voxels
@@ -241,59 +309,87 @@ int main(int argc, char *argv[])
 
         std::cout << "Processing..." << std::endl;
 
-        // Compute bandwidth matrix inverse
+        // Sort selected features by their energy (or explained variance)
+        vnl_vector< int > sortedFeatures = SortFeatures(energy);
+
+        // Compute bandwidth matrix diagonal matrix
         vnl_diag_matrix< double > H(numberOfReducedParameters*3);
         H.fill_diagonal(kernelBandwidth);
 
-        // Define cost function
-        btk::FeatureSelectionCostFunction::Pointer costFunction = NULL;
+        // Setup activation diagonal matrix
+        vnl_diag_matrix< double > W(numberOfReducedParameters*3);
+        W.fill(0.0);
 
-        // We use a kernel based cost function
-        btk::NadarayaWatsonReconstructionErrorFunction::Pointer kernelCostFunction = btk::NadarayaWatsonReconstructionErrorFunction::New();
-        kernelCostFunction->SetBandwidthMatrix(&H);
-        kernelCostFunction->SetImagesWeightVector(&w);
-        costFunction = kernelCostFunction;
+        int actualNumberOfReducedParameters = 0;
 
-        // Initialize cost function
-        costFunction->SetInputParameters(&Y);
-        costFunction->SetCurrentParameters(&X);
-        costFunction->Initialize();
+        // No elements in selected features matrix at first
+        vnl_matrix< double > tmpX = W * X;
 
-        // Compute residuals
-        vnl_vector< double > residuals = costFunction->GetResiduals();
+        // compute and save residuals and add elements by ascending order of energy
+        do
+        {
+            // Define cost function
+            btk::FeatureSelectionCostFunction::Pointer costFunction = NULL;
+
+            // We use a kernel based cost function
+            btk::NadarayaWatsonReconstructionErrorFunction::Pointer kernelCostFunction = btk::NadarayaWatsonReconstructionErrorFunction::New();
+            kernelCostFunction->SetBandwidthMatrix(&H);
+            kernelCostFunction->SetImagesWeightVector(&w);
+            costFunction = kernelCostFunction;
+
+            // Initialize cost function
+            costFunction->SetInputParameters(&Y);
+            costFunction->SetCurrentParameters(&tmpX);
+            costFunction->Initialize();
+
+            // Compute residuals
+            vnl_matrix< double > residuals = costFunction->GetResiduals();
+
+            // Save the residuals images
+            for(unsigned int j = 0; j < residuals.columns(); j++)
+            {
+                ResidualImage::Pointer residualsImage = btk::ImageHelper< ImageMask,ResidualImage >::CreateNewImageFromPhysicalSpaceOf(maskImage);
+
+                unsigned int i = 0;
+
+                ResidualImageIterator imageIt(residualsImage, maskedRegion);
+
+                for(maskIt.GoToBegin(), imageIt.GoToBegin(); !maskIt.IsAtEnd() && !imageIt.IsAtEnd(); ++maskIt, ++imageIt)
+                {
+                    if(maskIt.Get() > 0)
+                    {
+                        imageIt.Set(residuals(i,j) + residuals(i+numberOfParameters,j) + residuals(i+2*numberOfParameters,j));
+                        i++;
+                    }
+                    else // maskIt.Get <= 0
+                    {
+                        imageIt.Set(0.0);
+                    }
+                }
+
+                // Write file
+                std::stringstream s;
+                s << outputFileName << imagesFileNames[j] << "_" << actualNumberOfReducedParameters << ".nii.gz";
+
+                btk::ImageHelper< ResidualImage >::WriteImage(residualsImage, s.str());
+            }
+
+            if(actualNumberOfReducedParameters < numberOfReducedParameters)
+            {
+                // Add next parameter to the set
+                W(sortedFeatures(actualNumberOfReducedParameters))                               = 1.0;
+                W(sortedFeatures(actualNumberOfReducedParameters) + numberOfReducedParameters)   = 1.0;
+                W(sortedFeatures(actualNumberOfReducedParameters) + 2*numberOfReducedParameters) = 1.0;
+
+                // Update reduced set of parameters
+                tmpX = W * X;
+            }
+
+            actualNumberOfReducedParameters++;
+        }
+        while(actualNumberOfReducedParameters <= numberOfReducedParameters);
 
         std::cout << "done." << std::endl;
-
-
-        //
-        // Writing output
-        //
-
-        typedef itk::Image< double,3 >                    ResidualImage;
-        typedef itk::ImageRegionIterator< ResidualImage > ResidualImageIterator;
-
-
-        ResidualImage::Pointer residualsImage = btk::ImageHelper< ImageMask,ResidualImage >::CreateNewImageFromPhysicalSpaceOf(maskImage);
-
-        unsigned int i = 0;
-
-        ResidualImageIterator imageIt(residualsImage, maskedRegion);
-
-        for(maskIt.GoToBegin(), imageIt.GoToBegin(); !maskIt.IsAtEnd() && !imageIt.IsAtEnd(); ++maskIt, ++imageIt)
-        {
-            if(maskIt.Get() > 0)
-            {
-                imageIt.Set(residuals(i) + residuals(i+numberOfParameters) + residuals(i+2*numberOfParameters));
-                i++;
-            }
-            else // maskIt.Get <= 0
-            {
-                imageIt.Set(0.0);
-            }
-        }
-
-        // Write file
-        btk::ImageHelper< ResidualImage >::WriteImage(residualsImage, outputFileName);
     }
     catch(TCLAP::ArgException &exception)
     {
