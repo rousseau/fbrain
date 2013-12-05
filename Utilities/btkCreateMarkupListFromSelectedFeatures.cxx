@@ -45,6 +45,9 @@
 // TCLAP includes
 #include <tclap/CmdLine.h>
 
+// STL includes
+#include "fstream"
+
 // ITK includes
 #include "itkImage.h"
 #include "itkImageMaskSpatialObject.h"
@@ -76,7 +79,7 @@ int main(int argc, char *argv[])
 
         // Defines arguments
         TCLAP::ValueArg< std::string > selectedFeaturesFileNamesArg("r", "reduced_mask", "Selected features filename", true, "", "string", cmd);
-        TCLAP::ValueArg< std::string > outputFileNameArg("o", "output", "Output markup list filename", false, "SelectedFeatures.fcsv", "string", cmd);
+        TCLAP::ValueArg< std::string > outputFileNameArg("o", "output", "Output markup list filename (Default: \"SelectedFeatures.fcsv\")", false, "SelectedFeatures.fcsv", "string", cmd);
 
         // Parsing arguments
         cmd.parse(argc, argv);
@@ -105,14 +108,25 @@ int main(int argc, char *argv[])
         // Get the masked region
         Mask::RegionType maskedRegion = mask->GetAxisAlignedBoundingBoxRegion();
 
-        std::cerr << "# Markups fiducial file version = 4.3" << std::endl;
-        std::cerr << "# CoordinateSystem = 0" << std::endl;
-        std::cerr << "# columns = id,x,y,z,ow,ox,oy,oz,vis,sel,lock,label,desc,associatedNodeID" << std::endl;
+        // Open output file
+        std::ofstream outputFileStream(outputFileName.c_str());
 
+        if(!outputFileStream.is_open())
+        {
+            outputFileStream.close();
+            btkException("Error when writing in file !");
+        }
+
+        outputFileStream << "# Markups fiducial file version = 4.3" << std::endl;
+        outputFileStream << "# CoordinateSystem = 0" << std::endl;
+        outputFileStream << "# columns = id,x,y,z,ow,ox,oy,oz,vis,sel,lock,label,desc,associatedNodeID" << std::endl;
+
+        // Get origin of the image
         ImageMask::PointType origin = selectedFeaturesImage->GetOrigin();
 
         // Run through selected features to add to markup list
         ImageMaskIterator selectedFeaturesIt(selectedFeaturesImage, maskedRegion);
+        unsigned int featureCount = 1;
 
         for(selectedFeaturesIt.GoToBegin(); !selectedFeaturesIt.IsAtEnd(); ++selectedFeaturesIt)
         {
@@ -123,9 +137,14 @@ int main(int argc, char *argv[])
                 ImageMask::PointType point;
                 selectedFeaturesImage->TransformIndexToPhysicalPoint(index,point);
 
-                std::cerr << "vtkMRMLMarkupsFiducialNode_0," << -point[0] << "," << -point[1] << "," << point[2] << "," << origin[0] << "," << origin[1] << "," << origin[2] << ",1,1,1,1,F-1,Feature 1," << std::endl;
+                outputFileStream << "vtkMRMLMarkupsFiducialNode_0," << -point[0] << "," << -point[1] << "," << point[2] << "," << origin[0] << "," << origin[1] << "," << origin[2] << ",1,1,1,1,F-" << featureCount << ",Feature " << featureCount << "," << std::endl;
+
+                featureCount++;
             }
         }
+
+        // Close output stream
+        outputFileStream.close();
     }
     catch(TCLAP::ArgException &exception)
     {
