@@ -190,7 +190,7 @@ int main(int argc, char** argv)
     for(y=0; y < (int)size[1]; y++)
     for(x=0; x < (int)size[0]; x++)
     {
-      typename ShortImageType::IndexType p;
+      ShortImageType::IndexType p;
       p[0] = x;
       p[1] = y;
       p[2] = z;
