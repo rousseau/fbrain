@@ -279,6 +279,9 @@ target_link_libraries(btkApplyAffineTransformToFibers btkToolsLibrary ${ITK_LIBR
 ADD_EXECUTABLE(btkResolutionSampler btkResolutionSampler.cxx)
 TARGET_LINK_LIBRARIES(btkResolutionSampler  ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkSTAPLE btkSTAPLE.cxx)
+TARGET_LINK_LIBRARIES(btkSTAPLE  ${ITK_LIBRARIES})
+
 
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
@@ -352,5 +355,6 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkApplyTransformToDiffusionSequence
                 btkApplyAffineTransformToFibers
                 btkResolutionSampler
+                btkSTAPLE
         DESTINATION bin)
 
