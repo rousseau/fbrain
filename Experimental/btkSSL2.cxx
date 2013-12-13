@@ -159,20 +159,20 @@ int main(int argc, char** argv)
       for(y=0; y < (int)size[1]; y++)
       for(x=0; x < (int)size[0]; x++)
       {
-        typename FloatImageType::IndexType p;
+        FloatImageType::IndexType p;
         p[0] = x;
         p[1] = y;
         p[2] = z;
         if( maskImage->GetPixel(p) > 0 )
         {
             //Get neighbours
-            std::vector< typename FloatImageType::IndexType > neighbours;
+            std::vector< FloatImageType::IndexType > neighbours;
             neighbours.reserve(maxNeighbours);
             myPatchTool2.GetNeighboursUsingMeanAndVariance(p, inputImage, meanImage->GetPixel(p), varianceImage->GetPixel(p), meanImage, varianceImage, neighbours);
             //myPatchTool2.GetNeighbours(p, inputImage, neighbours);
 
             //Compute new neighbours with updated labels
-            std::vector< typename FloatImageType::IndexType > neighboursWithUpdatedLabels;
+            std::vector< FloatImageType::IndexType > neighboursWithUpdatedLabels;
             for(unsigned int n=0; n<neighbours.size(); n++)
               if( outputImage->GetPixel(neighbours[n]) > 0)
                 neighboursWithUpdatedLabels.push_back(neighbours[n]);
