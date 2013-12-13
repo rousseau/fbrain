@@ -198,7 +198,7 @@ int main(int argc, char** argv)
       {
 
         //Get neighbour coordinates of the current voxel
-        std::vector< typename ShortImageType::IndexType > neighbours;
+        std::vector< ShortImageType::IndexType > neighbours;
         neighbours.reserve(maxNeighbours); //reserve sufficient space for vector building to avoid unnecessary resizing
         myPatchTool2.GetNeighboursUsingMeanAndVariance(p, inputImage, meanImage->GetPixel(p), varianceImage->GetPixel(p), meanImage, varianceImage, neighbours);
         //myPatchTool2.GetNeighbours(p, inputImage, neighbours);
