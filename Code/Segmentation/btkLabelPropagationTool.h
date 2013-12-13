@@ -165,7 +165,7 @@ class LabelFusionTool
   double PatchDistance(itkFloatPointer & p,itkFloatPointer & q);
   void GetOutput(itkTPointer & outputImage);
   void GetWeightImage(itkFloatPointer & outputImage);
-	void GetFuzzyWeightImage(itkFloatPointer & outputImage, int label);
+  void GetFuzzyWeightImage(itkFloatPointer & outputImage, int label);
 
   void ReadOneImage(std::string input_file, itkTPointer & image);
 

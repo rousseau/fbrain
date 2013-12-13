@@ -108,9 +108,9 @@ class NadarayaWatsonReconstructionErrorFunction : public FeatureSelectionCostFun
 
         /**
          * @brief Get the residuals of the current parameters.
-         * @return A vector containing the residuals of each feature.
+         * @return A matrix containing the residuals of each feature (rows) and each image (columns).
          */
-        virtual vnl_vector< double > GetResiduals();
+        virtual vnl_matrix<double> GetResiduals();
 
         /**
          * @brief Initialize the cost function (compute some matrix and determinants).

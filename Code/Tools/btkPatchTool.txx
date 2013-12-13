@@ -245,10 +245,13 @@ void PatchTool<T1,T2>::ComputeNeighbourWeights(Patch<T1> & inputPatch, std::vect
             }		
             break;
             }
-    case 1: {
+    case 1: {//Nearest patches
+            // TO BE DONE
+            for(unsigned int i=0; i < neighbourPatches.size(); i++)
+                weights[i] = exp( - ComputeL2NormBetweenPatches(inputPatch, neighbourPatches[i]) / smoothing);
             break;
             }
-    case 2: {
+    case 2: {//Selection using mean and variance
     		for(unsigned int i=0; i < neighbourPatches.size(); i++)
     		{ 
     		  float w = 0;

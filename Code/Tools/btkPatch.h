@@ -61,30 +61,34 @@ namespace btk
 	  typedef typename itkTImage::SpacingType                     itkTSpacing;    
     
     
-        //Get and Set functions
-    	btkSetMacro(ImageSpacing,typename itkTImage::SpacingType);
-    	btkGetMacro(ImageSpacing,typename itkTImage::SpacingType);
-    	btkSetMacro(ImageSize,typename itkTImage::SizeType);
-    	btkGetMacro(ImageSize,typename itkTImage::SizeType);
-    	btkSetMacro(ImageRegion,typename itkTImage::RegionType);
-    	btkGetMacro(ImageRegion,typename itkTImage::RegionType);
-    	btkSetMacro(HalfPatchSize,typename itkTImage::SizeType);
-    	btkGetMacro(HalfPatchSize,typename itkTImage::SizeType);
-    	btkSetMacro(FullPatchSize,typename itkTImage::SizeType);
-    	btkGetMacro(FullPatchSize,typename itkTImage::SizeType);
-    	btkSetMacro(FullPatchRegion,typename itkTImage::RegionType);
-    	btkGetMacro(FullPatchRegion,typename itkTImage::RegionType);
-    	btkSetMacro(CentralPoint,typename itkTImage::RegionType::IndexType);
-    	btkGetMacro(CentralPoint,typename itkTImage::RegionType::IndexType);
-    	btkSetMacro(CentralPointInImage,typename itkTImage::RegionType::IndexType);
-    	btkGetMacro(CentralPointInImage,typename itkTImage::RegionType::IndexType);
-    	btkSetMacro(Data, itkTImagePointer);
-    	btkGetMacro(Data, itkTImagePointer);
+      //Get and Set functions
+      btkSetMacro(ImageSpacing,typename itkTImage::SpacingType);
+      btkGetMacro(ImageSpacing,typename itkTImage::SpacingType);
+      btkSetMacro(ImageSize,typename itkTImage::SizeType);
+      btkGetMacro(ImageSize,typename itkTImage::SizeType);
+      btkSetMacro(ImageRegion,typename itkTImage::RegionType);
+      btkGetMacro(ImageRegion,typename itkTImage::RegionType);
+      btkSetMacro(HalfPatchSize,typename itkTImage::SizeType);
+      btkGetMacro(HalfPatchSize,typename itkTImage::SizeType);
+      btkSetMacro(FullPatchSize,typename itkTImage::SizeType);
+      btkGetMacro(FullPatchSize,typename itkTImage::SizeType);
+      btkSetMacro(FullPatchRegion,typename itkTImage::RegionType);
+      btkGetMacro(FullPatchRegion,typename itkTImage::RegionType);
+      btkSetMacro(CentralPoint,typename itkTImage::RegionType::IndexType);
+      btkGetMacro(CentralPoint,typename itkTImage::RegionType::IndexType);
+      btkSetMacro(CentralPointInImage,typename itkTImage::RegionType::IndexType);
+      btkGetMacro(CentralPointInImage,typename itkTImage::RegionType::IndexType);
+      btkSetMacro(Data, itkTImagePointer);
+      btkGetMacro(Data, itkTImagePointer);
     	
-    	btkGetMacro(MeanValue, float);
-    	btkGetMacro(StdDevValue, float);
+      btkGetMacro(MeanValue, float);
+      btkGetMacro(StdDevValue, float);
 
-    
+      Patch(){};
+      Patch(itkTImagePointer & image, typename itkTImage::IndexType & p, int h=1){ Initialize(image,h); ComputePatch(p,image);};
+      Patch(itkTImagePointer & image, typename itkTImage::IndexType & p, typename itkTImage::SizeType h){ Initialize(image,h); ComputePatch(p,image);};
+
+
       void Initialize(itkTImagePointer & image, typename itkTImage::SizeType h);
       void Initialize(itkTImagePointer & image, int h=1);
       void ComputePatch(typename itkTImage::IndexType p, itkTImagePointer & image);

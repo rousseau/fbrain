@@ -282,6 +282,8 @@ TARGET_LINK_LIBRARIES(btkResolutionSampler  ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkSTAPLE btkSTAPLE.cxx)
 TARGET_LINK_LIBRARIES(btkSTAPLE  ${ITK_LIBRARIES})
 
+add_executable(btkCreateMarkupListFromSelectedFeatures btkCreateMarkupListFromSelectedFeatures.cxx)
+target_link_libraries(btkCreateMarkupListFromSelectedFeatures btkFeatureSelectionLibrary ${ITK_LIBRARIES})
 
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
@@ -350,11 +352,12 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkComputeCoefficientOfDeterminationForAtlas
                 btkGenerateVtkFileFromFiberDataTextFiles
                 btkGenerateSimulatedFiber
-		btkCreate4DEmptyImageFromReferenceImage
-		btkQuantifyClusteredRegions
+				btkCreate4DEmptyImageFromReferenceImage
+				btkQuantifyClusteredRegions
                 btkApplyTransformToDiffusionSequence
                 btkApplyAffineTransformToFibers
                 btkResolutionSampler
                 btkSTAPLE
+                btkCreateMarkupListFromSelectedFeatures
         DESTINATION bin)
 

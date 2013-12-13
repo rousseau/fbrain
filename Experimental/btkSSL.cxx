@@ -59,7 +59,7 @@ int main(int argc, char** argv)
   TCLAP::MultiArg<std::string> probaImageArg ("p","proba_file","probabilistic images of the textbook (float) (multiple inputs required) ",true,"string", cmd);  
   TCLAP::MultiArg<std::string> outputprobaImageArg ("w","output_proba_file","output probabilistic images (multiple inputs required) ",false,"string", cmd);  
   TCLAP::ValueArg<std::string> inputMaskArg  ("m","mask_file","filename of the mask image (short)",false,"","string", cmd);
-  TCLAP::MultiArg< int >       hwnArg        ("","hwn","patch half size",true,"int",cmd);  
+  TCLAP::MultiArg< int >       hwnArg        ("","hwn","patch half size",true,"int",cmd);
   TCLAP::MultiArg< int >       hwvsArg       ("","hwvs","half size of the volume search area, i.e. the spatial bandwidth",true,"int",cmd);
   TCLAP::ValueArg< float >     alphaArg      ("a","alpha","alpha value is the tradeoff between prior and graph-based consistency (default is 0.5)",false,0.5,"float",cmd);
   TCLAP::ValueArg< float >     betaArg       ("b","beta","beta value is the smoothing parameter of NLM (default is 1)",false,1,"float",cmd);
@@ -130,7 +130,7 @@ int main(int argc, char** argv)
   ShortImageType::SizeType    size    = region.GetSize();
   ShortImageType::SpacingType spacing = inputImage->GetSpacing();
 
-  //Create empty ouput image
+  //Create empty output image
   ShortImagePointer outputImage = btk::ImageHelper<ShortImageType>::CreateNewImageFromPhysicalSpaceOf(inputImage.GetPointer());
 
   int block = 0;
@@ -150,7 +150,7 @@ int main(int argc, char** argv)
   
   int x,y,z;
   
-  std::cout<<"Initializing the output image\n";  
+  std::cout<<"Initializing the output image using max probabilities-----------\n";
   #pragma omp parallel for private(x,y,z) schedule(dynamic)
   for(z=0; z < (int)size[2]; z++)
   {
@@ -178,8 +178,9 @@ int main(int argc, char** argv)
       }
     }
   }
+  //----------------------------------------------------------------------------
 
-  std::cout<<"Normalizing input probabilities\n";  
+  std::cout<<"Normalizing input probabilities-----------------------------------\n";
   #pragma omp parallel for private(x,y,z) schedule(dynamic)
   for(z=0; z < (int)size[2]; z++)
   {
@@ -209,7 +210,8 @@ int main(int argc, char** argv)
       }
     }
   }   
-  
+  //-----------------------------------------------------------------------------
+
   while( (currentLoop < maxLoop) && ( numberOfChanges > numberOfPoints * stoppingCriterion) )
   {
 
@@ -246,6 +248,8 @@ int main(int argc, char** argv)
 	  	  if(sumProba > 0)
 	  	    maxProba /= sumProba;
 	      	      
+          //Test on the mask (should we process this point?) and on the current probability to the current voxel
+          //i.e. if there is already a high probability, it should have converged.
 	  	  if( (maskImage->GetPixel(index) > 0) && (maxProba < probaThreshold) )
 	  	  //if( maskImage->GetPixel(index) > 0 )
           {
@@ -302,6 +306,8 @@ int main(int argc, char** argv)
   			
 			//Need to take into account the central weight--------------------------------
 			
+            //TO BE DONE ....................
+
 			//Update labels --------------------------------------------------------------
   			
   			double maxWeight = 0;

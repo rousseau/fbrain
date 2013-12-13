@@ -67,7 +67,15 @@ TARGET_LINK_LIBRARIES(btkTissueSegmentation ${ITK_LIBRARIES})
 ADD_EXECUTABLE(btkSSL btkSSL.cxx)
 TARGET_LINK_LIBRARIES(btkSSL btkToolsLibrary ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkPatchAnalysis btkPatchAnalysis.cxx)
+TARGET_LINK_LIBRARIES(btkPatchAnalysis btkToolsLibrary ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkSSL2 btkSSL2.cxx)
+TARGET_LINK_LIBRARIES(btkSSL2 btkToolsLibrary ${ITK_LIBRARIES} )
+
 INSTALL(TARGETS
     btkTissueSegmentation
     btkSSL
+    btkPatchAnalysis
+    btkSSL2
 DESTINATION bin)

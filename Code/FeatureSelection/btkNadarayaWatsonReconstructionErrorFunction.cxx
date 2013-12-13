@@ -156,22 +156,15 @@ double NadarayaWatsonReconstructionErrorFunction::EvaluateDesactivation(unsigned
 
 //----------------------------------------------------------------------------------------
 
-vnl_vector< double > NadarayaWatsonReconstructionErrorFunction::GetResiduals()
+vnl_matrix< double > NadarayaWatsonReconstructionErrorFunction::GetResiduals()
 {
-    vnl_vector< double > residuals(m_InputParameters->rows());
+    vnl_matrix< double > residuals(m_InputParameters->rows(),m_InputParameters->columns());
     residuals.fill(0.0);
 
     for(unsigned int j = 0; j < m_NumberOfVectors; j++)
     {
         vnl_vector< double > v = m_CurrentParameters->get_column(j);
-        vnl_vector< double > d = m_InputParameters->get_column(j) - this->NadarayaWatsonMultivariateKernelEstimator(*m_CurrentParameters, v);
-
-        for(unsigned int i = 0; i < m_InputParameters->rows(); i++)
-        {
-            d(i) = std::abs(d(i));
-        }
-
-        residuals += d * m_ImagesWeightVector->get(j);
+        residuals.set_column(j, m_InputParameters->get_column(j) - this->NadarayaWatsonMultivariateKernelEstimator(*m_CurrentParameters, v) * m_ImagesWeightVector->get(j) );
     }
 
     return residuals;
