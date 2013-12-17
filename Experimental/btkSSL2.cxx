@@ -67,6 +67,7 @@ int main(int argc, char** argv)
   	TCLAP::ValueArg<std::string> inputMaskArg  ("m","mask_file","filename of the mask image (short)",false,"","string", cmd);
     TCLAP::MultiArg<std::string> probaImageArg ("p","proba_file","probabilistic images of the textbook (float) (multiple inputs required) ",true,"string", cmd);
     TCLAP::MultiArg<std::string> outputprobaImageArg ("w","output_proba_file","output probabilistic images (multiple inputs required) ",false,"string", cmd);
+    TCLAP::ValueArg< int >       iterMaxArg    ("","iter","maximum iteration number (default is 100)",false,100,"int", cmd);
 
   	// Parse the args.
   	cmd.parse( argc, argv );
@@ -77,6 +78,7 @@ int main(int argc, char** argv)
     std::string mask_file                      = inputMaskArg.getValue();
     std::vector<std::string> proba_file        = probaImageArg.getValue();
     std::vector<std::string> output_proba_file = outputprobaImageArg.getValue();
+    int itermax                                = iterMaxArg.getValue();
 
   	
     int   hwn             = 1;
@@ -149,7 +151,6 @@ int main(int argc, char** argv)
     btk::PandoraBoxImageFilters::GetLabelWithMaxProbabilityImage(probaImages, outputImage);
 
 
-    int itermax = 20;
     for(int i=0; i < itermax; i++)
     {
       std::cout<<"Iteration : "<<i<<std::endl;
