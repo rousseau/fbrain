@@ -149,7 +149,7 @@ int main(int argc, char** argv)
     btk::PandoraBoxImageFilters::GetLabelWithMaxProbabilityImage(probaImages, outputImage);
 
 
-    int itermax = 100;
+    int itermax = 20;
     for(int i=0; i < itermax; i++)
     {
       std::cout<<"Iteration : "<<i<<std::endl;
@@ -189,10 +189,9 @@ int main(int argc, char** argv)
             {
               double localConsistency = 0;
 
-              for(unsigned int n=0; n<neighboursWithUpdatedLabels.size(); n++)
-                localConsistency += weights[n]*probaImagesStepK[l]->GetPixel( neighboursWithUpdatedLabels[n] );
-
               if( sumOfWeights > 0 )
+                for(unsigned int n=0; n<neighboursWithUpdatedLabels.size(); n++)
+                  localConsistency += weights[n]*probaImagesStepK[l]->GetPixel( neighboursWithUpdatedLabels[n] );
                 localConsistency /= sumOfWeights;
 
               probaImagesStepKPlusOne[l]->SetPixel(p, localConsistency);

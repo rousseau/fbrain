@@ -244,6 +244,7 @@ void PatchTool2<T>::ComputeNeighbourWeights(itkTImagePointer & image, typename i
   btk::Patch2<T> patch = btk::Patch2<T>(image, m_FullPatchSize, point);
   btk::Patch2<T> neighbourPatch = btk::Patch2<T>(image, m_FullPatchSize);
 
+  sumOfWeights = 0;
   double neighbourWeight = 0;
 
   for(unsigned int n = 0; n < neighbours.size(); n++)
@@ -251,6 +252,7 @@ void PatchTool2<T>::ComputeNeighbourWeights(itkTImagePointer & image, typename i
     neighbourPatch.ComputePatch(image, neighbours[n]);
     neighbourWeight = exp( - ComputeL2NormBetweenPatches(patch, neighbourPatch ) / smoothing);
     weights.push_back(neighbourWeight);
+    sumOfWeights += neighbourWeight;
   }
 }
 
