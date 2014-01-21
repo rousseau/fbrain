@@ -285,6 +285,9 @@ TARGET_LINK_LIBRARIES(btkSTAPLE  ${ITK_LIBRARIES})
 add_executable(btkCreateMarkupListFromSelectedFeatures btkCreateMarkupListFromSelectedFeatures.cxx)
 target_link_libraries(btkCreateMarkupListFromSelectedFeatures btkFeatureSelectionLibrary ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkComputeStatisticsOverMultipleROI btkComputeStatisticsOverMultipleROI.cxx)
+TARGET_LINK_LIBRARIES(btkComputeStatisticsOverMultipleROI  ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -359,5 +362,6 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkResolutionSampler
                 btkSTAPLE
                 btkCreateMarkupListFromSelectedFeatures
+                btkComputeStatisticsOverMultipleROI
         DESTINATION bin)
 
