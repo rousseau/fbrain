@@ -53,8 +53,8 @@ int main(int argc, char * argv[])
     typedef itk::Image<float, Dimension> itkFloatImage;
     typedef itk::Image<short, Dimension> itkShortImage;
 
-    typedef typename itk::ImageRegionIterator< itkFloatImage > itkFloatIterator;
-    typedef typename itk::ImageRegionIterator< itkShortImage > itkShortIterator;
+    typedef itk::ImageRegionIterator< itkFloatImage > itkFloatIterator;
+    typedef itk::ImageRegionIterator< itkShortImage > itkShortIterator;
 
     //TCLAP
 	try { 
