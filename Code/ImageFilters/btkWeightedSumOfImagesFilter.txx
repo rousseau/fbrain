@@ -103,9 +103,9 @@ template< class TImage,typename TPrecision >
 void WeightedSumOfImagesFilter< TImage,TPrecision >::SetInputs(const std::vector< typename TImage::Pointer > &inputs)
 {
     // Exceptions
-    if(inputs.size() < 2)
+    if(inputs.size() < 1)
     {
-        btkException("WeightedSumOfImagesFilter: There is not enough input images (it should be at least 2) !");
+        btkException("WeightedSumOfImagesFilter: There is not enough input images (it should be at least 1) !");
     }
 
     if(!ImageHelper< TImage >::IsInSamePhysicalSpace(inputs))
