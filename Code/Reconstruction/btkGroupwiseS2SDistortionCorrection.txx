@@ -84,13 +84,13 @@ GroupwiseS2SDistortionCorrection<TSequence>
   {
     if ( ( j % imageSize[3] ) == 0 )
     {
-      fscanf( fr, "%f\n", &value);
+      int returned_value1 = fscanf( fr, "%f\n", &value);
       m_GradientTable(nrow-1,ncol-1)=value;
       nrow = 0;
       ncol++;
     } else
     {
-      fscanf( fr, "%f ", &value);
+      int returned_value2 = fscanf( fr, "%f ", &value);
       m_GradientTable(nrow-1,ncol-1)=value;
     }
     nrow++;

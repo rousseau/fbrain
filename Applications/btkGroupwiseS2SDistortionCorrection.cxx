@@ -150,12 +150,12 @@ try {
   // Write gradient table
   char clcopybvec[255];
   sprintf(clcopybvec,"cp %s %s",bvec.c_str(),bvec_out.c_str());
-  system(clcopybvec);
+  int returned_value1 = system(clcopybvec);
 
   // Write b-values
   char clcopybval[255];
   sprintf(clcopybval,"cp %s %s",bval.c_str(),bval_out.c_str());
-  system(clcopybval);
+  int returned_value2 = system(clcopybval);
 
   // Write transformations
 
