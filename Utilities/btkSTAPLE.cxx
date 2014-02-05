@@ -68,14 +68,18 @@ int main( int argc, char *argv[] )
   const   unsigned int        Dimension = 3;
   typedef itk::Image< short, Dimension >    ShortImageType;
 
-  typedef itk::MultiLabelSTAPLEImageFilter< ShortImageType, ShortImageType >  STAPLEFilterType;
+  typedef itk::MultiLabelSTAPLEImageFilter< ShortImageType >  STAPLEFilterType;
+  typedef STAPLEFilterType::Pointer STAPLEFilterPointer;
 
   typedef ShortImageType::Pointer ShortImagePointer;
 
   typedef itk::ImageFileReader< ShortImageType >  ShortReaderType;
   typedef itk::ImageFileWriter< ShortImageType >  ShortWriterType;
 
-  STAPLEFilterType::Pointer filter = STAPLEFilterType::New();
+
+  //STAPLEFilterPointer filter = STAPLEFilterType::New();
+
+  /*
   filter->SetMaximumNumberOfIterations( 1 );
 
   std::vector<ShortReaderType::Pointer> readers;
@@ -92,7 +96,7 @@ int main( int argc, char *argv[] )
   writer->SetInput( filter->GetOutput() );
 
   writer->Update();
-
+*/
 
   } catch (TCLAP::ArgException &e)  // catch any exceptions
   { std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; }
