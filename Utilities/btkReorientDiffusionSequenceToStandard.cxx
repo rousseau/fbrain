@@ -523,7 +523,7 @@ int main( int argc, char *argv[] )
   // Write b-values
   char clcopybval[255];
   sprintf(clcopybval,"cp %s %s",bval_in.c_str(),bval_out.c_str());
-  system(clcopybval);
+  int returned_value = system(clcopybval);
 
 
   } catch (TCLAP::ArgException &e)  // catch any exceptions
