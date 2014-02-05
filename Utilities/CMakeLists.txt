@@ -288,6 +288,9 @@ target_link_libraries(btkCreateMarkupListFromSelectedFeatures btkFeatureSelectio
 ADD_EXECUTABLE(btkComputeStatisticsOverMultipleROI btkComputeStatisticsOverMultipleROI.cxx)
 TARGET_LINK_LIBRARIES(btkComputeStatisticsOverMultipleROI  ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkComputeJacobian btkComputeJacobian.cxx)
+TARGET_LINK_LIBRARIES(btkComputeJacobian  ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -363,5 +366,6 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkSTAPLE
                 btkCreateMarkupListFromSelectedFeatures
                 btkComputeStatisticsOverMultipleROI
+                btkComputeJacobian
         DESTINATION bin)
 
