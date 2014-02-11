@@ -31,8 +31,8 @@ The fact that you are presently reading this means that you have had
 knowledge of the CeCILL-B license and that you accept its terms.
 */
 
-#ifndef BTK_PATCH_H
-#define BTK_PATCH_H
+#ifndef BTK_PATCH2_H
+#define BTK_PATCH2_H
 
 #include "itkImage.h"
 #include "itkImageRegionIterator.h"
@@ -44,13 +44,13 @@ namespace btk
 {
 
   /**
-  * @class Patch
+  * @class Patch2
   * @brief 3D Patch
   * @author François Rousseau
   * @ingroup Tools
   */
   template<typename T>
-  class Patch
+  class Patch2
   {
     public:
     //Defining ITK stuff for the input image and the patch image
@@ -60,70 +60,37 @@ namespace btk
       typedef typename itk::ImageRegionConstIterator< itkTImage > itkConstIterator;
 	  typedef typename itkTImage::SpacingType                     itkTSpacing;    
     
-    
+
       //Get and Set functions
-      btkSetMacro(ImageSpacing,typename itkTImage::SpacingType);
-      btkGetMacro(ImageSpacing,typename itkTImage::SpacingType);
-      btkSetMacro(ImageSize,typename itkTImage::SizeType);
-      btkGetMacro(ImageSize,typename itkTImage::SizeType);
-      btkSetMacro(ImageRegion,typename itkTImage::RegionType);
-      btkGetMacro(ImageRegion,typename itkTImage::RegionType);
-      btkSetMacro(HalfPatchSize,typename itkTImage::SizeType);
-      btkGetMacro(HalfPatchSize,typename itkTImage::SizeType);
-      btkSetMacro(FullPatchSize,typename itkTImage::SizeType);
-      btkGetMacro(FullPatchSize,typename itkTImage::SizeType);
-      btkSetMacro(FullPatchRegion,typename itkTImage::RegionType);
-      btkGetMacro(FullPatchRegion,typename itkTImage::RegionType);
-      btkSetMacro(CentralPoint,typename itkTImage::RegionType::IndexType);
-      btkGetMacro(CentralPoint,typename itkTImage::RegionType::IndexType);
+
+
+      Patch2(){};
+      Patch2(itkTImagePointer & image, typename itkTImage::SizeType & fullPatchSize){ CreateEmptyPatch(image,fullPatchSize); };
+      Patch2(itkTImagePointer & image, typename itkTImage::SizeType & fullPatchSize, typename itkTImage::IndexType & p){ CreateEmptyPatch(image,fullPatchSize); ComputePatch(image, p);};
+
+      void CreateEmptyPatch(itkTImagePointer & image, typename itkTImage::SizeType & fullPatchSize);
+      void ComputePatch(itkTImagePointer & image, typename itkTImage::IndexType & p);
+      void ComputePatchRegion(itkTImagePointer & image, typename itkTImage::IndexType & p, typename itkTImage::RegionType & imageRegion, typename itkTImage::RegionType & patchRegion);
+
+      void ComputeMeanAndVariance(float &mean, float &variance);
+      T GetDataAtCenter();
+
       btkSetMacro(CentralPointInImage,typename itkTImage::RegionType::IndexType);
       btkGetMacro(CentralPointInImage,typename itkTImage::RegionType::IndexType);
       btkSetMacro(Data, itkTImagePointer);
       btkGetMacro(Data, itkTImagePointer);
-    	
-      btkGetMacro(MeanValue, float);
-      btkGetMacro(StdDevValue, float);
 
-      Patch(){};
-      Patch(itkTImagePointer & image, typename itkTImage::IndexType & p, int h=1){ Initialize(image,h); ComputePatch(p,image);};
-      Patch(itkTImagePointer & image, typename itkTImage::IndexType & p, typename itkTImage::SizeType h){ Initialize(image,h); ComputePatch(p,image);};
-
-
-      void Initialize(itkTImagePointer & image, typename itkTImage::SizeType h);
-      void Initialize(itkTImagePointer & image, int h=1);
-      void ComputePatch(typename itkTImage::IndexType p, itkTImagePointer & image);
-      void SetInputImage(itkTImagePointer & image);
-      void SetPatchSize(int h);
-      void CreatePatch();
-      void ComputePatchRegion(typename itkTImage::IndexType p,  typename itkTImage::RegionType & imageRegion, typename itkTImage::RegionType & patchRegion);
-      T GetCentralValue();
-                  
-      void ComputeMeanAndStdDevValues();
-                  
 	private:
-		
-      itkTImagePointer                m_Data;
 
-      typename itkTImage::SpacingType m_ImageSpacing;
-      typename itkTImage::SizeType    m_ImageSize;
-      typename itkTImage::RegionType  m_ImageRegion;
-  
-      typename itkTImage::SizeType    m_HalfPatchSize;          //half of the patch size
-      typename itkTImage::SizeType    m_FullPatchSize;          //patch size  : 2 * halfPatchSize + 1
-      typename itkTImage::RegionType  m_FullPatchRegion;        //ITK region corresponding to a patch
-      typename itkTImage::RegionType::IndexType m_CentralPoint; //Coordinates of the central point of a patch = HalfPatchSize
+      itkTImagePointer                          m_Data;                //Data, i.e. ITK object containing image intensities
       typename itkTImage::RegionType::IndexType m_CentralPointInImage; //Coordinates of the central point of a patch in the image
-      
-      
-      float    m_MeanValue;
-      float    m_StdDevValue;
   
   };
 
 } // namespace btk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "btkPatch.txx"
+#include "btkPatch2.txx"
 #endif
 
-#endif // BTK_PATCH_H
+#endif // BTK_PATCH2_H

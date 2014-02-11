@@ -279,6 +279,9 @@ target_link_libraries(btkApplyAffineTransformToFibers btkToolsLibrary ${ITK_LIBR
 ADD_EXECUTABLE(btkResolutionSampler btkResolutionSampler.cxx)
 TARGET_LINK_LIBRARIES(btkResolutionSampler  ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkSTAPLE btkSTAPLE.cxx)
+TARGET_LINK_LIBRARIES(btkSTAPLE  ${ITK_LIBRARIES})
+
 add_executable(btkCreateMarkupListFromSelectedFeatures btkCreateMarkupListFromSelectedFeatures.cxx)
 target_link_libraries(btkCreateMarkupListFromSelectedFeatures btkFeatureSelectionLibrary ${ITK_LIBRARIES})
 
@@ -287,6 +290,12 @@ target_link_libraries(btkFeaturesReconstruction btkFeatureSelectionLibrary ${ITK
 
 add_executable(btkFeaturesStatistics btkFeaturesStatistics.cxx)
 target_link_libraries(btkFeaturesStatistics btkFeatureSelectionLibrary ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkComputeStatisticsOverMultipleROI btkComputeStatisticsOverMultipleROI.cxx)
+TARGET_LINK_LIBRARIES(btkComputeStatisticsOverMultipleROI  ${ITK_LIBRARIES})
+
+ADD_EXECUTABLE(btkComputeJacobian btkComputeJacobian.cxx)
+TARGET_LINK_LIBRARIES(btkComputeJacobian  ${ITK_LIBRARIES})
 
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
@@ -355,13 +364,16 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkComputeCoefficientOfDeterminationForAtlas
                 btkGenerateVtkFileFromFiberDataTextFiles
                 btkGenerateSimulatedFiber
-		btkCreate4DEmptyImageFromReferenceImage
-		btkQuantifyClusteredRegions
+				btkCreate4DEmptyImageFromReferenceImage
+				btkQuantifyClusteredRegions
                 btkApplyTransformToDiffusionSequence
                 btkApplyAffineTransformToFibers
                 btkResolutionSampler
+                btkSTAPLE
                 btkCreateMarkupListFromSelectedFeatures
                 btkFeaturesReconstruction
                 btkFeaturesStatistics
+                btkComputeStatisticsOverMultipleROI
+                btkComputeJacobian
         DESTINATION bin)
 

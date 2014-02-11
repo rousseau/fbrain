@@ -193,7 +193,7 @@ int main( int argc, char *argv[] )
     // Write b-values
     char clcopybval[255];
     sprintf(clcopybval,"cp %s %s",bval,bval_out);
-    system(clcopybval);
+    int returned_value = system(clcopybval);
 
     // Change sequence
 

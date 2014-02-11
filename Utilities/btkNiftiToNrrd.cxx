@@ -130,7 +130,7 @@ int main( int argc, char * argv[] )
         int bvalue;
         while ( !feof(f) )
         {
-            fscanf( f, "%d ", &bvalue);
+            int returned_value1 = fscanf( f, "%d ", &bvalue);
             bValues.push_back(bvalue);
         }
         fclose (f);
@@ -147,9 +147,9 @@ int main( int argc, char * argv[] )
         for (unsigned int i=1; i<=3*bValues.size(); i++)
         {
             if ( ( i % bValues.size() ) == 0 )
-                fscanf( f, "%f\n", &gvalue);
+                int returned_value2 = fscanf( f, "%f\n", &gvalue);
             else
-                fscanf( f, "%f ", &gvalue);
+                int returned_value3 = fscanf( f, "%f ", &gvalue);
 
             gValues[coor].push_back(gvalue);
 

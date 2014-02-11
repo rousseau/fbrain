@@ -36,7 +36,25 @@
 #ifndef BTKCURVATURES_H
 #define BTKCURVATURES_H
 
+
+// VTK includes
+#include "vtkVersion.h"
+#include "vtkPolyData.h"
+#include "vtkDoubleArray.h"
+#include "vtkCellArray.h"
+#include "vtkSmartPointer.h"
+#include "vtkPolyDataNormals.h"
 #include "vtkPolyDataAlgorithm.h"
+#include "vtkPointData.h"
+#include "vtkDataArray.h"
+#include "vtkIdList.h"
+#include "vtkTriangle.h"
+#include "vtkMath.h"
+#include "vtkTensor.h"
+#include "vtkInformation.h"
+#include "vtkInformationVector.h"
+#include "vtkObjectFactory.h"
+#include "vtkStreamingDemandDrivenPipeline.h"
 
 // enum ?
 #define CURVATURE_TENSOR 0

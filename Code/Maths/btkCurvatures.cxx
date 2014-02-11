@@ -33,26 +33,11 @@
 
 ==========================================================================*/
 
+#ifndef __BTKCURVATURES_CXX__
+#define __BTKCURVATURES_CXX__
+
 // BTK includes
 #include "btkCurvatures.h"
-
-// VTK includes
-#include "vtkVersion.h"
-#include "vtkPolyData.h"
-#include "vtkDoubleArray.h"
-#include "vtkCellArray.h"
-#include "vtkSmartPointer.h"
-#include "vtkPolyDataNormals.h"
-#include "vtkPointData.h"
-#include "vtkDataArray.h"
-#include "vtkIdList.h"
-#include "vtkTriangle.h"
-#include "vtkMath.h"
-#include "vtkTensor.h"
-#include "vtkInformation.h"
-#include "vtkInformationVector.h"
-#include "vtkObjectFactory.h"
-#include "vtkStreamingDemandDrivenPipeline.h"
 
 // VTK standard use for filters implementation
 
@@ -507,3 +492,4 @@ void btkCurvatures::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "CurvatureType: " << this->CurvatureType << "\n";
 }
 
+#endif

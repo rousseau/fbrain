@@ -110,7 +110,8 @@ float OrientationDiffusionFunctionModel::ModelAt(ModelImage::PixelType shCoeffic
         {
             for(int m = -(int)l; m <= (int)l; m++)
             {
-                response += btk::SphericalHarmonics::ComputeBasis(u,l,m) * m_LegendreMatrix(i,i) * m_ModelSharpMatrix(i,i) * shCoefficients[i++];
+                response += btk::SphericalHarmonics::ComputeBasis(u,l,m) * m_LegendreMatrix(i,i) * m_ModelSharpMatrix(i,i) * shCoefficients[i];
+                i++;
             } // for m
         } // for l
     }
@@ -120,7 +121,8 @@ float OrientationDiffusionFunctionModel::ModelAt(ModelImage::PixelType shCoeffic
         {
             for(int m = -(int)l; m <= (int)l; m++)
             {
-                response += btk::SphericalHarmonics::ComputeBasis(u,l,m) * m_LegendreMatrix(i,i) * shCoefficients[i++];
+                response += btk::SphericalHarmonics::ComputeBasis(u,l,m) * m_LegendreMatrix(i,i) * shCoefficients[i];
+                i++;
             } // for m
         } // for l
     }
