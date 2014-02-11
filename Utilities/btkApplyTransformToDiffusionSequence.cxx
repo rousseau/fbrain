@@ -97,6 +97,8 @@ int main( int argc, char *argv[])
         TCLAP::ValueArg< std::string > outputSequenceFileNameArg("o", "output", "Registred output diffusion sequence", true, "", "string", cmd);
         TCLAP::SwitchArg invArg  ("","inv","inverse the transformation", cmd, false);
         TCLAP::ValueArg< std::string > transformFileNameArg("t", "transformation", "Transformation to apply", true, "", "string", cmd);
+        TCLAP::ValueArg< std::string > referenceFileNameArg("r", "reference", "Reference image", true, "", "string", cmd);
+        
 
         //TCLAP::SwitchArg verboseModeArg("v", "verbose", "Verbose mode", cmd, false);
 
@@ -106,6 +108,7 @@ int main( int argc, char *argv[])
         std::string  inputSequenceFileName = inputSequenceFileNameArg.getValue();
         std::string outputSequenceFileName = outputSequenceFileNameArg.getValue();
         std::string transformationFileName = transformFileNameArg.getValue();
+        std::string      referenceFileName = referenceFileNameArg.getValue();
 
         bool inverseTheTransform = invArg.getValue();
 
@@ -119,6 +122,7 @@ int main( int argc, char *argv[])
 
         Sequence::Pointer inputSequence = btk::DiffusionSequenceHelper::ReadSequence(inputSequenceFileName);
 
+        Image::Pointer referenceImage = btk::ImageHelper<Image>::ReadImage(referenceFileName);
 
         itk::TransformFactory< MatrixTransformType >::RegisterTransform();
         MatrixTransformType::Pointer transform = btk::IOTransformHelper< MatrixTransformType >::ReadTransform(transformationFileName);
@@ -166,7 +170,7 @@ int main( int argc, char *argv[])
             resampler->SetTransform(transform);
             resampler->SetInput(extractor->GetOutput());
             resampler->SetUseReferenceImage(true);
-            resampler->SetReferenceImage(extractor->GetOutput());
+            resampler->SetReferenceImage(referenceImage);
             resampler->SetDefaultPixelValue(0);
 
             // Define interpolation
