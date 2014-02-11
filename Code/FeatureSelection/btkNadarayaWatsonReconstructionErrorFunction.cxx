@@ -172,6 +172,24 @@ vnl_matrix< double > NadarayaWatsonReconstructionErrorFunction::GetResiduals()
 
 //----------------------------------------------------------------------------------------
 
+vnl_matrix< double > &NadarayaWatsonReconstructionErrorFunction::GetReconstruction(vnl_matrix< double > &parameters)
+{
+    vnl_matrix< double > *reconstruction_ptr = new vnl_matrix< double >(m_InputParameters->rows(),parameters.columns());
+    vnl_matrix< double >     &reconstruction = *reconstruction_ptr;
+
+    reconstruction.fill(0.0);
+
+    for(unsigned int j = 0; j < reconstruction.columns(); j++)
+    {
+        vnl_vector< double > v = parameters.get_column(j);
+        reconstruction.set_column(j, this->NadarayaWatsonMultivariateKernelEstimator(*m_CurrentParameters, v) * m_ImagesWeightVector->get(j) );
+    }
+
+    return reconstruction;
+}
+
+//----------------------------------------------------------------------------------------
+
 void NadarayaWatsonReconstructionErrorFunction::Initialize()
 {
     Superclass::Initialize();

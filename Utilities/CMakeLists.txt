@@ -282,6 +282,11 @@ TARGET_LINK_LIBRARIES(btkResolutionSampler  ${ITK_LIBRARIES})
 add_executable(btkCreateMarkupListFromSelectedFeatures btkCreateMarkupListFromSelectedFeatures.cxx)
 target_link_libraries(btkCreateMarkupListFromSelectedFeatures btkFeatureSelectionLibrary ${ITK_LIBRARIES})
 
+add_executable(btkFeaturesReconstruction btkFeaturesReconstruction.cxx)
+target_link_libraries(btkFeaturesReconstruction btkFeatureSelectionLibrary ${ITK_LIBRARIES})
+
+add_executable(btkFeaturesStatistics btkFeaturesStatistics.cxx)
+target_link_libraries(btkFeaturesStatistics btkFeatureSelectionLibrary ${ITK_LIBRARIES})
 
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
@@ -356,5 +361,7 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkApplyAffineTransformToFibers
                 btkResolutionSampler
                 btkCreateMarkupListFromSelectedFeatures
+                btkFeaturesReconstruction
+                btkFeaturesStatistics
         DESTINATION bin)
 

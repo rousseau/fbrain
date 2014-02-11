@@ -113,6 +113,14 @@ class NadarayaWatsonReconstructionErrorFunction : public FeatureSelectionCostFun
         virtual vnl_matrix<double> GetResiduals();
 
         /**
+         * @brief Get the reconstruction given the current parameters.
+         * This method actually allocate space memory for the matrix and return it as a reference.
+         * @param parameters Matrix of parameters used to reconstruct the data.
+         * @return A reconstructed matrix from the given matrix of parameters.
+         */
+        virtual vnl_matrix< double > &GetReconstruction(vnl_matrix< double > &parameters);
+
+        /**
          * @brief Initialize the cost function (compute some matrix and determinants).
          */
         virtual void Initialize();
