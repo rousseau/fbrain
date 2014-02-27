@@ -54,24 +54,29 @@ int main( int argc, char *argv[] )
   // Parse arguments
   const char *inputImageFile = NULL, *gTableFile = NULL, *cTableFile = NULL; //, *dir = NULL;
 
-  TCLAP::CmdLine cmd("Transform gradients from world to image coordinates.", ' ', "Unversioned");
+  TCLAP::CmdLine cmd("Transform gradients from world to image coordinates. Can also swap directions or inverse directions (beware of the order of operations on directions)", ' ', "Unversioned");
 
   TCLAP::ValueArg<std::string> inputArg("i","input","Input image",true,"","string",cmd);
   TCLAP::ValueArg<std::string> gTableArg("g","gtable","Gradient table",true,"","string",cmd);
   TCLAP::ValueArg<std::string> cTableArg("c","ctable","Modified table",true,"","string",cmd);
 
-  TCLAP::SwitchArg w2iSwitchArg("","w2i","Conversion is performed in the world to image direction (default)",cmd,false);
+  TCLAP::SwitchArg w2iSwitchArg("","w2i","Conversion is performed in the world to image direction",cmd,false);
   TCLAP::SwitchArg i2wSwitchArg("","i2w","Conversion is performed in the image to world direction",cmd,false);
 
-//  TCLAP::ValueArg<std::string> dirArg("d","direction","w2i converts from world to image coordinates;
-//  i2w converts from image to worls coordinates;",true,"","string",cmd);
+  TCLAP::SwitchArg swapxySwitchArg("","swapxy","Swap X and Y diffusion directions",cmd,false);
+  TCLAP::SwitchArg swapyzSwitchArg("","swapyz","Swap Y and Z diffusion directions",cmd,false);
+  TCLAP::SwitchArg swapxzSwitchArg("","swapxz","Swap X and Z diffusion directions",cmd,false);
+
+  TCLAP::SwitchArg invxSwitchArg("","invx","Inverse X diffusion directions",cmd,false);
+  TCLAP::SwitchArg invySwitchArg("","invy","Inverse Y diffusion directions",cmd,false);
+  TCLAP::SwitchArg invzSwitchArg("","invz","Inverse Z diffusion directions",cmd,false);
+
 
   cmd.parse( argc, argv );
 
   inputImageFile = inputArg.getValue().c_str();
   gTableFile     = gTableArg.getValue().c_str();
   cTableFile     = cTableArg.getValue().c_str();
-//  dir            = dirArg.getValue().c_str();
 
   const    unsigned int    Dimension = 4;
 
@@ -97,10 +102,27 @@ int main( int argc, char *argv[] )
   gradientTable -> SetImage( image );
   gradientTable -> LoadFromFile( gTableFile);
 
+  //Change coordinate system ....................................
   if ( i2wSwitchArg.isSet() )
     gradientTable -> TransformGradientsToWorldCoordinates();
-  else
+  if ( w2iSwitchArg.isSet() )
     gradientTable -> TransformGradientsToImageCoordinates();
+
+  //Swap directions .............................................
+  if ( swapxySwitchArg.isSet() )
+    gradientTable -> SwapXYDirections();
+  if ( swapyzSwitchArg.isSet() )
+    gradientTable -> SwapYZDirections();
+  if ( swapxzSwitchArg.isSet() )
+    gradientTable -> SwapXZDirections();
+
+  //Inverse directions ..........................................
+  if ( invxSwitchArg.isSet() )
+    gradientTable -> InverseXDirection();
+  if ( invySwitchArg.isSet() )
+    gradientTable -> InverseYDirection();
+  if ( invzSwitchArg.isSet() )
+    gradientTable -> InverseZDirection();
 
   gradientTable -> SaveToFile( cTableFile);
 
