@@ -164,11 +164,13 @@ int main( int argc, char *argv[] )
   MaskType::Pointer mask = MaskType::New();
   mask -> SetImage( imageMaskReader -> GetOutput() );
 
-  // Compute 4D diffusion ROI for input sequence from mask
+  std::cout<<"Compute 4D diffusion ROI for input sequence from mask\n";
 
   SequenceType::RegionType seqROI = sequence -> GetLargestPossibleRegion();
   SequenceType::IndexType  seqROIIndex = seqROI.GetIndex();
   SequenceType::SizeType   seqROISize  = seqROI.GetSize();
+
+  std::cout<<"Size of 4D diffusion ROI :"<<seqROISize[0]<<" "<<seqROISize[1]<<" "<<seqROISize[2]<<" "<<seqROISize[3]<<std::endl;
 
   unsigned int numberOfFrames = seqROISize[3];
 
@@ -190,7 +192,7 @@ int main( int argc, char *argv[] )
 
   SequenceType::RegionType recROI = seqROI; // By default we reconstruct on the original grid
 
-   // Create reconstructed sequence (= 4D image)
+  std::cout<<"Create reconstructed sequence (= 4D image)\n";
 
   SequenceType::Pointer recSequence = SequenceType::New();
 
@@ -272,13 +274,15 @@ int main( int argc, char *argv[] )
   recSequence -> SetOrigin( recOrigin );
   recSequence -> SetSpacing( recSpacing );
 
+  std::cout<<"Size of reconstructed 4D diffusion image :"<<recSize[0]<<" "<<recSize[1]<<" "<<recSize[2]<<" "<<recSize[3]<<std::endl;
+
   // Read transform ref -> dwi
 
   typedef itk::AffineTransform< double, 3 > TransformType;
   TransformType::Pointer tref = TransformType::New();
   tref -> SetIdentity();
 
-  // Read transformation file
+  std::cout<<"Read transformation file\n";
   if ( refSwitch.isSet() && strcmp(trefFile,""))
   {
     typedef itk::TransformFileReader     TransformReaderType;
@@ -323,7 +327,7 @@ int main( int argc, char *argv[] )
 
   start = clock();
 
-  // First resample the T2 image ...
+  std::cout<<"First resample the T2 image ...\n";
   typedef itk::LinearInterpolateImageFunction< SequenceType,
                                                double >      LinearInterpolatorType;
   LinearInterpolatorType::Pointer linearInterpolator = LinearInterpolatorType::New();
@@ -337,13 +341,15 @@ int main( int argc, char *argv[] )
     recIt.Set( linearInterpolator -> Evaluate(pointRef) );
   }
 
-  // ... and then the diffusion weighted images.
+  std::cout<<"... and then the diffusion weighted images\n";
   unsigned int image = 0;
 
   for (; !recIt.IsAtEnd(); ++recIt)
   {
     //index[3]: number of the current image
     index = recIt.GetIndex();
+
+    std::cout<<"index : "<<index[0]<<" "<<index[1]<<" "<<index[2]<<" "<<index[3]<<std::endl;
 
     if (index[3]!=image)
     {
@@ -374,13 +380,14 @@ int main( int argc, char *argv[] )
     }
 
     recIt.Set( (short)value );
+    std::cout<<"new value : "<<value<<std::endl;
 
   }
   finish = clock();
 
   std::cout << "time (seg) = " << (finish - start) / CLOCKS_PER_SEC << std::endl;
 
-  // Write interpolated sequence
+  std::cout<<"Write interpolated sequence\n";
 
   typedef itk::ImageFileWriter< SequenceType >  SequenceWriterType;
   SequenceWriterType::Pointer sequenceWriter = SequenceWriterType::New();
@@ -428,7 +435,7 @@ int main( int argc, char *argv[] )
   gradientTable -> RotateGradientsInWorldCoordinates();
   gradientTable -> SaveToFile( bvec_out.c_str());
 
-  // Write b-values
+  std::cout<<"Write b-values\n";
   char clcopybval[255];
   sprintf(clcopybval,"cp %s %s",bval_in.c_str(),bval_out.c_str());
   int returned_value = system(clcopybval);
