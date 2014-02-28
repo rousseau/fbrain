@@ -218,6 +218,7 @@ void SphericalHarmonicsDiffusionDecompositionFilter::BeforeThreadedGenerateData(
     region.SetSize(3,0);
     extract->SetInput(m_InputDiffusionSequence);
     extract->SetExtractionRegion(region);
+    extract->SetDirectionCollapseToSubmatrix();
     extract->Update();
 
     // Build a vector image from the diffusion sequence
