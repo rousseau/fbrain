@@ -349,8 +349,6 @@ int main( int argc, char *argv[] )
     //index[3]: number of the current image
     index = recIt.GetIndex();
 
-    //std::cout<<"index : "<<index[0]<<" "<<index[1]<<" "<<index[2]<<" "<<index[3]<<std::endl;
-
     if (index[3]!=image)
     {
       image = index[3];
@@ -362,14 +360,11 @@ int main( int argc, char *argv[] )
     recSequence -> TransformIndexToPhysicalPoint(index,pointRef);
     pointRef3D[0] = pointRef[0];  pointRef3D[1] = pointRef[1]; pointRef3D[2] = pointRef[2];
 
-    //std::cout<<"physical point : "<<pointRef[0]<<" "<<pointRef[1]<<" "<<pointRef[2]<<std::endl;
-
     if (refSwitch.isSet())
       pointRef3D = tref -> TransformPoint(pointRef3D);
 
     if ( mask -> IsInside(pointRef3D) )
     {
-      //std::cout<<"is inside\n";
       pointSeq3D = pointRef3D;
 
       pointSeq[0] = pointSeq3D[0];
@@ -379,13 +374,10 @@ int main( int argc, char *argv[] )
 
       interpolator -> GetGradientDirection(index[3],theta,phi);
 
-      //std::cout<<"going to evaluate\n";
       value =  interpolator -> Evaluate(pointSeq, theta, phi, rspa, rgra, 0);
     }
 
     recIt.Set( (short)value );
-    //std::cout<<"new value : "<<value<<std::endl;
-
   }
   finish = clock();
 
