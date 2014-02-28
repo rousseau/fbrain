@@ -67,39 +67,10 @@ void PandoraBoxImageFilters::ProbabilityImageNormalization(std::vector< itkFloat
       for(unsigned int l = 0; l < inputImages.size(); l++){
         valueVector[l] /= sumVector;
         outputImages[l]->SetPixel(index, valueVector[l]);
-        if(valueVector[l] > 1)
-          std::cout<<"shit ************************************************* \n";
-
       }
     else
       for(unsigned int l = 0; l < inputImages.size(); l++)
           outputImages[l]->SetPixel(index, 0);
-/*
-
-    double sumProba = 0.0;
-    for(unsigned int l = 0; l < inputImages.size(); l++){
-      sumProba += (double)inputImages[l]->GetPixel( index );
-      std::cout<<"inside first loop : "<<l<<" "<<sumProba<<" "<<inputImages[l]->GetPixel( index )<<"\n";
-
-    }
-
-    if(sumProba > 0)
-      for(unsigned int l = 0; l < inputImages.size(); l++){
-        outputImages[l]->SetPixel(index, inputImages[l]->GetPixel(index) / sumProba);
-
-        if(inputImages[l]->GetPixel(index) / sumProba > 1){
-            std::cout<<"oops : "<<l<<" "<<inputImages[l]->GetPixel(index)<<" "<<sumProba<<" "<<inputImages[l]->GetPixel(index) / sumProba<<"\n";
-            double sumProba2 = 0;
-            for(unsigned int ll = 0; ll < inputImages.size(); ll++){
-              sumProba2 += inputImages[ll]->GetPixel( index );
-              std::cout<<"inside loop : "<<ll<<" "<<sumProba2<<" "<<inputImages[ll]->GetPixel( index )<<"\n";
-            }
-        }
-      }
-    else
-        for(unsigned int l = 0; l < inputImages.size(); l++)
-            outputImages[l]->SetPixel(index, 0);
-  */
   }
 
 }
