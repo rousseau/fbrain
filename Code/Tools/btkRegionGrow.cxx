@@ -118,7 +118,7 @@ double btkRegionGrow::getCurvValue(vtkIdType pointId)
 // Function that checks if a value of type ID is present inside a vector of IDs
 bool btkRegionGrow::isInside(vtkIdType value, IdVector vec)
 {
-    for(int i = 0; i<vec.size(); i++) // go through all the elements of the vector to check if the value is present
+    for(unsigned int i = 0; i<vec.size(); i++) // go through all the elements of the vector to check if the value is present
     {
         if(vec[i] == value)
         {
