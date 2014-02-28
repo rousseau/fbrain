@@ -605,9 +605,6 @@ RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
 
     k_gra = m_kdTreeSphere -> annkFRSearch(spherePt,9*r_gra*r_gra, 0);
 
-
-    //exit(-1);
-
     ANNidxArray nnIdx_gra;
     nnIdx_gra = new ANNidx[k_gra];
 
@@ -622,22 +619,15 @@ RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
     unsigned int numberOfPoints = 0;
     bool fixedNN = false;
 
-    btkCoutVariable(k_gra);
-    // exit(-1);
-    //std::cout << "Proximos al punto " << spherePt[0] << " " << spherePt[1] << " " << spherePt[2] << " : " << std::endl;
-
     for(unsigned int j=init; j < k_gra; j++)
     {
         unsigned int gradIndex =  nnIdx_gra[j] % (m_NumberOfGradients*m_NumberOfSlices);
 
-        std::cout << "gradIndex = " << gradIndex << " " <<  m_dataPtsSphere[ nnIdx_gra[j] ][0] <<
-                     " " << m_dataPtsSphere[ nnIdx_gra[j] ][1] << " " << m_dataPtsSphere[ nnIdx_gra[j] ][2] << std::endl;
-
+        //std::cout << "gradIndex = " << gradIndex << " " <<  m_dataPtsSphere[ nnIdx_gra[j] ][0] << " " << m_dataPtsSphere[ nnIdx_gra[j] ][1] << " " << m_dataPtsSphere[ nnIdx_gra[j] ][2] << std::endl;
 
         k_spa[j] = m_kdTreeSpace[gradIndex] -> annkFRSearch(spatialPt, 9*r_spa*r_spa, 0);
         numberOfPoints += (k_spa[j] - init);
     }
-    //exit(-1);
 
     if (numberOfPoints == 0)
     {
@@ -651,9 +641,6 @@ RBFInterpolateImageFunctionS2S< TInputImage, TCoordRep >
         }
         fixedNN = true;
     }
-
-    btkCoutVariable(numberOfPoints);
-    exit(-1);
 
     BtkMatrix<double> pts(numberOfPoints,5);
     BtkVector<double> y(numberOfPoints);
