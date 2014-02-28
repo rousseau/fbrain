@@ -65,7 +65,7 @@ void DiffusionSequenceHelper::WriteSequenceArray(std::vector< btk::DiffusionSequ
 {
     if(sequences.size() == fileNames.size())
     {
-        for(int i = 0; i < sequences.size(); i++)
+        for(unsigned int i = 0; i < sequences.size(); i++)
         {
             WriteSequence(sequences[i], fileNames[i]);
         }
@@ -97,7 +97,7 @@ std::vector< btk::DiffusionSequence::Pointer > &DiffusionSequenceHelper::ReadSeq
     std::vector< btk::DiffusionSequence::Pointer > &sequences = *ptrSequences;
     sequences.resize(fileNames.size());
 
-    for(int i = 0; i < fileNames.size(); i++)
+    for(unsigned int i = 0; i < fileNames.size(); i++)
     {
         sequences[i] = ReadSequence(fileNames[i]);
     }
