@@ -50,7 +50,7 @@ int main( int argc, char *argv[] )
     
     TCLAP::CmdLine cmd("Compute label map using majority voting rule", ' ', "Unversioned");
     TCLAP::MultiArg<std::string> inputArg ("i","input","Label image file.", true,"string",cmd);
-    TCLAP::ValueArg<std::string> weightArg("w","weight","Weight image file. ",false,"","string",cmd);
+    TCLAP::ValueArg<std::string> weightArg("w","weight","Output weight image file. ",false,"","string",cmd);
     TCLAP::ValueArg<std::string> outArg   ("o","output","Output file of the estimated label image.", true,"","string",cmd);
     TCLAP::SwitchArg             backgroundArg("","removeBackground","Background (label 0) is considered by default as a label. Use this swith to turn this option off. ",cmd,false);
 
