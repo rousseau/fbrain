@@ -150,6 +150,10 @@ int main( int argc, char *argv[] )
               outputLabel = (*mapIt).first;
             }
           }
+          //We should use a mask region to define a ROI.
+          //Without mask, we can set a minimum value for wmax:
+          if(wmax < 0.0001)
+            outputLabel = 0;
         }
         else
         {
