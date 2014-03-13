@@ -43,6 +43,7 @@
 
 /* OTHERS */
 #include "iostream"
+#include "fstream"
 #include <tclap/CmdLine.h>
 
 
@@ -64,9 +65,11 @@ int main(int argc, char * argv[])
     TCLAP::ValueArg<std::string> inputArg("i","input","input image file of interest",true,"","string",cmd);
     TCLAP::ValueArg<std::string> weightArg("w","weight","weight image (probability map)",false,"","string",cmd);
     TCLAP::ValueArg<std::string> labelArg("l","label","label image defining the ROI",true,"","string",cmd);
-    TCLAP::ValueArg<std::string> meanArg("m","mean","mean image for each ROI",true,"","string",cmd);
-    TCLAP::ValueArg<std::string> varianceArg("v","variance","variance image for each ROI",true,"","string",cmd);
+    TCLAP::ValueArg<std::string> meanArg("m","mean","mean image for each ROI",false,"","string",cmd);
+    TCLAP::ValueArg<std::string> varianceArg("v","variance","variance image for each ROI",false,"","string",cmd);
     TCLAP::ValueArg<float>       thresholdArg("t","threshold","threshold for output image visualisation",false,0.01,"float", cmd);
+    TCLAP::ValueArg<std::string> histArg("","hist","Output prefix text file for weighted histogram computation",false,"","string",cmd);
+
 
     // Parse the argv array.
     cmd.parse( argc, argv );
@@ -77,6 +80,7 @@ int main(int argc, char * argv[])
     std::string meanFile = meanArg.getValue();
     std::string varianceFile = varianceArg.getValue();
     float threshold = thresholdArg.getValue();
+    std::string histFile = histArg.getValue();
 
     itkFloatImage::Pointer inputImage  = btk::ImageHelper< itkFloatImage >::ReadImage(inputFile);
     itkFloatImage::Pointer weightImage = btk::ImageHelper< itkFloatImage >::ReadOrCreateImage(weightFile,inputImage,1);
@@ -86,30 +90,32 @@ int main(int argc, char * argv[])
     itkFloatImage::Pointer meanImage = btk::ImageHelper<itkFloatImage>::CreateNewImageFromPhysicalSpaceOf(inputImage.GetPointer());
     itkFloatImage::Pointer varianceImage = btk::ImageHelper<itkFloatImage>::CreateNewImageFromPhysicalSpaceOf(inputImage.GetPointer());
 
-	std::map<short,double> mMap;
-	std::map<short,double> m2Map;
-  std::map<short,double> counterMap;
-	std::map<short,double> meanMap;
-	std::map<short,double> varianceMap;
+    std::map<short,double> mMap;
+    std::map<short,double> m2Map;
+    std::map<short,double> counterMap;
+    std::map<short,double> meanMap;
+    std::map<short,double> varianceMap;
 	
-	itkFloatIterator inputIterator(inputImage, inputImage->GetRequestedRegion() );
-  itkFloatIterator weightIterator(weightImage, weightImage->GetRequestedRegion() );
-  itkShortIterator labelIterator(labelImage, labelImage->GetRequestedRegion() );
-	itkFloatIterator meanIterator(meanImage, meanImage->GetRequestedRegion() );
-	itkFloatIterator varianceIterator(varianceImage, varianceImage->GetRequestedRegion() );
-	
+    itkFloatIterator inputIterator(inputImage, inputImage->GetRequestedRegion() );
+    itkFloatIterator weightIterator(weightImage, weightImage->GetRequestedRegion() );
+    itkShortIterator labelIterator(labelImage, labelImage->GetRequestedRegion() );
+    itkFloatIterator meanIterator(meanImage, meanImage->GetRequestedRegion() );
+    itkFloatIterator varianceIterator(varianceImage, varianceImage->GetRequestedRegion() );
+
     for(inputIterator.GoToBegin(),labelIterator.GoToBegin(),weightIterator.GoToBegin(); !inputIterator.IsAtEnd(); ++inputIterator, ++weightIterator, ++labelIterator){
 
       float inputValue = inputIterator.Get();
       float weightValue = weightIterator.Get();
       short labelValue = labelIterator.Get();
 	  
-      //sum of weights per label
-      counterMap[labelValue] += weightValue;
-      //sum of weighted values per label
-      mMap[labelValue] += (weightValue*inputValue);
-      //sum of weighted squared values per label
-      m2Map[labelValue]+= (weightValue*(inputValue * inputValue));
+      if( weightValue > threshold){
+        //sum of weights per label
+        counterMap[labelValue] += weightValue;
+        //sum of weighted values per label
+        mMap[labelValue] += (weightValue*inputValue);
+        //sum of weighted squared values per label
+        m2Map[labelValue]+= (weightValue*(inputValue * inputValue));
+      }
     } 	
     
     std::map<short, double>::iterator mMapIt;
@@ -140,10 +146,40 @@ int main(int argc, char * argv[])
       }
     } 	
     
-    btk::ImageHelper<itkFloatImage>::WriteImage(meanImage, meanFile);
-    btk::ImageHelper<itkFloatImage>::WriteImage(varianceImage, varianceFile);    
+    if(meanFile!="")
+      btk::ImageHelper<itkFloatImage>::WriteImage(meanImage, meanFile);
+    if(varianceFile!="")
+      btk::ImageHelper<itkFloatImage>::WriteImage(varianceImage, varianceFile);
 
-	
+    if(histFile != "")
+    {
+      std::cout<<"Writing data for histogram analysis"<<std::endl;
+
+      for(mMapIt = mMap.begin(); mMapIt != mMap.end(); ++mMapIt){
+        short label = (*mMapIt).first;
+
+        std::cout<<"Label "<<label<<std::endl;
+
+        std::string textfilename = histFile+"_label"+std::to_string(label)+".txt";
+        std::ofstream textFile;
+        textFile.open(textfilename);
+
+        for(inputIterator.GoToBegin(),labelIterator.GoToBegin(),weightIterator.GoToBegin(); !inputIterator.IsAtEnd(); ++inputIterator, ++weightIterator, ++labelIterator){
+
+          float inputValue = inputIterator.Get();
+          float weightValue = weightIterator.Get();
+          short labelValue = labelIterator.Get();
+
+          if( (labelValue == label) && (weightValue > threshold) )
+          {
+            textFile << weightValue <<" "<< inputValue << std::endl;
+          }
+        }
+
+        textFile.close();
+
+      }
+    }
 		
 		
     } catch (TCLAP::ArgException &e)  // catch any exceptions
