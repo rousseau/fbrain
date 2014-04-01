@@ -298,7 +298,7 @@ int main(int argc, char *argv[])
         std::stringstream sSampleMeanMagnitude;
         sSampleMeanMagnitude << outputFileName << "_sample-mean-magnitude.nii.gz";
 
-        std::ofstream file(sSampleMeanMagnitude.str());
+        std::ofstream file(sSampleMeanMagnitude.str().c_str());
 
         if(file.is_open())
         {
