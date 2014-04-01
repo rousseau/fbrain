@@ -292,7 +292,7 @@ add_executable(btkFeaturesStatistics btkFeaturesStatistics.cxx)
 target_link_libraries(btkFeaturesStatistics btkFeatureSelectionLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkComputeStatisticsOverMultipleROI btkComputeStatisticsOverMultipleROI.cxx)
-TARGET_LINK_LIBRARIES(btkComputeStatisticsOverMultipleROI  ${ITK_LIBRARIES})
+TARGET_LINK_LIBRARIES(btkComputeStatisticsOverMultipleROI  btkToolsLibrary ${ITK_LIBRARIES})
 
 ADD_EXECUTABLE(btkComputeJacobian btkComputeJacobian.cxx)
 TARGET_LINK_LIBRARIES(btkComputeJacobian  ${ITK_LIBRARIES})

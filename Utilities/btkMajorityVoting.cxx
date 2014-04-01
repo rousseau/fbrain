@@ -50,9 +50,10 @@ int main( int argc, char *argv[] )
     
     TCLAP::CmdLine cmd("Compute label map using majority voting rule", ' ', "Unversioned");
     TCLAP::MultiArg<std::string> inputArg ("i","input","Label image file.", true,"string",cmd);
-    TCLAP::ValueArg<std::string> weightArg("w","weight","Weight image file. ",false,"","string",cmd);
+    TCLAP::ValueArg<std::string> weightArg("w","weight","Output weight image file. ",false,"","string",cmd);
     TCLAP::ValueArg<std::string> outArg   ("o","output","Output file of the estimated label image.", true,"","string",cmd);
-    
+    TCLAP::SwitchArg             backgroundArg("","removeBackground","Background (label 0) is considered by default as a label. Use this swith to turn this option off. ",cmd,false);
+
     // Parse the argv array.
     cmd.parse( argc, argv );
     
@@ -139,10 +140,28 @@ int main( int argc, char *argv[] )
         }
         std::map<InputPixelType, float>::iterator mapIt;
         float wmax = 0;
-        for(mapIt = map.begin (); mapIt != map.end (); ++mapIt){
-          if( (*mapIt).second > wmax ){
-            wmax = (*mapIt).second;
-            outputLabel = (*mapIt).first;
+
+        if ( backgroundArg.isSet() )
+        {
+          outputLabel = 1;
+          for(mapIt = map.begin (); mapIt != map.end (); ++mapIt){
+            if( ((*mapIt).second > wmax) && ((*mapIt).first != 0) ){
+              wmax = (*mapIt).second;
+              outputLabel = (*mapIt).first;
+            }
+          }
+          //We should use a mask region to define a ROI.
+          //Without mask, we can set a minimum value for wmax:
+          if(wmax < 0.0001)
+            outputLabel = 0;
+        }
+        else
+        {
+          for(mapIt = map.begin (); mapIt != map.end (); ++mapIt){
+            if( (*mapIt).second > wmax ){
+              wmax = (*mapIt).second;
+              outputLabel = (*mapIt).first;
+            }
           }
         }
  

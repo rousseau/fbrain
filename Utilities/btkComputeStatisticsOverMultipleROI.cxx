@@ -62,64 +62,82 @@ int main(int argc, char * argv[])
     TCLAP::CmdLine cmd("Computes the average and the variance in every ROI defined by a label image", ' ', "1.0", true);
     
     TCLAP::ValueArg<std::string> inputArg("i","input","input image file of interest",true,"","string",cmd);
+    TCLAP::ValueArg<std::string> weightArg("w","weight","weight image (probability map)",false,"","string",cmd);
     TCLAP::ValueArg<std::string> labelArg("l","label","label image defining the ROI",true,"","string",cmd);
     TCLAP::ValueArg<std::string> meanArg("m","mean","mean image for each ROI",true,"","string",cmd);
     TCLAP::ValueArg<std::string> varianceArg("v","variance","variance image for each ROI",true,"","string",cmd);
+    TCLAP::ValueArg<float>       thresholdArg("t","threshold","threshold for output image visualisation",false,0.01,"float", cmd);
 
     // Parse the argv array.
     cmd.parse( argc, argv );
     
     std::string inputFile = inputArg.getValue();
+    std::string weightFile = weightArg.getValue();
     std::string labelFile = labelArg.getValue();
     std::string meanFile = meanArg.getValue();
     std::string varianceFile = varianceArg.getValue();
+    float threshold = thresholdArg.getValue();
 
-    itkFloatImage::Pointer inputImage = btk::ImageHelper< itkFloatImage >::ReadImage(inputFile);
-    itkShortImage::Pointer labelImage = btk::ImageHelper< itkShortImage >::ReadImage(labelFile);
+    itkFloatImage::Pointer inputImage  = btk::ImageHelper< itkFloatImage >::ReadImage(inputFile);
+    itkFloatImage::Pointer weightImage = btk::ImageHelper< itkFloatImage >::ReadOrCreateImage(weightFile,inputImage,1);
+
+    itkShortImage::Pointer labelImage  = btk::ImageHelper< itkShortImage >::ReadImage(labelFile);
 
     itkFloatImage::Pointer meanImage = btk::ImageHelper<itkFloatImage>::CreateNewImageFromPhysicalSpaceOf(inputImage.GetPointer());
     itkFloatImage::Pointer varianceImage = btk::ImageHelper<itkFloatImage>::CreateNewImageFromPhysicalSpaceOf(inputImage.GetPointer());
 
 	std::map<short,double> mMap;
 	std::map<short,double> m2Map;
-	std::map<short,long unsigned int> counterMap;
+  std::map<short,double> counterMap;
 	std::map<short,double> meanMap;
 	std::map<short,double> varianceMap;
 	
 	itkFloatIterator inputIterator(inputImage, inputImage->GetRequestedRegion() );
-	itkShortIterator labelIterator(labelImage, labelImage->GetRequestedRegion() );	
+  itkFloatIterator weightIterator(weightImage, weightImage->GetRequestedRegion() );
+  itkShortIterator labelIterator(labelImage, labelImage->GetRequestedRegion() );
 	itkFloatIterator meanIterator(meanImage, meanImage->GetRequestedRegion() );
 	itkFloatIterator varianceIterator(varianceImage, varianceImage->GetRequestedRegion() );
 	
-  	for(inputIterator.GoToBegin(),labelIterator.GoToBegin(); !inputIterator.IsAtEnd(); ++inputIterator, ++labelIterator){
-	  float inputValue = inputIterator.Get();
-	  short labelValue = labelIterator.Get();
+    for(inputIterator.GoToBegin(),labelIterator.GoToBegin(),weightIterator.GoToBegin(); !inputIterator.IsAtEnd(); ++inputIterator, ++weightIterator, ++labelIterator){
+
+      float inputValue = inputIterator.Get();
+      float weightValue = weightIterator.Get();
+      short labelValue = labelIterator.Get();
 	  
-	  counterMap[labelValue] += 1;	
-	  mMap[labelValue] += inputValue;
-	  m2Map[labelValue]+= (inputValue * inputValue);	  
+      //sum of weights per label
+      counterMap[labelValue] += weightValue;
+      //sum of weighted values per label
+      mMap[labelValue] += (weightValue*inputValue);
+      //sum of weighted squared values per label
+      m2Map[labelValue]+= (weightValue*(inputValue * inputValue));
     } 	
     
     std::map<short, double>::iterator mMapIt;
     std::map<short, double>::iterator m2MapIt;
-    std::map<short, long unsigned int>::iterator counterMapIt;
+    std::map<short, double>::iterator counterMapIt;
     
     for(mMapIt = mMap.begin(), m2MapIt = m2Map.begin(), counterMapIt = counterMap.begin(); mMapIt != mMap.end(); ++mMapIt, ++m2MapIt, ++counterMapIt){
       short label = (*mMapIt).first;
-      long unsigned int n = (*counterMapIt).second;
-      
-      double mean = (*mMapIt).second / n;      
-      double variance = ( (*m2MapIt).second / n) - (mean * mean) ;
 
-	  meanMap[label]     = mean;
-	  varianceMap[label] = variance; 
+      double n = (*counterMapIt).second;
+      double mean = (*mMapIt).second / n;      
+      //biased estimator of weighted variance
+      double variance = ( (*m2MapIt).second / n) - (mean * mean) ;
+      //unbiased estimator of weighted variance
+      //double variance = ( ( (*m2MapIt).second * n) - ((*mMapIt).second * (*mMapIt).second) )/ (n*n - XXXXXX);
+
+      meanMap[label]     = mean;
+      varianceMap[label] = variance;
+      std::cout<<"Label "<<label<<" : mean = "<<mean<<", standard deviation = "<<sqrt(variance)<<std::endl;
     }
 
-  	for(labelIterator.GoToBegin(),meanIterator.GoToBegin(),varianceIterator.GoToBegin(); !labelIterator.IsAtEnd(); ++labelIterator, ++meanIterator, ++varianceIterator){
-	  short labelValue = labelIterator.Get();
+    for(labelIterator.GoToBegin(),meanIterator.GoToBegin(),varianceIterator.GoToBegin(),weightIterator.GoToBegin(); !labelIterator.IsAtEnd(); ++labelIterator, ++weightIterator, ++meanIterator, ++varianceIterator){
+      short labelValue = labelIterator.Get();
 	 
-	  meanIterator.Set( meanMap[labelValue] );
-	  varianceIterator.Set( varianceMap[labelValue] );
+      if(weightIterator.Get() > threshold){
+        meanIterator.Set( meanMap[labelValue] );
+        varianceIterator.Set( varianceMap[labelValue] );
+      }
     } 	
     
     btk::ImageHelper<itkFloatImage>::WriteImage(meanImage, meanFile);

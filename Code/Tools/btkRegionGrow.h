@@ -97,11 +97,11 @@ class btkRegionGrow : public vtkPolyDataAlgorithm
         unsigned int m_Size; // size of m_Vec
         vtkPolyData *m_Polydata; // input polydata mesh
         vtkIdType   m_SeedPoint; // input seedPoint choosed by the user
-        int m_numberOfPoints; // final number of Points that will be find in the ROI
+        unsigned int m_numberOfPoints; // final number of Points that will be find in the ROI
         unsigned int m_Nb_Loop;
 
 
-        void growing(vtkIdType m_SeedPoint, int m_numberOfPoints);
+        void growing(vtkIdType m_SeedPoint, unsigned int m_numberOfPoints);
         IdVector getNeighbours(vtkIdType point);
         std::vector<double> getNormalVector(vtkIdType point);
         double getCurvValue(vtkIdType pointID);

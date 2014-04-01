@@ -53,17 +53,26 @@ void PandoraBoxImageFilters::ProbabilityImageNormalization(std::vector< itkFloat
     index[1] = y;
     index[2] = z;
 
-    double sumProba = 0;
-    for(unsigned int l = 0; l < inputImages.size(); l++)
-      sumProba += inputImages[l]->GetPixel( index );
+    std::vector<double> valueVector(inputImages.size());
+    double sumVector = 0.0;
 
-    if(sumProba > 0)
-      for(unsigned int l = 0; l < inputImages.size(); l++)
-        outputImages[l]->SetPixel(index, inputImages[l]->GetPixel(index) / sumProba);
-    else
-        for(unsigned int l = 0; l < inputImages.size(); l++)
-            outputImages[l]->SetPixel(index, 0);
+    for(unsigned int l = 0; l < inputImages.size(); l++){
+      valueVector[l] = inputImages[l]->GetPixel( index );
+      if(valueVector[l] < 0)
+        valueVector[l] = 0;
+      sumVector += valueVector[l];
     }
+
+    if(sumVector > 0)
+      for(unsigned int l = 0; l < inputImages.size(); l++){
+        valueVector[l] /= sumVector;
+        outputImages[l]->SetPixel(index, valueVector[l]);
+      }
+    else
+      for(unsigned int l = 0; l < inputImages.size(); l++)
+          outputImages[l]->SetPixel(index, 0);
+  }
+
 }
 
 void PandoraBoxImageFilters::GetLabelWithMaxProbabilityImage(std::vector< itkFloatImagePointer > & inputImages, itkShortImagePointer & outputImage)

@@ -68,6 +68,7 @@ int main(int argc, char** argv)
     TCLAP::MultiArg<std::string> probaImageArg ("p","proba_file","probabilistic images of the textbook (float) (multiple inputs required) ",true,"string", cmd);
     TCLAP::MultiArg<std::string> outputprobaImageArg ("w","output_proba_file","output probabilistic images (multiple inputs required) ",false,"string", cmd);
     TCLAP::ValueArg< int >       iterMaxArg    ("","iter","maximum iteration number (default is 100)",false,100,"int", cmd);
+    TCLAP::ValueArg< float >     betaArg       ("","beta","beta value for patch similarity (default is 1)",false,1,"float", cmd);
 
   	// Parse the args.
   	cmd.parse( argc, argv );
@@ -79,11 +80,11 @@ int main(int argc, char** argv)
     std::vector<std::string> proba_file        = probaImageArg.getValue();
     std::vector<std::string> output_proba_file = outputprobaImageArg.getValue();
     int itermax                                = iterMaxArg.getValue();
+    float beta                                 = betaArg.getValue();
 
   	
     int   hwn             = 1;
     int   hwvs            = 1;
-    float beta            = 1;
 
 
   	//ITK declaration
@@ -196,6 +197,7 @@ int main(int argc, char** argv)
                 localConsistency /= sumOfWeights;
 
               probaImagesStepKPlusOne[l]->SetPixel(p, localConsistency);
+
             }
         }
       }

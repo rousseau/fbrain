@@ -125,6 +125,16 @@ public:
   // Save gradient table to file
   void SaveToFile( const char* output );
 
+  // Swap diffusion directions
+  void SwapXYDirections();
+  void SwapXZDirections();
+  void SwapYZDirections();
+
+  // Inverse directions (multiply by -1)
+  void InverseXDirection();
+  void InverseYDirection();
+  void InverseZDirection();
+
   void RemoveRepeatedZeroEntries();
 
   // Set/Get transform

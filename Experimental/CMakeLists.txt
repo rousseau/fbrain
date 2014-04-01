@@ -77,10 +77,14 @@ TARGET_LINK_LIBRARIES(btkSSL2 btkToolsLibrary ${ITK_LIBRARIES} )
 ADD_EXECUTABLE(btkDummy btkDummy.cxx)
 TARGET_LINK_LIBRARIES(btkDummy btkToolsLibrary ${ITK_LIBRARIES} )
 
+ADD_EXECUTABLE(btkDicomSeriesTo3DImage btkDicomSeriesTo3DImage.cxx)
+TARGET_LINK_LIBRARIES(btkDicomSeriesTo3DImage ${ITK_LIBRARIES} )
+
 INSTALL(TARGETS
     btkTissueSegmentation
     btkSSL
     btkPatchAnalysis
     btkSSL2
     btkDummy
+    btkDicomSeriesTo3DImage
 DESTINATION bin)

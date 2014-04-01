@@ -97,6 +97,8 @@ int main( int argc, char *argv[])
         TCLAP::ValueArg< std::string > outputSequenceFileNameArg("o", "output", "Registred output diffusion sequence", true, "", "string", cmd);
         TCLAP::SwitchArg invArg  ("","inv","inverse the transformation", cmd, false);
         TCLAP::ValueArg< std::string > transformFileNameArg("t", "transformation", "Transformation to apply", true, "", "string", cmd);
+        TCLAP::ValueArg< std::string > referenceFileNameArg("r", "reference", "Reference image", true, "", "string", cmd);
+        
 
         //TCLAP::SwitchArg verboseModeArg("v", "verbose", "Verbose mode", cmd, false);
 
@@ -106,6 +108,7 @@ int main( int argc, char *argv[])
         std::string  inputSequenceFileName = inputSequenceFileNameArg.getValue();
         std::string outputSequenceFileName = outputSequenceFileNameArg.getValue();
         std::string transformationFileName = transformFileNameArg.getValue();
+        std::string      referenceFileName = referenceFileNameArg.getValue();
 
         bool inverseTheTransform = invArg.getValue();
 
@@ -119,6 +122,7 @@ int main( int argc, char *argv[])
 
         Sequence::Pointer inputSequence = btk::DiffusionSequenceHelper::ReadSequence(inputSequenceFileName);
 
+        Image::Pointer referenceImage = btk::ImageHelper<Image>::ReadImage(referenceFileName);
 
         itk::TransformFactory< MatrixTransformType >::RegisterTransform();
         MatrixTransformType::Pointer transform = btk::IOTransformHelper< MatrixTransformType >::ReadTransform(transformationFileName);
@@ -166,7 +170,7 @@ int main( int argc, char *argv[])
             resampler->SetTransform(transform);
             resampler->SetInput(extractor->GetOutput());
             resampler->SetUseReferenceImage(true);
-            resampler->SetReferenceImage(extractor->GetOutput());
+            resampler->SetReferenceImage(referenceImage);
             resampler->SetDefaultPixelValue(0);
 
             // Define interpolation
@@ -200,7 +204,38 @@ int main( int argc, char *argv[])
         // (only rigid part is necessary for gradient table reorientation)
         vnl_matrix< PrecisionType > R(3,3);
         R.set_identity();
-        R = transform->GetMatrix().GetVnlMatrix();
+        //R = transform->GetMatrix().GetVnlMatrix();
+
+        //Get B0 image
+        Sequence::RegionType B0currentRegion = inputSequence->GetLargestPossibleRegion();
+        B0currentRegion.SetSize(3,0);
+        B0currentRegion.SetIndex(3,0);
+        extractor->SetExtractionRegion(B0currentRegion);
+        extractor->Update();
+        Image::Pointer B0Image = extractor->GetOutput();
+
+
+        //This part must be validated using other sequences -------------------------
+        // directions of B0 image
+        vnl_matrix< PrecisionType > A(3,3);
+        A = B0Image -> GetDirection().GetVnlMatrix();
+
+        std::cout<<"Directions of B0 image\n"<<A;
+
+        // directions of reference image
+        vnl_matrix< PrecisionType > B(3,3);
+        B = referenceImage -> GetDirection().GetVnlMatrix();
+
+        std::cout<<"Directions of reference image\n"<<B;
+
+        // transform to apply
+        vnl_matrix< PrecisionType > C(3,3);
+        C = transform->GetMatrix().GetVnlMatrix();
+        // full transfo to apply to the gradient table
+        //R = C.transpose() * B.transpose() * A;  //1 - Stan like ?
+        //R = B.transpose() * C.transpose() * A;  //2 - logique (vecteurs en coordonnées image)
+        //R = B * C.transpose() * A.transpose();  //3 - logique inverse
+        R = C.transpose(); //4 - logique (vecteur en coordonnées monde)
 
         vnl_matrix< PrecisionType > PQ = R;
         vnl_matrix< PrecisionType > NQ = R;
@@ -221,6 +256,7 @@ int main( int argc, char *argv[])
                 PQ = NQ;
             }
         }
+
 
         // Define rigid transformation for gradient table reorientation
         EulerTransform::Pointer gradientTableTransform = EulerTransform::New();

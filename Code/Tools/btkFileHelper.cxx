@@ -42,7 +42,7 @@ void FileHelper::FilesExist(std::vector< std::string > &files, std::vector<bool>
     result.resize(files.size());
     std::fstream fs;
 
-    for(int i = 0; i< files.size(); i++)
+    for(unsigned int i = 0; i< files.size(); i++)
     {
         fs.open(files[i].c_str());
 
@@ -65,7 +65,7 @@ void FileHelper::FilesExistPrintIt(std::vector< std::string > &files, std::vecto
     result.resize(files.size());
     std::fstream fs;
 
-    for(int i = 0; i< files.size(); i++)
+    for(unsigned int i = 0; i< files.size(); i++)
     {
         fs.open(files[i].c_str());
 

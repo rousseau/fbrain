@@ -287,6 +287,50 @@ DiffusionGradientTable<TInputImage>
 
 }
 
+// Swap diffusion directions
+template < typename TInputImage > void DiffusionGradientTable<TInputImage>::SwapXYDirections()
+{
+  std::cout<<"Swapping X and Y diffusion directions"<<std::endl;
+  vnl_vector<double> columnX = m_GradientTable.get_column(0);
+  vnl_vector<double> columnY = m_GradientTable.get_column(1);
+  m_GradientTable.set_column(0, columnY);
+  m_GradientTable.set_column(1, columnX);
+}
+template < typename TInputImage > void DiffusionGradientTable<TInputImage>::SwapXZDirections()
+{
+  std::cout<<"Swapping X and Z diffusion directions"<<std::endl;
+  vnl_vector<double> columnX = m_GradientTable.get_column(0);
+  vnl_vector<double> columnZ = m_GradientTable.get_column(2);
+  m_GradientTable.set_column(0, columnZ);
+  m_GradientTable.set_column(2, columnX);
+}
+template < typename TInputImage > void DiffusionGradientTable<TInputImage>::SwapYZDirections()
+{
+  std::cout<<"Swapping Y and Z diffusion directions"<<std::endl;
+  vnl_vector<double> columnY = m_GradientTable.get_column(1);
+  vnl_vector<double> columnZ = m_GradientTable.get_column(2);
+  m_GradientTable.set_column(1, columnZ);
+  m_GradientTable.set_column(2, columnY);
+}
+// Inverse directions (multiply by -1)
+template < typename TInputImage > void DiffusionGradientTable<TInputImage>::InverseXDirection()
+{
+  std::cout<<"Inverse X diffusion direction"<<std::endl;
+  m_GradientTable.scale_column(0,-1);
+}
+template < typename TInputImage > void DiffusionGradientTable<TInputImage>::InverseYDirection()
+{
+  std::cout<<"Inverse Y diffusion direction"<<std::endl;
+  m_GradientTable.scale_column(1,-1);
+}
+template < typename TInputImage > void DiffusionGradientTable<TInputImage>::InverseZDirection()
+{
+  std::cout<<"Inverse Z diffusion direction"<<std::endl;
+  m_GradientTable.scale_column(2,-1);
+}
+
+
+
 
 } // end namespace btk
 
