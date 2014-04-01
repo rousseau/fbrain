@@ -218,12 +218,25 @@ int main(int argc, char *argv[])
             stdParameters(i) = std::sqrt(sum);
         }
 
-        // Compute the mean magnitude for each sample
+        // Compute the mean of magnitudes for each sample
         vnl_vector< double > sampleMeansParameters(Y.cols());
 
         for(int j = 0; j < sampleMeansParameters.size(); j++)
         {
-            sampleMeansParameters(j) = Y.get_column(j).mean();
+            double sum = 0.0;
+
+            for(int p = 0; p < numberOfParameters; p++)
+            {
+                // Make the sum of magnitudes
+                sum += std::sqrt(
+                    Y(p,j)*Y(p,j) +
+                    Y(p+numberOfParameters,j)*Y(p+numberOfParameters,j) +
+                    Y(p+2*numberOfParameters,j)*Y(p+2*numberOfParameters,j)
+                );
+            }
+
+            // Make the average
+            sampleMeansParameters(j) = sum / static_cast< double >(numberOfParameters);
         } // for each column
 
         btkCoutMacro("done.");
@@ -302,15 +315,9 @@ int main(int argc, char *argv[])
 
         if(file.is_open())
         {
-            for(int n = 0; n < numberOfParameters; n++)
+            for(int j = 0; j < Y.cols(); j++)
             {
-                double magnitude = std::sqrt(
-                            sampleMeansParameters(n)*sampleMeansParameters(n) +
-                            sampleMeansParameters(n+numberOfParameters)*sampleMeansParameters(n+numberOfParameters) +
-                            sampleMeansParameters(n+2*numberOfParameters)*sampleMeansParameters(n+2*numberOfParameters)
-                            );
-
-                file << magnitude << std::endl;
+                file << sampleMeansParameters(j) << std::endl;
             } // for each column
 
             // Close file
