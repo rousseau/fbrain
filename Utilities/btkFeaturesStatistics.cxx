@@ -41,6 +41,7 @@
  * @ingroup FeatureSelection
  * @brief Compute statistics on features
  * For each feature, statistics are computed (mean, std for instance).
+ * The dynamic of reduced feature is computed too (if any).
  */
 
 // TCLAP includes
@@ -90,7 +91,6 @@ int main(int argc, char *argv[])
         // Defines arguments
         TCLAP::UnlabeledMultiArg< std::string > imagesFileNamesArg("image", "Input displacement field images' filenames", true, "string", cmd);
         TCLAP::ValueArg< std::string >            maskFileNamesArg("m", "mask", "Mask filename", true, "", "string", cmd);
-//        TCLAP::ValueArg< std::string > reducedMaskImageFileNamesArg("r", "reduced_mask", "Selected features filename", true, "", "string", cmd);
         TCLAP::ValueArg< std::string >            outputFileNameArg("o", "output", "Output filename prefix (Default: \"statistics\")", false, "statistics", "string", cmd);
 
         // Parsing arguments
@@ -99,7 +99,6 @@ int main(int argc, char *argv[])
         // Get back arguments' values
         std::vector< std::string > imagesFileNames = imagesFileNamesArg.getValue();
         std::string                   maskFileName = maskFileNamesArg.getValue();
-//        std::string       reducedMaskImageFileName = reducedMaskImageFileNamesArg.getValue();
         std::string                 outputFileName = outputFileNameArg.getValue();
 
 
@@ -125,15 +124,6 @@ int main(int argc, char *argv[])
             btkException("Input images and mask image are not in the same physical space !");
         }
 
-//        // Read selected features mask
-//        ImageMask::Pointer reducedMaskImage = btk::ImageHelper< ImageMask >::ReadImage(reducedMaskImageFileName);
-
-//        // Test if images and mask are in the same space
-//        if(!btk::ImageHelper< DisplacementField,ImageMask >::IsInSamePhysicalSpace(images[0],reducedMaskImage, 1e-4))
-//        {
-//            btkException("Input images and reduced mask image are not in the same physical space !");
-//        }
-
 
         //
         // Preprocessing
@@ -150,40 +140,32 @@ int main(int argc, char *argv[])
         Mask::RegionType maskedRegion = mask->GetAxisAlignedBoundingBoxRegion();
 
         // Compute the number of parameters
-        unsigned int numberOfParameters = 0/*, numberOfReducedParameters = 0*/;
+        unsigned int numberOfParameters = 0;
         ImageMaskIterator maskIt(maskImage, maskedRegion);
-//        ImageMaskIterator reducedMaskIt(reducedMaskImage, maskedRegion);
 
-        for(maskIt.GoToBegin()/*, reducedMaskIt.GoToBegin()*/; !maskIt.IsAtEnd()/* && !reducedMaskIt.IsAtEnd()*/; ++maskIt/*, ++reducedMaskIt*/)
+        for(maskIt.GoToBegin(); !maskIt.IsAtEnd(); ++maskIt)
         {
             if(maskIt.Get() > 0)
             {
                 numberOfParameters++;
-
-//                if(reducedMaskIt.Get() > 0)
-//                {
-//                    numberOfReducedParameters++;
-//                }
             }
         } // for each voxels
 
-//        btkCoutMacro("\tThere are " << numberOfParameters << " initial parameters and " << numberOfReducedParameters << " reduced parameters.");
-        btkCoutMacro("\tThere are " << numberOfParameters << " initial parameters.");
+        btkCoutMacro("\tThere are " << numberOfParameters << " parameters.");
 
 
         // Build input and reduced parameters
         vnl_matrix< double > Y(numberOfParameters*3, images.size());
-//        vnl_matrix< double > X(numberOfReducedParameters*3, images.size());
         unsigned int j = 0;
 
         for(std::vector< DisplacementField::Pointer >::iterator image = images.begin(); image != images.end(); image++, j++)
         {
             // Fill parameters
-            unsigned int i = 0/*, i2 = 0*/;
+            unsigned int i = 0;
 
             DisplacementFieldIterator imageIt(*image, maskedRegion);
 
-            for(maskIt.GoToBegin()/*, reducedMaskIt.GoToBegin()*/, imageIt.GoToBegin(); !maskIt.IsAtEnd()/* && !reducedMaskIt.IsAtEnd()*/ && !imageIt.IsAtEnd(); ++maskIt/*, ++reducedMaskIt*/, ++imageIt)
+            for(maskIt.GoToBegin(), imageIt.GoToBegin(); !maskIt.IsAtEnd() && !imageIt.IsAtEnd(); ++maskIt, ++imageIt)
             {
                 if(maskIt.Get() > 0)
                 {
@@ -191,14 +173,6 @@ int main(int argc, char *argv[])
                     Y(i+numberOfParameters,j) = imageIt.Get()[1];
                     Y(i+2*numberOfParameters,j) = imageIt.Get()[2];
                     i++;
-
-//                    if(reducedMaskIt.Get() > 0)
-//                    {
-//                        X(i2,j) = imageIt.Get()[0];
-//                        X(i2+numberOfReducedParameters,j) = imageIt.Get()[1];
-//                        X(i2+2*numberOfReducedParameters,j) = imageIt.Get()[2];
-//                        i2++;
-//                    }
                 }
             } // for each voxels
 
@@ -208,7 +182,6 @@ int main(int argc, char *argv[])
 
         // Clean memory
         mask = NULL;
-//        reducedMaskImage = NULL;
 
         std::cout << "done." << std::endl;
 
@@ -245,23 +218,31 @@ int main(int argc, char *argv[])
             stdParameters(i) = std::sqrt(sum);
         }
 
+        // Compute the mean magnitude for each sample
+        vnl_vector< double > sampleMeansParameters(Y.cols());
+
+        for(int j = 0; j < sampleMeansParameters.size(); j++)
+        {
+            sampleMeansParameters(j) = Y.get_column(j).mean();
+        } // for each column
+
         btkCoutMacro("done.");
 
         // Save the statistics images
-        DisplacementField::Pointer meanImage = btk::ImageHelper< ImageMask,DisplacementField >::CreateNewImageFromPhysicalSpaceOf(maskImage);
-//        DisplacementField::Pointer stdImage = btk::ImageHelper< ImageMask,DisplacementField >::CreateNewImageFromPhysicalSpaceOf(maskImage);
-        ScalarImage::Pointer stdImage = btk::ImageHelper< ImageMask,ScalarImage >::CreateNewImageFromPhysicalSpaceOf(maskImage);
+        DisplacementField::Pointer meanImage    = btk::ImageHelper< ImageMask,DisplacementField >::CreateNewImageFromPhysicalSpaceOf(maskImage);
+        DisplacementField::Pointer stdImage     = btk::ImageHelper< ImageMask,DisplacementField >::CreateNewImageFromPhysicalSpaceOf(maskImage);
+        ScalarImage::Pointer meanMagnitudeImage = btk::ImageHelper< ImageMask,ScalarImage >::CreateNewImageFromPhysicalSpaceOf(maskImage);
 
         unsigned int i = 0;
 
         DisplacementFieldIterator meanImageIt(meanImage, maskedRegion);
-//        DisplacementFieldIterator stdImageIt(stdImage, maskedRegion);
-        ScalarImageIterator stdImageIt(stdImage, maskedRegion);
+        DisplacementFieldIterator stdImageIt(stdImage, maskedRegion);
+        ScalarImageIterator meanMagnitudeImageIt(meanMagnitudeImage, maskedRegion);
 
-        for(maskIt.GoToBegin(), meanImageIt.GoToBegin(), stdImageIt.GoToBegin(); !maskIt.IsAtEnd() && !meanImageIt.IsAtEnd() && !stdImageIt.IsAtEnd(); ++maskIt, ++meanImageIt, ++stdImageIt)
+        for(maskIt.GoToBegin(), meanImageIt.GoToBegin(), stdImageIt.GoToBegin(), meanMagnitudeImageIt.GoToBegin(); !maskIt.IsAtEnd() && !meanImageIt.IsAtEnd() && !stdImageIt.IsAtEnd() && !meanMagnitudeImageIt.IsAtEnd(); ++maskIt, ++meanImageIt, ++stdImageIt, ++meanMagnitudeImageIt)
         {
-            DisplacementField::PixelType pixelMean/*, pixelStd*/;
-            ScalarImage::PixelType pixelStd;
+            DisplacementField::PixelType pixelMean, pixelStd;
+            ScalarImage::PixelType pixelMeanMagnitude;
 
             if(maskIt.Get() > 0)
             {
@@ -270,15 +251,17 @@ int main(int argc, char *argv[])
                 pixelMean[2] = meanParameters(i+2*numberOfParameters);
                 meanImageIt.Set(pixelMean);
 
-//                pixelStd[0] = meanParameters(i);
-//                pixelStd[1] = meanParameters(i+numberOfParameters);
-//                pixelStd[2] = meanParameters(i+2*numberOfParameters);
-                pixelStd = std::sqrt(
+                pixelStd[0] = meanParameters(i);
+                pixelStd[1] = meanParameters(i+numberOfParameters);
+                pixelStd[2] = meanParameters(i+2*numberOfParameters);
+                stdImageIt.Set(pixelStd);
+
+                pixelMeanMagnitude = std::sqrt(
                             meanParameters(i)*meanParameters(i) +
                             meanParameters(i+numberOfParameters)*meanParameters(i+numberOfParameters) +
                             meanParameters(i+2*numberOfParameters)*meanParameters(i+2*numberOfParameters)
                 );
-                stdImageIt.Set(pixelStd);
+                meanMagnitudeImageIt.Set(pixelMeanMagnitude);
                 i++;
             }
             else // maskIt.Get <= 0
@@ -286,9 +269,11 @@ int main(int argc, char *argv[])
                 pixelMean[0] = pixelMean[1] = pixelMean[2] = 0.0;
                 meanImageIt.Set(pixelMean);
 
-//                pixelStd[0] = pixelStd[1] = pixelStd[2] = 0.0;
-                pixelStd = 0.0;
+                pixelStd[0] = pixelStd[1] = pixelStd[2] = 0.0;
                 stdImageIt.Set(pixelStd);
+
+                pixelMeanMagnitude = 0.0;
+                meanMagnitudeImageIt.Set(pixelMeanMagnitude);
             }
         }
 
@@ -301,8 +286,36 @@ int main(int argc, char *argv[])
         std::stringstream sStd;
         sStd << outputFileName << "_std.nii.gz";
 
-//        btk::ImageHelper< DisplacementField >::WriteImage(stdImage, sStd.str());
-        btk::ImageHelper< ScalarImage >::WriteImage(stdImage, sStd.str());
+        btk::ImageHelper< DisplacementField >::WriteImage(stdImage, sStd.str());
+
+        std::stringstream sMeanMagnitude;
+        sMeanMagnitude << outputFileName << "_mean-magnitude.nii.gz";
+
+        btk::ImageHelper< ScalarImage >::WriteImage(meanMagnitudeImage, sMeanMagnitude.str());
+
+
+        // Save sample statistics
+        std::stringstream sSampleMeanMagnitude;
+        sSampleMeanMagnitude << outputFileName << "_sample-mean-magnitude.nii.gz";
+
+        std::ofstream file(sSampleMeanMagnitude.str());
+
+        if(file.is_open())
+        {
+            for(int n = 0; n < numberOfParameters; n++)
+            {
+                double magnitude = std::sqrt(
+                            sampleMeansParameters(n)*sampleMeansParameters(n) +
+                            sampleMeansParameters(n+numberOfParameters)*sampleMeansParameters(n+numberOfParameters) +
+                            sampleMeansParameters(n+2*numberOfParameters)*sampleMeansParameters(n+2*numberOfParameters)
+                            );
+
+                file << magnitude << std::endl;
+            } // for each column
+
+            // Close file
+            file.close();
+        }
     }
     catch(TCLAP::ArgException &exception)
     {
