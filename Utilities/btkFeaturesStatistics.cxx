@@ -296,7 +296,7 @@ int main(int argc, char *argv[])
 
         // Save sample statistics
         std::stringstream sSampleMeanMagnitude;
-        sSampleMeanMagnitude << outputFileName << "_sample-mean-magnitude.nii.gz";
+        sSampleMeanMagnitude << outputFileName << "_sample-mean-magnitude.csv";
 
         std::ofstream file(sSampleMeanMagnitude.str().c_str());
 
