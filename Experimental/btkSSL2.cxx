@@ -90,7 +90,7 @@ int main(int argc, char** argv)
   	//ITK declaration
   	const   unsigned int                               Dimension = 3;
   
- 	typedef itk::Image< short, Dimension >             ShortImageType;
+    typedef itk::Image< short, Dimension >             ShortImageType;
   	typedef ShortImageType::Pointer                    ShortImagePointer;
 
     typedef itk::Image< float, Dimension >             FloatImageType;
@@ -109,8 +109,8 @@ int main(int argc, char** argv)
     std::vector< FloatImagePointer > probaImagesStepKPlusOne = btk::ImageHelper<FloatImageType>::ReadImage(proba_file);
 
   	//compute characteristics of the input image
-	ShortImageType::RegionType  region  = inputImage->GetLargestPossibleRegion();
-	ShortImageType::SizeType    size    = region.GetSize();
+    ShortImageType::RegionType  region  = inputImage->GetLargestPossibleRegion();
+    ShortImageType::SizeType    size    = region.GetSize();
   	ShortImageType::SpacingType spacing = inputImage->GetSpacing();
 
     //--------------------------------------------------------------------------------------
@@ -194,6 +194,7 @@ int main(int argc, char** argv)
               if( sumOfWeights > 0 )
                 for(unsigned int n=0; n<neighboursWithUpdatedLabels.size(); n++)
                   localConsistency += weights[n]*probaImagesStepK[l]->GetPixel( neighboursWithUpdatedLabels[n] );
+              if( sumOfWeights > 1 )
                 localConsistency /= sumOfWeights;
 
               probaImagesStepKPlusOne[l]->SetPixel(p, localConsistency);
@@ -228,7 +229,8 @@ int main(int argc, char** argv)
 
     //-------------------------------------------------------------------------------------------------------------------------------------
     btk::ImageHelper<ShortImageType>::WriteImage(outputImage, output_file);
-    btk::ImageHelper<FloatImageType>::WriteImage(probaImagesStepKPlusOne[0], "proba0.nii.gz");
+    for(unsigned int l=0; l < output_proba_file.size(); l++)
+      btk::ImageHelper<FloatImageType>::WriteImage(probaImagesStepKPlusOne[l], output_proba_file[l]);
 
 
     //-------------------------------------------------------------------------------------------------------------------------------------

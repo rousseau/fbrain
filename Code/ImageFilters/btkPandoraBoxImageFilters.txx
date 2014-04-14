@@ -43,7 +43,7 @@ void PandoraBoxImageFilters::ProbabilityImageNormalization(std::vector< itkFloat
   int x,y,z;
   itkFloatImage::SizeType    size    = inputImages[0]->GetLargestPossibleRegion().GetSize();
 
-  #pragma omp parallel for private(x,y,z) schedule(dynamic)
+#pragma omp parallel for private(x,y,z) schedule(dynamic)
   for(z=0; z < (int)size[2]; z++)
   for(y=0; y < (int)size[1]; y++)
   for(x=0; x < (int)size[0]; x++)

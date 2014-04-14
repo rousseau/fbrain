@@ -154,9 +154,9 @@ int main(int argc, char *argv[])
         // Diffusion weighted estimation filter
         ////////////////////////////////////////////////////////////////////////////
         //
-        //   Note: the volume to volume registration work good in fetal case with
+        //   Note: the volume to volume registration work well in fetal case with
         //         an image of white matter as reference image.
-        //         /!\ The slice by slice don't work.../!\
+        //         /!\ The slice by slice doesn't work properly yet.../!\
         //
         // - SetDiffusionDataset: Set a pointer of DiffusionDataset.
         // - SetRadius:           Set the radius of the neighbor search

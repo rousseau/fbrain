@@ -96,21 +96,21 @@ namespace btk
             /**
              * @brief Read an image.
              * @param fileName File name of the image to read.
-             * @return A pointer to the image that have been red.
+             * @return A pointer to the image that have been read.
              */
             static typename TImageInput::Pointer ReadImage(const std::string &fileName);
 
             /**
              * @brief Read an image and return an constant pointer.
              * @param fileName File name of the image to read.
-             * @return A constant pointer to the image that have been red.
+             * @return A constant pointer to the image that have been read.
              */
             static typename TImageInput::ConstPointer ReadConstImage(const std::string &fileName);
 
             /**
              * @brief Read a vector of images.
              * @param fileNames File names of the images to read.
-             * @return A reference to a vector containing the images that have been red.
+             * @return A reference to a vector containing the images that have been read.
              */
             static std::vector< typename TImageInput::Pointer > &ReadImage(std::vector< std::string> &fileNames);
 
@@ -163,7 +163,7 @@ namespace btk
             static bool IsInSamePhysicalSpace(const std::vector< typename TImageInput::Pointer > &images, double epsilon = 10e-7);
             
              /**
-             * @brief Read an image if the file exist, otherwise create an image with a constant pixel value.
+             * @brief Read an image if the file exists, otherwise create an image with a constant pixel value.
              * @param fileName File name of the image to read.
              * @param image Image of which physical space will be used for creation.
              * @param pixel value used for initialisation in case of image creation.

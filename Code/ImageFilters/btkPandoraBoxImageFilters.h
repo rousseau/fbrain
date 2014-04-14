@@ -64,7 +64,7 @@ class PandoraBoxImageFilters
     //Common filters on 3D float images --------------------------------------------------------------------------------
     static void DiscreteGaussianFiltering(itkFloatImagePointer & inputImage, itkFloatImagePointer & outputImage, float variance);
 
-    //Methods on prabability images (stored as vector of images) -------------------------------------------------------
+    //Methods on probability images (stored as vector of images) -------------------------------------------------------
     static void ProbabilityImageNormalization(std::vector< itkFloatImagePointer > & inputImages, std::vector< itkFloatImagePointer > & outputImages);
     static void GetLabelWithMaxProbabilityImage(std::vector< itkFloatImagePointer > & inputImages, itkShortImagePointer & outputImage);
 

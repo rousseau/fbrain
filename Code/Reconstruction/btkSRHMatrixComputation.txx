@@ -163,7 +163,7 @@ void SRHMatrixComputation< TImage >::Update()
             PointType srPoint = m_Transforms[im]->TransformPoint(lrPoint);
 
             // if point is not in the mask we skip it
-            if(!m_Masks[im]->GetImage()->GetPixel(lrIndex) > 0)
+            if((!m_Masks[im]->GetImage()->GetPixel(lrIndex)) > 0)
             {
                 continue;
             }

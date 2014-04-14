@@ -40,10 +40,15 @@ knowledge of the CeCILL-B license and that you accept its terms.
 /* Itk includes */
 #include "itkImage.h"
 
+#include "itkMatrixOffsetTransformBase.h"
+#include "btkIOTransformHelper.h"
+#include "itkTransformFileReader.h"
+
+
 /*Btk includes*/
 #include "btkImageHelper.h"
-
 #include "btkPandoraBoxReconstructionFilters.h"
+
 
 int main(int argc, char** argv)
 {
@@ -51,185 +56,128 @@ int main(int argc, char** argv)
   
     TCLAP::CmdLine cmd("Dummy", ' ', "0.1", true);
 
-  	TCLAP::ValueArg<std::string> inputImageArg ("i","image_file","input image file (short)",true,"","string", cmd);
-  	TCLAP::ValueArg<std::string> outputImageArg("o","output_file","output image file (float)",true,"","string", cmd);
-  	TCLAP::ValueArg<std::string> inputMaskArg  ("m","mask_file","filename of the mask image (short)",false,"","string", cmd);
-    TCLAP::MultiArg<std::string> probaImageArg ("p","proba_file","probabilistic images of the textbook (float) (multiple inputs required) ",true,"string", cmd);
-    TCLAP::MultiArg<std::string> outputprobaImageArg ("w","output_proba_file","output probabilistic images (multiple inputs required) ",false,"string", cmd);
-    TCLAP::ValueArg< int >       iterMaxArg    ("","iter","maximum iteration number (default is 100)",false,100,"int", cmd);
+    TCLAP::MultiArg<std::string> inputImageArg        ("i","input","Low-resolution image files",true,"string",cmd);
+    TCLAP::MultiArg<std::string> inputMaskArg         ("m","mask","Mask of low-resolution image files",false,"string",cmd);
+    TCLAP::ValueArg<std::string> inputHRImageArg      ("","init","Input high-resolution image file (used for initialization)",false,"","string",cmd);
+    TCLAP::MultiArg<std::string> input3DtransformArg  ("","t3d","3D affine transforms",false,"string",cmd);
+    TCLAP::MultiArg<std::string> inputSBStransformArg ("","sbs","Slice by slice affine transforms",false,"string",cmd);
 
   	// Parse the args.
   	cmd.parse( argc, argv );
 
   	// Get the value parsed by each arg. 
-    std::string input_file                     = inputImageArg.getValue();
-    std::string output_file                    = outputImageArg.getValue();
-    std::string mask_file                      = inputMaskArg.getValue();
-    std::vector<std::string> proba_file        = probaImageArg.getValue();
-    std::vector<std::string> output_proba_file = outputprobaImageArg.getValue();
-    int itermax                                = iterMaxArg.getValue();
+    std::vector< std::string > input_image_filenames = inputImageArg.getValue();
+    std::vector< std::string > input_mask_filenames  = inputMaskArg.getValue();
+    std::string                input_HR_filename     = inputHRImageArg.getValue();
+    std::vector< std::string > input_t3d_filenames   = input3DtransformArg.getValue();
+    std::vector< std::string > input_sbs_filenames   = inputSBStransformArg.getValue();
 
-  	
-    int   hwn             = 1;
-    int   hwvs            = 1;
-    float beta            = 1;
-
+    typedef itk::Image< float, 3 >       itkFloatImage;
+    typedef itk::MatrixOffsetTransformBase<double,3,3> itkTransformType;
+    itk::TransformFactory<itkTransformType>::RegisterTransform();
 
     //Read LR images
+    std::vector< itkFloatImage::Pointer > inputLRImages;
+    inputLRImages = btk::ImageHelper< itkFloatImage > ::ReadImage(input_image_filenames);
 
     //Read LR masks
+    std::vector< itkFloatImage::Pointer > inputLRMasks;
+    if(input_mask_filenames.size() > 0)
+      inputLRMasks = btk::ImageHelper< itkFloatImage > ::ReadImage(input_mask_filenames);
+    else
+      inputLRMasks = btk::ImageHelper< itkFloatImage > ::CreateNewImageFromPhysicalSpaceOf(inputLRImages,1.0);
 
-    //Read HR image if any
-
-    //Read 2D transforms if any
-
-    //or read 3D transforms if any
-
-
-/*
-  	//ITK declaration
-  	const   unsigned int                               Dimension = 3;
-  
- 	typedef itk::Image< short, Dimension >             ShortImageType;
-  	typedef ShortImageType::Pointer                    ShortImagePointer;
-
-    typedef itk::Image< float, Dimension >             FloatImageType;
-  	typedef FloatImageType::Pointer                    FloatImagePointer;
-    typedef itk::ImageRegionIterator< FloatImageType > FloatIterator;
-
-  	std::cout<<"Read input image \n";
-    FloatImagePointer inputImage = btk::ImageHelper<FloatImageType>::ReadImage(input_file);
-    FloatImagePointer maskImage  = btk::ImageHelper<FloatImageType>::ReadOrCreateImage(mask_file, inputImage, 1);
-
-  	std::cout<<"Create empty output image\n";
-    ShortImagePointer outputImage = btk::ImageHelper<FloatImageType,ShortImageType>::CreateNewImageFromPhysicalSpaceOf(inputImage.GetPointer());
-
-    std::vector< FloatImagePointer > probaImages = btk::ImageHelper<FloatImageType>::ReadImage(proba_file);
-    std::vector< FloatImagePointer > probaImagesStepK = btk::ImageHelper<FloatImageType>::ReadImage(proba_file);
-    std::vector< FloatImagePointer > probaImagesStepKPlusOne = btk::ImageHelper<FloatImageType>::ReadImage(proba_file);
-
-  	//compute characteristics of the input image
-	ShortImageType::RegionType  region  = inputImage->GetLargestPossibleRegion();
-	ShortImageType::SizeType    size    = region.GetSize();
-  	ShortImageType::SpacingType spacing = inputImage->GetSpacing();
-
-    //--------------------------------------------------------------------------------------
-
-
-    //Estimation of noise level
-    btk::Noise<float> myNoiseTool;
-    myNoiseTool.SetSigma2Image( btk::ImageHelper<FloatImageType, FloatImageType>::CreateNewImageFromPhysicalSpaceOf(inputImage.GetPointer()) );
-    myNoiseTool.ComputeGlobalSigma(inputImage, maskImage);
-
-    //--------------------------------------------------------------------------------------
-
-    //Initialize patch tools
-    btk::PatchTool2<float> myPatchTool2;
-    myPatchTool2.ComputePatchSize(inputImage, hwn);
-    myPatchTool2.ComputeSpatialBandwidth(inputImage, hwvs);
-
-    double smoothing = 2 * beta * myNoiseTool.GetGlobalSigma2() * myPatchTool2.GetFullPatchSize()[0] * myPatchTool2.GetFullPatchSize()[1] * myPatchTool2.GetFullPatchSize()[2];
-    std::cout<<"Smoothing = "<<smoothing<<", estimated variance = "<<myNoiseTool.GetGlobalSigma2()<<std::endl;
-
-    FloatImagePointer meanImage     = btk::ImageHelper<FloatImageType,FloatImageType>::CreateNewImageFromPhysicalSpaceOf(inputImage.GetPointer());
-    FloatImagePointer varianceImage = btk::ImageHelper<FloatImageType,FloatImageType>::CreateNewImageFromPhysicalSpaceOf(inputImage.GetPointer());
-
-    myPatchTool2.ComputeMeanAndVarianceImage(inputImage, maskImage, meanImage, varianceImage);
-
-    int maxNeighbours = myPatchTool2.GetFullPatchSize()[0] * myPatchTool2.GetFullPatchSize()[1] * myPatchTool2.GetFullPatchSize()[2];
-
-
-    //-------------------------------------------------------------------------------------------------------------------------------------
-
-    unsigned int numberOfClasses = probaImages.size();
-
-    std::cout<<"Normalize probability images\n";
-    btk::PandoraBoxImageFilters::ProbabilityImageNormalization(probaImages,probaImages);
-    btk::PandoraBoxImageFilters::ProbabilityImageNormalization(probaImagesStepK,probaImagesStepK);
-    btk::PandoraBoxImageFilters::ProbabilityImageNormalization(probaImagesStepKPlusOne,probaImagesStepKPlusOne);
-
-    std::cout<<"Initialize output image using the maximum probability at each voxel\n";
-    btk::PandoraBoxImageFilters::GetLabelWithMaxProbabilityImage(probaImages, outputImage);
-
-
-    for(int i=0; i < itermax; i++)
+    if(inputLRImages.size() != inputLRMasks.size())
     {
-      std::cout<<"Iteration : "<<i<<std::endl;
-      int x,y,z;
-      #pragma omp parallel for private(x,y,z) schedule(dynamic)
-      for(z=0; z < (int)size[2]; z++)
-      for(y=0; y < (int)size[1]; y++)
-      for(x=0; x < (int)size[0]; x++)
+      std::cout<<"Not the same number of input LR images and input masks ! Program stops."<<std::endl;
+      std::cout<<"Number of input LR images : "<<inputLRImages.size()<<std::endl;
+      std::cout<<"Number of input LR masks  : "<<inputLRMasks.size()<<std::endl;
+      exit(1);
+    }
+
+    std::cout<<"Reading 2D transforms if any"<<std::endl;
+    typedef itk::TransformFileReader     TransformReaderType;
+    typedef TransformReaderType::TransformListType * TransformListType;
+
+    std::vector< std::vector<itkTransformType::Pointer> > affineSBSTransforms;
+    affineSBSTransforms.resize( inputLRImages.size() );
+
+    if(input_sbs_filenames.size() == inputLRImages.size() )
+    {
+      for(unsigned int i=0;i<input_sbs_filenames.size();i++)
       {
-        FloatImageType::IndexType p;
-        p[0] = x;
-        p[1] = y;
-        p[2] = z;
-        if( maskImage->GetPixel(p) > 0 )
+        std::cout<<"Reading slice by slice transform:"<<input_sbs_filenames[i]<<std::endl;
+        TransformReaderType::Pointer transformReader = TransformReaderType::New();
+        transformReader -> SetFileName( input_sbs_filenames[i] );
+        transformReader -> Update();
+
+        TransformListType transforms = transformReader->GetTransformList();
+        std::cout<<"List size : "<<transforms->size()<<std::endl;
+
+        TransformReaderType::TransformListType::const_iterator it = transforms->begin();
+
+        for(it = transforms->begin(); it != transforms->end(); ++it)
         {
-            //Get neighbours
-            std::vector< FloatImageType::IndexType > neighbours;
-            neighbours.reserve(maxNeighbours);
-            myPatchTool2.GetNeighboursUsingMeanAndVariance(p, inputImage, meanImage->GetPixel(p), varianceImage->GetPixel(p), meanImage, varianceImage, neighbours);
-            //myPatchTool2.GetNeighbours(p, inputImage, neighbours);
-
-            //Compute new neighbours with updated labels
-            std::vector< FloatImageType::IndexType > neighboursWithUpdatedLabels;
-            for(unsigned int n=0; n<neighbours.size(); n++)
-              if( outputImage->GetPixel(neighbours[n]) > 0)
-                neighboursWithUpdatedLabels.push_back(neighbours[n]);
-
-            //Compute the corresponding weights
-            std::vector<double> weights;
-            double sumOfWeights = 0;
-            //Reserve the (known) size of the vector (should be faster)
-            weights.reserve(neighboursWithUpdatedLabels.size());
-            myPatchTool2.ComputeNeighbourWeights(inputImage, p, neighboursWithUpdatedLabels, weights, sumOfWeights, smoothing);
-
-            //Propagate labels to the current voxel
-            for(unsigned int l = 0; l < numberOfClasses; l++)
-            {
-              double localConsistency = 0;
-
-              if( sumOfWeights > 0 )
-                for(unsigned int n=0; n<neighboursWithUpdatedLabels.size(); n++)
-                  localConsistency += weights[n]*probaImagesStepK[l]->GetPixel( neighboursWithUpdatedLabels[n] );
-                localConsistency /= sumOfWeights;
-
-              probaImagesStepKPlusOne[l]->SetPixel(p, localConsistency);
-            }
+          affineSBSTransforms[i].push_back(dynamic_cast< itkTransformType * >( it->GetPointer() ) );
+          std::cout<<"transfo :"<< affineSBSTransforms[i].back() <<std::endl;
         }
       }
-      for(unsigned int l = 0; l < numberOfClasses; l++)
-        probaImagesStepK[l] = btk::ImageHelper<FloatImageType>::DeepCopy( probaImagesStepKPlusOne[l].GetPointer() );
-
-      btk::PandoraBoxImageFilters::GetLabelWithMaxProbabilityImage(probaImagesStepKPlusOne, outputImage);
-
-      if(i%5==0)
+    }
+    else
+    {
+      std::cout<<"Setting slice by slice transforms with identity " << std::endl;
+      for(unsigned int i=0;i< inputLRImages.size();i++)
       {
-        std::string tmpfile;
-        std::ostringstream oss;
-        oss << i;
-        tmpfile = "output_"+oss.str()+".nii.gz";
-        btk::ImageHelper<ShortImageType>::WriteImage(outputImage, tmpfile);
-        for(unsigned int l = 0; l < numberOfClasses; l++)
+        unsigned int numberOfSlices = inputLRImages[i]->GetLargestPossibleRegion().GetSize()[2];
+        affineSBSTransforms[i].resize(numberOfSlices);
+        for(unsigned int j=0; j<numberOfSlices; j++)
         {
-          std::ostringstream oss2;
-          oss2 << l;
-          tmpfile = "proba_"+oss2.str()+"_"+oss.str()+".nii.gz";
-          btk::ImageHelper<FloatImageType>::WriteImage(probaImagesStepKPlusOne[l], tmpfile);
-
+          //Set the slice by slice transform to identity
+          affineSBSTransforms[i][j] = itkTransformType::New();
         }
-
       }
     }
 
+    //or read 3D transforms if any
+    std::vector<itkTransformType::Pointer> affine3DTransforms;
+    affine3DTransforms.resize(inputLRImages.size());
 
-    //-------------------------------------------------------------------------------------------------------------------------------------
-    btk::ImageHelper<ShortImageType>::WriteImage(outputImage, output_file);
-    btk::ImageHelper<FloatImageType>::WriteImage(probaImagesStepKPlusOne[0], "proba0.nii.gz");
+    if(input_t3d_filenames.size() == inputLRImages.size())
+    {      
+      for(unsigned int i=0;i<input_t3d_filenames.size();i++)
+      {
+        std::cout<<"Reading 3D transform:"<<input_t3d_filenames[i]<<std::endl;
+        affine3DTransforms[i] = btk::IOTransformHelper< itkTransformType >::ReadTransform( input_t3d_filenames[i] );
+        std::cout<<"Transform :"  << affine3DTransforms[i]->GetNameOfClass()<<std::endl;
+        std::cout<<"Center :"     << affine3DTransforms[i]->GetCenter()<<std::endl;
+        std::cout<<"Offset :"     << affine3DTransforms[i]->GetOffset()<<std::endl;
+        std::cout<<"Translation :"<< affine3DTransforms[i]->GetTranslation()<<std::endl;
+        std::cout<<"Parameters :" << affine3DTransforms[i]->GetParameters()<<std::endl;
+        std::cout<<"Matrix : "    << affine3DTransforms[i]->GetMatrix()<<std::endl;
+        std::cout<<affine3DTransforms[i];
+      }
+    }
+    else
+    {
+      for(unsigned int i=0;i< inputLRImages.size();i++)
+      {
+        //Set 3D transform to identity
+        affine3DTransforms[i] = itkTransformType::New();
+      }
+    }
 
-    */
+    //Read HR image if any
+    itkFloatImage::Pointer inputHRImage;
+    if(input_HR_filename != "")
+      inputHRImage = btk::ImageHelper< itkFloatImage > ::ReadImage(input_HR_filename);
+    //else, we should estimate one
+
+    //Convert input images into stacks
+    std::vector< std::vector<itkFloatImage::Pointer> > inputLRStacks;
+    inputLRStacks.resize( inputLRImages.size() );
+
+    for(unsigned int i=0; i<inputLRImages.size() ; i++)
+      btk::PandoraBoxReconstructionFilters::Convert3DImageToSliceStack(inputLRStacks[i], inputLRImages[i]);
 
     //-------------------------------------------------------------------------------------------------------------------------------------
     //-------------------------------------------------------------------------------------------------------------------------------------

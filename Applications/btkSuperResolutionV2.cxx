@@ -338,7 +338,7 @@ int main(int argc, char * argv[])
     //Write the final SR image
     btk::ImageHelper< itkImage>::WriteImage(referenceImage,outImage);
 
-    //since btk::NLMTool has not smart pointer
+    //since btk::NLMTool has no smart pointer
     delete myTool;
 
     //end

@@ -42,6 +42,10 @@
 // ITK includes
 #include "itkImage.h"
 #include "itkImageRegionIterator.h"
+#include "itkImageRegionIteratorWithIndex.h"
+#include "itkMatrixOffsetTransformBase.h"
+#include "itkTransform.h"
+#include "itkContinuousIndex.h"
 
 namespace btk
 {
@@ -52,14 +56,19 @@ class PandoraBoxReconstructionFilters
     typedef itk::Image< float, 3>                              itkFloatImage;
     typedef itkFloatImage::Pointer                             itkFloatImagePointer;
     typedef itk::ImageRegionIterator< itkFloatImage >          itkFloatIterator;
+    typedef itk::ImageRegionIteratorWithIndex< itkFloatImage > itkFloatIteratorWithIndex;
 
-    static void toto();
+    typedef itk::MatrixOffsetTransformBase<double,3,3>         itkTransformType;
+
+    //Convert 3D image to a stack of 3D images (slices)
+    static void Convert3DImageToSliceStack(std::vector<itkFloatImagePointer> & outputStack, itkFloatImagePointer & inputImage);
 
     //Compute PSF
 
     //Compute H
 
     //Injection
+    static void ImageFusionByInjection(itkFloatImagePointer & outputImage, std::vector<itkFloatImagePointer> & inputImages, std::vector< std::vector<itkTransformType::Pointer> > & affineSBSTransforms);
 
     //SR (L1,L2,robust) + Reg(local, patch, tv)
 

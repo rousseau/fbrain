@@ -34,7 +34,7 @@
 ==========================================================================*/
 
 #ifndef __BTK_AFFINESLICEBYSLICETRANSFORM_TXX__
-#define __BTK_AFFINELICEBYSLICETRANSFORM_TXX__
+#define __BTK_AFFINESLICEBYSLICETRANSFORM_TXX__
 
 #include "itkNumericTraits.h"
 #include "btkAffineSliceBySliceTransform.h"
