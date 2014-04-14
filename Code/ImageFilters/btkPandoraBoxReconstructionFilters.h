@@ -39,6 +39,9 @@
 // STL includes
 #include "vector"
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 // ITK includes
 #include "itkImage.h"
 #include "itkImageRegionIterator.h"
@@ -46,6 +49,7 @@
 #include "itkMatrixOffsetTransformBase.h"
 #include "itkTransform.h"
 #include "itkContinuousIndex.h"
+#include "itkLinearInterpolateImageFunction.h"
 
 namespace btk
 {
@@ -57,6 +61,7 @@ class PandoraBoxReconstructionFilters
     typedef itkFloatImage::Pointer                             itkFloatImagePointer;
     typedef itk::ImageRegionIterator< itkFloatImage >          itkFloatIterator;
     typedef itk::ImageRegionIteratorWithIndex< itkFloatImage > itkFloatIteratorWithIndex;
+    typedef itk::ContinuousIndex<double,3>                     itkContinuousIndex;
 
     typedef itk::MatrixOffsetTransformBase<double,3,3>         itkTransformType;
 
@@ -68,7 +73,7 @@ class PandoraBoxReconstructionFilters
     //Compute H
 
     //Injection
-    static void ImageFusionByInjection(itkFloatImagePointer & outputImage, std::vector<itkFloatImagePointer> & inputImages, std::vector< std::vector<itkTransformType::Pointer> > & affineSBSTransforms);
+    static void ImageFusionByInjection(itkFloatImagePointer & outputImage, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkTransformType::Pointer> > & affineSBSTransforms);
 
     //SR (L1,L2,robust) + Reg(local, patch, tv)
 

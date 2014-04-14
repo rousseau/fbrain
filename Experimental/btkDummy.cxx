@@ -43,10 +43,12 @@ knowledge of the CeCILL-B license and that you accept its terms.
 #include "itkMatrixOffsetTransformBase.h"
 #include "btkIOTransformHelper.h"
 #include "itkTransformFileReader.h"
+#include "itkResampleImageFilter.h"
 
 
 /*Btk includes*/
 #include "btkImageHelper.h"
+#include "btkPandoraBoxImageFilters.h"
 #include "btkPandoraBoxReconstructionFilters.h"
 
 
@@ -58,9 +60,11 @@ int main(int argc, char** argv)
 
     TCLAP::MultiArg<std::string> inputImageArg        ("i","input","Low-resolution image files",true,"string",cmd);
     TCLAP::MultiArg<std::string> inputMaskArg         ("m","mask","Mask of low-resolution image files",false,"string",cmd);
+    TCLAP::ValueArg<std::string> outputHRImageArg     ("o","output","High-resolution image file",true,"","string",cmd);
     TCLAP::ValueArg<std::string> inputHRImageArg      ("","init","Input high-resolution image file (used for initialization)",false,"","string",cmd);
     TCLAP::MultiArg<std::string> input3DtransformArg  ("","t3d","3D affine transforms",false,"string",cmd);
     TCLAP::MultiArg<std::string> inputSBStransformArg ("","sbs","Slice by slice affine transforms",false,"string",cmd);
+    TCLAP::MultiArg<float>       spacingArg           ("s","spacing","resolution (spacing)) in mm (1 by default)",false,"float",cmd);
 
   	// Parse the args.
   	cmd.parse( argc, argv );
@@ -68,13 +72,16 @@ int main(int argc, char** argv)
   	// Get the value parsed by each arg. 
     std::vector< std::string > input_image_filenames = inputImageArg.getValue();
     std::vector< std::string > input_mask_filenames  = inputMaskArg.getValue();
+    std::string                output_HR_filename    = outputHRImageArg.getValue();
     std::string                input_HR_filename     = inputHRImageArg.getValue();
     std::vector< std::string > input_t3d_filenames   = input3DtransformArg.getValue();
     std::vector< std::string > input_sbs_filenames   = inputSBStransformArg.getValue();
+    std::vector<float>         spacing               = spacingArg.getValue();
 
-    typedef itk::Image< float, 3 >       itkFloatImage;
-    typedef itk::MatrixOffsetTransformBase<double,3,3> itkTransformType;
+    typedef itk::Image< float, 3 >                                   itkFloatImage;
+    typedef itk::MatrixOffsetTransformBase<double,3,3>               itkTransformType;
     itk::TransformFactory<itkTransformType>::RegisterTransform();
+    typedef itk::ResampleImageFilter<itkFloatImage, itkFloatImage>   itkResampleFilter;
 
     //Read LR images
     std::vector< itkFloatImage::Pointer > inputLRImages;
@@ -94,6 +101,20 @@ int main(int argc, char** argv)
       std::cout<<"Number of input LR masks  : "<<inputLRMasks.size()<<std::endl;
       exit(1);
     }
+
+    //Convert input images into stacks
+    std::vector< std::vector<itkFloatImage::Pointer> > inputLRStacks;
+    inputLRStacks.resize( inputLRImages.size() );
+
+    for(unsigned int i=0; i<inputLRImages.size() ; i++)
+      btk::PandoraBoxReconstructionFilters::Convert3DImageToSliceStack(inputLRStacks[i], inputLRImages[i]);
+
+    //Convert mask images into stacks
+    std::vector< std::vector<itkFloatImage::Pointer> > inputMaskStacks;
+    inputMaskStacks.resize( inputLRMasks.size() );
+
+    for(unsigned int i=0; i<inputLRMasks.size() ; i++)
+      btk::PandoraBoxReconstructionFilters::Convert3DImageToSliceStack(inputMaskStacks[i], inputLRMasks[i]);
 
     std::cout<<"Reading 2D transforms if any"<<std::endl;
     typedef itk::TransformFileReader     TransformReaderType;
@@ -134,6 +155,7 @@ int main(int argc, char** argv)
         {
           //Set the slice by slice transform to identity
           affineSBSTransforms[i][j] = itkTransformType::New();
+          affineSBSTransforms[i][j]->SetIdentity();
         }
       }
     }
@@ -163,6 +185,7 @@ int main(int argc, char** argv)
       {
         //Set 3D transform to identity
         affine3DTransforms[i] = itkTransformType::New();
+        affine3DTransforms[i]->SetIdentity();
       }
     }
 
@@ -171,14 +194,28 @@ int main(int argc, char** argv)
     if(input_HR_filename != "")
       inputHRImage = btk::ImageHelper< itkFloatImage > ::ReadImage(input_HR_filename);
     //else, we should estimate one
+    //need to set the size, the spacing, and the origin of the HR image
 
-    //Convert input images into stacks
-    std::vector< std::vector<itkFloatImage::Pointer> > inputLRStacks;
-    inputLRStacks.resize( inputLRImages.size() );
 
-    for(unsigned int i=0; i<inputLRImages.size() ; i++)
-      btk::PandoraBoxReconstructionFilters::Convert3DImageToSliceStack(inputLRStacks[i], inputLRImages[i]);
+    itkFloatImage::Pointer outputHRImage;
 
+    itkFloatImage::SpacingType outputSpacing;
+    for(unsigned int i=0; i<3; i++)
+      outputSpacing[i] = spacing[i];
+
+
+    //btk::PandoraBoxImageFilters::ResampleImageUsingSpacing(inputLRImages[0],outputHRImage,outputSpacing,1);
+
+    itkFloatImage::SizeType outputSize;
+    for(unsigned int i=0; i<3; i++)
+      outputSize[i] = 512;
+
+    //btk::PandoraBoxImageFilters::ResampleImageUsingSize(inputLRImages[0],outputHRImage,outputSize,1);
+
+    btk::PandoraBoxImageFilters::ResampleImageUsingReference(inputLRImages[0],outputHRImage, inputHRImage, 1);
+
+
+    btk::ImageHelper<itkFloatImage>::WriteImage(outputHRImage, output_HR_filename);
     //-------------------------------------------------------------------------------------------------------------------------------------
     //-------------------------------------------------------------------------------------------------------------------------------------
     //-------------------------------------------------------------------------------------------------------------------------------------

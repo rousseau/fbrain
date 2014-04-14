@@ -44,6 +44,10 @@
 #include "itkImageRegionIterator.h"
 
 #include "itkDiscreteGaussianImageFilter.h"
+#include "itkResampleImageFilter.h"
+#include "itkIdentityTransform.h"
+#include "itkBSplineInterpolateImageFunction.h"
+#include "itkContinuousIndex.h"
 
 namespace btk
 {
@@ -59,10 +63,20 @@ class PandoraBoxImageFilters
     typedef itkFloatImage::Pointer                             itkFloatImagePointer;
     typedef itk::ImageRegionIterator< itkFloatImage >          itkFloatIterator;
 
+    typedef itk::ResampleImageFilter<itkFloatImage, itkFloatImage>               itkResampleFilter;
+    typedef itk::IdentityTransform<double, 3>                                    itkIdentityTransform;
+    typedef itk::BSplineInterpolateImageFunction<itkFloatImage, double, double>  itkBSplineInterpolator;
+
+    typedef itk::ContinuousIndex<double,3>     itkContinuousIndex;
+
     typedef itk::DiscreteGaussianImageFilter< itkFloatImage,itkFloatImage > itkGaussianFilter;
 
     //Common filters on 3D float images --------------------------------------------------------------------------------
     static void DiscreteGaussianFiltering(itkFloatImagePointer & inputImage, itkFloatImagePointer & outputImage, float variance);
+
+    static void ResampleImageUsingSpacing(itkFloatImagePointer & inputImage, itkFloatImagePointer & outputImage, itkFloatImage::SpacingType & itkSpacing, int interpolationOrder);
+    static void ResampleImageUsingSize(itkFloatImagePointer & inputImage, itkFloatImagePointer & outputImage, itkFloatImage::SizeType & itkSize, int interpolationOrder);
+    static void ResampleImageUsingReference(itkFloatImagePointer & inputImage, itkFloatImagePointer & outputImage, itkFloatImagePointer & referenceImage, int interpolationOrder);
 
     //Methods on probability images (stored as vector of images) -------------------------------------------------------
     static void ProbabilityImageNormalization(std::vector< itkFloatImagePointer > & inputImages, std::vector< itkFloatImagePointer > & outputImages);

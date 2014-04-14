@@ -49,6 +49,9 @@
 #include "itkContinuousIndex.h"
 
 
+/*Btk includes*/
+#include "btkImageHelper.h"
+#include "btkPandoraBoxImageFilters.h"
 
 int main(int argc, char *argv[])
 {
@@ -98,6 +101,10 @@ int main(int argc, char *argv[])
   
 
     std::cout<<"Reading the input image:"<<input_file<<"\n";
+
+
+
+
     itkReader::Pointer input_reader = itkReader::New();
     input_reader->SetFileName( input_file );
     input_reader->Update();

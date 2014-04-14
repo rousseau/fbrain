@@ -99,17 +99,33 @@ void PandoraBoxReconstructionFilters::Convert3DImageToSliceStack(std::vector<itk
   }
 }
 
-void PandoraBoxReconstructionFilters::ImageFusionByInjection(itkFloatImagePointer & outputImage, std::vector<itkFloatImagePointer> & inputImages, std::vector< std::vector<itkTransformType::Pointer> > & affineSBSTransforms)
+void PandoraBoxReconstructionFilters::ImageFusionByInjection(itkFloatImagePointer & outputImage, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkTransformType::Pointer> > & affineSBSTransforms)
 {
-  itkFloatImage::PointType outputPoint;  //physical point in HR output image
-  itkFloatImage::IndexType outputIndex;  //index in HR output image
 
-  itkFloatIteratorWithIndex itOuputImage(outputImage,outputImage->GetLargestPossibleRegion());
+  itkFloatImage::PointType outputPoint;      //physical point in HR output image
+  itkFloatImage::IndexType outputIndex;      //index in HR output image
+  itkFloatImage::PointType transformedPoint; //Physical point location after applying affine transform
+  itkContinuousIndex       inputContIndex;   //continuous index in LR image
+  itkContinuousIndex       interpolationContIndex;   //continuous index in LR image for interpolation (i.e. z = 0)
+  interpolationContIndex[2] = 0;
 
   //Create a weight image from the output image
   itkFloatImage::Pointer weightImage = btk::ImageHelper< itkFloatImage > ::CreateNewImageFromPhysicalSpaceOf(outputImage,0.0);
 
-  for(itOuputImage.GoToBegin(); !itOuputImage.IsAtEnd(); ++itOuputImage)
+  //Set iterator for output and weight images
+  itkFloatIteratorWithIndex itOuputImage(outputImage,outputImage->GetLargestPossibleRegion());
+  itkFloatIterator          itWeightImage(weightImage,weightImage->GetLargestPossibleRegion());
+
+  //Define a threshold for z coordinate based on FWHM = 2sqrt(2ln2)sigma = 2.3548 sigma
+  float cst = 2*sqrt(2*log(2.0));
+  float sigmaz = inputStacks[0][0]->GetSpacing()[2] /cst;
+  int scale_search_Z = 2;
+  float sz2 = sigmaz * scale_search_Z;
+
+  //ITK Interpolator
+  itk::LinearInterpolateImageFunction<itkFloatImage, double>::Pointer interpolator = itk::LinearInterpolateImageFunction<itkFloatImage, double>::New();
+
+  for(itOuputImage.GoToBegin(), itWeightImage.GoToBegin(); !itOuputImage.IsAtEnd(); ++itOuputImage, ++itWeightImage)
   {
     //Coordinate in the output image (index)
     outputIndex = itOuputImage.GetIndex();
@@ -118,21 +134,55 @@ void PandoraBoxReconstructionFilters::ImageFusionByInjection(itkFloatImagePointe
     outputImage->TransformIndexToPhysicalPoint(outputIndex,outputPoint);
 
     //Loop over the input stacks
+    for(unsigned int s=0; s<inputStacks.size(); s++)
+    {
 
-    //Loop over images of the current stack
+      unsigned int sizeX = inputStacks[s][0]->GetLargestPossibleRegion().GetSize()[0];
+      unsigned int sizeY = inputStacks[s][0]->GetLargestPossibleRegion().GetSize()[1];
 
-    //Coordinate in mm in the current image (physical point)
+      //Loop over images of the current stack
+      for(unsigned int i=0; i<inputStacks[s].size(); i++)
+      {
 
-    //Coordinate in the current image (continuous index)
+        //Coordinate in mm in the current image (physical point)
+        transformedPoint = affineSBSTransforms[s][i]->TransformPoint(outputPoint);
 
-    //Check whether slice to distance is higher than a given threshold
+        //Coordinate in the current image (continuous index)
+        inputStacks[s][i]->TransformPhysicalPointToContinuousIndex(transformedPoint,inputContIndex);
 
-    //Compute weight and corresponding intensity
+        //Set input for interpolator
+        interpolator->SetInputImage( inputStacks[s][i] );
 
+        //Check whether point is inside the ROI (2D image size and slice to distance less than a given threshold)
+        if( (transformedPoint[0] >= 0) && (transformedPoint[1] >= 0) && (transformedPoint[0] < sizeX) && (transformedPoint[1] < sizeY) && (fabs(inputContIndex[2]) <= sz2) )
+        {
+          interpolationContIndex[0] = transformedPoint[0];
+          interpolationContIndex[1] = transformedPoint[1];
+          float pixelValue = interpolator->EvaluateAtContinuousIndex( interpolationContIndex );
+
+          //Compute weight and corresponding intensity
+          float weight = exp(-inputContIndex[2]*inputContIndex[2]/(2*sigmaz*sigmaz))/(sqrt(2*M_PI)*sigmaz);
+
+          float newValue = itOuputImage.Get() + weight * pixelValue;
+          float newWeight = weight + itWeightImage.Get();
+
+          //Set computed values
+          itOuputImage.Set(newValue);
+          itWeightImage.Set(newWeight);
+        }
+      }
+    }
   }
 
   //Divide the output image by the weight image
-
+  for(itOuputImage.GoToBegin(), itWeightImage.GoToBegin(); !itOuputImage.IsAtEnd(); ++itOuputImage, ++itWeightImage)
+  {
+    if( itWeightImage.Get() > 0)
+    {
+      float newValue = itOuputImage.Get() / itWeightImage.Get();
+      itOuputImage.Set( newValue );
+    }
+  }
 }
 
 } // namespace btk

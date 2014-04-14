@@ -38,6 +38,159 @@
 namespace btk
 {
 
+void PandoraBoxImageFilters::DiscreteGaussianFiltering(itkFloatImagePointer & inputImage, itkFloatImagePointer & outputImage, float variance)
+{
+  itkGaussianFilter::Pointer filter = itkGaussianFilter::New();
+  filter->SetInput(inputImage);
+
+  itkGaussianFilter::ArrayType var;
+  var[0] = variance;
+  var[1] = variance;
+  var[2] = variance;
+  filter->SetVariance(var);
+
+  filter->SetUseImageSpacingOff();
+  filter->Update();
+
+  outputImage = filter->GetOutput();
+}
+
+void PandoraBoxImageFilters::ResampleImageUsingSpacing(itkFloatImagePointer & inputImage, itkFloatImagePointer & outputImage, itkFloatImage::SpacingType & itkSpacing, int interpolationOrder)
+{
+  itkResampleFilter::Pointer resample = itkResampleFilter::New();
+
+  //parameters for interpolation (identity transform and bspline interpolator)
+  itkIdentityTransform::Pointer transform = itkIdentityTransform::New();
+  transform->SetIdentity();
+  itkBSplineInterpolator::Pointer bsInterpolator = itkBSplineInterpolator::New();
+  bsInterpolator->SetSplineOrder(interpolationOrder);
+
+  resample->SetTransform(transform);
+  resample->SetInterpolator(bsInterpolator);
+
+  itkFloatImage::SizeType    itkSize;
+  itkFloatImage::SizeType    itkInputSize    = inputImage->GetLargestPossibleRegion().GetSize();
+  itkFloatImage::SpacingType itkInputSpacing = inputImage->GetSpacing();
+
+  for(uint i=0; i<3; i++)
+    itkSize[i] = itkInputSize[i] * itkInputSpacing[i] / itkSpacing[i] ;
+
+  resample->SetSize(itkSize);
+  resample->SetOutputSpacing(itkSpacing);
+  resample->SetDefaultPixelValue(0.0);
+  resample->SetInput( inputImage );
+
+  //Set the new origin correctly:
+  itkFloatImage::IndexType inputIndex;
+  inputIndex[0] = 0;
+  inputIndex[1] = 0;
+  inputIndex[2] = 0;
+  itkFloatImage::PointType inputPoint;
+  //This point should corresponds to the origin of the input image
+  inputImage->TransformIndexToPhysicalPoint(inputIndex,inputPoint);
+
+  itkContinuousIndex outputIndex;
+  outputIndex[0] = -0.5 * inputImage->GetSpacing()[0] + 0.5 * resample->GetOutputSpacing()[0]  ;
+  outputIndex[1] = -0.5 * inputImage->GetSpacing()[1] + 0.5 * resample->GetOutputSpacing()[1] ;
+  outputIndex[2] = -0.5 * inputImage->GetSpacing()[2] + 0.5 * resample->GetOutputSpacing()[2] ;
+
+  itkFloatImage::PointType outputPoint;
+  inputImage->TransformContinuousIndexToPhysicalPoint(outputIndex,outputPoint);
+
+  resample->SetOutputOrigin( outputPoint );
+  resample->SetOutputDirection( inputImage->GetDirection() );
+  resample->Update();
+  outputImage = resample->GetOutput();
+}
+
+void PandoraBoxImageFilters::ResampleImageUsingSize(itkFloatImagePointer & inputImage, itkFloatImagePointer & outputImage, itkFloatImage::SizeType & itkSize, int interpolationOrder)
+{
+  itkResampleFilter::Pointer resample = itkResampleFilter::New();
+
+  //parameters for interpolation (identity transform and bspline interpolator)
+  itkIdentityTransform::Pointer transform = itkIdentityTransform::New();
+  transform->SetIdentity();
+  itkBSplineInterpolator::Pointer bsInterpolator = itkBSplineInterpolator::New();
+  bsInterpolator->SetSplineOrder(interpolationOrder);
+
+  resample->SetTransform(transform);
+  resample->SetInterpolator(bsInterpolator);
+
+  itkFloatImage::SpacingType itkSpacing;
+  itkFloatImage::SizeType    itkInputSize    = inputImage->GetLargestPossibleRegion().GetSize();
+  itkFloatImage::SpacingType itkInputSpacing = inputImage->GetSpacing();
+
+  for(uint i=0; i<3; i++)
+    itkSpacing[i] = itkInputSize[i] * itkInputSpacing[i] / itkSize[i] ;
+
+  resample->SetSize(itkSize);
+  resample->SetOutputSpacing(itkSpacing);
+  resample->SetDefaultPixelValue(0.0);
+  resample->SetInput( inputImage );
+
+  //Set the new origin correctly:
+  itkFloatImage::IndexType inputIndex;
+  inputIndex[0] = 0;
+  inputIndex[1] = 0;
+  inputIndex[2] = 0;
+  itkFloatImage::PointType inputPoint;
+  //This point should corresponds to the origin of the input image
+  inputImage->TransformIndexToPhysicalPoint(inputIndex,inputPoint);
+
+  itkContinuousIndex outputIndex;
+  outputIndex[0] = -0.5 * inputImage->GetSpacing()[0] + 0.5 * resample->GetOutputSpacing()[0]  ;
+  outputIndex[1] = -0.5 * inputImage->GetSpacing()[1] + 0.5 * resample->GetOutputSpacing()[1] ;
+  outputIndex[2] = -0.5 * inputImage->GetSpacing()[2] + 0.5 * resample->GetOutputSpacing()[2] ;
+
+  itkFloatImage::PointType outputPoint;
+  inputImage->TransformContinuousIndexToPhysicalPoint(outputIndex,outputPoint);
+
+  resample->SetOutputOrigin( outputPoint );
+  resample->SetOutputDirection( inputImage->GetDirection() );
+  resample->Update();
+  outputImage = resample->GetOutput();
+}
+
+void PandoraBoxImageFilters::ResampleImageUsingReference(itkFloatImagePointer & inputImage, itkFloatImagePointer & outputImage, itkFloatImagePointer & referenceImage, int interpolationOrder)
+{
+  itkResampleFilter::Pointer resample = itkResampleFilter::New();
+
+  //parameters for interpolation (identity transform and bspline interpolator)
+  itkIdentityTransform::Pointer transform = itkIdentityTransform::New();
+  transform->SetIdentity();
+  itkBSplineInterpolator::Pointer bsInterpolator = itkBSplineInterpolator::New();
+  bsInterpolator->SetSplineOrder(interpolationOrder);
+
+  resample->SetTransform(transform);
+  resample->SetInterpolator(bsInterpolator);
+  resample->UseReferenceImageOn();
+  resample->SetReferenceImage( referenceImage );
+  resample->SetDefaultPixelValue(0.0);
+  resample->SetInput( inputImage );
+
+  //Set the new origin correctly:
+  itkFloatImage::IndexType inputIndex;
+  inputIndex[0] = 0;
+  inputIndex[1] = 0;
+  inputIndex[2] = 0;
+  itkFloatImage::PointType inputPoint;
+  //This point should corresponds to the origin of the input image
+  inputImage->TransformIndexToPhysicalPoint(inputIndex,inputPoint);
+
+  itkContinuousIndex outputIndex;
+  outputIndex[0] = -0.5 * inputImage->GetSpacing()[0] + 0.5 * resample->GetOutputSpacing()[0]  ;
+  outputIndex[1] = -0.5 * inputImage->GetSpacing()[1] + 0.5 * resample->GetOutputSpacing()[1] ;
+  outputIndex[2] = -0.5 * inputImage->GetSpacing()[2] + 0.5 * resample->GetOutputSpacing()[2] ;
+
+  itkFloatImage::PointType outputPoint;
+  inputImage->TransformContinuousIndexToPhysicalPoint(outputIndex,outputPoint);
+
+  resample->SetOutputOrigin( outputPoint );
+  resample->SetOutputDirection( inputImage->GetDirection() );
+  resample->Update();
+  outputImage = resample->GetOutput();
+}
+
 void PandoraBoxImageFilters::ProbabilityImageNormalization(std::vector< itkFloatImagePointer > & inputImages, std::vector< itkFloatImagePointer > & outputImages)
 {
   int x,y,z;
@@ -102,24 +255,6 @@ void PandoraBoxImageFilters::GetLabelWithMaxProbabilityImage(std::vector< itkFlo
     outputImage->SetPixel(index, maxLabel);
   }
 }
-
-void PandoraBoxImageFilters::DiscreteGaussianFiltering(itkFloatImagePointer & inputImage, itkFloatImagePointer & outputImage, float variance)
-{
-  itkGaussianFilter::Pointer filter = itkGaussianFilter::New();
-  filter->SetInput(inputImage);
-
-  itkGaussianFilter::ArrayType var;
-  var[0] = variance;
-  var[1] = variance;
-  var[2] = variance;
-  filter->SetVariance(var);
-
-  filter->SetUseImageSpacingOff();
-  filter->Update();
-
-  outputImage = filter->GetOutput();
-}
-
 
 
 
