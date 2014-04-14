@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
     TCLAP::ValueArg<std::string> outputImageArg   ("o","output_image","output image file",true,"","string",cmd);
     TCLAP::ValueArg<std::string> referenceImageArg("r","reference_image","reference image file",false,"","string",cmd);
     TCLAP::MultiArg<float>       spacingArg       ("","spacing","resolution (spacing)) in mm (1 by default)",false,"float",cmd);
-    TCLAP::MultiArg<float>       sizeArg          ("","size","size in voxels",false,"float");
+    TCLAP::MultiArg<float>       sizeArg          ("","size","size in voxels",false,"float",cmd);
     TCLAP::ValueArg<int>         orderArg         ("","order","order of the bspline interpolator (default:1)",false,1,"int",cmd);
              
     // Parse the args.
