@@ -96,6 +96,48 @@ void PandoraBoxReconstructionFilters::Convert3DImageToSliceStack(std::vector<itk
   }
 }
 
+void PandoraBoxReconstructionFilters::ConvertSliceStackTo3DImage(itkFloatImagePointer & outputImage, std::vector<itkFloatImagePointer> & inputStack)
+{
+  outputImage = itkFloatImage::New();
+  outputImage->SetSpacing( inputStack[0]->GetSpacing() );
+  outputImage->SetDirection( inputStack[0]->GetDirection() );
+  outputImage->SetOrigin( inputStack[0]->GetOrigin() );
+
+  itkFloatImage::SizeType imageSize;
+  imageSize[0] = inputStack[0]->GetLargestPossibleRegion().GetSize()[0];
+  imageSize[1] = inputStack[0]->GetLargestPossibleRegion().GetSize()[1];
+  imageSize[2] = inputStack.size();
+
+  itkFloatImage::IndexType start;
+  start[0] = 0;
+  start[1] = 0;
+  start[2] = 0;
+
+  itkFloatImage::RegionType imageRegion;
+  imageRegion.SetSize( imageSize );
+  imageRegion.SetIndex( start );
+  outputImage->SetRegions( imageRegion );
+
+  //Allocate and Copy image values
+  outputImage->Allocate();
+
+  itkFloatImage::IndexType inputIndex;
+  inputIndex[2] = 0;
+  itkFloatImage::IndexType outputIndex;
+
+  for(unsigned int i=0; i<inputStack.size(); i++)
+  for(unsigned int x=0; x<inputStack[i]->GetLargestPossibleRegion().GetSize()[0]; x++)
+  for(unsigned int y=0; y<inputStack[i]->GetLargestPossibleRegion().GetSize()[1]; y++)
+  {
+    inputIndex[0] = x;
+    inputIndex[1] = y;
+    outputIndex[0] = x;
+    outputIndex[1] = y;
+    outputIndex[2] = i;
+    outputImage->SetPixel(outputIndex, inputStack[i]->GetPixel(inputIndex) );
+  }
+}
+
 void PandoraBoxReconstructionFilters::ImageFusionByInjection(itkFloatImagePointer & outputImage, itkFloatImagePointer & maskImage, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkTransformType::Pointer> > & affineSBSTransforms)
 {
   //Strictly speaking, this is not an injection process, but il's faster to do it this way
