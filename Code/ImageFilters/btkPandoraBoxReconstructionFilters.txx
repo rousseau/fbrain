@@ -40,9 +40,6 @@ namespace btk
 
 void PandoraBoxReconstructionFilters::Convert3DImageToSliceStack(std::vector<itkFloatImagePointer> & outputStack, itkFloatImagePointer & inputImage)
 {
-  //The ExtractImageFilter does not modify the origin of the extracted image
-  //We have to modify this to create a stack of 3D slices
-
   unsigned int numberOfSlices = inputImage->GetLargestPossibleRegion().GetSize()[2];
   outputStack.resize(numberOfSlices);
 
@@ -85,7 +82,7 @@ void PandoraBoxReconstructionFilters::Convert3DImageToSliceStack(std::vector<itk
     itkFloatImage::IndexType inputIndex;
     inputIndex[2] = i;
     itkFloatImage::IndexType outputIndex;
-    inputIndex[2] = 0;
+    outputIndex[2] = 0;
 
     for(unsigned int x=0; x<inputImage->GetLargestPossibleRegion().GetSize()[0]; x++)
     for(unsigned int y=0; y<inputImage->GetLargestPossibleRegion().GetSize()[1]; y++)
@@ -101,7 +98,7 @@ void PandoraBoxReconstructionFilters::Convert3DImageToSliceStack(std::vector<itk
 
 void PandoraBoxReconstructionFilters::ImageFusionByInjection(itkFloatImagePointer & outputImage, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkTransformType::Pointer> > & affineSBSTransforms)
 {
-
+  std::cout<<"Starting ImageFusionByInjection"<<std::endl;
   itkFloatImage::PointType outputPoint;      //physical point in HR output image
   itkFloatImage::IndexType outputIndex;      //index in HR output image
   itkFloatImage::PointType transformedPoint; //Physical point location after applying affine transform
@@ -119,8 +116,10 @@ void PandoraBoxReconstructionFilters::ImageFusionByInjection(itkFloatImagePointe
   //Define a threshold for z coordinate based on FWHM = 2sqrt(2ln2)sigma = 2.3548 sigma
   float cst = 2*sqrt(2*log(2.0));
   float sigmaz = inputStacks[0][0]->GetSpacing()[2] /cst;
-  int scale_search_Z = 2;
+  int scale_search_Z = 8;
   float sz2 = sigmaz * scale_search_Z;
+
+  std::cout<<"sz2 : "<<sz2<<std::endl;
 
   //ITK Interpolator
   itk::LinearInterpolateImageFunction<itkFloatImage, double>::Pointer interpolator = itk::LinearInterpolateImageFunction<itkFloatImage, double>::New();
@@ -136,28 +135,26 @@ void PandoraBoxReconstructionFilters::ImageFusionByInjection(itkFloatImagePointe
     //Loop over the input stacks
     for(unsigned int s=0; s<inputStacks.size(); s++)
     {
-
       unsigned int sizeX = inputStacks[s][0]->GetLargestPossibleRegion().GetSize()[0];
       unsigned int sizeY = inputStacks[s][0]->GetLargestPossibleRegion().GetSize()[1];
 
       //Loop over images of the current stack
       for(unsigned int i=0; i<inputStacks[s].size(); i++)
       {
-
         //Coordinate in mm in the current image (physical point)
         transformedPoint = affineSBSTransforms[s][i]->TransformPoint(outputPoint);
 
         //Coordinate in the current image (continuous index)
         inputStacks[s][i]->TransformPhysicalPointToContinuousIndex(transformedPoint,inputContIndex);
 
-        //Set input for interpolator
-        interpolator->SetInputImage( inputStacks[s][i] );
-
         //Check whether point is inside the ROI (2D image size and slice to distance less than a given threshold)
-        if( (transformedPoint[0] >= 0) && (transformedPoint[1] >= 0) && (transformedPoint[0] < sizeX) && (transformedPoint[1] < sizeY) && (fabs(inputContIndex[2]) <= sz2) )
+        if( (inputContIndex[0] >= 0) && (inputContIndex[1] >= 0) && (inputContIndex[0] < sizeX) && (inputContIndex[1] < sizeY) && (fabs(inputContIndex[2]) <= sz2) )
         {
-          interpolationContIndex[0] = transformedPoint[0];
-          interpolationContIndex[1] = transformedPoint[1];
+          //Set input for interpolator
+          interpolator->SetInputImage( inputStacks[s][i] );
+
+          interpolationContIndex[0] = inputContIndex[0];
+          interpolationContIndex[1] = inputContIndex[1];
           float pixelValue = interpolator->EvaluateAtContinuousIndex( interpolationContIndex );
 
           //Compute weight and corresponding intensity
@@ -183,6 +180,7 @@ void PandoraBoxReconstructionFilters::ImageFusionByInjection(itkFloatImagePointe
       itOuputImage.Set( newValue );
     }
   }
+  btk::ImageHelper<itkFloatImage>::WriteImage(weightImage, "weight.nii.gz");
 }
 
 } // namespace btk
