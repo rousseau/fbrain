@@ -71,6 +71,9 @@ class PandoraBoxReconstructionFilters
     //Convert a stack of 3D images to a 3D image
     static void ConvertSliceStackTo3DImage(itkFloatImagePointer & outputImage, std::vector<itkFloatImagePointer> & inputStack);
 
+    //Project a 3D image into a stack of slices
+    static void Project3DImageToSliceStack(std::vector<itkFloatImagePointer> & outputStack, itkFloatImagePointer & inputImage, std::vector<itkFloatImagePointer> & inputStack, std::vector<itkTransformType::Pointer> & affineSBSTransforms);
+
     //Compute PSF
 
     //Compute H

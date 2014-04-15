@@ -98,6 +98,7 @@ void PandoraBoxReconstructionFilters::Convert3DImageToSliceStack(std::vector<itk
 
 void PandoraBoxReconstructionFilters::ConvertSliceStackTo3DImage(itkFloatImagePointer & outputImage, std::vector<itkFloatImagePointer> & inputStack)
 {
+  //Image information are computed from the first slice of the stack
   outputImage = itkFloatImage::New();
   outputImage->SetSpacing( inputStack[0]->GetSpacing() );
   outputImage->SetDirection( inputStack[0]->GetDirection() );
@@ -137,6 +138,52 @@ void PandoraBoxReconstructionFilters::ConvertSliceStackTo3DImage(itkFloatImagePo
     outputImage->SetPixel(outputIndex, inputStack[i]->GetPixel(inputIndex) );
   }
 }
+
+void PandoraBoxReconstructionFilters::Project3DImageToSliceStack(std::vector<itkFloatImagePointer> & outputStack, itkFloatImagePointer & inputImage, std::vector<itkFloatImagePointer> & inputStack, std::vector<itkTransformType::Pointer> & affineSBSTransforms)
+{
+  outputStack.resize( inputStack.size() );
+
+  //Use currently a linear interpolation
+  itk::BSplineInterpolateImageFunction<itkFloatImage, double, double>::Pointer bsInterpolator = itk::BSplineInterpolateImageFunction<itkFloatImage, double, double>::New();
+  bsInterpolator->SetSplineOrder(1);
+  bsInterpolator->SetInputImage(inputImage);
+
+  //Loop over the input stacks
+  for(unsigned int s=0; s<outputStack.size(); s++)
+  {
+    //Allocate and initialize the output slice
+    outputStack[s] = btk::ImageHelper< itkFloatImage > ::CreateNewImageFromPhysicalSpaceOf(inputStack[s],0.0);
+
+    itkFloatImage::IndexType sliceIndex;      //index in the current slice
+    sliceIndex[2] = 0;
+    itkFloatImage::PointType slicePoint;      //physical point of the current slice
+    itkFloatImage::PointType transformedPoint; //Physical point location after applying affine transform
+    itkContinuousIndex       inputContIndex;   //continuous index in the 3D image
+
+    //Loop over the pixel of the current slice
+    for(unsigned int x=0; x<outputStack[s]->GetLargestPossibleRegion().GetSize()[0]; x++)
+    for(unsigned int y=0; y<outputStack[s]->GetLargestPossibleRegion().GetSize()[1]; y++)
+    {
+      //Coordinate (index) of the current pixel in the current slice
+      sliceIndex[0] = x;
+      sliceIndex[1] = y;
+
+      //Coordinate in the physical world (mm)
+      outputStack[s]->TransformIndexToPhysicalPoint(sliceIndex,slicePoint);
+
+      //Apply affine transform (slice to 3D image)
+      transformedPoint = affineSBSTransforms[s]->TransformPoint(slicePoint);
+
+      //Coordinate in the 3D image (continuous index)
+      inputImage->TransformPhysicalPointToContinuousIndex(transformedPoint,inputContIndex);
+
+      double interpolatedValue = bsInterpolator->EvaluateAtContinuousIndex(inputContIndex);
+
+      outputStack[s]->SetPixel(sliceIndex, interpolatedValue);
+    }
+  }
+}
+
 
 void PandoraBoxReconstructionFilters::ImageFusionByInjection(itkFloatImagePointer & outputImage, itkFloatImagePointer & maskImage, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkTransformType::Pointer> > & affineSBSTransforms)
 {
