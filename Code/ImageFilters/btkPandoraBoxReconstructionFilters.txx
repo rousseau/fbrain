@@ -96,7 +96,7 @@ void PandoraBoxReconstructionFilters::Convert3DImageToSliceStack(std::vector<itk
   }
 }
 
-void PandoraBoxReconstructionFilters::ImageFusionByInjection(itkFloatImagePointer & outputImage, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkTransformType::Pointer> > & affineSBSTransforms)
+void PandoraBoxReconstructionFilters::ImageFusionByInjection(itkFloatImagePointer & outputImage, itkFloatImagePointer & maskImage, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkTransformType::Pointer> > & affineSBSTransforms)
 {
   //Strictly speaking, this is not an injection process, but il's faster to do it this way
   itkFloatImage::PointType outputPoint;      //physical point in HR output image
@@ -112,6 +112,7 @@ void PandoraBoxReconstructionFilters::ImageFusionByInjection(itkFloatImagePointe
   //Set iterator for output and weight images
   itkFloatIteratorWithIndex itOuputImage(outputImage,outputImage->GetLargestPossibleRegion());
   itkFloatIterator          itWeightImage(weightImage,weightImage->GetLargestPossibleRegion());
+  itkFloatIterator          itMaskImage(maskImage,maskImage->GetLargestPossibleRegion());
 
   //Define a threshold for z coordinate based on FWHM = 2sqrt(2ln2)sigma = 2.3548 sigma
   float cst = 2*sqrt(2*log(2.0));
@@ -122,48 +123,51 @@ void PandoraBoxReconstructionFilters::ImageFusionByInjection(itkFloatImagePointe
   //ITK Interpolator
   itk::LinearInterpolateImageFunction<itkFloatImage, double>::Pointer interpolator = itk::LinearInterpolateImageFunction<itkFloatImage, double>::New();
 
-  for(itOuputImage.GoToBegin(), itWeightImage.GoToBegin(); !itOuputImage.IsAtEnd(); ++itOuputImage, ++itWeightImage)
+  for(itOuputImage.GoToBegin(), itWeightImage.GoToBegin(), itMaskImage.GoToBegin(); !itOuputImage.IsAtEnd(); ++itOuputImage, ++itWeightImage, ++itMaskImage)
   {
-    //Coordinate in the output image (index)
-    outputIndex = itOuputImage.GetIndex();
-
-    //Coordinate in mm (physical point)
-    outputImage->TransformIndexToPhysicalPoint(outputIndex,outputPoint);
-
-    //Loop over the input stacks
-    for(unsigned int s=0; s<inputStacks.size(); s++)
+    if(itMaskImage.Get() > 0)
     {
-      unsigned int sizeX = inputStacks[s][0]->GetLargestPossibleRegion().GetSize()[0];
-      unsigned int sizeY = inputStacks[s][0]->GetLargestPossibleRegion().GetSize()[1];
+      //Coordinate in the output image (index)
+      outputIndex = itOuputImage.GetIndex();
 
-      //Loop over images of the current stack
-      for(unsigned int i=0; i<inputStacks[s].size(); i++)
+      //Coordinate in mm (physical point)
+      outputImage->TransformIndexToPhysicalPoint(outputIndex,outputPoint);
+
+      //Loop over the input stacks
+      for(unsigned int s=0; s<inputStacks.size(); s++)
       {
-        //Coordinate in mm in the current image (physical point)
-        transformedPoint = affineSBSTransforms[s][i]->TransformPoint(outputPoint);
+        unsigned int sizeX = inputStacks[s][0]->GetLargestPossibleRegion().GetSize()[0];
+        unsigned int sizeY = inputStacks[s][0]->GetLargestPossibleRegion().GetSize()[1];
 
-        //Coordinate in the current image (continuous index)
-        inputStacks[s][i]->TransformPhysicalPointToContinuousIndex(transformedPoint,inputContIndex);
-
-        //Check whether point is inside the ROI (2D image size and slice to distance less than a given threshold)
-        if( (inputContIndex[0] >= 0) && (inputContIndex[1] >= 0) && (inputContIndex[0] < sizeX) && (inputContIndex[1] < sizeY) && (fabs(inputContIndex[2]) <= sz2) )
+        //Loop over images of the current stack
+        for(unsigned int i=0; i<inputStacks[s].size(); i++)
         {
-          //Set input for interpolator
-          interpolator->SetInputImage( inputStacks[s][i] );
+          //Coordinate in mm in the current image (physical point)
+          transformedPoint = affineSBSTransforms[s][i]->TransformPoint(outputPoint);
 
-          interpolationContIndex[0] = inputContIndex[0];
-          interpolationContIndex[1] = inputContIndex[1];
-          float pixelValue = interpolator->EvaluateAtContinuousIndex( interpolationContIndex );
+          //Coordinate in the current image (continuous index)
+          inputStacks[s][i]->TransformPhysicalPointToContinuousIndex(transformedPoint,inputContIndex);
 
-          //Compute weight and corresponding intensity
-          float weight = exp(-inputContIndex[2]*inputContIndex[2]/(2*sigmaz*sigmaz))/(sqrt(2*M_PI)*sigmaz);
+          //Check whether point is inside the ROI (2D image size and slice to distance less than a given threshold)
+          if( (inputContIndex[0] >= 0) && (inputContIndex[1] >= 0) && (inputContIndex[0] < sizeX) && (inputContIndex[1] < sizeY) && (fabs(inputContIndex[2]) <= sz2) )
+          {
+            //Set input for interpolator
+            interpolator->SetInputImage( inputStacks[s][i] );
 
-          float newValue = itOuputImage.Get() + weight * pixelValue;
-          float newWeight = weight + itWeightImage.Get();
+            interpolationContIndex[0] = inputContIndex[0];
+            interpolationContIndex[1] = inputContIndex[1];
+            float pixelValue = interpolator->EvaluateAtContinuousIndex( interpolationContIndex );
 
-          //Set computed values
-          itOuputImage.Set(newValue);
-          itWeightImage.Set(newWeight);
+            //Compute weight and corresponding intensity
+            float weight = exp(-inputContIndex[2]*inputContIndex[2]/(2*sigmaz*sigmaz))/(sqrt(2*M_PI)*sigmaz);
+
+            float newValue = itOuputImage.Get() + weight * pixelValue;
+            float newWeight = weight + itWeightImage.Get();
+
+            //Set computed values
+            itOuputImage.Set(newValue);
+            itWeightImage.Set(newWeight);
+          }
         }
       }
     }

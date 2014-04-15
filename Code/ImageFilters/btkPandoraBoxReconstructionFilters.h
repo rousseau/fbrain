@@ -73,7 +73,7 @@ class PandoraBoxReconstructionFilters
     //Compute H
 
     //Injection
-    static void ImageFusionByInjection(itkFloatImagePointer & outputImage, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkTransformType::Pointer> > & affineSBSTransforms);
+    static void ImageFusionByInjection(itkFloatImagePointer & outputImage, itkFloatImagePointer & maskImage, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkTransformType::Pointer> > & affineSBSTransforms);
 
     //SR (L1,L2,robust) + Reg(local, patch, tv)
 

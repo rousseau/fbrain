@@ -204,9 +204,11 @@ int main(int argc, char** argv)
       outputSpacing[i] = spacing[i];
 
     btk::PandoraBoxImageFilters::ResampleImageUsingSpacing(inputLRImages[0],outputHRImage,outputSpacing,1);
+    itkFloatImage::Pointer maskHRImage = btk::ImageHelper< itkFloatImage > ::CreateNewImageFromPhysicalSpaceOf(outputHRImage,1.0);
+
 
     outputHRImage->FillBuffer(0.0);
-    btk::PandoraBoxReconstructionFilters::ImageFusionByInjection(outputHRImage, inputLRStacks, affineSBSTransforms);
+    btk::PandoraBoxReconstructionFilters::ImageFusionByInjection(outputHRImage, maskHRImage, inputLRStacks, affineSBSTransforms);
 
 
     btk::ImageHelper<itkFloatImage>::WriteImage(outputHRImage, output_HR_filename);
