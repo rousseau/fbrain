@@ -64,7 +64,7 @@ int main(int argc, char** argv)
     TCLAP::ValueArg<std::string> inputHRImageArg      ("","init","Input high-resolution image file (used for initialization)",false,"","string",cmd);
     TCLAP::MultiArg<std::string> input3DtransformArg  ("","t3d","3D affine transforms",false,"string",cmd);
     TCLAP::MultiArg<std::string> inputSBStransformArg ("","sbs","Slice by slice affine transforms",false,"string",cmd);
-    TCLAP::MultiArg<float>       spacingArg           ("s","spacing","resolution (spacing)) in mm (1 by default)",false,"float",cmd);
+    TCLAP::MultiArg<float>       spacingArg           ("s","spacing","resolution (spacing)) in mm",true,"float",cmd);
 
   	// Parse the args.
   	cmd.parse( argc, argv );
@@ -203,16 +203,10 @@ int main(int argc, char** argv)
     for(unsigned int i=0; i<3; i++)
       outputSpacing[i] = spacing[i];
 
+    btk::PandoraBoxImageFilters::ResampleImageUsingSpacing(inputLRImages[0],outputHRImage,outputSpacing,1);
 
-    //btk::PandoraBoxImageFilters::ResampleImageUsingSpacing(inputLRImages[0],outputHRImage,outputSpacing,1);
-
-    itkFloatImage::SizeType outputSize;
-    for(unsigned int i=0; i<3; i++)
-      outputSize[i] = 512;
-
-    //btk::PandoraBoxImageFilters::ResampleImageUsingSize(inputLRImages[0],outputHRImage,outputSize,1);
-
-    btk::PandoraBoxImageFilters::ResampleImageUsingReference(inputLRImages[0],outputHRImage, inputHRImage, 1);
+    outputHRImage->FillBuffer(0.0);
+    btk::PandoraBoxReconstructionFilters::ImageFusionByInjection(outputHRImage, inputLRStacks, affineSBSTransforms);
 
 
     btk::ImageHelper<itkFloatImage>::WriteImage(outputHRImage, output_HR_filename);

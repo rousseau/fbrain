@@ -98,7 +98,7 @@ void PandoraBoxReconstructionFilters::Convert3DImageToSliceStack(std::vector<itk
 
 void PandoraBoxReconstructionFilters::ImageFusionByInjection(itkFloatImagePointer & outputImage, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkTransformType::Pointer> > & affineSBSTransforms)
 {
-  std::cout<<"Starting ImageFusionByInjection"<<std::endl;
+  //Strictly speaking, this is not an injection process, but il's faster to do it this way
   itkFloatImage::PointType outputPoint;      //physical point in HR output image
   itkFloatImage::IndexType outputIndex;      //index in HR output image
   itkFloatImage::PointType transformedPoint; //Physical point location after applying affine transform
@@ -116,10 +116,8 @@ void PandoraBoxReconstructionFilters::ImageFusionByInjection(itkFloatImagePointe
   //Define a threshold for z coordinate based on FWHM = 2sqrt(2ln2)sigma = 2.3548 sigma
   float cst = 2*sqrt(2*log(2.0));
   float sigmaz = inputStacks[0][0]->GetSpacing()[2] /cst;
-  int scale_search_Z = 8;
+  int scale_search_Z = 2;
   float sz2 = sigmaz * scale_search_Z;
-
-  std::cout<<"sz2 : "<<sz2<<std::endl;
 
   //ITK Interpolator
   itk::LinearInterpolateImageFunction<itkFloatImage, double>::Pointer interpolator = itk::LinearInterpolateImageFunction<itkFloatImage, double>::New();
@@ -180,7 +178,6 @@ void PandoraBoxReconstructionFilters::ImageFusionByInjection(itkFloatImagePointe
       itOuputImage.Set( newValue );
     }
   }
-  btk::ImageHelper<itkFloatImage>::WriteImage(weightImage, "weight.nii.gz");
 }
 
 } // namespace btk
