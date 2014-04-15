@@ -184,6 +184,79 @@ void PandoraBoxReconstructionFilters::Project3DImageToSliceStack(std::vector<itk
   }
 }
 
+void PandoraBoxReconstructionFilters::ComputePSFImage(itkFloatImagePointer & PSFImage, itkFloatImage::SpacingType HRSpacing, itkFloatImage::SpacingType LRSpacing)
+{
+  //Use a 3D Gaussian in this function
+  float cst = 2*sqrt(2*log(2.0));
+  float sigmaX = 1.2 * LRSpacing[0] / cst;
+  float sigmaY = 1.2 * LRSpacing[1] / cst;
+  float sigmaZ = LRSpacing[2] / cst;
+
+  //To get 99%, psfSize must be >= 6*sigma
+  //To get 95%, psfSize must be >= 4*sigma
+
+  //Compute size and index for the new PSF image
+  itkFloatImage::SizeType psfSize;
+  psfSize[0] = (int)ceil(6*sigmaX / HRSpacing[0]) + 2;
+  psfSize[1] = (int)ceil(6*sigmaY / HRSpacing[1]) + 2;
+  psfSize[2] = (int)ceil(6*sigmaZ / HRSpacing[2]) + 2;
+
+  itkFloatImage::IndexType psfIndex;
+  psfIndex[0] = 0;
+  psfIndex[1] = 0;
+  psfIndex[2] = 0;
+
+  itkFloatImage::RegionType psfRegion;
+  psfRegion.SetSize(psfSize);
+  psfRegion.SetIndex(psfIndex);
+
+  PSFImage = itkFloatImage::New();
+  PSFImage->SetRegions(psfRegion);
+  PSFImage->SetSpacing(HRSpacing);
+  PSFImage->Allocate();
+  PSFImage->FillBuffer(0.0);
+
+  //Set the origin of the PSF in the center of it
+  itkContinuousIndex psfIndexCenter;
+  psfIndexCenter[0] = (psfSize[0]-1)/2.0;
+  psfIndexCenter[1] = (psfSize[1]-1)/2.0;
+  psfIndexCenter[2] = (psfSize[2]-1)/2.0;
+  itkFloatImage::PointType newPSFOrigin;
+  PSFImage->TransformContinuousIndexToPhysicalPoint(psfIndexCenter,newPSFOrigin);
+  newPSFOrigin[0] *= -1;
+  newPSFOrigin[1] *= -1;
+  newPSFOrigin[2] *= -1;
+  PSFImage->SetOrigin(newPSFOrigin);
+
+  itkFloatImage::IndexType currentIndex;      //index of the current voxel
+  itkFloatImage::PointType currentPoint;      //physical coordinates of the current voxel
+  itkFloatIteratorWithIndex itPSFImage(PSFImage,PSFImage->GetLargestPossibleRegion());
+
+  double psfValue = 0;
+  double psfSum = 0;
+  //Loop over PSF points and compute the integration of the PSF function (currently 3D Gaussian)
+  for(itPSFImage.GoToBegin(); !itPSFImage.IsAtEnd(); ++itPSFImage)
+  {
+    currentIndex = itPSFImage.GetIndex();
+
+    PSFImage->TransformIndexToPhysicalPoint(currentIndex,currentPoint);
+
+    //should be done by integration instead of evaluating the value at a certain location
+    psfValue = exp(-currentPoint[0]*currentPoint[0]/(2*sigmaX*sigmaX))/(sqrt(2*M_PI)*sigmaX);
+    psfValue*= exp(-currentPoint[1]*currentPoint[1]/(2*sigmaY*sigmaY))/(sqrt(2*M_PI)*sigmaY);
+    psfValue*= exp(-currentPoint[2]*currentPoint[2]/(2*sigmaZ*sigmaZ))/(sqrt(2*M_PI)*sigmaZ);
+
+    itPSFImage.Set(psfValue);
+    psfSum += psfValue;
+  }
+
+  //Normalization of PSF values
+  for(itPSFImage.GoToBegin(); !itPSFImage.IsAtEnd(); ++itPSFImage)
+  {
+    double normalizedValue = itPSFImage.Get() / psfSum;
+    itPSFImage.Set(normalizedValue);
+  }
+}
 
 void PandoraBoxReconstructionFilters::ImageFusionByInjection(itkFloatImagePointer & outputImage, itkFloatImagePointer & maskImage, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkTransformType::Pointer> > & affineSBSTransforms)
 {
