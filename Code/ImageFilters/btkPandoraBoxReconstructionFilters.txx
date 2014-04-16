@@ -194,12 +194,13 @@ void PandoraBoxReconstructionFilters::ComputePSFImage(itkFloatImagePointer & PSF
 
   //To get 99%, psfSize must be >= 6*sigma
   //To get 95%, psfSize must be >= 4*sigma
+  float scaleFactor = 1;
 
   //Compute size and index for the new PSF image
   itkFloatImage::SizeType psfSize;
-  psfSize[0] = (int)ceil(6*sigmaX / HRSpacing[0]) + 2;
-  psfSize[1] = (int)ceil(6*sigmaY / HRSpacing[1]) + 2;
-  psfSize[2] = (int)ceil(6*sigmaZ / HRSpacing[2]) + 2;
+  psfSize[0] = 3;//(int)ceil(scaleFactor*sigmaX / HRSpacing[0]) + 2;
+  psfSize[1] = 3;//(int)ceil(scaleFactor*sigmaY / HRSpacing[1]) + 2;
+  psfSize[2] = 3;//(int)ceil(scaleFactor*sigmaZ / HRSpacing[2]) + 2;
 
   itkFloatImage::IndexType psfIndex;
   psfIndex[0] = 0;
@@ -255,6 +256,204 @@ void PandoraBoxReconstructionFilters::ComputePSFImage(itkFloatImagePointer & PSF
   {
     double normalizedValue = itPSFImage.Get() / psfSum;
     itPSFImage.Set(normalizedValue);
+  }
+}
+
+void PandoraBoxReconstructionFilters::ComputerObservationModelParameters(vnl_sparse_matrix<double> & H, vnl_vector<double> & Y, vnl_vector<double> & X, itkFloatImagePointer & HRImage, std::vector< std::vector<itkFloatImagePointer> > & maskStacks, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkTransformType::Pointer> > & inverseAffineSBSTransforms, itkFloatImagePointer & PSFImage)
+{
+  //Principle: for each voxel of the LR images, we compute the influence of each voxel of the PSF (centered at the current LR voxel) and add the corresponding influence value (PSF value * interpolation weight) in the matrix H
+
+  // Set size of matrices
+  unsigned int ncols = HRImage->GetLargestPossibleRegion().GetNumberOfPixels();
+
+  std::vector< std::vector<unsigned int> > offset;
+  //offset is used to fill correctly the vector Y with the input LR image values (offset for the linear index)
+  offset.resize(inputStacks.size());
+  unsigned int nrows = 0;
+  for(unsigned int im = 0; im < inputStacks.size(); im++){
+    offset[im].resize( inputStacks[im].size() );
+    for(unsigned int s = 0; s < inputStacks[im].size(); s++)
+    {
+      offset[im][s] = nrows;
+      nrows += inputStacks[im][s]->GetLargestPossibleRegion().GetNumberOfPixels();
+    }
+  }
+  H.set_size(nrows, ncols);
+  Y.set_size(nrows);
+  Y.fill(0.0);
+  X.set_size(ncols);
+  X.fill(0.0);
+
+  //linear index : an integer value corresponding to (x,y,z) triplet coordinates (ITK index)
+  unsigned int lrLinearIndex = 0;
+  unsigned int hrLinearIndex = 0;
+
+  //Temporary variables
+  itkFloatImage::IndexType lrIndex;  //index of the current voxel in the LR image
+  itkFloatImage::PointType lrPoint;  //physical point location of lrIndex
+  itkFloatImage::IndexType psfIndex; //index of the current voxel in the PSF
+  itkFloatImage::PointType psfPoint; //physical point location of psfIndex
+  itkFloatImage::PointType transformedPoint; //Physical point location after applying affine transform
+  itkContinuousIndex  hrContIndex;  //continuous index in HR image of psfPoint
+  itkFloatImage::IndexType hrIndex;  //index in HR image of interpolated psfPoint
+
+  //We use linear interpolation for the estimation of point influence in matrix H
+  typedef itk::BSplineInterpolationWeightFunction<double, 3, 1> itkBSplineFunction;
+  itkBSplineFunction::Pointer bsplineFunction = itkBSplineFunction::New();
+  itkBSplineFunction::WeightsType bsplineWeights;
+  bsplineWeights.SetSize(8); // (bsplineOrder + 1)^3
+  itkBSplineFunction::IndexType   bsplineStartIndex;
+  itkBSplineFunction::IndexType   bsplineEndIndex;
+  itkBSplineFunction::SizeType    bsplineSize;
+  itkFloatImage::RegionType       bsplineRegion;
+
+  //Get the size of the HR image
+  itkFloatImage::SizeType  hrSize  = HRImage->GetLargestPossibleRegion().GetSize();
+
+  //Create a moving PSF to compute H
+  itkFloatImage::Pointer movingPSFImage = btk::ImageHelper< itkFloatImage > ::DeepCopy(PSFImage.GetPointer());
+
+  //Instantiate an iterator over the current PSF
+  itkFloatIteratorWithIndex itPSF(movingPSFImage,movingPSFImage->GetLargestPossibleRegion());
+
+  //Compute temporary variables for setting the correct origin of the moving PSF for every voxel of the LR image
+  itkFloatImage::SizeType psfSize = PSFImage->GetLargestPossibleRegion().GetSize();
+  itkContinuousIndex psfIndexCenter;
+  psfIndexCenter[0] = (psfSize[0]-1)/2.0;
+  psfIndexCenter[1] = (psfSize[1]-1)/2.0;
+  psfIndexCenter[2] = (psfSize[2]-1)/2.0;
+  itkFloatImage::PointType psfPointCenter;
+  itkFloatImage::PointType psfOrigin;
+  itkFloatImage::PointType zeroOrigin;
+  zeroOrigin[0] = 0;
+  zeroOrigin[2] = 0;
+  zeroOrigin[1] = 0;
+
+  unsigned int count = -1;
+
+  for(unsigned int i=0; i<inputStacks.size(); i++)
+  {
+    for(unsigned int s=0; s<inputStacks[i].size(); s++)
+    {
+      //Get the size of the current LR slice
+      itkFloatImage::SizeType  lrSize  = inputStacks[i][s]->GetLargestPossibleRegion().GetSize();
+
+      //Instantiate an iterator over the current LR image
+      itkFloatIteratorWithIndex itLRImage(inputStacks[i][s],inputStacks[i][s]->GetLargestPossibleRegion());
+
+      //Instantiate an iterator over the current LR mask image
+      itkFloatIterator itLRMask(maskStacks[i][s],maskStacks[i][s]->GetLargestPossibleRegion());
+
+      //Set the correct direction for the PSF of the current image
+      movingPSFImage->SetDirection(inputStacks[i][s]->GetDirection());
+
+      //Loop over the voxels of the current LR image
+      for(itLRImage.GoToBegin(), itLRMask.GoToBegin(); !itLRImage.IsAtEnd(); ++itLRImage, ++itLRMask)
+      {
+        count++;
+
+        if(itLRMask.Get() > 0)
+        {
+          //Coordinate in the current LR image
+          lrIndex = itLRImage.GetIndex();
+
+          //Compute the corresponding linear index of lrIndex
+          lrLinearIndex = offset[i][s] + lrIndex[0] + lrIndex[1]*lrSize[0];
+
+          //Fill Y
+          Y[lrLinearIndex] = itLRImage.Get();
+
+          //Reset PSF origin
+          movingPSFImage->SetOrigin( zeroOrigin );
+
+          //Change the origin of the PSF so that itLRImage location corresponds to the center of the PSF
+          movingPSFImage->TransformContinuousIndexToPhysicalPoint(psfIndexCenter,psfPointCenter);
+          inputStacks[i][s]->TransformIndexToPhysicalPoint(lrIndex,lrPoint);
+          psfOrigin[0] = lrPoint[0] - psfPointCenter[0];
+          psfOrigin[1] = lrPoint[1] - psfPointCenter[1];
+          psfOrigin[2] = lrPoint[2] - psfPointCenter[2];
+          movingPSFImage->SetOrigin(psfOrigin);
+
+          //Loop over the m_PSF
+          for(itPSF.GoToBegin(); !itPSF.IsAtEnd(); ++itPSF)
+          {
+            //Get coordinate in PSF
+            psfIndex = itPSF.GetIndex();
+
+            //Compute the physical point of psfIndex
+            movingPSFImage->TransformIndexToPhysicalPoint(psfIndex,psfPoint);
+
+            //Apply estimated affine transform to psfPoint (need to apply the inverse since the transform goes from the HR image to the LR image)
+            transformedPoint = inverseAffineSBSTransforms[i][s]->TransformPoint(psfPoint);
+
+            //Get back to the index in the HR image
+            HRImage->TransformPhysicalPointToContinuousIndex(transformedPoint,hrContIndex);
+
+            //Check if the continuous index hrContIndex is inside the HR image
+            if (HRImage->GetLargestPossibleRegion().IsInside(hrContIndex))
+            {
+              //Get the interpolation weight using itkBSplineInterpolationWeightFunction
+              bsplineFunction->Evaluate(hrContIndex,bsplineWeights,bsplineStartIndex);
+
+              //Get the support size for interpolation
+              bsplineSize = bsplineFunction->GetSupportSize();
+
+              //Check if the bspline support region is inside the HR image
+              bsplineEndIndex[0] = bsplineStartIndex[0] + bsplineSize[0];
+              bsplineEndIndex[1] = bsplineStartIndex[1] + bsplineSize[1];
+              bsplineEndIndex[2] = bsplineStartIndex[2] + bsplineSize[2];
+
+              if( (HRImage->GetLargestPossibleRegion().IsInside(bsplineStartIndex)) && (HRImage->GetLargestPossibleRegion().IsInside(bsplineEndIndex)) )
+              {
+                //Set the support region
+                bsplineRegion.SetSize(bsplineSize);
+                bsplineRegion.SetIndex(bsplineStartIndex);
+
+                //Instantiate an iterator on HR image over the bspline region
+                itkFloatIteratorWithIndex itHRImage(HRImage,bsplineRegion);
+
+                //linear index of bspline weights
+                unsigned int weightLinearIndex = 0;
+
+                //Loop over the support region
+                for(itHRImage.GoToBegin(); !itHRImage.IsAtEnd(); ++itHRImage)
+                {
+                  //Get coordinate in HR image
+                  hrIndex = itHRImage.GetIndex();
+
+                  //Compute the corresponding linear index
+                  hrLinearIndex = hrIndex[0] + hrIndex[1]*hrSize[0] + hrIndex[2]*hrSize[0]*hrSize[1];
+
+                  //Add weight*PSFValue to the corresponding element in H
+                  H(lrLinearIndex,hrLinearIndex) += itPSF.Get() * bsplineWeights[weightLinearIndex];
+                  weightLinearIndex += 1;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  // Normalize H
+  for(unsigned int i = 0; i < H.rows(); i++){
+
+    double sum = H.sum_row(i);
+
+    vnl_sparse_matrix<double>::row & r = H.get_row(i);
+    vnl_sparse_matrix<double>::row::iterator col_iter;
+
+    for (col_iter = r.begin(); col_iter != r.end(); ++col_iter)
+      (*col_iter).second = (*col_iter).second / sum;
+  }
+
+  //Fill X
+  //Instantiate an iterator on HR image
+  itkFloatIteratorWithIndex itHRImage(HRImage,HRImage->GetLargestPossibleRegion());
+  for(itHRImage.GoToBegin(); !itHRImage.IsAtEnd(); ++itHRImage){
+    hrIndex = itHRImage.GetIndex();
+    hrLinearIndex = hrIndex[0] + hrIndex[1]*hrSize[0] + hrIndex[2]*hrSize[0]*hrSize[1];
+    X[hrLinearIndex] = itHRImage.Get();
   }
 }
 
@@ -342,6 +541,65 @@ void PandoraBoxReconstructionFilters::ImageFusionByInjection(itkFloatImagePointe
     {
       float newValue = itOuputImage.Get() / itWeightImage.Get();
       itOuputImage.Set( newValue );
+    }
+  }
+}
+
+void PandoraBoxReconstructionFilters::SimulateObservations(vnl_sparse_matrix<double> & H, vnl_vector<double> & Y, vnl_vector<double> & X, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkFloatImagePointer> > & outputStacks)
+{
+
+  std::cout<<"SimulateObservations"<<std::endl;
+  std::vector< std::vector<unsigned int> > offset;
+  //offset is used to fill correctly the vector Y with the input LR image values (offset for the linear index)
+  offset.resize(inputStacks.size());
+  unsigned int nrows = 0;
+  for(unsigned int im = 0; im < inputStacks.size(); im++){
+    offset[im].resize( inputStacks[im].size() );
+    for(unsigned int s = 0; s < inputStacks[im].size(); s++)
+    {
+      offset[im][s] = nrows;
+      nrows += inputStacks[im][s]->GetLargestPossibleRegion().GetNumberOfPixels();
+    }
+  }
+
+  //Compute H * x
+  vnl_vector<double> Hx;
+  H.mult(X,Hx);
+
+  //Now, we have to convert this vector into a set of stacks
+  outputStacks.resize(inputStacks.size());
+  for(unsigned int im = 0; im < inputStacks.size(); im++)
+    outputStacks[im].resize( inputStacks[im].size() );
+
+  //Temporary variables
+  itkFloatImage::IndexType lrIndex;  //index of the current voxel in the LR image
+  unsigned int lrLinearIndex = 0;
+
+  for(unsigned int i=0; i<inputStacks.size(); i++)
+  {
+    for(unsigned int s=0; s<inputStacks[i].size(); s++)
+    {
+      //Initialize every slice of the current stack
+      outputStacks[i][s] = btk::ImageHelper< itkFloatImage > ::CreateNewImageFromPhysicalSpaceOf(inputStacks[i][s],0.0);
+
+      //Get the size of the current LR slice
+      itkFloatImage::SizeType  lrSize  = outputStacks[i][s]->GetLargestPossibleRegion().GetSize();
+
+      //Instantiate an iterator over the current LR image
+      itkFloatIteratorWithIndex itLRImage(outputStacks[i][s],outputStacks[i][s]->GetLargestPossibleRegion());
+
+      for(itLRImage.GoToBegin(); !itLRImage.IsAtEnd(); ++itLRImage)
+      {
+        //Coordinate in the current LR image
+        lrIndex = itLRImage.GetIndex();
+
+        //Compute the corresponding linear index of lrIndex
+        lrLinearIndex = offset[i][s] + lrIndex[0] + lrIndex[1]*lrSize[0];
+
+        //Fill Y
+        itLRImage.Set( Hx[lrLinearIndex] );
+
+      }
     }
   }
 }

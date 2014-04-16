@@ -50,6 +50,9 @@
 #include "itkTransform.h"
 #include "itkContinuousIndex.h"
 #include "itkLinearInterpolateImageFunction.h"
+#include "itkBSplineInterpolationWeightFunction.h"
+
+#include "vnl/vnl_sparse_matrix.h"
 
 namespace btk
 {
@@ -77,10 +80,14 @@ class PandoraBoxReconstructionFilters
     //Compute PSF
     static void ComputePSFImage(itkFloatImagePointer & PSFImage, itkFloatImage::SpacingType HRSpacing, itkFloatImage::SpacingType LRSpacing);
 
-    //Compute H
+    //Compute parameters of the observation model : H, Y, X (Y = HX)
+    static void ComputerObservationModelParameters(vnl_sparse_matrix<double> & H, vnl_vector<double> & Y, vnl_vector<double> & X, itkFloatImagePointer & HRImage, std::vector< std::vector<itkFloatImagePointer> > & maskStacks, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkTransformType::Pointer> > & inverseAffineSBSTransforms, itkFloatImagePointer & PSFImage);
 
     //Injection
     static void ImageFusionByInjection(itkFloatImagePointer & outputImage, itkFloatImagePointer & maskImage, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkTransformType::Pointer> > & affineSBSTransforms);
+
+    //Simulate observations using the observation model Y=HX
+    static void SimulateObservations(vnl_sparse_matrix<double> & H, vnl_vector<double> & Y, vnl_vector<double> & X, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkFloatImagePointer> > & outputStacks);
 
     //SR (L1,L2,robust) + Reg(local, patch, tv)
 
