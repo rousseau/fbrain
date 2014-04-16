@@ -623,4 +623,59 @@ void PandoraBoxReconstructionFilters::Convert3DImageToVNLVector(vnl_vector<float
   }
 }
 
+void PandoraBoxReconstructionFilters::ConvertVNLVectorToSliceStack(std::vector< std::vector<itkFloatImagePointer> > & outputStacks, vnl_vector<float> & Y)
+{
+  if(outputStacks.size() == 0)
+  {
+    std::cout<<"WARNING : the outputStacks need to be properly resized before using this function"<<std::endl;
+    std::cout<<"Program stops (in ConvertVNLVectorToSliceStack, PandoraBoxReconstructionFilters)"<<std::endl;
+    exit(1);
+  }
+
+  std::vector< std::vector<unsigned int> > offset;
+  //offset is used to fill correctly the slice stacks based on the vector Y
+  offset.resize(outputStacks.size());
+  unsigned int nrows = 0;
+  for(unsigned int im = 0; im < outputStacks.size(); im++){
+    offset[im].resize( outputStacks[im].size() );
+    for(unsigned int s = 0; s < outputStacks[im].size(); s++)
+    {
+      offset[im][s] = nrows;
+      nrows += outputStacks[im][s]->GetLargestPossibleRegion().GetNumberOfPixels();
+    }
+  }
+
+  //index of the current voxel in the image
+  itkFloatImage::IndexType index;
+
+  for(unsigned int i=0; i<outputStacks.size(); i++)
+  {
+    for(unsigned int s=0; s<outputStacks[i].size(); s++)
+    {
+      //Initialize the output slice with 0
+      outputStacks[i][s]->FillBuffer(0.0);
+
+      //Instantiate an iterator over the current image
+      itkFloatIteratorWithIndex itImage(outputStacks[i][s],outputStacks[i][s]->GetLargestPossibleRegion());
+
+      //Get the size of the current slice
+      itkFloatImage::SizeType  size  = outputStacks[i][s]->GetLargestPossibleRegion().GetSize();
+
+      //Loop over the pixel of the current slice
+      for(itImage.GoToBegin(); !itImage.IsAtEnd(); ++itImage)
+      {
+        //Coordinate in the current image
+        index = itImage.GetIndex();
+
+        //Compute the corresponding linear index of index
+        unsigned int linearIndex = offset[i][s] + index[0] + index[1]*size[0];
+
+        //Set the pixel value according to the vnl vector value
+        itImage.Set( Y[linearIndex] );
+      }
+    }
+  }
+
+}
+
 } // namespace btk

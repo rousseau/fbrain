@@ -92,6 +92,10 @@ class PandoraBoxReconstructionFilters
     //Convert a 3D image to a vnl vector (HRimage -> X)
     static void Convert3DImageToVNLVector(vnl_vector<float> & X, itkFloatImagePointer & inputImage);
 
+    //Convert a vnl vector into a image stack (Y -> stacks)
+    static void ConvertVNLVectorToSliceStack(std::vector< std::vector<itkFloatImagePointer> > & outputStacks, vnl_vector<float> & Y);
+
+
     //SR (L1,L2,robust) + Reg(local, patch, tv)
 
     //Slice motion estimation using a 3D reference image
