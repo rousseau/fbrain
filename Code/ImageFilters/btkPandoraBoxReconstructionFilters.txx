@@ -194,13 +194,13 @@ void PandoraBoxReconstructionFilters::ComputePSFImage(itkFloatImagePointer & PSF
 
   //To get 99%, psfSize must be >= 6*sigma
   //To get 95%, psfSize must be >= 4*sigma
-  float scaleFactor = 1;
+  float scaleFactor = 4;
 
   //Compute size and index for the new PSF image
   itkFloatImage::SizeType psfSize;
-  psfSize[0] = 3;//(int)ceil(scaleFactor*sigmaX / HRSpacing[0]) + 2;
-  psfSize[1] = 3;//(int)ceil(scaleFactor*sigmaY / HRSpacing[1]) + 2;
-  psfSize[2] = 3;//(int)ceil(scaleFactor*sigmaZ / HRSpacing[2]) + 2;
+  psfSize[0] = (int)ceil(scaleFactor*sigmaX / HRSpacing[0]) + 2;
+  psfSize[1] = (int)ceil(scaleFactor*sigmaY / HRSpacing[1]) + 2;
+  psfSize[2] = (int)ceil(scaleFactor*sigmaZ / HRSpacing[2]) + 2;
 
   itkFloatImage::IndexType psfIndex;
   psfIndex[0] = 0;
@@ -259,7 +259,7 @@ void PandoraBoxReconstructionFilters::ComputePSFImage(itkFloatImagePointer & PSF
   }
 }
 
-void PandoraBoxReconstructionFilters::ComputerObservationModelParameters(vnl_sparse_matrix<double> & H, vnl_vector<double> & Y, vnl_vector<double> & X, itkFloatImagePointer & HRImage, std::vector< std::vector<itkFloatImagePointer> > & maskStacks, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkTransformType::Pointer> > & inverseAffineSBSTransforms, itkFloatImagePointer & PSFImage)
+void PandoraBoxReconstructionFilters::ComputerObservationModelParameters(vnl_sparse_matrix<float> & H, vnl_vector<float> & Y, vnl_vector<float> & X, itkFloatImagePointer & HRImage, std::vector< std::vector<itkFloatImagePointer> > & maskStacks, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkTransformType::Pointer> > & inverseAffineSBSTransforms, itkFloatImagePointer & PSFImage)
 {
   //Principle: for each voxel of the LR images, we compute the influence of each voxel of the PSF (centered at the current LR voxel) and add the corresponding influence value (PSF value * interpolation weight) in the matrix H
 
@@ -440,8 +440,8 @@ void PandoraBoxReconstructionFilters::ComputerObservationModelParameters(vnl_spa
 
     double sum = H.sum_row(i);
 
-    vnl_sparse_matrix<double>::row & r = H.get_row(i);
-    vnl_sparse_matrix<double>::row::iterator col_iter;
+    vnl_sparse_matrix<float>::row & r = H.get_row(i);
+    vnl_sparse_matrix<float>::row::iterator col_iter;
 
     for (col_iter = r.begin(); col_iter != r.end(); ++col_iter)
       (*col_iter).second = (*col_iter).second / sum;
@@ -545,7 +545,7 @@ void PandoraBoxReconstructionFilters::ImageFusionByInjection(itkFloatImagePointe
   }
 }
 
-void PandoraBoxReconstructionFilters::SimulateObservations(vnl_sparse_matrix<double> & H, vnl_vector<double> & Y, vnl_vector<double> & X, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkFloatImagePointer> > & outputStacks)
+void PandoraBoxReconstructionFilters::SimulateObservations(vnl_sparse_matrix<float> & H, vnl_vector<float> & X, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkFloatImagePointer> > & outputStacks)
 {
 
   std::cout<<"SimulateObservations"<<std::endl;
@@ -563,7 +563,7 @@ void PandoraBoxReconstructionFilters::SimulateObservations(vnl_sparse_matrix<dou
   }
 
   //Compute H * x
-  vnl_vector<double> Hx;
+  vnl_vector<float> Hx;
   H.mult(X,Hx);
 
   //Now, we have to convert this vector into a set of stacks
