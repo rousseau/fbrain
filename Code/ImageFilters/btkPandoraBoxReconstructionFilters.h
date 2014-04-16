@@ -90,7 +90,7 @@ class PandoraBoxReconstructionFilters
     static void SimulateObservations(vnl_sparse_matrix<float> & H, vnl_vector<float> & X, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkFloatImagePointer> > & outputStacks);
 
     //Convert a 3D image to a vnl vector (HRimage -> X)
-    static void ConvertEDImageToVNLVector();
+    static void Convert3DImageToVNLVector(vnl_vector<float> & X, itkFloatImagePointer & inputImage);
 
     //SR (L1,L2,robust) + Reg(local, patch, tv)
 

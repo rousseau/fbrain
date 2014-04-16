@@ -604,4 +604,23 @@ void PandoraBoxReconstructionFilters::SimulateObservations(vnl_sparse_matrix<flo
   }
 }
 
+void PandoraBoxReconstructionFilters::Convert3DImageToVNLVector(vnl_vector<float> & X, itkFloatImagePointer & inputImage)
+{
+  //Initialize to zero the output vector X
+  unsigned int ncols = inputImage->GetLargestPossibleRegion().GetNumberOfPixels();
+  X.set_size(ncols);
+  X.fill(0.0);
+
+  itkFloatImage::IndexType index;
+  unsigned int linearIndex = 0;
+  itkFloatImage::SizeType  size  = inputImage->GetLargestPossibleRegion().GetSize();
+
+  itkFloatIteratorWithIndex itImage(inputImage,inputImage->GetLargestPossibleRegion());
+  for(itImage.GoToBegin(); !itImage.IsAtEnd(); ++itImage){
+    index = itImage.GetIndex();
+    linearIndex = index[0] + index[1]*size[0] + index[2]*size[0]*size[1];
+    X[linearIndex] = itImage.Get();
+  }
+}
+
 } // namespace btk
