@@ -759,4 +759,50 @@ void PandoraBoxReconstructionFilters::IterativeBackProjection(itkFloatImagePoint
   ConvertVNLVectorTo3DImage(outputImage,X);
 }
 
+void PandoraBoxReconstructionFilters::ConvertParametersToRigidMatrix(itkTransformType::Pointer outputTransform, std::vector<float> & inputParameters)
+{
+  //Quite ugly (and slow) way to do that ! (but we keep the flexibility of using MatrixOffsetTransformBase instead of specific transform such as Euler or Affine)
+  //Create a ITK-based Euler transform, compute matrix, and then get parameters
+  //inputParameters : 3 rotation angles (degrees) and 3 translations (mm)
+  //Angles must be in degrees here
+
+  // constant for converting degrees into radians
+  const double dtr = ( vcl_atan(1.0) * 4.0 ) / 180.0;
+
+  itk::Euler3DTransform<double>::Pointer eulerTransform = itk::Euler3DTransform<double>::New();
+  eulerTransform->SetRotation(dtr*inputParameters[0], dtr*inputParameters[1], dtr*inputParameters[2]);
+  outputTransform->SetMatrix( eulerTransform->GetMatrix() );
+
+  itkTransformType::OutputVectorType translation;
+  translation[0] = inputParameters[3];
+  translation[1] = inputParameters[4];
+  translation[2] = inputParameters[5];
+
+  outputTransform->SetTranslation( translation );
+}
+
+void PandoraBoxReconstructionFilters::ConvertRigidMatrixToParameters(std::vector<float> & outputParameters, itkTransformType::Pointer inputTransform)
+{
+  //Same as above (ConvertParametersToRigidMatrix)
+  //Use a ITK-based Euler transform to compute the parameters
+
+  // constant for converting degrees into radians
+  const double rtd = 180.0 / ( vcl_atan(1.0) * 4.0 ) ;
+
+  itk::Euler3DTransform<double>::Pointer eulerTransform = itk::Euler3DTransform<double>::New();
+  eulerTransform->SetMatrix( inputTransform->GetMatrix() );
+
+  outputParameters[0] = eulerTransform->GetAngleX() * rtd;
+  outputParameters[1] = eulerTransform->GetAngleY() * rtd;
+  outputParameters[2] = eulerTransform->GetAngleZ() * rtd;
+
+  itkTransformType::OutputVectorType translation;
+  translation = inputTransform->GetTranslation();
+  outputParameters[3] = translation[0];
+  outputParameters[4] = translation[1];
+  outputParameters[5] = translation[2];
+}
+
+
+
 } // namespace btk

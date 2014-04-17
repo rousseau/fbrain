@@ -52,6 +52,7 @@
 #include "itkLinearInterpolateImageFunction.h"
 #include "itkBSplineInterpolationWeightFunction.h"
 #include "itkSubtractImageFilter.h"
+#include "itkEuler3DTransform.h"
 
 #include "vnl/vnl_sparse_matrix.h"
 
@@ -103,6 +104,16 @@ class PandoraBoxReconstructionFilters
     static void IterativeBackProjection(itkFloatImagePointer & outputImage, itkFloatImage::SpacingType & outputSpacing, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkFloatImagePointer> > & maskStacks, std::vector< std::vector<itkTransformType::Pointer> > & affineSBSTransforms, std::vector< std::vector<itkTransformType::Pointer> > & inverseAffineSBSTransforms, unsigned int maxIterations);
 
     //SR (L1,L2,robust) + Reg(local, patch, tv)
+
+    //Common functions for slice motion estimation
+    //By default, the center of the transforms is 0,0,0 in the physical space.
+    //It has to be checked whether this choice is good enough in our case, or whether we should move it to the center of the slice
+
+    //Convert parameters to rigid transform matrix
+    static void ConvertParametersToRigidMatrix(itkTransformType::Pointer outputTransform, std::vector<float> & inputParameters);
+
+    //Convert rigid transform matrix to parameters
+    static void ConvertRigidMatrixToParameters(std::vector<float> & outputParameters, itkTransformType::Pointer inputTransform);
 
     //Slice motion estimation using a 3D reference image
 
