@@ -186,6 +186,7 @@ void PandoraBoxReconstructionFilters::Project3DImageToSliceStack(std::vector<itk
 
 void PandoraBoxReconstructionFilters::ComputePSFImage(itkFloatImagePointer & PSFImage, itkFloatImage::SpacingType HRSpacing, itkFloatImage::SpacingType LRSpacing)
 {
+  std::cout<<"ComputePSFImage"<<std::endl;
   //Use a 3D Gaussian in this function
   float cst = 2*sqrt(2*log(2.0));
   float sigmaX = 1.2 * LRSpacing[0] / cst;
@@ -262,7 +263,7 @@ void PandoraBoxReconstructionFilters::ComputePSFImage(itkFloatImagePointer & PSF
 void PandoraBoxReconstructionFilters::ComputerObservationModelParameters(vnl_sparse_matrix<float> & H, vnl_vector<float> & Y, vnl_vector<float> & X, itkFloatImagePointer & HRImage, std::vector< std::vector<itkFloatImagePointer> > & maskStacks, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkTransformType::Pointer> > & inverseAffineSBSTransforms, itkFloatImagePointer & PSFImage)
 {
   //Principle: for each voxel of the LR images, we compute the influence of each voxel of the PSF (centered at the current LR voxel) and add the corresponding influence value (PSF value * interpolation weight) in the matrix H
-
+  std::cout<<"ComputerObservationModelParameters"<<std::endl;
   // Set size of matrices
   unsigned int ncols = HRImage->GetLargestPossibleRegion().GetNumberOfPixels();
 
@@ -459,6 +460,7 @@ void PandoraBoxReconstructionFilters::ComputerObservationModelParameters(vnl_spa
 
 void PandoraBoxReconstructionFilters::ImageFusionByInjection(itkFloatImagePointer & outputImage, itkFloatImagePointer & maskImage, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkTransformType::Pointer> > & affineSBSTransforms)
 {
+  std::cout<<"ImageFusionByInjection"<<std::endl;
   //Strictly speaking, this is not an injection process, but il's faster to do it this way
   itkFloatImage::PointType outputPoint;      //physical point in HR output image
   itkFloatImage::IndexType outputIndex;      //index in HR output image
@@ -547,7 +549,6 @@ void PandoraBoxReconstructionFilters::ImageFusionByInjection(itkFloatImagePointe
 
 void PandoraBoxReconstructionFilters::SimulateObservations(vnl_sparse_matrix<float> & H, vnl_vector<float> & X, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkFloatImagePointer> > & outputStacks)
 {
-
   std::cout<<"SimulateObservations"<<std::endl;
   std::vector< std::vector<unsigned int> > offset;
   //offset is used to fill correctly the vector Y with the input LR image values (offset for the linear index)
@@ -606,6 +607,7 @@ void PandoraBoxReconstructionFilters::SimulateObservations(vnl_sparse_matrix<flo
 
 void PandoraBoxReconstructionFilters::Convert3DImageToVNLVector(vnl_vector<float> & X, itkFloatImagePointer & inputImage)
 {
+  std::cout<<"Convert3DImageToVNLVector"<<std::endl;
   //Initialize to zero the output vector X
   unsigned int ncols = inputImage->GetLargestPossibleRegion().GetNumberOfPixels();
   X.set_size(ncols);
@@ -623,8 +625,27 @@ void PandoraBoxReconstructionFilters::Convert3DImageToVNLVector(vnl_vector<float
   }
 }
 
+void PandoraBoxReconstructionFilters::ConvertVNLVectorTo3DImage(itkFloatImagePointer & outputImage, vnl_vector<float> & X)
+{
+  std::cout<<"ConvertVNLVectorTo3DImage"<<std::endl;
+  //Initialize the output image to zero
+  outputImage->FillBuffer(0.0);
+
+  itkFloatImage::IndexType index;
+  unsigned int linearIndex = 0;
+  itkFloatImage::SizeType  size  = outputImage->GetLargestPossibleRegion().GetSize();
+
+  itkFloatIteratorWithIndex itImage(outputImage,outputImage->GetLargestPossibleRegion());
+  for(itImage.GoToBegin(); !itImage.IsAtEnd(); ++itImage){
+    index = itImage.GetIndex();
+    linearIndex = index[0] + index[1]*size[0] + index[2]*size[0]*size[1];
+    itImage.Set( X[linearIndex] );
+  }
+}
+
 void PandoraBoxReconstructionFilters::ConvertVNLVectorToSliceStack(std::vector< std::vector<itkFloatImagePointer> > & outputStacks, vnl_vector<float> & Y)
 {
+  std::cout<<"ConvertVNLVectorToSliceStack"<<std::endl;
   if(outputStacks.size() == 0)
   {
     std::cout<<"WARNING : the outputStacks need to be properly resized before using this function"<<std::endl;
@@ -676,6 +697,66 @@ void PandoraBoxReconstructionFilters::ConvertVNLVectorToSliceStack(std::vector< 
     }
   }
 
+}
+
+void PandoraBoxReconstructionFilters::IterativeBackProjection(itkFloatImagePointer & outputImage, itkFloatImage::SpacingType & outputSpacing, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkFloatImagePointer> > & maskStacks, std::vector< std::vector<itkTransformType::Pointer> > & affineSBSTransforms, std::vector< std::vector<itkTransformType::Pointer> > & inverseAffineSBSTransforms, unsigned int maxIterations)
+{
+  std::cout<<"IterativeBackProjection"<<std::endl;
+  //Create a first estimate of the output HR image
+  itkFloatImage::Pointer tmpImage;
+  ConvertSliceStackTo3DImage(tmpImage, inputStacks[0]);
+  PandoraBoxImageFilters::ResampleImageUsingSpacing(tmpImage,outputImage,outputSpacing,1);
+
+  //Use image fusion to refine the estimate of the output HR image
+  itkFloatImage::Pointer maskHRImage = btk::ImageHelper< itkFloatImage > ::CreateNewImageFromPhysicalSpaceOf(outputImage,1.0);
+  ImageFusionByInjection(outputImage, maskHRImage, inputStacks, affineSBSTransforms);
+
+  //Estimate PSF
+  itkFloatImage::Pointer psfImage;
+  ComputePSFImage(psfImage, outputSpacing, inputStacks[0][0]->GetSpacing() );
+
+  //Compute the parameters (H,X,Y) of the observation model
+  vnl_sparse_matrix<float> H;
+  vnl_vector<float>        Y;
+  vnl_vector<float>        X;
+  ComputerObservationModelParameters(H, Y, X, outputImage, maskStacks, inputStacks, inverseAffineSBSTransforms, psfImage);
+
+  //Loop over iterations
+  for(unsigned int iteration=0; iteration < maxIterations; iteration++)
+  {
+    //Simulate observations
+    std::vector< std::vector<itkFloatImage::Pointer> > simulatedLRStacks;
+    SimulateObservations(H, X, inputStacks, simulatedLRStacks);
+
+    //Compute difference image stacks
+    std::vector< std::vector<itkFloatImage::Pointer> > diffStacks;
+    diffStacks.resize( inputStacks.size() );
+    for(unsigned int i=0; i<inputStacks.size(); i++)
+    {
+      diffStacks[i].resize( inputStacks[i].size() );
+      for(unsigned int s=0; s<inputStacks[i].size(); s++)
+      {
+        //Compute the difference for every slice of the stacks (using ITK filter)
+        itk::SubtractImageFilter <itkFloatImage, itkFloatImage >::Pointer subtractFilter = itk::SubtractImageFilter <itkFloatImage, itkFloatImage >::New ();
+        subtractFilter->SetInput1(inputStacks[i][s]);
+        subtractFilter->SetInput2(simulatedLRStacks[i][s]);
+        subtractFilter->Update();
+        diffStacks[i][s] = subtractFilter->GetOutput();
+      }
+    }
+
+    //Create a 3D difference image
+    itkFloatImage::Pointer diffImage = btk::ImageHelper< itkFloatImage > ::CreateNewImageFromPhysicalSpaceOf(outputImage,0.0);
+    ImageFusionByInjection(diffImage, maskHRImage, diffStacks, affineSBSTransforms);
+
+    //Update the output HR image
+    vnl_vector<float>        diff;
+    Convert3DImageToVNLVector(diff, diffImage);
+    X = X + diff;
+  }
+
+  //Convert X to 3D image
+  ConvertVNLVectorTo3DImage(outputImage,X);
 }
 
 } // namespace btk

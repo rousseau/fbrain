@@ -51,6 +51,7 @@
 #include "itkContinuousIndex.h"
 #include "itkLinearInterpolateImageFunction.h"
 #include "itkBSplineInterpolationWeightFunction.h"
+#include "itkSubtractImageFilter.h"
 
 #include "vnl/vnl_sparse_matrix.h"
 
@@ -92,9 +93,14 @@ class PandoraBoxReconstructionFilters
     //Convert a 3D image to a vnl vector (HRimage -> X)
     static void Convert3DImageToVNLVector(vnl_vector<float> & X, itkFloatImagePointer & inputImage);
 
+    //Convert a vnl vector to a 3D image (X -> HRimage)
+    static void ConvertVNLVectorTo3DImage(itkFloatImagePointer & outputImage, vnl_vector<float> & X);
+
     //Convert a vnl vector into a image stack (Y -> stacks)
     static void ConvertVNLVectorToSliceStack(std::vector< std::vector<itkFloatImagePointer> > & outputStacks, vnl_vector<float> & Y);
 
+    //Iterative back projection
+    static void IterativeBackProjection(itkFloatImagePointer & outputImage, itkFloatImage::SpacingType & outputSpacing, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkFloatImagePointer> > & maskStacks, std::vector< std::vector<itkTransformType::Pointer> > & affineSBSTransforms, std::vector< std::vector<itkTransformType::Pointer> > & inverseAffineSBSTransforms, unsigned int maxIterations);
 
     //SR (L1,L2,robust) + Reg(local, patch, tv)
 
