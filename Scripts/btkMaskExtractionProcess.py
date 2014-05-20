@@ -151,8 +151,8 @@ for im in images:
     inputimage = input_directory+'/'+im+format
     inputmask  = output_directory+'/'+im+'_bbox_crop_mask'+format
     outputimage= output_directory+'/'+im+'_bbox_crop'+format
-    #go = btk_apply_mask + ' -i '+inputimage+' -m '+inputmask+' -o '+outputimage
-    go = image_math+' --in '+inputimage+' --in '+inputmask+' --mul --out '+outputimage
+    go = btk_apply_mask + ' -i '+inputimage+' -m '+inputmask+' -o '+outputimage
+    #go = image_math+' --in '+inputimage+' --in '+inputmask+' --mul --out '+outputimage
     print(go)
     os.system(go)   
     temporary_files.append(outputimage)
