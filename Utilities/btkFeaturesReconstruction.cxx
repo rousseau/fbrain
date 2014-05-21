@@ -96,6 +96,7 @@ int main(int argc, char *argv[])
         // Optional arguments
         TCLAP::ValueArg< unsigned int > numberOfSamplesPerFeatureArg("s","number_of_samples", "Number of samples per feature (for reconstruction, default; 3)",false, 3, "positive integer", cmd);
         TCLAP::ValueArg< float >                  kernelBandwidthArg("b", "kernel_bandwidth", "Bandwidth of the kernel use for cost function", false, 1.0, "positive real", cmd);
+        TCLAP::SwitchArg                 populationReconstructionArg("", "population", "Reconstruct the initial population", cmd);
 
         // Parsing arguments
         cmd.parse(argc, argv);
@@ -109,6 +110,7 @@ int main(int argc, char *argv[])
 
         unsigned int numberOfSamplesPerFeature = numberOfSamplesPerFeatureArg.getValue();
         float                  kernelBandwidth = kernelBandwidthArg.getValue();
+        bool          populationReconstruction = populationReconstructionArg.getValue();
 
 
         //
@@ -238,65 +240,74 @@ int main(int argc, char *argv[])
         // Processing
         //
 
-        btkCoutMacro("Computing selected features range...");
+        vnl_matrix< double > parameters;
 
-        // Compute range of selected features
-        vnl_matrix< double > range(X.rows(),numberOfSamplesPerFeature);
-        range.fill(0.0);
-
-        for(unsigned int i = 0; i < range.rows(); i++)
+        if(!populationReconstruction)
         {
-            // min range
-            range(i,0) = X.get_row(i).min_value();
+            btkCoutMacro("Computing selected features range...");
 
-            // max range
-            range(i,range.columns()-1) = X.get_row(i).max_value();
+            // Compute range of selected features
+            vnl_matrix< double > range(X.rows(),numberOfSamplesPerFeature);
+            range.fill(0.0);
 
-            // increment
-            double increment = (range(i,range.columns()-1)-range(i,0)) / static_cast< double >(numberOfSamplesPerFeature-1);
-
-            // Fill the other columns of the matrix
-            for(unsigned int j = 1; j < range.cols()-1; j++)
+            for(unsigned int i = 0; i < range.rows(); i++)
             {
-                range(i,j) += range(i,j-1) + increment;
-            } // for each column
-        } // for each row
+                // min range
+                range(i,0) = X.get_row(i).min_value();
 
-        btkCoutMacro("done.");
+                // max range
+                range(i,range.columns()-1) = X.get_row(i).max_value();
 
-        btkCoutMacro("Computing mean vector...");
+                // increment
+                double increment = (range(i,range.columns()-1)-range(i,0)) / static_cast< double >(numberOfSamplesPerFeature-1);
 
-        // Compute the mean vector of reduced parameters
-        vnl_vector< double > meanParameters(X.rows());
+                // Fill the other columns of the matrix
+                for(unsigned int j = 1; j < range.cols()-1; j++)
+                {
+                    range(i,j) += range(i,j-1) + increment;
+                } // for each column
+            } // for each row
 
-        for(int i = 0; i < meanParameters.size(); i++)
-        {
-            meanParameters(i) = X.get_row(i).mean();
-        } // for each row
+            btkCoutMacro("done.");
 
-        std::cerr << std::endl;
+            btkCoutMacro("Computing mean vector...");
 
-        btkCoutMacro("done.");
+            // Compute the mean vector of reduced parameters
+            vnl_vector< double > meanParameters(X.rows());
 
-        btkCoutMacro("Computing the varying parameters matrix...");
-
-        // Compute the varying parameters matrix
-        vnl_matrix< double > parameters(range.rows(),range.rows()*numberOfSamplesPerFeature);
-
-        for(unsigned int j = 0; j < parameters.columns(); j++)
-        {
-            parameters.set_column(j, meanParameters);
-        }
-
-        for(unsigned int i = 0; i < range.rows(); i++)
-        {
-            for(unsigned int j = 0; j < range.columns(); j++)
+            for(int i = 0; i < meanParameters.size(); i++)
             {
-                parameters(i,numberOfSamplesPerFeature*i + j) = range(i,j);
+                meanParameters(i) = X.get_row(i).mean();
+            } // for each row
+
+            std::cerr << std::endl;
+
+            btkCoutMacro("done.");
+
+            btkCoutMacro("Computing the varying parameters matrix...");
+
+            // Compute the varying parameters matrix
+            parameters = vnl_matrix< double >(range.rows(),range.rows()*numberOfSamplesPerFeature);
+
+            for(unsigned int j = 0; j < parameters.columns(); j++)
+            {
+                parameters.set_column(j, meanParameters);
             }
-        }
 
-        btkCoutMacro("done.");
+            for(unsigned int i = 0; i < range.rows(); i++)
+            {
+                for(unsigned int j = 0; j < range.columns(); j++)
+                {
+                    parameters(i,numberOfSamplesPerFeature*i + j) = range(i,j);
+                }
+            }
+
+            btkCoutMacro("done.");
+        }
+        else // populationReconstruction
+        {
+            parameters = X;
+        }
 
         // Compute bandwidth matrix diagonal matrix
         vnl_diag_matrix< double > H(numberOfReducedParameters*3);
@@ -353,7 +364,15 @@ int main(int argc, char *argv[])
 
             // Write file
             std::stringstream s;
-            s << outputFileName << "_feature-" << j / numberOfSamplesPerFeature << "_increment-" << j % numberOfSamplesPerFeature << ".nii.gz";
+
+            if(!populationReconstruction)
+            {
+                s << outputFileName << "_feature-" << j / numberOfSamplesPerFeature << "_increment-" << j % numberOfSamplesPerFeature << ".nii.gz";
+            }
+            else // populationReconstruction
+            {
+                s << outputFileName << "_reconstruction_" << imagesFileNames[j] << ".nii.gz";
+            }
 
             btk::ImageHelper< DisplacementField >::WriteImage(reconstructedImage, s.str());
         }
