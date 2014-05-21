@@ -81,12 +81,17 @@ int main(int argc, char *argv[])
         TCLAP::ValueArg< std::string > selectedFeaturesFileNamesArg("r", "reduced_mask", "Selected features filename", true, "", "string", cmd);
         TCLAP::ValueArg< std::string > outputFileNameArg("o", "output", "Output markup list filename (Default: \"SelectedFeatures.fcsv\")", false, "SelectedFeatures.fcsv", "string", cmd);
 
+        // Options
+        TCLAP::SwitchArg vtkFileArg("", "vtk", "Produce VTK files in output", cmd);
+
         // Parsing arguments
         cmd.parse(argc, argv);
 
         // Get back arguments' values
         std::string selectedFeaturesFileName = selectedFeaturesFileNamesArg.getValue();
         std::string           outputFileName = outputFileNameArg.getValue();
+
+        bool vtkFile = vtkFileArg.getValue();
 
 
         //
@@ -117,29 +122,69 @@ int main(int argc, char *argv[])
             btkException("Error when writing in file !");
         }
 
-        outputFileStream << "# Markups fiducial file version = 4.3" << std::endl;
-        outputFileStream << "# CoordinateSystem = 0" << std::endl;
-        outputFileStream << "# columns = id,x,y,z,ow,ox,oy,oz,vis,sel,lock,label,desc,associatedNodeID" << std::endl;
-
-        // Get origin of the image
-        ImageMask::PointType origin = selectedFeaturesImage->GetOrigin();
-
-        // Run through selected features to add to markup list
-        ImageMaskIterator selectedFeaturesIt(selectedFeaturesImage, maskedRegion);
-        unsigned int featureCount = 1;
-
-        for(selectedFeaturesIt.GoToBegin(); !selectedFeaturesIt.IsAtEnd(); ++selectedFeaturesIt)
+        if(vtkFile)
         {
-            if(selectedFeaturesIt.Get() > 0)
+            outputFileStream << "# vtk DataFile Version 3.0" << std::endl;
+            outputFileStream << "vtk output" << std::endl;
+            outputFileStream << "ASCII" << std::endl;
+            outputFileStream << "DATASET POLYDATA" << std::endl;
+
+            // Run through selected features to add to markup list
+            ImageMaskIterator selectedFeaturesIt(selectedFeaturesImage, maskedRegion);
+
+            // Get the number of features
+            unsigned int featureCount = 0;
+
+            for(selectedFeaturesIt.GoToBegin(); !selectedFeaturesIt.IsAtEnd(); ++selectedFeaturesIt)
             {
-                // Convert image coordinate to physical coordinates
-                ImageMask::IndexType index = selectedFeaturesIt.GetIndex();
-                ImageMask::PointType point;
-                selectedFeaturesImage->TransformIndexToPhysicalPoint(index,point);
+                if(selectedFeaturesIt.Get() > 0)
+                {
+                    featureCount++;
+                }
+            }
 
-                outputFileStream << "vtkMRMLMarkupsFiducialNode_0," << -point[0] << "," << -point[1] << "," << point[2] << "," << origin[0] << "," << origin[1] << "," << origin[2] << ",1,1,1,1,F-" << featureCount << ",Feature " << featureCount << "," << std::endl;
+            outputFileStream << "POINTS " << featureCount << " float" << std::endl;
 
-                featureCount++;
+            // Write features
+            for(selectedFeaturesIt.GoToBegin(); !selectedFeaturesIt.IsAtEnd(); ++selectedFeaturesIt)
+            {
+                if(selectedFeaturesIt.Get() > 0)
+                {
+                    // Convert image coordinate to physical coordinates
+                    ImageMask::IndexType index = selectedFeaturesIt.GetIndex();
+                    ImageMask::PointType point;
+                    selectedFeaturesImage->TransformIndexToPhysicalPoint(index,point);
+
+                    outputFileStream << -point[0] << " " << -point[1] << " " << point[2] << std::endl;
+                }
+            }
+        }
+        else // fcsv file
+        {
+            outputFileStream << "# Markups fiducial file version = 4.3" << std::endl;
+            outputFileStream << "# CoordinateSystem = 0" << std::endl;
+            outputFileStream << "# columns = id,x,y,z,ow,ox,oy,oz,vis,sel,lock,label,desc,associatedNodeID" << std::endl;
+
+            // Get origin of the image
+            ImageMask::PointType origin = selectedFeaturesImage->GetOrigin();
+
+            // Run through selected features to add to markup list
+            ImageMaskIterator selectedFeaturesIt(selectedFeaturesImage, maskedRegion);
+            unsigned int featureCount = 1;
+
+            for(selectedFeaturesIt.GoToBegin(); !selectedFeaturesIt.IsAtEnd(); ++selectedFeaturesIt)
+            {
+                if(selectedFeaturesIt.Get() > 0)
+                {
+                    // Convert image coordinate to physical coordinates
+                    ImageMask::IndexType index = selectedFeaturesIt.GetIndex();
+                    ImageMask::PointType point;
+                    selectedFeaturesImage->TransformIndexToPhysicalPoint(index,point);
+
+                    outputFileStream << "vtkMRMLMarkupsFiducialNode_0," << -point[0] << "," << -point[1] << "," << point[2] << "," << origin[0] << "," << origin[1] << "," << origin[2] << ",1,1,1,1,F-" << featureCount << ",Feature " << featureCount << "," << std::endl;
+
+                    featureCount++;
+                }
             }
         }
 
