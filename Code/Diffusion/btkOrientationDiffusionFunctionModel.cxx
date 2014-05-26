@@ -577,10 +577,9 @@ std::vector< btk::GradientDirection > OrientationDiffusionFunctionModel::MeanDir
     for(unsigned int i = 0; i < meanDirections.size(); i++)
     {
         float dotProduct = meanDirections[i]*vector;
-        float      alpha = std::acos( dotProduct / (meanDirections[i].GetNorm()*vector.GetNorm()) );
 
         // Check if the current direction is in the solid angle
-        if(alpha <= angle)
+        if( dotProduct >= std::cos(angle) )
         {
             restrictedMeanDirections.push_back(meanDirections[i]);
         }

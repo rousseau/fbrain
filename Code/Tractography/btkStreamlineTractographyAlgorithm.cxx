@@ -81,9 +81,10 @@ vtkSmartPointer< vtkPolyData > StreamlineTractographyAlgorithm::PropagateSeed(Se
     // Processing
     for(std::vector< btk::GradientDirection >::iterator it = nextDirections.begin(); it != nextDirections.end(); it++)
     {
-        //
-        // Estimate Fiber
-        //
+
+      //
+      // Estimate Fiber
+      //
 
         std::vector< Self::PhysicalPoint > points;
         points.push_back(point);
@@ -246,6 +247,7 @@ void StreamlineTractographyAlgorithm::PropagateSeedRK1(std::vector< Self::Physic
 
             // Search next direction
             std::vector< btk::GradientDirection > meanDirections = m_DiffusionModel->MeanDirectionsAt(nextPoint, k1, m_ThresholdAngle);
+
             nextDirection = this->SelectClosestDirection(meanDirections, k1);
 
             if(nextDirection.IsNull())

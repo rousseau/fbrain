@@ -145,6 +145,9 @@ int main(int argc, char *argv[])
         btk::TractographyAlgorithm::MaskImage::Pointer mask = btk::ImageHelper< btk::TractographyAlgorithm::MaskImage >::ReadImage(maskFileName);
         btk::TractographyAlgorithm::LabelImage::Pointer roi = btk::ImageHelper< btk::TractographyAlgorithm::LabelImage >::ReadImage(roiFileName);
 
+        //dcm2nii provides gradient tables in image coordinate system
+        //btkTractography assumes that the gradient table is expressed in world coordinate system
+        dwiSequence->ConvertGradientTableToPhysicalCoordinates();
 
         //
         // Compute diffusion signal

@@ -435,7 +435,7 @@ int main(int argc, char *argv[])
     btk::DiffusionSequence::Pointer inputSequence = btk::DiffusionSequenceHelper::ReadSequence(inputSequenceFileName);
 
     // VTK works in image space coordinates
-    inputSequence->ConvertGradientTableToImageCoordinates();
+    //inputSequence->ConvertGradientTableToImageCoordinates();
 
     // Mask (if any)
     ImageMask::Pointer inputMask = NULL;

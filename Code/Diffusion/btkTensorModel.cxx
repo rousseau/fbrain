@@ -288,10 +288,8 @@ std::vector< btk::GradientDirection > TensorModel::MeanDirectionsAt(ContinuousIn
         dotProduct        *= -1;
     }
 
-    float alpha = std::acos( dotProduct / (meanDirections[0].GetNorm()*vector.GetNorm()) );
-
     // Check if the direction is in the solid angle
-    if(alpha <= angle)
+    if( dotProduct >= std::cos(angle) )
     {
         restrictedMeanDirections.push_back(meanDirections[0]);
     }
