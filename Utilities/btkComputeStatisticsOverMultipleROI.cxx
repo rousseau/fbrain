@@ -45,6 +45,7 @@
 #include "iostream"
 #include "fstream"
 #include <tclap/CmdLine.h>
+#include "sstream"
 
 
 int main(int argc, char * argv[])
@@ -160,7 +161,13 @@ int main(int argc, char * argv[])
 
         std::cout<<"Label "<<label<<std::endl;
 
-        std::string textfilename = histFile+"_label"+std::to_string(label)+".txt";
+        //The following line is not yet supported by all compilers
+        //std::string textfilename = histFile+"_label"+std::to_string(label)+".txt";
+
+        std::ostringstream stmp ;
+        stmp << label;
+        std::string textfilename = histFile+"_label"+stmp.str()+".txt";
+
         std::ofstream textFile;
         textFile.open(textfilename);
 
