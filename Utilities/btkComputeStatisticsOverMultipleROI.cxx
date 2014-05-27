@@ -169,7 +169,7 @@ int main(int argc, char * argv[])
         std::string textfilename = histFile+"_label"+stmp.str()+".txt";
 
         std::ofstream textFile;
-        textFile.open(textfilename);
+        textFile.open(textfilename.c_str());
 
         for(inputIterator.GoToBegin(),labelIterator.GoToBegin(),weightIterator.GoToBegin(); !inputIterator.IsAtEnd(); ++inputIterator, ++weightIterator, ++labelIterator){
 
