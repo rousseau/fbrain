@@ -204,7 +204,6 @@ int main( int argc, char *argv[])
         // (only rigid part is necessary for gradient table reorientation)
         vnl_matrix< PrecisionType > R(3,3);
         R.set_identity();
-        //R = transform->GetMatrix().GetVnlMatrix();
 
         //Get B0 image
         Sequence::RegionType B0currentRegion = inputSequence->GetLargestPossibleRegion();
@@ -213,7 +212,6 @@ int main( int argc, char *argv[])
         extractor->SetExtractionRegion(B0currentRegion);
         extractor->Update();
         Image::Pointer B0Image = extractor->GetOutput();
-
 
         //This part must be validated using other sequences -------------------------
         // directions of B0 image
@@ -231,11 +229,13 @@ int main( int argc, char *argv[])
         // transform to apply
         vnl_matrix< PrecisionType > C(3,3);
         C = transform->GetMatrix().GetVnlMatrix();
+
+        std::cout<<"Transform from the reference image to the moving image \n"<<C;
+
         // full transfo to apply to the gradient table
-        //R = C.transpose() * B.transpose() * A;  //1 - Stan like ?
-        //R = B.transpose() * C.transpose() * A;  //2 - logique (vecteurs en coordonnées image)
-        //R = B * C.transpose() * A.transpose();  //3 - logique inverse
-        R = C.transpose(); //4 - logique (vecteur en coordonnées monde)
+        R = B.transpose() * C.transpose() * A;  //the gradient table in nifti (converted using DCM2NII) is expressed in image coordinates
+
+        std::cout<<"Transformation applied to the gradient table : \n"<<R;
 
         vnl_matrix< PrecisionType > PQ = R;
         vnl_matrix< PrecisionType > NQ = R;
@@ -258,17 +258,15 @@ int main( int argc, char *argv[])
         }
 
 
-        // Define rigid transformation for gradient table reorientation
-        EulerTransform::Pointer gradientTableTransform = EulerTransform::New();
-        gradientTableTransform->SetMatrix(NQ);
+        //DCM2NII provides gradient table in image coordinates.
+        //Here, we have just to apply the rotation matrix NQ to the gradient table.
 
         // Load input gradient table, rotate and save to new gradient table file
         GradientTable::Pointer inputGradientTable = GradientTable::New();
         inputGradientTable->SetNumberOfGradients(inputSequence->GetLargestPossibleRegion().GetSize(3));
-        inputGradientTable->SetImage(inputSequence);
-        inputGradientTable->SetTransform(gradientTableTransform);
         inputGradientTable->LoadFromFile(inputSequenceGradientsFileName.c_str());
-        inputGradientTable->RotateGradientsInWorldCoordinates();
+        inputGradientTable->SetRotationMatrix(NQ);
+        inputGradientTable->RotateGradients();
 
         std::cout << "done." << std::endl;
 
