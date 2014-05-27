@@ -256,10 +256,14 @@ int main( int argc, char * argv[] )
     fprintf( fw, "type: short\n");
     fprintf( fw, "dimension: 4\n");
     //TODO How to change space? NrrdIO option?
-    if ( lpsSwitchArg.isSet() )
+    if ( lpsSwitchArg.isSet() ){
+      std::cout<<"space: left-posterior-superior\n";
       fprintf( fw, "space: left-posterior-superior\n");
-    else
+    }
+    else{
+      std::cout<<"space: right-anterior-superior\n";
       fprintf( fw, "space: right-anterior-superior\n");
+    }
 
     if (lsssSwitchArg.isSet())
       fprintf( fw, "sizes: %ld %ld %ld %ld\n", imageSize[3], imageSize[0], imageSize[1], imageSize[2]);
@@ -276,6 +280,7 @@ int main( int argc, char * argv[] )
 
     if ( !lpsSwitchArg.isSet() )
     {
+      std::cout<<"Multiply by -1 the first and second rows of direction matrix\n";
       nrrdDir.scale_row(0,-1);
       nrrdDir.scale_row(1,-1);
     }
@@ -319,7 +324,7 @@ int main( int argc, char * argv[] )
     fprintf( fw, "measurement frame: (1,0,0) (0,1,0) (0,0,1)\n");
     fprintf( fw, "modality:=DWMRI\n");
 
-    // Express gradient directions in WC
+    // Express gradient directions in world coordinates
 
     vnl_vector< double > g(3);
     vnl_vector< double > gwc(3);
