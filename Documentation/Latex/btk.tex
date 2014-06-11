@@ -75,16 +75,16 @@ Any researcher reporting results using BTK should acknowledge this software by c
 
 \subsubsection{Dependencies}
 
-Baby Brain Toolkit (BTK) needs the following packages\footnote{BTK has been tested under Debian 6.0.7 and MacOSX 10.8.3}:
+Baby Brain Toolkit (BTK) needs the following packages\footnote{BTK has been tested under Ubuntu 12.04 and MacOSX 10.9}:
 \begin{itemize}
  \item \href{http://www.cmake.org}{CMake}, \href{http://tclap.sourceforge.net}{Tclap}, \href{http://openmp.org}{OpenMP}, \href{http://www.cs.umd.edu/\string~mount/ANN}{ANN}, \href{http://www.doxygen.org}{Doxygen} and \href{http://git-scm.com/}{Git}. These libraries can be installed using the following command line:
  \begin{itemize}
  \item for debian-based distributions: \texttt{apt-get install build-essential libgl1-mesa-dev libxt-dev cmake cmake-curses-gui libtclap-dev libgomp1 libann-dev  doxygen git-core}
  \item for MacOSX using macports\footnote{When configuring in cmake, please use /opt/local/include for TCLAP\_DIRECTORY}: \texttt{port install cmake tclap libANN doxygen git-core}
  \end{itemize}
- \item \href{http://www.itk.org/ITK/resources/software.html}{Insight Toolkit (ITK) version 4.3.1}
+ \item \href{http://www.itk.org/ITK/resources/software.html}{Insight Toolkit (ITK) version 4.5}
  \begin{itemize}
- \item Download the tar.gz archive of ITK v4.3.1
+ \item Download the tar.gz archive of ITK v4.5
  \item Extract the archive 
  \item Then open a terminal and type :
  \end{itemize}
@@ -99,8 +99,7 @@ following changes:
 \begin{verbatim}
 BUILD_TESTING = OFF
 CMAKE_BUILD_TYPE = Release
-ITK_USE_REVIEW = ON
-ITK_BUILD_ALL_MODULES = ON
+Module_ITKReview = ON
 BUILD_DOCUMENTATION = OFF
 \end{verbatim}
 Then press \texttt{[c]} to configure and \texttt{[g]} to generate the make file.
@@ -170,7 +169,7 @@ Then for generating the documentation run :
 
 
 Most of the programs of the BTK suite use the OpenMP library for multi-threading
-purpose\footnote{Please note that the current Apple compiler (llvm gcc 4.2.1) does not take into account OpenMP.}. The number of cores used can be tuned using the following command line
+purpose\footnote{Please note that the current Apple compiler does not take into account OpenMP.}. The number of cores used can be tuned using the following command line
 (in this example, 4 cores will be used): \texttt{export OMP\_NUM\_THREADS=4}
 \input{pipeline}
 \input{app}
