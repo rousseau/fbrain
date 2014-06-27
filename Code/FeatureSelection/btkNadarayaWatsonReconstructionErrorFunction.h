@@ -135,25 +135,28 @@ class NadarayaWatsonReconstructionErrorFunction : public FeatureSelectionCostFun
          * @brief Compute the nadaraya watson multivariate kernel estimator.
          * @param data Reduced parameters matrix.
          * @param v Input vector for kernel estimate.
+         * @param currentSampleJ Index of the current sample (for leave-one-out robustness)
          * @return A vector estimated by kernel regression.
          */
-        vnl_vector< double > NadarayaWatsonMultivariateKernelEstimator(vnl_matrix< double > &data, vnl_vector< double > &v);
+        vnl_vector< double > NadarayaWatsonMultivariateKernelEstimator(vnl_matrix< double > &data, vnl_vector< double > &v, unsigned int currentSampleJ);
 
         /**
          * @brief Compute the Nadaraya-Watson multivariate kernel estimator with parameter activation.
          * @param activatedIndex Index of parameter to test activation
          * @param v Input vector of the estimator
+         * @param currentSampleJ Index of the current sample (for leave-one-out robustness)
          * @return The vector estimated with parameter activation
          */
-        vnl_vector< double > NadarayaWatsonMultivariateKernelEstimatorActivation(unsigned int activatedIndex, vnl_vector< double > &v);
+        vnl_vector< double > NadarayaWatsonMultivariateKernelEstimatorActivation(unsigned int activatedIndex, vnl_vector< double > &v, unsigned int currentSampleJ);
 
         /**
          * @brief Compute the Nadaraya-Watson multivariate kernel estimator with parameter desactivation.
          * @param desactivatedIndex Index of parameter to test desactivation
          * @param v Input vector of the estimator
+         * @param currentSampleJ Index of the current sample (for leave-one-out robustness)
          * @return The vector estimated with parameter desactivation
          */
-        vnl_vector< double > NadarayaWatsonMultivariateKernelEstimatorDesactivation(unsigned int desactivatedIndex, vnl_vector< double > &v);
+        vnl_vector< double > NadarayaWatsonMultivariateKernelEstimatorDesactivation(unsigned int desactivatedIndex, vnl_vector< double > &v, unsigned int currentSampleJ);
 
         /**
          * @brief Compute the gaussian multivariate kernel.
