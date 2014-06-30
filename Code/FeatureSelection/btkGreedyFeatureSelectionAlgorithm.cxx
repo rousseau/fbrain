@@ -106,28 +106,29 @@ void GreedyFeatureSelectionAlgorithm::Update()
         // Search for minimal solution (if it exists)
         std::vector< double >::iterator itadd = std::min_element(costsadd.begin(), costsadd.end());
 
-        // When found, get the value and the index
         if(*itadd < minCost)
         {
+            // When found, get the value and the index
             minCost = *itadd;
             index_add = std::distance(costsadd.begin(), itadd);
+
+            // Add parameter with the minimal cost
+            w(index_add)              = 1;
+            e(index_add)              = oldCost - minCost;
+            numberOfActiveParameters += 1;
+            m_CostFunction->ActivateParameters(index_add);
+
+            // Fill output messages
+            message << "\tFound one parameter to add (" << index_add+1 << ") with cost equal to " << minCost << std::endl;
+            message << "\tUnexplained variance: " << minCost << " (" << 100.0 * (minCost / (minCost + e.sum())) << " %)" << std::endl;
         }
-
-        // Add parameter with the minimal cost
-        w(index_add)              = 1;
-        e(index_add)              = oldCost - minCost;
-        numberOfActiveParameters += 1;
-        m_CostFunction->ActivateParameters(index_add);
-
-        // Check for stability
-        if(btkFloatingEqual(e(index_add), 0.0))
+        else // No minimal value found, so the algorithm is converging
         {
             stability = true;
-        }
 
-        // Fill output messages
-        message << "\tFound one parameter to add (" << index_add+1 << ") with cost equal to " << minCost << std::endl;
-        message << "\tUnexplained variance: " << minCost << " (" << 100.0 * (minCost / (minCost + e.sum())) << " %)" << std::endl;
+            // Fill output messages
+            message << "\tThe algorithm has converged." << std::endl;
+        }
 
         // Send message to observer
         m_CurrentMessage = message.str();
