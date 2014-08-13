@@ -88,48 +88,61 @@ void ResampleImagesToBiggestImageFilter< TImage >::GenerateData()
         index[0] = 0; index[1] = 0; index[2] = 0;
         m_InputImages[i]->TransformIndexToPhysicalPoint(index, point);
 
-        if(point[0] < minPoint[0])
+        for(int d=0; d < 3; d++)
         {
-            minPoint[0] = point[0];
-        }
+          if(point[d] < minPoint[d])
+          {
+              minPoint[d] = point[d];
+          }
 
-        if(point[1] < minPoint[1])
-        {
-            minPoint[1] = point[1];
+          if(point[d] > maxPoint[d])
+          {
+              maxPoint[d] = point[d];
+          }
         }
-
-        if(point[2] < minPoint[2])
-        {
-            minPoint[2] = point[2];
-        }
-
 
         size = m_InputImages[i]->GetLargestPossibleRegion().GetSize();
         index[0] = size[0]-1; index[1] = size[1]-1; index[2] = size[2]-1;
         m_InputImages[i]->TransformIndexToPhysicalPoint(index, point);
 
-        if(point[0] > maxPoint[0])
+        for(int d=0; d < 3; d++)
         {
-            maxPoint[0] = point[0];
-        }
+          if(point[d] < minPoint[d])
+          {
+              minPoint[d] = point[d];
+          }
 
-        if(point[1] > maxPoint[1])
-        {
-            maxPoint[1] = point[1];
-        }
-
-        if(point[2] > maxPoint[2])
-        {
-            maxPoint[2] = point[2];
+          if(point[d] > maxPoint[d])
+          {
+              maxPoint[d] = point[d];
+          }
         }
     }
 
 
+    std::cout<<"min point : "<<minPoint<<std::endl;
+    std::cout<<"max point : "<<maxPoint<<std::endl;
+
     // Compute the reference layer information
     typename TImage::SpacingType newspacing = m_InputImages[0]->GetSpacing();
+    for(int i = 1; i < m_InputImages.size(); i++)
+    {
+      typename TImage::SpacingType currentspacing = m_InputImages[i]->GetSpacing();
+
+      for(int d=0; d < 3; d++)
+      {
+        if(currentspacing[d] < newspacing[d] )
+          newspacing[d] = currentspacing[d];
+      }
+    }
+
+    std::cout<<"Spacing of the output image:"<<newspacing[0]<<" "<<newspacing[1]<<" "<<newspacing[2]<<std::endl;
+
 
     typename TImage::SizeType newsize;
     newsize[0] = std::abs(maxPoint[0]-minPoint[0])/newspacing[0]; newsize[1] = std::abs(maxPoint[1]-minPoint[1])/newspacing[1]; newsize[2] = std::abs(maxPoint[2]-minPoint[2])/newspacing[2];
+
+    std::cout<<"Size of the output image:"<<newsize[0]<<" "<<newsize[1]<<" "<<newsize[2]<<std::endl;
 
     typename TImage::PointType neworigin = minPoint;
 
