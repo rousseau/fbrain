@@ -171,6 +171,10 @@ int main(int argc, char *argv[])
                     case itk::ImageIOBase::SHORT:
                         Process< itk::Image< short,3 > >(inputFileNames, weights, outputFileName);
                         break;
+                        
+                    case itk::ImageIOBase::USHORT:
+                        Process< itk::Image< unsigned short,3 > >(inputFileNames, weights, outputFileName);
+                        break;
 
                     case itk::ImageIOBase::FLOAT:
                         Process< itk::Image< float,3 > >(inputFileNames, weights, outputFileName);
