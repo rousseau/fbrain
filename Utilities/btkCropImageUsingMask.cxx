@@ -262,6 +262,11 @@ int main(int argc, char * argv[])
 
                 switch(imageIO->GetComponentType())
                 {
+                    case itk::ImageIOBase::UCHAR:
+                        btkCoutMacro("Scalar type: Unsigned Char");
+                        Process< itk::Image< unsigned char,3 >,itk::Image< unsigned char,3 > >(inputFileNames, outputFileNames, maskFileNames, Dimension);
+                        break;
+
                     case itk::ImageIOBase::SHORT:
                         btkCoutMacro("Scalar type: Short");
                         Process< itk::Image< short,3 >,itk::Image< unsigned char,3 > >(inputFileNames, outputFileNames, maskFileNames, Dimension);
