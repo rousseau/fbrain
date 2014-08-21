@@ -125,6 +125,11 @@ class NadarayaWatsonReconstructionErrorFunction : public FeatureSelectionCostFun
          */
         virtual void Initialize();
 
+        /**
+         * @brief Optimize the bandwidth parameters with actual selected points.
+         */
+        virtual void OptimizeParameters();
+
     protected:
         /**
          * @brief Constructor.

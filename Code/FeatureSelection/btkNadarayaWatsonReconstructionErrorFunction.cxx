@@ -207,6 +207,38 @@ void NadarayaWatsonReconstructionErrorFunction::Initialize()
 
 //----------------------------------------------------------------------------------------
 
+void NadarayaWatsonReconstructionErrorFunction::OptimizeParameters()
+{
+    // FIXME Use of a more efficient algorithm ?
+    // Exhaustive search of bandwidth paramter.
+    // We assume that the bandwidth is common for all input parameter.
+    double minH = 0.5;
+    m_BandwidthMatrixInverse.fill_diagonal(1.0/minH);
+    double minReconstructionError = this->Evaluate();
+
+    // TODO Check the range
+    for(double h = 1.0; h < 10.0; h+=0.5)
+    {
+        // Set up the matrix inverse
+        m_BandwidthMatrixInverse.fill_diagonal(1.0/h);
+
+        // Evaluate the cost function
+        double reconstructionError = this->Evaluate();
+
+        // Test for minimality
+        if(reconstructionError < minReconstructionError)
+        {
+            minReconstructionError = reconstructionError;
+            minH = h;
+        }
+    }
+
+    // Set up the optimized bandwidth
+    m_BandwidthMatrixInverse.fill_diagonal(1.0/minH);
+}
+
+//----------------------------------------------------------------------------------------
+
 vnl_vector< double > NadarayaWatsonReconstructionErrorFunction::NadarayaWatsonMultivariateKernelEstimator(vnl_matrix< double > &data, vnl_vector< double > &v, unsigned int currentSampleJ)
 {
     vnl_vector< double > estimate(m_InputParameters->rows(), 0.0);
