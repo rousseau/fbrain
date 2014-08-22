@@ -124,7 +124,7 @@ void GreedyFeatureSelectionAlgorithm::Update()
             message << "\tUnexplained variance: " << minCost << " (" << 100.0 * (minCost / (minCost + e.sum())) << " %)" << std::endl;
 
             // Optimize side parameters
-            m_CostFunction->OptimizeParameters();
+            message << m_CostFunction->OptimizeParameters() << std::endl;
         }
         else // No minimal value found, so the algorithm is converging
         {

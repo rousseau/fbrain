@@ -129,8 +129,9 @@ class FeatureSelectionCostFunction : public itk::ProcessObject
 
         /**
          * @brief Optimize the parameters of the cost function (if any).
+         * @return A message to display optimized parameters.
          */
-        virtual void OptimizeParameters() = 0;
+        virtual std::string OptimizeParameters() = 0;
 
     protected:
         /**

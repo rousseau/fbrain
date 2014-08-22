@@ -207,7 +207,7 @@ void NadarayaWatsonReconstructionErrorFunction::Initialize()
 
 //----------------------------------------------------------------------------------------
 
-void NadarayaWatsonReconstructionErrorFunction::OptimizeParameters()
+std::string NadarayaWatsonReconstructionErrorFunction::OptimizeParameters()
 {
     // FIXME Use of a more efficient algorithm ?
     // Exhaustive search of bandwidth paramter.
@@ -235,6 +235,11 @@ void NadarayaWatsonReconstructionErrorFunction::OptimizeParameters()
 
     // Set up the optimized bandwidth
     m_BandwidthMatrixInverse.fill_diagonal(1.0/minH);
+
+    std::stringstream message;
+    message << "\tOptimized bandwidth: " << minH;
+
+    return message.str();
 }
 
 //----------------------------------------------------------------------------------------
