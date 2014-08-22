@@ -358,7 +358,7 @@ int main(int argc, char *argv[])
                 {
                     if(maskIt.Get() > 0)
                     {
-                        imageIt.Set(residuals(i,j) + residuals(i+numberOfParameters,j) + residuals(i+2*numberOfParameters,j));
+                        imageIt.Set(residuals(i,j)*residuals(i,j) + residuals(i+numberOfParameters,j)*residuals(i+numberOfParameters,j) + residuals(i+2*numberOfParameters,j)*residuals(i+2*numberOfParameters,j));
                         i++;
                     }
                     else // maskIt.Get <= 0

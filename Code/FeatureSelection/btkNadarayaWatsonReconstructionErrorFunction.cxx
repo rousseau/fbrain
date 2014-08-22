@@ -95,7 +95,7 @@ double NadarayaWatsonReconstructionErrorFunction::Evaluate()
     {
         vnl_vector< double > v = m_CurrentParameters->get_column(j);
 
-        value = value + m_ImagesWeightVector->get(j) * ( m_InputParameters->get_column(j) - this->NadarayaWatsonMultivariateKernelEstimator(*m_CurrentParameters, v) ).two_norm();
+        value = value + m_ImagesWeightVector->get(j) * ( m_InputParameters->get_column(j) - this->NadarayaWatsonMultivariateKernelEstimator(*m_CurrentParameters, v, j) ).two_norm();
     }
 
     return value;
@@ -121,7 +121,7 @@ double NadarayaWatsonReconstructionErrorFunction::EvaluateActivation(unsigned in
         v(activatedIndex2) = (*m_InputParameters)(activatedIndex2,j);
         v(activatedIndex3) = (*m_InputParameters)(activatedIndex3,j);
 
-        value = value + m_ImagesWeightVector->get(j) * ( m_InputParameters->get_column(j) - this->NadarayaWatsonMultivariateKernelEstimatorActivation(activatedIndex, v) ).two_norm();
+        value = value + m_ImagesWeightVector->get(j) * ( m_InputParameters->get_column(j) - this->NadarayaWatsonMultivariateKernelEstimatorActivation(activatedIndex, v, j) ).two_norm();
     }
 
     return value;
@@ -147,7 +147,7 @@ double NadarayaWatsonReconstructionErrorFunction::EvaluateDesactivation(unsigned
         v(desactivatedIndex2) = 0;
         v(desactivatedIndex3) = 0;
 
-        value = value + m_ImagesWeightVector->get(j) * ( m_InputParameters->get_column(j) - this->NadarayaWatsonMultivariateKernelEstimatorDesactivation(desactivatedIndex, v) ).two_norm();
+        value = value + m_ImagesWeightVector->get(j) * ( m_InputParameters->get_column(j) - this->NadarayaWatsonMultivariateKernelEstimatorDesactivation(desactivatedIndex, v, j) ).two_norm();
     }
 
 
@@ -164,7 +164,7 @@ vnl_matrix< double > NadarayaWatsonReconstructionErrorFunction::GetResiduals()
     for(unsigned int j = 0; j < m_NumberOfVectors; j++)
     {
         vnl_vector< double > v = m_CurrentParameters->get_column(j);
-        residuals.set_column(j, m_InputParameters->get_column(j) - this->NadarayaWatsonMultivariateKernelEstimator(*m_CurrentParameters, v) * m_ImagesWeightVector->get(j) );
+        residuals.set_column(j, m_InputParameters->get_column(j) - this->NadarayaWatsonMultivariateKernelEstimator(*m_CurrentParameters, v, j) * m_ImagesWeightVector->get(j) );
     }
 
     return residuals;
@@ -182,7 +182,7 @@ vnl_matrix< double > &NadarayaWatsonReconstructionErrorFunction::GetReconstructi
     for(unsigned int j = 0; j < reconstruction.columns(); j++)
     {
         vnl_vector< double > v = parameters.get_column(j);
-        reconstruction.set_column(j, this->NadarayaWatsonMultivariateKernelEstimator(*m_CurrentParameters, v) * m_ImagesWeightVector->get(j) );
+        reconstruction.set_column(j, this->NadarayaWatsonMultivariateKernelEstimator(*m_CurrentParameters, v, j) * m_ImagesWeightVector->get(j) );
     }
 
     return reconstruction;
@@ -207,7 +207,44 @@ void NadarayaWatsonReconstructionErrorFunction::Initialize()
 
 //----------------------------------------------------------------------------------------
 
-vnl_vector< double > NadarayaWatsonReconstructionErrorFunction::NadarayaWatsonMultivariateKernelEstimator(vnl_matrix< double > &data, vnl_vector< double > &v)
+std::string NadarayaWatsonReconstructionErrorFunction::OptimizeParameters()
+{
+    // FIXME Use of a more efficient algorithm ?
+    // Exhaustive search of bandwidth paramter.
+    // We assume that the bandwidth is common for all input parameter.
+    double minH = 0.5;
+    m_BandwidthMatrixInverse.fill_diagonal(1.0/minH);
+    double minReconstructionError = this->Evaluate();
+
+    // TODO Check the range
+    for(double h = 1.0; h < 10.0; h+=0.5)
+    {
+        // Set up the matrix inverse
+        m_BandwidthMatrixInverse.fill_diagonal(1.0/h);
+
+        // Evaluate the cost function
+        double reconstructionError = this->Evaluate();
+
+        // Test for minimality
+        if(reconstructionError < minReconstructionError)
+        {
+            minReconstructionError = reconstructionError;
+            minH = h;
+        }
+    }
+
+    // Set up the optimized bandwidth
+    m_BandwidthMatrixInverse.fill_diagonal(1.0/minH);
+
+    std::stringstream message;
+    message << "\tOptimized bandwidth: " << minH;
+
+    return message.str();
+}
+
+//----------------------------------------------------------------------------------------
+
+vnl_vector< double > NadarayaWatsonReconstructionErrorFunction::NadarayaWatsonMultivariateKernelEstimator(vnl_matrix< double > &data, vnl_vector< double > &v, unsigned int currentSampleJ)
 {
     vnl_vector< double > estimate(m_InputParameters->rows(), 0.0);
 
@@ -215,11 +252,14 @@ vnl_vector< double > NadarayaWatsonReconstructionErrorFunction::NadarayaWatsonMu
 
     for(unsigned int j = 0; j < m_NumberOfVectors; j++)
     {
-        double weight = this->MultivariateGaussianKernel(m_BandwidthMatrixInverse * (v - data.get_column(j)));
+        if(j != currentSampleJ)
+        {
+            double weight = this->MultivariateGaussianKernel(m_BandwidthMatrixInverse * (v - data.get_column(j)));
 
-        sumOfWeights += weight;
+            sumOfWeights += weight;
 
-        estimate += m_InputParameters->get_column(j) * weight;
+            estimate += m_InputParameters->get_column(j) * weight;
+        }
     }
 
     estimate /= sumOfWeights;
@@ -229,7 +269,7 @@ vnl_vector< double > NadarayaWatsonReconstructionErrorFunction::NadarayaWatsonMu
 
 //----------------------------------------------------------------------------------------
 
-vnl_vector< double > NadarayaWatsonReconstructionErrorFunction::NadarayaWatsonMultivariateKernelEstimatorActivation(unsigned int activatedIndex, vnl_vector< double > &v)
+vnl_vector< double > NadarayaWatsonReconstructionErrorFunction::NadarayaWatsonMultivariateKernelEstimatorActivation(unsigned int activatedIndex, vnl_vector< double > &v, unsigned int currentSampleJ)
 {
     vnl_vector< double > estimate(v.size(), 0.0);
 
@@ -241,18 +281,21 @@ vnl_vector< double > NadarayaWatsonReconstructionErrorFunction::NadarayaWatsonMu
 
     for(unsigned int j = 0; j < m_NumberOfVectors; j++)
     {
-        vnl_vector< double > data = m_CurrentParameters->get_column(j);
+        if(j != currentSampleJ)
+        {
+            vnl_vector< double > data = m_CurrentParameters->get_column(j);
 
-        // Activate parameter
-        data(activatedIndex)  = (*m_InputParameters)(activatedIndex,j);
-        data(activatedIndex2) = (*m_InputParameters)(activatedIndex2,j);
-        data(activatedIndex3) = (*m_InputParameters)(activatedIndex3,j);
+            // Activate parameter
+            data(activatedIndex)  = (*m_InputParameters)(activatedIndex,j);
+            data(activatedIndex2) = (*m_InputParameters)(activatedIndex2,j);
+            data(activatedIndex3) = (*m_InputParameters)(activatedIndex3,j);
 
-        double weight = this->MultivariateGaussianKernel(m_BandwidthMatrixInverse * (v - data));
+            double weight = this->MultivariateGaussianKernel(m_BandwidthMatrixInverse * (v - data));
 
-        sumOfWeights += weight;
+            sumOfWeights += weight;
 
-        estimate += m_InputParameters->get_column(j) * weight;
+            estimate += m_InputParameters->get_column(j) * weight;
+        }
     }
 
     estimate /= sumOfWeights;
@@ -262,7 +305,7 @@ vnl_vector< double > NadarayaWatsonReconstructionErrorFunction::NadarayaWatsonMu
 
 //----------------------------------------------------------------------------------------
 
-vnl_vector< double > NadarayaWatsonReconstructionErrorFunction::NadarayaWatsonMultivariateKernelEstimatorDesactivation(unsigned int desactivatedIndex, vnl_vector< double > &v)
+vnl_vector< double > NadarayaWatsonReconstructionErrorFunction::NadarayaWatsonMultivariateKernelEstimatorDesactivation(unsigned int desactivatedIndex, vnl_vector< double > &v, unsigned int currentSampleJ)
 {
     vnl_vector< double > estimate(v.size(), 0.0);
 
@@ -274,18 +317,21 @@ vnl_vector< double > NadarayaWatsonReconstructionErrorFunction::NadarayaWatsonMu
 
     for(unsigned int j = 0; j < m_NumberOfVectors; j++)
     {
-        vnl_vector< double > data = m_CurrentParameters->get_column(j);
+        if(j != currentSampleJ)
+        {
+            vnl_vector< double > data = m_CurrentParameters->get_column(j);
 
-        // Desactivate parameter
-        data(desactivatedIndex)  = 0;
-        data(desactivatedIndex2) = 0;
-        data(desactivatedIndex3) = 0;
+            // Desactivate parameter
+            data(desactivatedIndex)  = 0;
+            data(desactivatedIndex2) = 0;
+            data(desactivatedIndex3) = 0;
 
-        double weight = this->MultivariateGaussianKernel(m_BandwidthMatrixInverse * (v - data));
+            double weight = this->MultivariateGaussianKernel(m_BandwidthMatrixInverse * (v - data));
 
-        sumOfWeights += weight;
+            sumOfWeights += weight;
 
-        estimate += m_InputParameters->get_column(j) * weight;
+            estimate += m_InputParameters->get_column(j) * weight;
+        }
     }
 
     estimate /= sumOfWeights;
