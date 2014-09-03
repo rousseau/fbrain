@@ -62,6 +62,9 @@ typedef itk::Image< unsigned char,3 >         ImageMask;
 typedef itk::ImageMaskSpatialObject< 3 >      Mask;
 typedef itk::ImageRegionIterator< ImageMask > ImageMaskIterator;
 
+typedef itk::Image< float,3 >                     VarianceImage;
+typedef itk::ImageRegionIterator< VarianceImage > VarianceImageIterator;
+
 
 /**
  * @brief Main function of the program.
@@ -79,6 +82,7 @@ int main(int argc, char *argv[])
 
         // Defines arguments
         TCLAP::ValueArg< std::string > selectedFeaturesFileNamesArg("r", "reduced_mask", "Selected features filename", true, "", "string", cmd);
+        TCLAP::ValueArg< std::string > varianceFeaturesFileNamesArg("v", "explained_variance", "The explained variance filename", true, "", "string", cmd);
         TCLAP::ValueArg< std::string > outputFileNameArg("o", "output", "Output markup list filename (Default: \"SelectedFeatures.fcsv\")", false, "SelectedFeatures.fcsv", "string", cmd);
 
         // Options
@@ -89,16 +93,18 @@ int main(int argc, char *argv[])
 
         // Get back arguments' values
         std::string selectedFeaturesFileName = selectedFeaturesFileNamesArg.getValue();
+        std::string varianceFeaturesFileName = varianceFeaturesFileNamesArg.getValue();
         std::string           outputFileName = outputFileNameArg.getValue();
 
         bool vtkFile = vtkFileArg.getValue();
 
 
         //
-        // Read input file
+        // Read input files
         //
 
-        ImageMask::Pointer selectedFeaturesImage = btk::ImageHelper< ImageMask >::ReadImage(selectedFeaturesFileName);
+        ImageMask::Pointer     selectedFeaturesImage = btk::ImageHelper< ImageMask >::ReadImage(selectedFeaturesFileName);
+        VarianceImage::Pointer varianceFeaturesImage = btk::ImageHelper< VarianceImage >::ReadImage(varianceFeaturesFileName);
 
 
         //
@@ -130,7 +136,8 @@ int main(int argc, char *argv[])
             outputFileStream << "DATASET POLYDATA" << std::endl;
 
             // Run through selected features to add to markup list
-            ImageMaskIterator selectedFeaturesIt(selectedFeaturesImage, maskedRegion);
+            ImageMaskIterator     selectedFeaturesIt(selectedFeaturesImage, maskedRegion);
+            VarianceImageIterator varianceFeaturesIt(varianceFeaturesImage, maskedRegion);
 
             // Get the number of features
             unsigned int featureCount = 0;
@@ -156,6 +163,19 @@ int main(int argc, char *argv[])
                     selectedFeaturesImage->TransformIndexToPhysicalPoint(index,point);
 
                     outputFileStream << -point[0] << " " << -point[1] << " " << point[2] << std::endl;
+                }
+            }
+
+            // Write explained variance
+            outputFileStream << "POINT_DATA " << featureCount << std::endl;
+            outputFileStream << "SCALARS explained_variance float 1" << std::endl;
+            outputFileStream << "LOOKUP_TABLE default" << std::endl;
+
+            for(selectedFeaturesIt.GoToBegin(), varianceFeaturesIt.GoToBegin(); !selectedFeaturesIt.IsAtEnd() && !varianceFeaturesIt.IsAtEnd(); ++selectedFeaturesIt, ++varianceFeaturesIt)
+            {
+                if(selectedFeaturesIt.Get() > 0)
+                {
+                    outputFileStream << varianceFeaturesIt.Get() << std::endl;
                 }
             }
         }
