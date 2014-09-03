@@ -118,6 +118,7 @@ int main(int argc, char *argv[])
         // Options
         TCLAP::ValueArg< unsigned int > maxNumberOfParametersArg("n", "max_number_of_parameters", "Maximal number of parameters", false, 10, "unsigned int", cmd);
         TCLAP::ValueArg< float >              kernelBandwidthArg("b", "kernel_bandwidth", "Bandwidth of the kernel use for cost function", false, 1.0, "positive real", cmd);
+        TCLAP::ValueArg< float >                    precisionArg("p", "precision", "Precision of the selection (in mm; corresponds to the mean vector error; default: 1 mm", false, 1.0, "positive real", cmd);
 
         // Parsing arguments
         cmd.parse(argc, argv);
@@ -130,6 +131,7 @@ int main(int argc, char *argv[])
 
         unsigned int maxNumberOfParameters = maxNumberOfParametersArg.getValue();
         float              kernelBandwidth = kernelBandwidthArg.getValue();
+        float                    precision = precisionArg.getValue();
 
 
         //
@@ -261,6 +263,7 @@ int main(int argc, char *argv[])
         spaceReduction->SetInputParameters(&Y);
         spaceReduction->SetCostFunction(costFunction);
         spaceReduction->SetMaxNumberOfParameters(maxNumberOfParameters);
+        spaceReduction->SetPrecision(precision);
 
         // Set a command-line observer
         btk::FeatureSelectionCommandIterationUpdate::Pointer observer = btk::FeatureSelectionCommandIterationUpdate::New();

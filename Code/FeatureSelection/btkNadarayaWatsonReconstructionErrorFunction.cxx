@@ -103,6 +103,32 @@ double NadarayaWatsonReconstructionErrorFunction::Evaluate()
 
 //----------------------------------------------------------------------------------------
 
+double NadarayaWatsonReconstructionErrorFunction::ComputeMeanParameterError()
+{
+    double meanError = 0.0;
+
+    for(unsigned int j = 0; j < m_NumberOfVectors; j++)
+    {
+        vnl_vector< double > v = m_CurrentParameters->get_column(j);
+        vnl_vector< double > f = this->NadarayaWatsonMultivariateKernelEstimator(*m_CurrentParameters, v, j);
+
+        for(unsigned int i = 0; i < m_NumberOfParameters; i++)
+        {
+            double error1 = (*m_InputParameters)(i,j) - f(i);
+            double error2 = (*m_InputParameters)(i+m_NumberOfParameters,j) - f(i+m_NumberOfParameters);
+            double error3 = (*m_InputParameters)(i+m_TwoTimeNumberOfParameters,j) - f(i+m_TwoTimeNumberOfParameters);
+
+            meanError += std::sqrt( error1*error1 + error2*error2 + error3*error3 );
+        }
+    }
+
+    meanError /= m_NumberOfParameters*m_NumberOfVectors;
+
+    return meanError;
+}
+
+//----------------------------------------------------------------------------------------
+
 double NadarayaWatsonReconstructionErrorFunction::FunctionEvaluate(double h)
 {
     m_BandwidthMatrixInverse.fill_diagonal(1.0/h);
