@@ -103,6 +103,28 @@ double NadarayaWatsonReconstructionErrorFunction::Evaluate()
 
 //----------------------------------------------------------------------------------------
 
+double NadarayaWatsonReconstructionErrorFunction::FunctionEvaluate(double h)
+{
+    m_BandwidthMatrixInverse.fill_diagonal(1.0/h);
+
+    return this->Evaluate();
+}
+
+//----------------------------------------------------------------------------------------
+
+double NadarayaWatsonReconstructionErrorFunction::GradientEvaluate(double h)
+{
+    double delta = 0.1/2.0;
+
+    // Use the finite centered difference with step=1 to approximage gradient
+    double fPlus = this->FunctionEvaluate(h+delta);
+    double fMinus = this->FunctionEvaluate(h-delta);
+
+    return (fPlus - fMinus) / delta;
+}
+
+//----------------------------------------------------------------------------------------
+
 double NadarayaWatsonReconstructionErrorFunction::EvaluateActivation(unsigned int activatedIndex)
 {
     unsigned int activatedIndex2 = activatedIndex + m_NumberOfParameters;
@@ -209,35 +231,75 @@ void NadarayaWatsonReconstructionErrorFunction::Initialize()
 
 std::string NadarayaWatsonReconstructionErrorFunction::OptimizeParameters()
 {
-    // FIXME Use of a more efficient algorithm ?
-    // Exhaustive search of bandwidth paramter.
-    // We assume that the bandwidth is common for all input parameter.
-    double minH = 0.5;
-    m_BandwidthMatrixInverse.fill_diagonal(1.0/minH);
-    double minReconstructionError = this->Evaluate();
+    // Initialisation of gradient descent parameters
+    double h = m_BandwidthMatrix->get(0,0); // Parameter to optimise
 
-    // TODO Check the range
-    for(double h = 1.0; h < 10.0; h+=0.5)
+    double     initialStep = 1e-1;  // Initial step of the gradient descent
+    double         stepMin = 1e-2;  // Minimal step
+    double         stepMax = 0.5;   // Maximal step
+    double    stepIncrease = 1e-2;  // Step increase for the linear search
+    int maxNumOfIterations = 30;    // Maximum number of iterations
+    int   currentIteration = 1;     // Current iteration number
+    double         epsilon = 1e-2;  // Threshold of gradient magnitude
+    double              m1 = 0.1;   // First constant of Wolfe's conditions
+    double              m2 = 0.9;   // Second constant of Wolfe's conditions
+
+    double  gradient = this->GradientEvaluate(h);
+    double direction = (gradient < 0.0) ? 1 : -1;
+
+//    btkCoutVariable(currentIteration);
+//    btkCoutVariable(h);
+//    btkCoutVariable(gradient);
+//    btkCoutVariable(direction);
+//    btkCoutVariable(initialStep);
+//    std::cerr << std::endl;
+
+    while(currentIteration <= maxNumOfIterations && std::abs(gradient) > epsilon)
     {
-        // Set up the matrix inverse
-        m_BandwidthMatrixInverse.fill_diagonal(1.0/h);
+        // Search for a good step
+        bool  firstWolfeCondition = false;
+        bool secondWolfeCondition = false;
+        double               step = initialStep;
+        double                  f = this->FunctionEvaluate(h);
 
-        // Evaluate the cost function
-        double reconstructionError = this->Evaluate();
-
-        // Test for minimality
-        if(reconstructionError < minReconstructionError)
+        do
         {
-            minReconstructionError = reconstructionError;
-            minH = h;
+            firstWolfeCondition  = false;
+            secondWolfeCondition = false;
+
+            double delta = step*direction;
+
+            firstWolfeCondition = this->FunctionEvaluate(h+delta) <= f + m1*delta*gradient;
+
+            if(firstWolfeCondition)
+            {
+                secondWolfeCondition = direction*this->GradientEvaluate(h+delta) >= m2*direction*gradient;
+
+                if(!secondWolfeCondition)
+                    step += stepIncrease;
+            }
+            else // !firstWolfeCondition
+                step -= stepIncrease;
         }
+        while((!firstWolfeCondition || !secondWolfeCondition) && (step > stepMin && step < stepMax));
+
+        h += step*direction;
+        gradient = this->GradientEvaluate(h);
+        direction = (gradient < 0) ? 1 : -1;
+        currentIteration++;
+
+//        btkCoutVariable(currentIteration);
+//        btkCoutVariable(h);
+//        btkCoutVariable(gradient);
+//        btkCoutVariable(direction);
+//        btkCoutVariable(step);
+//        std::cerr << std::endl;
     }
 
-    // Set up the optimized bandwidth
-    m_BandwidthMatrixInverse.fill_diagonal(1.0/minH);
+    m_BandwidthMatrixInverse.fill_diagonal(1.0/h);
 
     std::stringstream message;
-    message << "\tOptimized bandwidth: " << minH;
+    message << "\tOptimized bandwidth: " << h;
 
     return message.str();
 }
