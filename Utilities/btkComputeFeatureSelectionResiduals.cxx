@@ -94,7 +94,7 @@ vnl_vector< int > SortFeatures(vnl_vector< double > &explainedVariance)
 
     for(int i = 0; i < indices.size(); i++)
     {
-        indices(i) = i+1;
+        indices(i) = i;
     }
 
     // Bubble sort
@@ -341,6 +341,7 @@ int main(int argc, char *argv[])
             costFunction->SetInputParameters(&Y);
             costFunction->SetCurrentParameters(&tmpX);
             costFunction->Initialize();
+            std::cerr << costFunction->OptimizeParameters() << std::endl;
 
             // Compute residuals
             vnl_matrix< double > residuals = costFunction->GetResiduals();
