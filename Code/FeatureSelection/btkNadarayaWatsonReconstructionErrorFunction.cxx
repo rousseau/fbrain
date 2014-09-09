@@ -95,7 +95,7 @@ double NadarayaWatsonReconstructionErrorFunction::Evaluate()
     {
         vnl_vector< double > v = m_CurrentParameters->get_column(j);
 
-        value = value + m_ImagesWeightVector->get(j) * ( m_InputParameters->get_column(j) - this->NadarayaWatsonMultivariateKernelEstimator(*m_CurrentParameters, v, j) ).two_norm();
+        value = value + m_ImagesWeightVector->get(j) * ( m_InputParameters->get_column(j) - this->NadarayaWatsonMultivariateKernelEstimator(*m_CurrentParameters, v, j) ).squared_magnitude();
     }
 
     return value;
@@ -169,7 +169,7 @@ double NadarayaWatsonReconstructionErrorFunction::EvaluateActivation(unsigned in
         v(activatedIndex2) = (*m_InputParameters)(activatedIndex2,j);
         v(activatedIndex3) = (*m_InputParameters)(activatedIndex3,j);
 
-        value = value + m_ImagesWeightVector->get(j) * ( m_InputParameters->get_column(j) - this->NadarayaWatsonMultivariateKernelEstimatorActivation(activatedIndex, v, j) ).two_norm();
+        value = value + m_ImagesWeightVector->get(j) * ( m_InputParameters->get_column(j) - this->NadarayaWatsonMultivariateKernelEstimatorActivation(activatedIndex, v, j) ).squared_magnitude();
     }
 
     return value;
@@ -195,7 +195,7 @@ double NadarayaWatsonReconstructionErrorFunction::EvaluateDesactivation(unsigned
         v(desactivatedIndex2) = 0;
         v(desactivatedIndex3) = 0;
 
-        value = value + m_ImagesWeightVector->get(j) * ( m_InputParameters->get_column(j) - this->NadarayaWatsonMultivariateKernelEstimatorDesactivation(desactivatedIndex, v, j) ).two_norm();
+        value = value + m_ImagesWeightVector->get(j) * ( m_InputParameters->get_column(j) - this->NadarayaWatsonMultivariateKernelEstimatorDesactivation(desactivatedIndex, v, j) ).squared_magnitude();
     }
 
 
