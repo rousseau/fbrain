@@ -98,6 +98,7 @@ void PandoraBoxReconstructionFilters::Convert3DImageToSliceStack(std::vector<itk
 
 void PandoraBoxReconstructionFilters::ConvertSliceStackTo3DImage(itkFloatImagePointer & outputImage, std::vector<itkFloatImagePointer> & inputStack)
 {
+  std::cout<<"ConvertSliceStackTo3DImage\n";
   //Image information are computed from the first slice of the stack
   outputImage = itkFloatImage::New();
   outputImage->SetSpacing( inputStack[0]->GetSpacing() );
@@ -203,6 +204,8 @@ void PandoraBoxReconstructionFilters::ComputePSFImage(itkFloatImagePointer & PSF
   psfSize[1] = (int)ceil(scaleFactor*sigmaY / HRSpacing[1]) + 2;
   psfSize[2] = (int)ceil(scaleFactor*sigmaZ / HRSpacing[2]) + 2;
 
+  std::cout<<"PSF size : "<<psfSize[0]<<" "<<psfSize[1]<<" "<<psfSize[2]<<std::endl;
+
   itkFloatImage::IndexType psfIndex;
   psfIndex[0] = 0;
   psfIndex[1] = 0;
@@ -252,12 +255,26 @@ void PandoraBoxReconstructionFilters::ComputePSFImage(itkFloatImagePointer & PSF
     psfSum += psfValue;
   }
 
+  //for memory saving, we limit the number of non-null voxels
+  for(itPSFImage.GoToBegin(); !itPSFImage.IsAtEnd(); ++itPSFImage){
+    if(itPSFImage.Get() < 0.001)
+      itPSFImage.Set(0);
+  }
+
   //Normalization of PSF values
   for(itPSFImage.GoToBegin(); !itPSFImage.IsAtEnd(); ++itPSFImage)
   {
     double normalizedValue = itPSFImage.Get() / psfSum;
     itPSFImage.Set(normalizedValue);
   }
+
+//  std::cout<<"Positive values of the PSF : \n";
+//  for(itPSFImage.GoToBegin(); !itPSFImage.IsAtEnd(); ++itPSFImage)
+//    if(itPSFImage.Get()>0){
+//      itkFloatImage::IndexType index = itPSFImage.GetIndex();
+//      std::cout<<itPSFImage.Get()<<" ("<<index[0]<<", "<<index[1]<<", "<<index[2]<<") \n";
+//    }
+
 }
 
 void PandoraBoxReconstructionFilters::ComputerObservationModelParameters(vnl_sparse_matrix<float> & H, vnl_vector<float> & Y, vnl_vector<float> & X, itkFloatImagePointer & HRImage, std::vector< std::vector<itkFloatImagePointer> > & maskStacks, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkTransformType::Pointer> > & inverseAffineSBSTransforms, itkFloatImagePointer & PSFImage)
@@ -334,6 +351,8 @@ void PandoraBoxReconstructionFilters::ComputerObservationModelParameters(vnl_spa
 
   for(unsigned int i=0; i<inputStacks.size(); i++)
   {
+    std::cout<<"#input stack : "<<i+1<<" with "<<inputStacks[i].size()<<" slices."<<std::endl;
+
     for(unsigned int s=0; s<inputStacks[i].size(); s++)
     {
       //Get the size of the current LR slice
@@ -605,6 +624,25 @@ void PandoraBoxReconstructionFilters::SimulateObservations(vnl_sparse_matrix<flo
   }
 }
 
+
+void PandoraBoxReconstructionFilters::ComputeModelError(std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkFloatImagePointer> > & modelStacks, std::vector< std::vector<itkFloatImagePointer> > & outputStacks)
+{
+  outputStacks.resize( inputStacks.size() );
+  for(unsigned int i=0; i<inputStacks.size(); i++)
+  {
+    outputStacks[i].resize( inputStacks[i].size() );
+    for(unsigned int s=0; s<inputStacks[i].size(); s++)
+    {
+      //Compute the difference for every slice of the stacks (using ITK filter)
+      itk::SubtractImageFilter <itkFloatImage, itkFloatImage >::Pointer subtractFilter = itk::SubtractImageFilter <itkFloatImage, itkFloatImage >::New ();
+      subtractFilter->SetInput1(inputStacks[i][s]);
+      subtractFilter->SetInput2(modelStacks[i][s]);
+      subtractFilter->Update();
+      outputStacks[i][s] = subtractFilter->GetOutput();
+    }
+  }
+}
+
 void PandoraBoxReconstructionFilters::Convert3DImageToVNLVector(vnl_vector<float> & X, itkFloatImagePointer & inputImage)
 {
   std::cout<<"Convert3DImageToVNLVector"<<std::endl;
@@ -730,20 +768,7 @@ void PandoraBoxReconstructionFilters::IterativeBackProjection(itkFloatImagePoint
 
     //Compute difference image stacks
     std::vector< std::vector<itkFloatImage::Pointer> > diffStacks;
-    diffStacks.resize( inputStacks.size() );
-    for(unsigned int i=0; i<inputStacks.size(); i++)
-    {
-      diffStacks[i].resize( inputStacks[i].size() );
-      for(unsigned int s=0; s<inputStacks[i].size(); s++)
-      {
-        //Compute the difference for every slice of the stacks (using ITK filter)
-        itk::SubtractImageFilter <itkFloatImage, itkFloatImage >::Pointer subtractFilter = itk::SubtractImageFilter <itkFloatImage, itkFloatImage >::New ();
-        subtractFilter->SetInput1(inputStacks[i][s]);
-        subtractFilter->SetInput2(simulatedLRStacks[i][s]);
-        subtractFilter->Update();
-        diffStacks[i][s] = subtractFilter->GetOutput();
-      }
-    }
+    ComputeModelError(inputStacks, simulatedLRStacks, diffStacks);
 
     //Create a 3D difference image
     itkFloatImage::Pointer diffImage = btk::ImageHelper< itkFloatImage > ::CreateNewImageFromPhysicalSpaceOf(outputImage,0.0);

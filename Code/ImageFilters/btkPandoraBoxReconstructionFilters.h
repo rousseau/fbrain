@@ -91,6 +91,9 @@ class PandoraBoxReconstructionFilters
     //Simulate observations using the observation model Y=HX
     static void SimulateObservations(vnl_sparse_matrix<float> & H, vnl_vector<float> & X, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkFloatImagePointer> > & outputStacks);
 
+    //Compute modelign errors
+    static void ComputeModelError(std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkFloatImagePointer> > & modelStacks, std::vector< std::vector<itkFloatImagePointer> > & outputStacks);
+
     //Convert a 3D image to a vnl vector (HRimage -> X)
     static void Convert3DImageToVNLVector(vnl_vector<float> & X, itkFloatImagePointer & inputImage);
 
@@ -120,6 +123,11 @@ class PandoraBoxReconstructionFilters
     //Slice motion estimation using a observation model
 
     //Slice motion estimation using a set of slices
+
+    //Outliers detection in each slice
+
+    //Slice-based relative bias correction
+
 
     //protected:
 
