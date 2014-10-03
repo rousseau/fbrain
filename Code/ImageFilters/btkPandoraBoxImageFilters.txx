@@ -57,6 +57,9 @@ void PandoraBoxImageFilters::DiscreteGaussianFiltering(itkFloatImagePointer & in
 
 void PandoraBoxImageFilters::ResampleImageUsingSpacing(itkFloatImagePointer & inputImage, itkFloatImagePointer & outputImage, itkFloatImage::SpacingType & itkSpacing, int interpolationOrder)
 {
+  //Warning : interpolation order 0 (nearest neighbors) or 1 (linear) are fine. 3 (spline) may provide null image (ITK bug?).
+  std::cout<<"ResampleImageUsingSpacing\n";
+
   itkResampleFilter::Pointer resample = itkResampleFilter::New();
 
   //parameters for interpolation (identity transform and bspline interpolator)
@@ -255,6 +258,33 @@ void PandoraBoxImageFilters::GetLabelWithMaxProbabilityImage(std::vector< itkFlo
     outputImage->SetPixel(index, maxLabel);
   }
 }
+
+//Display common image info
+void PandoraBoxImageFilters::DisplayImageInfo(itkShortImagePointer & inputImage)
+{
+  itkShort2FloatImageCastFilter::Pointer castFilter = itkShort2FloatImageCastFilter::New();
+  castFilter->SetInput(inputImage);
+  castFilter->Update();
+  itkFloatImagePointer tmpImage = castFilter->GetOutput();
+  DisplayImageInfo(tmpImage);
+}
+
+void PandoraBoxImageFilters::DisplayImageInfo(itkFloatImagePointer & inputImage)
+{
+  std::cout<<"Image size : "<<inputImage->GetLargestPossibleRegion().GetSize()<<std::endl;
+  std::cout<<"Image spacing : "<<inputImage->GetSpacing()<<std::endl;
+
+  itkImageCalculatorFilter::Pointer calculatorFilter = itkImageCalculatorFilter::New();
+  calculatorFilter->SetImage(inputImage);
+  calculatorFilter->Compute();
+  std::cout<<"Intensity Max : "<<calculatorFilter->GetMaximum()<<std::endl;
+  std::cout<<"Intensity min : "<<calculatorFilter->GetMinimum()<<std::endl;
+
+}
+
+
+
+
 
 
 

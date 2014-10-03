@@ -48,6 +48,8 @@
 #include "itkIdentityTransform.h"
 #include "itkBSplineInterpolateImageFunction.h"
 #include "itkContinuousIndex.h"
+#include "itkCastImageFilter.h"
+#include "itkMinimumMaximumImageCalculator.h"
 
 namespace btk
 {
@@ -71,6 +73,9 @@ class PandoraBoxImageFilters
 
     typedef itk::DiscreteGaussianImageFilter< itkFloatImage,itkFloatImage > itkGaussianFilter;
 
+    typedef itk::CastImageFilter< itkShortImage, itkFloatImage >     itkShort2FloatImageCastFilter;
+    typedef itk::MinimumMaximumImageCalculator <itkFloatImage>       itkImageCalculatorFilter;
+
     //Common filters on 3D float images --------------------------------------------------------------------------------
     static void DiscreteGaussianFiltering(itkFloatImagePointer & inputImage, itkFloatImagePointer & outputImage, float variance);
 
@@ -81,6 +86,10 @@ class PandoraBoxImageFilters
     //Methods on probability images (stored as vector of images) -------------------------------------------------------
     static void ProbabilityImageNormalization(std::vector< itkFloatImagePointer > & inputImages, std::vector< itkFloatImagePointer > & outputImages);
     static void GetLabelWithMaxProbabilityImage(std::vector< itkFloatImagePointer > & inputImages, itkShortImagePointer & outputImage);
+
+    //Display common image info
+    static void DisplayImageInfo(itkShortImagePointer &inputImage);
+    static void DisplayImageInfo(itkFloatImagePointer & inputImage);
 
     //protected:
 
