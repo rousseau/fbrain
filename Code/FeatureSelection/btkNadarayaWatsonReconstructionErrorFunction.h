@@ -79,6 +79,26 @@ class NadarayaWatsonReconstructionErrorFunction : public FeatureSelectionCostFun
         virtual double Evaluate();
 
         /**
+         * @brief Compute the mean error of parameters.
+         * @return  The mean error.
+         */
+        virtual double ComputeMeanParameterError();
+
+        /**
+         * @brief Evaluate the cost function depending on the bandwidth parameter.
+         * @param h Bandwidth parameter.
+         * @return Value of the cost function with activated vectors.
+         */
+        virtual double FunctionEvaluate(double h);
+
+        /**
+         * @brief Evaluate the cost function gradient depending on the bandwidth parameter.
+         * @param h Bandwidth parameter.
+         * @return Value of the cost function gradient with activated vectors.
+         */
+        virtual double GradientEvaluate(double h);
+
+        /**
          * @brief Evaluate cost function with parameter activation.
          * @param activatedIndex Index of the parameter to test activation.
          * @return The value of the cost function with the activation of the parameter with index activatedIndex.

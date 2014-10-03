@@ -76,12 +76,13 @@ void GreedyFeatureSelectionAlgorithm::Update()
 
     double minCost = m_CostFunction->Evaluate(); // evaluation of the cost function without any seleced parameters
 
-    // TODO Add an error threshold under which the algorithm stops
-    // NOTE The error is the sum of reconstruction errors of each subject
-    while(numberOfActiveParameters <= m_MaxNumberOfParameters && !stability)
+    double meanError = m_CostFunction->ComputeMeanParameterError();
+
+    // Main loop
+    while(numberOfActiveParameters <= m_MaxNumberOfParameters && !stability && meanError > m_Precision)
     {
-        // Display actual cost function on error output
-        std::cerr << minCost << std::endl;
+        // Display actual algorithm information on error output
+        std::cerr << minCost << "," << meanError << std::endl;
 
 
         std::stringstream message;
@@ -119,9 +120,13 @@ void GreedyFeatureSelectionAlgorithm::Update()
             numberOfActiveParameters += 1;
             m_CostFunction->ActivateParameters(index_add);
 
+            // Compute mean parameter error
+            meanError = m_CostFunction->ComputeMeanParameterError();
+
             // Fill output messages
             message << "\tFound one parameter to add (" << index_add+1 << ") with cost equal to " << minCost << std::endl;
             message << "\tUnexplained variance: " << minCost << " (" << 100.0 * (minCost / (minCost + e.sum())) << " %)" << std::endl;
+            message << "\tMean parameter error: " << meanError << " mm" << std::endl;
 
             // Optimize side parameters
             message << m_CostFunction->OptimizeParameters() << std::endl;

@@ -326,6 +326,7 @@ int main(int argc, char *argv[])
         costFunction->SetInputParameters(&Y);
         costFunction->SetCurrentParameters(&X);
         costFunction->Initialize();
+        std::cerr << costFunction->OptimizeParameters() << std::endl;
 
         btkCoutMacro("Computing reconstruction...");
 

@@ -83,6 +83,12 @@ class FeatureSelectionCostFunction : public itk::ProcessObject
         virtual double Evaluate() = 0;
 
         /**
+         * @brief Compute the mean error of parameters.
+         * @return  The mean error.
+         */
+        virtual double ComputeMeanParameterError() = 0;
+
+        /**
          * @brief Evaluate cost function with parameter activation.
          * @param activatedIndex Index of the parameter to test activation.
          * @return The value of the cost function with the activation of the parameter with index activatedIndex.

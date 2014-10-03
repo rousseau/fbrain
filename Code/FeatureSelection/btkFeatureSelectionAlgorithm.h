@@ -83,6 +83,9 @@ class FeatureSelectionAlgorithm : public itk::ProcessObject
         btkGetMacro(MaxNumberOfParameters, unsigned int);
         btkSetMacro(MaxNumberOfParameters, unsigned int);
 
+        btkGetMacro(Precision, float);
+        btkSetMacro(Precision, float);
+
         btkGetMacro(CurrentIteration, unsigned int);
 
         btkGetMacro(CurrentMessage, std::string);
@@ -140,6 +143,11 @@ class FeatureSelectionAlgorithm : public itk::ProcessObject
          * @brief Current iteration of the greedy iterative search.
          */
         unsigned int m_CurrentIteration;
+
+        /**
+         * @brief Precision of the algorithm (mean parameter error in mm).
+         */
+        float m_Precision;
 
         /**
          * @brief Current message of the current iteration.

@@ -264,9 +264,9 @@ int main(int argc, char *argv[])
                 pixelMean[2] = meanParameters(i+2*numberOfParameters);
                 meanImageIt.Set(pixelMean);
 
-                pixelStd[0] = meanParameters(i);
-                pixelStd[1] = meanParameters(i+numberOfParameters);
-                pixelStd[2] = meanParameters(i+2*numberOfParameters);
+                pixelStd[0] = stdParameters(i);
+                pixelStd[1] = stdParameters(i+numberOfParameters);
+                pixelStd[2] = stdParameters(i+2*numberOfParameters);
                 stdImageIt.Set(pixelStd);
 
                 pixelMeanMagnitude = std::sqrt(
