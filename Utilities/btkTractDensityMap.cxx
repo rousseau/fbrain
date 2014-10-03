@@ -105,6 +105,8 @@ int main(int argc, char *argv[])
         referenceReader->Update();
         Image::Pointer reference = referenceReader->GetOutput();
 
+
+        std::cout << "Size of the reference image : "<<reference->GetLargestPossibleRegion().GetSize(0)<<" "<<reference->GetLargestPossibleRegion().GetSize(1)<<" "<<reference->GetLargestPossibleRegion().GetSize(2)<<std::endl;
         std::cout << "done." << std::endl;
 
 
@@ -129,13 +131,13 @@ int main(int argc, char *argv[])
         // Conversion
         //
 
-        std::cout << "Converting fibers bundle to connectivity map..." << std::flush;
+        std::cout << "Converting fibers bundle to connectivity map..." << std::endl;
 
 
         for(int bundleIndex=0; bundleIndex<bundleFileName.size(); bundleIndex++)
         {
           
-        // Load bundle
+        std::cout<<" Loading fiber bundle\n";
         vtkSmartPointer<vtkPolyDataReader> bundleReader = vtkSmartPointer<vtkPolyDataReader>::New();
         bundleReader->SetFileName(bundleFileName[bundleIndex].c_str());
         bundleReader->Update();
@@ -145,7 +147,8 @@ int main(int argc, char *argv[])
 
         vtkIdType numberOfPoints, *pointIds;
 
-        // For each fibers
+        std::cout<<"Number of fiber bundles : "<<lines->GetSize()<<std::endl;
+        std::cout<<"Parsing each fiber "<<std::endl;
         while(lines->GetNextCell(numberOfPoints, pointIds) != 0)
         {
             // For each point of the current fiber
@@ -231,6 +234,7 @@ int main(int argc, char *argv[])
                    0 <= index[1] && index[1] < output->GetLargestPossibleRegion().GetSize(1) &&
                    0 <= index[2] && index[2] < output->GetLargestPossibleRegion().GetSize(2))
                     output->SetPixel(index, output->GetPixel(index) + wz*wx*wy);
+
             }
 
         }
@@ -247,6 +251,8 @@ int main(int argc, char *argv[])
             if(it.Get() > maxIntensity)
                 maxIntensity = it.Get();
         }
+
+        std::cout<<"max intensity : "<<maxIntensity<<std::endl;
 
         for(it.GoToBegin(); !it.IsAtEnd(); ++it)
             it.Set(it.Get()/maxIntensity);
