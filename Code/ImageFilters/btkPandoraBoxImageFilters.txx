@@ -84,18 +84,10 @@ void PandoraBoxImageFilters::ResampleImageUsingSpacing(itkFloatImagePointer & in
   resample->SetInput( inputImage );
 
   //Set the new origin correctly:
-  itkFloatImage::IndexType inputIndex;
-  inputIndex[0] = 0;
-  inputIndex[1] = 0;
-  inputIndex[2] = 0;
-  itkFloatImage::PointType inputPoint;
-  //This point should corresponds to the origin of the input image
-  inputImage->TransformIndexToPhysicalPoint(inputIndex,inputPoint);
-
   itkContinuousIndex outputIndex;
-  outputIndex[0] = -0.5 * inputImage->GetSpacing()[0] + 0.5 * resample->GetOutputSpacing()[0]  ;
-  outputIndex[1] = -0.5 * inputImage->GetSpacing()[1] + 0.5 * resample->GetOutputSpacing()[1] ;
-  outputIndex[2] = -0.5 * inputImage->GetSpacing()[2] + 0.5 * resample->GetOutputSpacing()[2] ;
+  outputIndex[0] = (-0.5 * inputImage->GetSpacing()[0] + 0.5 * resample->GetOutputSpacing()[0]) / inputImage->GetSpacing()[0] ;
+  outputIndex[1] = (-0.5 * inputImage->GetSpacing()[1] + 0.5 * resample->GetOutputSpacing()[1]) / inputImage->GetSpacing()[1] ;
+  outputIndex[2] = (-0.5 * inputImage->GetSpacing()[2] + 0.5 * resample->GetOutputSpacing()[2]) / inputImage->GetSpacing()[2] ;
 
   itkFloatImage::PointType outputPoint;
   inputImage->TransformContinuousIndexToPhysicalPoint(outputIndex,outputPoint);
@@ -132,18 +124,10 @@ void PandoraBoxImageFilters::ResampleImageUsingSize(itkFloatImagePointer & input
   resample->SetInput( inputImage );
 
   //Set the new origin correctly:
-  itkFloatImage::IndexType inputIndex;
-  inputIndex[0] = 0;
-  inputIndex[1] = 0;
-  inputIndex[2] = 0;
-  itkFloatImage::PointType inputPoint;
-  //This point should corresponds to the origin of the input image
-  inputImage->TransformIndexToPhysicalPoint(inputIndex,inputPoint);
-
   itkContinuousIndex outputIndex;
-  outputIndex[0] = -0.5 * inputImage->GetSpacing()[0] + 0.5 * resample->GetOutputSpacing()[0]  ;
-  outputIndex[1] = -0.5 * inputImage->GetSpacing()[1] + 0.5 * resample->GetOutputSpacing()[1] ;
-  outputIndex[2] = -0.5 * inputImage->GetSpacing()[2] + 0.5 * resample->GetOutputSpacing()[2] ;
+  outputIndex[0] = (-0.5 * inputImage->GetSpacing()[0] + 0.5 * resample->GetOutputSpacing()[0]) / inputImage->GetSpacing()[0] ;
+  outputIndex[1] = (-0.5 * inputImage->GetSpacing()[1] + 0.5 * resample->GetOutputSpacing()[1]) / inputImage->GetSpacing()[1] ;
+  outputIndex[2] = (-0.5 * inputImage->GetSpacing()[2] + 0.5 * resample->GetOutputSpacing()[2]) / inputImage->GetSpacing()[2] ;
 
   itkFloatImage::PointType outputPoint;
   inputImage->TransformContinuousIndexToPhysicalPoint(outputIndex,outputPoint);
@@ -170,26 +154,6 @@ void PandoraBoxImageFilters::ResampleImageUsingReference(itkFloatImagePointer & 
   resample->SetReferenceImage( referenceImage );
   resample->SetDefaultPixelValue(0.0);
   resample->SetInput( inputImage );
-
-  //Set the new origin correctly:
-  itkFloatImage::IndexType inputIndex;
-  inputIndex[0] = 0;
-  inputIndex[1] = 0;
-  inputIndex[2] = 0;
-  itkFloatImage::PointType inputPoint;
-  //This point should corresponds to the origin of the input image
-  inputImage->TransformIndexToPhysicalPoint(inputIndex,inputPoint);
-
-  itkContinuousIndex outputIndex;
-  outputIndex[0] = -0.5 * inputImage->GetSpacing()[0] + 0.5 * resample->GetOutputSpacing()[0]  ;
-  outputIndex[1] = -0.5 * inputImage->GetSpacing()[1] + 0.5 * resample->GetOutputSpacing()[1] ;
-  outputIndex[2] = -0.5 * inputImage->GetSpacing()[2] + 0.5 * resample->GetOutputSpacing()[2] ;
-
-  itkFloatImage::PointType outputPoint;
-  inputImage->TransformContinuousIndexToPhysicalPoint(outputIndex,outputPoint);
-
-  resample->SetOutputOrigin( outputPoint );
-  resample->SetOutputDirection( inputImage->GetDirection() );
   resample->Update();
   outputImage = resample->GetOutput();
 }
