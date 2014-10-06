@@ -316,6 +316,7 @@ void PandoraBoxReconstructionFilters::ComputerObservationModelParameters(vnl_spa
   itkFloatImage::IndexType hrIndex;  //index in HR image of interpolated psfPoint
 
   //We use linear interpolation for the estimation of point influence in matrix H
+  //This can introduce artefacts at the image boundary
   typedef itk::BSplineInterpolationWeightFunction<double, 3, 1> itkBSplineFunction;
   itkBSplineFunction::Pointer bsplineFunction = itkBSplineFunction::New();
   itkBSplineFunction::WeightsType bsplineWeights;
@@ -479,6 +480,8 @@ void PandoraBoxReconstructionFilters::ComputerObservationModelParameters(vnl_spa
 
 void PandoraBoxReconstructionFilters::ImageFusionByInjection(itkFloatImagePointer & outputImage, itkFloatImagePointer & maskImage, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkTransformType::Pointer> > & affineSBSTransforms)
 {
+  outputImage->FillBuffer(0.0);
+
   std::cout<<"ImageFusionByInjection"<<std::endl;
   //Strictly speaking, this is not an injection process, but il's faster to do it this way
   itkFloatImage::PointType outputPoint;      //physical point in HR output image
@@ -623,7 +626,6 @@ void PandoraBoxReconstructionFilters::SimulateObservations(vnl_sparse_matrix<flo
     }
   }
 }
-
 
 void PandoraBoxReconstructionFilters::ComputeModelError(std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkFloatImagePointer> > & modelStacks, std::vector< std::vector<itkFloatImagePointer> > & outputStacks)
 {
