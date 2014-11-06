@@ -75,12 +75,12 @@ Any researcher reporting results using BTK should acknowledge this software by c
 
 \subsubsection{Dependencies}
 
-Baby Brain Toolkit (BTK) needs the following packages\footnote{BTK has been tested under Ubuntu 12.04 and MacOSX 10.9}:
+Baby Brain Toolkit (BTK) needs the following packages\footnote{BTK has been tested under Ubuntu 12.04 and MacOSX 10.10 (Yosemite)}:
 \begin{itemize}
  \item \href{http://www.cmake.org}{CMake}, \href{http://tclap.sourceforge.net}{Tclap}, \href{http://openmp.org}{OpenMP}, \href{http://www.cs.umd.edu/\string~mount/ANN}{ANN}, \href{http://www.doxygen.org}{Doxygen} and \href{http://git-scm.com/}{Git}. These libraries can be installed using the following command line:
  \begin{itemize}
  \item for debian-based distributions: \texttt{apt-get install build-essential libgl1-mesa-dev libxt-dev cmake cmake-curses-gui libtclap-dev libgomp1 libann-dev  doxygen git-core}
- \item for MacOSX using macports\footnote{When configuring in cmake, please use /opt/local/include for TCLAP\_DIRECTORY}: \texttt{port install cmake tclap libANN doxygen git-core}
+ \item for MacOSX using macports\footnote{When configuring in cmake, please use /opt/local/include for TCLAP\_DIRECTORY}: \texttt{port install cmake tclap libANN doxygen git}
  \end{itemize}
  \item \href{http://www.itk.org/ITK/resources/software.html}{Insight Toolkit (ITK) version 4.5}
  \begin{itemize}
