@@ -455,13 +455,19 @@ void NLMTool<T>::ComputeOutput()
   }
 
   itkTPointer denoisedImage = itkTImage::New();
+  typename itkTDuplicator::Pointer duplicator = itkTDuplicator::New();
+  duplicator->SetInputImage( m_inputImage );
+  duplicator->Update();
+  denoisedImage = duplicator->GetOutput();
+  denoisedImage->FillBuffer(0);
+  /*
   denoisedImage->SetRegions(m_inputImage->GetLargestPossibleRegion());
   denoisedImage->SetSpacing( m_inputImage->GetSpacing() );
   denoisedImage->SetOrigin( m_inputImage->GetOrigin() );
   denoisedImage->SetDirection( m_inputImage->GetDirection() );
   denoisedImage->Allocate();
   denoisedImage->FillBuffer(0);
-
+  */
 
   itkTIterator denoisedIt( denoisedImage, denoisedImage->GetLargestPossibleRegion() );
   itkTIterator outputIt( m_outputImage, m_outputImage->GetLargestPossibleRegion());
