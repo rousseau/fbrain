@@ -46,6 +46,7 @@
 #include "itkDiscreteGaussianImageFilter.h"
 #include "itkResampleImageFilter.h"
 #include "itkIdentityTransform.h"
+#include "itkMatrixOffsetTransformBase.h"
 #include "itkBSplineInterpolateImageFunction.h"
 #include "itkContinuousIndex.h"
 #include "itkCastImageFilter.h"
@@ -67,6 +68,8 @@ class PandoraBoxImageFilters
 
     typedef itk::ResampleImageFilter<itkFloatImage, itkFloatImage>               itkResampleFilter;
     typedef itk::IdentityTransform<double, 3>                                    itkIdentityTransform;
+    typedef itk::MatrixOffsetTransformBase<double,3,3>                           itkTransformType;
+  typedef itkTransformType::Pointer                                              itkTransformPointer;
     typedef itk::BSplineInterpolateImageFunction<itkFloatImage, double, double>  itkBSplineInterpolator;
 
     typedef itk::ContinuousIndex<double,3>     itkContinuousIndex;
@@ -82,6 +85,9 @@ class PandoraBoxImageFilters
     static void ResampleImageUsingSpacing(itkFloatImagePointer & inputImage, itkFloatImagePointer & outputImage, itkFloatImage::SpacingType & itkSpacing, int interpolationOrder);
     static void ResampleImageUsingSize(itkFloatImagePointer & inputImage, itkFloatImagePointer & outputImage, itkFloatImage::SizeType & itkSize, int interpolationOrder);
     static void ResampleImageUsingReference(itkFloatImagePointer & inputImage, itkFloatImagePointer & outputImage, itkFloatImagePointer & referenceImage, int interpolationOrder);
+    static void ResampleImageUsingTransform(itkFloatImagePointer & inputImage, itkFloatImagePointer & outputImage, itkFloatImagePointer & referenceImage, int interpolationOrder, itkTransformPointer & inputTransform);
+
+    static void DownscaleImage(itkFloatImagePointer & inputImage, itkFloatImagePointer & outputImage, float factor);
 
     //Methods on probability images (stored as vector of images) -------------------------------------------------------
     static void ProbabilityImageNormalization(std::vector< itkFloatImagePointer > & inputImages, std::vector< itkFloatImagePointer > & outputImages);

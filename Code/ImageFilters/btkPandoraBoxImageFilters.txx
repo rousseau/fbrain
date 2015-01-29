@@ -75,7 +75,7 @@ void PandoraBoxImageFilters::ResampleImageUsingSpacing(itkFloatImagePointer & in
   itkFloatImage::SizeType    itkInputSize    = inputImage->GetLargestPossibleRegion().GetSize();
   itkFloatImage::SpacingType itkInputSpacing = inputImage->GetSpacing();
 
-  for(uint i=0; i<3; i++)
+  for(unsigned int i=0; i<3; i++)
     itkSize[i] = itkInputSize[i] * itkInputSpacing[i] / itkSpacing[i] ;
 
   resample->SetSize(itkSize);
@@ -157,6 +157,44 @@ void PandoraBoxImageFilters::ResampleImageUsingReference(itkFloatImagePointer & 
   resample->Update();
   outputImage = resample->GetOutput();
 }
+
+void PandoraBoxImageFilters::ResampleImageUsingTransform(itkFloatImagePointer & inputImage, itkFloatImagePointer & outputImage, itkFloatImagePointer & referenceImage, int interpolationOrder, itkTransformPointer & inputTransform)
+  {
+    itkResampleFilter::Pointer resample = itkResampleFilter::New();
+    
+    //parameters for interpolation (bspline interpolator)
+    itkBSplineInterpolator::Pointer bsInterpolator = itkBSplineInterpolator::New();
+    bsInterpolator->SetSplineOrder(interpolationOrder);
+    
+    resample->SetTransform(inputTransform);
+    resample->SetInterpolator(bsInterpolator);
+    resample->UseReferenceImageOn();
+    resample->SetReferenceImage( referenceImage );
+    resample->SetDefaultPixelValue(0.0);
+    resample->SetInput( inputImage );
+    resample->Update();
+    outputImage = resample->GetOutput();
+  }
+  
+void PandoraBoxImageFilters::DownscaleImage(itkFloatImagePointer & inputImage, itkFloatImagePointer & outputImage, float factor)
+{
+  itkFloatImage::Pointer tmpImage;
+  float variance = 6 * factor / 3.14159;   //PhD thesis P. Hellier 2000, page 35
+  DiscreteGaussianFiltering(inputImage,tmpImage,variance);
+
+  itkFloatImage::SpacingType spacing = inputImage->GetSpacing();
+  float minSpacing = spacing[0];
+  for(unsigned int i=1; i<3; i++)
+    if(minSpacing > spacing[i] )
+      minSpacing = spacing[i];
+
+  for(unsigned int i=0; i<3; i++)
+    //spacing[i] = spacing[i] * factor;
+    spacing[i] = minSpacing * factor;
+
+  ResampleImageUsingSpacing(tmpImage,outputImage,spacing,0);
+}
+
 
 void PandoraBoxImageFilters::ProbabilityImageNormalization(std::vector< itkFloatImagePointer > & inputImages, std::vector< itkFloatImagePointer > & outputImages)
 {
