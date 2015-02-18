@@ -36,8 +36,11 @@
 
 #include <cmath>
 
+#include "vnl/vnl_vector.h"
+#include "vnl/vnl_matrix.h"
+
 /* Itk includes */
-#include "itkVector.h"
+//#include "itkVector.h"
 
 #include "btkMacro.h"
 
@@ -77,6 +80,9 @@ public:
 
     template <class T> vnl_vector< double > minimize(vnl_vector< double > & point, vnl_vector< double > & displacements, T & f)
     {
+        //std::cout<<"Run Simplex Optimization"<<std::endl;
+        //std::cout<<"Initial displacements : "<<displacements<<std::endl;
+
         this->SetDimension(point.size());
         vnl_matrix<double> initialSimplex(this->GetDimension()+1,this->GetDimension());
         //Initialization of the simplex
@@ -92,11 +98,13 @@ public:
 
     template <class T> vnl_vector< double > minimize(vnl_matrix<double> & initialSimplex, T & f)
     {
-        std::cout<<"Run Simplex Optimization"<<std::endl;
+        /*
+        std::cout<<"Initial point : "<<initialSimplex.get_row(0)<<std::endl;
         if(m_ConvergenceToleranceForEachParameter.size() != this->GetDimension())
             std::cout<<"Global tolerance (on cost function value) : "<<this->GetConvergenceTolerance()<<std::endl;
         else
             std::cout<<"Tolerance (on each parameter value) : "<<this->GetConvergenceToleranceForEachParameter()<<std::endl;
+        */
 
         vnl_vector< double > sum( this->GetDimension() );
         vnl_vector< double > min( this->GetDimension() );
