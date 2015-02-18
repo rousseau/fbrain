@@ -58,7 +58,6 @@ void PandoraBoxImageFilters::DiscreteGaussianFiltering(itkFloatImagePointer & in
 void PandoraBoxImageFilters::ResampleImageUsingSpacing(itkFloatImagePointer & inputImage, itkFloatImagePointer & outputImage, itkFloatImage::SpacingType & itkSpacing, int interpolationOrder)
 {
   //Warning : interpolation order 0 (nearest neighbors) or 1 (linear) are fine. 3 (spline) may provide null image (ITK bug?).
-  std::cout<<"ResampleImageUsingSpacing\n";
 
   itkResampleFilter::Pointer resample = itkResampleFilter::New();
 
