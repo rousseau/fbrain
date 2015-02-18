@@ -78,11 +78,20 @@ int main(int argc, char** argv)
     TCLAP::ValueArg<std::string> registeredImageArg ("o","output","registered image file",false,"","string",cmd);
     TCLAP::ValueArg<std::string> transformArg       ("t","transf","estimated transform",false,"","string",cmd);
     TCLAP::ValueArg< int >       dofArg             ("","dof","Number of degrees of freedom (6,7,9,12)",false,6,"int",cmd);
-    TCLAP::ValueArg< float >     factorArg          ("f","factor","factor",false,1,"int",cmd);
+    TCLAP::ValueArg< float >     factorArg          ("f","factor","factor for image downsampling (default: 4)",false,4,"int",cmd);
+    TCLAP::MultiArg< float>      scaleArg           ("","scale","scales for registration (default: 8,4,2)",false,"float",cmd);
     TCLAP::ValueArg< int >       similarityArg      ("s","sim","similarity measure (MSE:0 (default), MI:1, NMI:2)",false,0,"int",cmd);
-    TCLAP::ValueArg< int >       binArg             ("b","bin","number of bin of the joint histogram",false,64,"int",cmd);
+    TCLAP::ValueArg< int >       binArg             ("b","bin","number of bin of the joint histogram (default: 64)",false,64,"int",cmd);
+    TCLAP::ValueArg< int >       bestCandidatesArg  ("","best","number of best candidates kept (default: 2)",false,2,"int",cmd);
+    TCLAP::ValueArg< int >       numberOfPerturbationsArg  ("","perturb","number of perturbations (default: 2)",false,2,"int",cmd);
+    TCLAP::ValueArg< float >     rotationXRangeArg  ("","rx","range of rotation (x axis) (default: 10)",false,10,"float",cmd);
+    TCLAP::ValueArg< float >     rotationYRangeArg  ("","ry","range of rotation (y axis) (default: 10)",false,10,"float",cmd);
+    TCLAP::ValueArg< float >     rotationZRangeArg  ("","rz","range of rotation (z axis) (default: 10)",false,10,"float",cmd);
+    TCLAP::ValueArg< int >       numberOfStartingEstimateArg  ("","start","number of starting estimates (per rotation axis) (default: 3)",false,3,"int",cmd);
 
     
+    //TODO
+
     // Parse the args.
     cmd.parse( argc, argv );
     
@@ -97,11 +106,31 @@ int main(int argc, char** argv)
     std::string                output_transform_filename  = transformArg.getValue();
 
     //DOF MAX -> need to adjust code for that **************************************************
-    int       dof    = dofArg.getValue();
-    float     factor = factorArg.getValue();
-    int       similarity = similarityArg.getValue();
-    int       bin    = binArg.getValue();
-    
+    int       dof              = dofArg.getValue();
+    float     factor           = factorArg.getValue();
+    int       similarity       = similarityArg.getValue();
+    int       bin              = binArg.getValue();
+    std::vector<float> scales  = scaleArg.getValue();
+    int numberOfBestCandidates = bestCandidatesArg.getValue();
+    int numberOfPerturbations  = numberOfPerturbationsArg.getValue();
+
+    vnl_vector< double > rotationRange(3,0);
+    rotationRange[0] = rotationXRangeArg.getValue();
+    rotationRange[1] = rotationYRangeArg.getValue();
+    rotationRange[2] = rotationZRangeArg.getValue();
+    int samplingRate = numberOfStartingEstimateArg.getValue();
+
+
+
+    if(scales.size() < 1)
+    {
+        scales.push_back(8);
+        scales.push_back(4);
+        scales.push_back(2);
+    }
+    //Ordering scales if necessary
+    std::sort(scales.begin(), scales.end());
+    std::reverse(scales.begin(), scales.end());
     
     typedef itk::Image< float, 3 >                                   itkFloatImage;
     typedef itk::MatrixOffsetTransformBase<double,3,3>               itkTransformType;
@@ -149,11 +178,6 @@ int main(int argc, char** argv)
 
     std::cout<<"Image center of the estimated transform:"<<centerIndex<<std::endl;
     std::cout<<"Physical center of the estimated transform:"<<center<<std::endl;
-
-    //center[0] = 0;
-    //center[1] = 0;
-    //center[2] = 0;
-
 
     //Initialisation of the registration parameters : by default, we assume that the headers provide relevant information
     //Otherwise, we should initialize the parameters using image moments, or center etc.
@@ -232,8 +256,193 @@ int main(int argc, char** argv)
     itkFloatImage::Pointer tmpReferenceMask;
     itkFloatImage::Pointer tmpMovingMask;
 
+    //FIRST SCALE *********************************************************************************
+    //Fast approximate search of good sets of parameters
+    factor = scales[0];
+    std::cout<<"Factor : "<<factor<<std::endl;
+
+    //INITIALIZATION (same of all scales) ----------------------------------------------------------
+    //Downscale with respect to the finest scaling factor of the original images
+
+    btk::PandoraBoxImageFilters::DownscaleImage(referenceImage, tmpReferenceImage,factor);
+    btk::PandoraBoxImageFilters::DownscaleImage(movingImage, tmpMovingImage,factor);
+    btk::PandoraBoxImageFilters::DownscaleImage(referenceMask, tmpReferenceMask,factor);
+    btk::PandoraBoxImageFilters::DownscaleImage(movingMask, tmpMovingMask,factor);
+
+    myCostFunction->SetReferenceImage(tmpReferenceImage);
+    myCostFunction->SetMovingImage(tmpMovingImage);
+    myCostFunction->SetMovingMask(tmpMovingMask);
+    myCostFunction->SetReferenceMask(tmpReferenceMask);
+    myCostFunction->SetCenter(center);
+
+    if( (similarity==1) || (similarity==2) || (similarity==4) || (similarity==5) )
+        myCostFunction->InitializeJointHistogram(bin,bin);
+
+    vnl_vector< double > tmpParameterRange = finalParameterRange;
+    vnl_vector< double > tmpTolerance      = finalTolerance;
+
+    //update accordingly to image resolution
+    for(unsigned int i=3; i < 6; i++)
+    {
+        tmpParameterRange(i) = finalParameterRange(i) * factor / 2;
+    }
+    for(unsigned int i=0; i < 6; i++)
+    {
+        tmpTolerance(i) = finalTolerance(i) * factor;
+    }
+    //END OF INITIALIZATION ------------------------------------------------------------------------
+
+    //Generate parameters (using uniform sampling over rotation domain)
+    std::vector< vnl_vector< double > > candidates;
+    btk::PandoraBoxRegistrationFilters::GenerateUniformlyDistributedParameters(inputParam, candidates, rotationRange, samplingRate);
+
+    std::vector< std::pair< vnl_vector< double >, double > > pairOfCandidates(candidates.size());
+
+    std::cout<<"Run registration for each set of candidate parameters\n";
+    for(unsigned int i=0; i < candidates.size(); i++)
+    {
+        btk::PandoraBoxRegistrationFilters::Register3DImages(*myCostFunction, candidates[i], outputParam, tmpParameterRange, tmpTolerance);
+        //std::cout<<"Estimated parameters : "<<outputParam<<std::endl;
+        pairOfCandidates[i].first = outputParam;
+        pairOfCandidates[i].second = (*myCostFunction)(outputParam);
+        //A cost function value equal to 0 is not possible (meaning that there is no more overlap between the two images.
+        if(pairOfCandidates[i].second == 0)
+            pairOfCandidates[i].second = std::numeric_limits<double>::max();
+        //std::cout<<"Cost function : "<< pairOfCandidates[i].second <<std::endl;
+    }
+
+    std::cout<<"Sort results by cost function values\n";
+    std::sort( pairOfCandidates.begin(), pairOfCandidates.end(), less_than_second );
+    for(unsigned int i=0; i < candidates.size(); i++)
+    {
+        std::cout<<"param : "<<pairOfCandidates[i].first<<", cost : "<<pairOfCandidates[i].second<<std::endl;
+    }
+    std::vector< vnl_vector< double > > bestCandidates(numberOfBestCandidates);
+    for(unsigned int i=0; i < numberOfBestCandidates; i++)
+        bestCandidates[i] = pairOfCandidates[i].first;
+
+
+    //SECOND SCALE *********************************************************************************
+    //Keep the best candidates of the previous scale, add perturbations and optimize
+    if(scales.size() > 1)
+        factor = scales[1];
+    else
+        factor = scales[0];
+
+    std::cout<<"Factor : "<<factor<<std::endl;
+
+    //INITIALIZATION (same of all scales) ----------------------------------------------------------
+    //Downscale with respect to the finest scaling factor of the original images
+    btk::PandoraBoxImageFilters::DownscaleImage(referenceImage, tmpReferenceImage,factor);
+    btk::PandoraBoxImageFilters::DownscaleImage(movingImage, tmpMovingImage,factor);
+    btk::PandoraBoxImageFilters::DownscaleImage(referenceMask, tmpReferenceMask,factor);
+    btk::PandoraBoxImageFilters::DownscaleImage(movingMask, tmpMovingMask,factor);
+
+    myCostFunction->SetReferenceImage(tmpReferenceImage);
+    myCostFunction->SetMovingImage(tmpMovingImage);
+    myCostFunction->SetMovingMask(tmpMovingMask);
+    myCostFunction->SetReferenceMask(tmpReferenceMask);
+    myCostFunction->SetCenter(center);
+
+    if( (similarity==1) || (similarity==2) || (similarity==4) || (similarity==5) )
+        myCostFunction->InitializeJointHistogram(bin,bin);
+
+    tmpParameterRange = finalParameterRange;
+    tmpTolerance      = finalTolerance;
+
+    //update accordingly to image resolution
+    for(unsigned int i=3; i < 6; i++)
+    {
+        tmpParameterRange(i) = finalParameterRange(i) * factor / 2;
+    }
+    for(unsigned int i=0; i < 6; i++)
+    {
+        tmpTolerance(i) = finalTolerance(i) * factor;
+    }
+    //END OF INITIALIZATION ------------------------------------------------------------------------
+
+    std::vector< std::pair< vnl_vector< double >, double > > pairOfParamsAndCostFunctionValues(numberOfBestCandidates * numberOfPerturbations);
+
+    //Generate random registration parameters
+    srand (time(NULL));
+    int index = 0;
+    for(unsigned int i=0; i < numberOfBestCandidates; i++)
+        for(unsigned int j=0; j < numberOfPerturbations; j++)
+        {
+            btk::PandoraBoxRegistrationFilters::GenerateRandomParameters(bestCandidates[i], pairOfParamsAndCostFunctionValues[index].first, tmpParameterRange);
+            index++;
+        }
+
+    //Run registration for each set of parameters
+    for(unsigned int i=0; i < numberOfBestCandidates * numberOfPerturbations; i++)
+    {
+        btk::PandoraBoxRegistrationFilters::Register3DImages(*myCostFunction, pairOfParamsAndCostFunctionValues[i].first, outputParam, tmpParameterRange, tmpTolerance);
+        std::cout<<"Estimated parameters : "<<outputParam<<std::endl;
+        pairOfParamsAndCostFunctionValues[i].first = outputParam;
+        pairOfParamsAndCostFunctionValues[i].second = (*myCostFunction)(outputParam);
+        //A cost function value equal to 0 is not possible (meaning that there is no more overlap between the two images.
+        if(pairOfParamsAndCostFunctionValues[i].second == 0)
+            pairOfParamsAndCostFunctionValues[i].second = std::numeric_limits<double>::max();
+        std::cout<<"Cost function : "<< pairOfParamsAndCostFunctionValues[i].second <<std::endl;
+    }
+
+    //Sort results by cost function values
+    std::sort( pairOfParamsAndCostFunctionValues.begin(), pairOfParamsAndCostFunctionValues.end(), less_than_second );
+    for(unsigned int i=0; i < numberOfPerturbations; i++)
+        std::cout<<"param : "<<pairOfParamsAndCostFunctionValues[i].first<<", cost : "<<pairOfParamsAndCostFunctionValues[i].second<<std::endl;
+
+    //Assign best estimations
+    vnl_vector< double > bestParamSoFar(inputParam.size(),0);
+
+    bestParamSoFar = pairOfParamsAndCostFunctionValues[0].first;
+
+
+    //THE OTHER SCALES ****************************************************************************************
+    //Optimize only one set of parameters
+    if(scales.size() > 2){
+        for(unsigned int scaleIndex=2; scaleIndex < scales.size(); scaleIndex++)
+        {
+            factor = scales[scaleIndex];
+            std::cout<<"Factor : "<<factor<<std::endl;
+
+            //Downscale with respect to the finest scaling factor of the original images
+            btk::PandoraBoxImageFilters::DownscaleImage(referenceImage, tmpReferenceImage,factor);
+            btk::PandoraBoxImageFilters::DownscaleImage(movingImage, tmpMovingImage,factor);
+            btk::PandoraBoxImageFilters::DownscaleImage(referenceMask, tmpReferenceMask,factor);
+            btk::PandoraBoxImageFilters::DownscaleImage(movingMask, tmpMovingMask,factor);
+
+            myCostFunction->SetReferenceImage(tmpReferenceImage);
+            myCostFunction->SetMovingImage(tmpMovingImage);
+            myCostFunction->SetMovingMask(tmpMovingMask);
+            myCostFunction->SetReferenceMask(tmpReferenceMask);
+            myCostFunction->SetCenter(center);
+
+            if( (similarity==1) || (similarity==2) || (similarity==4) || (similarity==5) )
+                myCostFunction->InitializeJointHistogram(bin,bin);
+
+            tmpParameterRange = finalParameterRange;
+            tmpTolerance      = finalTolerance;
+
+            //update accordingly to image resolution
+            for(unsigned int i=3; i < 6; i++)
+            {
+                tmpParameterRange(i) = finalParameterRange(i) * factor / 2;
+            }
+            for(unsigned int i=0; i < 6; i++)
+            {
+                tmpTolerance(i) = finalTolerance(i) * factor;
+            }
+            //END OF INITIALIZATION ------------------------------------------------------------------------
+
+            btk::PandoraBoxRegistrationFilters::Register3DImages(*myCostFunction, bestParamSoFar, outputParam, tmpParameterRange, tmpTolerance);
+            std::cout<<"Estimated parameters : "<<outputParam<<std::endl;
+            bestParamSoFar = outputParam;
+
+        }
+    }
+
+/*
     // FIRST LEVEL : FACTOR 8
-    //float factor = 8;
     std::cout<<"Factor : "<<factor<<std::endl;
     int numberOfBestCandidates = 2;
     int numberOfPerturbations = 2;
@@ -279,7 +488,6 @@ int main(int argc, char** argv)
     vnl_vector< double > rotationRange(3,10);
     int samplingRate = 3;
     btk::PandoraBoxRegistrationFilters::GenerateUniformlyDistributedParameters(inputParam, candidates, rotationRange, samplingRate);
-    //std::cout<<"Generated candidates : "<<std::endl;
 
     std::vector< std::pair< vnl_vector< double >, double > > pairOfCandidates(candidates.size());
 
@@ -341,6 +549,10 @@ int main(int argc, char** argv)
 
     //Assign best estimations
     outputParam = pairOfParamsAndCostFunctionValues[0].first;
+*/
+    std::cout<<"*********************************************************************\n";
+    std::cout<<"Estimated parameters : "<<outputParam<<std::endl;
+    std::cout<<"*********************************************************************\n";
 
     std::cout<<"Convert parameters to ITK matrix\n";
     itkTransformType::Pointer estimatedTransform = itkTransformType::New();
