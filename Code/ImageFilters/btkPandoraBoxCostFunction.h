@@ -189,12 +189,14 @@ namespace btk
             //Take max(w1,w2) instead of w1, or w1*w2
 
             //Simple version, taking only into account for reference mask -------------------------------------------
-
-            double interpolatedValueImage = bsInterpolatorMovingImage->EvaluateAtContinuousIndex(inputContIndex);
-            weight = itMask.Get();
-            //weightedSum += weight;
-            //res += weight * pow(interpolatedValueImage - itReference.Get(), 2.0);
-            jointHistogram.AddSample( itReference.Get(), interpolatedValueImage, weight );
+            if(bsInterpolatorMovingImage->IsInsideBuffer(inputContIndex))
+            {
+              double interpolatedValueImage = bsInterpolatorMovingImage->EvaluateAtContinuousIndex(inputContIndex);
+              weight = itMask.Get();
+              //weightedSum += weight;
+              //res += weight * pow(interpolatedValueImage - itReference.Get(), 2.0);
+              jointHistogram.AddSample( itReference.Get(), interpolatedValueImage, weight );
+            }
           }
         }
 
@@ -252,12 +254,15 @@ namespace btk
                   itkContinuousIndex       inputContIndex;   //continuous index in the 3D image
                   movingImage->TransformPhysicalPointToContinuousIndex(transformedPoint,inputContIndex);
 
-                  double interpolatedValueImage = bsInterpolatorMovingImage->EvaluateAtContinuousIndex(inputContIndex);
-                  double weight = referenceMask->GetPixel( refIndex );
+                  if(bsInterpolatorMovingImage->IsInsideBuffer(inputContIndex))
+                  {
+                    double interpolatedValueImage = bsInterpolatorMovingImage->EvaluateAtContinuousIndex(inputContIndex);
+                    double weight = referenceMask->GetPixel( refIndex );
 
-                  double currentReferenceValue = referenceImage->GetPixel( refIndex );
+                    double currentReferenceValue = referenceImage->GetPixel( refIndex );
 
-                  jhVector[ithread].AddSample(currentReferenceValue, interpolatedValueImage, weight);
+                    jhVector[ithread].AddSample(currentReferenceValue, interpolatedValueImage, weight);
+                  }
               }
             }
 
@@ -379,12 +384,13 @@ namespace btk
           //Take max(w1,w2) instead of w1, or w1*w2
 
           //Simple version, taking only into account for reference mask -------------------------------------------
-
-          double interpolatedValueImage = bsInterpolatorMovingImage->EvaluateAtContinuousIndex(inputContIndex);
-          weight = itMask.Get();
-          weightedSum += weight;
-          res += weight * pow(interpolatedValueImage - itReference.Get(), 2.0);
-
+          if(bsInterpolatorMovingImage->IsInsideBuffer(inputContIndex))
+          {
+            double interpolatedValueImage = bsInterpolatorMovingImage->EvaluateAtContinuousIndex(inputContIndex);
+            weight = itMask.Get();
+            weightedSum += weight;
+            res += weight * pow(interpolatedValueImage - itReference.Get(), 2.0);
+          }
 
           //max(wref,wmov)-----------------------------------------------------------------------------------------
           /*
@@ -440,7 +446,6 @@ namespace btk
       int x,y,z;
       itkFloatImage::SizeType    size    = referenceImage->GetLargestPossibleRegion().GetSize();
 
-      //#pragma omp parallel for private(x,y,z,refIndex,refPoint,transformedPoint,inputContIndex) schedule(dynamic)
       #pragma omp parallel for private(x,y,z) reduction(+: res,weightedSum)
       for(z=0; z < (int)size[2]; z++)
       for(y=0; y < (int)size[1]; y++)
@@ -461,12 +466,12 @@ namespace btk
             itkContinuousIndex       inputContIndex;   //continuous index in the 3D image
             movingImage->TransformPhysicalPointToContinuousIndex(transformedPoint,inputContIndex);
 
-            double interpolatedValueImage = bsInterpolatorMovingImage->EvaluateAtContinuousIndex(inputContIndex);
-            double weight = referenceMask->GetPixel( refIndex );
-            double mse = weight * pow(interpolatedValueImage - referenceImage->GetPixel( refIndex ), 2.0);
-
-            //#pragma omp critical
+            if(bsInterpolatorMovingImage->IsInsideBuffer(inputContIndex))
             {
+                double interpolatedValueImage = bsInterpolatorMovingImage->EvaluateAtContinuousIndex(inputContIndex);
+                double weight = referenceMask->GetPixel( refIndex );
+                double mse = weight * pow(interpolatedValueImage - referenceImage->GetPixel( refIndex ), 2.0);
+
                 weightedSum += weight;
                 res += mse;
             }
