@@ -78,9 +78,8 @@ int main(int argc, char** argv)
     TCLAP::ValueArg<std::string> registeredImageArg ("o","output","registered image file",false,"","string",cmd);
     TCLAP::ValueArg<std::string> transformArg       ("t","transf","estimated transform",false,"","string",cmd);
     TCLAP::ValueArg< int >       dofArg             ("","dof","Number of degrees of freedom (6,7,9,12)",false,6,"int",cmd);
-    TCLAP::ValueArg< float >     factorArg          ("f","factor","factor for image downsampling (default: 4)",false,4,"int",cmd);
     TCLAP::MultiArg< float>      scaleArg           ("","scale","scales for registration (default: 8,4,2)",false,"float",cmd);
-    TCLAP::ValueArg< int >       similarityArg      ("s","sim","similarity measure (MSE:0 (default), MI:1, NMI:2)",false,0,"int",cmd);
+    TCLAP::ValueArg< int >       similarityArg      ("s","sim","similarity measure (MSE:0 (default), MI:1, NMI:2, openMP MSE: 3, openMP MI: 4, openMP NMI: 5)",false,0,"int",cmd);
     TCLAP::ValueArg< int >       binArg             ("b","bin","number of bin of the joint histogram (default: 64)",false,64,"int",cmd);
     TCLAP::ValueArg< int >       bestCandidatesArg  ("","best","number of best candidates kept (default: 2)",false,2,"int",cmd);
     TCLAP::ValueArg< int >       numberOfPerturbationsArg  ("","perturb","number of perturbations (default: 2)",false,2,"int",cmd);
@@ -107,7 +106,6 @@ int main(int argc, char** argv)
 
     //DOF MAX -> need to adjust code for that **************************************************
     int       dof              = dofArg.getValue();
-    float     factor           = factorArg.getValue();
     int       similarity       = similarityArg.getValue();
     int       bin              = binArg.getValue();
     std::vector<float> scales  = scaleArg.getValue();
@@ -135,7 +133,6 @@ int main(int argc, char** argv)
     typedef itk::Image< float, 3 >                                   itkFloatImage;
     typedef itk::MatrixOffsetTransformBase<double,3,3>               itkTransformType;
     //itk::TransformFactory<itkTransformType>::RegisterTransform();
-    //typedef itk::ResampleImageFilter<itkFloatImage, itkFloatImage>   itkResampleFilter;
     typedef itk::Vector<double, 3>                              itkVector;
 
     
@@ -258,7 +255,7 @@ int main(int argc, char** argv)
 
     //FIRST SCALE *********************************************************************************
     //Fast approximate search of good sets of parameters
-    factor = scales[0];
+    float factor = scales[0];
     std::cout<<"Factor : "<<factor<<std::endl;
 
     //INITIALIZATION (same of all scales) ----------------------------------------------------------
