@@ -56,3 +56,15 @@ CMakeLists.txt.user*
 #####################
 build
 release
+
+*.config
+
+*.creator
+
+*.user
+
+*.3505f91
+
+*.files
+
+*.includes
