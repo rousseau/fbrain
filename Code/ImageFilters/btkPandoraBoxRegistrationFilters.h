@@ -102,7 +102,6 @@ class PandoraBoxRegistrationFilters
     //Coarse3DRegistration explores the domain (i.e. possible rotation values) of registration parameters
     static void Coarse3DRegistration(PandoraBoxCostFunction & costFunction, vnl_vector< double > & inputParameters, vnl_vector< double > & outputParameters, vnl_vector< double > & parameterRange, unsigned int numberOfIncrements, vnl_vector< double > toleranceVector, double tolerance);
 
-
     //Slice motion estimation using a observation model
 
     //Slice motion estimation using a set of slices

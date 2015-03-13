@@ -67,6 +67,7 @@ SET(MATHS_LIBRARY_HEADER
     ${MATHS_LIBRARY_SOURCE_DIR}/btkSphericalHarmonics.h
     ${MATHS_LIBRARY_SOURCE_DIR}/btkMatrixOperations.h
     ${MATHS_LIBRARY_SOURCE_DIR}/btkHistogram.h
+    ${MATHS_LIBRARY_SOURCE_DIR}/btkJointHistogram.h
     ${MATHS_LIBRARY_SOURCE_DIR}/btkProbabilityDensity.h
     ${MATHS_LIBRARY_SOURCE_DIR}/btkNormalProbabilityDensity.h
     ${MATHS_LIBRARY_SOURCE_DIR}/btkVonMisesFisherProbabilityDensity.h
@@ -87,6 +88,7 @@ SET(MATHS_LIBRARY_SOURCES
     ${MATHS_LIBRARY_SOURCE_DIR}/btkSphericalHarmonics.cxx
     ${MATHS_LIBRARY_SOURCE_DIR}/btkMatrixOperations.cxx
     ${MATHS_LIBRARY_SOURCE_DIR}/btkHistogram.cxx
+    ${MATHS_LIBRARY_SOURCE_DIR}/btkJointHistogram.cxx
     ${MATHS_LIBRARY_SOURCE_DIR}/btkNormalProbabilityDensity.cxx
     ${MATHS_LIBRARY_SOURCE_DIR}/btkVonMisesFisherProbabilityDensity.cxx
     ${MATHS_LIBRARY_SOURCE_DIR}/btkCurvatures.cxx

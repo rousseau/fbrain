@@ -211,8 +211,8 @@ TARGET_LINK_LIBRARIES(btkInverseDisplacementField ${ITK_LIBRARIES})
 ADD_EXECUTABLE( btkTractDensityMap  btkTractDensityMap.cxx)
 TARGET_LINK_LIBRARIES(btkTractDensityMap ${ITK_LIBRARIES} vtkHybrid)
 
-ADD_EXECUTABLE(btkColorFiberTractsByOrientation btkColorFiberTractsByOrientation.cxx)
-TARGET_LINK_LIBRARIES(btkColorFiberTractsByOrientation btkTractographyLibrary vtkHybrid)
+#ADD_EXECUTABLE(btkColorFiberTractsByOrientation btkColorFiberTractsByOrientation.cxx)
+#TARGET_LINK_LIBRARIES(btkColorFiberTractsByOrientation btkTractographyLibrary vtkHybrid)
 
 ADD_EXECUTABLE(btkComputeSoftMaskUsingOrthogonalImages btkComputeSoftMaskUsingOrthogonalImages.cxx)
 TARGET_LINK_LIBRARIES(btkComputeSoftMaskUsingOrthogonalImages ${ITK_LIBRARIES})
@@ -232,20 +232,20 @@ TARGET_LINK_LIBRARIES(btkDiffusionScalarMeasurement btkToolsLibrary btkDiffusion
 ADD_EXECUTABLE(btkS2SSimilarity btkS2SSimilarity.cxx)
 TARGET_LINK_LIBRARIES(btkS2SSimilarity btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkComputeCurvature btkComputeCurvature.cxx)
-TARGET_LINK_LIBRARIES(btkComputeCurvature btkMathsLibrary ${VTK_LIBRARIES} vtkHybrid)
+#ADD_EXECUTABLE(btkComputeCurvature btkComputeCurvature.cxx)
+#TARGET_LINK_LIBRARIES(btkComputeCurvature btkMathsLibrary ${VTK_LIBRARIES} vtkHybrid)
 
 ADD_EXECUTABLE(btkConvertToTXT btkConvertToTXT.cxx)
 TARGET_LINK_LIBRARIES(btkConvertToTXT ${VTK_LIBRARIES} vtkHybrid)
 
-ADD_EXECUTABLE(btkApplyRegionGrow btkApplyRegionGrow.cxx)
-TARGET_LINK_LIBRARIES(btkApplyRegionGrow btkToolsLibrary btkMathsLibrary ${VTK_LIBRARIES} vtkHybrid)
+#ADD_EXECUTABLE(btkApplyRegionGrow btkApplyRegionGrow.cxx)
+#TARGET_LINK_LIBRARIES(btkApplyRegionGrow btkToolsLibrary btkMathsLibrary ${VTK_LIBRARIES} vtkHybrid)
 
 ADD_EXECUTABLE(btkProjectPointsOnPolydata btkProjectPointsOnPolydata.cxx)
 TARGET_LINK_LIBRARIES(btkProjectPointsOnPolydata ${VTK_LIBRARIES} vtkHybrid)
 
-ADD_EXECUTABLE(btkSelectSeedPoint btkSelectSeedPoint.cxx)
-TARGET_LINK_LIBRARIES(btkSelectSeedPoint ${VTK_LIBRARIES} vtkHybrid)
+#ADD_EXECUTABLE(btkSelectSeedPoint btkSelectSeedPoint.cxx)
+#TARGET_LINK_LIBRARIES(btkSelectSeedPoint ${VTK_LIBRARIES} vtkHybrid)
 
 ADD_EXECUTABLE(btkLikelihoodOfSequenceEstimation btkLikelihoodOfSequenceEstimation.cxx)
 TARGET_LINK_LIBRARIES(btkLikelihoodOfSequenceEstimation ${ITK_LIBRARIES})
@@ -347,25 +347,25 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkInverseDisplacementField
                 btkDistanceBetweenBinaryImages
                 btkTractDensityMap
-                btkColorFiberTractsByOrientation
+#                btkColorFiberTractsByOrientation
                 btkComputeSoftMaskUsingOrthogonalImages
                 btkLocalHistogramMatching
                 btkWeightImageOfPatches
                 btkTriangleMesh
                 btkDiffusionScalarMeasurement
                 btkS2SSimilarity
-                btkComputeCurvature
+#                btkComputeCurvature
                 btkConvertToTXT
-                btkApplyRegionGrow
+#                btkApplyRegionGrow
                 btkProjectPointsOnPolydata
-                btkSelectSeedPoint
+#                btkSelectSeedPoint
                 btkLikelihoodOfSequenceEstimation
                 btkComputeFeatureSelectionResiduals
                 btkComputeCoefficientOfDeterminationForAtlas
                 btkGenerateVtkFileFromFiberDataTextFiles
                 btkGenerateSimulatedFiber
-				btkCreate4DEmptyImageFromReferenceImage
-				btkQuantifyClusteredRegions
+								btkCreate4DEmptyImageFromReferenceImage
+								btkQuantifyClusteredRegions
                 btkApplyTransformToDiffusionSequence
                 btkApplyAffineTransformToFibers
                 btkResolutionSampler

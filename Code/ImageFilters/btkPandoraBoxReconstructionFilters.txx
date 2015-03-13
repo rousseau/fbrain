@@ -255,12 +255,6 @@ void PandoraBoxReconstructionFilters::ComputePSFImage(itkFloatImagePointer & PSF
     psfSum += psfValue;
   }
 
-  //for memory saving, we limit the number of non-null voxels
-  for(itPSFImage.GoToBegin(); !itPSFImage.IsAtEnd(); ++itPSFImage){
-    if(itPSFImage.Get() < 0.001)
-      itPSFImage.Set(0);
-  }
-
   //Normalization of PSF values
   for(itPSFImage.GoToBegin(); !itPSFImage.IsAtEnd(); ++itPSFImage)
   {
@@ -268,12 +262,29 @@ void PandoraBoxReconstructionFilters::ComputePSFImage(itkFloatImagePointer & PSF
     itPSFImage.Set(normalizedValue);
   }
 
-//  std::cout<<"Positive values of the PSF : \n";
-//  for(itPSFImage.GoToBegin(); !itPSFImage.IsAtEnd(); ++itPSFImage)
-//    if(itPSFImage.Get()>0){
-//      itkFloatImage::IndexType index = itPSFImage.GetIndex();
-//      std::cout<<itPSFImage.Get()<<" ("<<index[0]<<", "<<index[1]<<", "<<index[2]<<") \n";
-//    }
+  //for memory saving, we limit the number of non-null voxels
+  psfSum = 0;
+  for(itPSFImage.GoToBegin(); !itPSFImage.IsAtEnd(); ++itPSFImage)
+  {
+    if(itPSFImage.Get() < 0.01)
+      itPSFImage.Set(0.0);
+    else
+      psfSum += itPSFImage.Get();
+  }
+
+  //Normalization of PSF values after cleaning PSF values
+  for(itPSFImage.GoToBegin(); !itPSFImage.IsAtEnd(); ++itPSFImage)
+  {
+    double normalizedValue = itPSFImage.Get() / psfSum;
+    itPSFImage.Set(normalizedValue);
+  }
+
+  std::cout<<"Positive values of the PSF : \n";
+  for(itPSFImage.GoToBegin(); !itPSFImage.IsAtEnd(); ++itPSFImage)
+    if(itPSFImage.Get()>0){
+      itkFloatImage::IndexType index = itPSFImage.GetIndex();
+      std::cout<<itPSFImage.Get()<<" ("<<index[0]<<", "<<index[1]<<", "<<index[2]<<") \n";
+    }
 
 }
 
@@ -502,7 +513,7 @@ void PandoraBoxReconstructionFilters::ImageFusionByInjection(itkFloatImagePointe
   //Define a threshold for z coordinate based on FWHM = 2sqrt(2ln2)sigma = 2.3548 sigma
   float cst = 2*sqrt(2*log(2.0));
   float sigmaz = inputStacks[0][0]->GetSpacing()[2] /cst;
-  int scale_search_Z = 2;
+  float scale_search_Z = 2;
   float sz2 = sigmaz * scale_search_Z;
 
   //ITK Interpolator
@@ -569,6 +580,78 @@ void PandoraBoxReconstructionFilters::ImageFusionByInjection(itkFloatImagePointe
   }
 }
 
+void PandoraBoxReconstructionFilters::ImageFusionByScatteredInterpolation(itkFloatImagePointer & outputImage, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkFloatImagePointer> > & maskStacks, std::vector< std::vector<itkTransformType::Pointer> > & inverseAffineSBSTransforms)
+{
+  std::cout<<"ImageFusionByScatteredInterpolation (segmentation fault !!! )\n";
+  itkPointSet::Pointer pointSet = itkPointSet::New();
+  itkFloatImage::IndexType lrIndex;  //index of the current voxel in the LR image
+  itkFloatImage::PointType lrPoint;  //physical point location of lrIndex
+
+  //Loop over the input stacks
+  for(unsigned int i=0; i<inputStacks.size(); i++)
+  {
+    //Loop over every slice of the current stack
+    for(unsigned int s=0; s<inputStacks[i].size(); s++)
+    {
+      //Instantiate an iterator over the current LR image
+      itkFloatIteratorWithIndex itLRImage(inputStacks[i][s],inputStacks[i][s]->GetLargestPossibleRegion());
+
+      //Instantiate an iterator over the current LR mask image
+      itkFloatIterator itLRMask(maskStacks[i][s],maskStacks[i][s]->GetLargestPossibleRegion());
+
+      //Loop over the voxels of the current LR image
+      for(itLRImage.GoToBegin(), itLRMask.GoToBegin(); !itLRImage.IsAtEnd(); ++itLRImage, ++itLRMask)
+      {
+        if(itLRMask.Get() > 0)
+        {
+          //Coordinate in the current LR image
+          lrIndex = itLRImage.GetIndex();
+
+          //Compute its physical location
+          itkPointSet::PointType point;
+
+          //Compute the physical point of psfIndex
+          inputStacks[i][s]->TransformIndexToPhysicalPoint(lrIndex,lrPoint);
+          point = inverseAffineSBSTransforms[i][s]->TransformPoint(lrPoint);
+
+          //Add the point and its corresponding intensity value
+          unsigned long nbp = pointSet->GetNumberOfPoints();
+          pointSet ->SetPoint(nbp, point);
+
+          pointSet ->SetPointData(nbp, itLRImage.Get());
+
+        }
+      }
+    }
+  }
+
+  std::cout<<"Number of scattered points :"<<pointSet->GetNumberOfPoints()<<std::endl;
+
+  std::cout<<"Instantiate the ITK filter\n";
+  itkScatteredInterpolationFilter::Pointer BSInterpolator = itkScatteredInterpolationFilter::New();
+  BSInterpolator->SetSplineOrder( 3 );
+  itkScatteredInterpolationFilter::ArrayType ncps;
+  ncps.Fill( 4 );
+  BSInterpolator->SetNumberOfControlPoints( ncps );
+  BSInterpolator->SetNumberOfLevels( 3 );
+
+  BSInterpolator->SetOrigin( outputImage->GetOrigin() );
+  BSInterpolator->SetSpacing( outputImage->GetSpacing() );
+  BSInterpolator->SetSize( outputImage->GetLargestPossibleRegion().GetSize() );
+  BSInterpolator->SetInput( pointSet );
+
+  std::cout<<"Run interpolation filter\n";
+  BSInterpolator->Update();
+
+  //Conversion from vector image to float image
+  itkFloatIterator itOut(outputImage,outputImage->GetLargestPossibleRegion());
+  itkVectorIterator itBSI(BSInterpolator->GetOutput(),BSInterpolator->GetOutput()->GetLargestPossibleRegion());
+  for(itBSI.GoToBegin(), itOut.GoToBegin(); !itBSI.IsAtEnd(); ++itBSI, ++itOut)
+    itOut.Set( itBSI.Get()[0] );
+
+
+}
+
 void PandoraBoxReconstructionFilters::SimulateObservations(vnl_sparse_matrix<float> & H, vnl_vector<float> & X, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkFloatImagePointer> > & outputStacks)
 {
   std::cout<<"SimulateObservations"<<std::endl;
@@ -620,8 +703,10 @@ void PandoraBoxReconstructionFilters::SimulateObservations(vnl_sparse_matrix<flo
         lrLinearIndex = offset[i][s] + lrIndex[0] + lrIndex[1]*lrSize[0];
 
         //Fill Y
-        itLRImage.Set( Hx[lrLinearIndex] );
-
+        if( Hx[lrLinearIndex] != Hx[lrLinearIndex] )// Nan test (meaning that this row of H is empty)
+          itLRImage.Set(0);
+        else
+          itLRImage.Set( Hx[lrLinearIndex] );
       }
     }
   }
@@ -785,51 +870,5 @@ void PandoraBoxReconstructionFilters::IterativeBackProjection(itkFloatImagePoint
   //Convert X to 3D image
   ConvertVNLVectorTo3DImage(outputImage,X);
 }
-
-void PandoraBoxReconstructionFilters::ConvertParametersToRigidMatrix(itkTransformType::Pointer outputTransform, std::vector<float> & inputParameters)
-{
-  //Quite ugly (and slow) way to do that ! (but we keep the flexibility of using MatrixOffsetTransformBase instead of specific transform such as Euler or Affine)
-  //Create a ITK-based Euler transform, compute matrix, and then get parameters
-  //inputParameters : 3 rotation angles (degrees) and 3 translations (mm)
-  //Angles must be in degrees here
-
-  // constant for converting degrees into radians
-  const double dtr = ( vcl_atan(1.0) * 4.0 ) / 180.0;
-
-  itk::Euler3DTransform<double>::Pointer eulerTransform = itk::Euler3DTransform<double>::New();
-  eulerTransform->SetRotation(dtr*inputParameters[0], dtr*inputParameters[1], dtr*inputParameters[2]);
-  outputTransform->SetMatrix( eulerTransform->GetMatrix() );
-
-  itkTransformType::OutputVectorType translation;
-  translation[0] = inputParameters[3];
-  translation[1] = inputParameters[4];
-  translation[2] = inputParameters[5];
-
-  outputTransform->SetTranslation( translation );
-}
-
-void PandoraBoxReconstructionFilters::ConvertRigidMatrixToParameters(std::vector<float> & outputParameters, itkTransformType::Pointer inputTransform)
-{
-  //Same as above (ConvertParametersToRigidMatrix)
-  //Use a ITK-based Euler transform to compute the parameters
-
-  // constant for converting degrees into radians
-  const double rtd = 180.0 / ( vcl_atan(1.0) * 4.0 ) ;
-
-  itk::Euler3DTransform<double>::Pointer eulerTransform = itk::Euler3DTransform<double>::New();
-  eulerTransform->SetMatrix( inputTransform->GetMatrix() );
-
-  outputParameters[0] = eulerTransform->GetAngleX() * rtd;
-  outputParameters[1] = eulerTransform->GetAngleY() * rtd;
-  outputParameters[2] = eulerTransform->GetAngleZ() * rtd;
-
-  itkTransformType::OutputVectorType translation;
-  translation = inputTransform->GetTranslation();
-  outputParameters[3] = translation[0];
-  outputParameters[4] = translation[1];
-  outputParameters[5] = translation[2];
-}
-
-
 
 } // namespace btk

@@ -38,6 +38,7 @@
 
 // STL includes
 #include "vector"
+#include <string>
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -53,6 +54,8 @@
 #include "itkBSplineInterpolationWeightFunction.h"
 #include "itkSubtractImageFilter.h"
 #include "itkEuler3DTransform.h"
+#include "itkPointSet.h"
+#include "itkBSplineScatteredDataPointSetToImageFilter.h"
 
 #include "vnl/vnl_sparse_matrix.h"
 
@@ -67,6 +70,13 @@ class PandoraBoxReconstructionFilters
     typedef itk::ImageRegionIterator< itkFloatImage >          itkFloatIterator;
     typedef itk::ImageRegionIteratorWithIndex< itkFloatImage > itkFloatIteratorWithIndex;
     typedef itk::ContinuousIndex<double,3>                     itkContinuousIndex;
+
+    typedef itk::Vector<float, 1>                              itkVector;
+    typedef itk::Image<itkVector, 3>                           itkVectorImage;
+    typedef itk::PointSet<itkVectorImage::PixelType, 3>        itkPointSet;
+    typedef itk::BSplineScatteredDataPointSetToImageFilter <itkPointSet , itkVectorImage > itkScatteredInterpolationFilter;
+    typedef itk::ImageRegionIterator< itkVectorImage >          itkVectorIterator;
+
 
     typedef itk::MatrixOffsetTransformBase<double,3,3>         itkTransformType;
 
@@ -88,6 +98,9 @@ class PandoraBoxReconstructionFilters
     //Injection
     static void ImageFusionByInjection(itkFloatImagePointer & outputImage, itkFloatImagePointer & maskImage, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkTransformType::Pointer> > & affineSBSTransforms);
 
+    //Scattered interpolation
+    static void ImageFusionByScatteredInterpolation(itkFloatImagePointer & outputImage, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkFloatImagePointer> > & maskStacks, std::vector< std::vector<itkTransformType::Pointer> > & inverseAffineSBSTransforms);
+
     //Simulate observations using the observation model Y=HX
     static void SimulateObservations(vnl_sparse_matrix<float> & H, vnl_vector<float> & X, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkFloatImagePointer> > & outputStacks);
 
@@ -107,22 +120,6 @@ class PandoraBoxReconstructionFilters
     static void IterativeBackProjection(itkFloatImagePointer & outputImage, itkFloatImage::SpacingType & outputSpacing, std::vector< std::vector<itkFloatImagePointer> > & inputStacks, std::vector< std::vector<itkFloatImagePointer> > & maskStacks, std::vector< std::vector<itkTransformType::Pointer> > & affineSBSTransforms, std::vector< std::vector<itkTransformType::Pointer> > & inverseAffineSBSTransforms, unsigned int maxIterations);
 
     //SR (L1,L2,robust) + Reg(local, patch, tv)
-
-    //Common functions for slice motion estimation
-    //By default, the center of the transforms is 0,0,0 in the physical space.
-    //It has to be checked whether this choice is good enough in our case, or whether we should move it to the center of the slice
-
-    //Convert parameters to rigid transform matrix
-    static void ConvertParametersToRigidMatrix(itkTransformType::Pointer outputTransform, std::vector<float> & inputParameters);
-
-    //Convert rigid transform matrix to parameters
-    static void ConvertRigidMatrixToParameters(std::vector<float> & outputParameters, itkTransformType::Pointer inputTransform);
-
-    //Slice motion estimation using a 3D reference image
-
-    //Slice motion estimation using a observation model
-
-    //Slice motion estimation using a set of slices
 
     //Outliers detection in each slice
 

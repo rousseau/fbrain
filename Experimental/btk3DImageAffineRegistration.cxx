@@ -57,7 +57,6 @@
 /*Btk includes*/
 #include "btkImageHelper.h"
 #include "btkPandoraBoxImageFilters.h"
-//#include "btkPandoraBoxReconstructionFilters.h"
 #include "btkPandoraBoxRegistrationFilters.h"
 #include "btkPandoraBoxCostFunction.h"
 

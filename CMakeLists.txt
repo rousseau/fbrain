@@ -10,7 +10,11 @@ IF(USE_OMP)
 ENDIF(USE_OMP)
 
 # Warning mask
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wno-gnu -Wno-deprecated")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wno-gnu -Wno-deprecated")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
+
+# C++2011 (does not seem compatible with ITK461)
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 # Testing
 OPTION(BUILD_TESTING "Build testing applications" OFF)

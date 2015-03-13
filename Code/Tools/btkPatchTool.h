@@ -47,67 +47,67 @@ knowledge of the CeCILL-B license and that you accept its terms.
 namespace btk
 {
 
-  /**
+/**
   * @class PatchTool
   * @brief 3D patch handling
   */
-  template<typename T1, typename T2>
-  class PatchTool
-  {
-    public:
+template<typename T1, typename T2>
+class PatchTool
+{
+public:
 
-    //Defining ITK stuff for the input image and the patch image
-    typedef typename itk::Image< float, 3>                         itkFloatImage;
-    typedef typename itkFloatImage::Pointer                        itkFloatImagePointer;
-    typedef typename itk::ImageRegionIterator< itkFloatImage >     itkFloatIterator;
+  //Defining ITK stuff for the input image and the patch image
+  typedef typename itk::Image< float, 3>                         itkFloatImage;
+  typedef typename itkFloatImage::Pointer                        itkFloatImagePointer;
+  typedef typename itk::ImageRegionIterator< itkFloatImage >     itkFloatIterator;
 
-    typedef typename itk::Image< T1, 3>                           itkT1Image;
-    typedef typename itkT1Image::Pointer                          itkT1ImagePointer;
-    typedef typename itk::ImageRegionIterator< itkT1Image >       itkT1Iterator;
-    typedef typename itk::ImageRegionConstIterator< itkT1Image >  itkConstT1Iterator;
-  	typedef typename itk::ImageRegionIteratorWithIndex< itkT1Image > itkT1IteratorWithIndex;
+  typedef typename itk::Image< T1, 3>                           itkT1Image;
+  typedef typename itkT1Image::Pointer                          itkT1ImagePointer;
+  typedef typename itk::ImageRegionIterator< itkT1Image >       itkT1Iterator;
+  typedef typename itk::ImageRegionConstIterator< itkT1Image >  itkConstT1Iterator;
+  typedef typename itk::ImageRegionIteratorWithIndex< itkT1Image > itkT1IteratorWithIndex;
 
-    typedef typename itk::Image< T2, 3>                           itkT2Image;
-    typedef typename itkT2Image::Pointer                          itkT2ImagePointer;
-    typedef typename itk::ImageRegionIterator< itkT2Image >       itkT2Iterator;
-    typedef typename itk::ImageRegionConstIterator< itkT2Image >  itkConstT2Iterator;
-  	typedef typename itk::ImageRegionIteratorWithIndex< itkT2Image > itkT2IteratorWithIndex;
+  typedef typename itk::Image< T2, 3>                           itkT2Image;
+  typedef typename itkT2Image::Pointer                          itkT2ImagePointer;
+  typedef typename itk::ImageRegionIterator< itkT2Image >       itkT2Iterator;
+  typedef typename itk::ImageRegionConstIterator< itkT2Image >  itkConstT2Iterator;
+  typedef typename itk::ImageRegionIteratorWithIndex< itkT2Image > itkT2IteratorWithIndex;
 
-    typedef typename itk::StatisticsImageFilter<itkT1Image> itkStatisticsT1ImageFilter;
-    
-    void SetSpatialBandwidth(int s, Patch<T1> & patch);
+  typedef typename itk::StatisticsImageFilter<itkT1Image> itkStatisticsT1ImageFilter;
 
-    void AddPatchToImage(typename itkT1Image::IndexType & p, Patch<T2> & patch, itkT1ImagePointer & image, itkFloatImagePointer & weightImage, double weight);
+  void SetSpatialBandwidth(int s, Patch<T1> & patch);
 
-    void PatchIntensityNormalizationUsingMeanAndVariance(Patch<T1> & inputPatch, Patch<T1> & refPatch, Patch<T2> & outputPatch);
+  void AddPatchToImage(typename itkT1Image::IndexType & p, Patch<T2> & patch, itkT1ImagePointer & image, itkFloatImagePointer & weightImage, double weight);
 
-	void CreatePatchFromAnotherPatch(Patch<T1> & inputPatch, Patch<T2> & outputPatch);
-		
-	void ComputeSearchRegion(Patch<T1> & inputPatch,  typename itkT1Image::RegionType & region);	
-		
-	void SetSelectionNeighbourPatchMethod(Patch<T1> & inputPatch);
-		
-	void GetNeighbourPatches(Patch<T1> & inputPatch, std::vector< Patch<T2> > & neighbourPatches, itkT2ImagePointer & image);
+  void PatchIntensityNormalizationUsingMeanAndVariance(Patch<T1> & inputPatch, Patch<T1> & refPatch, Patch<T2> & outputPatch);
 
-	void ComputeNeighbourWeights(Patch<T1> & inputPatch, std::vector< Patch<T2> > & neighbourPatches, std::vector<float> & weights, float & smoothing);
-	
-	double ComputeL2NormBetweenPatches(Patch<T1> & p, Patch<T2> & q);
-	
-   	btkGetMacro(HalfSpatialBandwidth,typename itkT1Image::SizeType);
-   	btkGetMacro(FullSpatialBandwidth,typename itkT1Image::SizeType);
-   	btkGetMacro(PatchSelectionMethod, int);
-	btkSetMacro(PatchSelectionMethod, int);
-	btkSetMacro(ParamPatchSelectionMethod, float);
-	btkSetMacro(ImageSize, typename itkT1Image::SizeType);
+  void CreatePatchFromAnotherPatch(Patch<T1> & inputPatch, Patch<T2> & outputPatch);
 
-  private:
-	typename itkT1Image::SizeType    m_HalfSpatialBandwidth;   //equivalent to the half size of the volume search area in non-local means
-  	typename itkT1Image::SizeType    m_FullSpatialBandwidth;   //spatial bandwidth : 2 * halfSpatialBandwidth + 1
-  	int                              m_PatchSelectionMethod;
-  	float                            m_ParamPatchSelectionMethod;
-  	typename itkT1Image::SizeType    m_ImageSize;
-  	
-  };
+  void ComputeSearchRegion(Patch<T1> & inputPatch,  typename itkT1Image::RegionType & region);
+
+  void SetSelectionNeighbourPatchMethod(Patch<T1> & inputPatch);
+
+  void GetNeighbourPatches(Patch<T1> & inputPatch, std::vector< Patch<T2> > & neighbourPatches, itkT2ImagePointer & image);
+
+  void ComputeNeighbourWeights(Patch<T1> & inputPatch, std::vector< Patch<T2> > & neighbourPatches, std::vector<float> & weights, float & smoothing);
+
+  double ComputeL2NormBetweenPatches(Patch<T1> & p, Patch<T2> & q);
+
+  btkGetMacro(HalfSpatialBandwidth,typename itkT1Image::SizeType);
+  btkGetMacro(FullSpatialBandwidth,typename itkT1Image::SizeType);
+  btkGetMacro(PatchSelectionMethod, int);
+  btkSetMacro(PatchSelectionMethod, int);
+  btkSetMacro(ParamPatchSelectionMethod, float);
+  btkSetMacro(ImageSize, typename itkT1Image::SizeType);
+
+private:
+  typename itkT1Image::SizeType    m_HalfSpatialBandwidth;   //equivalent to the half size of the volume search area in non-local means
+  typename itkT1Image::SizeType    m_FullSpatialBandwidth;   //spatial bandwidth : 2 * halfSpatialBandwidth + 1
+  int                              m_PatchSelectionMethod;
+  float                            m_ParamPatchSelectionMethod;
+  typename itkT1Image::SizeType    m_ImageSize;
+
+};
 
 } // namespace btk
 

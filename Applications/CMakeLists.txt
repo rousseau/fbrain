@@ -117,14 +117,14 @@ ADD_EXECUTABLE(btkSuperResolutionV2 btkSuperResolutionV2.cxx
 )
 TARGET_LINK_LIBRARIES(btkSuperResolutionV2 btkToolsLibrary btkMathsLibrary ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkGroupwiseS2SDistortionCorrection btkGroupwiseS2SDistortionCorrection.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolation.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkNumerical.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkGroupwiseS2SDistortionCorrection.h
-)
-TARGET_LINK_LIBRARIES(btkGroupwiseS2SDistortionCorrection btkToolsLibrary ${ITK_LIBRARIES} ${ANN_LIBRARY})
+#ADD_EXECUTABLE(btkGroupwiseS2SDistortionCorrection btkGroupwiseS2SDistortionCorrection.cxx
+#    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolation.h
+#    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.h
+#    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.cxx
+#    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkNumerical.h
+#    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkGroupwiseS2SDistortionCorrection.h
+#)
+#TARGET_LINK_LIBRARIES(btkGroupwiseS2SDistortionCorrection btkToolsLibrary ${ITK_LIBRARIES} ${ANN_LIBRARY})
 
 
 #ADD_EXECUTABLE(btk3DSuperResolution btk3DSuperResolution.cxx
@@ -162,16 +162,16 @@ TARGET_LINK_LIBRARIES(btkGroupwiseS2SDistortionCorrection btkToolsLibrary ${ITK_
 
 #TARGET_LINK_LIBRARIES(btk3DSuperResolution btkToolsLibrary ${ITK_LIBRARIES})
 
-ADD_EXECUTABLE(btkRBFInterpolationS2S btkRBFInterpolationS2S.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolation.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkNumerical.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolateImageFunctionS2S.h
-    ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
-)
+#ADD_EXECUTABLE(btkRBFInterpolationS2S btkRBFInterpolationS2S.cxx
+#    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolation.h
+#    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.h
+#    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.cxx
+#    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkNumerical.h
+#    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolateImageFunctionS2S.h
+#    ${fbrain_SOURCE_DIR}/Code/Diffusion/btkDiffusionGradientTable.h
+#)
 
-TARGET_LINK_LIBRARIES(btkRBFInterpolationS2S btkToolsLibrary  btkDiffusionLibrary ${ITK_LIBRARIES} ${ANN_LIBRARY})
+#TARGET_LINK_LIBRARIES(btkRBFInterpolationS2S btkToolsLibrary  btkDiffusionLibrary ${ITK_LIBRARIES} ${ANN_LIBRARY})
 
 #ADD_EXECUTABLE(btkIntersectionRegistration btkIntersectionRegistration.cxx
 #${fbrain_SOURCE_DIR}/Code/Tools/btkImageHelper.h
@@ -194,8 +194,8 @@ TARGET_LINK_LIBRARIES(btkRBFInterpolationS2S btkToolsLibrary  btkDiffusionLibrar
 INSTALL(TARGETS btkImageReconstruction
                 btkSuperResolution
                 btkSuperResolutionV2
-                btkGroupwiseS2SDistortionCorrection
-                btkRBFInterpolationS2S
+               #btkGroupwiseS2SDistortionCorrection
+               #btkRBFInterpolationS2S
                #btkIntersectionRegistration
         DESTINATION bin)
 
@@ -209,17 +209,17 @@ INCLUDE_DIRECTORIES(
     ${Code_SOURCE_DIR}/Tractography
 )
 
-ADD_EXECUTABLE(btkTractography btkTractography.cxx
-    ${Code_SOURCE_DIR}/Denoising/btkPseudoResidualsVarianceCalculator.h
-)
-TARGET_LINK_LIBRARIES(btkTractography btkToolsLibrary btkMathsLibrary btkDiffusionLibrary btkTractographyLibrary btkDenoisingLibrary ${ITK_LIBRARIES} vtkHybrid)
+#ADD_EXECUTABLE(btkTractography btkTractography.cxx
+#    ${Code_SOURCE_DIR}/Denoising/btkPseudoResidualsVarianceCalculator.h
+#)
+#TARGET_LINK_LIBRARIES(btkTractography btkToolsLibrary btkMathsLibrary btkDiffusionLibrary btkTractographyLibrary btkDenoisingLibrary ${ITK_LIBRARIES} vtkHybrid)
 
 ADD_EXECUTABLE(btkAtlasBasedFiberLabeling btkAtlasBasedFiberLabeling.cxx
 )
 TARGET_LINK_LIBRARIES(btkAtlasBasedFiberLabeling ${ITK_LIBRARIES} vtkHybrid)
 
 INSTALL(TARGETS
-    btkTractography
+    #btkTractography
     btkAtlasBasedFiberLabeling
 DESTINATION bin)
 
@@ -248,16 +248,16 @@ INSTALL(TARGETS
 DESTINATION bin)
 
 # ---- Outliers correction -----------------------------------------------------------------------
-ADD_EXECUTABLE(btkOutliersCorrection btkOutliersCorrection.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.h
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.cxx
-    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolateImageFunctionS2S.h
-)
-TARGET_LINK_LIBRARIES(btkOutliersCorrection btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES} ${ANN_LIBRARY})
+#ADD_EXECUTABLE(btkOutliersCorrection btkOutliersCorrection.cxx
+#    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.h
+#    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkLUDecomposition.cxx
+#    ${fbrain_SOURCE_DIR}/Code/Reconstruction/btkRBFInterpolateImageFunctionS2S.h
+#)
+#TARGET_LINK_LIBRARIES(btkOutliersCorrection btkToolsLibrary btkDiffusionLibrary ${ITK_LIBRARIES} ${ANN_LIBRARY})
 
-INSTALL(TARGETS
-    btkOutliersCorrection
-DESTINATION bin)
+#INSTALL(TARGETS
+#    btkOutliersCorrection
+#DESTINATION bin)
 
 
 # ---- Feature selection ----------------------------------------------------------------
