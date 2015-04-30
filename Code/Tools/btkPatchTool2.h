@@ -91,6 +91,8 @@ namespace btk
     void ComputePatchRegion(typename itkTImage::IndexType & p, typename itkTImage::RegionType & imageRegion, typename itkTImage::RegionType & patchRegion);
     void AddPatchToImage(typename itkTImage::IndexType & p, Patch2<float> & patch, itkFloatImagePointer & image, itkFloatImagePointer & weightImage, double & weight);
 
+    void ComputePatchSimilarityOverMask(itkTImagePointer & image, itkTImagePointer & maskImage, std::vector<typename itkTImage::IndexType> & seeds, itkFloatImagePointer & outputImage, double & smoothing);
+
     //TO BE IMPLEMENTED : CHI2, Gestion du patch central, CorrelationBetweenNeighbourhood
     //-----------------------------------------------------------------------------------------------------------------------
     //-----------------------------------------------------------------------------------------------------------------------

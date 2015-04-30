@@ -381,5 +381,36 @@ void PatchTool2<T>::AddPatchToImage(typename itkTImage::IndexType & p, Patch2<fl
   }
 }
 
+template <typename T>
+void PatchTool2<T>::ComputePatchSimilarityOverMask(itkTImagePointer & image, itkTImagePointer & maskImage, std::vector< typename itkTImage::IndexType> & seeds, itkFloatImagePointer & outputImage, double & smoothing)
+{
+  typename itkTImage::RegionType  region  = image->GetLargestPossibleRegion();
+  typename itkTImage::SizeType    size    = region.GetSize();
+
+  //Loop over seeds
+  for(unsigned int s=0; s<seeds.size(); s++)
+  {
+    btk::Patch2<T> patch = btk::Patch2<T>(image, m_FullPatchSize, seeds[s]);
+
+    int x,y,z;
+    #pragma omp parallel for private(x,y,z) schedule(dynamic)
+    for(z=0; z < (int)size[2]; z++)
+      for(y=0; y < (int)size[1]; y++)
+        for(x=0; x < (int)size[0]; x++)
+        {
+          itkFloatImage::IndexType p;
+          p[0] = x;
+          p[1] = y;
+          p[2] = z;
+          if( maskImage->GetPixel(p) > 0 )
+          {
+            btk::Patch2<T> patch2 = btk::Patch2<T>(image, m_FullPatchSize, p);
+            float neighbourWeight = exp( - ComputeL2NormBetweenPatches(patch, patch2 ) / smoothing);
+            outputImage->SetPixel(p,neighbourWeight);
+          }
+        }
+  }
+}
+
 } // namespace btk
 
