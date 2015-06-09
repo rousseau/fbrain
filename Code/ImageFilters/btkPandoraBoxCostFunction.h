@@ -38,6 +38,7 @@
 
 // STL includes
 #include "vector"
+#include "limits"
 
 // ITK includes
 #include "itkImage.h"
@@ -419,7 +420,11 @@ namespace btk
           */
         }
       }
-      return res / weightedSum;
+      if(weightedSum == 0)
+          return std::numeric_limits<double>::max();
+      else
+        return res/weightedSum;
+
     }
   };
     
@@ -477,7 +482,10 @@ namespace btk
             }
         }
       }
-      return res / weightedSum;
+      if(weightedSum == 0)
+          return std::numeric_limits<double>::max();
+      else
+        return res/weightedSum;
     }
   };
 
