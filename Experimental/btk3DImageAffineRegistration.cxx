@@ -47,6 +47,8 @@
 
 #include "itkMatrixOffsetTransformBase.h"
 //#include "itkEuler3DTransform.h"
+#include "itkCenteredTransformInitializer.h"
+
 #include "btkIOTransformHelper.h"
 //#include "itkTransformFileReader.h"
 //#include "itkResampleImageFilter.h"
@@ -86,6 +88,7 @@ int main(int argc, char** argv)
     TCLAP::ValueArg< float >     rotationYRangeArg  ("","ry","range of rotation (y axis) (default: 10)",false,10,"float",cmd);
     TCLAP::ValueArg< float >     rotationZRangeArg  ("","rz","range of rotation (z axis) (default: 10)",false,10,"float",cmd);
     TCLAP::ValueArg< int >       numberOfStartingEstimateArg  ("","start","number of starting estimates (per rotation axis) (default: 3)",false,3,"int",cmd);
+    TCLAP::SwitchArg             useImageCenterSwitchArg("","useImageCenter","Use image center for transform initialization instead of file headers",cmd,false);
 
     
     //TODO
@@ -154,26 +157,20 @@ int main(int argc, char** argv)
         
     //Computer center of the reference image
     //It will be used as center of the transform
-
     itk::Vector<double, 3>  center;
 
-    itkFloatImage::SizeType    size    = referenceImage->GetLargestPossibleRegion().GetSize();
-    //itkFloatImage::IndexType centerIndex;
-    itk::ContinuousIndex<double,3> centerIndex;
+    itkTransformType::Pointer initTransform = itkTransformType::New();
+    typedef itk::CenteredTransformInitializer< itkTransformType, itkFloatImage, itkFloatImage >  TransformInitializerType;
+    TransformInitializerType::Pointer initializer = TransformInitializerType::New();
+    initializer->SetTransform(   initTransform );
+    initializer->SetFixedImage(  referenceImage );
+    initializer->SetMovingImage( movingImage );
+    initializer->GeometryOn();
+    initializer->InitializeTransform();
 
-    centerIndex[0] = (size[0]-1)/2.0;
-    centerIndex[1] = (size[1]-1)/2.0;
-    centerIndex[2] = (size[2]-1)/2.0;
-    itkFloatImage::PointType refPoint; //physical point location of reference image
-
-    //referenceImage->TransformIndexToPhysicalPoint(centerIndex,refPoint);
-    referenceImage->TransformContinuousIndexToPhysicalPoint(centerIndex,refPoint);
-    center[0] = refPoint[0];
-    center[1] = refPoint[1];
-    center[2] = refPoint[2];
-
-    std::cout<<"Image center of the estimated transform:"<<centerIndex<<std::endl;
-    std::cout<<"Physical center of the estimated transform:"<<center<<std::endl;
+    center[0] = initTransform->GetCenter()[0];
+    center[1] = initTransform->GetCenter()[1];
+    center[2] = initTransform->GetCenter()[2];
 
     //Initialisation of the registration parameters : by default, we assume that the headers provide relevant information
     //Otherwise, we should initialize the parameters using image moments, or center etc.
@@ -185,9 +182,17 @@ int main(int argc, char** argv)
         for(unsigned int i=9; i < dof; i++)
             inputParam(i) = 0.0;
 
-    //define center of transformation
+    //Set the output param as identity
     vnl_vector< double > outputParam(inputParam.size(),0);
 
+    if( useImageCenterSwitchArg.isSet() )
+    {
+        std::cout<<"Use image center to initialize transform.\n";
+        outputParam[3] = initTransform->GetTranslation()[0];
+        outputParam[4] = initTransform->GetTranslation()[1];
+        outputParam[5] = initTransform->GetTranslation()[2];
+    }
+    std::cout<<"Initialized transform : "<<outputParam<<std::endl;
 
     itkFloatImage::SpacingType spacingReferenceImage = referenceImage->GetSpacing();
 
@@ -317,6 +322,10 @@ int main(int argc, char** argv)
     for(unsigned int i=0; i < numberOfBestCandidates; i++)
         bestCandidates[i] = pairOfCandidates[i].first;
 
+    for(unsigned int i=0; i < numberOfBestCandidates; i++)
+    {
+        std::cout<<"Best candidates : "<<bestCandidates[i]<<", cost : "<<(*myCostFunction)(bestCandidates[i])<<std::endl;
+    }
 
     //SECOND SCALE *********************************************************************************
     //Keep the best candidates of the previous scale, add perturbations and optimize
@@ -373,13 +382,12 @@ int main(int argc, char** argv)
     for(unsigned int i=0; i < numberOfBestCandidates * numberOfPerturbations; i++)
     {
         btk::PandoraBoxRegistrationFilters::Register3DImages(*myCostFunction, pairOfParamsAndCostFunctionValues[i].first, outputParam, tmpParameterRange, tmpTolerance);
-        std::cout<<"Estimated parameters : "<<outputParam<<std::endl;
+        //No check of improvement -> this might be an issue
         pairOfParamsAndCostFunctionValues[i].first = outputParam;
         pairOfParamsAndCostFunctionValues[i].second = (*myCostFunction)(outputParam);
         //A cost function value equal to 0 is not possible (meaning that there is no more overlap between the two images.
         if(pairOfParamsAndCostFunctionValues[i].second == 0)
             pairOfParamsAndCostFunctionValues[i].second = std::numeric_limits<double>::max();
-        std::cout<<"Cost function : "<< pairOfParamsAndCostFunctionValues[i].second <<std::endl;
     }
 
     //Sort results by cost function values
