@@ -86,6 +86,7 @@ int main(int argc, char** argv)
     TCLAP::ValueArg< float >     rotationYRangeArg  ("","ry","range of rotation (y axis) (default: 10)",false,10,"float",cmd);
     TCLAP::ValueArg< float >     rotationZRangeArg  ("","rz","range of rotation (z axis) (default: 10)",false,10,"float",cmd);
     TCLAP::ValueArg< int >       numberOfStartingEstimateArg  ("","start","number of starting estimates (per rotation axis) (default: 3)",false,3,"int",cmd);
+    TCLAP::ValueArg< int >       orderInterpolationArg ("","order","order of the interpolation spline",false,1,"int",cmd);
 
     
     //TODO
@@ -116,6 +117,7 @@ int main(int argc, char** argv)
     rotationRange[1] = rotationYRangeArg.getValue();
     rotationRange[2] = rotationZRangeArg.getValue();
     int samplingRate = numberOfStartingEstimateArg.getValue();
+    int interpolationOrder = orderInterpolationArg.getValue();
 
 
 
@@ -558,7 +560,7 @@ int main(int argc, char** argv)
 
     std::cout<<"Resampling\n";
     itkFloatImage::Pointer registeredImage = itkFloatImage::New();
-    btk::PandoraBoxImageFilters::ResampleImageUsingTransform(movingImage, registeredImage, referenceImage, 1, estimatedTransform);
+    btk::PandoraBoxImageFilters::ResampleImageUsingTransform(movingImage, registeredImage, referenceImage, interpolationOrder, estimatedTransform);
 
     std::cout<<"Writing\n";
     if(registered_image_filename != "")
