@@ -57,6 +57,11 @@ namespace btk
     //std::cout<<"Size tolerance vector : "<<toleranceVector.size()<<std::endl;
 
     outputParameters = toto.minimize(inputParameters, parameterRange, costFunction);
+
+    //It might appear that new estimate provide higher cost (nan issue maybe)
+    if( costFunction(inputParameters) < costFunction(outputParameters) )
+      outputParameters = inputParameters;
+
   }
 
   void PandoraBoxRegistrationFilters::GenerateRandomParameters(vnl_vector< double > & inputParameters, vnl_vector< double > & outputParameters, vnl_vector< double > & parameterRange)
