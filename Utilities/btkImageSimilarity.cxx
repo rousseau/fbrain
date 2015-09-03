@@ -141,11 +141,14 @@ int main( int argc, char *argv[] )
 
   if (strcmp(maskFile.c_str(),"") != 0)
   {
+    std::cout<<"Reading mask image : "<<maskFile<<std::endl;
+    std::cout<<"CAUTION : mask image is casted into unsigned char."<<std::endl;
     MaskReaderType::Pointer maskReader = MaskReaderType::New();
     maskReader -> SetFileName( maskFile.c_str() );
     maskReader -> Update();
 
     mask -> SetImage( maskReader -> GetOutput() );
+    std::cout<<"Mask region : "<<mask -> GetAxisAlignedBoundingBoxRegion()<<std::endl;
   }
 
   // Compute similarity
