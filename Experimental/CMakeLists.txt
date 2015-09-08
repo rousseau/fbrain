@@ -77,11 +77,8 @@ TARGET_LINK_LIBRARIES(btkSSL2 btkToolsLibrary ${ITK_LIBRARIES} )
 ADD_EXECUTABLE(btk3DImageAffineRegistration btk3DImageAffineRegistration.cxx)
 TARGET_LINK_LIBRARIES(btk3DImageAffineRegistration btkToolsLibrary btkMathsLibrary ${ITK_LIBRARIES} )
 
-ADD_EXECUTABLE(btkDummy btkDummy.cxx)
-TARGET_LINK_LIBRARIES(btkDummy btkToolsLibrary ${ITK_LIBRARIES} )
-
-ADD_EXECUTABLE(btkToto btkToto.cxx)
-TARGET_LINK_LIBRARIES(btkToto ${ITK_LIBRARIES} )
+#ADD_EXECUTABLE(btkDummy btkDummy.cxx)
+#TARGET_LINK_LIBRARIES(btkDummy btkToolsLibrary ${ITK_LIBRARIES} )
 
 ADD_EXECUTABLE(btkDicomSeriesTo3DImage btkDicomSeriesTo3DImage.cxx)
 TARGET_LINK_LIBRARIES(btkDicomSeriesTo3DImage ${ITK_LIBRARIES} )
@@ -91,8 +88,7 @@ INSTALL(TARGETS
     btkSSL
     btkPatchAnalysis
     btkSSL2
-    btkDummy
+    #btkDummy
     btk3DImageAffineRegistration
     btkDicomSeriesTo3DImage
-    btkToto
 DESTINATION bin)

@@ -564,6 +564,11 @@ int main(int argc, char** argv)
     
     btk::PandoraBoxTransform::ConvertParametersToMatrix(estimatedTransform, outputParam, center);
     std::cout<<"Estimated parameters : "<<outputParam<<std::endl;
+    std::cout<<"Estimated ITK transform : "<<std::endl;
+    std::cout<<"Matrix : \n"<<estimatedTransform->GetMatrix()<<std::endl;
+    std::cout<<"Translation : "<<estimatedTransform->GetTranslation()<<std::endl;
+    std::cout<<"Center : "<<estimatedTransform->GetCenter()<<std::endl;
+    std::cout<<"Offset : "<<estimatedTransform->GetOffset()<<std::endl;
 
     std::cout<<"Resampling\n";
     itkFloatImage::Pointer registeredImage = itkFloatImage::New();
@@ -575,9 +580,6 @@ int main(int argc, char** argv)
     if(output_transform_filename != "")
         btk::IOTransformHelper< itkTransformType >::WriteTransform(estimatedTransform,output_transform_filename);
 
-    //-------------------------------------------------------------------------------------------------------------------------------------
-    //-------------------------------------------------------------------------------------------------------------------------------------
-    //-------------------------------------------------------------------------------------------------------------------------------------
     
     return 1;
   } catch (TCLAP::ArgException &e)  // catch any exceptions
