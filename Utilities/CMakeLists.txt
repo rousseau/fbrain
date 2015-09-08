@@ -297,6 +297,9 @@ TARGET_LINK_LIBRARIES(btkComputeStatisticsOverMultipleROI  btkToolsLibrary ${ITK
 ADD_EXECUTABLE(btkComputeJacobian btkComputeJacobian.cxx)
 TARGET_LINK_LIBRARIES(btkComputeJacobian  ${ITK_LIBRARIES})
 
+ADD_EXECUTABLE(btkChangeImageOrientation btkChangeImageOrientation.cxx)
+TARGET_LINK_LIBRARIES(btkChangeImageOrientation  ${ITK_LIBRARIES})
+
 INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkConvertGradientTable
                 btkReorientImageToStandard
@@ -375,5 +378,6 @@ INSTALL(TARGETS btkModifyImageUsingLookUpTable
                 btkFeaturesStatistics
                 btkComputeStatisticsOverMultipleROI
                 btkComputeJacobian
+                btkChangeImageOrientation
         DESTINATION bin)
 
