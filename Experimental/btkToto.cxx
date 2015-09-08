@@ -17,151 +17,172 @@
  *=========================================================================*/
 
 #include <iostream>
-#include "vnl/vnl_matrix.h"
+#include "itkImage.h"
+#include "btkImageHelper.h"
 
-class connard
+float computeNLM(itk::Image< float, 3 >::Pointer & inputImage,int i, int j, int k, int hps, int hss, float h)
 {
-public:
-    void you(){bite.set_size(3,3); std::cout<<bite<<std::endl;}
-    connard(){}
-private:
-    vnl_matrix < int > bite;
-};
+    itk::Image< float, 3 >::SizeType    size    = inputImage->GetLargestPossibleRegion().GetSize();
+
+    itk::Image< float, 3 >::IndexType p;
+    p[0] = i;
+    p[1] = j;
+    p[2] = k;
+
+    int xmin = i - hss;
+    if(xmin < hps) xmin = hps;
+    int ymin = j - hss;
+    if(ymin < hps) ymin = hps;
+    int zmin = k - hss;
+    if(zmin < hps) zmin = hps;
+    int xmax = i + hss;
+    if(xmax > size[0]-hps) xmax = size[0]-hps;
+    int ymax = j + hss;
+    if(ymax > size[1]-hps) ymax = size[0]-hps;
+    int zmax = k + hss;
+    if(zmax > size[2]-hps) zmax = size[0]-hps;
+
+    float sum = 0;
+    float outputValue = 0;
+    for(int ii=xmin; ii<xmax; ii++)
+        for(int jj=ymin; jj<ymax; jj++)
+            for(int kk=zmin; kk<zmax; kk++)
+            {
+                float dist = 0;
+                itk::Image< float, 3 >::IndexType pp;
+                pp[0] = ii;
+                pp[1] = jj;
+                pp[2] = kk;
+
+                for(int iii=-hps; iii< hps+1; iii++)
+                    for(int jjj=-hps; jjj<hps+1; jjj++)
+                        for(int kkk=-hps; kkk<hps+1; kkk++)
+                        {
+                            itk::Image< float, 3 >::IndexType p1;
+                            p1[0] = p[0]+iii;
+                            p1[1] = p[1]+jjj;
+                            p1[2] = p[2]+kkk;
+                            itk::Image< float, 3 >::IndexType p2;
+                            p2[0] = pp[0]+iii;
+                            p2[1] = pp[1]+jjj;
+                            p2[2] = pp[2]+kkk;
+
+                            dist += (inputImage->GetPixel(p1)-inputImage->GetPixel(p2))*(inputImage->GetPixel(p1)-inputImage->GetPixel(p2));
+                        }
+                float weight = exp (-dist/h);
+                sum+= weight;
+                outputValue+= weight*inputImage->GetPixel(pp);
+            }
+    if (sum>0)
+        outputValue /= sum;
+    return outputValue;
+}
+float computeNLMkji(itk::Image< float, 3 >::Pointer & inputImage,int i, int j, int k, int hps, int hss, float h)
+{
+    itk::Image< float, 3 >::SizeType    size    = inputImage->GetLargestPossibleRegion().GetSize();
+
+    itk::Image< float, 3 >::IndexType p;
+    p[0] = i;
+    p[1] = j;
+    p[2] = k;
+
+    int xmin = i - hss;
+    if(xmin < hps) xmin = hps;
+    int ymin = j - hss;
+    if(ymin < hps) ymin = hps;
+    int zmin = k - hss;
+    if(zmin < hps) zmin = hps;
+    int xmax = i + hss;
+    if(xmax > size[0]-hps) xmax = size[0]-hps;
+    int ymax = j + hss;
+    if(ymax > size[1]-hps) ymax = size[0]-hps;
+    int zmax = k + hss;
+    if(zmax > size[2]-hps) zmax = size[0]-hps;
+
+    float sum = 0;
+    float outputValue = 0;
+    for(int kk=zmin; kk<zmax; kk++)
+        for(int jj=ymin; jj<ymax; jj++)
+            for(int ii=xmin; ii<xmax; ii++)
+            {
+                float dist = 0;
+                itk::Image< float, 3 >::IndexType pp;
+                pp[0] = ii;
+                pp[1] = jj;
+                pp[2] = kk;
+
+                for(int kkk=-hps; kkk<hps+1; kkk++)
+                    for(int jjj=-hps; jjj<hps+1; jjj++)
+                        for(int iii=-hps; iii< hps+1; iii++)
+                        {
+                            itk::Image< float, 3 >::IndexType p1;
+                            p1[0] = p[0]+iii;
+                            p1[1] = p[1]+jjj;
+                            p1[2] = p[2]+kkk;
+                            itk::Image< float, 3 >::IndexType p2;
+                            p2[0] = pp[0]+iii;
+                            p2[1] = pp[1]+jjj;
+                            p2[2] = pp[2]+kkk;
+
+                            dist += (inputImage->GetPixel(p1)-inputImage->GetPixel(p2))*(inputImage->GetPixel(p1)-inputImage->GetPixel(p2));
+                        }
+                float weight = exp (-dist/h);
+                sum+= weight;
+                outputValue+= weight*inputImage->GetPixel(pp);
+            }
+    if (sum>0)
+        outputValue /= sum;
+    return outputValue;
+}
 
 int main( int argc, char * argv [] )
 {
-    connard c;
-    //c.bite.set_size(3,3);
-    c.you();
+    std::string filename = "/Users/rousseau/Data/debug/newfbr/neo1.nii.gz";
 
+    typedef itk::Image< float, 3 >  itkFloatImage;
+    itkFloatImage::Pointer inputImage  = btk::ImageHelper< itkFloatImage > ::ReadImage(filename);
+    itkFloatImage::Pointer outputImage = btk::ImageHelper< itkFloatImage > ::CreateNewImageFromPhysicalSpaceOf(inputImage,0.0);
 
-    vnl_matrix < double > toto;
-    std::cout<<toto<<std::endl;
+    itkFloatImage::SizeType    size    = inputImage->GetLargestPossibleRegion().GetSize();
 
+    int ps = 3; // patch size
+    int hps= 1; //half patch size
+    int hss= 2; //half search size
+
+    float h = 10000;
+    int i,j,k;
+    //#pragma omp parallel for private(i,j,k) schedule(dynamic)
     /*
-  if ( argc != 3 )
-    {
-    std::cout << "Usage: " << argv[0] << " inputImage outputImage" << std::endl;
-    return EXIT_FAILURE;
-    }
+    for(i=hps; i<size[0]-hps; i++)
+        for(j=hps; j<size[1]-hps; j++)
+            for(k=hps; k<size[2]-hps; k++)
+            {
+                itk::Image< float, 3 >::IndexType p;
+                p[0] = i;
+                p[1] = j;
+                p[2] = k;
 
-  const unsigned int ParametricDimension = 3;
-  const unsigned int DataDimension = 1;
+                float outputValue = computeNLM(inputImage, i,j,k,hps,hss,h);
+                outputImage->SetPixel(p,outputValue);
+            }
+    */
+    #pragma omp parallel for private(i,j,k) schedule(dynamic)
+    for(k=hps; k<size[2]-hps; k++)
+        for(j=hps; j<size[1]-hps; j++)
+            for(i=hps; i<size[0]-hps; i++)
+            {
+                itk::Image< float, 3 >::IndexType p;
+                p[0] = i;
+                p[1] = j;
+                p[2] = k;
 
-  typedef int                                           PixelType;
-  typedef itk::Image<PixelType, ParametricDimension>    InputImageType;
-  typedef float                                         RealType;
-  typedef itk::Vector<RealType, DataDimension>          VectorType;
-  typedef itk::Image<VectorType, ParametricDimension>   VectorImageType;
-  typedef itk::PointSet
-    <VectorImageType::PixelType, ParametricDimension>   PointSetType;
-
-
-  btk::Simplex toto;
-  toto.SetConvergenceTolerance(10.0);
-
-
-  PointSetType::Pointer pointSet = PointSetType::New();
-
-  typedef itk::ImageFileReader<InputImageType> ReaderType;
-  ReaderType::Pointer reader = ReaderType::New();
-  reader->SetFileName( argv[1] );
-  reader->Update();
-
-  itk::ImageRegionIteratorWithIndex<InputImageType>
-    It( reader->GetOutput(), reader->GetOutput()->GetLargestPossibleRegion() );
-
-  // Iterate through the input image which consists of multivalued
-  // foreground pixels (=nonzero) and background values (=zero).
-  // The foreground pixels comprise the input point set.
-
-  for ( It.GoToBegin(); !It.IsAtEnd(); ++It )
-    {
-    if ( It.Get() != itk::NumericTraits<PixelType>::Zero )
-      {
-      // We extract both the 2-D location of the point
-      // and the pixel value of that point.
-
-      PointSetType::PointType point;
-      reader->GetOutput()->TransformIndexToPhysicalPoint( It.GetIndex(), point );
-
-      unsigned long i = pointSet->GetNumberOfPoints();
-      pointSet->SetPoint( i, point );
-
-      PointSetType::PixelType V( DataDimension );
-      V[0] = static_cast<RealType>( It.Get() );
-      pointSet->SetPointData( i, V );
-      }
-    }
-
-  // Instantiate the B-spline filter and set the desired parameters.
-  typedef itk::BSplineScatteredDataPointSetToImageFilter
-    <PointSetType, VectorImageType> FilterType;
-  FilterType::Pointer filter = FilterType::New();
-  filter->SetSplineOrder( 3 );
-  FilterType::ArrayType ncps;
-  ncps.Fill( 4 );
-  filter->SetNumberOfControlPoints( ncps );
-  filter->SetNumberOfLevels( 3 );
-  FilterType::ArrayType close;
-  close.Fill( 0 );
-  filter->SetCloseDimension( close );
-
-  // Define the parametric domain.
-  filter->SetOrigin( reader->GetOutput()->GetOrigin() );
-  filter->SetSpacing( reader->GetOutput()->GetSpacing() );
-  filter->SetSize( reader->GetOutput()->GetLargestPossibleRegion().GetSize() );
-  filter->SetDirection( reader->GetOutput()->GetDirection() );
-
-  filter->SetInput( pointSet );
-
-  try
-    {
-    filter->Update();
-    }
-  catch (...)
-    {
-    std::cerr << "Test 1: itkBSplineScatteredDataImageFilter exception thrown"
-              << std::endl;
-    return EXIT_FAILURE;
-    }
-  VectorImageType *outputImage = filter->GetOutput();
-
-  std::cout << "Origin: " << filter->GetOrigin() << std::endl;
-  std::cout << "Spacing: " << filter->GetSpacing() << std::endl;
-  std::cout << "Size: " << filter->GetSize() << std::endl;
-  std::cout << "Direction: " << filter->GetDirection() << std::endl;
-
-  std::cout << "Number of control points: " <<
-    filter->GetNumberOfControlPoints() << std::endl;
-  std::cout << "Current number of control points: " <<
-    filter->GetCurrentNumberOfControlPoints() << std::endl;
-  std::cout << "Number of levels: " <<
-    filter->GetNumberOfLevels() << std::endl;
-  std::cout << "Close dimension: " <<
-    filter->GetCloseDimension() << std::endl;
-  std::cout << "Spline order: " << filter->GetSplineOrder() << std::endl;
-
-  // Write the output to an image.
-  typedef itk::Image<RealType, ParametricDimension> RealImageType;
-  RealImageType::Pointer image = RealImageType::New();
-  image->SetRegions( reader->GetOutput()->GetLargestPossibleRegion() );
-  image->Allocate();
-  itk::ImageRegionIteratorWithIndex<RealImageType>
-    Itt( image, image->GetLargestPossibleRegion() );
-
-  for ( Itt.GoToBegin(); !Itt.IsAtEnd(); ++Itt )
-    {
-    Itt.Set( outputImage->GetPixel( Itt.GetIndex() )[0] );
-    }
-
-  typedef itk::ImageFileWriter<RealImageType> WriterType;
-  WriterType::Pointer writer = WriterType::New();
-  writer->SetInput( image );
-  writer->SetFileName( argv[2] );
-  writer->Update();
+                float outputValue = computeNLMkji(inputImage, i,j,k,hps,hss,h);
+                outputImage->SetPixel(p,outputValue);
+            }
 
 
-  return EXIT_SUCCESS;
-*/
+    btk::ImageHelper<itkFloatImage>::WriteImage(outputImage, "btktoto.nii.gz");
+
+
+
 }
