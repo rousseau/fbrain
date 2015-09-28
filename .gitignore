@@ -56,6 +56,8 @@ Thumbs.db
 # QtCreator generated files #
 #############################
 CMakeLists.txt.user*
+CMakeCache.tx*
+cmake.check*
 
 # Build directories #
 #####################
