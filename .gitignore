@@ -9,6 +9,11 @@
 *.*~
 *.save
 
+# PYTHON #
+##########
+
+*.pyc
+
 # LATEX #
 #########
 *.tex.backup
