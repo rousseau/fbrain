@@ -94,7 +94,7 @@ int main (int argc, char* argv[])
   std::vector<std::string> mask_ref_file = maskRefImageArg.getValue();
   
   //ITK declaration
-  typedef short PixelType;
+  typedef float PixelType;
   const   unsigned int        Dimension = 3;
   typedef itk::Image< PixelType, Dimension >    ImageType;
   typedef ImageType::Pointer                    ImagePointer;
