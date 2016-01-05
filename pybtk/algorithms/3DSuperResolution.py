@@ -34,6 +34,7 @@ import argparse
 from os import path
 import nibabel
 import numpy as np
+import math
 
 print path.dirname( path.dirname( path.abspath(__file__) ) )
 sys.path.append( path.dirname( path.dirname( path.dirname( path.abspath(__file__) ) ) ) )
@@ -134,7 +135,7 @@ if __name__ == '__main__':
     #todo : compute the bounding box containing all input image
     inputSize = np.float32(np.array(inputImages[0].header['dim'][1:4]))
     inputSpacing = np.float32(np.array(inputImages[0].header['pixdim'][1:4]))
-    newSize = np.int16(inputSize / resolution * inputSpacing)+1
+    newSize = np.int16(math.ceil(inputSize / resolution * inputSpacing))
     
     refImageData = np.zeros(newSize, dtype=np.int16)
     s = np.eye(4)
