@@ -28,7 +28,79 @@
   knowledge of the CeCILL-B license and that you accept its terms.
 
 """
+import numpy as np
 
-def compute_psf(lowResolution, highResolution, fx='sinc', fy='sinc', fz='boxcar'):
+def boxcarPSF(sx,sy,sz):
+  psf = np.ones((sx,sy,sz))
+  psf/= (sx*sy*sz)
+  return psf
   
+def compute_psf(lowResolution, highResolution, psftype='boxcar'):
+  print 'Computing PSF'
+  print 'Type of PSF : '+psftype
+  #default case : boxcar
+  #Appropriate size when PSF is a boxcar
+  psfShape = (np.int16(np.ceil(lowResolution / highResolution)))
   
+  sigma = np.zeros(3)
+  if psftype == 'gauss':
+    #size for gaussian kernel
+    truncate = 2 #standard deviation cut : 1 = 68%, 2 = 95%, 3 : 99%
+    #Sigma size from Kainz et al. TMI 2015   
+    sigma[0] = 1.2 * lowResolution[0] / 2.3548
+    sigma[1] = 1.2 * lowResolution[1] / 2.3548
+    sigma[2] = lowResolution[2] / 2.3548
+    psfShape = 2 * (truncate * sigma * lowResolution / highResolution + 0.5).astype(int) + 1
+      
+    
+  HRpsf = np.zeros(psfShape)
+  
+  print 'Shape of PSF : '
+  print HRpsf.shape
+  #center of HR psf
+  cx = (HRpsf.shape[0]-1.0) / 2.0
+  cy = (HRpsf.shape[1]-1.0) / 2.0
+  cz = (HRpsf.shape[2]-1.0) / 2.0
+  
+  #the oversampling rate is used to provide a more accurate estimate of the PSF value
+  oversampling = 5
+  
+  def boxcar(x):
+    if np.abs(x) < 0.5:
+      return 1.0
+    else:
+      return 0.0
+      
+  def gaussian(x,sigma):
+    return np.exp(-x*x/(2*sigma*sigma))  
+
+  for x in range(HRpsf.shape[0]):
+    for y in range(HRpsf.shape[1]):
+      for z in range(HRpsf.shape[2]):
+        
+        val = 0
+        
+        #perform oversampling
+        for xs in range(oversampling):
+          for ys in range(oversampling):
+            for zs in range(oversampling):
+              
+              xpsf = x - cx - 0.5 + 1.0 * xs / oversampling + 1.0 / (2*oversampling)
+              ypsf = y - cy - 0.5 + 1.0 * ys / oversampling + 1.0 / (2*oversampling)
+              zpsf = z - cz - 0.5 + 1.0 * zs / oversampling + 1.0 / (2*oversampling)
+               
+              #convert (xpsf,ypsf,zpsf) into LR space
+              xlr = xpsf*highResolution[0]/lowResolution[0]
+              ylr = ypsf*highResolution[1]/lowResolution[1]
+              zlr = zpsf*highResolution[2]/lowResolution[2]
+
+              if psftype == 'gauss':
+                val += gaussian(xlr,sigma[0]) * gaussian(ylr, sigma[1]) * gaussian(zlr, sigma[2])
+              else:
+                val += boxcar(xlr)*boxcar(ylr)*boxcar(zlr)
+              
+              
+        HRpsf[x,y,z] = val/(oversampling*oversampling*oversampling)  
+  HRpsf /= np.sum(HRpsf)      
+  print HRpsf
+  return HRpsf  

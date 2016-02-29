@@ -40,7 +40,7 @@ sys.path.append( path.dirname( path.dirname( path.dirname( path.abspath(__file__
 
 from pybtk.io.itk_transforms import read_itk_transform
 from pybtk.filters.imagefilters import apply_affine_itk_transform_on_image
-
+from pybtk.reconstruction.psf import compute_psf
 
 
 if __name__ == '__main__':
@@ -53,6 +53,7 @@ if __name__ == '__main__':
   parser.add_argument('-o', '--output', help='Estimated high-resolution image filename (required)', type=str, required = True)
   parser.add_argument('--init', help='Image filename for initialization (optional)')
   parser.add_argument('-r', '--resolution', help='Resolution of the output HR image (1 for isotropic case, or 3 for anisotropic HR image). If not provided, the minimum size of the input image will be used.', action='append')
+  parser.add_argument('-p', '--psf', help='3D PSF type (boxcar (default), gauss)', type=str)
 
   args = parser.parse_args()
 
@@ -103,26 +104,26 @@ if __name__ == '__main__':
     for i in args.input:
       inputTransforms.append( (m,c) )
 
-  #todo : mask image
+  #todo : mask image or use padding values
   
-  resolution = []
+  HRSpacing = []
   if args.resolution is not None :  
     if len(args.resolution) not in [1,3]:
       print 'Please provide 0, 1 or 3 values for image resolution. Exit.\n'
       sys.exit()  
     if len(args.resolution) == 1:
       r = np.array(float(args.resolution[0]))
-      resolution = np.array([1, 1, 1]) * r
+      HRSpacing = np.array([1, 1, 1]) * r
     else:
       r = [float(i) for i in args.resolution]
-      resolution = np.array(r)
+      HRSpacing = np.array(r)
       
   else:
     r = float(min(inputImages[0].header['pixdim'][1:4]))
-    resolution = np.array([1, 1, 1]) * r
+    HRSpacing = np.array([1, 1, 1]) * r
     
   print 'Resolution for image reconstruction: '
-  print resolution  
+  print HRSpacing  
   
   ###---- Computing initialization if not provided ----------------------------
   if args.init is not None:
@@ -132,27 +133,39 @@ if __name__ == '__main__':
     print 'Computing initialization for HR image using the stack of input images'
     #Create a reference image using the first image 
     #todo : compute the bounding box containing all input image
-    inputSize = np.float32(np.array(inputImages[0].header['dim'][1:4]))
-    inputSpacing = np.float32(np.array(inputImages[0].header['pixdim'][1:4]))
-    newSize = np.int16(np.ceil(inputSize / resolution * inputSpacing))
+    LRSize    = np.float32(np.array(inputImages[0].header['dim'][1:4]))
+    LRSpacing = np.float32(np.array(inputImages[0].header['pixdim'][1:4]))
+    HRSize    = np.int16(np.ceil(LRSize / HRSpacing * LRSpacing))
     
-    refImageData = np.zeros(newSize, dtype=np.int16)
+    refImageData = np.zeros(HRSize, dtype=np.int16)
     s = np.eye(4)
     s[0,0] = inputImages[0].header['pixdim'][1]
     s[1,1] = inputImages[0].header['pixdim'][2]
     s[2,2] = inputImages[0].header['pixdim'][3]
     newAffine = np.dot(inputImages[0].header.get_sform(), np.linalg.inv(s))
-    s[0,0] = resolution[0]
-    s[1,1] = resolution[1]
-    s[2,2] = resolution[2]    
+    s[0,0] = HRSpacing[0]
+    s[1,1] = HRSpacing[1]
+    s[2,2] = HRSpacing[2]    
     newAffine = np.dot(newAffine,s)
     referenceImage = nibabel.Nifti1Image(refImageData, newAffine)
     
-    initHRImageData = np.zeros(newSize, dtype=np.float32)
+    initHRImageData = np.zeros(HRSize, dtype=np.float32)
     for i,t in zip(inputImages,inputTransforms):
       tmpImage = apply_affine_itk_transform_on_image(input_image=i,transform=t[0], center=t[1], reference_image=referenceImage, order=3) 
       initHRImageData += ( tmpImage.get_data() / np.float32(len(inputImages)) )
     initHRImage = nibabel.Nifti1Image(initHRImageData, newAffine)
     
     nibabel.save(initHRImage,args.output)  
-  
+    
+  #convert 3D images to stacks of 2D slice images
+  #create a transform for each 2D slice
+  #create a initialisation using 2D slice stacks
+  #compute H
+    
+  if args.psf == None:
+    psftype = 'boxcar'
+  else:
+    psftype = args.psf
+  HRpsf = compute_psf(LRSpacing, HRSpacing, psftype)
+
+      
