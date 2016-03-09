@@ -30,11 +30,15 @@
 """
 import numpy as np
 
-def boxcarPSF(sx,sy,sz):
-  psf = np.ones((sx,sy,sz))
-  psf/= (sx*sy*sz)
-  return psf
-  
+def boxcar(x):
+  if np.abs(x) < 0.5:
+    return 1.0
+  else:
+    return 0.0
+      
+def gaussian(x,sigma):
+  return np.exp(-x*x/(2*sigma*sigma))  
+    
 def compute_psf(lowResolution, highResolution, psftype='boxcar'):
   print 'Computing PSF'
   print 'Type of PSF : '+psftype
@@ -50,8 +54,7 @@ def compute_psf(lowResolution, highResolution, psftype='boxcar'):
     sigma[0] = 1.2 * lowResolution[0] / 2.3548
     sigma[1] = 1.2 * lowResolution[1] / 2.3548
     sigma[2] = lowResolution[2] / 2.3548
-    psfShape = 2 * (truncate * sigma * lowResolution / highResolution + 0.5).astype(int) + 1
-      
+    psfShape = 2 * (truncate * sigma / highResolution + 0.5).astype(int) + 1
     
   HRpsf = np.zeros(psfShape)
   
@@ -63,17 +66,8 @@ def compute_psf(lowResolution, highResolution, psftype='boxcar'):
   cz = (HRpsf.shape[2]-1.0) / 2.0
   
   #the oversampling rate is used to provide a more accurate estimate of the PSF value
-  oversampling = 5
+  oversampling = 25
   
-  def boxcar(x):
-    if np.abs(x) < 0.5:
-      return 1.0
-    else:
-      return 0.0
-      
-  def gaussian(x,sigma):
-    return np.exp(-x*x/(2*sigma*sigma))  
-
   for x in range(HRpsf.shape[0]):
     for y in range(HRpsf.shape[1]):
       for z in range(HRpsf.shape[2]):
@@ -89,10 +83,10 @@ def compute_psf(lowResolution, highResolution, psftype='boxcar'):
               ypsf = y - cy - 0.5 + 1.0 * ys / oversampling + 1.0 / (2*oversampling)
               zpsf = z - cz - 0.5 + 1.0 * zs / oversampling + 1.0 / (2*oversampling)
                
-              #convert (xpsf,ypsf,zpsf) into LR space
-              xlr = xpsf*highResolution[0]/lowResolution[0]
-              ylr = ypsf*highResolution[1]/lowResolution[1]
-              zlr = zpsf*highResolution[2]/lowResolution[2]
+              #convert (xpsf,ypsf,zpsf) into world space (in mm)
+              xlr = xpsf*highResolution[0]
+              ylr = ypsf*highResolution[1]
+              zlr = zpsf*highResolution[2]
 
               if psftype == 'gauss':
                 val += gaussian(xlr,sigma[0]) * gaussian(ylr, sigma[1]) * gaussian(zlr, sigma[2])

@@ -34,6 +34,8 @@ import argparse
 from os import path
 import nibabel
 import numpy as np
+from time import time
+from scipy.sparse import lil_matrix
 
 print path.dirname( path.dirname( path.abspath(__file__) ) )
 sys.path.append( path.dirname( path.dirname( path.dirname( path.abspath(__file__) ) ) ) )
@@ -41,7 +43,8 @@ sys.path.append( path.dirname( path.dirname( path.dirname( path.abspath(__file__
 from pybtk.io.itk_transforms import read_itk_transform
 from pybtk.filters.imagefilters import apply_affine_itk_transform_on_image
 from pybtk.reconstruction.psf import compute_psf
-
+from pybtk.reconstruction.observation import compute_H, convert_image_to_vector, convert_vector_to_image, convert_vector_to_list_images, convert_list_images_to_vector
+from pybtk.reconstruction.optim import optimize, optimizebis
 
 if __name__ == '__main__':
 
@@ -53,7 +56,10 @@ if __name__ == '__main__':
   parser.add_argument('-o', '--output', help='Estimated high-resolution image filename (required)', type=str, required = True)
   parser.add_argument('--init', help='Image filename for initialization (optional)')
   parser.add_argument('-r', '--resolution', help='Resolution of the output HR image (1 for isotropic case, or 3 for anisotropic HR image). If not provided, the minimum size of the input image will be used.', action='append')
-  parser.add_argument('-p', '--psf', help='3D PSF type (boxcar (default), gauss)', type=str)
+  parser.add_argument('-p', '--psf', help='3D PSF type (boxcar (default), gauss)', type=str, default='boxcar')
+  parser.add_argument('--maxiter', help='Maximum number of iterations (SR optimization)', type=int, default=10)
+  parser.add_argument('--optim', help='Optimization method (CG,L-BFGS-B)', type=str,default='L-BFGS-B')
+
 
   args = parser.parse_args()
 
@@ -93,6 +99,7 @@ if __name__ == '__main__':
   for i in args.input:
     inputImages.append(nibabel.load(i))
   
+  print 'Loading Transforms'
   inputTransforms = []
   if args.transform is not None :
     for t in args.transform:
@@ -104,7 +111,17 @@ if __name__ == '__main__':
     for i in args.input:
       inputTransforms.append( (m,c) )
 
-  #todo : mask image or use padding values
+  maskImages = []
+  if args.mask is not None :
+    for i in args.mask:
+      maskImages.append(nibabel.load(i))
+
+  else:
+    print 'Creating mask images using 0 as a padding value'
+    for i in range(len(inputImages)):
+      data = np.zeros(inputImages[i].get_data().shape)
+      data[np.nonzero(inputImages[i].get_data())] = 1
+      maskImages.append(nibabel.Nifti1Image(data, inputImages[i].affine))         
   
   HRSpacing = []
   if args.resolution is not None :  
@@ -155,17 +172,62 @@ if __name__ == '__main__':
       initHRImageData += ( tmpImage.get_data() / np.float32(len(inputImages)) )
     initHRImage = nibabel.Nifti1Image(initHRImageData, newAffine)
     
-    nibabel.save(initHRImage,args.output)  
-    
+    maskHRImageData = np.zeros(HRSize, dtype=np.float32)
+    for i,t in zip(maskImages,inputTransforms):
+      tmpImage = apply_affine_itk_transform_on_image(input_image=i,transform=t[0], center=t[1], reference_image=referenceImage, order=1) 
+      maskHRImageData += ( tmpImage.get_data() / np.float32(len(maskImages)) )
+    maskHRImage = nibabel.Nifti1Image(maskHRImageData, newAffine)
+        
   #convert 3D images to stacks of 2D slice images
   #create a transform for each 2D slice
   #create a initialisation using 2D slice stacks
-  #compute H
+  #compute H for each LR image
     
-  if args.psf == None:
-    psftype = 'boxcar'
-  else:
-    psftype = args.psf
-  HRpsf = compute_psf(LRSpacing, HRSpacing, psftype)
+  HRpsf = compute_psf(LRSpacing, HRSpacing, args.psf)
+  
+  x = convert_image_to_vector(initHRImage)
+  maskX = convert_image_to_vector(maskHRImage)
+  #Let mask the HR image
+  x = x*maskX
+  
+  #loop over LR images and stack H, y and masks
+  HList = [] 
+  maskList = []
+  yList = []
+  for i in range(len(inputImages)):
+    t = time()
+    y = convert_image_to_vector(inputImages[i])
+    m = convert_image_to_vector(maskImages[i])
+    maskList.append(m)
+    #-------Masked version of y
+    yList.append(y*m)
+    H = compute_H(inputImages[i], initHRImage, inputTransforms[i], HRpsf, maskImages[i])
+    HList.append(H)
+    nibabel.save(convert_vector_to_image(H.dot(x),inputImages[i]),'simu_'+str(i)+'.nii.gz')
+    nibabel.save(convert_vector_to_image(H.dot(x)-y,inputImages[i]),'diff_'+str(i)+'.nii.gz')
+    print time()-t
+  
+  #compress x and H
+  index = np.nonzero(x)[0]
+  xc = x[index]
+  HListc = []
+  for i in range(len(inputImages)):
+    HListc.append(HList[i][:,index])
+
+  
+#  res = optimize(H,x,y,args.maxiter)
+  #res = optimizebis(HList,x,yList,args.maxiter,args.optim)
+  #outputData = res.x.reshape(initHRImage.get_data().shape)
+  #decompress res.x
+  res = optimizebis(HListc,xc,yList,args.maxiter,args.optim)
+  x[index] = res.x
+  outputData = x.reshape(initHRImage.get_data().shape)
+  print res.message
+  outputImage = nibabel.Nifti1Image(outputData, initHRImage.affine)
+  nibabel.save(outputImage,args.output)
+  
+
+
+
 
       
