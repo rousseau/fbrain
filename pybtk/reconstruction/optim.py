@@ -51,7 +51,7 @@ def optimize(H,x,y, maxiter):
   result = minimize(lossL2,x, method='L-BFGS-B', bounds=[(0, np.max(y))] * x.size, options=minimize_options)  
   return result
   
-def optimizebis(H,x,y,maxiter,method):
+def optimizebis(H,x,y,maxiter):
   """
   Optimization for super resolution
   
@@ -82,21 +82,14 @@ def optimizebis(H,x,y,maxiter,method):
     return f_val
   minimize_options={'maxiter': maxiter}  
   
-  if method=='L-BFGS-B':
-    maxfun  = 1000000 #10000000
-    #maxcor = 10
-    #minimize_options={'maxiter': maxiter,'ftol': 0,'gtol': 0, 'maxfun': maxfun, 'disp':True, 'maxcor': maxcor}
-    minimize_options={'maxiter': maxiter,'ftol': 0,'gtol': 0, 'maxfun': maxfun, 'disp':True}
+  maxfun  = 1000000 #10000000
+  #maxcor = 10
+  #minimize_options={'maxiter': maxiter,'ftol': 0,'gtol': 0, 'maxfun': maxfun, 'disp':True, 'maxcor': maxcor}
+  minimize_options={'maxiter': maxiter,'ftol': 0,'gtol': 0, 'maxfun': maxfun, 'disp':True}
     
 
-    #TODO : modify the boundary of max intensity using all input LR images (instead of just y[0])
-    result = minimize(lossL2,x, method='L-BFGS-B', bounds=[(0, np.max(y[0]))] * x.size, options=minimize_options)  
-  if method=='CG':
-    result = minimize(lossL2,x, method='CG', options=minimize_options)  
-  if method=='Nelder-Mead':
-    result = minimize(lossL2,x, method='Nelder-Mead', options=minimize_options)  
-  if method=='Powell':
-    result = minimize(lossL2,x, method='Powell', options=minimize_options)  
+  #TODO : modify the boundary of max intensity using all input LR images (instead of just y[0])
+  result = minimize(lossL2,x, method='L-BFGS-B', bounds=[(0, np.max(y[0]))] * x.size, options=minimize_options)  
     
     
   return result  

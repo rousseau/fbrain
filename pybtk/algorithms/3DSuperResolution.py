@@ -59,7 +59,6 @@ if __name__ == '__main__':
   parser.add_argument('-r', '--resolution', help='Resolution of the output HR image (1 for isotropic case, or 3 for anisotropic HR image). If not provided, the minimum size of the input image will be used.', action='append')
   parser.add_argument('-p', '--psf', help='3D PSF type (boxcar (default), gauss)', type=str, default='boxcar')
   parser.add_argument('--maxiter', help='Maximum number of iterations (SR optimization)', type=int, default=10)
-  parser.add_argument('--optim', help='Optimization method (CG,L-BFGS-B)', type=str,default='L-BFGS-B')
 
 
   args = parser.parse_args()
@@ -220,7 +219,7 @@ if __name__ == '__main__':
   #res = optimizebis(HList,x,yList,args.maxiter,args.optim)
   #outputData = res.x.reshape(initHRImage.get_data().shape)
   #decompress res.x
-  res = optimizebis(HListc,xc,yList,args.maxiter,args.optim)
+  res = optimizebis(HListc,xc,yList,args.maxiter)
   x[index] = res.x
   outputData = x.reshape(initHRImage.get_data().shape)
   print res.message
