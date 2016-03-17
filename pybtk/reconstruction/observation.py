@@ -39,7 +39,7 @@ from numba import jit
 from os import path
 import sys
 sys.path.append( path.dirname( path.dirname( path.dirname( path.abspath(__file__) ) ) ) )
-from pybtk.registration.transforms import transform_a_set_of_points, convert_itk_transform_to_affine_transform
+from pybtk.registration.affine_transforms import transform_a_set_of_points, convert_itk_transform_to_affine_transform
 
 #Basic operation to convert vector to an image, or a list of images
 def convert_image_to_vector(HRImage):

@@ -34,7 +34,10 @@ import nibabel
 
 from scipy.ndimage.interpolation import map_coordinates
 
-from transforms import transform_a_set_of_points, convert_itk_transform_to_affine_transform
+from os import path
+import sys
+sys.path.append( path.dirname( path.dirname( path.dirname( path.abspath(__file__) ) ) ) )
+from pybtk.registration.affine_transforms import transform_a_set_of_points, convert_itk_transform_to_affine_transform
 
 def apply_affine_itk_transform_on_image(input_image, transform, center, reference_image=None, order=None):
   """
