@@ -67,7 +67,6 @@ def optimizebis(H,x,y,maxiter):
     result.x contains the estimation of x
     
   """
-  print 'Optimization method : '+method
 
   def lossL2(x):
     f_val = 0
