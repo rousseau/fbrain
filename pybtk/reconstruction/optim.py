@@ -129,15 +129,17 @@ def myOptimization(H,x,y,maxiter):
   iteration = 0
   grad = np.zeros(x.shape)
   maxdiff = np.ones(len(y)) * (maxy-miny)
-  threshold = 0.05 * (maxy-miny)
+  threshold = 0.01 * (maxy-miny)
   print 'threshold : '+str(threshold)
   
   while iteration<maxiter and np.max(maxdiff) > threshold:
     grad = fprime2(x,H,y)
+    #Simple rule to define alpha    
     alpha = 0.05 * (np.max(x)-np.min(x))/np.max(np.abs(grad))
-    
-    #res = line_search(f, fprime2, x, -grad, args=(H,y))
-    #alpha = res[0]
+    #Find alpha that satisfies strong Wolfe conditions.
+    #http://scipy.github.io/devdocs/generated/scipy.optimize.line_search.html#scipy.optimize.line_search
+    res = line_search(f, fprime2, x, -grad, args=(H,y))
+    alpha = res[0]
     
     x = x - alpha * grad
     
@@ -153,4 +155,5 @@ def myOptimization(H,x,y,maxiter):
     iteration+=1
   
   print 'Loss L2 : '+str(f(x,H,y))
+  
   return x, grad
