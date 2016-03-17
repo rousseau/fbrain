@@ -45,7 +45,7 @@ from pybtk.io.itk_transforms import read_itk_transform
 from pybtk.filters.imagefilters import apply_affine_itk_transform_on_image
 from pybtk.reconstruction.psf import compute_psf
 from pybtk.reconstruction.observation import compute_H, convert_image_to_vector, convert_vector_to_image, convert_vector_to_list_images, convert_list_images_to_vector
-from pybtk.reconstruction.optim import optimize, optimizebis
+from pybtk.reconstruction.optim import optimize, optimizebis, myOptimization
 
 if __name__ == '__main__':
 
@@ -219,10 +219,15 @@ if __name__ == '__main__':
   #res = optimizebis(HList,x,yList,args.maxiter,args.optim)
   #outputData = res.x.reshape(initHRImage.get_data().shape)
   #decompress res.x
-  res = optimizebis(HListc,xc,yList,args.maxiter)
-  x[index] = res.x
+  #res = optimizebis(HListc,xc,yList,args.maxiter)
+  #x[index] = res.x
+  #print res.message
+  
+  res,grad = myOptimization(HListc,xc,yList,args.maxiter)
+  x[index] = res
+  
   outputData = x.reshape(initHRImage.get_data().shape)
-  print res.message
+  
   outputImage = nibabel.Nifti1Image(outputData, initHRImage.affine)
   nibabel.save(outputImage,args.output)
   
