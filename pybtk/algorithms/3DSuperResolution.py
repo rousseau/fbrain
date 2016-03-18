@@ -58,6 +58,7 @@ if __name__ == '__main__':
   parser.add_argument('-r', '--resolution', help='Resolution of the output HR image (1 for isotropic case, or 3 for anisotropic HR image). If not provided, the minimum size of the input image will be used.', action='append')
   parser.add_argument('-p', '--psf', help='3D PSF type (boxcar (default), gauss)', type=str, default='boxcar')
   parser.add_argument('--maxiter', help='Maximum number of iterations (SR optimization)', type=int, default=10)
+  parser.add_argument('--ref', help='Reference image used for spectrum constraints', type=str)
 
 
   args = parser.parse_args()
@@ -213,9 +214,21 @@ if __name__ == '__main__':
   for i in range(len(inputImages)):
     HListc.append(HList[i][:,index])
 
-  
-  res = optimize_L_BFGS_B(H,x,y,args.maxiter) 
-  #res,grad = optimize(HListc,xc,yList,args.maxiter)
+  #Spectrum constraint
+  magRef = None
+  if args.ref is not None:
+    print 'Use spectrum constraint with reference image : '+args.ref
+    Iref = nibabel.load(args.ref)
+    dataRef = Iref.get_data()
+    if dataRef.shape != initHRImage.get_data().shape:
+      print 'Shape of image reference is not correct : '+str(dataRef.shape)
+      print 'WARNING : Reference data will be resized'
+      dataRef = np.resize(dataRef,initHRImage.get_data().shape)
+    magRef = np.abs(np.fft.fftn(dataRef))
+
+    
+  #res = optimize_L_BFGS_B(H,x,y,args.maxiter) 
+  res,grad = optimize(HListc,xc,yList,args.maxiter,magRef,index)
 
   #decompress res.x
   x[index] = res  
@@ -223,6 +236,30 @@ if __name__ == '__main__':
   
   outputImage = nibabel.Nifti1Image(outputData, initHRImage.affine)
   nibabel.save(outputImage,args.output)
+  
+  im = np.zeros(magRef.shape).reshape(-1)
+  im[index] = xc
+  im = im.reshape(magRef.shape)
+  # ax = np.hanning(magRef.shape[0]).reshape((-1,1,1))
+  # ay = np.hanning(magRef.shape[1]).reshape((1,-1,1))
+  # az = np.hanning(magRef.shape[2]).reshape((1,1,-1))
+  # window = ax*ay*az
+  # window = np.ones(I.shape)
+  # im = im*window
+
+  epsilon = 10**-10
+  fftIm = np.fft.fftn(im)
+  magIm = np.abs(fftIm) + epsilon
+  newIm = np.real( np.fft.ifftn( magRef / magIm * fftIm) )
+  toto = (im-newIm).reshape((-1))
+  
+  
+  x[index] = grad  
+  outputData = x.reshape(initHRImage.get_data().shape)  
+  outputImage = nibabel.Nifti1Image(outputData, initHRImage.affine)
+  nibabel.save(outputImage,'/Users/rousseau/Desktop/grad.nii.gz')
+    
+  
   
   for i in range(len(inputImages)):  
     nibabel.save(convert_vector_to_image(HList[i].dot(x),inputImages[i]),'simu_'+str(i)+'.nii.gz')

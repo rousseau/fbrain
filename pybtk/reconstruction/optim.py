@@ -80,7 +80,23 @@ def lossL2prime(x,H,y):
   res /= len(y)  
   return res    
 
+def LossSpectrumprime(x,magRef,index):
+  im = np.zeros(magRef.shape).reshape(-1)
+  im[index] = x
+  im = im.reshape(magRef.shape)
+  # ax = np.hanning(magRef.shape[0]).reshape((-1,1,1))
+  # ay = np.hanning(magRef.shape[1]).reshape((1,-1,1))
+  # az = np.hanning(magRef.shape[2]).reshape((1,1,-1))
+  # window = ax*ay*az
+  # window = np.ones(I.shape)
+  # im = im*window
 
+  epsilon = 10**-10
+  fftIm = np.fft.fftn(im)
+  magIm = np.abs(fftIm + epsilon)
+  newIm = np.real( np.fft.ifftn( magRef / magIm * fftIm) )
+  return (im-newIm).reshape((-1))[index]
+  
 def optimize_L_BFGS_B(H,x,y, maxiter):
   """
   Optimization for super resolution using L-BFGS-B method
@@ -105,7 +121,7 @@ def optimize_L_BFGS_B(H,x,y, maxiter):
   print result.message
   return result.x
     
-def optimize(H,x,y,maxiter):
+def optimize(H,x,y,maxiter,magRef,index):
   print 'Doing super-resolution optimization'
   t = time()
   miny = np.min(y[0])
@@ -118,18 +134,27 @@ def optimize(H,x,y,maxiter):
   threshold = 0.01 * (maxy-miny)
   
   while iteration<maxiter and np.max(maxdiff) > threshold:
-    grad = lossL2prime(x,H,y)
+
+    gradL2 = lossL2prime(x,H,y)
       
     #Find alpha that satisfies strong Wolfe conditions.
     #http://scipy.github.io/devdocs/generated/scipy.optimize.line_search.html#scipy.optimize.line_search
-    res = line_search(lossL2, lossL2prime, x, -grad, args=(H,y))
-    alpha = res[0]
-    if alpha is None:
+    res = line_search(lossL2, lossL2prime, x, -gradL2, args=(H,y))
+    alphaL2 = res[0]
+    if alphaL2 is None:
       #Simple rule to define alpha  
-      alpha = 0.05 * (np.max(x)-np.min(x))/np.max(np.abs(grad))
-      
+      alphaL2 = 0.05 * (np.max(x)-np.min(x))/np.max(np.abs(grad))
+    
+    if magRef is not None:
+      gradSpectrum = LossSpectrumprime(x,magRef,index)
+      alphaSpectrum = 0.05 * (np.max(x)-np.min(x))/np.max(np.abs(gradSpectrum))
+      update = 0.5*alphaSpectrum*gradSpectrum + 0.5*alphaL2*grad
+    else:
+      update = alphaL2*grad
+    
+    
     #Update high resolution image  
-    x = x - alpha * grad
+    x = x - update
     
     for i in range(len(y)):
       maxdiff[i] = np.max(H[i].dot(x) - y[i])
@@ -144,4 +169,4 @@ def optimize(H,x,y,maxiter):
   
   print 'Optimization done in '+str(time()-t)+' s, in '+str(iteration)+' iterations'
   
-  return x, grad
+  return x, gradSpectrum
