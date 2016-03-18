@@ -182,8 +182,12 @@ if __name__ == '__main__':
   #create a transform for each 2D slice
   #create a initialisation using 2D slice stacks
   #compute H for each LR image
-    
-  HRpsf = compute_psf(LRSpacing, HRSpacing, args.psf)
+
+  psfList = []
+  for i in range(len(inputImages)):
+    LRSpacing = np.float32(np.array(inputImages[i].header['pixdim'][1:4]))
+    HRpsf = compute_psf(LRSpacing, HRSpacing, args.psf)
+    psfList.append(HRpsf)
   
   x = convert_image_to_vector(initHRImage)
   maskX = convert_image_to_vector(maskHRImage)
@@ -200,7 +204,7 @@ if __name__ == '__main__':
     maskList.append(m)
     #-------Masked version of y
     yList.append(y*m)
-    H = compute_H(inputImages[i], initHRImage, inputTransforms[i], HRpsf, maskImages[i])
+    H = compute_H(inputImages[i], initHRImage, inputTransforms[i], psfList[i], maskImages[i])
     HList.append(H)
   
   #compress x and H
@@ -226,6 +230,7 @@ if __name__ == '__main__':
   
   outputImage = nibabel.Nifti1Image(outputData, initHRImage.affine)
   nibabel.save(outputImage,args.output)
+  
 
   for i in range(len(inputImages)):  
     nibabel.save(convert_vector_to_image(HList[i].dot(x),inputImages[i]),'simu_'+str(i)+'.nii.gz')
