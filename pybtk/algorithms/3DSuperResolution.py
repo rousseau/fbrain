@@ -35,7 +35,6 @@ from os import path
 import nibabel
 import numpy as np
 from time import time
-from scipy.sparse import lil_matrix
 
 #print path.dirname( path.dirname( path.abspath(__file__) ) )
 #Add path to pybtk:
@@ -45,7 +44,7 @@ from pybtk.io.itk_transforms import read_itk_transform
 from pybtk.filters.imagefilters import apply_affine_itk_transform_on_image
 from pybtk.reconstruction.psf import compute_psf
 from pybtk.reconstruction.observation import compute_H, convert_image_to_vector, convert_vector_to_image, convert_vector_to_list_images, convert_list_images_to_vector
-from pybtk.reconstruction.optim import optimize, optimizebis, myOptimization
+from pybtk.reconstruction.optim import optimize, optimize_L_BFGS_B
 
 if __name__ == '__main__':
 
@@ -215,26 +214,19 @@ if __name__ == '__main__':
     HListc.append(HList[i][:,index])
 
   
-#  res = optimize(H,x,y,args.maxiter)
-  #res = optimizebis(HList,x,yList,args.maxiter,args.optim)
-  #outputData = res.x.reshape(initHRImage.get_data().shape)
+  res = optimize_L_BFGS_B(H,x,y,args.maxiter) 
+  #res,grad = optimize(HListc,xc,yList,args.maxiter)
+
   #decompress res.x
-  #res = optimizebis(HListc,xc,yList,args.maxiter)
-  #x[index] = res.x
-  #print res.message
-  
-  res,grad = myOptimization(HListc,xc,yList,args.maxiter)
-  x[index] = res
-  
+  x[index] = res  
   outputData = x.reshape(initHRImage.get_data().shape)
   
   outputImage = nibabel.Nifti1Image(outputData, initHRImage.affine)
   nibabel.save(outputImage,args.output)
   
-
   for i in range(len(inputImages)):  
     nibabel.save(convert_vector_to_image(HList[i].dot(x),inputImages[i]),'simu_'+str(i)+'.nii.gz')
-    nibabel.save(convert_vector_to_image(HList[i].dot(x)-y,inputImages[i]),'diff_'+str(i)+'.nii.gz')
+    nibabel.save(convert_vector_to_image(HList[i].dot(x)-yList[i],inputImages[i]),'diff_'+str(i)+'.nii.gz')
 
 
 
