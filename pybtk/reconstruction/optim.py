@@ -93,7 +93,8 @@ def optimizebis(H,x,y,maxiter):
   return result 
   
 def myOptimization(H,x,y,maxiter):
-
+  print 'Doing super-resolution optimization'
+  t = time()
   miny = np.min(y[0])
   maxy = np.max(y[0])
   print 'bounds of y : '+str(miny)+', '+str(maxy)
@@ -125,35 +126,38 @@ def myOptimization(H,x,y,maxiter):
     return grad    
   
 
-
   iteration = 0
   grad = np.zeros(x.shape)
   maxdiff = np.ones(len(y)) * (maxy-miny)
   threshold = 0.01 * (maxy-miny)
-  print 'threshold : '+str(threshold)
   
   while iteration<maxiter and np.max(maxdiff) > threshold:
     grad = fprime2(x,H,y)
-    #Simple rule to define alpha    
-    alpha = 0.05 * (np.max(x)-np.min(x))/np.max(np.abs(grad))
+      
     #Find alpha that satisfies strong Wolfe conditions.
     #http://scipy.github.io/devdocs/generated/scipy.optimize.line_search.html#scipy.optimize.line_search
     res = line_search(f, fprime2, x, -grad, args=(H,y))
     alpha = res[0]
-    
+    if alpha is None:
+      #Simple rule to define alpha  
+      alpha = 0.05 * (np.max(x)-np.min(x))/np.max(np.abs(grad))
+      
+    #Update high resolution image  
     x = x - alpha * grad
     
     for i in range(len(y)):
       maxdiff[i] = np.max(H[i].dot(x) - y[i])
-    print 'max diff : '+str(np.max(maxdiff))
-    print 'iteration : '+str(iteration+1)
+    #print 'max diff : '+str(np.max(maxdiff))
+    #print 'iteration : '+str(iteration+1)
     
     #Use bounds to limit intensity range of x
     x[x<miny] = miny
     x[x>maxy] = maxy
     
     iteration+=1
+    if iteration==maxiter:
+      print 'Maximum number of iterations is reached'
   
-  print 'Loss L2 : '+str(f(x,H,y))
+  print 'Optimization done in '+str(time()-t)+' s'
   
   return x, grad

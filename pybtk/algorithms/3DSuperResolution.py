@@ -195,7 +195,6 @@ if __name__ == '__main__':
   maskList = []
   yList = []
   for i in range(len(inputImages)):
-    t = time()
     y = convert_image_to_vector(inputImages[i])
     m = convert_image_to_vector(maskImages[i])
     maskList.append(m)
@@ -203,9 +202,6 @@ if __name__ == '__main__':
     yList.append(y*m)
     H = compute_H(inputImages[i], initHRImage, inputTransforms[i], HRpsf, maskImages[i])
     HList.append(H)
-    nibabel.save(convert_vector_to_image(H.dot(x),inputImages[i]),'simu_'+str(i)+'.nii.gz')
-    nibabel.save(convert_vector_to_image(H.dot(x)-y,inputImages[i]),'diff_'+str(i)+'.nii.gz')
-    print time()-t
   
   #compress x and H
   index = np.nonzero(x)[0]
@@ -230,7 +226,10 @@ if __name__ == '__main__':
   
   outputImage = nibabel.Nifti1Image(outputData, initHRImage.affine)
   nibabel.save(outputImage,args.output)
-  
+
+  for i in range(len(inputImages)):  
+    nibabel.save(convert_vector_to_image(H.dot(x),inputImages[i]),'simu_'+str(i)+'.nii.gz')
+    nibabel.save(convert_vector_to_image(H.dot(x)-y,inputImages[i]),'diff_'+str(i)+'.nii.gz')
 
 
 

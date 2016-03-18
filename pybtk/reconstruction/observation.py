@@ -90,6 +90,9 @@ def compute_H(y, x, w2wtransform, psf, mask):
     Sparse matrix H corresponding to the observation model y=Hx
     
   """
+  print 'Computing the observation matrix H (for each low-resolution image)'
+  t = time()
+  
   psfCenter = (np.array(psf.shape) -1.0 )/2.0
 
   LRSpacing = np.float32(np.array(y.header['pixdim'][1:4]))
@@ -216,4 +219,5 @@ def compute_H(y, x, w2wtransform, psf, mask):
   #normalization of rows (using sklearn)
   H_normalized = normalize(H, norm='l1', axis=1)
 
+  print 'Computation done in '+str(time()-t)+' s'
   return H_normalized
