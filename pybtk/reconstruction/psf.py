@@ -30,8 +30,8 @@
 """
 import numpy as np
 
-def boxcar(x):
-  if np.abs(x) < 0.5:
+def boxcar(x,threshold):
+  if np.abs(x) < threshold:
     return 1.0
   else:
     return 0.0
@@ -55,6 +55,9 @@ def compute_psf(lowResolution, highResolution, psftype='boxcar'):
     sigma[1] = 1.2 * lowResolution[1] / 2.3548
     sigma[2] = lowResolution[2] / 2.3548
     psfShape = 2 * (truncate * sigma / highResolution + 0.5).astype(int) + 1
+  if psftype == 'boxcar':
+    sigma[0:3] = lowResolution[0:3]/2
+
     
   HRpsf = np.zeros(psfShape)
   
@@ -91,7 +94,7 @@ def compute_psf(lowResolution, highResolution, psftype='boxcar'):
               if psftype == 'gauss':
                 val += gaussian(xlr,sigma[0]) * gaussian(ylr, sigma[1]) * gaussian(zlr, sigma[2])
               else:
-                val += boxcar(xlr)*boxcar(ylr)*boxcar(zlr)
+                val += boxcar(xlr,sigma[0])*boxcar(ylr,sigma[1])*boxcar(zlr,sigma[2])
               
               
         HRpsf[x,y,z] = val/(oversampling*oversampling*oversampling)  

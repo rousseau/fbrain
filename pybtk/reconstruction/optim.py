@@ -158,6 +158,6 @@ def myOptimization(H,x,y,maxiter):
     if iteration==maxiter:
       print 'Maximum number of iterations is reached'
   
-  print 'Optimization done in '+str(time()-t)+' s'
+  print 'Optimization done in '+str(time()-t)+' s, in '+str(iteration)+' iterations'
   
   return x, grad

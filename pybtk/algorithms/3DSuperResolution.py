@@ -228,8 +228,8 @@ if __name__ == '__main__':
   nibabel.save(outputImage,args.output)
 
   for i in range(len(inputImages)):  
-    nibabel.save(convert_vector_to_image(H.dot(x),inputImages[i]),'simu_'+str(i)+'.nii.gz')
-    nibabel.save(convert_vector_to_image(H.dot(x)-y,inputImages[i]),'diff_'+str(i)+'.nii.gz')
+    nibabel.save(convert_vector_to_image(HList[i].dot(x),inputImages[i]),'simu_'+str(i)+'.nii.gz')
+    nibabel.save(convert_vector_to_image(HList[i].dot(x)-y,inputImages[i]),'diff_'+str(i)+'.nii.gz')
 
 
 
