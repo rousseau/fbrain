@@ -59,7 +59,7 @@ if __name__ == '__main__':
   parser.add_argument('-p', '--psf', help='3D PSF type (boxcar (default), gauss)', type=str, default='boxcar')
   parser.add_argument('--maxiter', help='Maximum number of iterations (SR optimization)', type=int, default=10)
   parser.add_argument('--ref', help='Reference image used for spectrum constraints', type=str)
-
+  parser.add_argument('--padding', help='Padding value used when no mask is provided', type=float, default=0)
 
   args = parser.parse_args()
 
@@ -117,10 +117,10 @@ if __name__ == '__main__':
       maskImages.append(nibabel.load(i))
 
   else:
-    print 'Creating mask images using 0 as a padding value'
+    print 'Creating mask images using the following padding value:'+str(args.padding)
     for i in range(len(inputImages)):
       data = np.zeros(inputImages[i].get_data().shape)
-      data[np.nonzero(inputImages[i].get_data())] = 1
+      data[inputImages[i].get_data() > args.padding] = 1
       maskImages.append(nibabel.Nifti1Image(data, inputImages[i].affine))         
   
   HRSpacing = []
