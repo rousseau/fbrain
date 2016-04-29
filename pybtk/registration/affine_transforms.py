@@ -293,4 +293,4 @@ def convert_affine_transform_to_itk_transform(transform,center):
   ITKcenter = np.dot(RAS2LPS,center)
 
   return ITKtransform, ITKcenter  
-  
+

@@ -86,3 +86,47 @@ def apply_affine_itk_transform_on_image(input_image, transform, center, referenc
   output_data = np.reshape(val,ref_data.shape)
  
   return nibabel.Nifti1Image(output_data, reference_image.affine)
+
+def apply_affine_RAS_transform_on_image(input_image, transform, center, reference_image=None, order=None):
+  """
+  
+  """
+  input_data = np.float32(input_image.get_data())
+      
+  if reference_image is None:
+    reference_image = input_image
+
+  #set the interpolation order to 1 if not specified
+  if order is None:
+    order = 1
+    
+  ref_data = np.float32(reference_image.get_data())    
+  
+  #create index for the reference space
+  i = np.arange(0,ref_data.shape[0])
+  j = np.arange(0,ref_data.shape[1])
+  k = np.arange(0,ref_data.shape[2])
+  iv,jv,kv = np.meshgrid(i,j,k,indexing='ij')
+  
+  iv = np.reshape(iv,(-1))
+  jv = np.reshape(jv,(-1))
+  kv = np.reshape(kv,(-1))
+
+  #compute the coordinates in the input image
+  pointset = np.zeros((4,iv.shape[0]))
+  pointset[0,:] = iv
+  pointset[1,:] = jv
+  pointset[2,:] = kv
+  pointset[3,:] = np.ones((iv.shape[0]))
+
+  #no need to specify the center here because it is included in itk-based nb_transform  
+  #pointset = transform_a_set_of_points(pointset,nb_transform,reference_image.affine,np.linalg.inv(input_image.affine))
+  pointset = transform_a_set_of_points(pointset,transform,reference_image.affine,np.linalg.inv(input_image.affine),center)
+
+  #compute the interpolation
+  val = np.zeros(iv.shape)            
+  map_coordinates(input_data,[pointset[0,:],pointset[1,:],pointset[2,:]],output=val,order=order)
+  
+  output_data = np.reshape(val,ref_data.shape)
+ 
+  return nibabel.Nifti1Image(output_data, reference_image.affine)
