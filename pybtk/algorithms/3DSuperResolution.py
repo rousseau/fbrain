@@ -121,7 +121,9 @@ if __name__ == '__main__':
     for i in range(len(inputImages)):
       data = np.zeros(inputImages[i].get_data().shape)
       data[inputImages[i].get_data() > args.padding] = 1
-      maskImages.append(nibabel.Nifti1Image(data, inputImages[i].affine))         
+      maskImages.append(nibabel.Nifti1Image(data, inputImages[i].affine)) 
+      #np.nonzero returns index array, so needs to be divide by the dimension of the array (i.e. 3 here)
+      print 'Percentage of masked values : %.2f '%( np.size(np.nonzero((data))) / (1.0*np.size(data.shape)) * 100.0 / np.size(data) )        
   
   HRSpacing = []
   if args.resolution is not None :  
@@ -228,7 +230,7 @@ if __name__ == '__main__':
 
     
   #res = optimize_L_BFGS_B(H,x,y,args.maxiter) 
-  res,grad = optimize(HListc,xc,yList,args.maxiter,magRef,index)
+  res = optimize(HListc,xc,yList,args.maxiter,magRef,index)
 
   #decompress res.x
   x[index] = res  
@@ -236,30 +238,6 @@ if __name__ == '__main__':
   
   outputImage = nibabel.Nifti1Image(outputData, initHRImage.affine)
   nibabel.save(outputImage,args.output)
-  
-  im = np.zeros(magRef.shape).reshape(-1)
-  im[index] = xc
-  im = im.reshape(magRef.shape)
-  # ax = np.hanning(magRef.shape[0]).reshape((-1,1,1))
-  # ay = np.hanning(magRef.shape[1]).reshape((1,-1,1))
-  # az = np.hanning(magRef.shape[2]).reshape((1,1,-1))
-  # window = ax*ay*az
-  # window = np.ones(I.shape)
-  # im = im*window
-
-  epsilon = 10**-10
-  fftIm = np.fft.fftn(im)
-  magIm = np.abs(fftIm) + epsilon
-  newIm = np.real( np.fft.ifftn( magRef / magIm * fftIm) )
-  toto = (im-newIm).reshape((-1))
-  
-  
-  x[index] = grad  
-  outputData = x.reshape(initHRImage.get_data().shape)  
-  outputImage = nibabel.Nifti1Image(outputData, initHRImage.affine)
-  nibabel.save(outputImage,'/Users/rousseau/Desktop/grad.nii.gz')
-    
-  
   
   for i in range(len(inputImages)):  
     nibabel.save(convert_vector_to_image(HList[i].dot(x),inputImages[i]),'simu_'+str(i)+'.nii.gz')

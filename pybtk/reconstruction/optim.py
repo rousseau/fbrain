@@ -169,4 +169,4 @@ def optimize(H,x,y,maxiter,magRef,index):
   
   print 'Optimization done in '+str(time()-t)+' s, in '+str(iteration)+' iterations'
   
-  return x, gradSpectrum
+  return x
