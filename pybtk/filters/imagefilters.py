@@ -33,6 +33,7 @@ import numpy as np
 import nibabel
 
 from scipy.ndimage.interpolation import map_coordinates
+from scipy.ndimage.filters import gaussian_filter
 
 from os import path
 import sys
@@ -130,3 +131,13 @@ def apply_affine_RAS_transform_on_image(input_image, transform, center, referenc
   output_data = np.reshape(val,ref_data.shape)
  
   return nibabel.Nifti1Image(output_data, reference_image.affine)
+
+def gaussian_biais_correction(input_image,reference_image, sigma):
+  gi = gaussian_filter(input_image.get_data(),sigma)
+  gr = gaussian_filter(reference_image.get_data(),sigma)
+  index = np.nonzero(gi)
+  data = np.zeros(input_image.get_data().shape)
+  #Low res constraint
+  data[index] = input_image.get_data()[index] * gr[index] / gi[index] 
+  print np.mean(data)  
+  return nibabel.Nifti1Image(data, input_image.affine)
