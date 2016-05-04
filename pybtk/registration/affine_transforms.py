@@ -160,14 +160,14 @@ def transform_a_point(point, transform, matrix1=None, matrix2=None, center=None)
   
   #apply a translation with respect to the center of the rotation if specified    
   if center is not None:
-    output[:3] = output[:3] - center[:3]
+    output[:3] = output[:3] - center[:3,np.newaxis]
     
   #apply the transform
   output = np.dot(transform,output)
 
   #apply the inverse translation wrt the center of the rotation if specified
   if center is not None:
-    output[:3] = output[:3] + center[:3]
+    output[:3] = output[:3] + center[:3,np.newaxis]
     
   #from world coordinate to image 2 coordinate
   if matrix2 is not None:
