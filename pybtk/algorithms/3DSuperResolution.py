@@ -32,6 +32,7 @@
 import sys
 import argparse
 from os import path
+import os
 import nibabel
 import numpy as np
 from time import time
@@ -41,10 +42,13 @@ from time import time
 sys.path.append( path.dirname( path.dirname( path.dirname( path.abspath(__file__) ) ) ) )
 
 from pybtk.io.itk_transforms import read_itk_transform
-from pybtk.filters.imagefilters import apply_affine_itk_transform_on_image
+from pybtk.filters.imagefilters import apply_affine_itk_transform_on_image,gaussian_biais_correction
 from pybtk.reconstruction.psf import compute_psf
 from pybtk.reconstruction.observation import compute_H, convert_image_to_vector, convert_vector_to_image, convert_vector_to_list_images, convert_list_images_to_vector
 from pybtk.reconstruction.optim import optimize, optimize_L_BFGS_B
+from pybtk.registration.affine_transforms import transform_a_point
+from pybtk.registration.affine_transforms import convert_itk_transform_to_affine_transform
+
 
 if __name__ == '__main__':
 
@@ -100,6 +104,7 @@ if __name__ == '__main__':
     inputImages.append(nibabel.load(i))
   
   print 'Loading Transforms'
+  print 'Warning: Transforms depend on the HR image.' 
   inputTransforms = []
   if args.transform is not None :
     for t in args.transform:
@@ -147,6 +152,9 @@ if __name__ == '__main__':
   ###---- Computing initialization if not provided ----------------------------
   if args.init is not None:
     initHRImage = nibabel.load( args.init )
+    data = np.zeros(initHRImage.get_data().shape)
+    data[initHRImage.get_data() > args.padding] = 1
+    maskHRImage = nibabel.Nifti1Image(data, initHRImage.affine)
 
   else:
     print 'Computing initialization for HR image using the stack of input images'
@@ -156,6 +164,7 @@ if __name__ == '__main__':
     LRSpacing = np.float32(np.array(inputImages[0].header['pixdim'][1:4]))
     HRSize    = np.int16(np.ceil(LRSize / HRSpacing * LRSpacing))
     
+    #Compute the new affine (header) matrix
     refImageData = np.zeros(HRSize, dtype=np.int16)
     s = np.eye(4)
     s[0,0] = inputImages[0].header['pixdim'][1]
@@ -169,16 +178,23 @@ if __name__ == '__main__':
     referenceImage = nibabel.Nifti1Image(refImageData, newAffine)
     
     initHRImageData = np.zeros(HRSize, dtype=np.float32)
+    j = 0
     for i,t in zip(inputImages,inputTransforms):
-      tmpImage = apply_affine_itk_transform_on_image(input_image=i,transform=t[0], center=t[1], reference_image=referenceImage, order=3) 
+      tmpImage = apply_affine_itk_transform_on_image(input_image=i,transform=t[0], center=t[1], reference_image=referenceImage, order=3)
+      nibabel.save(tmpImage,'warped_'+str(j)+'.nii.gz')
+      j = j+1
       initHRImageData += ( tmpImage.get_data() / np.float32(len(inputImages)) )
     initHRImage = nibabel.Nifti1Image(initHRImageData, newAffine)
+    nibabel.save(initHRImage,'init.nii.gz')
     
     maskHRImageData = np.zeros(HRSize, dtype=np.float32)
     for i,t in zip(maskImages,inputTransforms):
-      tmpImage = apply_affine_itk_transform_on_image(input_image=i,transform=t[0], center=t[1], reference_image=referenceImage, order=1) 
+      tmpImage = apply_affine_itk_transform_on_image(input_image=i,transform=t[0], center=t[1], reference_image=referenceImage, order=1)
       maskHRImageData += ( tmpImage.get_data() / np.float32(len(maskImages)) )
+      
     maskHRImage = nibabel.Nifti1Image(maskHRImageData, newAffine)
+    nibabel.save(maskHRImage,'maskHR.nii.gz')
+
         
   #convert 3D images to stacks of 2D slice images
   #create a transform for each 2D slice
@@ -195,7 +211,7 @@ if __name__ == '__main__':
   maskX = convert_image_to_vector(maskHRImage)
   #Let mask the HR image
   x = x*maskX
-  
+
   #loop over LR images and stack H, y and masks
   HList = [] 
   maskList = []
@@ -208,8 +224,14 @@ if __name__ == '__main__':
     yList.append(y*m)
     H = compute_H(inputImages[i], initHRImage, inputTransforms[i], psfList[i], maskImages[i])
     HList.append(H)
+
+    nibabel.save(convert_vector_to_image(HList[i].dot(x),inputImages[i]),'simu_'+str(i)+'.nii.gz')
+    nibabel.save(convert_vector_to_image(HList[i].dot(x)-yList[i],inputImages[i]),'diff_'+str(i)+'.nii.gz')
+   
+  #Intensity correction To do      
+
   
-  #compress x and H
+  #compress x and H : to perform the optimizaton only on nonzero points (i.e reduce the dimension of the parameter vector)
   index = np.nonzero(x)[0]
   xc = x[index]
   HListc = []
@@ -218,17 +240,17 @@ if __name__ == '__main__':
 
   #Spectrum constraint
   magRef = None
-  if args.ref is not None:
-    print 'Use spectrum constraint with reference image : '+args.ref
-    Iref = nibabel.load(args.ref)
-    dataRef = Iref.get_data()
-    if dataRef.shape != initHRImage.get_data().shape:
-      print 'Shape of image reference is not correct : '+str(dataRef.shape)
-      print 'WARNING : Reference data will be resized'
-      dataRef = np.resize(dataRef,initHRImage.get_data().shape)
-    magRef = np.abs(np.fft.fftn(dataRef))
+#  if args.ref is not None:
+#    print 'Use spectrum constraint with reference image : '+args.ref
+#    Iref = nibabel.load(args.ref)
+#    dataRef = Iref.get_data()
+#    if dataRef.shape != initHRImage.get_data().shape:
+#      print 'Shape of image reference is not correct : '+str(dataRef.shape)
+#      print 'WARNING : Reference data will be resized'
+#      dataRef = np.resize(dataRef,initHRImage.get_data().shape)
+#    magRef = np.abs(np.fft.fftn(dataRef))
 
-    
+      
   #res = optimize_L_BFGS_B(H,x,y,args.maxiter) 
   res = optimize(HListc,xc,yList,args.maxiter,magRef,index)
 
@@ -238,12 +260,15 @@ if __name__ == '__main__':
   
   outputImage = nibabel.Nifti1Image(outputData, initHRImage.affine)
   nibabel.save(outputImage,args.output)
+
+  for i in range(len(inputImages)):
   
-  for i in range(len(inputImages)):  
     nibabel.save(convert_vector_to_image(HList[i].dot(x),inputImages[i]),'simu_'+str(i)+'.nii.gz')
     nibabel.save(convert_vector_to_image(HList[i].dot(x)-yList[i],inputImages[i]),'diff_'+str(i)+'.nii.gz')
 
-
+      
+    
+  
 
 
       
