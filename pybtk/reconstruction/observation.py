@@ -134,20 +134,20 @@ def compute_H(y, x, w2wtransform, psf, mask):
   
   #Get index to process in the current LR image
   nonzeroMask = np.nonzero(mask.get_data())
-        
+         
   for i,j,k in zip(nonzeroMask[0],nonzeroMask[1],nonzeroMask[2]):
                 
     #Compute the index of current voxel in y
     indexlr = lookup_lr_index[i,j,k]
 
     #Loop over PSF elements (put all psf points into psfPoints array)
-    psfPoints = np.array([[i],[j],[k],[0]]) + psfShift
+    psfPoints = np.array([[i],[j],[k],[1]]) + psfShift
 
     #Transform index to world coordinate (y)
     #Transform world coordinate (y) to world coordinate (x)
     #Transform world coordinate (x) to index
     #These three transforms are applied using the following function:
-    pointset = transform_a_set_of_points(psfPoints,transform,y.affine,inverseMatrixX,center)
+    pointset = transform_a_set_of_points(psfPoints,np.linalg.inv(transform),y.affine,inverseMatrixX,center)
     #pointset = transform_a_set_of_points(psfPoints,transform,y[l].affine,np.linalg.inv(x.affine),center)
 
     #Do psf weights interpolation on the grid of x (HR image)
@@ -207,6 +207,8 @@ def compute_H(y, x, w2wtransform, psf, mask):
         indexhr = lookup_hr_index[f[0],f[1]+1,f[2]]
         tmpH[indexhr] += weight[7]
         tmpHList.append(indexhr)
+    
+        #H[lookup_lr_index[i,j,k],lookup_hr_index[f[0],f[1],f[2]]] = 1.0
     
     #Get the list of index to update in H
     tmpHIndex = np.unique(np.asarray(tmpHList))
