@@ -98,6 +98,7 @@ def compute_psf(lowResolution, highResolution, psftype='boxcar'):
               
               
         HRpsf[x,y,z] = val/(oversampling*oversampling*oversampling)  
-  HRpsf /= np.sum(HRpsf)      
+  HRpsf /= np.sum(HRpsf)    
+  
   print HRpsf
   return HRpsf  

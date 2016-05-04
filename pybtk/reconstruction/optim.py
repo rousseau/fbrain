@@ -129,7 +129,6 @@ def optimize(H,x,y,maxiter,magRef,index):
   print 'bounds of y : '+str(miny)+', '+str(maxy)
   
   iteration = 0
-  grad = np.zeros(x.shape)
   maxdiff = np.ones(len(y)) * (maxy-miny)
   threshold = 0.01 * (maxy-miny)
   
@@ -143,19 +142,23 @@ def optimize(H,x,y,maxiter,magRef,index):
     alphaL2 = res[0]
     if alphaL2 is None:
       #Simple rule to define alpha  
-      alphaL2 = 0.05 * (np.max(x)-np.min(x))/np.max(np.abs(grad))
+      if np.max(np.abs(gradL2)) > 0:
+        alphaL2 = 0.05 * (np.max(x)-np.min(x))/np.max(np.abs(gradL2))
+      else:
+        alphaL2 = 0
     
     if magRef is not None:
       gradSpectrum = LossSpectrumprime(x,magRef,index)
       alphaSpectrum = 0.05 * (np.max(x)-np.min(x))/np.max(np.abs(gradSpectrum))
-      update = 0.5*alphaSpectrum*gradSpectrum + 0.5*alphaL2*grad
+      update = 0.5*alphaSpectrum*gradSpectrum + 0.5*alphaL2*gradL2
     else:
-      update = alphaL2*grad
+      update = alphaL2*gradL2
     
     
     #Update high resolution image  
     x = x - update
-    
+
+    #Threshold on Maxdiff or update magnitude ?    
     for i in range(len(y)):
       maxdiff[i] = np.max(H[i].dot(x) - y[i])
     
