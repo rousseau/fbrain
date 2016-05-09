@@ -64,6 +64,7 @@ if __name__ == '__main__':
   parser.add_argument('--maxiter', help='Maximum number of iterations (SR optimization)', type=int, default=10)
   parser.add_argument('--ref', help='Reference image used for spectrum constraints', type=str)
   parser.add_argument('--padding', help='Padding value used when no mask is provided', type=float, default=0)
+  parser.add_argument('--bias', help='Do bias correction (N4) + local intensity correction', type=bool, default = False)
 
   args = parser.parse_args()
 
@@ -207,13 +208,40 @@ if __name__ == '__main__':
     HRpsf = compute_psf(LRSpacing, HRSpacing, args.psf)
     psfList.append(HRpsf)
   
+
+  #Compute H
+  HList = []
+  for i in range(len(inputImages)):
+    H = compute_H(inputImages[i], initHRImage, inputTransforms[i], psfList[i], maskImages[i])
+    HList.append(H)
+   
+  #Intensity correction To do
+  #N4 on initHR
+  #local correction
+  #New init HR
+  if args.bias == True:
+    filein = 'initHRImage.nii.gz'
+    fileout ='initHRImage_N4.nii.gz'
+    nibabel.save(initHRImage,filein)
+    os.system('N4BiasFieldCorrection -i '+filein+' -s 1 -o '+fileout) 
+    initHRImage_N4 = nibabel.load(fileout)
+    xN4 = convert_image_to_vector(initHRImage_N4)
+    hrN4Data = np.zeros(initHRImage.get_data().shape)
+    for i in range(len(inputImages)):
+      simu = convert_vector_to_image(HList[i].dot(xN4),inputImages[i])
+      im = gaussian_biais_correction(inputImages[i],simu, 5)
+        
+      warped = apply_affine_itk_transform_on_image(input_image=im,transform=inputTransforms[i][0], center=inputTransforms[i][1], reference_image=initHRImage, order=3)
+      hrN4Data += (warped.get_data() / np.float32(len(inputImages)) )
+    initHRImage = nibabel.Nifti1Image(hrN4Data, initHRImage.affine)  
+             
+  #Compute x
   x = convert_image_to_vector(initHRImage)
   maskX = convert_image_to_vector(maskHRImage)
   #Let mask the HR image
   x = x*maskX
 
-  #loop over LR images and stack H, y and masks
-  HList = [] 
+  #loop over LR images and stack y and masks
   maskList = []
   yList = []
   for i in range(len(inputImages)):
@@ -222,15 +250,7 @@ if __name__ == '__main__':
     maskList.append(m)
     #-------Masked version of y
     yList.append(y*m)
-    H = compute_H(inputImages[i], initHRImage, inputTransforms[i], psfList[i], maskImages[i])
-    HList.append(H)
-
-    nibabel.save(convert_vector_to_image(HList[i].dot(x),inputImages[i]),'simu_'+str(i)+'.nii.gz')
-    nibabel.save(convert_vector_to_image(HList[i].dot(x)-yList[i],inputImages[i]),'diff_'+str(i)+'.nii.gz')
-   
-  #Intensity correction To do      
-
-  
+    
   #compress x and H : to perform the optimizaton only on nonzero points (i.e reduce the dimension of the parameter vector)
   index = np.nonzero(x)[0]
   xc = x[index]
@@ -253,7 +273,6 @@ if __name__ == '__main__':
       
   #res = optimize_L_BFGS_B(H,x,y,args.maxiter) 
   res = optimize(HListc,xc,yList,args.maxiter,magRef,index)
-
   #decompress res.x
   x[index] = res  
   outputData = x.reshape(initHRImage.get_data().shape)

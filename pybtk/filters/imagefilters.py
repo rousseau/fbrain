@@ -139,5 +139,4 @@ def gaussian_biais_correction(input_image,reference_image, sigma):
   data = np.zeros(input_image.get_data().shape)
   #Low res constraint
   data[index] = input_image.get_data()[index] * gr[index] / gi[index] 
-  print np.mean(data)  
   return nibabel.Nifti1Image(data, input_image.affine)
