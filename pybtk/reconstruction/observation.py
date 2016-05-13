@@ -32,38 +32,13 @@ from time import time
 import numpy as np
 from scipy.sparse import lil_matrix
 from sklearn.preprocessing import normalize
-import nibabel
 
-from numba import jit
+#from numba import jit
 
 from os import path
 import sys
 sys.path.append( path.dirname( path.dirname( path.dirname( path.abspath(__file__) ) ) ) )
 from pybtk.registration.affine_transforms import transform_a_set_of_points, convert_itk_transform_to_affine_transform
-
-#Basic operation to convert vector to an image, or a list of images
-def convert_image_to_vector(HRImage):
-  return np.float32(HRImage.get_data()).flatten()
-
-def convert_vector_to_image(x,HRImage):
-  return nibabel.Nifti1Image(x.reshape(HRImage.get_data().shape), HRImage.affine)
-
-def convert_list_images_to_vector(LRImages):
-  y = np.array([])
-  for image in LRImages:
-    y = np.append(y, np.float32(image.get_data()).flatten())
-  return y
-
-def convert_vector_to_list_images(y,LRImages):
-  list = []
-  index=0
-  for image in LRImages:
-    n = image.get_data().size
-    data = y[index:index+n]
-    index+=n
-    data = data.reshape(image.get_data().shape)
-    list.append(nibabel.Nifti1Image(data.reshape(image.get_data().shape), image.affine))
-  return list
 
 def compute_H(y, x, w2wtransform, psf, mask):
   """
