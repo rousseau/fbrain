@@ -35,19 +35,18 @@ from os import path
 import os
 import nibabel
 import numpy as np
-from time import time
 
 #print path.dirname( path.dirname( path.abspath(__file__) ) )
 #Add path to pybtk:
 sys.path.append( path.dirname( path.dirname( path.dirname( path.abspath(__file__) ) ) ) )
 
 from pybtk.io.itk_transforms import read_itk_transform
-from pybtk.filters.imagefilters import apply_affine_itk_transform_on_image,gaussian_biais_correction
+from pybtk.filters.imagefilters import apply_affine_itk_transform_on_image,gaussian_biais_correction,apply_N4_on_image
 from pybtk.reconstruction.psf import compute_psf
-from pybtk.reconstruction.observation import compute_H, convert_image_to_vector, convert_vector_to_image, convert_vector_to_list_images, convert_list_images_to_vector
-from pybtk.reconstruction.optim import optimize, optimize_L_BFGS_B
-from pybtk.registration.affine_transforms import transform_a_point
-from pybtk.registration.affine_transforms import convert_itk_transform_to_affine_transform
+from pybtk.reconstruction.utilities import convert_image_to_vector, convert_vector_to_image, convert_vector_to_list_images, convert_list_images_to_vector
+from pybtk.reconstruction.observation import compute_H
+from pybtk.reconstruction.optim import optimization
+from pybtk.reconstruction.ibp import iterativeBackPropagation
 
 
 if __name__ == '__main__':
@@ -62,7 +61,6 @@ if __name__ == '__main__':
   parser.add_argument('-r', '--resolution', help='Resolution of the output HR image (1 for isotropic case, or 3 for anisotropic HR image). If not provided, the minimum size of the input image will be used.', action='append')
   parser.add_argument('-p', '--psf', help='3D PSF type (boxcar (default), gauss)', type=str, default='boxcar')
   parser.add_argument('--maxiter', help='Maximum number of iterations (SR optimization)', type=int, default=10)
-  parser.add_argument('--ref', help='Reference image used for spectrum constraints', type=str)
   parser.add_argument('--padding', help='Padding value used when no mask is provided', type=float, default=0)
   parser.add_argument('--bias', help='Do bias correction (N4) + local intensity correction', type=bool, default = False)
 
@@ -170,19 +168,15 @@ if __name__ == '__main__':
   #Compute H
   HList = []
   for i in range(len(inputImages)):
-    H = compute_H(inputImages[i], initHRImage, inputTransforms[i], psfList[i], maskImages[i])
-    HList.append(H)
+    HList.append( compute_H(inputImages[i], initHRImage, inputTransforms[i], psfList[i], maskImages[i]) )
    
   #Intensity correction To do
   #N4 on initHR
   #local correction
   #New init HR
   if args.bias == True:
-    filein = 'initHRImage.nii.gz'
-    fileout ='initHRImage_N4.nii.gz'
-    nibabel.save(initHRImage,filein)
-    os.system('N4BiasFieldCorrection -i '+filein+' -s 1 -o '+fileout) 
-    initHRImage_N4 = nibabel.load(fileout)
+    initHRImage_N4 = apply_N4_on_image(initHRImage, shrink_factor=1)
+      
     xN4 = convert_image_to_vector(initHRImage_N4)
     hrN4Data = np.zeros(initHRImage.get_data().shape)
     for i in range(len(inputImages)):
@@ -209,33 +203,19 @@ if __name__ == '__main__':
     #-------Masked version of y
     yList.append(y*m)
     
-  #compress x and H : to perform the optimizaton only on nonzero points (i.e reduce the dimension of the parameter vector)
-  index = np.nonzero(x)[0]
-  xc = x[index]
-  HListc = []
-  for i in range(len(inputImages)):
-    HListc.append(HList[i][:,index])
-
-  #Spectrum constraint
-  magRef = None
-#  if args.ref is not None:
-#    print 'Use spectrum constraint with reference image : '+args.ref
-#    Iref = nibabel.load(args.ref)
-#    dataRef = Iref.get_data()
-#    if dataRef.shape != initHRImage.get_data().shape:
-#      print 'Shape of image reference is not correct : '+str(dataRef.shape)
-#      print 'WARNING : Reference data will be resized'
-#      dataRef = np.resize(dataRef,initHRImage.get_data().shape)
-#    magRef = np.abs(np.fft.fftn(dataRef))
-
-      
-  #res = optimize_L_BFGS_B(H,x,y,args.maxiter) 
-  res = optimize(HListc,xc,yList,args.maxiter,magRef,index)
-  #decompress res.x
-  x[index] = res  
-  outputData = x.reshape(initHRImage.get_data().shape)
+#  outputData = optimization(HList,x,yList,args.maxiter,initHRImage)
+#  outputData = optimization(HList,x,yList,100,initHRImage)  
+#  
+#  tmpImage = initHRImage
+#  for j in range(10):
+#    outputData = optimization(HList,x,yList,100,tmpImage)
+#    tmpImage = nibabel.Nifti1Image(outputData, initHRImage.affine)
+#    nibabel.save(tmpImage,'toto_'+str(j)+'.nii.gz')
+#  
+#  outputImage = nibabel.Nifti1Image(outputData, initHRImage.affine)
   
-  outputImage = nibabel.Nifti1Image(outputData, initHRImage.affine)
+  outputImage = iterativeBackPropagation(initHRImage, inputImages, maskImages, inputTransforms, HList, 10)  
+  
   nibabel.save(outputImage,args.output)
 
   for i in range(len(inputImages)):
