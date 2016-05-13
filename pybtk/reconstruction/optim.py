@@ -31,6 +31,12 @@
 import numpy as np
 from scipy.optimize import minimize, approx_fprime,line_search
 from time import time
+import nibabel
+from os import path
+import sys
+sys.path.append( path.dirname( path.dirname( path.dirname( path.abspath(__file__) ) ) ) )
+from pybtk.reconstruction.utilities import convert_image_to_vector
+
 
 def lossL2(x,H,y):
   """
@@ -120,8 +126,39 @@ def optimize_L_BFGS_B(H,x,y, maxiter):
   result = minimize(lossL2,x, args=(H,y), method='L-BFGS-B', bounds=[(0, np.max(y))] * x.size, options=minimize_options)  
   print result.message
   return result.x
+
+def computeAlpha(x,grad):
+  #Simple rule to define alpha 
+  if np.max(np.abs(grad)) > 0:
+    alpha = 0.05 * (np.max(x)-np.min(x))/np.max(np.abs(grad))
+  else:
+    alpha = 0
+  return alpha
+
+def optimization(HList,x,yList,maxiter,initHRImage):
+  #prepare the data for optimization 
+
+  #compress x and H : to perform the optimizaton only on nonzero points (i.e reduce the dimension of the parameter vector)
+  index = np.nonzero(x)[0]
+  xc = x[index]
+  HListc = []
+  for i in range(len(HList)):
+    HListc.append(HList[i][:,index])
+
+  from skimage.restoration import denoise_tv_chambolle
+  HRDenoised = denoise_tv_chambolle(initHRImage.get_data(),weight=10)  
+  
+  nibabel.save(nibabel.Nifti1Image(HRDenoised,initHRImage.affine),'cham.nii.gz')
+  
+  xRef = convert_image_to_vector(nibabel.Nifti1Image(HRDenoised, initHRImage.affine))[index]
+  
+  res = optimize(HListc,xc,yList,maxiter,index,xRef,lambdaL2=0.6)
+  #decompress res.x
+  x[index] = res  
+  return x.reshape(initHRImage.get_data().shape)
+
     
-def optimize(H,x,y,maxiter,magRef,index):
+def optimize(H,x,y,maxiter,index,xRef,lambdaL2=0.5):
   print 'Doing super-resolution optimization'
   t = time()
   miny = np.min(y[0])
@@ -141,20 +178,15 @@ def optimize(H,x,y,maxiter,magRef,index):
     res = line_search(lossL2, lossL2prime, x, -gradL2, args=(H,y))
     alphaL2 = res[0]
     if alphaL2 is None:
-      #Simple rule to define alpha  
-      if np.max(np.abs(gradL2)) > 0:
-        alphaL2 = 0.05 * (np.max(x)-np.min(x))/np.max(np.abs(gradL2))
-      else:
-        alphaL2 = 0
+      alphaL2 = computeAlpha(x,gradL2) 
     
-    if magRef is not None:
-      gradSpectrum = LossSpectrumprime(x,magRef,index)
-      alphaSpectrum = 0.05 * (np.max(x)-np.min(x))/np.max(np.abs(gradSpectrum))
-      update = 0.5*alphaSpectrum*gradSpectrum + 0.5*alphaL2*gradL2
-    else:
-      update = alphaL2*gradL2
-    
-    
+    update = alphaL2*gradL2    
+          
+    if xRef is not None:
+      gradDenoising =2.0* (x-xRef)
+      alphaDenoising = computeAlpha(x,gradDenoising)
+      update = (1-lambdaL2)*alphaDenoising*gradDenoising + lambdaL2*alphaL2*gradL2   
+       
     #Update high resolution image  
     x = x - update
 
