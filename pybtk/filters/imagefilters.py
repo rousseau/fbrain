@@ -31,6 +31,8 @@
 
 import numpy as np
 import nibabel
+import tempfile
+import os
 
 from scipy.ndimage.interpolation import map_coordinates
 from scipy.ndimage.filters import gaussian_filter
@@ -40,6 +42,29 @@ import sys
 sys.path.append( path.dirname( path.dirname( path.dirname( path.abspath(__file__) ) ) ) )
 from pybtk.registration.affine_transforms import transform_a_set_of_points, convert_itk_transform_to_affine_transform
 
+def apply_N4_on_image(input_image, shrink_factor=2, mask_image=None):
+  filein = tempfile.NamedTemporaryFile(suffix=".nii.gz").name
+  fileout= tempfile.NamedTemporaryFile(suffix=".nii.gz").name
+  
+  nibabel.save(input_image,filein)
+
+  command_line = 'N4BiasFieldCorrection -i '+filein+' -s '+str(shrink_factor)+' -o '+fileout
+  
+  if mask_image is not None:
+    filemask = tempfile.NamedTemporaryFile(suffix=".nii.gz").name
+    nibabel.save(mask_image,filemask)
+    command_line+= ' -x '+filemask
+    
+  os.system(command_line) 
+  output_image = nibabel.load(fileout)
+  
+  filein.close()
+  fileout.close()
+  if mask_image is not None:
+    filemask.close()
+    
+  return output_image
+  
 def apply_affine_itk_transform_on_image(input_image, transform, center, reference_image=None, order=None):
   """
   
