@@ -92,4 +92,6 @@ def patches_to_array(patches, patch_shape, array_shape):
   
   for (i, j, k) in product(range(i_x), range(i_y), range(i_z)):
       array[i, j, k] /= float(min(i + 1, p_x, i_x - i) * min(j + 1, p_y, i_y - j) * min(k + 1, p_z, i_z - k))
-  return array    
+  return array   
+  
+  
