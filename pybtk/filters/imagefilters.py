@@ -165,3 +165,16 @@ def gaussian_biais_correction(input_image,reference_image, sigma):
   #Low res constraint
   data[index] = input_image.get_data()[index] * gr[index] / gi[index] 
   return nibabel.Nifti1Image(data, input_image.affine)
+  
+def create_mask_image_using_padding_value(image, padding_value=0):
+  data = np.zeros(image.get_data().shape)
+  data[image.get_data() > padding_value] = 1
+  return nibabel.Nifti1Image(data, image.affine)  
+  
+def extract_ramdom_subarray(array,size):
+  shape = np.array(array.shape)
+  size = np.array(size)
+  x = np.floor(np.random.rand(3)*(shape-size)).astype(int)
+  output = np.copy(array[x[0]:x[0]+size[0],x[1]:x[1]+size[1],x[2]:x[2]+size[2]])
+  print(output.shape)
+  return output  
