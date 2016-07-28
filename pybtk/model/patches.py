@@ -68,7 +68,7 @@ def array_to_patches(arr, patch_shape=(3,3,3), extraction_step=1, normalization=
     patches = patches.astype(np.float32)
     patches -= np.mean(patches, axis=0)
     patches /= np.std(patches, axis=0)
-  print('%.2d patches have been extracted' % patches.shape[0])  
+  #print('%.2d patches have been extracted' % patches.shape[0])  
   return patches
 
 def patches_to_array(patches, patch_shape, array_shape):

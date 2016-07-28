@@ -39,34 +39,36 @@ from sklearn.externals import joblib
 #Add path to pybtk:
 sys.path.append( path.dirname( path.dirname( path.dirname( path.abspath(__file__) ) ) ) )
 
+import pybtk.model.sparsity as sparsity
 import pybtk.filters.imagefilters as filters
+
 
 if __name__ == '__main__':
 
   parser = argparse.ArgumentParser()
-  parser.add_argument('--ps', help='Patch size (for sparse coding)', type=int, default=3)
-  parser.add_argument('--sub', help='Subsampling rate for patch-based sparse coding', type=float, default = 1.0)
-  parser.add_argument('--padding', help='Padding value used when no mask is provided', type=float, default=0)
 
-  parser.add_argument('-i', '--input', help='Input image filename', type=str, required=True)
+  parser.add_argument('-d', '--dic', help='Dictionary filename', type=str)
+  parser.add_argument('-i', '--input',  help='Input image filename ', type=str)
   parser.add_argument('-m', '--mask',  help='Input mask filename ', type=str)
-  parser.add_argument('-o', '--output',help='Output patches to save into pickle file', type=str, required=True)
+  parser.add_argument('-p', '--padding', help='Padding value used when no mask is provided', type=float, default=0)
+  parser.add_argument('-o', '--output',help='Output image filename', type=str)
 
   args = parser.parse_args()
-
-  print("Loading input image")
+  
   image = nibabel.load(args.input)
+  data = image.get_data().astype(float)
+  data = data.reshape(data.shape[0:3])
 
-  mask = None  
-  if args.mask is not None:
-    mask = nibabel.load(args.mask)
-  else:
+  mask = None
+  if args.mask is None:
     mask = filters.create_mask_image_using_padding_value(image,args.padding)
-  
-  #compressed means : remove 0 patches (or out of mask) and do possibly subsampling  
-  p = filters.image_to_compressed_patches(image,mask,args.ps,args.sub)  
-  
-  #Save into pickle file
-  #Issue related to files larger than 4Go on Mac -> workaround : use subsampling
-  joblib.dump(p, args.output, compress=1)
+  else:
+    mask = nibabel.load(args.mask)
     
+  mask = mask.get_data().astype(bool)
+  mask = mask.reshape(mask.shape[0:3])
+
+
+  D = joblib.load(args.dic)
+  output = sparsity.scskl_reconstruction(data,mask,D)
+  nibabel.save(nibabel.Nifti1Image(output,image.affine),args.output)
