@@ -40,8 +40,8 @@ def gaussian(x,sigma):
   return np.exp(-x*x/(2*sigma*sigma))  
     
 def compute_psf(lowResolution, highResolution, psftype='boxcar'):
-  print 'Computing PSF'
-  print 'Type of PSF : '+psftype
+  print('Computing PSF')
+  print('Type of PSF : ',psftype)
   #default case : boxcar
   #Appropriate size when PSF is a boxcar
   psfShape = (np.int16(np.ceil(lowResolution / highResolution)))
@@ -61,8 +61,7 @@ def compute_psf(lowResolution, highResolution, psftype='boxcar'):
     
   HRpsf = np.zeros(psfShape)
   
-  print 'Shape of PSF : '
-  print HRpsf.shape
+  print('Shape of PSF : ',HRpsf.shape)
   #center of HR psf
   cx = (HRpsf.shape[0]-1.0) / 2.0
   cy = (HRpsf.shape[1]-1.0) / 2.0
@@ -100,5 +99,5 @@ def compute_psf(lowResolution, highResolution, psftype='boxcar'):
         HRpsf[x,y,z] = val/(oversampling*oversampling*oversampling)  
   HRpsf /= np.sum(HRpsf)    
   
-  print HRpsf
+  print(HRpsf)
   return HRpsf  

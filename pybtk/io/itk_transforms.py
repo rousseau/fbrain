@@ -36,8 +36,7 @@ def read_itk_transform( transform_file ):
   modified from https://gist.github.com/haehn/5614966
   '''
 
-  print 'reading the following ITK transform:'
-  print transform_file
+  print('reading the following ITK transform:', transform_file)
   
   # read the transform
   transform = None
@@ -46,8 +45,8 @@ def read_itk_transform( transform_file ):
 
       # check for Parameters:
       if line.startswith( 'Transform:' ):
-        print 'type for transform:'
-        print line.split( ': ' )[1]
+        print('type for transform:')
+        print(line.split( ': ' )[1])
 
       if line.startswith( 'Parameters:' ):
         values = line.split( ': ' )[1].split( ' ' )

@@ -124,7 +124,7 @@ def optimize_L_BFGS_B(H,x,y, maxiter):
   minimize_options={'maxiter': maxiter,'ftol': 0,'gtol': 0, 'maxfun': maxfun, 'disp':True, 'maxcor': maxcor}
 
   result = minimize(lossL2,x, args=(H,y), method='L-BFGS-B', bounds=[(0, np.max(y))] * x.size, options=minimize_options)  
-  print result.message
+  print(result.message)
   return result.x
 
 def computeAlpha(x,grad):
@@ -159,11 +159,11 @@ def optimization(HList,x,yList,maxiter,initHRImage):
 
     
 def optimize(H,x,y,maxiter,index,xRef,lambdaL2=0.5):
-  print 'Doing super-resolution optimization'
+  print('Doing super-resolution optimization')
   t = time()
   miny = np.min(y[0])
   maxy = np.max(y[0])
-  print 'bounds of y : '+str(miny)+', '+str(maxy)
+  print('bounds of y : '+str(miny)+', '+str(maxy))
   
   iteration = 0
   maxdiff = np.ones(len(y)) * (maxy-miny)
@@ -200,8 +200,8 @@ def optimize(H,x,y,maxiter,index,xRef,lambdaL2=0.5):
     
     iteration+=1
     if iteration==maxiter:
-      print 'Maximum number of iterations is reached'
+      print('Maximum number of iterations is reached')
   
-  print 'Optimization done in '+str(time()-t)+' s, in '+str(iteration)+' iterations'
+  print('Optimization done in '+str(time()-t)+' s, in '+str(iteration)+' iterations')
   
   return x
