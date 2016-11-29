@@ -31,6 +31,7 @@
 import numpy as np
 from sklearn.decomposition import MiniBatchDictionaryLearning,SparseCoder
 from sklearn.externals import joblib
+import matplotlib.pyplot as plt
 
 from os import path
 import sys
@@ -48,8 +49,9 @@ def scskl_dico_learning(list_pickled_array,n_atoms,maxepoch=5,maxiter=100):
       
       
 def scskl_reconstruction(data,mask,D):
-  #TODO : add a way to use mask image
-  output = np.empty(data.shape)
+  output = np.zeros(data.shape)
+  fmap = np.zeros((D.shape[0]))
+  #fdata = np.zeros((data.shape[0],data.shape[1],data.shape[2],D.shape[0]))
 
   px = np.int(np.around(np.power(D.shape[1],1/3))) #patch size (is assumed to be isotropic)
   hpx = np.floor(px/2).astype(int)
@@ -57,6 +59,7 @@ def scskl_reconstruction(data,mask,D):
   subsize = np.ceil(np.array(data.shape) / nblock).astype(int)
   
   med = np.median(data)
+  currentblock = 1
   
   for x in range(np.ceil(data.shape[0]/subsize[0]).astype(int)):
     xmin = x*subsize[0]
@@ -67,6 +70,9 @@ def scskl_reconstruction(data,mask,D):
       for z in range(np.ceil(data.shape[2]/subsize[2]).astype(int)):  
         zmin = z*subsize[2]
         zmax = np.min((data.shape[2],(z+1)*subsize[2]))
+        
+        print('Processing block : ',currentblock)
+        currentblock+=1
         
         #Enlarge subimage to take into account block effect due to non-overlapping patches
         xmin2 = np.max((0,xmin-hpx))
@@ -85,15 +91,38 @@ def scskl_reconstruction(data,mask,D):
         subp = p[index]
         subp -= med
         
-        coder = SparseCoder(dictionary=D, transform_algorithm='omp')
-        code = coder.transform(subp).astype(np.float32)
-        subp = np.dot(code, D)          
-        subp += med 
-        p[index] = subp 
-        suboutput = mp.patches_to_array(patches=p, patch_shape=(px,px,px), array_shape=subdata.shape)
-        
-        tmpoutput = np.empty(data.shape)
-        tmpoutput[xmin2:xmax2,ymin2:ymax2,zmin2:zmax2]= suboutput      
-        output[xmin:xmax,ymin:ymax,zmin:zmax] = tmpoutput[xmin:xmax,ymin:ymax,zmin:zmax]
+        if subp.shape[0] > 0:
+          print('Number of patches to process: ',subp.shape[0])
+          #Currently, there is a bug when using n_jobs>1 (https://github.com/scikit-learn/scikit-learn/issues/5956)
+          coder = SparseCoder(dictionary=D, transform_algorithm='omp')
+          code = coder.transform(subp).astype(np.float32)
+          fmap += np.sum((np.fabs(code)>0),axis=0)
+          subp = np.dot(code, D)          
+          subp += med 
+          p[index] = subp 
+          suboutput = mp.patches_to_array(patches=p, patch_shape=(px,px,px), array_shape=subdata.shape)
+          
+          tmpoutput = np.empty(data.shape)
+          tmpoutput[xmin2:xmax2,ymin2:ymax2,zmin2:zmax2]= suboutput      
+          output[xmin:xmax,ymin:ymax,zmin:zmax] = tmpoutput[xmin:xmax,ymin:ymax,zmin:zmax]
+          
+#          for a in range(D.shape[0]):
+#            for s in range(subp.shape[0]):
+#              subp[s,:] = code[s,a]
+#            p.fill(0)
+#            p[index] = subp
+#            fa = mp.patches_to_array(patches=p, patch_shape=(px,px,px), array_shape=subdata.shape)
+#            to = np.empty(data.shape)
+#            to[xmin2:xmax2,ymin2:ymax2,zmin2:zmax2]= fa      
+#            fdata[xmin:xmax,ymin:ymax,zmin:zmax,a] = to[xmin:xmax,ymin:ymax,zmin:zmax]
+              
+            
+          
+  #plt.bar(range(0,D.shape[0]), fmap)
+  #print('points in mask: ',np.sum(mask!=0))
+  #print('Number of non zero elements: ',np.sum(fmap)/np.sum(mask!=0))
+  #plt.show()
+      
+#  return (output,fdata)
   return output
     

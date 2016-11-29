@@ -34,6 +34,7 @@ import argparse
 from os import path
 import nibabel
 from sklearn.externals import joblib
+import numpy as np
 
 #print path.dirname( path.dirname( path.abspath(__file__) ) )
 #Add path to pybtk:
@@ -68,7 +69,9 @@ if __name__ == '__main__':
   mask = mask.get_data().astype(bool)
   mask = mask.reshape(mask.shape[0:3])
 
-
   D = joblib.load(args.dic)
+  #(output,fdata) = sparsity.scskl_reconstruction(data,mask,D)  
   output = sparsity.scskl_reconstruction(data,mask,D)
   nibabel.save(nibabel.Nifti1Image(output,image.affine),args.output)
+  #nibabel.save(nibabel.Nifti1Image(fdata,image.affine),'fdata.nii.gz')
+  

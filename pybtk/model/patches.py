@@ -61,7 +61,7 @@ def array_to_patches(arr, patch_shape=(3,3,3), extraction_step=1, normalization=
       result.reshape([-1] + list(patch_shape))
   """
   
-  patches = extract_patches(arr, patch_shape, extraction_step=1)    
+  patches = extract_patches(arr, patch_shape, extraction_step)    
   patches = patches.reshape(-1, patch_shape[0],patch_shape[1],patch_shape[2])    
   patches = patches.reshape(patches.shape[0], -1) 
   if normalization==True:
