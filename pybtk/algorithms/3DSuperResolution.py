@@ -68,42 +68,42 @@ if __name__ == '__main__':
 
 
   ###---- Print Input Information ---------------------------------------------
-  print 'Number of input images: '+str(len(args.input))
+  print('Number of input images: '+str(len(args.input)))
   for image in args.input:
-    print image
+    print(image)
     
   if args.transform is not None:
-    print 'Number of input transforms: '+str(len(args.transform)) 
+    print('Number of input transforms: '+str(len(args.transform)) )
     for t in args.transform:
-      print t
+      print(t)
     
     if len(args.transform) != len(args.input):
-      print 'Please provide the same number of input images and transforms. Exit.\n'
+      print('Please provide the same number of input images and transforms. Exit.\n')
       sys.exit()
 
   if args.mask is not None :
-    print 'Number of input masks: '+str(len(args.mask))
+    print('Number of input masks: '+str(len(args.mask)))
     for m in args.mask:
-      print m
+      print(m)
     
     if len(args.mask) != len(args.input):
-      print 'Please provide the same number of input images and masks. Exit.\n'
+      print('Please provide the same number of input images and masks. Exit.\n')
       sys.exit()
   
-  print 'Output image: '+args.output
+  print('Output image: '+args.output)
   
   if args.init is not None:
-    print 'Initialization image: '+args.init
+    print('Initialization image: '+args.init)
   else:
-    print 'No initialization image provided.'
+    print('No initialization image provided.')
         
   ###---- Load input data -----------------------------------------------------
   inputImages = []
   for i in args.input:
     inputImages.append(nibabel.load(i))
   
-  print 'Loading Transforms'
-  print 'Warning: Transforms depend on the HR image.' 
+  print('Loading Transforms')
+  print('Warning: Transforms depend on the HR image.' )
   inputTransforms = []
   if args.transform is not None :
     for t in args.transform:
@@ -121,18 +121,18 @@ if __name__ == '__main__':
       maskImages.append(nibabel.load(i))
 
   else:
-    print 'Creating mask images using the following padding value:'+str(args.padding)
+    print('Creating mask images using the following padding value:'+str(args.padding))
     for i in range(len(inputImages)):
       data = np.zeros(inputImages[i].get_data().shape)
       data[inputImages[i].get_data() > args.padding] = 1
       maskImages.append(nibabel.Nifti1Image(data, inputImages[i].affine)) 
       #np.nonzero returns index array, so needs to be divide by the dimension of the array (i.e. 3 here)
-      print 'Percentage of masked values : %.2f '%( np.size(np.nonzero((data))) / (1.0*np.size(data.shape)) * 100.0 / np.size(data) )        
+      print('Percentage of masked values : %.2f '%( np.size(np.nonzero((data))) / (1.0*np.size(data.shape)) * 100.0 / np.size(data) )        )
   
   HRSpacing = []
   if args.resolution is not None :  
     if len(args.resolution) not in [1,3]:
-      print 'Please provide 0, 1 or 3 values for image resolution. Exit.\n'
+      print('Please provide 0, 1 or 3 values for image resolution. Exit.\n')
       sys.exit()  
     if len(args.resolution) == 1:
       r = np.array(float(args.resolution[0]))
@@ -145,8 +145,8 @@ if __name__ == '__main__':
     r = float(min(inputImages[0].header['pixdim'][1:4]))
     HRSpacing = np.array([1, 1, 1]) * r
     
-  print 'Resolution for image reconstruction: '
-  print HRSpacing  
+  print('Resolution for image reconstruction: ')
+  print(HRSpacing)  
   
   ###---- Reading HR image as initialization ----------------------------
   initHRImage = nibabel.load( args.init )
@@ -214,9 +214,9 @@ if __name__ == '__main__':
 #  
 #  outputImage = nibabel.Nifti1Image(outputData, initHRImage.affine)
   
-  outputImage = iterativeBackPropagation(initHRImage, inputImages, maskImages, inputTransforms, HList, 10)  
+  #outputImage = iterativeBackPropagation(initHRImage, inputImages, maskImages, inputTransforms, HList, 10)  
   
-  nibabel.save(outputImage,args.output)
+  #nibabel.save(outputImage,args.output)
 
   for i in range(len(inputImages)):
   

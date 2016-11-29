@@ -194,8 +194,8 @@ int main(int argc, char** argv)
     myTool.ComputeOutput_groupwise();  //groupwise label propagation
   if(mode==-1)
     myTool.ComputeDenoisedOutput();    //denoising using the other anatomical images
-    if(mode==-2)
-      myTool.ComputeHROutput();        //HR estimation using the HR anatomical images
+  if(mode==-2)
+    myTool.ComputeHROutput();        //HR estimation using the HR anatomical images
 
   //Write the result 
   ImagePointer outputImage = ImageType::New();

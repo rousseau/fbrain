@@ -61,7 +61,7 @@ def array_to_patches(arr, patch_shape=(3,3,3), extraction_step=1, normalization=
       result.reshape([-1] + list(patch_shape))
   """
   
-  patches = extract_patches(arr, patch_shape, extraction_step=1)    
+  patches = extract_patches(arr, patch_shape, extraction_step=1).astype(float)   
   patches = patches.reshape(-1, patch_shape[0],patch_shape[1],patch_shape[2])    
   patches = patches.reshape(patches.shape[0], -1) 
   if normalization==True:   
@@ -70,7 +70,7 @@ def array_to_patches(arr, patch_shape=(3,3,3), extraction_step=1, normalization=
   print('%.2d patches have been extracted' % patches.shape[0])  
   return patches
 
-def patches_to_array(patches, patch_shape=(3,3,3), array_shape):
+def patches_to_array(patches, array_shape, patch_shape=(3,3,3)):
   #Adapted from 2D reconstruction from sklearn
   #https://github.com/scikit-learn/scikit-learn/blob/51a765a/sklearn/feature_extraction/image.py
   patches = patches.reshape(len(patches),*patch_shape)

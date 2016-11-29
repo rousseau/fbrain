@@ -33,13 +33,15 @@ import numpy as np
 from scipy.sparse import lil_matrix
 from sklearn.preprocessing import normalize
 
-#from numba import jit
+from numba import jit
 
 from os import path
 import sys
 sys.path.append( path.dirname( path.dirname( path.dirname( path.abspath(__file__) ) ) ) )
 from pybtk.registration.affine_transforms import transform_a_set_of_points, convert_itk_transform_to_affine_transform
 
+#@jit 
+#It seems that numba slows down this function... This should be investigated.
 def compute_H(y, x, w2wtransform, psf, mask):
   """
   Compute the matrix H, y = Hx
@@ -65,7 +67,7 @@ def compute_H(y, x, w2wtransform, psf, mask):
     Sparse matrix H corresponding to the observation model y=Hx
     
   """
-  print 'Computing the observation matrix H (for each low-resolution image)'
+  print('Computing the observation matrix H (for each low-resolution image)')
   t = time()
   
   psfCenter = (np.array(psf.shape) -1.0 )/2.0
@@ -196,5 +198,5 @@ def compute_H(y, x, w2wtransform, psf, mask):
   #normalization of rows (using sklearn)
   H_normalized = normalize(H, norm='l1', axis=1)
 
-  print 'Computation done in '+str(time()-t)+' s'
+  print('Computation done in '+str(time()-t)+' s')
   return H_normalized

@@ -290,7 +290,6 @@ double NLMTool<T>::ComputePseudoResidual(typename itkTImage::IndexType & pixelIn
     ei += tmpImage->GetPixel(pixelIndex);
 
     ei = sqrt(6.0/7.0)*(value -ei/6.0);
-
   return ei;
 }
 
@@ -314,6 +313,7 @@ float NLMTool<T>::MADEstimation(std::vector<float> & vecei, float & beta)
   //Estimation of sigma with MAD
   std::sort(vecei.begin(), vecei.end());
   float med = vecei[(int)(vecei.size()/2)];
+  std::cout<<"Median in MAD estimation : "<<med<<std::endl;
   for(unsigned int i=0; i<vecei.size(); i++)
   {
     vecei[i] = fabs(vecei[i] - med);
@@ -354,10 +354,10 @@ void NLMTool<T>::SetSmoothing(float beta)
                     double ei = ComputePseudoResidual(pixelIndex);
 
                     #pragma omp critical
-//                    if(fabs(ei>0))
-//                    {
+                    if(fabs(ei>0))
+                    {
                         vecei.push_back(fabs(ei));
-//                    }
+                    }
                 }
             }
         }
