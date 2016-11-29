@@ -68,12 +68,12 @@ if __name__ == '__main__':
 
 
   ###---- Print Input Information ---------------------------------------------
-  print('Number of input images: '+str(len(args.input)))
+  print('Number of input images: ',str(len(args.input)))
   for image in args.input:
     print(image)
     
   if args.transform is not None:
-    print('Number of input transforms: '+str(len(args.transform)) )
+    print('Number of input transforms: ',str(len(args.transform)))
     for t in args.transform:
       print(t)
     
@@ -82,7 +82,7 @@ if __name__ == '__main__':
       sys.exit()
 
   if args.mask is not None :
-    print('Number of input masks: '+str(len(args.mask)))
+    print('Number of input masks: ',str(len(args.mask)))
     for m in args.mask:
       print(m)
     
@@ -90,10 +90,10 @@ if __name__ == '__main__':
       print('Please provide the same number of input images and masks. Exit.\n')
       sys.exit()
   
-  print('Output image: '+args.output)
+  print('Output image: ',args.output)
   
   if args.init is not None:
-    print('Initialization image: '+args.init)
+    print('Initialization image: ',args.init)
   else:
     print('No initialization image provided.')
         
@@ -103,7 +103,7 @@ if __name__ == '__main__':
     inputImages.append(nibabel.load(i))
   
   print('Loading Transforms')
-  print('Warning: Transforms depend on the HR image.' )
+  print('Warning: Transforms depend on the HR image.') 
   inputTransforms = []
   if args.transform is not None :
     for t in args.transform:
@@ -121,13 +121,13 @@ if __name__ == '__main__':
       maskImages.append(nibabel.load(i))
 
   else:
-    print('Creating mask images using the following padding value:'+str(args.padding))
+    print('Creating mask images using the following padding value:',str(args.padding))
     for i in range(len(inputImages)):
       data = np.zeros(inputImages[i].get_data().shape)
       data[inputImages[i].get_data() > args.padding] = 1
       maskImages.append(nibabel.Nifti1Image(data, inputImages[i].affine)) 
       #np.nonzero returns index array, so needs to be divide by the dimension of the array (i.e. 3 here)
-      print('Percentage of masked values : %.2f '%( np.size(np.nonzero((data))) / (1.0*np.size(data.shape)) * 100.0 / np.size(data) )        )
+      print('Percentage of masked values : %.2f '%( np.size(np.nonzero((data))) / (1.0*np.size(data.shape)) * 100.0 / np.size(data) )   )     
   
   HRSpacing = []
   if args.resolution is not None :  
@@ -214,7 +214,7 @@ if __name__ == '__main__':
 #  
 #  outputImage = nibabel.Nifti1Image(outputData, initHRImage.affine)
   
-  #outputImage = iterativeBackPropagation(initHRImage, inputImages, maskImages, inputTransforms, HList, 10)  
+  outputImage = iterativeBackPropagation(initHRImage, inputImages, maskImages, inputTransforms, HList, 10, 3)  
   
   #nibabel.save(outputImage,args.output)
 
@@ -223,9 +223,46 @@ if __name__ == '__main__':
     nibabel.save(convert_vector_to_image(HList[i].dot(x),inputImages[i]),'simu_'+str(i)+'.nii.gz')
     nibabel.save(convert_vector_to_image(HList[i].dot(x)-yList[i],inputImages[i]),'diff_'+str(i)+'.nii.gz')
 
+
+  from skimage.restoration import denoise_tv_chambolle
+  current = initHRImage
+  for i in range(10):
+    w = 5
+    ibp = iterativeBackPropagation(current, inputImages, maskImages, inputTransforms, HList, 1, 3)
+    current = nibabel.Nifti1Image(ibp.get_data(), initHRImage.affine)
+    nibabel.save(current,'toto_ibp_w'+str(w)+'_'+str(i)+'.nii.gz')
+
+  current = initHRImage
+  for i in range(10):
+    w = 5
+    ibp = iterativeBackPropagation(current, inputImages, maskImages, inputTransforms, HList, 1, 3)
+    cham = denoise_tv_chambolle(ibp.get_data(),weight=w)
+    current = nibabel.Nifti1Image(cham, initHRImage.affine)
+    nibabel.save(current,'toto_ibp_cham_w'+str(w)+'_'+str(i)+'.nii.gz')
+
+  current = initHRImage
+  for i in range(10):
+    w = 5
+    ibp = iterativeBackPropagation(current, inputImages, maskImages, inputTransforms, HList, 1, 3)
+    cham = denoise_tv_chambolle(ibp.get_data(),weight=w)
+    current = nibabel.Nifti1Image(cham, initHRImage.affine)
+    nibabel.save(current,'toto_ibp_cham_local_w'+str(w)+'_'+str(i)+'.nii.gz')
+    for i in range(len(inputImages)):
+      xcurrent = convert_image_to_vector(current)
+      simu = convert_vector_to_image(HList[i].dot(xcurrent),inputImages[i])
+      im = gaussian_biais_correction(inputImages[i],simu, 5)
+      inputImages[i] = im
+      #yList[i] = convert_image_to_vector(im)
+
       
-    
-  
+      
+  for i in range(len(inputImages)):
+    x = convert_image_to_vector(current)
+    im = convert_vector_to_image(HList[i].dot(x)-yList[i],inputImages[i])
+    nibabel.save(im,'diff_'+str(i)+'.nii.gz')
+    warped = apply_affine_itk_transform_on_image(input_image=im,transform=inputTransforms[i][0], center=inputTransforms[i][1], reference_image=initHRImage, order=3)
+    nibabel.save(im,'err_'+str(i)+'.nii.gz')
+
 
 
       
