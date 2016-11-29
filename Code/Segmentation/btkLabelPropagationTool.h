@@ -430,7 +430,7 @@ void LabelFusionTool<T>::SetSmoothing(float beta)
 	    
 	  sigma2 += ei*ei;
 	  count ++;
-//          if(fabs(ei>0))
+          if(fabs(ei>0))
             vecei.push_back(fabs(ei));
         }
       }
