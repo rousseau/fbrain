@@ -41,6 +41,8 @@ from os import path
 import sys
 sys.path.append( path.dirname( path.dirname( path.dirname( path.abspath(__file__) ) ) ) )
 from pybtk.registration.affine_transforms import transform_a_set_of_points, convert_itk_transform_to_affine_transform
+import pybtk.model.patches as mp
+
 
 def apply_N4_on_image(input_image, shrink_factor=2, mask_image=None):
   filein = tempfile.NamedTemporaryFile(suffix=".nii.gz").name
@@ -165,3 +167,35 @@ def gaussian_biais_correction(input_image,reference_image, sigma):
   #Low res constraint
   data[index] = input_image.get_data()[index] * gr[index] / gi[index] 
   return nibabel.Nifti1Image(data, input_image.affine)
+  
+def create_mask_image_using_padding_value(image, padding_value=0):
+  data = np.zeros(image.get_data().shape)
+  data[image.get_data() > padding_value] = 1
+  return nibabel.Nifti1Image(data, image.affine)  
+  
+def extract_ramdom_subarray(array,size):
+  shape = np.array(array.shape)
+  size = np.array(size)
+  x = np.floor(np.random.rand(3)*(shape-size)).astype(int)
+  output = np.copy(array[x[0]:x[0]+size[0],x[1]:x[1]+size[1],x[2]:x[2]+size[2]])
+  print(output.shape)
+  return output  
+  
+def image_to_compressed_patches(image,mask,patchsize,subsampling):
+  data=image.get_data()
+  data = data.reshape(data.shape[0:3])
+  p = mp.array_to_patches(data,patch_shape=(patchsize,patchsize,patchsize),normalization=True)
+  
+  data = mask.get_data().astype(bool)
+  data = data.reshape(data.shape[0:3])
+  pm = mp.array_to_patches(data,patch_shape=(patchsize,patchsize,patchsize),normalization=False)
+  
+  #Remove zero patches
+  pmr = p[ ~np.all(pm==0,axis=1) ]
+  del p,pm
+
+  #Subsampling of the data
+  np.random.shuffle(pmr)
+  pmr = pmr[0:np.int(subsampling*pmr.shape[0]),:].astype(float)
+  
+  return pmr  

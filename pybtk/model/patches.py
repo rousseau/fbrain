@@ -33,7 +33,7 @@ import numpy as np
 from itertools import product
 from sklearn.feature_extraction.image import extract_patches
 
-def array_to_patches(arr, patch_shape=(3,3,3), extraction_step=1, normalization=True):
+def array_to_patches(arr, patch_shape=(3,3,3), extraction_step=1, normalization=False):
   #Make use of skleanr function extract_patches
   #https://github.com/scikit-learn/scikit-learn/blob/51a765a/sklearn/feature_extraction/image.py
   """Extracts patches of any n-dimensional array in place using strides.
@@ -61,18 +61,24 @@ def array_to_patches(arr, patch_shape=(3,3,3), extraction_step=1, normalization=
       result.reshape([-1] + list(patch_shape))
   """
   
-  patches = extract_patches(arr, patch_shape, extraction_step=1).astype(float)   
-  patches = patches.reshape(-1, patch_shape[0],patch_shape[1],patch_shape[2])    
+  patches = extract_patches(arr, patch_shape, extraction_step)
+  patches = patches.reshape(-1, patch_shape[0],patch_shape[1],patch_shape[2])
   patches = patches.reshape(patches.shape[0], -1) 
-  if normalization==True:   
+  if normalization==True:
+    patches = patches.astype(np.float32)
     patches -= np.mean(patches, axis=0)
     patches /= np.std(patches, axis=0)
-  print('%.2d patches have been extracted' % patches.shape[0])  
+  #print('%.2d patches have been extracted' % patches.shape[0])  
   return patches
 
-def patches_to_array(patches, array_shape, patch_shape=(3,3,3)):
+def patches_to_array(patches, patch_shape, array_shape):
   #Adapted from 2D reconstruction from sklearn
   #https://github.com/scikit-learn/scikit-learn/blob/51a765a/sklearn/feature_extraction/image.py
+  """
+  Patches are assumed to overlap and the image is constructed by filling in
+  the patches from left to right, top to bottom, averaging the overlapping
+  regions.
+  """
   patches = patches.reshape(len(patches),*patch_shape)
   i_x, i_y, i_z = array_shape
   p_x, p_y, p_z = patch_shape
@@ -86,4 +92,6 @@ def patches_to_array(patches, array_shape, patch_shape=(3,3,3)):
   
   for (i, j, k) in product(range(i_x), range(i_y), range(i_z)):
       array[i, j, k] /= float(min(i + 1, p_x, i_x - i) * min(j + 1, p_y, i_y - j) * min(k + 1, p_z, i_z - k))
-  return array    
+  return array   
+  
+  

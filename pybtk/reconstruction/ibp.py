@@ -36,37 +36,62 @@ sys.path.append( path.dirname( path.dirname( path.dirname( path.abspath(__file__
 from pybtk.reconstruction.utilities import convert_image_to_vector, convert_vector_to_image
 from pybtk.filters.imagefilters import apply_affine_itk_transform_on_image
 
-def iterativeBackPropagation(hrImage, lrImages, lrMasks, transforms, H, itermax):
+def ibpComputeError(x, H, y, hrMaskSum, lrImages, transforms, interpOrder):
+  hrError = np.zeros(hrMaskSum.get_data().shape, dtype=np.float32)
+  #Loop over LR image to compute the sum of errors
+  for i in range(len(lrImages)):
+    lrError = convert_vector_to_image(H[i].dot(x)-y[i], lrImages[i])
+    tmp2 = apply_affine_itk_transform_on_image(input_image = lrError, transform=transforms[i][0], center=transforms[i][1], reference_image=hrMaskSum, order=interpOrder)
+    hrError += tmp2.get_data()
   
+  #Normalize the error image  
+  hrErrorNorm = np.zeros(hrMaskSum.get_data().shape, dtype=np.float32)
+  index = np.nonzero(hrMaskSum.get_data())
+  hrErrorNorm[index] = hrError[index] / hrMaskSum.get_data()[index]
+  
+  return hrErrorNorm
+  
+def iterativeBackPropagation(hrImage, lrImages, lrMasks, transforms, H, itermax, interpOrder):
+  
+  #Convert LR images to a list of vectors
   y = []
   for i in range(len(lrImages)):
     y.append(convert_image_to_vector(lrImages[i]) * convert_image_to_vector(lrMasks[i]))
 
+  #Convert HR Image to vector
   x = convert_image_to_vector(hrImage)
   outputImage = nibabel.Nifti1Image(hrImage.get_data(),hrImage.affine) 
 
+  #Compute HR mask
   hrMaskSum=np.zeros(hrImage.get_data().shape, dtype=np.float32)
   for i in range(len(lrImages)):
     tmp1 = apply_affine_itk_transform_on_image(input_image = lrMasks[i], transform=transforms[i][0], center=transforms[i][1], reference_image=hrImage, order=0)
     hrMaskSum += tmp1.get_data()  
   
-  index = np.nonzero(hrMaskSum)
+  
+  #index = np.nonzero(hrMaskSum)
   
   for j in range(itermax):
      
-    #simulation and error computation
-    hrError = np.zeros(hrImage.get_data().shape, dtype=np.float32)
-
-    for i in range(len(lrImages)):
-      lrError = convert_vector_to_image(H[i].dot(x)-y[i], lrImages[i])
-      tmp2 = apply_affine_itk_transform_on_image(input_image = lrError, transform=transforms[i][0], center=transforms[i][1], reference_image=hrImage, order=1)
-      hrError += tmp2.get_data()
-    
-    hrError2 = np.zeros(hrImage.get_data().shape, dtype=np.float32)
-    hrError2[index] = hrError[index] / hrMaskSum[index]
+    error = ibpComputeError(x, H, y, nibabel.Nifti1Image(hrMaskSum,hrImage.affine), lrImages, transforms, interpOrder)
+#    #simulation and error computation
+#    hrError = np.zeros(hrImage.get_data().shape, dtype=np.float32)
+#
+#    for i in range(len(lrImages)):
+#      lrError = convert_vector_to_image(H[i].dot(x)-y[i], lrImages[i])
+#      tmp2 = apply_affine_itk_transform_on_image(input_image = lrError, transform=transforms[i][0], center=transforms[i][1], reference_image=hrImage, order=interpOrder)
+#      hrError += tmp2.get_data()
+#    
+#    hrError2 = np.zeros(hrImage.get_data().shape, dtype=np.float32)
+#    hrError2[index] = hrError[index] / hrMaskSum[index]
+#    
+    #filter error map
+    from skimage.restoration import denoise_tv_chambolle
+    hrError2 = denoise_tv_chambolle(error,weight=5)
     
     #update hr image and x
     outputImage = nibabel.Nifti1Image(outputImage.get_data() - hrError2,hrImage.affine)
+    nibabel.save(nibabel.Nifti1Image(hrError2,hrImage.affine),'error_iter'+str(j)+'.nii.gz')
     nibabel.save(outputImage,'ibp_iter'+str(j)+'.nii.gz')    
     x = convert_image_to_vector(outputImage)
   
