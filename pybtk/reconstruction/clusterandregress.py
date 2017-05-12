@@ -28,7 +28,7 @@
   knowledge of the CeCILL-B license and that you accept its terms.
 
 """
-from sklearn.cluster import MiniBatchKMeans, Birch
+from sklearn.cluster import MiniBatchKMeans, Birch, AgglomerativeClustering, SpectralClustering
 from sklearn import linear_model
 import numpy as np
 
@@ -41,9 +41,13 @@ class ClusterAndRegress():
       self.clustering=MiniBatchKMeans(n_clusters=self.n_clusters, batch_size = self.batch_size)
     if clustering == 'Birch':
       self.clustering = Birch(n_clusters=self.n_clusters)      
+    if clustering == 'Ward':
+      self.clustering = AgglomerativeClustering(n_clusters=self.clusters, linkage='ward')
+    if clustering == 'SpectralClustering':
+      self.clustering = SpectralClustering(n_clusters=self.n_clusters, affinity='nearest_neighbors', eigen_solver='arpack')
     self.regressors=[None]*n_clusters
     
-  def fit(self,Xlr,Xhr):
+  def fit(self,Xhr,Xlr):
         
     y_pred = self.clustering.fit_predict(Xlr)
 
