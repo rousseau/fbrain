@@ -56,3 +56,16 @@ def convert_vector_to_list_images(y,LRImages):
     list.append(nibabel.Nifti1Image(data.reshape(image.get_data().shape), image.affine))
   return list
 
+def resize_array(array,shape):
+  tmp = np.zeros(shape)
+  mx = shape[0]
+  if array.shape[0] < mx:
+    mx = array.shape[0]
+  my = shape[1]
+  if array.shape[1] < my:
+    my = array.shape[1]
+  mz = shape[2]
+  if array.shape[2] < mz:
+    mz = array.shape[2]
+  tmp[0:mx,0:my,0:mz] = array[0:mx,0:my,0:mz] 
+  return tmp
